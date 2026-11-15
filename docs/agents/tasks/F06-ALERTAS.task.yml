@@ -22,6 +22,11 @@
 # Inicio.tsx, Anuncio.tsx nem as rotas mercado/*. A criacao de alerta mora na
 # tela nova (form de criterios), nao no detalhe do anuncio — paridade com o que
 # o dispatch casa, nao com o layout da web morta.
+#
+# EMENDA 16/11 (execucao, aprovada pelo proprio contrato em acceptance): duas
+# provas de e2e afirmavam que /imoveis/alertas ficava na web
+# (mercado-redirects.spec.ts e portas-de-entrada.spec.ts). Elas entram em
+# allowed_paths porque a troca as inverte: viraram a prova do 307.
 
 task_id: RUN-169
 
@@ -68,6 +73,8 @@ allowed_paths:
   - tests/unit/infra/lan-troca-redirect.test.ts
   - tests/e2e/link-crawl.spec.ts
   - tests/e2e/imoveis-alertas-real.spec.ts
+  - tests/e2e/mercado-redirects.spec.ts
+  - tests/e2e/portas-de-entrada.spec.ts
   - scripts/visual/capture.mjs
   - .visual/f06-alertas
 
@@ -87,6 +94,7 @@ acceptance:
   - "Troca: 307 /imoveis/alertas → /app/imoveis/alertas (query preservada; regra antes da generica /imoveis/:id que hoje exclui alertas pelo lookahead — conferir e manter as negativas de novo|alertas); remover (shell)/imoveis/alertas/ + alert-manager.tsx + alert-form.tsx; as 4 server actions de alerta morrem com as telas se sem importador vivo (grep). NAO limpar actions alem das de alerta (as de property ja morreram no RUN-164; o que sobrou em actions.ts nao e daqui)."
   - "Provas: unit das rotas em tests/unit/app-api/imoveis (POST grava criterio igual a action morta — comparar payload nos testes; 401/CSRF 403/validacao/nao-dono 404/duplicata/503 sem eco); TROCADAS + ausencia da pasta + negativas (/imoveis/:id detalhe e /imoveis lista intactos); link-crawl: tirar as portas declaradas de alertas em :196-210 sem deixar entrada stale; capture.mjs: rota web fora; E2E real novo tests/e2e/imoveis-alertas-real.spec.ts (@stateful): persona cria alerta pelo app, aparece na lista, desliga, apaga, persiste apos recarga (3 larguras via CI — sem seed de alertas, criar pela UI); tests/unit/listings/alerts.test.ts continua valendo para o modulo compartilhado."
   - "api-surface: duas rotas novas marcadas; TOTAL_DE_ROTAS recalculado CONTRA O DISCO apos git rebase origin/main no fim do lote (RUN-168 soma +2 na mesma janela — nao gravar numero no escuro; o teste do manifesto compara com a contagem real). Passam: gate --fast, tsc -p tests/e2e, pnpm test, test:scope, app test. Antes de tocar fora dos allowed_paths, EMENDAR este contrato primeiro."
+  - "Emenda 16/11: tests/e2e/mercado-redirects.spec.ts e tests/e2e/portas-de-entrada.spec.ts afirmavam que /imoveis/alertas ficava na web. As duas provas se invertem para o 307 em /app/imoveis/alertas, sem perder as negativas de subcaminho (denunciar, novo/editar)."
 
 proof:
   - npx pnpm@11.18.0 gate --fast
