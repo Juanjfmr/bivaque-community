@@ -51,7 +51,7 @@ export function Sobreposicoes() {
       <Sobreposicao
         id="cidade"
         titulo="Trocar de cidade"
-        descricao="Mude a cidade que você está vendo. Sua cidade continua a mesma."
+        descricao="Veja o Guia, os encontros e os anúncios de outra cidade. Sua cidade continua a mesma."
         aoFechar={aoFechar}
       >
         <PainelDeCidade aoFechar={aoFechar} />

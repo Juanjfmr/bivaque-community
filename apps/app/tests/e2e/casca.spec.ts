@@ -115,14 +115,14 @@ test.describe("barra do topo por rota", () => {
     expect(new URL(page.url()).pathname).toBe("/app/inicio")
   })
 
-  test("trocar de cidade liga a faixa de visita, e ela volta para casa", async ({ page }) => {
-    await definirCascaDaProva(page, { cidade: "Manaus" })
+  test("a faixa de visita aparece quando a casca vê outra cidade, e volta para casa", async ({
+    page,
+  }) => {
+    // CIDADE-169: o painel do chip não troca mais o rótulo da casca — ele abre a
+    // consulta de verdade. O estado cosmético que continua existindo (a faixa)
+    // é semeado pela prova, que é o instrumento para isso.
+    await definirCascaDaProva(page, { cidade: "Recife" })
     await abrir(page, "/app/inicio")
-    await page.locator(SELETOR_CHIP_CIDADE).click()
-
-    await page.locator('[data-campo="cidade"]').fill("Recife")
-    await page.locator('[data-acao="aplicar-cidade"]').click()
-    await expect(page.locator('[data-sobreposicao="cidade"]')).toHaveCount(0)
 
     await expect(page.locator(SELETOR_CHIP_CIDADE)).toContainText("Recife")
     const faixa = page.locator('[data-faixa="visita"]')
