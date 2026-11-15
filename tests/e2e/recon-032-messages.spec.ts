@@ -1,10 +1,10 @@
 // RECON-032 — conversa endereçavel por URL (spec C12) e leitura de
 // notificacoes (C08) na conta do membro-1. A conversa e criada pelo RPC
-// `open_conversation`, idempotente pelo par — o mesmo id vale entre execucoes
-// e vira a fixture da captura /messages/<thread>.
+// `open_conversation`, idempotente pelo par — o mesmo id vale entre execucoes.
+// Desde o RUN-166 a tela antiga saiu da web: cada visita a /messages aqui
+// tambem prova que a URL velha cai no app (/app/conversa/[id]) pela regra de
+// redirect, que nao mudou.
 
-import { mkdirSync, writeFileSync } from "node:fs"
-import { join } from "node:path"
 import { expect, test } from "@playwright/test"
 import {
   mintSession,
@@ -59,11 +59,6 @@ test.beforeAll(async () => {
     throw new Error(`open_conversation falhou: ${result.status}`)
   }
   conversationId = String(result.data)
-  mkdirSync(join(process.cwd(), ".visual", "fixtures"), { recursive: true })
-  writeFileSync(
-    join(process.cwd(), ".visual", "fixtures", "message-thread.json"),
-    `${JSON.stringify({ path: `/messages/${conversationId}` }, null, 2)}\n`,
-  )
 })
 
 test.describe("conversa por URL estavel", () => {

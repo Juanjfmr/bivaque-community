@@ -59,12 +59,15 @@ describe("RECON-042, defeito 1 — o rótulo do item da lateral corresponde ao d
     })
   })
 
-  it("o ícone de conversas do cabeçalho leva a /messages", () => {
+  it("o ícone de conversas do cabeçalho leva a /app/conversas", () => {
     const source = readFileSync(appShell, "utf8")
-    const anchor = /<a\b[^>]*href="\/messages"[^>]*>/.exec(source)?.[0]
+    const anchor = /<a\b[^>]*href="\/app\/conversas"[^>]*>/.exec(source)?.[0]
     expect(anchor, "o cabeçalho precisa de uma porta para a caixa de conversas").toBeDefined()
     expect(anchor).toContain("aria-label={conversationsLabel(unreadConversations)}")
     expect(source).toMatch(/if \(unread === 0\) return "Conversas"/)
+    // RUN-166: a caixa saiu da web; a casca não pode voltar a apontar para a
+    // URL antiga, que hoje é só redirect.
+    expect(source).not.toContain('href="/messages"')
   })
 
   it("o avatar do cabeçalho continua levando a /profile", () => {

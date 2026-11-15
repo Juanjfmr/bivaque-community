@@ -2,7 +2,8 @@
 // (MSG-SEM-ENTRADA, decisão do dono de 22/09/2026).
 //
 // Conta CONVERSAS, não mensagens: o badge diz "há algo novo aqui", e a caixa mostra
-// o número por conversa. A mesma regra da caixa (conversation-inbox.tsx): é nova a
+// o número por conversa. A mesma regra da caixa, que desde o RUN-166 mora no app
+// (/app/conversas): é nova a
 // mensagem de outra pessoa depois do last_read_at do membro; sem estado de leitura,
 // a conversa inteira é nova. Função pura — as leituras (RLS) ficam no layout.
 

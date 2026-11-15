@@ -336,10 +336,10 @@ test.describe("rastreador de links", { tag: "@stateful" }, () => {
       listFiles(APP_DIR, "route.ts"),
       caminhosDoCatalogo(ROTAS),
       // Continuam sendo links válidos e são visitados; deixaram de ser telas
-      // da web cuja porta o inventário exige (LAN-TROCA fase 1).
+      // da web cuja porta o inventário exige (LAN-TROCA fase 1). /messages saiu
+      // desta lista no RUN-166: sem page.tsx, não há padrão a reclassificar, e
+      // nenhuma tela web linka a URL antiga (os links migraram para o app).
       [
-        "/messages",
-        "/messages/[id]",
         "/mercado/[id]",
         "/imoveis/[id]",
         "/pedidos",
