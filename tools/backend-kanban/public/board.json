@@ -6286,7 +6286,8 @@
         "14/11: LT-007 — F08 web parcial (PR #225, merge b5be43d4): /guide -> /app/guia 307 com query; lista antiga removida (715 linhas); subrotas /guide/[id], /guide/sugerir, /guide/[id]/correcao ficam na web (regra exata não as captura, prova negativa unit+E2E). TROCADAS 81/81; guia-redirects.spec.ts novo (307+query sem sessão em 375/768/1440); specs migradas (portas-de-entrada, empty-locality, two-localities); 5 links web da lista direto pro app (Salvos, busca global x2, city-reference, entry-moment). Revisão Qwen PASS. Completo verde no SHA a2c51d9d (run 43622057312, 17.9 min) após 5 correções de inventário (links, unitário href, typed routes via typegen, portas das subrotas, allowance /denuncias) + idle=10 do RUN-148. Perda declarada: ?locality=. Checklist de troca completo no LICOES. F08: lista trocada nos dois lados; gaps do verbete endereçável/sugestão/correção seguem em F08-RESSALVAS.",
         "15/11: jornada de gaps + trocas (5 lotes mergeados): RUN-152 tema claro-only (81763cc6, decisão do dono — lançamento só claro, escuro dormente); RUN-153 F04 resolver/reabrir + útil fake removido (2db19a6b, destrava /indicacoes/[id]); RUN-155 F04 criar grupo (dff7dacd); RUN-156 F06 resíduo criar/editar desapego (343e9775, últimos URLs diretos); RUN-154 F08 verbete endereçável + botão fake removido + minhas sugestões (03ace7a4, destrava /guide/[id], resolve F08-RESSALVAS 1-2). CI rápida no ar (RUN-147/149/150/151: fast ~1.5 min, fechamento ~9-11 min). Lições: lotes que mexem em specs Playwright exigem E2E real no CI (typecheck não pega quebra de runtime); branches paralelos que mexem no TOTAL_DE_ROTAS precisam re-sync após merges; executores DeepSeek param antes de validar em worktree novo (install) — retomar com executor de conclusão.",
         "15/11: mais 2 lotes — RUN-157 F10 sair da conta (55af2822, escopo local 'neste aparelho', servidor revoga sem cliente Supabase no app; causa-raiz do cookie no WeakMap registrada em SESSAO-COOKIES-WEAKMAP); RUN-158 F04 seguir/salvar indicações (0400887a, um toggle 'Seguir respostas' em recommendation_saves, reuse total sem migration — banco já notificava quem salvou; fecha também 'indicações em Salvos' do F10). Lacunas F04/F06/F10 atualizadas no checklist. 7 lotes de jornada no dia.",
-        "15/11: RUN-159 F04 denúncia de pergunta+resposta (ecc2d95d, reuse do mecanismo reports sem migration) — 8º lote. F04 completo exceto 'Também perguntar à cidade' (R3 grande, deferido com card F04-TAMBEM-PERGUNTAR; drift da lista de lacunas reconciliado)."
+        "15/11: RUN-159 F04 denúncia de pergunta+resposta (ecc2d95d, reuse do mecanismo reports sem migration) — 8º lote. F04 completo exceto 'Também perguntar à cidade' (R3 grande, deferido com card F04-TAMBEM-PERGUNTAR; drift da lista de lacunas reconciliado).",
+        "15/11: RUN-160 F10 gestão de interesses pós-onboarding (2a25105b, pares usuário↔grupo, reuse dos RPCs sem migration; service_role com exceção medida como família/localização) — 9º lote. F10 resta perfil alheio. Lição: E2E escrito sem rodar reincide em armadilhas (restauração de sobreposição no reload reabre o modal e aria-hidden o heading; getByRole Fechar substring casa a alça)."
       ],
       "id": "LAN-TROCA",
       "title": "Fase 6: varredura da troca — nenhuma rota de membro no apps/web servindo tela",
@@ -6299,7 +6300,7 @@
         "Portões do proxy movidos com teste por perfil",
         "Código, testes e ferramentas antigas removidos",
         "Fase 1 (RUN-019, decisão revista em 06/11): 307 das 11 rotas autorizadas, IDs/query preservados, sem ciclo; /indicacoes/:id fica na web até F04 para preservar Ajudou a resolver; demais rotas e edições ficam na web",
-        "Lacunas seguintes: filtros q/search e IDs do Guia/cidade/localidade (F02/F08); Também perguntar à cidade (F04, R3, card F04-TAMBEM-PERGUNTAR; grupos/seguir/salvar/resolver/denúncias fechados: RUN-153/155/158/159); convites/fan-out e criar/editar evento (F05); Meus anúncios e alertas (F06; criar/editar fechado: RUN-156); criar pedido endereçável e negócio/catálogo próprio (F07); avisos/preferências/bloqueio na conversa (F09); perfil alheio/interesses (F10; indicações em Salvos e sair da conta fechados: RUN-157/158)",
+        "Lacunas seguintes: filtros q/search e IDs do Guia/cidade/localidade (F02/F08); Também perguntar à cidade (F04, R3, card F04-TAMBEM-PERGUNTAR; grupos/seguir/salvar/resolver/denúncias fechados: RUN-153/155/158/159); convites/fan-out e criar/editar evento (F05); Meus anúncios e alertas (F06; criar/editar fechado: RUN-156); criar pedido endereçável e negócio/catálogo próprio (F07); avisos/preferências/bloqueio na conversa (F09); perfil alheio (F10; indicações em Salvos, sair da conta e interesses fechados: RUN-157/158/160)",
         "Provar a revisão da fase 1 no CI: E2E integrado e rastreador; manter as portas de /profile e /community enquanto suas jornadas ficam na web"
       ],
       "dependencies": [
@@ -6839,6 +6840,31 @@
       "proof": [
         "15/11: registrado pelo coordenador ao fechar RUN-159 (explorer confirmou: nenhuma camada feita, CHECK ainda XOR, compositor sem tipo pergunta). Deferido por ser R3 grande; exige ADR + migration antes de executar. Drift reconciliado: a lista de lacunas do LAN-TROCA omitia este gap."
       ]
+    },
+    {
+      "id": "RUN-160",
+      "title": "F10: gestão de interesses pós-onboarding no app (pares usuário↔grupo)",
+      "phase": "Lançamento",
+      "priority": "P1",
+      "category": "frontend",
+      "status": "done",
+      "completedAt": "2026-11-15",
+      "description": "Interesses são pares usuário↔grupo (não temas); o dado já era gravado no onboarding pelo RPC canônico record_user_group_interests — falta só ler/alterar/limpar depois da entrada + a porta no Você. Sem migration (tabela + RPCs prontos). GET/POST /api/app/voce/interesses: a tabela user_group_interests não tem grant para authenticated (operacional só via RPCs service_role), então cliente de serviço com autorização explícita DEPOIS de exigirSessao — userId e cidade sempre da sessão (vínculo current), nunca do corpo. GET devolve interesses ⊆ grupos da cidade (interseção evita o 409 permanente ao trocar de cidade); POST replace-set (CSRF, teto 20, UUIDs, dedupe, 42501→409, 503 sem eco). Linha Interesses no Você + folha com checkbox por grupo (jaMembro desabilitado, Salvar/Limpar). Sem Sugeridos/feed (ADR-20261023). Só interesses próprios. Exceção medida no scope f10-voce-porta (como família/localização) + teste dedicado.",
+      "checklist": [
+        "Rotas GET/POST interesses (cidade da sessão)",
+        "Linha + folha de interesses no Você",
+        "Testes positivo/negativo + CI verde"
+      ],
+      "dependencies": [],
+      "tests": ["tests/e2e/f10-voce-real.spec.ts", "tests/unit/app-api/voce/interesses.test.ts"],
+      "blockers": [],
+      "updatedAt": "2026-11-15",
+      "sourceRevision": "2a25105b",
+      "links": ["docs/agents/tasks/F10-INTERESSES.task.yml"],
+      "proof": [
+        "15/11: PR #239 mergeado em 2a25105b. Implementado pelo DeepSeek (5969bd8d) + fixes: F1 cidade antiga (a2b455ac, GET devolve interesses⊆grupos, prova de mutação), E2E reload/estado (39d4e6c6: fecha a folha antes do reload — a restauração de sobreposição reabria o modal e aria-hidden o h1; limparInteressesDaPersona no afterEach), Fechar exact:true (97408ffa, alça Arrastar para fechar). Revisão R2 Qwen APROVA com 1 correção (F1) aplicada; service_role ratificado (exceção medida como família/localização, teste dedicado). CI run 43715113838 todo verde. App test 560. Fecha a lacuna interesses do LAN-TROCA (F10); resta perfil alheio. Não troca a tela web (F10 não fecha neste lote)."
+      ],
+      "completedChecklist": [true, true, true]
     },
     {
       "id": "SESSAO-COOKIES-WEAKMAP",
