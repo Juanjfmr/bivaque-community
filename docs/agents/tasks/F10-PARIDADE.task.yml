@@ -1,0 +1,104 @@
+# RUN-170 — F10 Lote A (paridade): transferencia de cidade e afiliacao privada no app.
+#
+# A troca de /profile + /profile/editar (Lote B) nao pode matar os dois recursos
+# que so a web tem: a TRANSFERENCIA DE CIDADE (decisao do dono 25/09 no
+# ADR-20260925 — cidade muda pelo perfil, RPC declare_locality_transfer com grant
+# authenticated, regras 30d padrao / 180d teto no modulo compartilhado
+# lib/locality/move-city.ts, constraints no banco) e a AUTODECLARACAO Forca/OM
+# (ADR-20260908 D2, tabela profile_affiliations, uma linha por campo). A
+# decisao do lote esta no ADR-20261116-perfil-transferencia-e-afiliacao-no-app
+# (delegacao): afiliação entra PRIVADA por construcao (is_visible sempre false no
+# caminho do app; o toggle Exibir morre com a tela web — BLOCK-AFFILIATION nunca
+# teve consumidor vivo), upload de foto morre com a tela (card pos-lancamento
+# sera aberto pelo coordenador no fechamento), e NAO se porta o desfazer
+# (reverse_locality_transfer e hatch service_role, nao produto). SEM migration.
+#
+# DESJUNTAO: as lanes RUN-168 (salvar) e RUN-169 (alertas) tocam mercado/
+# Inicio/Anuncio/Salvos e rotas mercado/imoveis — este lote nao toca nada delas.
+# NAO troca /profile nem remove telas web (Lote B, depois deste + #246).
+
+task_id: RUN-170
+
+adr: docs/decisions/ADR-20261116-perfil-transferencia-e-afiliacao-no-app.md
+
+objective: >
+  Portar ao app, sem migration: declaracao de transferencia de cidade (POST
+  /api/app/voce/cidade sobre o RPC existente com o cliente da sessao e a
+  validacao compartilhada), leitura do estado no GET /api/app/voce (cidade com
+  id + outbound leaving), autodeclaracao Forca/OM privada (GET/PUT
+  /api/app/voce/afiliacao sobre profile_affiliations com validacao movida para
+  modulo compartilhado), e as duas secoes na UI do Voce/EdicaoDePerfil, com
+  /app/voce lendo o param mudar para pre-selecionar destino.
+
+authority:
+  - docs/LANCAMENTO.md:63 (linha F10) + criterios 1 e 5 (:38-48)
+  - ADR-20261116-perfil-transferencia-e-afiliacao-no-app.md (delegacao) + ADR-20260925 (transferencia) + ADR-20260908 D2 (afiliacao)
+  - ADR-20261105 §5 (contrato de rota)
+  - Mapa do explorer 16/11 (F10 paridade; file:line no RELATORIO do coordenador)
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    A transferencia so existe na web: (shell)/profile/city-section.tsx:114-199 +
+    city-actions.ts:64-67 (RPC declare_locality_transfer, cliente da sessao); o
+    estado leaving e lido em (shell)/layout.tsx:91-110; nenhum POST de cidade em
+    apps/web/app/api/app/voce. Afiliação só no editar web (page.tsx:335-433,
+    affiliation-actions.ts:88-126); zero ocorrencias de profile_affiliations ou
+    armed_force em apps/app. Voce.tsx mostra cidade como texto read-only.
+
+allowed_paths:
+  - docs/agents/tasks/F10-PARIDADE.task.yml
+  - apps/web/app/api/app/voce/cidade
+  - apps/web/app/api/app/voce/afiliacao
+  - apps/web/app/api/app/voce/route.ts
+  - apps/web/app/(shell)/profile/affiliation.ts
+  - apps/web/lib/profile
+  - apps/web/lib/locality
+  - apps/web/lib/security/api-surface.ts
+  - apps/app/lib/dados/voce.ts
+  - apps/app/src/telas/Voce.tsx
+  - apps/app/src/voce
+  - apps/app/src/telas/comum.tsx
+  - apps/app/tests
+  - tests/unit/app-api/voce
+  - tests/unit/profile
+  - tests/unit/locality
+  - tests/unit/security/api-surface.test.ts
+  - scripts/visual/capture.mjs
+  - .visual/f10-paridade
+
+forbidden:
+  - criar migration, RPC novo, mudar grants/polices do banco (tudo pre-existe: declare_locality_transfer com grant authenticated, profile_affiliations com RLS de dono)
+  - expor Forca/OM a terceiros: nada de profile_affiliations_for, nada de badge no perfil alheio, is_visible do caminho do app e sempre false (ADR-20261116)
+  - portar reverse_locality_transfer ou criar UI de desfazer (hatch service_role, nao produto)
+  - tocar Mercado.tsx, Inicio.tsx, Anuncio.tsx, Salvos.tsx, rotas mercado/imoveis ou a tela de alertas (lanes RUN-168/169)
+  - trocar/remover /profile ou /profile/editar, mover arquivos de familia do (shell)/profile, mexer em avatar/bucket/rota /api/avatar (Lote B / pos-lancamento)
+  - criar rota nova de catalogo de cidades (usar GET /api/localities e /api/localities/[uf] ja publicos e ja consumidos na entrada)
+  - usar skip/fixme novo ou afrouxar assercao; campo aditivo sem cobrir TODOS os caminhos que devolvem o objeto
+  - push, merge ou force-push; ler/criar/editar arquivos de ambiente; imprimir credenciais
+  - tocar em .work/main ou em outra worktree
+
+acceptance:
+  - "GET /api/app/voce (extensao aditiva): cidade passa a ter id; entra outbound | null = { id, nome, uf, endsAt, readOnly } lido da linha leaving sob RLS no padrao do (shell)/layout.tsx:91-110. Licao paga: campo aditivo em TODOS os caminhos que devolvem o objeto (POST/PUT locais, stubs do app, testes existentes) e no parser do cliente — teste de mutacao prova o furo."
+  - "POST /api/app/voce/cidade (e OPTIONS) no ADR §5: corpo { destino: uuid, prazo: ISO date }; exigirSessao + conferirEscrita; validacao REUSA lib/locality/move-city.ts (destino != atual, prazo hoje..+180, default 30d) sem duplicar regra; RPC declare_locality_transfer com o cliente da sessao (SECURITY DEFINER resolve auth.uid(); nunca service_role na rota; destino NUNCA vem de nome); 23505 vira a mensagem vigente de mudanca em andamento, 23514/28000/42501 no molde das rotas voce existentes, 503 sem eco; sucesso devolve o estado novo (current/leaving/leaving_at)."
+  - "Modulo compartilhado de afiliacao: logica de apps/web/app/(shell)/profile/affiliation.ts (enum Marinha/Exercito/Aeronautica, OM <=80 com varredura CPF/CEP, normalizar limpar=apagar) MUDA para apps/web/lib/profile/affiliation.ts e o arquivo antigo vira re-export de uma linha (testes web da pasta continuam verdes sem edicao). GET/PUT /api/app/voce/afiliacao: PUT { armedForce?: string|null, om?: string|null } grava/apaga linhas de dono com is_visible=false SEMPRE (sem campo de visibilidade no corpo — corpo que trouxer visibilidade e recusado 400); GET devolve as proprias; posse decide no banco (RLS dono); negativos: enum aberto 400, OM com digitos tipo CPF 400, sem sessao 401, CSRF no PUT, 503 sem eco."
+  - "App: dados/voce.ts ganha declararMudancaDeCidade(destino, prazo), lerAfilicao(), salvarAfilicao({armedForce, om}); Voce.tsx (secao Sua cidade): mostra cidade com id, estado 'saindo de <cidade> ate <data> — uma nova mudanca fica disponivel depois do prazo' com a cidade de destino, e o form de declaracao (destino pelo catalogo publico UF-municipio /api/localities + /api/localities/[uf], prazo com default 30d e aviso do teto 180) que so aparece sem leaving; ocupado/erro/vazio honestos, sucesso revalida o GET da tela. EdicaoDePerfil (ou a linha de edicao do Voce, o que a tela ja usa): campo Forca Armada (select dos 3 + vazio) e OM (texto), com a frase 'opcional e privado — outras pessoas nao veem'; limpar campo e apagar (espelhando normalizar do modulo). /app/voce le o param mudar=<id> da URL e pre-seleciona o destino no form (a query sobrevive ao 307 do Lote B; hoje so a consulta de cidade usa isso)."
+  - "Sem Lote B aqui: /profile e /profile/editar seguem servindo (a prova lan-troca-redirect.test.ts:219-224 de que continuam na web NAO muda); confirmacao de UI com a peca Confirmacao no molde das irmas (troca de sobreposicao, nao empilhamento — licao 16/11)."
+  - "Testes: unit do POST cidade (positivo com payload do RPC igual ao da action web; sem sessao 401; CSRF 403; destino=current 400; prazo fora 400; segunda mudanca 23505→mensagem; 503 sem eco) em tests/unit/app-api/voce; unit da afiliacao (GET/PUT, is_visible false sempre, corpo com visibilidade 400, limpar=apaga, enum/OM invalidos) e a existente profile-affiliation.test.ts continua verde via re-export; unit do GET voce com outbound; vitest do app para os novos clients e a tela (fetch mockado); e2E stub do app para o fluxo cidade (declarar→estado saindo aparece) roda local em vitest/Playwright do PROPRIO app se a porta estiver livre — senao fica pro CI e voce declara. E2E real @stateful: estender tests/e2e/f10-voce-real.spec.ts com o fluxo cidade pela persona em transferencia do seed (membro-transferencia@) — declarar de novo 23505 e o texto de bloqueio aparece; e afiliacao gravar→recarregar→persiste→apagar. Positivo E negativo em toda permissao."
+  - "api-surface: duas rotas novas marcadas (voce/cidade, voce/afiliacao); TOTAL_DE_ROTAS recalculado CONTRA O DISCO apos git rebase origin/main no fim do lote (RUN-168/169 somam na mesma janela — o teste do manifesto compara disco×manifesto). Passam: gate --fast, tsc -p tests/e2e, pnpm test, test:scope, app test. Antes de tocar fora dos allowed_paths, EMENDAR este contrato primeiro (cada '- ' em uma linha so — o parser nao aceita item quebrado)."
+
+proof:
+  - npx pnpm@11.18.0 --filter @bivaque/app test
+  - npx pnpm@11.18.0 gate --fast
+  - npx pnpm@11.18.0 test
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/F10-PARIDADE.task.yml
+
+risk: escrita de mudanca de cidade (identidade do proprio, RPC existente) e dado pessoal militar privado; campo aditivo no contrato do GET voce
+risk_level: R3
+
+reviewer_must_differ_from_executor: true
+retry_budget: 2
+on_budget_exhausted: HUMAN_DECISION
+
+closure:
+  requires_runtime_evidence: true
