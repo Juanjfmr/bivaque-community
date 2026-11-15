@@ -69,6 +69,7 @@ allowed_paths:
   - tests/unit/security/api-surface.test.ts
   - tests/e2e/f10-voce-real.spec.ts
   - tests/e2e/member-profile-denials.spec.ts
+  - tests/e2e/link-crawl.spec.ts
   - .visual/f10-perfil-alheio
 
 forbidden:
