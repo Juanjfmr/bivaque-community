@@ -5,6 +5,7 @@ import { useEffect, useState } from "react"
 
 import { Botao } from "@/components/bivaque/botao"
 import { Campo } from "@/components/bivaque/campos"
+import { Confirmacao } from "@/components/bivaque/confirmacao"
 import { EsqueletoDeLista } from "@/components/bivaque/esqueleto"
 import { EstadoDeErro } from "@/components/bivaque/estado-vazio"
 import { Etiqueta } from "@/components/bivaque/etiqueta"
@@ -12,13 +13,14 @@ import { Icone } from "@/components/bivaque/icone"
 import { Secao } from "@/components/bivaque/secao"
 import {
   buscarEncontro,
+  cancelarEncontro,
   cancelarPresenca,
   type Encontro,
   marcarPresenca,
   type PresencaDoEncontro,
   perguntarAoOrganizador,
 } from "@/lib/dados/eventos"
-import { useRolagemEFoco } from "@/lib/navegacao/react"
+import { useNavegacao, useRolagemEFoco } from "@/lib/navegacao/react"
 import { CARGA_CONCLUIDA } from "@/lib/navegacao/restauracao"
 import { validarParametros } from "@/lib/navegacao/rotas"
 import { EstadoDeSessaoVencida, EstadoNegado } from "@/src/eventos/EstadosDeAcesso"
@@ -62,6 +64,8 @@ export function Evento() {
   const [perguntaEnviada, setPerguntaEnviada] = useState(false)
   const [erroDaPergunta, setErroDaPergunta] = useState<string | null>(null)
   const [enviandoPergunta, setEnviandoPergunta] = useState(false)
+
+  const navegacao = useNavegacao()
 
   useRolagemEFoco(CARGA_CONCLUIDA)
 
@@ -149,6 +153,25 @@ export function Evento() {
     }
   }
 
+  /**
+   * Cancelar o encontro (RUN-167). A tela não muda sozinha: recarrega o
+   * encontro e mostra o que o banco passou a ter — a etiqueta de cancelado e o
+   * fim das ações de presença vêm do servidor, não de um otimismo local.
+   */
+  async function cancelarOEncontro() {
+    if (encontro === null || ocupado) return
+    setOcupado(true)
+    setAviso(null)
+    try {
+      await cancelarEncontro(encontro.id, { signal: controle.signal })
+      setRodada((atual) => atual + 1)
+    } catch (falha: unknown) {
+      if (!foiAbortada(falha)) setAviso(mensagemDaFalha(falha, "cancelar"))
+    } finally {
+      setOcupado(false)
+    }
+  }
+
   async function enviarPergunta(evento: React.FormEvent<HTMLFormElement>) {
     evento.preventDefault()
     if (encontro === null || enviandoPergunta) return
@@ -173,16 +196,34 @@ export function Evento() {
           <Etiqueta tom={cancelado ? "aviso" : "neutro"} icone="event">
             {cancelado ? "Encontro cancelado" : "Encontro da comunidade"}
           </Etiqueta>
-          {encontro.souOrganizador ? (
-            <Botao tom="tonal" icone="edit" className="ml-auto" onClick={() => setEditando(true)}>
-              Editar
-            </Botao>
+          {/* Cancelado é um estado final por aqui: as ações do organizador saem
+              de cena em vez de oferecer editar o que já não acontece. Sem id
+              (dado de demonstração) não existe o que cancelar no servidor. */}
+          {encontro.souOrganizador && !cancelado && encontro.id !== "" ? (
+            <div className="ml-auto flex flex-wrap gap-2">
+              <Botao tom="tonal" icone="edit" onClick={() => setEditando(true)}>
+                Editar
+              </Botao>
+              <Botao
+                tom="perigo"
+                icone="event_busy"
+                disabled={ocupado}
+                onClick={() => void navegacao.abrir("confirmacao")}
+              >
+                Cancelar encontro
+              </Botao>
+            </div>
           ) : null}
         </div>
         <h1 id="titulo-da-tela" data-titulo-da-tela tabIndex={-1} className="text-[24px] leading-8">
           {encontro.titulo}
         </h1>
         <p className="text-sm text-(--on-surface-variant)">{rotuloDaData}</p>
+        {aviso === null ? null : (
+          <p role="alert" className="text-sm text-(--destructive)">
+            {aviso}
+          </p>
+        )}
       </div>
 
       <div className="flex items-center gap-3 rounded-2xl bg-(--surface-lowest) px-4 py-3 ring-1 ring-(--outline-variant)">
@@ -262,12 +303,6 @@ export function Evento() {
               )}
             </div>
           )}
-
-          {aviso === null ? null : (
-            <p role="alert" className="text-sm text-(--destructive)">
-              {aviso}
-            </p>
-          )}
         </Secao>
       )}
 
@@ -314,6 +349,17 @@ export function Evento() {
             setEditando(false)
             setRodada((atual) => atual + 1)
           }}
+        />
+      ) : null}
+
+      {encontro.souOrganizador && !cancelado && encontro.id !== "" ? (
+        <Confirmacao
+          titulo="Cancelar este encontro?"
+          texto="Quem confirmou presença recebe um aviso. O encontro sai da agenda e não é possível reabrir por aqui."
+          confirmar="Sim, cancelar"
+          cancelar="Manter encontro"
+          perigo
+          aoConfirmar={() => void cancelarOEncontro()}
         />
       ) : null}
     </section>

@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it, vi } from "vitest"
 import { FalhaDaApi } from "@/lib/api/cliente"
 import {
   buscarEncontro,
+  cancelarEncontro,
   cancelarPresenca,
   criarEncontro,
   editarEncontro,
@@ -187,6 +188,16 @@ describe("criar, editar e perguntar", () => {
     expect(init.method).toBe("PATCH")
     // Sem capa no corpo: o servidor não toca no cover_path (item 1 da revisão).
     expect(Object.keys(JSON.parse(String(init.body)))).not.toContain("capa")
+  })
+
+  it("cancela pelo PATCH com a situação e mais nada", async () => {
+    const buscar = responder({ evento: { id: "e1" } })
+    await cancelarEncontro("e1")
+    const { caminho, init } = chamada(buscar)
+    expect(caminho).toBe("/api/app/eventos/e1")
+    expect(init.method).toBe("PATCH")
+    // O ramo do cancelamento não edita os dados: só a situação vai no corpo.
+    expect(JSON.parse(String(init.body))).toEqual({ status: "cancelled" })
   })
 
   it("pergunta pelo POST e devolve a conversa", async () => {

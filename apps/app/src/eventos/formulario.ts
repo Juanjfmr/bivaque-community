@@ -135,13 +135,21 @@ export function rotuloDeDataHora(quando: Date): string {
 }
 
 /** Cada ação tem a sua frase quando o servidor não manda uma. */
-export type AcaoQueFalha = "agenda" | "encontro" | "criar" | "editar" | "presenca" | "pergunta"
+export type AcaoQueFalha =
+  | "agenda"
+  | "encontro"
+  | "criar"
+  | "editar"
+  | "cancelar"
+  | "presenca"
+  | "pergunta"
 
 const PADRAO: Readonly<Record<AcaoQueFalha, string>> = {
   agenda: "Não foi possível carregar a agenda. Tente de novo.",
   encontro: "Não foi possível carregar o encontro. Tente de novo.",
   criar: "Não foi possível criar o encontro. Tente de novo.",
   editar: "Não foi possível salvar as alterações. Tente de novo.",
+  cancelar: "Não foi possível cancelar o encontro. Tente de novo.",
   presenca: "Não foi possível registrar sua presença. Tente de novo.",
   pergunta: "Não foi possível enviar. Seu texto foi mantido.",
 }
