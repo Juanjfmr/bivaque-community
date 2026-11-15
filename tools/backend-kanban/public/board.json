@@ -5909,7 +5909,7 @@
         "05/11–06/11: RUN-014 (perguntas da cidade: lista, detalhe e resposta) integrado pelo PR #140 (ace60d99). Implementação DeepSeek V4.1 Flash; revisão Qwen 3.8 Flash PASS COM RESSALVAS; security-auditor (Sonnet 5.5) LIBERA COM RESSALVAS; specs do app ajustados ao dado real; CI verde (um teste instável de foco em sobreposição passou na repetição). Grupos, publicação com foto, Útil, salvar, seguir, fixar e denúncia continuam fora.",
         "07/11: na main — perguntas (#140) e grupos (#153, merge 4673a768), E2E real nas três larguras no CI. Ressalvas seguem em F04-RESSALVAS. Fecha quando INDICACOES-MEMORIA fechar(em) (dependências do card).",
         "07/11: dependências RED-003 e RECON-050 retiradas — tratam de comunidades, legado fora do produto atual (AGENTS.md); INDICACOES-MEMORIA fechado com o E2E do CI. F04 completo: perguntas (#140), grupos (#153), tópicos (#155).",
-        "15/11: lacunas de lançamento remanescentes do fechamento de 07/11 fechadas pelos lotes de 15/11 — resolver/reabrir (RUN-153, 2db19a6b), criar grupo (RUN-155, dff7dacd), seguir/salvar indicações (RUN-158, 0400887a). Demais itens F04 (denúncias) conforme LAN-TROCA."
+        "15/11: lacunas de lançamento remanescentes do fechamento de 07/11 fechadas pelos lotes de 15/11 — resolver/reabrir (RUN-153, 2db19a6b), criar grupo (RUN-155, dff7dacd), seguir/salvar indicações (RUN-158, 0400887a). Demais itens F04: denúncias fechadas pelo RUN-159 (ecc2d95d); resta 'Também perguntar à cidade' (R3, card F04-TAMBEM-PERGUNTAR)."
       ],
       "id": "LAN-F04",
       "title": "F04 Comunidade e grupos ligados ao banco, com o redesenho provado",
@@ -6285,7 +6285,8 @@
         "14/11: LT-006 — F08 lado app (PR #222, merge aa21294c): Guia retém e consome q/categoria da URL. guia em ROTAS_COM_BUSCA (middleware renomeado manterBusca, lógica inalterada); leitura pura filtros-da-url.ts (termo 1..80, categoria válida, locality ignorado) + 8 testes; Guia.tsx semeia do endereço na montagem, digitação vence a origem e não reescreve a URL; E2E guia-filtros-url 23 passed local em 375/768/1440 nos dois temas, negativo verificado (sem guia no set a retenção falha). Revisão Qwen PASS com 2 ressalvas não bloqueantes -> F08-RESSALVAS. CI verde após RUN-146 (PR #223, merge 779d6b2c: runner pinado ubuntu-24.04, ubuntu-latest virou 26.04 incompatível com Playwright 1.51.1): gate 23m25s, App mobile-first 38m10s, HTML R72. Perda declarada: ?locality= não suportado. Próximo: LT-007 troca parcial de /guide (as outras 3 rotas do guia ficam na web).",
         "14/11: LT-007 — F08 web parcial (PR #225, merge b5be43d4): /guide -> /app/guia 307 com query; lista antiga removida (715 linhas); subrotas /guide/[id], /guide/sugerir, /guide/[id]/correcao ficam na web (regra exata não as captura, prova negativa unit+E2E). TROCADAS 81/81; guia-redirects.spec.ts novo (307+query sem sessão em 375/768/1440); specs migradas (portas-de-entrada, empty-locality, two-localities); 5 links web da lista direto pro app (Salvos, busca global x2, city-reference, entry-moment). Revisão Qwen PASS. Completo verde no SHA a2c51d9d (run 43622057312, 17.9 min) após 5 correções de inventário (links, unitário href, typed routes via typegen, portas das subrotas, allowance /denuncias) + idle=10 do RUN-148. Perda declarada: ?locality=. Checklist de troca completo no LICOES. F08: lista trocada nos dois lados; gaps do verbete endereçável/sugestão/correção seguem em F08-RESSALVAS.",
         "15/11: jornada de gaps + trocas (5 lotes mergeados): RUN-152 tema claro-only (81763cc6, decisão do dono — lançamento só claro, escuro dormente); RUN-153 F04 resolver/reabrir + útil fake removido (2db19a6b, destrava /indicacoes/[id]); RUN-155 F04 criar grupo (dff7dacd); RUN-156 F06 resíduo criar/editar desapego (343e9775, últimos URLs diretos); RUN-154 F08 verbete endereçável + botão fake removido + minhas sugestões (03ace7a4, destrava /guide/[id], resolve F08-RESSALVAS 1-2). CI rápida no ar (RUN-147/149/150/151: fast ~1.5 min, fechamento ~9-11 min). Lições: lotes que mexem em specs Playwright exigem E2E real no CI (typecheck não pega quebra de runtime); branches paralelos que mexem no TOTAL_DE_ROTAS precisam re-sync após merges; executores DeepSeek param antes de validar em worktree novo (install) — retomar com executor de conclusão.",
-        "15/11: mais 2 lotes — RUN-157 F10 sair da conta (55af2822, escopo local 'neste aparelho', servidor revoga sem cliente Supabase no app; causa-raiz do cookie no WeakMap registrada em SESSAO-COOKIES-WEAKMAP); RUN-158 F04 seguir/salvar indicações (0400887a, um toggle 'Seguir respostas' em recommendation_saves, reuse total sem migration — banco já notificava quem salvou; fecha também 'indicações em Salvos' do F10). Lacunas F04/F06/F10 atualizadas no checklist. 7 lotes de jornada no dia."
+        "15/11: mais 2 lotes — RUN-157 F10 sair da conta (55af2822, escopo local 'neste aparelho', servidor revoga sem cliente Supabase no app; causa-raiz do cookie no WeakMap registrada em SESSAO-COOKIES-WEAKMAP); RUN-158 F04 seguir/salvar indicações (0400887a, um toggle 'Seguir respostas' em recommendation_saves, reuse total sem migration — banco já notificava quem salvou; fecha também 'indicações em Salvos' do F10). Lacunas F04/F06/F10 atualizadas no checklist. 7 lotes de jornada no dia.",
+        "15/11: RUN-159 F04 denúncia de pergunta+resposta (ecc2d95d, reuse do mecanismo reports sem migration) — 8º lote. F04 completo exceto 'Também perguntar à cidade' (R3 grande, deferido com card F04-TAMBEM-PERGUNTAR; drift da lista de lacunas reconciliado)."
       ],
       "id": "LAN-TROCA",
       "title": "Fase 6: varredura da troca — nenhuma rota de membro no apps/web servindo tela",
@@ -6298,7 +6299,7 @@
         "Portões do proxy movidos com teste por perfil",
         "Código, testes e ferramentas antigas removidos",
         "Fase 1 (RUN-019, decisão revista em 06/11): 307 das 11 rotas autorizadas, IDs/query preservados, sem ciclo; /indicacoes/:id fica na web até F04 para preservar Ajudou a resolver; demais rotas e edições ficam na web",
-        "Lacunas seguintes: filtros q/search e IDs do Guia/cidade/localidade (F02/F08); denúncias (F04; grupos/seguir/salvar/resolver fechados: RUN-153/155/158); convites/fan-out e criar/editar evento (F05); Meus anúncios e alertas (F06; criar/editar fechado: RUN-156); criar pedido endereçável e negócio/catálogo próprio (F07); avisos/preferências/bloqueio na conversa (F09); perfil alheio/interesses (F10; indicações em Salvos e sair da conta fechados: RUN-157/158)",
+        "Lacunas seguintes: filtros q/search e IDs do Guia/cidade/localidade (F02/F08); Também perguntar à cidade (F04, R3, card F04-TAMBEM-PERGUNTAR; grupos/seguir/salvar/resolver/denúncias fechados: RUN-153/155/158/159); convites/fan-out e criar/editar evento (F05); Meus anúncios e alertas (F06; criar/editar fechado: RUN-156); criar pedido endereçável e negócio/catálogo próprio (F07); avisos/preferências/bloqueio na conversa (F09); perfil alheio/interesses (F10; indicações em Salvos e sair da conta fechados: RUN-157/158)",
         "Provar a revisão da fase 1 no CI: E2E integrado e rastreador; manter as portas de /profile e /community enquanto suas jornadas ficam na web"
       ],
       "dependencies": [
@@ -6783,6 +6784,61 @@
         "15/11: PR #237 mergeado em 0400887a. Implementado pelo DeepSeek (4bcb6f60) + contrato declara knock-on da contagem (a795033f, perguntas-porta 4→6). Revisão R2 Qwen PASS (mecanismo conferido direto na migration 20260802001100: PK user_id+request_id→23505 real, insert_own exige locality_id→grupo 42501, select/delete só do dono). CI run 43699069481 todo verde. App test 550, suíte raiz 3218. Fecha a lacuna seguir/salvar do LAN-TROCA (F04) e 'indicações em Salvos' (F10); drift do LAN-F04 done-sem-salvar/seguir reconciliado. 403 de grupo provado em unidade (seed sem pedido de grupo). Não corrige contagens.salvos (pré-existente)."
       ],
       "completedChecklist": [true, true, true]
+    },
+    {
+      "id": "RUN-159",
+      "title": "F04: denúncia de pergunta e de resposta pelo app (reuse do mecanismo reports)",
+      "phase": "Lançamento",
+      "priority": "P1",
+      "category": "frontend",
+      "status": "done",
+      "completedAt": "2026-11-15",
+      "description": "Denunciar pergunta e resposta no app. Reuse total do mecanismo reports existente — o banco já cobre recommendation_request/reply (enum 20260821000031, auto-denúncia bloqueada, índice de duplicata, is_deleted, RPC de resolução do operador, destino do aviso report_resolved -> /app/pergunta/{id}), tudo com pgTAP. SEM migration/pgTAP novo. Rota POST /api/app/perguntas/[id]/denuncia com {motivo, explicacao, respostaId?}: sem respostaId alvo recommendation_request, com alvo recommendation_reply (resposta precisa pertencer à pergunta). Visibilidade pela sessão->404, próprio->403 antes do insert, autoria da sessão, 23505->409, 42501->403, validação compartilhada reports.ts. Menu ⋯ + Dialog na Pergunta (4 motivos, molde AcoesDaPublicacao); resolver/seguir/responder intactos. Sem bloquear-após-denunciar (molde do app; bloqueio já existe em Você). Escopo só pergunta+resposta.",
+      "checklist": [
+        "Rota denuncia (dois alvos) + cliente denunciarPergunta",
+        "Menu de opções na Pergunta (pergunta + resposta)",
+        "Testes positivo/negativo + CI verde"
+      ],
+      "dependencies": [],
+      "tests": [
+        "tests/e2e/f04-perguntas-real.spec.ts",
+        "tests/unit/app-api/perguntas/denuncia.test.ts"
+      ],
+      "blockers": [],
+      "updatedAt": "2026-11-15",
+      "sourceRevision": "ecc2d95d",
+      "links": ["docs/agents/tasks/F04-DENUNCIA.task.yml"],
+      "proof": [
+        "15/11: PR #238 mergeado em ecc2d95d. Implementado pelo DeepSeek (791e3d06) + formatação do teste + knock-on da contagem declarado (perguntas-porta 6->7). Revisão R2 Qwen PASS-COM-RESSALVA (mecanismo conferido no banco: índice de duplicata->409 real, is_deleted, enum; achados menores aceitáveis: log.error vs helper, motivos duplicam servidor como no molde, E2E aceita enviada/já-denunciada pois não há DELETE). CI run 43708593391 todo verde. App test 554, gate --fast verde. Fecha a lacuna denúncias do LAN-TROCA (F04). 'Também perguntar à cidade' fica como gap R3 separado (card F04-TAMBEM-PERGUNTAR)."
+      ],
+      "completedChecklist": [true, true, true]
+    },
+    {
+      "id": "F04-TAMBEM-PERGUNTAR",
+      "title": "F04: Também perguntar à cidade (pergunta de grupo aberto nas indicações da cidade)",
+      "phase": "Lançamento",
+      "priority": "P1",
+      "category": "backend",
+      "status": "repo",
+      "description": "No escopo F04 do LANCAMENTO (linha 57) mas deferido do RUN-159 por ser R3 grande. Pergunta feita em grupo Aberto aparece também nas Indicações da cidade com o nome do grupo (ADR-20261024-redesenho-da-comunidade.md:60-70). Exige migration única: CHECK recommendation_origin_scope deixa de ser XOR (20260802001100_recommendations.sql:32-35), policy de INSERT nova (membro ativo + grupo Aberto/não Encerrado + cidade do grupo) e leituras; tipo pergunta no compositor de grupo (Escrever.tsx hoje só texto+foto, rota publicacoes não aceita post_type); vínculo post↔request; exibição 'Também perguntada em {grupo}'; propagação de edição/exclusão. A lista da cidade filtra por localidade (list_indications p_locality_id). Só existe no protótipo congelado.",
+      "checklist": [
+        "ADR R3 por delegação + security-auditor + revisão independente (RATIFICACAO.md)",
+        "Migration: origem não-XOR + policy de insert + leituras, pgTAP positivo/negativo por escrita direta",
+        "Tipo pergunta no compositor + vínculo post↔request + exibição na cidade + propagação edição/exclusão",
+        "E2E 375/768/1440 claro; troca da tela web se aplicável"
+      ],
+      "dependencies": [],
+      "tests": [],
+      "blockers": [],
+      "updatedAt": "2026-11-15",
+      "sourceRevision": "ecc2d95d",
+      "links": [
+        "docs/decisions/ADR-20261024-redesenho-da-comunidade.md",
+        "docs/agents/tasks/F04-DENUNCIA.task.yml"
+      ],
+      "proof": [
+        "15/11: registrado pelo coordenador ao fechar RUN-159 (explorer confirmou: nenhuma camada feita, CHECK ainda XOR, compositor sem tipo pergunta). Deferido por ser R3 grande; exige ADR + migration antes de executar. Drift reconciliado: a lista de lacunas do LAN-TROCA omitia este gap."
+      ]
     },
     {
       "id": "SESSAO-COOKIES-WEAKMAP",
