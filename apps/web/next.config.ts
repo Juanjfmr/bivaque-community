@@ -106,7 +106,16 @@ const nextConfig: NextConfig = {
           // `/guide/sugerir` e `/guide/[id]/correcao` seguem na web; a query
           // (q/categoria) continua pelo Next e o app a consome (LT-006).
           ["/guide", "/app/guia"],
-          // As páginas estáticas e /:id/editar continuam na web.
+          // As páginas estáticas continuam na web.
+          // F06 resíduo: criar e editar desapego saem com a troca. O app cria
+          // pela folha do Criar (não há `/app/mercado/novo`) e edita dentro do
+          // anúncio, então os destinos são a lista e o anúncio. As duas regras
+          // vêm antes de `:id` porque o Next aplica a primeira que casa, e o
+          // lookahead impede que "novo" vire id. Na regra de editar o `$` não
+          // fecha (há "/editar" atrás), então o bloqueio é de "novo/" — sem ele,
+          // `/mercado/novo/editar` viraria o anúncio "novo".
+          ["/mercado/novo", "/app/mercado"],
+          ["/mercado/:id((?!novo/)[^/]+)/editar", "/app/anuncio/:id"],
           ["/mercado/:id((?!novo/?$)[^/]+)", "/app/anuncio/:id"],
           ["/imoveis/:id((?!(?:novo|alertas)/?$)[^/]+)", "/app/anuncio/:id"],
           ["/pedidos", "/app/pedidos"],

@@ -231,16 +231,6 @@ const PORTAS_FORA_DO_LINK: readonly AllowedUnreached[] = [
       "DÍVIDA LAN-TROCA: a porta era o rail da Início web e a aba Sobre da comunidade, fora do percurso do rastreador (F02/F08)",
   },
   {
-    route: "/mercado/[id]/editar",
-    porta:
-      "URL DIRETA: a edição web de desapego permanece só por URL; o Gerenciar do app edita em folha inline e não referencia esta rota (gap registrado em LAN-F06)",
-  },
-  {
-    route: "/mercado/novo",
-    porta:
-      "DÍVIDA LAN-TROCA: a porta era o menu '+' da casca web, que a fase 1 substituiu pela casca do app (F06)",
-  },
-  {
     route: "/negocio",
     porta:
       "DÍVIDA LAN-TROCA: a porta era 'Meu negócio' na lista /mercado, trocada para o app (F06); a gestão do negócio próprio segue na web (F07)",
