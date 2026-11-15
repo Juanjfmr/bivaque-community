@@ -6586,7 +6586,8 @@
       "phase": "Lançamento",
       "priority": "P1",
       "category": "frontend",
-      "status": "now",
+      "status": "done",
+      "completedAt": "2026-11-15",
       "description": "Decisão do dono 14/11: lançamento apenas tema claro. App força data-tema=claro (tema.ts), escuro dormente atrás de :root[data-tema=escuro] sem media query (styles.css), @custom-variant dark retém utilities dark: do Tailwind. <source media=dark> removidos. Testes visuais claro-only (TEMAS=[light]); tema.spec.ts prova sistema-escuro-mantém-claro + dormente acende via data-tema. Tokens escuros preservados (reversível). LANCAMENTO atualizado (escopo 14/11).",
       "checklist": [
         "App força claro; escuro dormente reversível",
@@ -6596,11 +6597,35 @@
       "dependencies": [],
       "tests": ["apps/app/tests/e2e/tema.spec.ts"],
       "blockers": [],
-      "updatedAt": "2026-11-14",
-      "sourceRevision": "74b39b8b",
+      "updatedAt": "2026-11-15",
+      "sourceRevision": "81763cc6",
       "links": ["docs/agents/tasks/TEMA-CLARO.task.yml", "docs/LANCAMENTO.md"],
       "proof": [
-        "14/11: implementado pelo DeepSeek (74b39b8b). Revisão R2 Qwen PASS (mecanismo conferido: gate data-tema, @custom-variant dark, tokens preservados, testes claro-only). App test 512/512 + typecheck + gate --fast verdes (coordenador re-rodou app test). CI claro-only em curso (PR #231). Pendência: landing web ainda segue o sistema (card TEMA-CLARO-LANDING-WEB)."
+        "14/11: implementado pelo DeepSeek (74b39b8b). Revisão R2 Qwen PASS (mecanismo conferido: gate data-tema, @custom-variant dark, tokens preservados, testes claro-only). App test 512/512 + typecheck + gate --fast verdes (coordenador re-rodou app test). Pendência: landing web ainda segue o sistema (card TEMA-CLARO-LANDING-WEB).",
+        "15/11: FECHADO — PR #231 mergeado em 81763cc6. Fixes: capturadores web stateful claro-only (aa46cd7d); formato board.json (biome); hover do botao tonal virou token rgb (c950a1d7) — o contraste 1.36 do CI era artefato do helper (color-mix oklch lido como rgb), a paleta clara já tinha 12.54:1. CI run 43658532479 todo verde (stateful 3 viewports + fast + ci-core + agregador). Resíduo: helper de contraste não parseia oklch (card TESTE-CONTRASTE-OKLCH)."
+      ],
+      "completedChecklist": [true, true, true]
+    },
+    {
+      "id": "TESTE-CONTRASTE-OKLCH",
+      "title": "Helper de contraste dos E2E não parseia oklch/color-mix (leitura falsa)",
+      "phase": "Lançamento",
+      "priority": "P3",
+      "category": "testing",
+      "status": "repo",
+      "description": "O helper canais()/contraste() dos specs (ex.: f05-eventos-real.spec.ts:76) só entende rgb(). Fundos color-mix(in oklch,…) são serializados pelo Chromium como oklch()/color(srgb …) e lidos como quase-preto → contraste falso (1.36 em vez de 12.54). No RUN-152 o hover tonal virou token rgb para contornar. Robustecer o helper para parsear oklch/color(srgb) (ou exigir tokens rgb nos botões medidos). Achado do fix de contraste do RUN-152.",
+      "checklist": [
+        "Helper parseia oklch/color(srgb) ou regra de token rgb nos botões medidos",
+        "Sem leitura falsa de contraste"
+      ],
+      "dependencies": [],
+      "tests": ["tests/e2e/f05-eventos-real.spec.ts"],
+      "blockers": [],
+      "updatedAt": "2026-11-15",
+      "sourceRevision": "81763cc6",
+      "links": [],
+      "proof": [
+        "15/11: registrado a partir do fix de contraste do RUN-152 (hover tonal oklch→rgb)."
       ]
     },
     {
