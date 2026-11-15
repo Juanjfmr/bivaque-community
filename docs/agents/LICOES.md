@@ -274,3 +274,9 @@ Fechamento do lote: ~45 min -> ~11 min (4x), alvo 8-12 atingido.
   objeto INTEIRO antes de acrescentar campo — proof duplicado passou pelo board.mjs (JSON.parse
   fica com o último valor e descartou o histórico) mas o biome noDuplicateObjectKeys pegou, e
   derruba o gate de todos os PRs. Rode biome check no board.json antes de todo push de quadro.
+- E2E com sobreposição (folha/modal): o app RESTAURA o estado da sobreposição no reload. Se o teste
+  deixa a folha aberta e dá reload, ela reabre restaurada e o Radix põe aria-hidden no fundo — o
+  heading da tela some do getByRole e a asserção estoura por timeout. Feche a folha e espere o
+  DialogContent desmontar ANTES do reload; e limpe o estado gravado (ex.: interesses) no afterEach,
+  senão vaza para o retry. E o botão Fechar da folha exige exact:true (a alça Arrastar para fechar
+  casa por substring). RUN-160, reincidência de lições já pagas — executor escreve E2E sem rodar.
