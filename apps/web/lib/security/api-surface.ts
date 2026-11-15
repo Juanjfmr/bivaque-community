@@ -1,5 +1,5 @@
 /**
- * A postura de cada rota de `apps/web/app/api/**` — as 84 rotas, uma por linha,
+ * A postura de cada rota de `apps/web/app/api/**` — as 88 rotas, uma por linha,
  * com a guarda que a rota de fato usa e a prova negativa (ou o motivo explícito
  * de ser pública).
  *
@@ -86,7 +86,7 @@ export type RotaClassificada = Readonly<{
 }>
 
 /** Quantas rotas o manifesto cobre. Um rota nova exige classificação explícita. */
-export const TOTAL_DE_ROTAS = 87
+export const TOTAL_DE_ROTAS = 88
 
 function teste(arquivo: string, caso: string): ProvaDaRota {
   return { tipo: "teste", arquivo, caso }
@@ -174,6 +174,7 @@ const SESSAO: readonly Linha[] = [
   ["/api/app/voce/ocultados", "exigirSessao(", PORTA],
   ["/api/app/voce/ocultados/[id]", "exigirSessao(", PORTA],
   ["/api/app/voce/publicacoes", "exigirSessao(", PORTA],
+  ["/api/app/voce/sair", "exigirSessao(", PORTA],
   // Avatar resolve a sessão inline (cookie da web) e devolve 401 antes de ler o
   // perfil; a 404-not-403 vem depois, já sob a policy de `profiles`.
   ["/api/avatar/[userId]", "auth.getUser()", AQUI("GET /api/avatar sem cookie responde 401")],

@@ -218,4 +218,35 @@ test.describe("F10 — Você real no app", { tag: "@stateful" }, () => {
     })
     await expect(linhas).toHaveCount(antes)
   })
+
+  test("sair da conta encerra a sessão e a tela protegida devolve à entrada", async ({
+    page,
+    context,
+  }) => {
+    test.setTimeout(120_000)
+    await semearSessaoDeMembro(context, MEMBRO_SEMEADO)
+    await page.goto("/app/voce")
+    await expect(page.getByRole("heading", { level: 1, name: "Você" })).toBeVisible({
+      timeout: 30_000,
+    })
+
+    await page.getByRole("button", { name: "Sair da conta" }).click()
+    await page.getByRole("button", { name: "Sair", exact: true }).click()
+
+    await expect(page, "sair leva à porta única").toHaveURL(/\/app\/entrar$/, {
+      timeout: 30_000,
+    })
+    await expect(
+      page.getByRole("heading", { level: 1, name: "A comunidade militar da sua cidade." }),
+    ).toBeVisible({ timeout: 30_000 })
+
+    const restantes = (await context.cookies()).filter((cookie) => cookie.name.startsWith("sb-"))
+    expect(restantes, "o cookie da sessão não pode sobreviver à saída").toHaveLength(0)
+
+    // Sem sessão, a tela protegida da web devolve à entrada — nunca à tela antiga.
+    // /community segue na web (LAN-TROCA) e é gateada por sessão. /configuracoes/familia
+    // não serve: tem redirect de troca para /app/voce (next.config.ts:128), que é público.
+    await page.goto("/community")
+    await expect(page).toHaveURL(/\/app\/entrar/, { timeout: 30_000 })
+  })
 })
