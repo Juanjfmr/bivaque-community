@@ -152,7 +152,9 @@
         "apps/web/app/(shell)/profile/[userId]/page.tsx: 278 linhas, 0 ocorrencias de href, router.push ou Link",
         "Quatro levas de falso-positivo foram eliminadas antes do achado: rotas de API, links de provedor externo, comentario lido como link e handler de rota tratado como pagina"
       ],
-      "tests": ["node scripts/visual/flows/reachability.mjs"],
+      "tests": [
+        "node scripts/visual/flows/reachability.mjs"
+      ],
       "links": [
         "ADR | docs/decisions/ADR-20261024-front-react-spa.md",
         "docs/historico/superpowers/specs/2026-09-08-reconstrucao-visual-web-design.md secao 4.6 O05 e secao 4.9 C03",
@@ -199,7 +201,15 @@
         "Indice: docs/historico/journeys/FLOWS.md"
       ],
       "dependencies": [],
-      "completedChecklist": [true, true, true, true, true, true, true],
+      "completedChecklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ],
       "completedAt": "2026-09-12",
       "updatedAt": "2026-09-12",
       "sourceRevision": "b70d804"
@@ -285,8 +295,17 @@
       ],
       "updatedAt": "2026-08-25",
       "sourceRevision": "b1cf3a6",
-      "dependencies": ["BLOCK-RESEND"],
-      "completedChecklist": [true, true, true, true, true, true],
+      "dependencies": [
+        "BLOCK-RESEND"
+      ],
+      "completedChecklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ],
       "completedAt": "2026-08-25"
     },
     {
@@ -304,7 +323,13 @@
         "Cobrir negações cross-user, locality, community e ownership",
         "Auditar grants de storage e private schema"
       ],
-      "completedChecklist": [true, true, true, true, true],
+      "completedChecklist": [
+        true,
+        true,
+        true,
+        true,
+        true
+      ],
       "proof": [
         "migrations 20260821000022–25 e 40 adicionaram parâmetros explícitos p_user_id/p_viewer_user_id/p_caller_user_id",
         "2026-08-22 auditoria completa: todas as chamadas service_role passam caller explícito; nenhum gap crítico encontrado",
@@ -321,7 +346,9 @@
         "supabase/tests/event-invite-rpc-exposure.sql (RPCs expostas como public)"
       ],
       "completedAt": "2026-08-22",
-      "links": ["Matriz de risco | ../../docs/decisions/RISK_MATRIX.md"],
+      "links": [
+        "Matriz de risco | ../../docs/decisions/RISK_MATRIX.md"
+      ],
       "updatedAt": "2026-08-22",
       "sourceRevision": "8713635",
       "dependencies": []
@@ -350,7 +377,9 @@
       "updatedAt": "2026-08-22",
       "completedAt": "2026-08-22",
       "sourceRevision": "8713635",
-      "dependencies": ["MVP-02-AUTHZ"]
+      "dependencies": [
+        "MVP-02-AUTHZ"
+      ]
     },
     {
       "id": "MVP-03-COMMUNITY",
@@ -378,10 +407,15 @@
         "supabase/tests/community-rpcs.sql",
         "tests/e2e/community-batch-approval.spec.ts"
       ],
-      "links": ["Status: comunidade | ../../docs/historico/PRODUCT_STATUS.md"],
+      "links": [
+        "Status: comunidade | ../../docs/historico/PRODUCT_STATUS.md"
+      ],
       "updatedAt": "2026-08-25",
       "sourceRevision": "8713635",
-      "dependencies": ["MVP-02-AUTHZ", "BLOCK-RESEND"]
+      "dependencies": [
+        "MVP-02-AUTHZ",
+        "BLOCK-RESEND"
+      ]
     },
     {
       "id": "MVP-05-TEST-BASELINE",
@@ -408,7 +442,11 @@
         "Lote AR 18/09/2026: CI de volta (8 runs SUCCESS na main); a suite E2E foi executada pela primeira vez nesta sessao e mediu 659/58/6, com as falhas atribuidas a campanha por assinatura de erro e nao ao trabalho do dia",
         "Lote AS 18/09/2026: suite realinhada. Em desktop-1440: 12 -> 5 falhas (235 passed). Das 5, duas (community-batch-approval e group-admin-cycle) passam isoladas e falham na suite por interferencia de estado compartilhado entre specs. Gate completo verde e test:scope 114/0. A suite nos tres viewports foi medida em seguida e o numero ficou registrado aqui"
       ],
-      "tests": ["npx pnpm@11.18.0 gate", "npx pnpm@11.18.0 test:db", "npx pnpm@11.18.0 test:e2e"],
+      "tests": [
+        "npx pnpm@11.18.0 gate",
+        "npx pnpm@11.18.0 test:db",
+        "npx pnpm@11.18.0 test:e2e"
+      ],
       "links": [
         "Protocolo | ../../docs/historico/superpowers/plans/README.md",
         "Evidências externas datadas e links dos runs | ../../docs/historico/design/visual-guide-2026-09-06/PROCESSO-DE-CONSTRUCAO.md"
@@ -437,11 +475,19 @@
         "PRODUCT_STATUS registra busca/diretório como inexistente",
         "O briefing de fechamento define B5 como contrato transversal"
       ],
-      "tests": ["Negações cross-locality/community", "Ranking e filtro tipado por vertical"],
-      "links": ["Status: busca | ../../docs/historico/PRODUCT_STATUS.md"],
+      "tests": [
+        "Negações cross-locality/community",
+        "Ranking e filtro tipado por vertical"
+      ],
+      "links": [
+        "Status: busca | ../../docs/historico/PRODUCT_STATUS.md"
+      ],
       "updatedAt": "2026-11-02",
       "sourceRevision": "fc67e19e",
-      "dependencies": ["MVP-02-AUTHZ", "G-TASK-1"]
+      "dependencies": [
+        "MVP-02-AUTHZ",
+        "G-TASK-1"
+      ]
     },
     {
       "id": "MVP-07-KNOWLEDGE",
@@ -468,10 +514,14 @@
         "Negação de promoção automática",
         "ACL de claims por escopo"
       ],
-      "links": ["ADR de curadoria | ../../docs/decisions/ADR-20260815-guia-curadoria-ia.md"],
+      "links": [
+        "ADR de curadoria | ../../docs/decisions/ADR-20260815-guia-curadoria-ia.md"
+      ],
       "updatedAt": "2026-11-02",
       "sourceRevision": "fc67e19e",
-      "dependencies": ["MVP-06-DISCOVERY-INDEX"]
+      "dependencies": [
+        "MVP-06-DISCOVERY-INDEX"
+      ]
     },
     {
       "id": "MVP-08-INTELLIGENCE",
@@ -493,11 +543,21 @@
         "Ainda não há camada de IA no runtime",
         "O princípio de desligamento foi definido como requisito de arquitetura"
       ],
-      "tests": ["Corpus de evals", "Testes de ausência de vazamento", "Smoke sem provider de LLM"],
-      "links": ["Visão: IA | ../../docs/historico/BIVAQUE.md"],
+      "tests": [
+        "Corpus de evals",
+        "Testes de ausência de vazamento",
+        "Smoke sem provider de LLM"
+      ],
+      "links": [
+        "Visão: IA | ../../docs/historico/BIVAQUE.md"
+      ],
       "updatedAt": "2026-11-02",
       "sourceRevision": "fc67e19e",
-      "dependencies": ["MVP-06-DISCOVERY-INDEX", "MVP-07-KNOWLEDGE", "BLOCK-LEGAL-AI"]
+      "dependencies": [
+        "MVP-06-DISCOVERY-INDEX",
+        "MVP-07-KNOWLEDGE",
+        "BLOCK-LEGAL-AI"
+      ]
     },
     {
       "id": "MVP-09-OPERABILITY",
@@ -519,13 +579,20 @@
         "outbox e worker existem, mas adaptadores concretos não",
         "Sentry tem scrubber configurado no runtime"
       ],
-      "tests": ["outbox worker", "replay de job", "falha de adaptador e recovery"],
+      "tests": [
+        "outbox worker",
+        "replay de job",
+        "falha de adaptador e recovery"
+      ],
       "links": [
         "Plano D1 | ../../docs/historico/superpowers/plans/2026-08-11-onda-d1-infraestrutura.md"
       ],
       "updatedAt": "2026-11-02",
       "sourceRevision": "fc67e19e",
-      "dependencies": ["MVP-03-COMMUNITY", "G-TASK-1"]
+      "dependencies": [
+        "MVP-03-COMMUNITY",
+        "G-TASK-1"
+      ]
     },
     {
       "id": "MVP-10-BACKEND-FREEZE",
@@ -551,7 +618,9 @@
         "Integração service_role",
         "E2E de fronteiras browser-only"
       ],
-      "links": ["Critério de fechamento | ../../docs/historico/BIVAQUE.md"],
+      "links": [
+        "Critério de fechamento | ../../docs/historico/BIVAQUE.md"
+      ],
       "updatedAt": "2026-11-02",
       "sourceRevision": "fc67e19e",
       "dependencies": [
@@ -606,7 +675,15 @@
       "updatedAt": "2026-11-05",
       "sourceRevision": "15f1e273",
       "dependencies": [],
-      "completedChecklist": [true, true, true, false, false, false, false]
+      "completedChecklist": [
+        true,
+        true,
+        true,
+        false,
+        false,
+        false,
+        false
+      ]
     },
     {
       "id": "BLOCK-WHATSAPP",
@@ -627,11 +704,18 @@
         "adaptador atual retorna indisponível",
         "Lote BA 18/09/2026: o WhatsApp saiu do MVP de ponta a ponta e o schema passou a dizer a verdade. Migration 20260919054254 remove o valor do enum (recriando o tipo, porque Postgres nao tem ALTER TYPE DROP VALUE), as colunas fallback_channel/fallback_reason e os parametros correspondentes em private.outbox_apply_delivery. DUAS OUTRAS FUNCOES dependiam do tipo e o drop falhou alto ate serem recriadas (outbox_preference_user_id e outbox_delivery_allowed) - dependencia que passaria despercebida sem a guarda do proprio banco. Cadeia inteira ajustada: banco, packages/domain (tipo, constante WHATSAPP_FALLBACK_AFTER_ATTEMPTS, campo fallback da mutacao), adapters.ts e a rota do worker. Prova: test:db 121 arquivos / 1600 asserts PASS, unit 892 PASS, gate completo verde, db:lint limpo. Dois testes foram INVERTIDOS para provar o que passou a valer e os do comportamento removido foram apagados com o motivo escrito"
       ],
-      "links": ["Decisão D33 | ../../docs/historico/BIVAQUE.md"],
+      "links": [
+        "Decisão D33 | ../../docs/historico/BIVAQUE.md"
+      ],
       "updatedAt": "2026-09-18",
       "sourceRevision": "8713635",
       "dependencies": [],
-      "completedChecklist": [true, false, false, true],
+      "completedChecklist": [
+        true,
+        false,
+        false,
+        true
+      ],
       "completedAt": "2026-09-18"
     },
     {
@@ -654,8 +738,13 @@
         "BIVAQUE.md declara o texto de privacidade não publicável ainda",
         "PostHog e IA transferem dados para terceiros"
       ],
-      "blockers": ["Revisão jurídica", "Decisões do dono"],
-      "links": ["Privacidade | ../../docs/legal/PRIVACIDADE.md"],
+      "blockers": [
+        "Revisão jurídica",
+        "Decisões do dono"
+      ],
+      "links": [
+        "Privacidade | ../../docs/legal/PRIVACIDADE.md"
+      ],
       "updatedAt": "2026-09-08",
       "sourceRevision": "30ab4eb",
       "dependencies": []
@@ -681,7 +770,10 @@
         "consent/page.tsx exige checkbox; /privacidade e /codigo-de-conduta exibem os documentos completos",
         "tests/scope/consent-version.test.mjs e tests/scope/support-channel.test.mjs verdes em 2026-08-31"
       ],
-      "blockers": ["Abertura pública", "Prova E2E/deploy"],
+      "blockers": [
+        "Abertura pública",
+        "Prova E2E/deploy"
+      ],
       "links": [
         "Código de conduta | ../../docs/legal/CODIGO_DE_CONDUTA.md",
         "Privacidade | ../../docs/legal/PRIVACIDADE.md",
@@ -717,7 +809,9 @@
       "blockers": [
         "Governanca LGPD de terceiros (BLOCK-LEGAL-AI) — portao da EXPOSICAO do campo, agora com o tecnico resolvido"
       ],
-      "links": ["ADR OM declarada | ../../docs/decisions/ADR-20260811-om-declarada.md"],
+      "links": [
+        "ADR OM declarada | ../../docs/decisions/ADR-20260811-om-declarada.md"
+      ],
       "updatedAt": "2026-09-17",
       "sourceRevision": "20ade43",
       "dependencies": []
@@ -736,9 +830,16 @@
         "Projetar webhook e entitlement",
         "Provar que dinheiro não altera relevance ranking"
       ],
-      "proof": ["ADR de alcance pago foi aceito, mas o plano separa G1 e G2"],
-      "blockers": ["CNPJ", "Decisão operacional de cobrança"],
-      "links": ["ADR alcance pago | ../../docs/decisions/ADR-20260820-alcance-pago.md"],
+      "proof": [
+        "ADR de alcance pago foi aceito, mas o plano separa G1 e G2"
+      ],
+      "blockers": [
+        "CNPJ",
+        "Decisão operacional de cobrança"
+      ],
+      "links": [
+        "ADR alcance pago | ../../docs/decisions/ADR-20260820-alcance-pago.md"
+      ],
       "updatedAt": "2026-08-22",
       "sourceRevision": "8713635",
       "dependencies": []
@@ -770,7 +871,11 @@
         ".visual/landing-copy-v5-mobile.png: fold final em 375px sem orfao tipografico e com CTAs acima da dobra",
         ".visual/2026-08-23T00-29-41-828Z: loop global passou lint, typecheck, test, build e capture; 3 highs remanescentes pertencem ao touch target preexistente de /communities"
       ],
-      "tests": ["npx pnpm@11.18.0 gate", "npx pnpm@11.18.0 build", "node scripts/visual/loop.mjs"],
+      "tests": [
+        "npx pnpm@11.18.0 gate",
+        "npx pnpm@11.18.0 build",
+        "node scripts/visual/loop.mjs"
+      ],
       "links": [
         "Produto | ../../docs/historico/BIVAQUE.md",
         "Design spec | ../../docs/historico/agents/DESIGN_SPEC.md",
@@ -806,7 +911,11 @@
         "Build Next 16 de producao compilado com sucesso em 2026-08-22",
         ".visual/login-aaa-v3-2026-08-22/report.md: 0 findings e 0 high em 375/768/1440 para o estado anonimo"
       ],
-      "tests": ["npx pnpm@11.18.0 gate", "npx pnpm@11.18.0 build", "node scripts/visual/loop.mjs"],
+      "tests": [
+        "npx pnpm@11.18.0 gate",
+        "npx pnpm@11.18.0 build",
+        "node scripts/visual/loop.mjs"
+      ],
       "links": [
         "Produto | ../../docs/historico/BIVAQUE.md",
         "Landing | ../../apps/web/app/landing/landing.tsx",
@@ -814,7 +923,9 @@
       ],
       "updatedAt": "2026-08-22",
       "sourceRevision": "015e4ba",
-      "dependencies": ["FRONTEND-LANDING-AAA"],
+      "dependencies": [
+        "FRONTEND-LANDING-AAA"
+      ],
       "completedAt": "2026-08-22"
     },
     {
@@ -843,7 +954,11 @@
         "Build Next 16 de producao inclui /signup como rota estatica publica",
         ".visual/signup-aaa-v2-2026-08-22/report.md: 0 findings e 0 high em 375/768/1440 para login, signup e redirecionamentos anonimos"
       ],
-      "tests": ["npx pnpm@11.18.0 gate", "npx pnpm@11.18.0 build", "node scripts/visual/loop.mjs"],
+      "tests": [
+        "npx pnpm@11.18.0 gate",
+        "npx pnpm@11.18.0 build",
+        "node scripts/visual/loop.mjs"
+      ],
       "links": [
         "Produto | ../../docs/historico/BIVAQUE.md",
         "Status de login e onboarding | ../../docs/historico/PRODUCT_STATUS.md",
@@ -851,7 +966,9 @@
       ],
       "updatedAt": "2026-08-22",
       "sourceRevision": "015e4ba",
-      "dependencies": ["FRONTEND-LOGIN-AAA"],
+      "dependencies": [
+        "FRONTEND-LOGIN-AAA"
+      ],
       "completedAt": "2026-08-22"
     },
     {
@@ -870,7 +987,14 @@
         "Criar chegada final com primeiras acoes coerentes com os containers do produto",
         "Passar gate, build e auditoria visual em 375/768/1440"
       ],
-      "completedChecklist": [true, true, true, true, true, true],
+      "completedChecklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ],
       "proof": [
         "OnboardingShell unifica /consent, /onboarding, /onboarding/locality, /onboarding/status e /onboarding/welcome com progresso Regras, Elegibilidade e Localidade",
         "tests/unit/onboarding/onboarding-experience.test.ts fixa a jornada nacional, a separacao dos passos e o nome acessivel do upload",
@@ -880,7 +1004,11 @@
         ".visual/onboarding-status-release-2026-08-22: rejected e upload de excecao com 0 findings em 375/768/1440",
         ".visual/onboarding-aaa-v2-2026-08-22: elegibilidade real de usuario novo inspecionada em 375/768/1440"
       ],
-      "tests": ["npx pnpm@11.18.0 gate", "npx pnpm@11.18.0 build", "node scripts/visual/loop.mjs"],
+      "tests": [
+        "npx pnpm@11.18.0 gate",
+        "npx pnpm@11.18.0 build",
+        "node scripts/visual/loop.mjs"
+      ],
       "links": [
         "Produto | ../../docs/historico/BIVAQUE.md",
         "Status de admissao | ../../docs/historico/PRODUCT_STATUS.md",
@@ -889,7 +1017,9 @@
       "completedAt": "2026-08-22",
       "updatedAt": "2026-08-22",
       "sourceRevision": "015e4ba",
-      "dependencies": ["FRONTEND-SIGNUP-AAA"]
+      "dependencies": [
+        "FRONTEND-SIGNUP-AAA"
+      ]
     },
     {
       "id": "FRONTEND-RUNTIME-CONFORMANCE",
@@ -909,10 +1039,14 @@
         "PHASE6_REVIEW marca runtime como non-conforming",
         "DS-021 foi remediado; DS-029 ainda precisa de verificação mais ampla"
       ],
-      "links": ["Phase 6 | ../../docs/historico/agents/design-audit/PHASE6_REVIEW.md"],
+      "links": [
+        "Phase 6 | ../../docs/historico/agents/design-audit/PHASE6_REVIEW.md"
+      ],
       "updatedAt": "2026-08-22",
       "sourceRevision": "8713635",
-      "dependencies": ["MVP-10-BACKEND-FREEZE"]
+      "dependencies": [
+        "MVP-10-BACKEND-FREEZE"
+      ]
     },
     {
       "id": "FRONTEND-VISUAL-AAA",
@@ -927,11 +1061,18 @@
         "Não criar novo layout durante backend-first",
         "Planejar work separado após backend freeze"
       ],
-      "proof": ["Phase 6D declara a implementação atual não elegível para AAA-ready"],
-      "links": ["Design spec | ../../docs/historico/agents/DESIGN_SPEC.md"],
+      "proof": [
+        "Phase 6D declara a implementação atual não elegível para AAA-ready"
+      ],
+      "links": [
+        "Design spec | ../../docs/historico/agents/DESIGN_SPEC.md"
+      ],
       "updatedAt": "2026-08-22",
       "sourceRevision": "8713635",
-      "dependencies": ["MVP-10-BACKEND-FREEZE", "FRONTEND-RUNTIME-CONFORMANCE"]
+      "dependencies": [
+        "MVP-10-BACKEND-FREEZE",
+        "FRONTEND-RUNTIME-CONFORMANCE"
+      ]
     },
     {
       "id": "DS-001-DESIGN-SYSTEM",
@@ -1152,7 +1293,9 @@
         "PILOT_LOCALITY_ID fora do runtime (grep: só PILOT_LOCALITY_CODE estático)",
         "Residual executado (2026-08-25): empty-locality.spec verde nos 3 viewports após a vila do Rio entrar no seed; two-localities rodou verde na suíte completa de 2026-08-24 (ausente da lista de 65 falhas)"
       ],
-      "links": ["Issue #20 | https://github.com/Juanjfmr/bivaque-community/issues/20"],
+      "links": [
+        "Issue #20 | https://github.com/Juanjfmr/bivaque-community/issues/20"
+      ],
       "updatedAt": "2026-08-25",
       "sourceRevision": "8713635",
       "dependencies": []
@@ -1165,17 +1308,27 @@
       "category": "repo",
       "status": "done",
       "description": "Correção pequena que limpa a baseline de CI; revisar isoladamente antes de mudanças maiores de tipo gerado.",
-      "checklist": ["Revisar diff", "Rodar gate relevante", "Merge ou encerrar"],
+      "checklist": [
+        "Revisar diff",
+        "Rodar gate relevante",
+        "Merge ou encerrar"
+      ],
       "proof": [
         "PR draft aberto em 22/08/2026",
         "Triagem 2026-08-23: defeito não reproduz mais — database.generated.ts sem BOM neste branch e em origin/main (resolvido a montante após a abertura do PR).",
         "Decisão: encerrar como resolvido a montante; se o autor discordar, reabrir com diff contra o main atual."
       ],
-      "links": ["PR #24 | https://github.com/Juanjfmr/bivaque-community/pull/24"],
+      "links": [
+        "PR #24 | https://github.com/Juanjfmr/bivaque-community/pull/24"
+      ],
       "updatedAt": "2026-08-23",
       "sourceRevision": "6e14fe3",
       "dependencies": [],
-      "completedChecklist": [true, true, true],
+      "completedChecklist": [
+        true,
+        true,
+        true
+      ],
       "completedAt": "2026-08-23"
     },
     {
@@ -1195,11 +1348,17 @@
         "PR draft aberto em 22/08/2026",
         "Triagem 2026-08-23: PR mergeado — squash 4892362 presente no log local; falso positivo do scanner tratado, reviewer CI/max_turns ajustado, baseline verde registrada no próprio PR."
       ],
-      "links": ["PR #28 | https://github.com/Juanjfmr/bivaque-community/pull/28"],
+      "links": [
+        "PR #28 | https://github.com/Juanjfmr/bivaque-community/pull/28"
+      ],
       "updatedAt": "2026-08-23",
       "sourceRevision": "6e14fe3",
       "dependencies": [],
-      "completedChecklist": [true, true, true],
+      "completedChecklist": [
+        true,
+        true,
+        true
+      ],
       "completedAt": "2026-08-23"
     },
     {
@@ -1221,11 +1380,17 @@
         "Fatos verificáveis já cobertos a montante: conflito DM canon×runtime registrado em PRODUCT_STATUS §8; retorno ao denunciante fechado (H-Task 3).",
         "Decisão: encerrar como superseded; os audit docs podem ser reaproveitados pelo dono se quiser o histórico."
       ],
-      "links": ["PR #25 | https://github.com/Juanjfmr/bivaque-community/pull/25"],
+      "links": [
+        "PR #25 | https://github.com/Juanjfmr/bivaque-community/pull/25"
+      ],
       "updatedAt": "2026-08-23",
       "sourceRevision": "6e14fe3",
       "dependencies": [],
-      "completedChecklist": [true, true, true],
+      "completedChecklist": [
+        true,
+        true,
+        true
+      ],
       "completedAt": "2026-08-23"
     },
     {
@@ -1247,11 +1412,17 @@
         "Triagem 2026-08-23: SPEC.md propõe camada normativa legítima, mas as divergências da §9 envelheceram contra o runtime — 9.2 (vocabulário) derrubada por D21; 9.4 (memória→MAP) corrigida no main pelo PR #28; 9.1 persiste mutada (PRIVACY_VISIBILITIES órfão em packages/domain/src/index.ts:6); 9.3 persiste (migration 20260802001100:17/29).",
         "Decisão: manter draft; exigir revisão do SPEC.md contra runtime atual antes de merge; não citar SPEC.md como fonte no Kanban/README até lá."
       ],
-      "links": ["PR #18 | https://github.com/Juanjfmr/bivaque-community/pull/18"],
+      "links": [
+        "PR #18 | https://github.com/Juanjfmr/bivaque-community/pull/18"
+      ],
       "updatedAt": "2026-08-23",
       "sourceRevision": "6e14fe3",
       "dependencies": [],
-      "completedChecklist": [true, true, true],
+      "completedChecklist": [
+        true,
+        true,
+        true
+      ],
       "completedAt": "2026-08-23"
     },
     {
@@ -1277,7 +1448,9 @@
       ],
       "updatedAt": "2026-11-02",
       "sourceRevision": "fc67e19e",
-      "dependencies": ["MVP-10-BACKEND-FREEZE"]
+      "dependencies": [
+        "MVP-10-BACKEND-FREEZE"
+      ]
     },
     {
       "id": "REPO-DEPENDABOT",
@@ -1287,7 +1460,11 @@
       "category": "repo",
       "status": "frozen",
       "description": "Atualizações de dependência só entram sobre baseline verde e com escopo separado do fechamento funcional.",
-      "checklist": ["Confirmar baseline verde", "Revisar breaking changes", "Rodar gate completo"],
+      "checklist": [
+        "Confirmar baseline verde",
+        "Revisar breaking changes",
+        "Rodar gate completo"
+      ],
       "proof": [
         "02/11: congelado na reconciliação com docs/LANCAMENTO.md — PRs de agosto superados; dependências seguem pelo Dependabot atual.",
         "PRs #21 e #22 estão ready para revisão"
@@ -1298,7 +1475,9 @@
       ],
       "updatedAt": "2026-11-02",
       "sourceRevision": "fc67e19e",
-      "dependencies": ["MVP-05-TEST-BASELINE"]
+      "dependencies": [
+        "MVP-05-TEST-BASELINE"
+      ]
     },
     {
       "id": "REPO-SECRETS-ROTATION",
@@ -1319,12 +1498,19 @@
         "31/10/2026: secrets-scan sem achados na revisão 5b4cc105 antes do envio da branch feat/f01-entrada-visual.",
         "PRODUCT_STATUS § segurança registra a recomendação em 2026-08-21"
       ],
-      "links": ["Status: segurança | ../../docs/historico/PRODUCT_STATUS.md"],
+      "links": [
+        "Status: segurança | ../../docs/historico/PRODUCT_STATUS.md"
+      ],
       "updatedAt": "2026-10-31",
       "sourceRevision": "bcb00349",
       "dependencies": [],
       "completedAt": "2026-10-31",
-      "completedChecklist": [true, false, false, true]
+      "completedChecklist": [
+        true,
+        false,
+        false,
+        true
+      ]
     },
     {
       "id": "DRIFT-STATUS-RECONCILIATION",
@@ -1375,9 +1561,15 @@
         "PRODUCT_STATUS marca onda T fechada",
         "20260901190000_locality_state_codes_rpc: consulta distinta das 27 UFs validada em produção; /api/localities não fica limitada a 1.000 municípios"
       ],
-      "tests": ["locality-transfer.sql", "transfer-scope-denials.sql", "transfer-degradation.sql"],
+      "tests": [
+        "locality-transfer.sql",
+        "transfer-scope-denials.sql",
+        "transfer-degradation.sql"
+      ],
       "completedAt": "2026-08-20",
-      "links": ["Status: transferência | ../../docs/historico/PRODUCT_STATUS.md"],
+      "links": [
+        "Status: transferência | ../../docs/historico/PRODUCT_STATUS.md"
+      ],
       "updatedAt": "2026-09-01",
       "sourceRevision": "d225e03",
       "dependencies": []
@@ -1428,7 +1620,10 @@
         "migrations 20260821000022 e 20260821000023",
         "PRODUCT_STATUS registra confirmação ao vivo"
       ],
-      "tests": ["other-member-profile.sql", "member-profile-denials.spec.ts"],
+      "tests": [
+        "other-member-profile.sql",
+        "member-profile-denials.spec.ts"
+      ],
       "completedAt": "2026-08-21",
       "updatedAt": "2026-08-22",
       "sourceRevision": "8713635",
@@ -1453,7 +1648,10 @@
         "migrations 20260814081735 e 20260814174705",
         "apps/web/app/api/internal/outbox/route.ts"
       ],
-      "tests": ["outbox-worker.sql", "outbox-delivery.test.ts"],
+      "tests": [
+        "outbox-worker.sql",
+        "outbox-delivery.test.ts"
+      ],
       "completedAt": "2026-08-14",
       "updatedAt": "2026-08-22",
       "sourceRevision": "8713635",
@@ -1480,7 +1678,9 @@
         "Enriquecimento de seed de 22/08 já popula Vila Ajuricaba + contas Rio/transfer/operador/dono-vila com UUIDs estáveis",
         "Card fechado em 2026-08-23: auditoria de UUIDs 100%% conforme seed.sql; suíte E2E serial rodou (518 verdes / 65 falhas funcionais) e as falhas restantes foram separadas em MVP-00-E2E-FUNCTIONAL (commit a197086)"
       ],
-      "tests": ["Playwright --workers=1 contra seed completo"],
+      "tests": [
+        "Playwright --workers=1 contra seed completo"
+      ],
       "links": [
         "E2E status | ../../docs/historico/PRODUCT_STATUS.md",
         "Seed UUIDs | ../../supabase/seed.sql"
@@ -1488,7 +1688,12 @@
       "updatedAt": "2026-08-23",
       "sourceRevision": "810cdf8",
       "dependencies": [],
-      "completedChecklist": [true, true, true, true],
+      "completedChecklist": [
+        true,
+        true,
+        true,
+        true
+      ],
       "completedAt": "2026-08-23"
     },
     {
@@ -1511,11 +1716,17 @@
         "apps/web/app/(provider)/prestador/ já protege o shell e expõe placeholder",
         "2026-08-22 reconciliação: fundação confirmada no código — migration + RLS + helpers + shell; STATUS atualizado para distinguir fundação (implementado) de perfil/listings/dashboard (não implementados)"
       ],
-      "tests": ["provider-account-boundary.sql"],
-      "links": ["Plano G | ../../docs/historico/superpowers/plans/2026-08-20-onda-g-vitrine.md"],
+      "tests": [
+        "provider-account-boundary.sql"
+      ],
+      "links": [
+        "Plano G | ../../docs/historico/superpowers/plans/2026-08-20-onda-g-vitrine.md"
+      ],
       "updatedAt": "2026-08-22",
       "sourceRevision": "8713635",
-      "dependencies": ["MVP-02-AUTHZ"],
+      "dependencies": [
+        "MVP-02-AUTHZ"
+      ],
       "completedAt": "2026-08-22"
     },
     {
@@ -1533,11 +1744,18 @@
       "proof": [
         "02/11: congelado na reconciliação com docs/LANCAMENTO.md — absorvido por LAN-F07."
       ],
-      "tests": ["provider-invitation.sql"],
-      "links": ["Plano G | ../../docs/historico/superpowers/plans/2026-08-20-onda-g-vitrine.md"],
+      "tests": [
+        "provider-invitation.sql"
+      ],
+      "links": [
+        "Plano G | ../../docs/historico/superpowers/plans/2026-08-20-onda-g-vitrine.md"
+      ],
       "updatedAt": "2026-11-02",
       "sourceRevision": "fc67e19e",
-      "dependencies": ["G-TASK-1", "BLOCK-RESEND"]
+      "dependencies": [
+        "G-TASK-1",
+        "BLOCK-RESEND"
+      ]
     },
     {
       "id": "G-TASK-3",
@@ -1568,10 +1786,14 @@
         "provider-invitation.sql",
         "provider-revocation.sql"
       ],
-      "links": ["Plano G | ../../docs/historico/superpowers/plans/2026-08-20-onda-g-vitrine.md"],
+      "links": [
+        "Plano G | ../../docs/historico/superpowers/plans/2026-08-20-onda-g-vitrine.md"
+      ],
       "updatedAt": "2026-11-02",
       "sourceRevision": "fc67e19e",
-      "dependencies": ["G-TASK-1"]
+      "dependencies": [
+        "G-TASK-1"
+      ]
     },
     {
       "id": "G-TASK-4",
@@ -1588,11 +1810,17 @@
       "proof": [
         "02/11: congelado na reconciliação com docs/LANCAMENTO.md — absorvido por LAN-F07."
       ],
-      "tests": ["showcase-form.test.ts"],
-      "links": ["Plano G | ../../docs/historico/superpowers/plans/2026-08-20-onda-g-vitrine.md"],
+      "tests": [
+        "showcase-form.test.ts"
+      ],
+      "links": [
+        "Plano G | ../../docs/historico/superpowers/plans/2026-08-20-onda-g-vitrine.md"
+      ],
       "updatedAt": "2026-11-02",
       "sourceRevision": "fc67e19e",
-      "dependencies": ["G-TASK-3"]
+      "dependencies": [
+        "G-TASK-3"
+      ]
     },
     {
       "id": "G-TASK-5",
@@ -1609,11 +1837,17 @@
       "proof": [
         "02/11: congelado na reconciliação com docs/LANCAMENTO.md — absorvido por LAN-F07."
       ],
-      "tests": ["provider-search-scope.sql"],
-      "links": ["Plano G | ../../docs/historico/superpowers/plans/2026-08-20-onda-g-vitrine.md"],
+      "tests": [
+        "provider-search-scope.sql"
+      ],
+      "links": [
+        "Plano G | ../../docs/historico/superpowers/plans/2026-08-20-onda-g-vitrine.md"
+      ],
       "updatedAt": "2026-11-02",
       "sourceRevision": "fc67e19e",
-      "dependencies": ["G-TASK-3"]
+      "dependencies": [
+        "G-TASK-3"
+      ]
     },
     {
       "id": "G-TASK-6",
@@ -1631,11 +1865,19 @@
       "proof": [
         "02/11: congelado na reconciliação com docs/LANCAMENTO.md — absorvido por LAN-F09."
       ],
-      "tests": ["dm-context-allowed.sql", "dm-context-denials.sql"],
-      "links": ["Plano G | ../../docs/historico/superpowers/plans/2026-08-20-onda-g-vitrine.md"],
+      "tests": [
+        "dm-context-allowed.sql",
+        "dm-context-denials.sql"
+      ],
+      "links": [
+        "Plano G | ../../docs/historico/superpowers/plans/2026-08-20-onda-g-vitrine.md"
+      ],
       "updatedAt": "2026-11-02",
       "sourceRevision": "fc67e19e",
-      "dependencies": ["G-TASK-1", "G-TASK-3"]
+      "dependencies": [
+        "G-TASK-1",
+        "G-TASK-3"
+      ]
     },
     {
       "id": "MVP-00-E2E-FUNCTIONAL",
@@ -1674,7 +1916,9 @@
         "2026-09-01: suíte serial completa rodada após W1 fechou 594/6/3 (gate fast verde; W1 6/6 nos 3 viewports; pgTAP e lint/typecheck/test/secrets verdes). As 3 falhas restantes são deterministas em tests/e2e/reports-member-flow.spec.ts:194, todos os viewports. Re-rodando apenas o spec (desktop-1440) passa 2/2 — aponta para poluição de estado inter-spec, não regressão do report-button. Card separado aberto para tratar a flakiness do spec (ver W4-E2E-FLAKE-001).",
         "2026-09-01: suíte serial completa rodada novamente após fix do flake — 597 passed / 6 skipped / 0 failed em 7.2 min. Todos os 40 specs, 3 viewports (mobile-375, tablet-768, desktop-1440). Gate fast + gate full verdes. Card W4-E2E-FLAKE-001 fechado (commit e703023 fixou reports-member-flow.spec.ts; persona denunciante mudou de dono-vila para membro-1 — Bruno Almeida é aprovado da vila mas não posta lá, então a regra de self-target fica intacta e a fix não a fragiliza)."
       ],
-      "tests": ["Playwright --workers=1 contra seed completo (meta: 0 falhas funcionais)"],
+      "tests": [
+        "Playwright --workers=1 contra seed completo (meta: 0 falhas funcionais)"
+      ],
       "links": [
         "E2E status | ../../docs/historico/PRODUCT_STATUS.md",
         "Seed UUIDs | ../../supabase/seed.sql"
@@ -1835,12 +2079,18 @@
         "Texto em apps/web/app/components/bivaque/report-button.tsx:98 bate com o regex /A analise acontece em ate 48 horas/",
         "Fix em commit e703023. Causa raiz: reports-member-flow.spec.ts usava page.getByRole('button', { name: 'Mais opcoes' }).first() — quando publish-golden-slice rodava antes no mesmo worker (ordem alfabética do Playwright), o topo do feed ficava dominado por posts da dono-vila, e a regra em apps/web/app/components/bivaque/report-button.tsx:74-75 ('Voce nao pode denunciar seu proprio conteudo') rejeitava POST /rest/v1/reports com HTTP 400. Correção: REPORTER_EMAIL mudou de dono-vila@ para membro-1@ (Bruno Almeida, aprovado da Vila Ajuricaba mas sem posts lá, então vê o feed da vila com posts alheios); helper findOldestNonOwnVilaPostId(accessToken) ancora o seletor num post específico via REST. Suíte serial após fix: 597/6/0."
       ],
-      "tests": ["npx playwright test --workers=1 (suíte completa após o fix)"],
-      "links": ["Card bloqueado | ./board.json MVP-00-E2E-FUNCTIONAL"],
+      "tests": [
+        "npx playwright test --workers=1 (suíte completa após o fix)"
+      ],
+      "links": [
+        "Card bloqueado | ./board.json MVP-00-E2E-FUNCTIONAL"
+      ],
       "updatedAt": "2026-09-01",
       "sourceRevision": "e703023",
       "blockers": [],
-      "dependencies": ["MVP-00-E2E-FUNCTIONAL"],
+      "dependencies": [
+        "MVP-00-E2E-FUNCTIONAL"
+      ],
       "completedAt": "2026-09-01"
     },
     {
@@ -1881,7 +2131,9 @@
       "blockers": [
         "MOB-001-SESSION esta em now: o contrato R3 de sessao do mobile (PKCE, secure-store, revogacao) nao existe. Sem ele o composer escreve sem sessao provada, entao o done era sobre a UI, nao sobre o fluxo."
       ],
-      "dependencies": ["MOB-001-SESSION"]
+      "dependencies": [
+        "MOB-001-SESSION"
+      ]
     },
     {
       "id": "S5-MOBILE-UI",
@@ -1922,7 +2174,9 @@
       "updatedAt": "2026-09-01",
       "sourceRevision": "08621b8",
       "blockers": [],
-      "dependencies": ["S4-MOBILE-COMPOSER"],
+      "dependencies": [
+        "S4-MOBILE-COMPOSER"
+      ],
       "completedAt": "2026-09-01"
     },
     {
@@ -1964,7 +2218,9 @@
       "updatedAt": "2026-10-31",
       "sourceRevision": "b8e84b20",
       "blockers": [],
-      "dependencies": ["S5-MOBILE-UI"]
+      "dependencies": [
+        "S5-MOBILE-UI"
+      ]
     },
     {
       "id": "RUN-001",
@@ -1983,8 +2239,13 @@
         "2026-09-07: o gate mostrou que os artefatos locais de RUN-001 exigiam um checkConsent inexistente. A exigência contradizia o commit 23e4295, que removeu o portão de consentimento e integrou o aceite ao cadastro.",
         "Artefatos não publicados de RUN-001 removidos; o card é encerrado como substituído, sem afirmar nova prova de runtime."
       ],
-      "tests": ["npx pnpm@11.18.0 gate"],
-      "links": ["Fluxo atual | ../../apps/web/proxy.ts", "Commit que substituiu o plano | 23e4295"],
+      "tests": [
+        "npx pnpm@11.18.0 gate"
+      ],
+      "links": [
+        "Fluxo atual | ../../apps/web/proxy.ts",
+        "Commit que substituiu o plano | 23e4295"
+      ],
       "updatedAt": "2026-09-07",
       "sourceRevision": "23e4295",
       "blockers": [],
@@ -2045,7 +2306,17 @@
       "updatedAt": "2026-11-02",
       "sourceRevision": "fc67e19e",
       "dependencies": [],
-      "completedChecklist": [true, true, true, true, true, true, true, true, true],
+      "completedChecklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ],
       "blockers": []
     },
     {
@@ -2215,7 +2486,9 @@
         "grep -r 'em construção' apps/web/app/ retorna vazio",
         "2026-09-11: DRIFT — mesmo trabalho do RECON-W00-TELAS. Os dois cards descrevem a mesma entrega e precisam ser fundidos ou um fechado."
       ],
-      "tests": ["tests/unit/ui/empty-promises.test.ts"],
+      "tests": [
+        "tests/unit/ui/empty-promises.test.ts"
+      ],
       "links": [
         "docs/historico/superpowers/specs/2026-09-08-reconstrucao-visual-web-design.md",
         "docs/historico/design/visual-guide-2026-09-06/01-web-inicio.png",
@@ -2251,7 +2524,9 @@
               "npx pnpm@11.18.0 gate",
               "grep -r 'em construção' apps/web/app/ retorna vazio"
             ],
-            "tests": ["tests/unit/ui/empty-promises.test.ts"],
+            "tests": [
+              "tests/unit/ui/empty-promises.test.ts"
+            ],
             "links": [
               "docs/historico/superpowers/specs/2026-09-08-reconstrucao-visual-web-design.md",
               "docs/historico/design/visual-guide-2026-09-06/01-web-inicio.png",
@@ -2287,7 +2562,9 @@
               "grep -r 'em construção' apps/web/app/ retorna vazio",
               "2026-09-11: DRIFT — mesmo trabalho do RECON-W00-TELAS. Os dois cards descrevem a mesma entrega e precisam ser fundidos ou um fechado."
             ],
-            "tests": ["tests/unit/ui/empty-promises.test.ts"],
+            "tests": [
+              "tests/unit/ui/empty-promises.test.ts"
+            ],
             "links": [
               "docs/historico/superpowers/specs/2026-09-08-reconstrucao-visual-web-design.md",
               "docs/historico/design/visual-guide-2026-09-06/01-web-inicio.png",
@@ -2320,7 +2597,10 @@
         "Se mantido, exibe badge de não-lidas coerente com o da sidebar",
         "Alvo >= 44x44 e nome acessível preservados"
       ],
-      "proof": ["npx pnpm@11.18.0 gate", "node scripts/visual/loop.mjs"],
+      "proof": [
+        "npx pnpm@11.18.0 gate",
+        "node scripts/visual/loop.mjs"
+      ],
       "tests": [],
       "links": [
         "ADR | docs/decisions/ADR-20261024-front-react-spa.md",
@@ -2342,7 +2622,10 @@
         "Rota de configurações criada conforme a prancha 52, ou o rótulo passa a corresponder ao destino real",
         "Preferências, conta e privacidade acessíveis pelo destino rotulado"
       ],
-      "proof": ["npx pnpm@11.18.0 gate", "node scripts/visual/loop.mjs"],
+      "proof": [
+        "npx pnpm@11.18.0 gate",
+        "node scripts/visual/loop.mjs"
+      ],
       "tests": [],
       "links": [
         "ADR | docs/decisions/ADR-20261024-front-react-spa.md",
@@ -2369,12 +2652,17 @@
       ],
       "proof": [
         "npx pnpm@11.18.0 gate",
-        "prova de entrega real pelo outbox em ambiente implantado"
+        "prova de entrega real pelo outbox em ambiente implantado",
+        "16/11: reconciliacao — o produtor antigo (event-invites-actions.ts) morreu com a tela na fase 5 (375c336d); o deep-link de evento ja aponta /app/evento/{id} (adapters.ts:54,215). A linha F05 do LANCAMENTO nao exige convites/fan-out (decisao 16/11 no LAN-TROCA): a parte desta que sobra e a entrega com destinatario real quando e SE alguem re-criar o produtor; nao bloqueia o lancamento."
       ],
       "tests": [],
-      "links": ["docs/historico/superpowers/specs/2026-09-08-reconstrucao-visual-web-design.md"],
-      "dependencies": ["BLOCK-RESEND"],
-      "updatedAt": "2026-09-08",
+      "links": [
+        "docs/historico/superpowers/specs/2026-09-08-reconstrucao-visual-web-design.md"
+      ],
+      "dependencies": [
+        "BLOCK-RESEND"
+      ],
+      "updatedAt": "2026-11-16",
       "sourceRevision": "6d998a7"
     },
     {
@@ -2396,7 +2684,9 @@
         "10/11: PR #161 mergeado em 9e21be56; destino-do-app.ts mapeia os 18 tipos lidos das migrations; admission_rejected → /app/entrar/analise, invitation_accepted → destino seguro /app/voce, report_resolved → alvo visível ou seguro; testes destinos-de-todos-os-tipos e rotas cobrem o mapeamento."
       ],
       "tests": [],
-      "links": ["docs/historico/superpowers/specs/2026-09-08-reconstrucao-visual-web-design.md"],
+      "links": [
+        "docs/historico/superpowers/specs/2026-09-08-reconstrucao-visual-web-design.md"
+      ],
       "dependencies": [],
       "updatedAt": "2026-11-10",
       "sourceRevision": "9e21be56",
@@ -2416,9 +2706,14 @@
         "Entrada morta /landing removida de PUBLIC_PATHS ou rota criada",
         "Casamento por prefixo revisado para não abrir rota vizinha sem intenção"
       ],
-      "proof": ["npx pnpm@11.18.0 gate", "npx pnpm@11.18.0 test:e2e"],
+      "proof": [
+        "npx pnpm@11.18.0 gate",
+        "npx pnpm@11.18.0 test:e2e"
+      ],
       "tests": [],
-      "links": ["docs/historico/superpowers/specs/2026-09-08-reconstrucao-visual-web-design.md"],
+      "links": [
+        "docs/historico/superpowers/specs/2026-09-08-reconstrucao-visual-web-design.md"
+      ],
       "dependencies": [],
       "updatedAt": "2026-09-08",
       "sourceRevision": "6d998a7"
@@ -2576,7 +2871,9 @@
         "Distinção explícita entre primitivo com wrapper de HeroUI e superfície composta",
         "Afirmação sobre 'todo primitivo é wrapper de HeroUI' corrigida ou qualificada"
       ],
-      "proof": ["npx pnpm@11.18.0 test:scope"],
+      "proof": [
+        "npx pnpm@11.18.0 test:scope"
+      ],
       "tests": [],
       "links": [
         "ADR | docs/decisions/ADR-20261024-front-react-spa.md",
@@ -2624,7 +2921,10 @@
         "docs/decisions/ADR-20260907-login-com-senha.md",
         "docs/decisions/ADR-20260907-consentimento-no-cadastro.md"
       ],
-      "dependencies": ["RECON-W00-FUNDACAO", "BLOCK-RESEND"],
+      "dependencies": [
+        "RECON-W00-FUNDACAO",
+        "BLOCK-RESEND"
+      ],
       "updatedAt": "2026-11-02",
       "sourceRevision": "fc67e19e"
     },
@@ -2647,7 +2947,10 @@
         "PLAYWRIGHT_TEST_BASE_URL=http://127.0.0.1:3147 npx playwright test --config tests/e2e/recon-032.playwright.config.ts recon-032-salvos.spec.ts recon-032-denuncias.spec.ts recon-032-messages.spec.ts -> 11 passed",
         "BIVAQUE_VISUAL_ROUTE=/salvos node scripts/visual/capture.mjs -> Authenticated capture: yes, 0 findings em 375/768/1440"
       ],
-      "tests": ["tests/unit/ui/empty-promises.test.ts", "tests/e2e/recon-032-salvos.spec.ts"],
+      "tests": [
+        "tests/unit/ui/empty-promises.test.ts",
+        "tests/e2e/recon-032-salvos.spec.ts"
+      ],
       "links": [
         "docs/historico/tasks/RECON-001.task.yml",
         "docs/historico/design/visual-guide-2026-09-06/01-web-inicio.png",
@@ -2658,7 +2961,12 @@
       "updatedAt": "2026-09-11",
       "sourceRevision": "e974bd0",
       "completedAt": "2026-09-11",
-      "completedChecklist": [true, true, true, true]
+      "completedChecklist": [
+        true,
+        true,
+        true,
+        true
+      ]
     },
     {
       "id": "NAV-EXPLORAR-COLISAO",
@@ -2673,8 +2981,13 @@
         "Nenhuma rota expõe dois role=tab com o mesmo nome acessível significando coisas diferentes",
         "Regra verificável na auditoria visual ou em teste de escopo, para não voltar"
       ],
-      "proof": ["npx pnpm@11.18.0 test:e2e", "node scripts/visual/loop.mjs"],
-      "tests": ["tests/e2e/manaus-pilot-full-journey.spec.ts"],
+      "proof": [
+        "npx pnpm@11.18.0 test:e2e",
+        "node scripts/visual/loop.mjs"
+      ],
+      "tests": [
+        "tests/e2e/manaus-pilot-full-journey.spec.ts"
+      ],
       "links": [
         "ADR | docs/decisions/ADR-20261024-front-react-spa.md",
         "docs/historico/agents/DESIGN_SYSTEM.md"
@@ -2735,7 +3048,10 @@
               "PENDENTE: loop visual em 375/768/1440",
               "PENDENTE: revisao independente (G5)"
             ],
-            "proof": ["npx pnpm@11.18.0 gate → verde", "git 86e24ad"],
+            "proof": [
+              "npx pnpm@11.18.0 gate → verde",
+              "git 86e24ad"
+            ],
             "tests": [],
             "links": [
               "docs/historico/tasks/RECON-002.task.yml",
@@ -2821,7 +3137,9 @@
         "docs/decisions/ADR-20260908-perfil-campos-opcionais.md",
         "docs/historico/design/visual-guide-2026-09-06/51-web-perfil.png"
       ],
-      "dependencies": ["BLOCK-AFFILIATION"],
+      "dependencies": [
+        "BLOCK-AFFILIATION"
+      ],
       "phase": "Reconstrução",
       "updatedAt": "2026-09-17",
       "sourceRevision": "07e1d2f",
@@ -2853,7 +3171,9 @@
       ],
       "updatedAt": "2026-08-28",
       "sourceRevision": "8ded62c",
-      "dependencies": ["BLOCK-LEGAL-ENTRY"]
+      "dependencies": [
+        "BLOCK-LEGAL-ENTRY"
+      ]
     },
     {
       "id": "RECON-PRANCHAS-RESTANTES",
@@ -3001,7 +3321,9 @@
               "06/10/2026 10:43Z FIGMA002: fixturevoltouator001 apósnegativa002, policy/guardpreservados. Codex leulogrun8 real: All tests successful 97 arquivos 1185 assertions / PASS12 s (55novos). Provaexecutor API55621 pos94544 proof-media-gap-fill-run1.log7checksok: remove/repoemeio/primeiro/capa, promoveuma capa mínima, reordena1..5 e confirmaIDs invertidos. Quota repeatpos94544 proof-photo-quota-concurrency-run2.log:4inserts na12avaga =>1ok3x23514/final12pos1..12. Sources/logspreservados figma002-db-proofs. Provas são API/linhamedia, nao upload/remoçãoobjetostorage UI; cleanupfixtures ainda semresultado ependente. Rotas/imoveisausentes nesteinventario, componentesjáexistentes; Qwenativa lendo integraçãoweb. Loteaberto: UI/persistênciapelaUI/retomadas/storageEXIFreal/capturas/gate/GLMnovo/Flashnovo. Não duplicargates nem aceitar banco comofluxocompleto.",
               "06/10/2026 10:58Z-11:06Z FIGMA002 falha real deprovedor diagnosticada: log10:45Z Failed to drain AI.Error token-plan1-monthquotaexhausted (reset08/10 16UTC), emboraoutcomesucceeded eassistantvazio. Retomada mesma sessao confirmouquota novamente. Conexõesexistentesauthlist consultadas semchaves; QwenAlibaba recusouchaveexistente, QwenOpenCodeGo Insufficient account funds, DeepSeekPro direto Insufficient Balance. Semcompras/alterarcredenciais, cada tentativa sóapósinatividadeconfirmada, exports/historico preservados. Fallback autorizado decontinuidade implementador OpenAIgpt-6.1-sol ses_eef1c5897ffekiWHMU12yPayH4 viaOpenCode jáconectado: running e read/glob/shell/skillreais confirmados. Um escritor mesmo checkout, todasanterioresinativas e sessions.jsoncanonicoatualizado. BancoPASS1185 preservado, UIrotasaindapendentes. RevisãoGLM/Flash independentes mantidas, precisarão provedoralternativojáconectado poisTokenPlansemesaldoquota; nenhuma revisão duplicada. Loteaberto, semprodução pronta."
             ],
-            "tests": ["node --test tests/scope/prancha-coverage.test.mjs"],
+            "tests": [
+              "node --test tests/scope/prancha-coverage.test.mjs"
+            ],
             "links": [
               "docs/historico/agents/RECON-WEB-EXECUCAO.md",
               "docs/historico/agents/PRANCHAS-WEB-RESTANTES.md",
@@ -3015,7 +3337,9 @@
               "docs/historico/agents/FIGMA-ATUAL-COBERTURA.md",
               "docs/decisions/ADR-20261006-anuncios-salvos-e-moderacao.md"
             ],
-            "dependencies": ["BLOCK-LEGAL-AI"],
+            "dependencies": [
+              "BLOCK-LEGAL-AI"
+            ],
             "phase": "Reconstrução",
             "updatedAt": "2026-10-06",
             "sourceRevision": "b9faf50c282dc432240de867da0692486c4f4563",
@@ -3178,7 +3502,9 @@
               "06/10/2026 10:43Z FIGMA002: fixturevoltouator001 apósnegativa002, policy/guardpreservados. Codex leulogrun8 real: All tests successful 97 arquivos 1185 assertions / PASS12 s (55novos). Provaexecutor API55621 pos94544 proof-media-gap-fill-run1.log7checksok: remove/repoemeio/primeiro/capa, promoveuma capa mínima, reordena1..5 e confirmaIDs invertidos. Quota repeatpos94544 proof-photo-quota-concurrency-run2.log:4inserts na12avaga =>1ok3x23514/final12pos1..12. Sources/logspreservados figma002-db-proofs. Provas são API/linhamedia, nao upload/remoçãoobjetostorage UI; cleanupfixtures ainda semresultado ependente. Rotas/imoveisausentes nesteinventario, componentesjáexistentes; Qwenativa lendo integraçãoweb. Loteaberto: UI/persistênciapelaUI/retomadas/storageEXIFreal/capturas/gate/GLMnovo/Flashnovo. Não duplicargates nem aceitar banco comofluxocompleto.",
               "06/10/2026 10:58Z-11:06Z FIGMA002 falha real deprovedor diagnosticada: log10:45Z Failed to drain AI.Error token-plan1-monthquotaexhausted (reset08/10 16UTC), emboraoutcomesucceeded eassistantvazio. Retomada mesma sessao confirmouquota novamente. Conexõesexistentesauthlist consultadas semchaves; QwenAlibaba recusouchaveexistente, QwenOpenCodeGo Insufficient account funds, DeepSeekPro direto Insufficient Balance. Semcompras/alterarcredenciais, cada tentativa sóapósinatividadeconfirmada, exports/historico preservados. Fallback autorizado decontinuidade implementador OpenAIgpt-6.1-sol ses_eef1c5897ffekiWHMU12yPayH4 viaOpenCode jáconectado: running e read/glob/shell/skillreais confirmados. Um escritor mesmo checkout, todasanterioresinativas e sessions.jsoncanonicoatualizado. BancoPASS1185 preservado, UIrotasaindapendentes. RevisãoGLM/Flash independentes mantidas, precisarão provedoralternativojáconectado poisTokenPlansemesaldoquota; nenhuma revisão duplicada. Loteaberto, semprodução pronta."
             ],
-            "tests": ["node --test tests/scope/prancha-coverage.test.mjs"],
+            "tests": [
+              "node --test tests/scope/prancha-coverage.test.mjs"
+            ],
             "links": [
               "docs/historico/agents/RECON-WEB-EXECUCAO.md",
               "docs/historico/agents/PRANCHAS-WEB-RESTANTES.md",
@@ -3192,7 +3518,9 @@
               "docs/historico/agents/FIGMA-ATUAL-COBERTURA.md",
               "docs/decisions/ADR-20261006-anuncios-salvos-e-moderacao.md"
             ],
-            "dependencies": ["BLOCK-LEGAL-AI"],
+            "dependencies": [
+              "BLOCK-LEGAL-AI"
+            ],
             "phase": "Reconstrução",
             "updatedAt": "2026-10-07",
             "sourceRevision": "b9faf50c282dc432240de867da0692486c4f4563",
@@ -3292,7 +3620,9 @@
         "06/10/2026 10:43Z FIGMA002: fixturevoltouator001 apósnegativa002, policy/guardpreservados. Codex leulogrun8 real: All tests successful 97 arquivos 1185 assertions / PASS12 s (55novos). Provaexecutor API55621 pos94544 proof-media-gap-fill-run1.log7checksok: remove/repoemeio/primeiro/capa, promoveuma capa mínima, reordena1..5 e confirmaIDs invertidos. Quota repeatpos94544 proof-photo-quota-concurrency-run2.log:4inserts na12avaga =>1ok3x23514/final12pos1..12. Sources/logspreservados figma002-db-proofs. Provas são API/linhamedia, nao upload/remoçãoobjetostorage UI; cleanupfixtures ainda semresultado ependente. Rotas/imoveisausentes nesteinventario, componentesjáexistentes; Qwenativa lendo integraçãoweb. Loteaberto: UI/persistênciapelaUI/retomadas/storageEXIFreal/capturas/gate/GLMnovo/Flashnovo. Não duplicargates nem aceitar banco comofluxocompleto.",
         "06/10/2026 10:58Z-11:06Z FIGMA002 falha real deprovedor diagnosticada: log10:45Z Failed to drain AI.Error token-plan1-monthquotaexhausted (reset08/10 16UTC), emboraoutcomesucceeded eassistantvazio. Retomada mesma sessao confirmouquota novamente. Conexõesexistentesauthlist consultadas semchaves; QwenAlibaba recusouchaveexistente, QwenOpenCodeGo Insufficient account funds, DeepSeekPro direto Insufficient Balance. Semcompras/alterarcredenciais, cada tentativa sóapósinatividadeconfirmada, exports/historico preservados. Fallback autorizado decontinuidade implementador OpenAIgpt-6.1-sol ses_eef1c5897ffekiWHMU12yPayH4 viaOpenCode jáconectado: running e read/glob/shell/skillreais confirmados. Um escritor mesmo checkout, todasanterioresinativas e sessions.jsoncanonicoatualizado. BancoPASS1185 preservado, UIrotasaindapendentes. RevisãoGLM/Flash independentes mantidas, precisarão provedoralternativojáconectado poisTokenPlansemesaldoquota; nenhuma revisão duplicada. Loteaberto, semprodução pronta."
       ],
-      "tests": ["node --test tests/scope/prancha-coverage.test.mjs"],
+      "tests": [
+        "node --test tests/scope/prancha-coverage.test.mjs"
+      ],
       "links": [
         "ADR | docs/decisions/ADR-20261024-front-react-spa.md",
         "docs/historico/agents/RECON-WEB-EXECUCAO.md",
@@ -3307,7 +3637,9 @@
         "docs/historico/agents/FIGMA-ATUAL-COBERTURA.md",
         "docs/decisions/ADR-20261006-anuncios-salvos-e-moderacao.md"
       ],
-      "dependencies": ["BLOCK-LEGAL-AI"],
+      "dependencies": [
+        "BLOCK-LEGAL-AI"
+      ],
       "phase": "Reconstrução",
       "updatedAt": "2026-10-31",
       "sourceRevision": "b8e84b20",
@@ -3445,7 +3777,15 @@
       "updatedAt": "2026-09-17",
       "sourceRevision": "cabe1d5",
       "dependencies": [],
-      "completedChecklist": [true, true, true, true, true, true, true],
+      "completedChecklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ],
       "completedAt": "2026-09-17"
     },
     {
@@ -3569,7 +3909,9 @@
         "docs/historico/design/visual-guide-2026-09-06/54-web-retorno.png",
         "docs/historico/design/visual-guide-2026-09-06/56-web-confianca.png"
       ],
-      "dependencies": ["RECON-PRANCHAS-RESTANTES"],
+      "dependencies": [
+        "RECON-PRANCHAS-RESTANTES"
+      ],
       "updatedAt": "2026-09-18",
       "sourceRevision": "914a1d8",
       "completedAt": "2026-09-18"
@@ -3661,7 +4003,10 @@
         "docs/historico/design/visual-guide-2026-09-06/01-web-inicio.png",
         "docs/historico/design/visual-guide-2026-09-06/54-web-retorno.png"
       ],
-      "dependencies": ["RECON-PRANCHAS-RESTANTES", "RECON-032"],
+      "dependencies": [
+        "RECON-PRANCHAS-RESTANTES",
+        "RECON-032"
+      ],
       "updatedAt": "2026-09-18",
       "sourceRevision": "914a1d8",
       "completedAt": "2026-09-18"
@@ -3871,7 +4216,10 @@
         "npx pnpm@11.18.0 gate",
         "recaptura por rota (scripts/visual/capture.mjs) com prova válida"
       ],
-      "links": [".visual/compare/julgamento.md", "docs/historico/agents/PRANCHAS-WEB-RESTANTES.md"],
+      "links": [
+        ".visual/compare/julgamento.md",
+        "docs/historico/agents/PRANCHAS-WEB-RESTANTES.md"
+      ],
       "updatedAt": "2026-09-16",
       "sourceRevision": "285059d",
       "dependencies": [],
@@ -3900,7 +4248,11 @@
         "pgTAP supabase/tests/community-leave-cancel.sql: 10/10 ok (positivo/negativo/anon/cascata)",
         "Gate completo verde após a implementação (lint/typecheck/build/test/secrets)"
       ],
-      "tests": ["supabase test db", "npx pnpm@11.18.0 gate", "npx pnpm@11.18.0 test:scope"],
+      "tests": [
+        "supabase test db",
+        "npx pnpm@11.18.0 gate",
+        "npx pnpm@11.18.0 test:scope"
+      ],
       "links": [
         ".visual/compare/julgamento.md",
         "docs/decisions/ADR-20260914-saida-de-comunidade.md"
@@ -3977,7 +4329,10 @@
         "npx pnpm@11.18.0 exec supabase db reset (local)",
         "scripts/visual/capture.mjs por rota"
       ],
-      "links": ["supabase/seed.sql", ".visual/compare/julgamento.md"],
+      "links": [
+        "supabase/seed.sql",
+        ".visual/compare/julgamento.md"
+      ],
       "updatedAt": "2026-09-15",
       "sourceRevision": "294d11a",
       "dependencies": [],
@@ -4010,7 +4365,11 @@
         "Testes: pgTAP 41/41; unit da rota 15/15; E2E de UI 3/3 (3 viewports, não destrutivo); runtime 31/31; suíte pgTAP inteira PASS (113 arquivos, 1506 testes) em db reset --no-seed + db:lint sem erro de schema. Unit tests/unit/infra/account-deletion-route.test.ts: 15/15 (503/401/400, not_due sem tocar em nada, not_found/already_purged, ordem contato->mídia->soft delete->finalize por invocationCallOrder, falha de contato ou de mídia não apaga credencial, paginação com offset, lote deduplicado, e-mail nunca vai para log)",
         "Efeito colateral do mesmo commit: guard-rails de colunas de profiles (foundation-schema.test.sql, rls-or-column-regression.test.sql) reconheciam 'bio' como coluna não autorizada desde 20260911024732_profile_bio.sql — lista atualizada; e a asserção de idempotência de close_service_request comparava dois formatos do mesmo instante (card DRIFT-SERVICE-REQUESTS-CLOSE-AT)"
       ],
-      "tests": ["supabase test db", "npx pnpm@11.18.0 gate", "node .visual/prova-exclusao.mjs"],
+      "tests": [
+        "supabase test db",
+        "npx pnpm@11.18.0 gate",
+        "node .visual/prova-exclusao.mjs"
+      ],
       "links": [
         "docs/decisions/ADR-20260914-exclusao-de-conta.md",
         "supabase/migrations/20260915101543_account_deletion.sql",
@@ -4049,14 +4408,18 @@
         "Estado da implementacao (lote AN, interrompido): migration escrita e nao verificada, guardada como rascunho fora do repositorio porque o Docker Desktop caiu. Retomar quando o Docker estiver de pe: aplicar, rodar pgTAP com positivo e negativo por caso, regenerar tipos, ligar a chamada na rota de purga e capturar",
         "Lote AN 18/09/2026: as tres decisoes estao implementadas e verificadas. Migration 20260918114238_settle_account_possessions aplica posse -> moderador/operacao, anuncios closed + vitrine revogada, pedidos cancelados; chamada pela rota ANTES do soft delete, com teste de ordem. pgTAP novo com 11 asserts (120 arquivos / 1592 PASS). Um defeito real apareceu no caminho e foi corrigido: o update direto de listings violava a guarda de transicao de status — a migration passou a abrir a guarda com o mesmo GUC que transition_listing usa, e a fecha em seguida. O aviso neutro saiu para o card proprio NOTIF-PEDIDO-CANCELADO"
       ],
-      "tests": ["supabase test db"],
+      "tests": [
+        "supabase test db"
+      ],
       "links": [
         "docs/decisions/ADR-20260914-exclusao-de-conta.md (item 4 e tabela jurídica)",
         "supabase/migrations/20260915101543_account_deletion.sql (rodapé)"
       ],
       "updatedAt": "2026-09-18",
       "sourceRevision": "e9f458f",
-      "dependencies": ["RECON-052"],
+      "dependencies": [
+        "RECON-052"
+      ],
       "completedAt": "2026-09-18"
     },
     {
@@ -4077,8 +4440,12 @@
         "Medição: select (to_jsonb(t) ->> 'closed_at') = t.closed_at::text from (select now() as closed_at) t -> false; json=2026-09-15T10:54:47.939896+00:00, text=2026-09-15 10:54:47.939896+00",
         "supabase/migrations/*: close_service_request só faz update quando v_req.status <> 'closed'"
       ],
-      "tests": ["supabase test db"],
-      "links": ["supabase/tests/service-request-tracking.sql"],
+      "tests": [
+        "supabase test db"
+      ],
+      "links": [
+        "supabase/tests/service-request-tracking.sql"
+      ],
       "updatedAt": "2026-09-15",
       "sourceRevision": "cd001a6",
       "dependencies": [],
@@ -4120,7 +4487,15 @@
       "updatedAt": "2026-09-17",
       "sourceRevision": "1ef78b5",
       "dependencies": [],
-      "completedChecklist": [true, true, true, true, true, true, true],
+      "completedChecklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ],
       "completedAt": "2026-09-17"
     },
     {
@@ -4142,7 +4517,11 @@
         "22/09/2026: a proposta anterior de default null nao cabe na assinatura atual sem dar default tambem ao p_caller_user_id obrigatorio: PostgreSQL exige default em todos os argumentos seguintes. A normalizacao do tipo preserva a assinatura e os grants da RPC; node scripts/normalize-generated-types.mjs reproduziu o tipo esperado a partir da saida bruta do gerador e o typecheck local passou. GitHub Actions do PR #77, head 615d7e6, actions/runs/35687540811 concluiu com sucesso, incluindo Check generated types drift, banco e E2E. Esse run antecede ajustes de revisao; o CI da revisao final ainda precisa passar."
       ],
       "dependencies": [],
-      "completedChecklist": [true, true, false],
+      "completedChecklist": [
+        true,
+        true,
+        false
+      ],
       "updatedAt": "2026-09-22",
       "sourceRevision": "615d7e6"
     },
@@ -4168,7 +4547,14 @@
         "Lote AV 18/09/2026: o card fecha de ponta a ponta — dado (tipo proprio, destinatario correto, ator nulo), app (copy neutra e deep-link) e tela (captura com o texto renderizado e 0 achados). A fixture entrou no seed porque o tipo nao existia em nenhuma jornada do seed, e sem ela a prova visual seria vazia"
       ],
       "dependencies": [],
-      "completedChecklist": [true, true, true, true, true, true],
+      "completedChecklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ],
       "updatedAt": "2026-09-18",
       "sourceRevision": "fe5887e",
       "completedAt": "2026-09-18"
@@ -4189,7 +4575,14 @@
         "Antes do lancamento: decidir o pool do PostgREST (PGRST_DB_POOL nao esta definido, entao vale o padrao de 10) para o ambiente implantado",
         "Reavaliar depois do primeiro ambiente implantado, porque os ABSOLUTOS daqui sao de container unico local e nao transferem"
       ],
-      "completedChecklist": [true, true, true, false, false, false],
+      "completedChecklist": [
+        true,
+        true,
+        true,
+        false,
+        false,
+        false
+      ],
       "proof": [
         "Lote BC 19/09/2026: medicao sob concorrencia entregue em scripts/load/concurrency.mjs, com duas fases separadas (login = CPU do GoTrue; leitura = RPC do caminho real). Resultado final, com 0 falhas nas duas fases: login de 19/s a 1 simultaneo para ~100-117/s com p95 de 633ms a 50; leitura de 137/s a 1002/s com p95 de 99ms a 50. Referencia do banco medida no mesmo ambiente com pgbench: 108.000 tps e 0,44ms com 50 clientes, o que prova que o teto esta na camada de API e nao no banco.",
         "DOIS ERROS DE MEDICAO meus, corrigidos e registrados no proprio script: (1) a primeira versao media /rest/v1/posts?order=created_at.desc sem filtro de escopo, que NAO e o caminho do produto e nao tem indice — 40ms no banco contra 0,2ms da forma indexada; reportaria 88 req/s com p95 de 1,4s quando o caminho real faz ~1000 req/s com p95 de 99ms, ou seja 12x melhor; (2) a fase de leitura pegava os tokens DEPOIS de a fase de login martelar o auth, e quando vinham vazios ela media 'Bearer undefined' — 100% de erro em 1ms, rejeicao instantanea e nao leitura. Agora as sessoes vem antes e o script ABORTA se faltarem.",
@@ -4230,7 +4623,9 @@
         "tests/unit/notifications/service-request-labels.test.ts: a resposta nao aparece como pedido encerrado; o cancelamento segue neutro; nome da ficha ou frase neutra; os dois levam a /pedidos/[id] sem ator",
         "journey-pedir-servico.spec.ts: depois da resposta, a central da membra mostra \"Climatiza Manaus respondeu seu pedido\" e o clique abre o acompanhamento. Rodada final: 4 jornadas + rastreador 5 passed; regressao 57 passed / 1 failed — recommendation-reply-notify em strict mode (8 botoes Responder em /recommendations), acumulo de dados de rodadas anteriores no banco compartilhado, fora do escopo deste lote"
       ],
-      "tests": ["tests/e2e/journey-pedir-servico.spec.ts"],
+      "tests": [
+        "tests/e2e/journey-pedir-servico.spec.ts"
+      ],
       "completedAt": "2026-09-22"
     },
     {
@@ -4262,7 +4657,9 @@
         "journey-entrar-e-ser-admitido.spec.ts 2 passed: CPF -> instabilidade -> \"Enviar identidade agora\" -> envio do arquivo -> \"Documento enviado\". Banco: verification_outcomes pending, 1 documento; /admissions?q=<email> mostra \"Em analise · Documento para decidir\"",
         "Unidade: verify-and-provision.test.ts (sem chave grava temporary_error por upsert_verification_outcome sem consumir tentativa; falha de gravacao sobe) e browser-outcome.test.ts (o reason tecnico nao chega ao navegador)"
       ],
-      "tests": ["tests/e2e/journey-entrar-e-ser-admitido.spec.ts"],
+      "tests": [
+        "tests/e2e/journey-entrar-e-ser-admitido.spec.ts"
+      ],
       "completedAt": "2026-09-22"
     },
     {
@@ -4298,7 +4695,9 @@
     },
     {
       "phase": "Reconstrução",
-      "links": ["docs/historico/tasks/HRN-005.task.yml"],
+      "links": [
+        "docs/historico/tasks/HRN-005.task.yml"
+      ],
       "dependencies": [],
       "proof": [
         "Baseline 22/09 (build 8632239, personas em serie): 0 quebrados, 33 rotas sem link, 8 orfas verdadeiras + /guide/[id]/correcao travada",
@@ -4340,7 +4739,9 @@
       ],
       "dependencies": [],
       "proof": [],
-      "tests": ["tests/e2e/link-crawl.spec.ts"],
+      "tests": [
+        "tests/e2e/link-crawl.spec.ts"
+      ],
       "updatedAt": "2026-10-31",
       "sourceRevision": "064f677a",
       "id": "EVENTOS-CRIACAO-DUPLICADA",
@@ -4369,7 +4770,9 @@
         "journey-pedir-servico.spec.ts passa com o ciclo do retorno: apos a resposta do prestador o icone diz \"Conversas, N com mensagem nova\"; aberto o acompanhamento, volta a \"Conversas\". portas-de-entrada.spec.ts: o icone abre /messages em 375, 768 e 1440. Regressao shell-navigation, shell-accessibility-denials, nav-container-invariant, recon-032-messages: 74 passed / 10 skipped",
         "Achado no caminho: /pedidos/[id] so marcava lida ao clicar numa resposta ou enviar mensagem, embora o painel mostre a conversa inteira. Agora registra a leitura no servidor ao abrir, e mantem nesta visita os marcadores de nao lida da prancha 17"
       ],
-      "tests": ["tests/e2e/link-crawl.spec.ts"],
+      "tests": [
+        "tests/e2e/link-crawl.spec.ts"
+      ],
       "updatedAt": "2026-09-22",
       "sourceRevision": "506abff7",
       "id": "MSG-SEM-ENTRADA",
@@ -4394,7 +4797,10 @@
       ],
       "dependencies": [],
       "proof": [],
-      "tests": ["tests/e2e/link-crawl.spec.ts", "tests/e2e/manaus-pilot-denials.spec.ts"],
+      "tests": [
+        "tests/e2e/link-crawl.spec.ts",
+        "tests/e2e/manaus-pilot-denials.spec.ts"
+      ],
       "updatedAt": "2026-10-31",
       "sourceRevision": "064f677a",
       "id": "ROTA-CONSENT-LEGADA",
@@ -4431,7 +4837,9 @@
         "Achado no caminho e corrigido: /onboarding/perfil estava fora da allowlist do proxy, e o verificado sem membership voltava a /onboarding/locality ao clicar Continuar — ninguem novo concluia o cadastro, nem pelo CPF aprovado. tests/unit/onboarding/onboarding-proxy-allowlist.test.ts",
         "Migration aplicada no banco local compartilhado por psql, sem reset: supabase migration up recusou porque o banco tem 20260923200000 (guide_candidate_queue) e 20260922103620 (feed_community_cursor_pagination) de outro checkout; o historico dessas nao foi tocado"
       ],
-      "tests": ["tests/e2e/journey-entrar-e-ser-admitido.spec.ts"],
+      "tests": [
+        "tests/e2e/journey-entrar-e-ser-admitido.spec.ts"
+      ],
       "links": [
         "supabase/migrations/20260822215307_outbox_verification_decision.sql",
         "docs/decisions/ADR-20260922-identidade-quando-portal-falha.md",
@@ -4465,7 +4873,9 @@
         "E2E contra o build desta arvore: as quatro jornadas passam, e recon-032-messages, provider-vitrine, portas-de-entrada e event-invites 15 passed. Banco: o pedido novo da jornada esta in_conversation, com conversa de contexto service_request = o proprio pedido e 1 mensagem",
         "Caixa de conversas: rotulos para provider, listing, event_question e service_request, que antes apareciam como o nome cru do enum"
       ],
-      "tests": ["tests/e2e/journey-pedir-servico.spec.ts"],
+      "tests": [
+        "tests/e2e/journey-pedir-servico.spec.ts"
+      ],
       "links": [
         "supabase/migrations/20260912063553_reconcile_service_requests.sql",
         "supabase/migrations/20260915101543_account_deletion.sql",
@@ -4479,7 +4889,10 @@
     },
     {
       "phase": "Reconstrução",
-      "links": ["apps/web/app/api/onboarding/route.ts", "apps/web/proxy.ts"],
+      "links": [
+        "apps/web/app/api/onboarding/route.ts",
+        "apps/web/proxy.ts"
+      ],
       "dependencies": [],
       "proof": [
         "Depois da correcao, a mesma chamada: provision 403 verification is required, 0 membership, 0 perfil",
@@ -4516,14 +4929,15 @@
       "dependencies": [],
       "proof": [
         "tests/unit/profile/interests-require-verification.test.ts 12/12: sem verified e sem familiar a lista nem e consultada; verificado le, grava e limpa; familiar admitido le, grava e limpa; falha de leitura de qualquer uma das duas nao libera",
-        "supabase/tests/admitted-family-holder.sql 9/9: dependente de titular verificado true; titular verificado false; dependente de titular nao verificado false; sem vinculo false; vinculo removido false; authenticated e anon 42501; service_role executam"
+        "supabase/tests/admitted-family-holder.sql 9/9: dependente de titular verificado true; titular verificado false; dependente de titular nao verificado false; sem vinculo false; vinculo removido false; authenticated e anon 42501; service_role executam",
+        "16/11: reconciliacao — o produtor citado (interests-actions.ts) morreu com a tela no RUN-163; a guarda mora agora em admissao() na rota /api/app/voce/interesses (verified OU familiar admitido; 403 nao-admitido; 503 fail-closed sem crash; cidade do vinculo current), com provas em interests-require-verification.test.ts e interesses.test.ts. O achado que fechou o card permanece valido e testado."
       ],
       "tests": [
         "tests/unit/profile/interests-require-verification.test.ts",
         "supabase/tests/admitted-family-holder.sql"
       ],
-      "updatedAt": "2026-10-22",
-      "sourceRevision": "86c587bb",
+      "updatedAt": "2026-11-16",
+      "sourceRevision": "9ca86c53",
       "id": "SEC-INTERESSES-SEM-VERIFICACAO",
       "title": "Personalizacao listava grupos de qualquer cidade para conta nao verificada",
       "priority": "P2",
@@ -4539,12 +4953,16 @@
     },
     {
       "phase": "Reconstrução",
-      "links": ["supabase/migrations/20260922162000_service_request_block_checks.sql"],
+      "links": [
+        "supabase/migrations/20260922162000_service_request_block_checks.sql"
+      ],
       "dependencies": [],
       "proof": [
         "pgTAP: bloqueado pelo prestador e quem bloqueou recebem 42501 blocked; pedido sem bloqueio segue criando"
       ],
-      "tests": ["supabase/tests/service-request-conversation-per-request.sql"],
+      "tests": [
+        "supabase/tests/service-request-conversation-per-request.sql"
+      ],
       "updatedAt": "2026-09-22",
       "sourceRevision": "de05e856",
       "id": "SEC-PEDIDO-SEM-BLOQUEIO",
@@ -4606,7 +5024,9 @@
         "20260923161129_event_question_ignores_service_requests.sql: corpo identico ao original, so o select filtra context_type <> 'service_request' (o indice parcial garante no maximo uma linha); conferido por diff",
         "npx pnpm@11.18.0 test:db em 23/09/2026: Result PASS, 125 arquivos, 1645 asserts; supabase/tests/event-question-with-service-request.sql ok (positivo com pedido aberto, idempotencia, recusa preservada para outro evento)"
       ],
-      "tests": ["supabase/tests/event-question-with-service-request.sql"],
+      "tests": [
+        "supabase/tests/event-question-with-service-request.sql"
+      ],
       "updatedAt": "2026-09-23",
       "completedAt": "2026-09-23",
       "sourceRevision": "caa0c56f",
@@ -4623,7 +5043,9 @@
     },
     {
       "phase": "Reconstrução",
-      "links": ["apps/web/app/(shell)/pedidos/[id]/actions.ts"],
+      "links": [
+        "apps/web/app/(shell)/pedidos/[id]/actions.ts"
+      ],
       "dependencies": [],
       "proof": [
         "12/11: fechado pelo PR #192 (na main). apps/web/app/(shell)/pedidos/[id]/actions.ts traduz as recusas conhecidas em frase com saída por lib/service-requests/tracking-falhas.ts, mantendo o detalhe só no log; tests/unit/service-requests/tracking-falhas.test.ts cobre a tradução e o caminho genérico."
@@ -4641,7 +5063,10 @@
         "Traduzir os erros conhecidos em frase com saida e manter o detalhe so no log, como pedidos/novo/actions.ts",
         "Teste unitario da traducao e do caminho generico"
       ],
-      "completedChecklist": [true, true],
+      "completedChecklist": [
+        true,
+        true
+      ],
       "completedAt": "2026-11-12"
     },
     {
@@ -4706,7 +5131,9 @@
         "docs/historico/tasks/DS-006.task.yml",
         "docs/historico/design/visual-guide-2026-09-06/80-web-recomendacoes.png"
       ],
-      "dependencies": ["PROD-INICIO-UX-20260919"],
+      "dependencies": [
+        "PROD-INICIO-UX-20260919"
+      ],
       "updatedAt": "2026-11-02",
       "sourceRevision": "fc67e19e",
       "blockers": [
@@ -4714,7 +5141,18 @@
         "P3c pendente: tela do operador com o texto original da resposta ao lado da candidata",
         "Decisao do dono pendente: resposta cujo lugar ja esta no Guia fica 'devida' para sempre e o P3b reenviaria o mesmo corpo a cada execucao — o marcador de 'ja tentado, nada produzido' e estado novo"
       ],
-      "completedChecklist": [false, true, true, true, true, false, true, false, true, true]
+      "completedChecklist": [
+        false,
+        true,
+        true,
+        true,
+        true,
+        false,
+        true,
+        false,
+        true,
+        true
+      ]
     },
     {
       "id": "INDICACOES-MEMORIA",
@@ -4791,7 +5229,14 @@
       "dependencies": [],
       "updatedAt": "2026-11-02",
       "sourceRevision": "21bb7264",
-      "completedChecklist": [true, true, true, true, true, true],
+      "completedChecklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ],
       "completedAt": "2026-11-02"
     },
     {
@@ -4845,7 +5290,9 @@
         "scripts/visual/capture.mjs:548-568 implementa a regra",
         "docs/historico/superpowers/plans/2026-08-05-auditoria-telas.md:479-482 e 535-539 definem a intencao (sidebar e bottom-nav do shell; investigar antes de mexer no auditor)"
       ],
-      "links": ["Auditoria | ../../docs/historico/superpowers/plans/2026-08-05-auditoria-telas.md"],
+      "links": [
+        "Auditoria | ../../docs/historico/superpowers/plans/2026-08-05-auditoria-telas.md"
+      ],
       "updatedAt": "2026-11-02",
       "sourceRevision": "fc67e19e",
       "dependencies": []
@@ -4869,7 +5316,9 @@
         "apps/web/app/components/bivaque/feed-post-preview.tsx:32-36 e 87-91 definem o aria-label e a live region internos",
         "Review adversarial do LAND-001, achados M-1 e N-1, em .visual/landing-v4-2026-09-15/reviewer-report.md"
       ],
-      "links": ["Componente | ../../apps/web/app/components/bivaque/feed-post-preview.tsx"],
+      "links": [
+        "Componente | ../../apps/web/app/components/bivaque/feed-post-preview.tsx"
+      ],
       "updatedAt": "2026-11-02",
       "sourceRevision": "fc67e19e",
       "dependencies": []
@@ -5149,12 +5598,22 @@
         "docs/historico/agents/HANDOFF-COORDENACAO-2026-10-19.md",
         "docs/decisions/ADR-20261019-correcoes-de-seguranca-pre-lancamento.md"
       ],
-      "tests": ["npx pnpm@11.18.0 test:db", "npx pnpm@11.18.0 gate"],
+      "tests": [
+        "npx pnpm@11.18.0 test:db",
+        "npx pnpm@11.18.0 gate"
+      ],
       "notes": [
         "Card ausente na consulta inicial por SEC/upload/segurança; criado pelo coordenador para reconciliar a descoberta com o contrato existente, sem nova fila. Evidências locais em C:/Users/juana/AppData/Local/Temp/bivaque-sec006-coordenacao-20261019."
       ],
       "completedAt": "2026-10-21",
-      "completedChecklist": [true, true, true, true, true, true]
+      "completedChecklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
     },
     {
       "id": "SEC-004",
@@ -5184,7 +5643,11 @@
         "Não concluído pelo histórico anterior: novo achado exige reparo e prova. Push/PR aguardam ok de Juan."
       ],
       "completedAt": "2026-10-21",
-      "completedChecklist": [true, true, true]
+      "completedChecklist": [
+        true,
+        true,
+        true
+      ]
     },
     {
       "id": "SEC-005",
@@ -5214,7 +5677,11 @@
         "Não concluído pelo histórico anterior: novo achado exige reparo e prova. Push/PR aguardam ok de Juan."
       ],
       "completedAt": "2026-10-21",
-      "completedChecklist": [true, true, true]
+      "completedChecklist": [
+        true,
+        true,
+        true
+      ]
     },
     {
       "phase": "Lote 3 — piloto visual",
@@ -5229,14 +5696,22 @@
         "R72 correções do Codex",
         "Bateria explicada e base visual R72 congelada"
       ],
-      "proof": ["PR #100 mergeado (3fe41dc3); VISUAL_BASELINE_R72.md; bateria explicada"],
+      "proof": [
+        "PR #100 mergeado (3fe41dc3); VISUAL_BASELINE_R72.md; bateria explicada"
+      ],
       "tests": [],
       "links": [],
       "dependencies": [],
       "updatedAt": "2026-10-22",
       "sourceRevision": "3fe41dc3",
       "blockers": [],
-      "completedChecklist": [true, true, true, true, true],
+      "completedChecklist": [
+        true,
+        true,
+        true,
+        true,
+        true
+      ],
       "id": "LOTE-LANCAMENTO-PROTOTIPO",
       "title": "Lote Lançamento do protótipo (R69 a R72) e base visual R72",
       "completedAt": "2026-10-22"
@@ -5263,7 +5738,13 @@
       "updatedAt": "2026-10-22",
       "sourceRevision": "10653bad",
       "blockers": [],
-      "completedChecklist": [true, true, true, true, true],
+      "completedChecklist": [
+        true,
+        true,
+        true,
+        true,
+        true
+      ],
       "id": "PORT-001",
       "title": "Landing v8 no Next — piloto do porte visual (R73)",
       "completedAt": "2026-10-22"
@@ -5281,14 +5762,22 @@
         "Recusa de CEP no bairro em texto",
         "pgTAP e reset limpo"
       ],
-      "proof": ["PR #99 mergeado; migrations em produção em 22/10"],
+      "proof": [
+        "PR #99 mergeado; migrations em produção em 22/10"
+      ],
       "tests": [],
       "links": [],
       "dependencies": [],
       "updatedAt": "2026-10-22",
       "sourceRevision": "7b4c0a0b",
       "blockers": [],
-      "completedChecklist": [true, true, true, true, true],
+      "completedChecklist": [
+        true,
+        true,
+        true,
+        true,
+        true
+      ],
       "id": "DATA-001",
       "title": "Catálogo de bairros e bairro do perfil",
       "completedAt": "2026-10-22"
@@ -5306,14 +5795,22 @@
         "Purga na exclusão de conta",
         "pgTAP e reset limpo"
       ],
-      "proof": ["PR #99 mergeado; migrations em produção em 22/10"],
+      "proof": [
+        "PR #99 mergeado; migrations em produção em 22/10"
+      ],
       "tests": [],
       "links": [],
       "dependencies": [],
       "updatedAt": "2026-10-22",
       "sourceRevision": "7b4c0a0b",
       "blockers": [],
-      "completedChecklist": [true, true, true, true, true],
+      "completedChecklist": [
+        true,
+        true,
+        true,
+        true,
+        true
+      ],
       "id": "DATA-002",
       "title": "Ocultar para mim e chamados de ajuda",
       "completedAt": "2026-10-22"
@@ -5329,14 +5826,20 @@
         "AGENTS.md atualizado",
         "Regra antiga marcada como substituída"
       ],
-      "proof": ["PR #102 mergeado (f05fc69b)"],
+      "proof": [
+        "PR #102 mergeado (f05fc69b)"
+      ],
       "tests": [],
       "links": [],
       "dependencies": [],
       "updatedAt": "2026-10-22",
       "sourceRevision": "f05fc69b",
       "blockers": [],
-      "completedChecklist": [true, true, true],
+      "completedChecklist": [
+        true,
+        true,
+        true
+      ],
       "id": "ADR-LOCALIZACAO",
       "title": "Localização no padrão de mercado (CEP e coordenada)",
       "completedAt": "2026-10-22"
@@ -5357,12 +5860,21 @@
         "10/11: PR #162 mergeado em 822ee307 (head 09a42212) com CI verde; a migration 20261107140757 carrega o Censo 2022 (17.562 bairros/895 municípios) de forma idempotente; o job «Reapply the IBGE neighborhoods load» reaplica a carga no container do banco e exige a mesma contagem; pgTAP e reset limpo."
       ],
       "tests": [],
-      "links": ["docs/decisions/ADR-20261022-localizacao-padrao-de-mercado.md"],
-      "dependencies": ["ADR-LOCALIZACAO"],
+      "links": [
+        "docs/decisions/ADR-20261022-localizacao-padrao-de-mercado.md"
+      ],
+      "dependencies": [
+        "ADR-LOCALIZACAO"
+      ],
       "updatedAt": "2026-11-10",
       "sourceRevision": "822ee307",
       "blockers": [],
-      "completedChecklist": [false, false, false, false],
+      "completedChecklist": [
+        false,
+        false,
+        false,
+        false
+      ],
       "id": "DATA-IBGE-BAIRROS",
       "title": "Carga da malha de bairros do IBGE (Censo 2022)",
       "completedAt": "2026-11-10"
@@ -5384,12 +5896,23 @@
         "11/11: perfil com CEP e coordenada cálculo-only provado (PR #183, head 4c5e7451): migration 20261110211702_profile_location.sql, grants por coluna (cep/latitude/longitude fora do SELECT de authenticated), RPCs get_my_profile_location/set_member_location/distance_to_neighborhood, API GET/PATCH /api/app/voce + PUT /localizacao, E2E f10-voce-localizacao com gravação verde no smoke. Restam anúncio, pedido, distância de mim e mapa."
       ],
       "tests": [],
-      "links": ["docs/decisions/ADR-20261022-localizacao-padrao-de-mercado.md"],
-      "dependencies": ["ADR-LOCALIZACAO", "DATA-IBGE-BAIRROS"],
+      "links": [
+        "docs/decisions/ADR-20261022-localizacao-padrao-de-mercado.md"
+      ],
+      "dependencies": [
+        "ADR-LOCALIZACAO",
+        "DATA-IBGE-BAIRROS"
+      ],
       "updatedAt": "2026-11-11",
       "sourceRevision": "4c5e7451",
       "blockers": [],
-      "completedChecklist": [false, false, false, true, false],
+      "completedChecklist": [
+        false,
+        false,
+        false,
+        true,
+        false
+      ],
       "id": "LOC-IMPL",
       "title": "Implementar localização no padrão de mercado"
     },
@@ -5407,7 +5930,9 @@
         "02/11: entrega conferida no código e nos testes, não só no quadro. Ajuda pública: apps/web/app/(public)/ajuda/page.tsx com conteúdo sem login e “Meus chamados” só com sessão; apps/web/proxy.ts tem /ajuda em PUBLIC_PATHS; links de volta na landing (Ajuda no rodapé e Fale com a gente em Perguntas). Cobertura E2E: tests/e2e/entrada-convite-publica.spec.ts, casos “a Ajuda abre sem login, com as perguntas e o e-mail de contato” e “a landing religa Ajuda e Fale com a gente”; a suíte raiz roda no CI e passou na revisão 8b76f2dd (Install, test, and build verde). Histórico: d005d109 e ac4abdde.",
         "02/11: posto em now por instrução do dono: é dependência do LAN-F01 e entra antes dele."
       ],
-      "tests": ["tests/e2e/entrada-convite-publica.spec.ts"],
+      "tests": [
+        "tests/e2e/entrada-convite-publica.spec.ts"
+      ],
       "links": [
         "docs/historico/agents/PORT_001.md",
         "apps/web/app/(public)/ajuda/page.tsx",
@@ -5418,7 +5943,10 @@
       "updatedAt": "2026-11-02",
       "sourceRevision": "08d59aed",
       "blockers": [],
-      "completedChecklist": [true, true],
+      "completedChecklist": [
+        true,
+        true
+      ],
       "completedAt": "2026-11-02",
       "id": "AJUDA-PUBLICA",
       "title": "Ajuda pública para quem está fora"
@@ -5481,7 +6009,13 @@
       "dependencies": [],
       "updatedAt": "2026-11-02",
       "blockers": [],
-      "completedChecklist": [true, true, true, true, true],
+      "completedChecklist": [
+        true,
+        true,
+        true,
+        true,
+        true
+      ],
       "completedAt": "2026-11-02"
     },
     {
@@ -5496,7 +6030,10 @@
       "proof": [
         "02/11: extraído do APP-001 ao fechá-lo; evidências no STATUS APP-010 (docs/historico/agents/prototipo-shadcn/STATUS.md)."
       ],
-      "links": ["docs/historico/agents/prototipo-shadcn/STATUS.md", "docs/LANCAMENTO.md"],
+      "links": [
+        "docs/historico/agents/prototipo-shadcn/STATUS.md",
+        "docs/LANCAMENTO.md"
+      ],
       "sourceRevision": "3f0a9965",
       "phase": "Lançamento",
       "priority": "P2",
@@ -5508,7 +6045,10 @@
         "Vercel: Root Directory do preview legado e quota dos projetos — ato do dono.",
         "Revisor automático do PR sem parecer — executor e credenciais são do repositório e da máquina do dono."
       ],
-      "completedChecklist": [false, false]
+      "completedChecklist": [
+        false,
+        false
+      ]
     },
     {
       "id": "RED-003",
@@ -5530,7 +6070,9 @@
         "25/10 dono autorizou dividir a R3 em lotes menores, até três rodadas próprias por lote. RED-004 validado R3 em 9ebc90b2: seis fixtures, lint conhecido e gate com variáveis públicas do processo; migration e permissões fora do escopo. Retomada não significa aprovação do banco.",
         "25/10 RED-004 aprovado no escopo em b57f1035: seis suítes/148asserções, conferências2/2, db:lint e gate completos verdes. Banco agregado154arquivos/1875executadas FAIL59arquivos. RED-005 entregue com triagem, ainda sem julgamento. Permissões/RLS e revisão final pendentes."
       ],
-      "links": ["docs/historico/agents/prototipo-shadcn/STATUS.md"],
+      "links": [
+        "docs/historico/agents/prototipo-shadcn/STATUS.md"
+      ],
       "sourceRevision": "b57f1035",
       "phase": "SPA e redesenho — outubro",
       "priority": "P1",
@@ -5542,7 +6084,12 @@
         "Banco completo ainda sem PASS; fixtures e permissões remanescentes",
         "Revisão final independente de segurança pendente"
       ],
-      "completedChecklist": [false, false, false, false]
+      "completedChecklist": [
+        false,
+        false,
+        false,
+        false
+      ]
     },
     {
       "id": "APP-F01-ENTRADA-VISUAL",
@@ -5558,7 +6105,15 @@
         "Boas-vindas por momento, retomar, convite e conta apagada",
         "Aceite visual do dono sobre a jornada inteira"
       ],
-      "completedChecklist": [true, true, true, true, true, true, true],
+      "completedChecklist": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ],
       "proof": [
         "02/11: integração conferida e card fechado. O PR #118 (feat/f01-entrada-visual) foi integrado em 01/11 na branch do #116 (codex/ui-foundation-21st-20261026) e o #121 levou a linha do apps/app para a main em 02/11; origin/main contém apps/app/src/previa-f01 e os três specs de entrada, e esta branch está 5 commits à frente e 0 atrás da main, sem pendência de integração. Provas desta rodada: gate --fast verde; pnpm test verde (unitárias, workspaces, privacidade e 147/147 de escopo); apps/app build ok; E2E dos três specs do card (entrada-acesso, entrada-21st e entrada-etapa) nos seis tamanhos: 418 passed, 68 skipped e 0 falha (a primeira rodada teve 1 falha intermitente dos rádios do negócio em 768, que passou isolada e na segunda rodada completa). O aceite visual do dono (28/28 telas, claro e escuro, celular e desktop) segue na prova de 01/11. O backend do F01 é a LAN-F01, não este card.",
         "01/11: aceite visual do dono concluído em quatro rodadas na página Aceite da Entrada (https://claude.ai/artifact/Taqq3VFZwWyXsSRvtB75BK): 28 de 28 telas aprovadas, claro e escuro, celular e desktop. ENT-007 trouxe acesso e boas-vindas sobre os blocos sign-in-3 e Onboarding Welcome Screen, grupos sobre o Card Style Checkbox, o formulário do negócio sobre o Onboarding Wizard Form e o Radio Group (código real dos blocos do 21st, com crédito) e fotos próprias para 13b, 13c, 16, 17 e 18. Provas do contrato na revisão b3c2cc32: typecheck, lint, test:scope 150/150 e e2e de entrada 418 passaram, 0 falharam; revisão do Codex aprovada (.visual/ENT-007/revisao-codex-7.md). Gate completo da raiz não foi rodado nesta rodada; CI do PR #118 roda o app e o web.",
@@ -5587,7 +6142,9 @@
         "apps/app/tests/e2e/entrada-21st.spec.ts",
         "apps/app/tests/e2e/entrada-etapa.spec.ts"
       ],
-      "dependencies": ["APP-001"],
+      "dependencies": [
+        "APP-001"
+      ],
       "updatedAt": "2026-11-02",
       "blockers": [],
       "completedAt": "2026-11-02"
@@ -5605,7 +6162,11 @@
         "e2e que clica antes do registro do elemento e chega a /signup",
         "Mesma correção nos outros md-filled-button com href da landing (chamada final, barra fixa, folha do menu)"
       ],
-      "completedChecklist": [true, true, true],
+      "completedChecklist": [
+        true,
+        true,
+        true
+      ],
       "dependencies": [],
       "proof": [
         "HTML servido em 05/11/2026: cinco `<a class=\"ld-cta-btn\" href=\"/signup\">Criar conta</a>` e nenhum `<md-filled-button>` (antes: cinco botões cujo link só existia depois do registro no cliente).",
@@ -5648,7 +6209,15 @@
         "Ligar F01 e Grupos ao banco e portar as peças para components/bivaque",
         "Prova em celular real"
       ],
-      "completedChecklist": [true, true, true, false, false, false, false],
+      "completedChecklist": [
+        true,
+        true,
+        true,
+        false,
+        false,
+        false,
+        false
+      ],
       "proof": [
         "02/11: o dono delegou as decisões R3 (aceite por delegação, ratificação no fim); os dois ADRs de 01/11 deixam de bloquear e são aceitos nos lotes do F01 e de Grupos. Veredito de maturidade (agente e Astra, em separado): em parte; a rodada de maturidade é LAN-F1-IDENTIDADE.",
         "02/11: segunda revisão independente do GPT-6 Astra (.visual/PECAS/revisao-astra-2.md, fora do Git) confirmou 6 de 7 defeitos e 8 de 10 pontos visuais resolvidos em 7a1a95d1; o restante foi corrigido em 7a27676d: a pausa do aviso com foco e ponteiro, a precedência do movimento reduzido e \"Ver a resposta\", que por âncora levava à lista de grupos (defeito de 01/11). Na revisão 7a27676d: app 125/125, typecheck e build verdes, test:scope 150/150; percursos de Grupos em 375, 768 e 1440, claro e escuro, sem erro; prova de comportamento com 15 de 15 verificações (inclui foco no Desfazer com ponteiro, salto para a resposta com foco e destaque, movimento reduzido).",
@@ -5667,7 +6236,9 @@
         "apps/app/tests/previa-grupos.test.ts",
         "apps/app/tests/pecas.test.ts"
       ],
-      "dependencies": ["APP-001"],
+      "dependencies": [
+        "APP-001"
+      ],
       "updatedAt": "2026-11-02",
       "sourceRevision": "fc67e19e"
     },
@@ -5677,7 +6248,9 @@
       "blockers": [],
       "updatedAt": "2026-11-02",
       "sourceRevision": "1d395dcc",
-      "links": ["docs/LANCAMENTO.md"],
+      "links": [
+        "docs/LANCAMENTO.md"
+      ],
       "proof": [
         "02/11: PR #120 (deploy separado; nenhuma publicação nos merges seguintes, conferido na API de deployments), PR #121 (apps/app e instruções na main, CI verde em 10508814) e PR #122 (fase 1). Revisão das instruções às cegas em duas passadas, 11 achados corrigidos. PRs superados #76, #81–#83, #85, #87–#89, #95–#97, #113, #117 listados ao dono: o fechamento foi barrado pela permissão local.",
         "02/11: aberto na definição do lançamento (docs/LANCAMENTO.md), por mandato do dono."
@@ -5695,7 +6268,12 @@
         "PRs superados listados ao dono (fechar PR é ato dele nesta máquina)"
       ],
       "dependencies": [],
-      "completedChecklist": [true, true, true, true],
+      "completedChecklist": [
+        true,
+        true,
+        true,
+        true
+      ],
       "completedAt": "2026-11-02"
     },
     {
@@ -5704,7 +6282,9 @@
       "blockers": [],
       "updatedAt": "2026-11-02",
       "sourceRevision": "1d395dcc",
-      "links": ["docs/LANCAMENTO.md"],
+      "links": [
+        "docs/LANCAMENTO.md"
+      ],
       "proof": [
         "02/11: PR #122 integrado (1d395dcc), CI verde; marco 1 apresentado ao dono com as capturas. A troca das peças nas telas antigas e o resto da casca seguem nas jornadas (LAN-F01 a LAN-F10); APP-001 segue aberto pela casca e pelo movimento.",
         "02/11: revisão às cegas (subagente Claude) — Grupos e Entrada em parte, app real abaixo da régua; corrigidos ação sólida no escuro e concordância; serifa nos títulos já corrigida. Restante (abas em dois níveis, subtítulos explicativos, capa do grupo) fica nas jornadas.",
@@ -5723,8 +6303,15 @@
         "Achados do veredito de maturidade resolvidos nas telas-modelo (F01 e Grupos)",
         "Revisão às cegas por outro modelo; marco 1 apresentado ao dono"
       ],
-      "dependencies": ["LAN-F0-FUNDACAO"],
-      "completedChecklist": [true, true, true, true],
+      "dependencies": [
+        "LAN-F0-FUNDACAO"
+      ],
+      "completedChecklist": [
+        true,
+        true,
+        true,
+        true
+      ],
       "completedAt": "2026-11-02"
     },
     {
@@ -5819,7 +6406,12 @@
         "docs/decisions/ADR-20261105-entrada-enxuta-e-r3-sem-parada.md"
       ],
       "sourceRevision": "15f1e273",
-      "dependencies": ["LAN-F1-IDENTIDADE", "APP-F01-ENTRADA-VISUAL", "AJUDA-PUBLICA", "APP-001"]
+      "dependencies": [
+        "LAN-F1-IDENTIDADE",
+        "APP-F01-ENTRADA-VISUAL",
+        "AJUDA-PUBLICA",
+        "APP-001"
+      ]
     },
     {
       "phase": "Lançamento",
@@ -5827,7 +6419,9 @@
       "blockers": [],
       "updatedAt": "2026-11-06",
       "sourceRevision": "83470086",
-      "links": ["docs/LANCAMENTO.md"],
+      "links": [
+        "docs/LANCAMENTO.md"
+      ],
       "proof": [
         "02/11: aberto na definição do lançamento (docs/LANCAMENTO.md), por mandato do dono.",
         "04/11: direção do Início decidida com o dono depois de cinco direções desenhadas com referências do Mobbin: Painel da cidade (busca, quatro áreas com selo, faixas que somem sem conteúdo), mais a saudação em Noto Serif e a ordem das seções pelo momento da pessoa (saindo vê bazares de mudança primeiro; chegando vê indicações e imóveis). Motivo: aguenta cidade com pouco conteúdo.",
@@ -5848,7 +6442,10 @@
         "Acessibilidade: teclado, leitor de tela, contraste, alvos, movimento reduzido",
         "Tela antiga do apps/web retirada, com redirecionamento e portão do proxy"
       ],
-      "dependencies": ["LAN-F1-IDENTIDADE", "APP-001"]
+      "dependencies": [
+        "LAN-F1-IDENTIDADE",
+        "APP-001"
+      ]
     },
     {
       "id": "F02-RESSALVAS",
@@ -5865,7 +6462,9 @@
       ],
       "proof": [],
       "tests": [],
-      "links": ["docs/agents/tasks/RUN-012.task.yml"],
+      "links": [
+        "docs/agents/tasks/RUN-012.task.yml"
+      ],
       "dependencies": [],
       "updatedAt": "2026-11-05",
       "sourceRevision": "25610401"
@@ -5876,7 +6475,9 @@
       "blockers": [],
       "updatedAt": "2026-11-06",
       "sourceRevision": "f9492a1d",
-      "links": ["docs/LANCAMENTO.md"],
+      "links": [
+        "docs/LANCAMENTO.md"
+      ],
       "proof": [
         "02/11: aberto na definição do lançamento (docs/LANCAMENTO.md), por mandato do dono.",
         "06/11: RUN-015 integrado pelo PR #145 (f9492a1d): perguntar à cidade, anunciar desapego com foto (publicação pela RPC transition_listing) e Meus anúncios, com rascunho, revisão e erro preservado; migration nova veta pergunta de conta suspensa. Implementação GPT Sol 6.1 (parcial) e Qwen 3.8 Flash; revisão DeepSeek V4.1 Flash FAIL (publicação por UPDATE direto recusada pela guarda) e security-auditor (Sonnet 5.5) LIBERA COM RESSALVAS; rodada única de correção fechou; CI verde com o E2E real. Publicação em grupo fica para o F04 Grupos."
@@ -5895,7 +6496,10 @@
         "Acessibilidade: teclado, leitor de tela, contraste, alvos, movimento reduzido",
         "Tela antiga do apps/web retirada, com redirecionamento e portão do proxy"
       ],
-      "dependencies": ["LAN-F1-IDENTIDADE", "APP-001"]
+      "dependencies": [
+        "LAN-F1-IDENTIDADE",
+        "APP-001"
+      ]
     },
     {
       "phase": "Lançamento",
@@ -5903,7 +6507,9 @@
       "blockers": [],
       "updatedAt": "2026-11-07",
       "sourceRevision": "dc9bfcbd",
-      "links": ["docs/LANCAMENTO.md"],
+      "links": [
+        "docs/LANCAMENTO.md"
+      ],
       "proof": [
         "02/11: aberto na definição do lançamento (docs/LANCAMENTO.md), por mandato do dono.",
         "05/11–06/11: RUN-014 (perguntas da cidade: lista, detalhe e resposta) integrado pelo PR #140 (ace60d99). Implementação DeepSeek V4.1 Flash; revisão Qwen 3.8 Flash PASS COM RESSALVAS; security-auditor (Sonnet 5.5) LIBERA COM RESSALVAS; specs do app ajustados ao dado real; CI verde (um teste instável de foco em sobreposição passou na repetição). Grupos, publicação com foto, Útil, salvar, seguir, fixar e denúncia continuam fora.",
@@ -5925,7 +6531,12 @@
         "Acessibilidade: teclado, leitor de tela, contraste, alvos, movimento reduzido",
         "Tela antiga do apps/web retirada, com redirecionamento e portão do proxy"
       ],
-      "dependencies": ["LAN-F1-IDENTIDADE", "INDICACOES-MEMORIA", "INDICACOES-AVISO", "APP-001"],
+      "dependencies": [
+        "LAN-F1-IDENTIDADE",
+        "INDICACOES-MEMORIA",
+        "INDICACOES-AVISO",
+        "APP-001"
+      ],
       "completedAt": "2026-11-07"
     },
     {
@@ -5945,7 +6556,9 @@
       ],
       "updatedAt": "2026-11-11",
       "sourceRevision": "7c836a76",
-      "links": ["docs/LANCAMENTO.md"],
+      "links": [
+        "docs/LANCAMENTO.md"
+      ],
       "proof": [
         "02/11: aberto na definição do lançamento (docs/LANCAMENTO.md), por mandato do dono.",
         "05/11, rodada 1: F05 ligada ao banco no app (RUN-007; ADR-20261105, R3 aceito por delegação). Cliente único, um módulo por jornada, rotas /api/app/eventos* com o cliente da sessão sob RLS, validação compartilhada com a Server Action antiga. Agenda e Evento saíram do dadosDoApp.",
@@ -5983,7 +6596,10 @@
         "Acessibilidade: teclado, leitor de tela, contraste, alvos, movimento reduzido",
         "Tela antiga do apps/web retirada, com redirecionamento e portão do proxy"
       ],
-      "dependencies": ["LAN-F1-IDENTIDADE", "APP-001"]
+      "dependencies": [
+        "LAN-F1-IDENTIDADE",
+        "APP-001"
+      ]
     },
     {
       "phase": "Lançamento",
@@ -5991,7 +6607,10 @@
       "blockers": [],
       "updatedAt": "2026-11-14",
       "sourceRevision": "7637da64",
-      "links": ["docs/LANCAMENTO.md", "https://bazardavila.app.br/vender"],
+      "links": [
+        "docs/LANCAMENTO.md",
+        "https://bazardavila.app.br/vender"
+      ],
       "proof": [
         "02/11: aberto na definição do lançamento (docs/LANCAMENTO.md), por mandato do dono.",
         "04/11: checklist ampliado com situação do anúncio e mensagem pronta, a partir da análise do Bazar da Vila (bazardavila.app.br), app de desapego de mudança para vilas militares já ativo em Manaus.",
@@ -6017,7 +6636,12 @@
         "Situação do anúncio: disponível ou vendido, marcar vendido em um toque, filtro \"Só disponíveis\" e contagem à venda/vendidos na vitrine do anunciante",
         "Interesse abre a conversa com mensagem pronta e editável que cita o item e o preço"
       ],
-      "dependencies": ["LAN-F1-IDENTIDADE", "LOC-IMPL", "DATA-IBGE-BAIRROS", "APP-001"]
+      "dependencies": [
+        "LAN-F1-IDENTIDADE",
+        "LOC-IMPL",
+        "DATA-IBGE-BAIRROS",
+        "APP-001"
+      ]
     },
     {
       "phase": "Lançamento",
@@ -6048,7 +6672,9 @@
         "Cadastro em sequência para quem vai anunciar muitos itens: foto, preço e próximo, com meta de 30 segundos por item",
         "E2E em 375/768/1440, claro e escuro; RLS e pgTAP do que o bazar expõe, com casos positivos e negativos"
       ],
-      "dependencies": ["LAN-F06"]
+      "dependencies": [
+        "LAN-F06"
+      ]
     },
     {
       "phase": "Lançamento",
@@ -6056,7 +6682,9 @@
       "blockers": [],
       "updatedAt": "2026-11-05",
       "sourceRevision": "ca6498ee",
-      "links": ["docs/LANCAMENTO.md"],
+      "links": [
+        "docs/LANCAMENTO.md"
+      ],
       "proof": [
         "02/11: aberto na definição do lançamento (docs/LANCAMENTO.md), por mandato do dono.",
         "05/11: RUN-010 (GPT Sol 6.1) — entram as cinco rotas da sessão (categorias e negócios da cidade atual, ficha com foto por URL assinada de 5 min, criação de pedido, lista e detalhe dos próprios pedidos) e a porta de dados do app, com cancelamento, paginação e falha que preserva o texto; 'Onde atende' usa a cidade real; Mercado segue intacto. Commits c68b9ea6, 16b4b4c7, f1fdb588, 55ea0cd8 e ca6498ee. Números: 126 testes de API passam (70 da F07 e 56 de pedidos antigos); gate final verde sem build Next (falta configuração local); 2.174 de unidade, 261 do app, 76 mobile, 19 web, 189 de privacidade e 192 de escopo passam; 'Onde atende' com 18 cenários em 375/768/1440, claro e escuro, em HTTP controlado; 42 capturas estáveis. Não rodou: E2E com banco local real (Docker negado), pgTAP e build Next. Revisões: Qwen PASS COM RESSALVAS (.visual/run-010/revisao-qwen.md); auditoria de segurança válida do coordenador (security-auditor, Sonnet 5.5): LIBERA COM RESSALVAS, sem crítico nem alto. O arquivo .visual/run-010/45-auditoria.log é autoavaliação do executor e não conta como revisão. Ressalvas abertas no cartão F07-RESSALVAS-REVISAO. E2E com banco real roda no check Install, test, and build do CI deste PR.",
@@ -6076,7 +6704,11 @@
         "Acessibilidade: teclado, leitor de tela, contraste, alvos, movimento reduzido",
         "Tela antiga do apps/web retirada, com redirecionamento e portão do proxy"
       ],
-      "dependencies": ["LAN-F1-IDENTIDADE", "PEDIDO-MENSAGEM-ERRO-CRU", "APP-001"]
+      "dependencies": [
+        "LAN-F1-IDENTIDADE",
+        "PEDIDO-MENSAGEM-ERRO-CRU",
+        "APP-001"
+      ]
     },
     {
       "id": "F07-RESSALVAS-REVISAO",
@@ -6093,11 +6725,19 @@
         "Registrar falhas das cinco rotas no servidor, sem dado pessoal nos logs",
         "Retirar o export antigo de Negocios em apps/app/src/telas/Mercado.tsx"
       ],
-      "completedChecklist": [false, false, false, false, false],
+      "completedChecklist": [
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
       "proof": [],
       "tests": [],
       "blockers": [],
-      "links": ["docs/agents/tasks/RUN-010.task.yml"],
+      "links": [
+        "docs/agents/tasks/RUN-010.task.yml"
+      ],
       "dependencies": [],
       "updatedAt": "2026-11-05",
       "sourceRevision": "ca6498ee"
@@ -6108,7 +6748,9 @@
       "blockers": [],
       "updatedAt": "2026-11-06",
       "sourceRevision": "83470086",
-      "links": ["docs/LANCAMENTO.md"],
+      "links": [
+        "docs/LANCAMENTO.md"
+      ],
       "proof": [
         "02/11: aberto na definição do lançamento (docs/LANCAMENTO.md), por mandato do dono.",
         "05/11–06/11: RUN-009 integrado pelo PR #139 (e59e6008). Implementação DeepSeek V4.1 Flash; revisão de contrato Haiku 5.5 FAIL (roteiro e atalhos retirados, salvo preso, Salvos sem verbetes, sugestão sem E2E); auditoria security-auditor (Sonnet 5.5) LIBERA COM RESSALVAS (cursor sem escape); rodada única de correção no DeepSeek V4.1 Flash gratuito fechou tudo; CI verde com o E2E real. Observação: arrival_guide_entries tem leitura nacional por policy; salvar/sugerir só da cidade."
@@ -6127,7 +6769,11 @@
         "Acessibilidade: teclado, leitor de tela, contraste, alvos, movimento reduzido",
         "Tela antiga do apps/web retirada, com redirecionamento e portão do proxy"
       ],
-      "dependencies": ["LAN-F1-IDENTIDADE", "RECON-030-GUIA-FOTOS", "APP-001"]
+      "dependencies": [
+        "LAN-F1-IDENTIDADE",
+        "RECON-030-GUIA-FOTOS",
+        "APP-001"
+      ]
     },
     {
       "phase": "Lançamento",
@@ -6135,7 +6781,9 @@
       "blockers": [],
       "updatedAt": "2026-11-07",
       "sourceRevision": "954dd638",
-      "links": ["docs/LANCAMENTO.md"],
+      "links": [
+        "docs/LANCAMENTO.md"
+      ],
       "proof": [
         "02/11: aberto na definição do lançamento (docs/LANCAMENTO.md), por mandato do dono.",
         "04/11: o dono pôs o push no celular no lançamento; F09 passa a incluir o canal push nas preferências (LAN-PUSH).",
@@ -6187,7 +6835,9 @@
         "[x] Sem alterar colunas nem grants; RLS segue forçada e o helper privado segue fora da Data API — grant residual levado ao RLS-RESSALVAS-RUN017",
         "[x] Prova no banco local isolado (reset --local --no-seed, test:db e db:lint), registrada no cartão — provado pelo test:db do CI do PR #144"
       ],
-      "links": ["docs/LANCAMENTO.md"],
+      "links": [
+        "docs/LANCAMENTO.md"
+      ],
       "completedAt": "2026-11-06"
     },
     {
@@ -6212,7 +6862,9 @@
         "BOM (U+FEFF) removido da primeira linha dos arquivos do F09 que o recebem, sem tocar no conteúdo",
         "Link 'Ver origem' de conversa para anúncio ou negócio restaurado quando a tela de destino não ler demonstração"
       ],
-      "links": ["apps/web/app/api/app/conversas/[id]/mensagens/route.ts"]
+      "links": [
+        "apps/web/app/api/app/conversas/[id]/mensagens/route.ts"
+      ]
     },
     {
       "phase": "Lançamento",
@@ -6220,7 +6872,10 @@
       "blockers": [],
       "updatedAt": "2026-11-04",
       "sourceRevision": "29fcc8f",
-      "links": ["docs/LANCAMENTO.md", "docs/decisions/ADR-20261024-front-react-spa.md"],
+      "links": [
+        "docs/LANCAMENTO.md",
+        "docs/decisions/ADR-20261024-front-react-spa.md"
+      ],
       "proof": [
         "04/11: aberto por decisão do dono (push entra no lançamento), registrado em docs/LANCAMENTO.md, Mudanças de escopo."
       ],
@@ -6237,7 +6892,9 @@
         "Toque na notificação abre o destino certo pelos links profundos (NOTIF-DEEPLINKS)",
         "Prova no emulador Android e no simulador iOS com credenciais de teste; pgTAP positivo e negativo da tabela de tokens"
       ],
-      "dependencies": ["NOTIF-DEEPLINKS"]
+      "dependencies": [
+        "NOTIF-DEEPLINKS"
+      ]
     },
     {
       "phase": "Lançamento",
@@ -6245,7 +6902,9 @@
       "blockers": [],
       "updatedAt": "2026-11-06",
       "sourceRevision": "f9492a1d",
-      "links": ["docs/LANCAMENTO.md"],
+      "links": [
+        "docs/LANCAMENTO.md"
+      ],
       "proof": [
         "02/11: aberto na definição do lançamento (docs/LANCAMENTO.md), por mandato do dono.",
         "06/11: RUN-016 integrado pelo PR #143 (385d9850): perfil próprio (ler e editar nome e bio), minhas publicações, bloqueados e ocultados com desfazer, e pedido de exclusão pelo fluxo existente. Implementação DeepSeek V4.1 Flash; revisão Qwen 3.8 Flash PASS COM RESSALVAS; security-auditor (Sonnet 5.5) LIBERA COM RESSALVAS; CI verde com o E2E real. Família ficou fora (ver F10-FAMILIA)."
@@ -6264,15 +6923,21 @@
         "Acessibilidade: teclado, leitor de tela, contraste, alvos, movimento reduzido",
         "Tela antiga do apps/web retirada, com redirecionamento e portão do proxy"
       ],
-      "dependencies": ["LAN-F1-IDENTIDADE", "MVP-RETENTION-PURGE", "APP-001"]
+      "dependencies": [
+        "LAN-F1-IDENTIDADE",
+        "MVP-RETENTION-PURGE",
+        "APP-001"
+      ]
     },
     {
       "phase": "Lançamento",
       "tests": [],
       "blockers": [],
-      "updatedAt": "2026-11-14",
-      "sourceRevision": "b5be43d4",
-      "links": ["docs/LANCAMENTO.md"],
+      "updatedAt": "2026-11-16",
+      "sourceRevision": "9ca86c53",
+      "links": [
+        "docs/LANCAMENTO.md"
+      ],
       "proof": [
         "02/11: aberto na definição do lançamento (docs/LANCAMENTO.md), por mandato do dono.",
         "06/11: RUN-019 fase 1, autorizada pelo coordenador após o inventário de .visual/run-019/relatorio.md; família incluída pelo PR #147. Commits 21e333fb (13 regras 307 para 12 rotas, IDs/query e negativas) e 1b7c82e3 (E2E e rastreador adaptados). Gate --fast passou (lint e tipos, incluindo E2E), escopo 222/222 e unitários 2.525/2.525 em 226 arquivos, com um worker. Contrato substitui blocked_by por nota da fase 1 e lacunas no fechamento deste cartão. Sem revisão por outro modelo, E2E, servidor, banco, build ou gate completo local por ordem explícita; runtime/rastreador ficam para CI. LAN-TROCA permanece next, sem fechamento integral.",
@@ -6288,7 +6953,8 @@
         "15/11: mais 2 lotes — RUN-157 F10 sair da conta (55af2822, escopo local 'neste aparelho', servidor revoga sem cliente Supabase no app; causa-raiz do cookie no WeakMap registrada em SESSAO-COOKIES-WEAKMAP); RUN-158 F04 seguir/salvar indicações (0400887a, um toggle 'Seguir respostas' em recommendation_saves, reuse total sem migration — banco já notificava quem salvou; fecha também 'indicações em Salvos' do F10). Lacunas F04/F06/F10 atualizadas no checklist. 7 lotes de jornada no dia.",
         "15/11: RUN-159 F04 denúncia de pergunta+resposta (ecc2d95d, reuse do mecanismo reports sem migration) — 8º lote. F04 completo exceto 'Também perguntar à cidade' (R3 grande, deferido com card F04-TAMBEM-PERGUNTAR; drift da lista de lacunas reconciliado).",
         "15/11: RUN-160 F10 gestão de interesses pós-onboarding (2a25105b, pares usuário↔grupo, reuse dos RPCs sem migration; service_role com exceção medida como família/localização) — 9º lote. F10 resta perfil alheio. Lição: E2E escrito sem rodar reincide em armadilhas (restauração de sobreposição no reload reabre o modal e aria-hidden o heading; getByRole Fechar substring casa a alça).",
-        "15/11: RUN-161 F10 perfil alheio (6f5119cd, BLOCK-AFFILIATION respeitado, reuse das RPCs DONE-PROFILE-RPCS sem migration) — 10º lote, FECHA O F10 (funcionalidades). Regressão caught+fix: campo aditivo autorId tornou o parser do cliente estrito mas o POST do comentário não o devolvia (o fio recusava o comentário); lição: campo aditivo entra em TODOS os caminhos que devolvem o objeto parseado, inclusive escritas. Resta a troca de /profile próprio + /profile/interests. Gap: invitation_accepted cai em /app/voce."
+        "15/11: RUN-161 F10 perfil alheio (6f5119cd, BLOCK-AFFILIATION respeitado, reuse das RPCs DONE-PROFILE-RPCS sem migration) — 10º lote, FECHA O F10 (funcionalidades). Regressão caught+fix: campo aditivo autorId tornou o parser do cliente estrito mas o POST do comentário não o devolvia (o fio recusava o comentário); lição: campo aditivo entra em TODOS os caminhos que devolvem o objeto parseado, inclusive escritas. Resta a troca de /profile próprio + /profile/interests. Gap: invitation_accepted cai em /app/voce.",
+        "16/11: RUN-162 (PR #241, f237d683) fecha F08-RESSALVAS so com testes. RUN-163 (PR #242, 9ca86c53) troca /profile/interests → /app/voce e PORTA O PORTAO DE ADMISSAO para a rota do app (a web exigia verified OU familiar admitido antes de listar com service_role; a rota nao conferia — a troca mataria a fronteira). F05 reclassificado: criar/editar era drift; convites fan-out nao e linha do LANCAMENTO."
       ],
       "id": "LAN-TROCA",
       "title": "Fase 6: varredura da troca — nenhuma rota de membro no apps/web servindo tela",
@@ -6301,7 +6967,7 @@
         "Portões do proxy movidos com teste por perfil",
         "Código, testes e ferramentas antigas removidos",
         "Fase 1 (RUN-019, decisão revista em 06/11): 307 das 11 rotas autorizadas, IDs/query preservados, sem ciclo; /indicacoes/:id fica na web até F04 para preservar Ajudou a resolver; demais rotas e edições ficam na web",
-        "Lacunas seguintes: filtros q/search e IDs do Guia/cidade/localidade (F02/F08); Também perguntar à cidade (F04, R3, card F04-TAMBEM-PERGUNTAR; grupos/seguir/salvar/resolver/denúncias fechados: RUN-153/155/158/159); convites/fan-out e criar/editar evento (F05); Meus anúncios e alertas (F06; criar/editar fechado: RUN-156); criar pedido endereçável e negócio/catálogo próprio (F07); avisos/preferências/bloqueio na conversa (F09); troca de /profile próprio + /profile/interests (F10; funcionalidades completas: indicações em Salvos, sair, interesses, perfil alheio — RUN-157/158/160/161)",
+        "Lacunas seguintes: filtros/IDs de Guia e busca FECHADOS (RUN-162); cidade/localidade = jornada de troca propria (card CIDADE-LOCALIDADE-TROCA); F05: criar/editar era drift (ja feito — f05-eventos-real:319-375, tela trocada PR #176), fan-out de convites NAO e linha F05 do LANCAMENTO (decisao 16/11; parte de e-mail em OUTBOX-INVITE-RECIPIENTS), falta cancelar-encontro do organizador (card F05-CANCELAR-EVENTO); Meus anuncios e alertas (F06; criar/editar RUN-156, imovel em RUN-164, alertas/filtros/salvar em lotes B-D); F07; seguranca na conversa e preferencias (F09; RUN-165 em curso; troca da pasta /messages depois); troca de /profile proprio + editar (F10; funcionalidades RUN-157/158/160/161/163 completas; paridade pendente no card F10-TROCA-PERFIL-PROPRIO)",
         "Provar a revisão da fase 1 no CI: E2E integrado e rastreador; manter as portas de /profile e /community enquanto suas jornadas ficam na web"
       ],
       "dependencies": [
@@ -6325,7 +6991,9 @@
       "blockers": [],
       "updatedAt": "2026-11-02",
       "sourceRevision": "fc67e19e",
-      "links": ["docs/LANCAMENTO.md"],
+      "links": [
+        "docs/LANCAMENTO.md"
+      ],
       "proof": [
         "02/11: aberto na definição do lançamento (docs/LANCAMENTO.md), por mandato do dono."
       ],
@@ -6341,7 +7009,10 @@
         "Builds de release (AAB e arquivo do Xcode em executor macOS) gerados pelo CI sem assinatura de produção",
         "Assinatura, fichas e envio registrados como atos do dono"
       ],
-      "dependencies": ["LAN-TROCA", "BLOCK-MOBILE-RUNTIME"]
+      "dependencies": [
+        "LAN-TROCA",
+        "BLOCK-MOBILE-RUNTIME"
+      ]
     },
     {
       "phase": "Lançamento",
@@ -6349,7 +7020,9 @@
       "blockers": [],
       "updatedAt": "2026-11-11",
       "sourceRevision": "d17efa4c",
-      "links": ["docs/LANCAMENTO.md"],
+      "links": [
+        "docs/LANCAMENTO.md"
+      ],
       "proof": [
         "02/11: checklist ganhou a medição pós-lançamento herdada de INDICACOES-AVISO (tempo até a primeira resposta e pedidos de indicação sem resposta em 24 h), que só se mede depois de o app estar no ar.",
         "02/11: aberto na definição do lançamento (docs/LANCAMENTO.md), por mandato do dono.",
@@ -6368,7 +7041,11 @@
         "Ensaio de deploy e relatório final com a lista de ratificação",
         "Medir tempo até a primeira resposta e pedidos de indicação sem resposta em 24 h (herdado de INDICACOES-AVISO)"
       ],
-      "dependencies": ["LAN-TROCA", "LAN-LOJA", "OPS-CONCORRENCIA-LANCAMENTO"]
+      "dependencies": [
+        "LAN-TROCA",
+        "LAN-LOJA",
+        "OPS-CONCORRENCIA-LANCAMENTO"
+      ]
     },
     {
       "id": "LAN-OP",
@@ -6395,7 +7072,10 @@
       "blockers": [],
       "updatedAt": "2026-11-07",
       "sourceRevision": "954dd638",
-      "links": ["docs/LANCAMENTO.md", "docs/decisions/ADR-20261107-recursos-inspirados-humhub.md"],
+      "links": [
+        "docs/LANCAMENTO.md",
+        "docs/decisions/ADR-20261107-recursos-inspirados-humhub.md"
+      ],
       "proof": [
         "02/11: aberto pela revisão independente do Astra sobre as instruções (achado 7).",
         "07/11: ADR-20261107 confirma o LAN-OP no lançamento no modelo da administração do HumHub (fila de aprovação, denúncias, suspensão e registro das ações do operador).",
@@ -6454,7 +7134,12 @@
         "14/11: RUN-147 PR #224 (só workflows/docs, run 43604939946, SHA 321736bf): group-admin-cycle.spec.ts:120 (@stateful, membro pendente cancela o pedido) caiu nas 3 larguras nos dois retries; 281 passed, resto do completo verde. A testemunha RUN-145 (já mergeada, 4219d15f) confirmou a MESMA causa no kong-errors.log: recv() failed (104: Connection reset by peer) e upstream prematurely closed -> 502 em my_group_notify_level, dm_messages e group_memberships entre 14:32 e 14:42, janela do lote serial. Rerun do job falho aplicado (contorno sancionado pelo dono em 13/11); artefatos em .visual/run-147/ci-artifacts. Fix definitivo (idle=10 via prepare+HUP, preserva binds) segue em lote futuro.",
         "14/11: RUN-148 mergeado (PR #227, 5e4af006): step após os resets aplica idle=10 no Kong em execução (prepare com template custom + HUP no master, receita provada do RUN-144), 3 verificações fail-fast (valor no .kong_env, server 8088, fetch 200 do template). Completo verde em 22.9 min no SHA 6dcb91aa (run 43615866491), F01 verde — mecanismo aplicado e verificado, 1º run verde. A cura NÃO é provada (idle=10 absolvido no experimento isolado; 502 sob carga em aberto); o card segue aberto pelo critério de 10 verdes. Revisão Qwen PASS + correção (reposicionar o step após os resets)."
       ],
-      "completedChecklist": [true, false, false, false]
+      "completedChecklist": [
+        true,
+        false,
+        false,
+        false
+      ]
     },
     {
       "id": "CI-LINKCRAWL-SEM-PORTA-DENUNCIAS",
@@ -6470,16 +7155,23 @@
         "link-crawl verde em run com o lote serial sob carga"
       ],
       "dependencies": [],
-      "tests": ["tests/e2e/link-crawl.spec.ts"],
+      "tests": [
+        "tests/e2e/link-crawl.spec.ts"
+      ],
       "blockers": [],
       "updatedAt": "2026-11-14",
       "sourceRevision": "b5be43d4",
-      "links": ["tests/e2e/link-crawl.spec.ts"],
+      "links": [
+        "tests/e2e/link-crawl.spec.ts"
+      ],
       "proof": [
         "14/11: descoberto no fechamento do LT-007 (run 43616944587, semPorta=[/denuncias]); fragilidade pré-existente, não causada pela troca do guia.",
         "14/11: resolvido no LT-007 (merge b5be43d4): /denuncias declarado dependeDeDados:true em PORTAS_FORA_DO_LINK (portas legítimas intactas: Ajuda e retorno do fluxo); link-crawl verde no run 43622057312 (SHA a2c51d9d, completo 17.9 min)."
       ],
-      "completedChecklist": [true, true]
+      "completedChecklist": [
+        true,
+        true
+      ]
     },
     {
       "id": "RUN-147",
@@ -6510,7 +7202,13 @@
         "14/11: implementado pelo DeepSeek (commit 8cec117f, branch ds/ci-fast-cycle): 3 workflows, só adições (56 linhas); YAML válido, contrato R3 válido, secrets scan limpo. Coordenador verificou o diff no disco (fast com os comandos exatos dos steps rápidos; ci intacto + if; visuais com paths/timeouts preservados). Achado do executor sobre readiness-github.mjs resolvido pela leitura: classifyChecks exige cada step presente e verde -> fast-only = inconclusive, sem falso verde. Revisão Qwen + auditoria R3 em curso; prova de runtime no PR.",
         "14/11: FECHADO — PR #224 mergeado em 3dccdbc4 (squash de 321736bf). Prova de runtime completa: SEM label, run 43604585319 no SHA final 321736bf = Fast checks success 1.5 min, completo e visuais skipped; COM a label ci:full, runs 43604939946 (Pull Request CI), 43604939862 (App mobile-first, success 33.7 min) e 43604939861 (R72, success) no mesmo SHA — o evento labeled disparou os três. O completo caiu na 1ª tentativa só pelo flaky conhecido (group-admin-cycle:120, causa Kong↔PostgREST confirmada no kong-errors.log da testemunha RUN-145; ocorrência registrada em CI-E2E-UPSTREAM-INSTAVEL); rerun --failed verde: Install/test/build success 17.1 min, Fast 1.4 min, mesmo SHA 321736bf — ressalva R1 do auditor satisfeita (run completo no SHA mergeado). Revisão Qwen PASS + auditoria security-auditor PASS com ressalvas (R2: label criada e disparo conferido). Dashboard readiness não dá falso verde (classifyChecks exige steps presentes; runs de PR invisíveis ao readiness). Ciclo medido: ~1.5 min por push; completo ~17-25 min + visuais ~34 min, uma vez no fechamento."
       ],
-      "completedChecklist": [true, true, true, true, true]
+      "completedChecklist": [
+        true,
+        true,
+        true,
+        true,
+        true
+      ]
     },
     {
       "id": "RUN-149",
@@ -6527,15 +7225,23 @@
         "Medir wall time vs baseline 32 min"
       ],
       "dependencies": [],
-      "tests": ["tests/scope/app-suite-ci.test.mjs"],
+      "tests": [
+        "tests/scope/app-suite-ci.test.mjs"
+      ],
       "blockers": [],
       "updatedAt": "2026-11-14",
       "sourceRevision": "6342e2ce",
-      "links": ["docs/agents/tasks/RUN-149.task.yml"],
+      "links": [
+        "docs/agents/tasks/RUN-149.task.yml"
+      ],
       "proof": [
         "14/11: PR #228 mergeado em 6342e2ce. Visual --shard: 7 shards verdes (4.9-7.8 min) + agregador, wall 7.8 min vs baseline 32.1 (4.1x). workers:4 reprovado (colisão, 33 min sem ganho). webServer start-only: full verde, build único 12s. Guard app-suite-ci pass 1/fail 0."
       ],
-      "completedChecklist": [true, true, true]
+      "completedChecklist": [
+        true,
+        true,
+        true
+      ]
     },
     {
       "id": "RUN-150",
@@ -6552,15 +7258,23 @@
         "Medir wall time vs baseline 17-21 min"
       ],
       "dependencies": [],
-      "tests": ["tests/scope/local-command-surface.test.mjs"],
+      "tests": [
+        "tests/scope/local-command-surface.test.mjs"
+      ],
       "blockers": [],
       "updatedAt": "2026-11-14",
       "sourceRevision": "9b182875",
-      "links": ["docs/agents/tasks/RUN-150.task.yml"],
+      "links": [
+        "docs/agents/tasks/RUN-150.task.yml"
+      ],
       "proof": [
         "14/11: PR #229 mergeado em 9b182875. Run 43647205114 (SHA 63fbef3d): ci-core 11 min, stateful mobile-375 5.7/tablet-768 5.6/desktop-1440 9.3 min, agregador success, fast 1.5 min — tudo verde, sem colisão. Wall full 11 min vs baseline 17-21. Fechamento = max(full 11, visual 7.8) ~11 min (alvo 8-12). Gargalo restante: ci-core 11 min (setup+comuns)."
       ],
-      "completedChecklist": [true, true, true]
+      "completedChecklist": [
+        true,
+        true,
+        true
+      ]
     },
     {
       "id": "RUN-151",
@@ -6576,15 +7290,22 @@
         "Guards verdes; medir ci-core"
       ],
       "dependencies": [],
-      "tests": ["tests/scope/local-command-surface.test.mjs"],
+      "tests": [
+        "tests/scope/local-command-surface.test.mjs"
+      ],
       "blockers": [],
       "updatedAt": "2026-11-14",
       "sourceRevision": "2f44dfe2",
-      "links": ["docs/agents/tasks/RUN-151.task.yml"],
+      "links": [
+        "docs/agents/tasks/RUN-151.task.yml"
+      ],
       "proof": [
         "14/11: PR #230 mergeado em 2f44dfe2. Run 43651782334 (SHA 5017e9d0): ci-core 7.5 min, stateful desktop 9.4/tablet 6/mobile 7.4, fast 1.6, agregador success. Fechamento ~9.4 min (piso stateful-desktop). CI rápida: ~45 -> ~9.4 min."
       ],
-      "completedChecklist": [true, true]
+      "completedChecklist": [
+        true,
+        true
+      ]
     },
     {
       "id": "RUN-152",
@@ -6601,16 +7322,25 @@
         "Revisão R2 + CI claro-only verde"
       ],
       "dependencies": [],
-      "tests": ["apps/app/tests/e2e/tema.spec.ts"],
+      "tests": [
+        "apps/app/tests/e2e/tema.spec.ts"
+      ],
       "blockers": [],
       "updatedAt": "2026-11-15",
       "sourceRevision": "81763cc6",
-      "links": ["docs/agents/tasks/TEMA-CLARO.task.yml", "docs/LANCAMENTO.md"],
+      "links": [
+        "docs/agents/tasks/TEMA-CLARO.task.yml",
+        "docs/LANCAMENTO.md"
+      ],
       "proof": [
         "14/11: implementado pelo DeepSeek (74b39b8b). Revisão R2 Qwen PASS (mecanismo conferido: gate data-tema, @custom-variant dark, tokens preservados, testes claro-only). App test 512/512 + typecheck + gate --fast verdes (coordenador re-rodou app test). Pendência: landing web ainda segue o sistema (card TEMA-CLARO-LANDING-WEB).",
         "15/11: FECHADO — PR #231 mergeado em 81763cc6. Fixes: capturadores web stateful claro-only (aa46cd7d); formato board.json (biome); hover do botao tonal virou token rgb (c950a1d7) — o contraste 1.36 do CI era artefato do helper (color-mix oklch lido como rgb), a paleta clara já tinha 12.54:1. CI run 43658532479 todo verde (stateful 3 viewports + fast + ci-core + agregador). Resíduo: helper de contraste não parseia oklch (card TESTE-CONTRASTE-OKLCH)."
       ],
-      "completedChecklist": [true, true, true]
+      "completedChecklist": [
+        true,
+        true,
+        true
+      ]
     },
     {
       "id": "TESTE-CONTRASTE-OKLCH",
@@ -6625,7 +7355,9 @@
         "Sem leitura falsa de contraste"
       ],
       "dependencies": [],
-      "tests": ["tests/e2e/f05-eventos-real.spec.ts"],
+      "tests": [
+        "tests/e2e/f05-eventos-real.spec.ts"
+      ],
       "blockers": [],
       "updatedAt": "2026-11-15",
       "sourceRevision": "81763cc6",
@@ -6656,11 +7388,17 @@
       "blockers": [],
       "updatedAt": "2026-11-15",
       "sourceRevision": "2db19a6b",
-      "links": ["docs/agents/tasks/F04-RESOLVER.task.yml"],
+      "links": [
+        "docs/agents/tasks/F04-RESOLVER.task.yml"
+      ],
       "proof": [
         "15/11: PR #232 mergeado em 2db19a6b. Implementado pelo DeepSeek (4d3571f1) + fix do teste (675ae4e2: a etiqueta Resolvida carrega o ícone check_circle como ligadura no textContent, getByText exact:true não casava — removido exact, provado em navegador real). Revisão R2 Qwen PASS (2 notas menores: edge case pré-existente do RPC resolver sem resposta, inalcançável pela UI; risco baixo de estado pós-await). CI run 43669296794 todo verde (ci-core + fast + 3 stateful + agregador). App test 518. Resíduo: o RPC mark_recommendation_resolved não limpa resolved_reply_id quando já havia resposta marcada (pré-existente, registrar)."
       ],
-      "completedChecklist": [true, true, true]
+      "completedChecklist": [
+        true,
+        true,
+        true
+      ]
     },
     {
       "id": "RUN-154",
@@ -6678,15 +7416,25 @@
         "Swap web + CI verde"
       ],
       "dependencies": [],
-      "tests": ["tests/e2e/f08-guia-real.spec.ts", "tests/e2e/guia-redirects.spec.ts"],
+      "tests": [
+        "tests/e2e/f08-guia-real.spec.ts",
+        "tests/e2e/guia-redirects.spec.ts"
+      ],
       "blockers": [],
       "updatedAt": "2026-11-15",
       "sourceRevision": "03ace7a4",
-      "links": ["docs/agents/tasks/F08-VERBETE.task.yml"],
+      "links": [
+        "docs/agents/tasks/F08-VERBETE.task.yml"
+      ],
       "proof": [
         "15/11: PR #233 mergeado em 03ace7a4. Implementado pelo DeepSeek (f8a11135) + fixes: E2E (0c0f2acd: nome do verbete no h1, âncora Contribuir, reduced-motion na rota), unit knock-on (b6397093: cidade-consulta lê verbete.podeSalvar), manifesto (0e3a2db1: TOTAL 87 após merge da main com resolucao F04). Revisão R2 Qwen PASS com correção obrigatória (acessibilidade) aplicada. CI run 43674679843 todo verde. Resíduos: artigo guide_articles não migrado; correction-actions.ts revalidatePath em rota removida (no-op); loadOwnCorrectionRequests web órfã."
       ],
-      "completedChecklist": [true, true, true, true]
+      "completedChecklist": [
+        true,
+        true,
+        true,
+        true
+      ]
     },
     {
       "id": "RUN-155",
@@ -6703,15 +7451,24 @@
         "Testes positivo/negativo + CI verde"
       ],
       "dependencies": [],
-      "tests": ["tests/e2e/f04-grupos-real.spec.ts", "tests/unit/app-api/grupos/novo.test.ts"],
+      "tests": [
+        "tests/e2e/f04-grupos-real.spec.ts",
+        "tests/unit/app-api/grupos/novo.test.ts"
+      ],
       "blockers": [],
       "updatedAt": "2026-11-15",
       "sourceRevision": "dff7dacd",
-      "links": ["docs/agents/tasks/F04-CRIAR-GRUPO.task.yml"],
+      "links": [
+        "docs/agents/tasks/F04-CRIAR-GRUPO.task.yml"
+      ],
       "proof": [
         "15/11: PR #234 mergeado em dff7dacd. Implementado pelo DeepSeek (d7efdc38) + fix locator (86fa3b8b: Fechar da folha com exact:true, a alça Arrastar para fechar casava por substring). Revisão R2 Qwen PASS-COM-RESSALVA (3 LOW: corrida de nome sem índice único — shortcut como na web; mensagem CSRF 403 inalcançável; limites duplicados entre pacotes). CI run 43673852885 todo verde. App test 533, suíte raiz 3187."
       ],
-      "completedChecklist": [true, true, true]
+      "completedChecklist": [
+        true,
+        true,
+        true
+      ]
     },
     {
       "id": "RUN-156",
@@ -6722,17 +7479,29 @@
       "status": "done",
       "completedAt": "2026-11-15",
       "description": "Redirects 307 /mercado/novo → /app/mercado e /mercado/[id]/editar → /app/anuncio/[id] (query preservada). Páginas web removidas (novo 493 + editar 587 linhas). O app já cria/edita de verdade. provider-member-business.spec.ts:177 prova o redirect (porta extra saiu; criação de negócio segue por /explorar/servicos, /profile, /negocio). capture.mjs sem rotas que só redirecionam. Sem migration.",
-      "checklist": ["Redirects + páginas removidas", "Testes realocados sem afrouxar", "CI verde"],
+      "checklist": [
+        "Redirects + páginas removidas",
+        "Testes realocados sem afrouxar",
+        "CI verde"
+      ],
       "dependencies": [],
-      "tests": ["tests/e2e/mercado-redirects.spec.ts"],
+      "tests": [
+        "tests/e2e/mercado-redirects.spec.ts"
+      ],
       "blockers": [],
       "updatedAt": "2026-11-15",
       "sourceRevision": "343e9775",
-      "links": ["docs/agents/tasks/F06-RESIDUO.task.yml"],
+      "links": [
+        "docs/agents/tasks/F06-RESIDUO.task.yml"
+      ],
       "proof": [
         "15/11: PR #235 mergeado em 343e9775. Implementado pelo DeepSeek (a8137c6c) + fixes: knock-ons (bf46f3d4: provider test + capture.mjs), regex P1 (694d342f: lookahead (?!novo/) sem o $ inerte que capturava /mercado/novo/editar → /app/anuncio/novo; provado com pathToRegexp real do Next 16.3). Revisão R2 Qwen REQ_CHANGES→P1 corrigido. CI run 43674160666 todo verde. Resíduo: lib/listings/actions.ts server actions órfãs + revalidatePath em rota removida (card próprio); create-menu/market-strip ainda apontam /mercado/novo (caem no redirect)."
       ],
-      "completedChecklist": [true, true, true]
+      "completedChecklist": [
+        true,
+        true,
+        true
+      ]
     },
     {
       "id": "RUN-157",
@@ -6749,15 +7518,24 @@
         "Testes positivo/negativo (rota/cliente/E2E stub+real) + CI verde"
       ],
       "dependencies": [],
-      "tests": ["tests/e2e/f10-voce-real.spec.ts", "tests/unit/app-api/voce/sair.test.ts"],
+      "tests": [
+        "tests/e2e/f10-voce-real.spec.ts",
+        "tests/unit/app-api/voce/sair.test.ts"
+      ],
       "blockers": [],
       "updatedAt": "2026-11-15",
       "sourceRevision": "55af2822",
-      "links": ["docs/agents/tasks/F10-SAIR.task.yml"],
+      "links": [
+        "docs/agents/tasks/F10-SAIR.task.yml"
+      ],
       "proof": [
         "15/11: PR #236 mergeado em 55af2822. Implementado pelo DeepSeek (0fb04433) + fixes: escopo local (c177fade, decisão do coordenador — signOut global revogava todos os aparelhos mas a cópia diz neste aparelho; teste distingue o escopo + ramo 401), rota gateada no E2E real (f57b5585: /community em vez de /configuracoes/familia que é trocada p/ /app/voce público). Revisão R2 Qwen PASS. CI run 43695984691 todo verde. Runtime real provado pelo trace do CI: POST sair 200, cookie sb-127-auth-token Max-Age=0, /app/entrar carrega, entry/progress 401, porta renderizada. Follow-up: causa-raiz do cookie (card SESSAO-COOKIES-WEAKMAP)."
       ],
-      "completedChecklist": [true, true, true]
+      "completedChecklist": [
+        true,
+        true,
+        true
+      ]
     },
     {
       "id": "RUN-158",
@@ -6781,11 +7559,17 @@
       "blockers": [],
       "updatedAt": "2026-11-15",
       "sourceRevision": "0400887a",
-      "links": ["docs/agents/tasks/F04-SALVAR.task.yml"],
+      "links": [
+        "docs/agents/tasks/F04-SALVAR.task.yml"
+      ],
       "proof": [
         "15/11: PR #237 mergeado em 0400887a. Implementado pelo DeepSeek (4bcb6f60) + contrato declara knock-on da contagem (a795033f, perguntas-porta 4→6). Revisão R2 Qwen PASS (mecanismo conferido direto na migration 20260802001100: PK user_id+request_id→23505 real, insert_own exige locality_id→grupo 42501, select/delete só do dono). CI run 43699069481 todo verde. App test 550, suíte raiz 3218. Fecha a lacuna seguir/salvar do LAN-TROCA (F04) e 'indicações em Salvos' (F10); drift do LAN-F04 done-sem-salvar/seguir reconciliado. 403 de grupo provado em unidade (seed sem pedido de grupo). Não corrige contagens.salvos (pré-existente)."
       ],
-      "completedChecklist": [true, true, true]
+      "completedChecklist": [
+        true,
+        true,
+        true
+      ]
     },
     {
       "id": "RUN-159",
@@ -6809,11 +7593,17 @@
       "blockers": [],
       "updatedAt": "2026-11-15",
       "sourceRevision": "ecc2d95d",
-      "links": ["docs/agents/tasks/F04-DENUNCIA.task.yml"],
+      "links": [
+        "docs/agents/tasks/F04-DENUNCIA.task.yml"
+      ],
       "proof": [
         "15/11: PR #238 mergeado em ecc2d95d. Implementado pelo DeepSeek (791e3d06) + formatação do teste + knock-on da contagem declarado (perguntas-porta 6->7). Revisão R2 Qwen PASS-COM-RESSALVA (mecanismo conferido no banco: índice de duplicata->409 real, is_deleted, enum; achados menores aceitáveis: log.error vs helper, motivos duplicam servidor como no molde, E2E aceita enviada/já-denunciada pois não há DELETE). CI run 43708593391 todo verde. App test 554, gate --fast verde. Fecha a lacuna denúncias do LAN-TROCA (F04). 'Também perguntar à cidade' fica como gap R3 separado (card F04-TAMBEM-PERGUNTAR)."
       ],
-      "completedChecklist": [true, true, true]
+      "completedChecklist": [
+        true,
+        true,
+        true
+      ]
     },
     {
       "id": "F04-TAMBEM-PERGUNTAR",
@@ -6857,15 +7647,24 @@
         "Testes positivo/negativo + CI verde"
       ],
       "dependencies": [],
-      "tests": ["tests/e2e/f10-voce-real.spec.ts", "tests/unit/app-api/voce/interesses.test.ts"],
+      "tests": [
+        "tests/e2e/f10-voce-real.spec.ts",
+        "tests/unit/app-api/voce/interesses.test.ts"
+      ],
       "blockers": [],
       "updatedAt": "2026-11-15",
       "sourceRevision": "2a25105b",
-      "links": ["docs/agents/tasks/F10-INTERESSES.task.yml"],
+      "links": [
+        "docs/agents/tasks/F10-INTERESSES.task.yml"
+      ],
       "proof": [
         "15/11: PR #239 mergeado em 2a25105b. Implementado pelo DeepSeek (5969bd8d) + fixes: F1 cidade antiga (a2b455ac, GET devolve interesses⊆grupos, prova de mutação), E2E reload/estado (39d4e6c6: fecha a folha antes do reload — a restauração de sobreposição reabria o modal e aria-hidden o h1; limparInteressesDaPersona no afterEach), Fechar exact:true (97408ffa, alça Arrastar para fechar). Revisão R2 Qwen APROVA com 1 correção (F1) aplicada; service_role ratificado (exceção medida como família/localização, teste dedicado). CI run 43715113838 todo verde. App test 560. Fecha a lacuna interesses do LAN-TROCA (F10); resta perfil alheio. Não troca a tela web (F10 não fecha neste lote)."
       ],
-      "completedChecklist": [true, true, true]
+      "completedChecklist": [
+        true,
+        true,
+        true
+      ]
     },
     {
       "id": "RUN-161",
@@ -6889,11 +7688,164 @@
       "blockers": [],
       "updatedAt": "2026-11-15",
       "sourceRevision": "6f5119cd",
-      "links": ["docs/agents/tasks/F10-PERFIL-ALHEIO.task.yml"],
+      "links": [
+        "docs/agents/tasks/F10-PERFIL-ALHEIO.task.yml"
+      ],
       "proof": [
         "15/11: PR #240 mergeado em 6f5119cd. Implementado pelo DeepSeek (f2648089) + emenda allowed_paths/components + teste perfil-dados (58f44df2) + fix regressão autorId no POST do comentário (aa9cd65a: o parser estrito do cliente exige autorId mas o POST não devolvia → comentário não entrava no fio; f04-grupos-real:400 destravado; prova de mutação). Revisão R2 Qwen PASS (BLOCK-AFFILIATION conferido: sem profile_affiliations_for/cidade/contadores, 404 não 403, viewer da sessão; redirect não captura próprio/editar/interests). CI run 43722119938 todo verde. App test 564. FECHA O F10. Gap registrado: invitation_accepted ainda cai em /app/voce (destino-do-app.ts:126, fora do escopo) — deep-link web /profile/<ator> segue via redirect."
       ],
-      "completedChecklist": [true, true, true]
+      "completedChecklist": [
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "id": "RUN-162",
+      "title": "F08-RESSALVAS: os 2 testes LT-006 (resemeadura do Guia; URL estável ao digitar)",
+      "phase": "Lançamento",
+      "priority": "P1",
+      "category": "testing",
+      "status": "done",
+      "completedAt": "2026-11-16",
+      "description": "Lote test-only: fecha os itens LT-006 virando os 2 testes E2E que faltavam, no molde da busca (helper trocarEndereco). Sem contingencia: a re-leitura por mudanca de endereco ja existia em Guia.tsx:129-143; o teste prova contra o codigo real.",
+      "checklist": [
+        "Teste de resemeadura nas 3 larguras",
+        "Assercao page.url() durante e apos digitar",
+        "Sem skip novo, sem mudanca de produto"
+      ],
+      "dependencies": [],
+      "tests": [
+        "apps/app/tests/e2e/guia-filtros-url.spec.ts"
+      ],
+      "blockers": [],
+      "updatedAt": "2026-11-16",
+      "sourceRevision": "f237d683",
+      "links": [
+        "docs/agents/tasks/F08-RESSALVAS.task.yml"
+      ],
+      "proof": [
+        "16/11: PR #241 mergeado em f237d683. Diff = 1 spec (+60) + contrato. E2E local real: 38 passed/16 skipped; teste 1 ok nas 3 larguras; teste 2 ok em 1440. Ressalva honesta na revisao: o Guia nunca reescreve q no endereco — a assercao prova a forma forte (nunca reescreve), nao existia inverso. Revisao R2 Qwen PASS; CI 43747732501 todo verde."
+      ],
+      "completedChecklist": [
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "id": "RUN-163",
+      "title": "F10: troca do /profile/interests pelo app + portão de admissão portado para a rota",
+      "phase": "Lançamento",
+      "priority": "P1",
+      "category": "frontend",
+      "status": "done",
+      "completedAt": "2026-11-16",
+      "description": "A folha Interesses (RUN-160) cobre a tela web; a tela saiu com 307 /profile/interests → /app/voce (regra exata antes da :id; link do editar vai direto ao app). ACHADO: a rota do app nao conferia admissao — a web exigia verified OU familiar admitido (has_verified_family_holder) antes de listar com service_role; o portao foi portado com 403 nao-admitido e 503 fail-closed, cidade sempre do vinculo current. Fix P3 da revisao: resposta sem array/sem booleano = nao-deu-para-conferir = 503 sem crash; lista VAZIA continua legitima (familiar D16 sem linha de verificacao — os testes existentes pegaram essa armadilha na primeira versao do fix).",
+      "checklist": [
+        "Redirect + remocao pagina/secao/actions",
+        "Portao de admissao na rota do app + provas",
+        "Provas migradas (TROCADAS, ausencia, verification, link-crawl)"
+      ],
+      "dependencies": [],
+      "tests": [
+        "tests/unit/profile/interests-require-verification.test.ts",
+        "tests/unit/app-api/voce/interesses.test.ts",
+        "tests/e2e/user-group-interests.spec.ts"
+      ],
+      "blockers": [],
+      "updatedAt": "2026-11-16",
+      "sourceRevision": "9ca86c53",
+      "links": [
+        "docs/agents/tasks/F10-TROCA-INTERESSES.task.yml"
+      ],
+      "proof": [
+        "16/11: PR #242 mergeado em 9ca86c53 (c0226182 + fix 38a039f8). Revisao R2 Qwen PASS com 2 condicoes (P3 fail-closed + drifts de board), ambas tratadas antes do merge. Provas: unit 40/40; MUTACAO (sem o fix, os 2 casos novos falham, 11 passam); gate --fast + pnpm test + test:scope + tsc e2e. CI 43747772975 (pre-fix) e 43749212824 (final) todo verde. Cobertura funcional segue em f10-voce-real (marcar/recarregar/persistir/limpar). Sobras: user-group-interests-rpcs.ts 6rfao → TROCA-RESIDUOS; SEC-INTERESSES-SEM-VERIFICACAO reconciliado. Perda de um toque aceita: a folha nao abre por URL."
+      ],
+      "completedChecklist": [
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "id": "CIDADE-LOCALIDADE-TROCA",
+      "title": "Cidade/localidade: telas de membro ainda na web precisam de jornada de troca própria",
+      "phase": "Lançamento",
+      "priority": "P2",
+      "category": "frontend",
+      "status": "repo",
+      "description": "O texto antigo do LAN-TROCA misturava isto com filtros/IDs (fechados pelo RUN-162). /cidade/[id] (city-consult) e /localidade servem tela de membro na web SEM redirect; nao ha rota equivalente no app (catalogo sem cidade/localidade; PainelDeCidade so muda a cidade VISTA, por nome). E troca de jornada, nao fix de query/ID: portar a consulta de outra cidade + a entrada de localidade ao app e depois trocar. Estado provado: lan-troca-redirect.test.ts:114-121 (sem redirect de proposito), link-crawl:101-103,218-221 (portas declaradas).",
+      "checklist": [
+        "Decidir o formato no app (consulta de cidade + entrada de localidade)",
+        "Implementar pela porta /api/app",
+        "Trocar as telas com 307 + gates + provas"
+      ],
+      "dependencies": [],
+      "tests": [
+        "tests/e2e/link-crawl.spec.ts"
+      ],
+      "blockers": [],
+      "updatedAt": "2026-11-16",
+      "sourceRevision": "9ca86c53",
+      "links": [],
+      "proof": [
+        "16/11: aberto pela decisao do mapa F02/F08 ao reconciliar a linha de lacunas do LAN-TROCA."
+      ]
+    },
+    {
+      "id": "F05-CANCELAR-EVENTO",
+      "title": "F05: cancelar o encontro pelo organizador no app",
+      "phase": "Lançamento",
+      "priority": "P2",
+      "category": "frontend",
+      "status": "repo",
+      "description": "LANCAMENTO F05 exige presenca e cancelamento; cancelar PRESENCA existe (Evento.tsx:258-262) e o app renderiza cancelado, mas o ORGANIZADOR nao cancela o evento pelo app — a cancelEventAction da web morreu na troca (375c336d) e o PATCH atual nao expoe status. Menor forma: situacao=cancelled restrito ao organizador no PATCH /api/app/eventos/[id] + botao Cancelar encontro com Confirmacao; o trigger notify_event_change ja avisa quem foi (20260911054812:269-297). Sem migration (policy events_update_organizer provada no RUN-017).",
+      "checklist": [
+        "Escrita do cancelamento pela rota com posse de organizador",
+        "Botao + confirmacao na ficha",
+        "Aviso em cascata provado + E2E nas 3 larguras"
+      ],
+      "dependencies": [],
+      "tests": [
+        "tests/e2e/f05-eventos-real.spec.ts"
+      ],
+      "blockers": [],
+      "updatedAt": "2026-11-16",
+      "sourceRevision": "9ca86c53",
+      "links": [
+        "docs/decisions/ADR-20261105-porta-de-dados-do-app.md"
+      ],
+      "proof": [
+        "16/11: aberto pelo mapa F05 — unico resquicio real da linha; fan-out de convites ficou FORA (nao e linha do LANCAMENTO; decisao no LAN-TROCA)."
+      ]
+    },
+    {
+      "id": "F10-TROCA-PERFIL-PROPRIO",
+      "title": "F10: trocar /profile próprio + /profile/editar exige 3 decisões de paridade",
+      "phase": "Lançamento",
+      "priority": "P1",
+      "category": "frontend",
+      "status": "repo",
+      "description": "O RUN-163 deixou claro: /profile (proprio) e /profile/editar nao sao redirect puro — a web tem 3 recursos sem casa no app. (1) TRANSFERENCIA DE CIDADE com data de saida (CitySection/moveCityAction; decisao do dono 25/09; a casca so muda a cidade VISTA) — plano: PORTAR (produto aprovado que a troca nao pode matar). (2) AUTODECLARACAO Forca/OM (ADR-20260908 D2) — portar declaracao; aposentar o toggle Exibir (sem visivel-a-outros no lancamento) com registro para ratificacao no marco. (3) FOTO DE AVATAR — aposentar no lancamento (iniciais sao a identidade da regua; a linha F10 nao pede foto), dados no banco intactos, card pos-lancamento. Depois: redirects /profile e /profile/editar → /app/voce, remover telas/pecas, pins migrados (shell-navigation ancora em /profile, sidebar hrefs, persistent-login logout via /profile, city-switcher #cidade, capture).",
+      "checklist": [
+        "Decidir e portar a transferencia de cidade",
+        "Portar autodeclaracao Forca/OM (toggle Exibir aposentado, item no marco)",
+        "Aposentar foto de avatar com card pos-lancamento",
+        "Redirects + remocao das telas + pins migrados"
+      ],
+      "dependencies": [],
+      "tests": [
+        "tests/e2e/persistent-login.spec.ts",
+        "tests/e2e/shell-navigation.spec.ts"
+      ],
+      "blockers": [],
+      "updatedAt": "2026-11-16",
+      "sourceRevision": "9ca86c53",
+      "links": [],
+      "proof": [
+        "16/11: aberto pelo mapa da troca /profile + fechamento do RUN-163."
+      ]
     },
     {
       "id": "SESSAO-COOKIES-WEAKMAP",
@@ -6909,11 +7861,16 @@
         "Testes: signOut limpa cookie sem o contorno; renovação segue ok"
       ],
       "dependencies": [],
-      "tests": ["tests/unit/app-api/voce/sair.test.ts", "tests/unit/app-api/rota-do-app.test.ts"],
+      "tests": [
+        "tests/unit/app-api/voce/sair.test.ts",
+        "tests/unit/app-api/rota-do-app.test.ts"
+      ],
       "blockers": [],
       "updatedAt": "2026-11-15",
       "sourceRevision": "55af2822",
-      "links": ["docs/agents/tasks/F10-SAIR.task.yml"],
+      "links": [
+        "docs/agents/tasks/F10-SAIR.task.yml"
+      ],
       "proof": [
         "15/11: registrado pelo coordenador ao fechar RUN-157; causa-raiz confirmada em rota-do-app.ts:180,210 e no trace do CI (o contorno atual funciona)."
       ]
@@ -6930,12 +7887,16 @@
         "Landing web claro-only (escuro dormente ou removido)",
         "Prova visual claro-only"
       ],
-      "dependencies": ["RUN-152"],
+      "dependencies": [
+        "RUN-152"
+      ],
       "tests": [],
       "blockers": [],
       "updatedAt": "2026-11-14",
       "sourceRevision": "74b39b8b",
-      "links": ["docs/LANCAMENTO.md"],
+      "links": [
+        "docs/LANCAMENTO.md"
+      ],
       "proof": [
         "14/11: registrado a partir da revisão R2 do RUN-152 (apps/web fora do allowed_paths daquele lote)."
       ]
@@ -6957,12 +7918,20 @@
         "14/11: aberto na decisão D3 do contrato LT-004 (troca F09). A frase neutra atual foi confirmada pelo mapa F09 do explore: deep-links.ts:126-128 cai no neutro; o app é superconjunto da tela antiga exceto por este enriquecimento."
       ],
       "tests": [],
-      "links": ["docs/agents/tasks/LT-004.task.yml"],
-      "dependencies": ["LAN-TROCA"],
+      "links": [
+        "docs/agents/tasks/LT-004.task.yml"
+      ],
+      "dependencies": [
+        "LAN-TROCA"
+      ],
       "updatedAt": "2026-11-14",
       "sourceRevision": "ce75accc",
       "blockers": [],
-      "completedChecklist": [false, false, false]
+      "completedChecklist": [
+        false,
+        false,
+        false
+      ]
     },
     {
       "id": "APP-E2E-PREEXISTENTES",
@@ -6989,7 +7958,9 @@
       "blockers": [],
       "updatedAt": "2026-11-05",
       "sourceRevision": "45c0ccb1",
-      "links": ["docs/LANCAMENTO.md"],
+      "links": [
+        "docs/LANCAMENTO.md"
+      ],
       "proof": [
         "02/11: 15 falhas idênticas na linha de base e na branch da fase 1; demais 1789 casos verdes na fase 1 depois de atualizar cores e fonte.",
         "05/11, PR #129 (nenhuma alteração em apps/app): App Visual Smoke 42052189989 tentativa 1 teve 1 falha em r72-mobile-p1 corpoCabe a 360 (275 pass/6 skip); tentativa 2 da mesma fonte passou. Falha inicial preservada em .visual/run-130/ci-app-visual-failed.log; não declarada como correção do aplicativo.",
@@ -7016,11 +7987,16 @@
         "Prova: o caso de trocar de cidade em 768 e 375, e a suíte inteira duas vezes"
       ],
       "dependencies": [],
-      "tests": ["apps/app/tests/e2e/casca.spec.ts"],
+      "tests": [
+        "apps/app/tests/e2e/casca.spec.ts"
+      ],
       "blockers": [],
       "updatedAt": "2026-11-10",
       "sourceRevision": "8b0f1d83",
-      "links": ["docs/LANCAMENTO.md", "apps/app/lib/navegacao/react.tsx"],
+      "links": [
+        "docs/LANCAMENTO.md",
+        "apps/app/lib/navegacao/react.tsx"
+      ],
       "proof": [
         "05/11: 2 falhas em 5 passadas completas (768 e 375), nenhuma reproduzida em isolamento (`--repeat-each=15`) nem nas duas passadas finais com as correções do RUN-006.",
         "Mecanismo lido no código: `materializarEntrada` usa `temEntrada(estado)` do render; a escrita é assíncrona e pode vencer a de `abrir()`.",
@@ -7079,7 +8055,9 @@
       "completedAt": "2026-11-05",
       "sourceRevision": "29fcc8f898a8c064579a99c36ca3a368a1f52ebd",
       "dependencies": [],
-      "links": ["docs/agents/tasks/RUN-131.task.yml"],
+      "links": [
+        "docs/agents/tasks/RUN-131.task.yml"
+      ],
       "proof": [
         "Reproduzido na worktree limpa painel-baseline em 29fcc8f8: 1 failed / 14 passed (.visual/run-130/baseline-test.log).",
         "Após fixar o relógio em 02/11: os mesmos 15 testes passaram, com Date restaurado após cada caso."
@@ -7162,15 +8140,26 @@
         "05/11: aberto na revisão do RUN-004 rodada 2. O disjuntor de 500/h e o teto de 8/h por IP estão no ADR-20261101; o desafio humano e o risco de CGNAT/OM ficam aqui para depois da prova de volume, com dependência de BLOCK-RESEND.",
         "05/11: congelado pelo ADR-20261105-entrada-enxuta-e-r3-sem-parada. Fora do caminho do lançamento; reabre só com abuso ou volume observado em produção."
       ],
-      "blockers": ["Reabre só com abuso ou volume real observado em produção (ADR-20261105)"],
+      "blockers": [
+        "Reabre só com abuso ou volume real observado em produção (ADR-20261105)"
+      ],
       "links": [
         "docs/decisions/ADR-20261101-entrada-unica-por-codigo.md",
         "docs/decisions/ADR-20261105-entrada-enxuta-e-r3-sem-parada.md"
       ],
       "updatedAt": "2026-11-05",
       "sourceRevision": "15f1e273",
-      "dependencies": ["BLOCK-RESEND"],
-      "completedChecklist": [false, false, false, false, false, false]
+      "dependencies": [
+        "BLOCK-RESEND"
+      ],
+      "completedChecklist": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
     },
     {
       "id": "EVENTOS-UPDATE-ALCANCE-NO-BANCO",
@@ -7212,8 +8201,12 @@
         "[x] Redirecionar para /app/entrar preservando /consent e /auth/callback",
         "[x] E2E: rota antiga leva à entrada do app em 375/768/1440"
       ],
-      "dependencies": ["LAN-F01"],
-      "links": ["docs/decisions/ADR-20261105-entrada-enxuta-e-r3-sem-parada.md"],
+      "dependencies": [
+        "LAN-F01"
+      ],
+      "links": [
+        "docs/decisions/ADR-20261105-entrada-enxuta-e-r3-sem-parada.md"
+      ],
       "proof": [
         "05/11: lote de acabamento (Haiku 5.5) — redirecionamento 307 das rotas antigas de entrada do apps/web para /app/entrar em apps/web/next.config.ts, com /consent, /auth/callback, /auth/confirmar-email e /auth/callback-error fora; E2E antigos migrados (commits 2a9acabb, c0397181, c9f77ae1, 6b50e9f0); revisão Qwen FAIL na primeira entrega (E2E não migrados, caminho de falha do e-mail), corrigido na rodada única",
         "10/11: 3/3 verificados — redirects em apps/web/next.config.ts e middleware-session-gate.spec.ts:18 prova /app/entrar nos 3 projetos; o card só fecha quando LAN-F01 (now) fechar, porque a regra do board não deixa done depender de now.",
@@ -7242,7 +8235,9 @@
         "06/11: fechado pela migration 20261106090200 do RUN-017, PR #144 (fea99058), com pgTAP recommendation-replies-active-member.sql (3 casos: positivo com vínculo ativo, negativo com vínculo read_only e negativo com conta suspensa)."
       ],
       "tests": [],
-      "links": ["docs/agents/tasks/RUN-014.task.yml"],
+      "links": [
+        "docs/agents/tasks/RUN-014.task.yml"
+      ],
       "dependencies": [],
       "updatedAt": "2026-11-06",
       "sourceRevision": "f9492a1d"
@@ -7262,7 +8257,9 @@
       ],
       "proof": [],
       "tests": [],
-      "links": ["docs/agents/tasks/RUN-013.task.yml"],
+      "links": [
+        "docs/agents/tasks/RUN-013.task.yml"
+      ],
       "dependencies": [],
       "updatedAt": "2026-11-06",
       "sourceRevision": "83470086"
@@ -7284,7 +8281,9 @@
         "06/11: fechado pela migration do RUN-017, PR #144 (fea99058), com pgTAP positivo e negativo; revisão Haiku 5.5 PASS COM RESSALVAS e security-auditor (Sonnet 5.5) LIBERA COM RESSALVAS; CI verde."
       ],
       "tests": [],
-      "links": ["docs/agents/tasks/RUN-009.task.yml"],
+      "links": [
+        "docs/agents/tasks/RUN-009.task.yml"
+      ],
       "dependencies": [],
       "updatedAt": "2026-11-06",
       "sourceRevision": "f9492a1d",
@@ -7302,16 +8301,21 @@
         "Remover loadOwnCorrectionRequests órfã (ou religar se houver consumidor)",
         "Remover revalidatePath de rotas removidas (correction-actions:76-77, listings/actions:307)",
         "Atualizar create-menu/market-strip para a porta do app (ou aceitar o redirect)",
-        "Confirmar e remover ações de foto de listing órfãs, se sem página viva"
+        "Confirmar e remover ações de foto de listing órfãs, se sem página viva",
+        "Confirmar e remover apps/web/lib/user-group-interests-rpcs.ts (órfão após RUN-163)"
       ],
       "dependencies": [],
       "tests": [],
       "blockers": [],
-      "updatedAt": "2026-11-15",
+      "updatedAt": "2026-11-16",
       "sourceRevision": "03ace7a4",
-      "links": ["docs/agents/tasks/F08-VERBETE.task.yml", "docs/agents/tasks/F06-RESIDUO.task.yml"],
+      "links": [
+        "docs/agents/tasks/F08-VERBETE.task.yml",
+        "docs/agents/tasks/F06-RESIDUO.task.yml"
+      ],
       "proof": [
-        "15/11: registrado pelo coordenador ao fechar RUN-154/156, confrontado no disco (git grep). NÃO inclui o RPC mark_recommendation_resolved: a migration vigente (20261024110000_lote5_pergunta.sql:276) JÁ limpa resolved_reply_id — a ressalva da revisão do RUN-153 não se confirma no código."
+        "15/11: registrado pelo coordenador ao fechar RUN-154/156, confrontado no disco (git grep). NÃO inclui o RPC mark_recommendation_resolved: a migration vigente (20261024110000_lote5_pergunta.sql:276) JÁ limpa resolved_reply_id — a ressalva da revisão do RUN-153 não se confirma no código.",
+        "16/11: RUN-163 deixou o modulo de RPCs de interesses 6rfao com a morte da action web (declarado no relatorio do lote, fora do allowed_paths dele)."
       ]
     },
     {
@@ -7320,28 +8324,35 @@
       "phase": "Lançamento",
       "priority": "P3",
       "category": "frontend",
-      "status": "repo",
+      "status": "done",
       "description": "Ressalvas do LT-006 (PR #222, revisão Qwen Flash PASS não bloqueante): (1) o efeito de resemeadura por mudança de endereço no Guia (Voltar para outra entrada) ainda sem teste — o molde LT-003 tinha trocarEndereco; (2) 'URL não reescrita enquanto digita' provado só por ausência de navegação no código, sem asserção E2E dedicada. A ressalva original do RUN-009 (Voltar do sistema não fecha a folha do verbete) foi resolvida pelo RUN-154: o verbete virou rota /app/guia/$id e o Voltar do sistema volta à lista.",
       "checklist": [
         "[x] Voltar do sistema sair do verbete (RUN-154: virou rota /app/guia/$id, não folha)",
         "[x] E2E do Voltar com o verbete aberto (f08-guia-real: URL direta sobrevive a recarga e Voltar)",
-        "LT-006: teste do efeito de resemeadura por mudança de endereço no Guia (molde trocarEndereco do LT-003)",
-        "LT-006: asserção E2E de que a URL não é reescrita enquanto a pessoa digita no Guia"
+        "[x] LT-006: teste do efeito de resemeadura por mudanca de endereco no Guia (RUN-162: guia-filtros-url.spec.ts, trocarEndereco nas 3 larguras; produto intocado — a re-leitura ja existia em Guia.tsx:129-143)",
+        "[x] LT-006: assercao E2E de que a URL nao e reescrita enquanto a pessoa digita no Guia (RUN-162: page.url() antes/depois do fill e do commit; o Guia nunca escreveu search — forma forte provada; nao ha inverso a provar, e o contrato do LT-006 manda nao reescrever)"
       ],
       "proof": [
         "14/11: estendido com as 2 ressalvas não bloqueantes da revisão independente Qwen Flash do LT-006 (PR #222, commit 6220fd6c).",
-        "15/11: itens 1-2 resolvidos pelo RUN-154 (03ace7a4) — o verbete endereçável faz o Voltar do sistema voltar à lista, provado em f08-guia-real.spec.ts. Restam os 2 itens do LT-006."
+        "15/11: itens 1-2 resolvidos pelo RUN-154 (03ace7a4) — o verbete endereçável faz o Voltar do sistema voltar à lista, provado em f08-guia-real.spec.ts. Restam os 2 itens do LT-006.",
+        "16/11: fechada pelo RUN-162 (PR #241, merge f237d683) — os 2 itens LT-006 viraram testes E2E reais (38 passed / 16 skips nos portoes de largura-tema proprios do spec), sem mudanca de produto. Revisao R2 Qwen PASS; CI 43747732501 todo verde."
       ],
       "tests": [],
-      "links": ["docs/agents/tasks/RUN-009.task.yml", "docs/agents/tasks/LT-006.task.yml"],
+      "links": [
+        "docs/agents/tasks/RUN-009.task.yml",
+        "docs/agents/tasks/LT-006.task.yml"
+      ],
       "dependencies": [],
-      "updatedAt": "2026-11-15",
-      "sourceRevision": "03ace7a4"
+      "updatedAt": "2026-11-16",
+      "sourceRevision": "f237d683",
+      "completedAt": "2026-11-16"
     },
     {
       "phase": "Lançamento",
       "status": "repo",
-      "dependencies": ["F10-R3-SESSION-DERIVED"],
+      "dependencies": [
+        "F10-R3-SESSION-DERIVED"
+      ],
       "tests": [],
       "blockers": [],
       "proof": [
@@ -7362,7 +8373,9 @@
         "Jornada inteira com dados reais: entrada, ação, gravação, retorno e falha principal, em 375/768/1440",
         "Revisão de segurança R3 antes da integração"
       ],
-      "links": ["docs/agents/tasks/RUN-016.task.yml"]
+      "links": [
+        "docs/agents/tasks/RUN-016.task.yml"
+      ]
     },
     {
       "phase": "Lançamento",
@@ -7383,7 +8396,9 @@
         "Teste do 403 ao desocultar conteúdo",
         "PATCH do perfil não responde 503 depois de já gravar quando a leitura da cidade falha"
       ],
-      "links": ["docs/agents/tasks/RUN-016.task.yml"]
+      "links": [
+        "docs/agents/tasks/RUN-016.task.yml"
+      ]
     },
     {
       "phase": "Lançamento",
@@ -7406,7 +8421,9 @@
         "Positivo de events: trocar lives_ok vazio por teste que afirma a escrita",
         "Mensagem própria para conta indisponível nas telas de mensagem direta"
       ],
-      "links": ["docs/agents/tasks/RUN-017.task.yml"]
+      "links": [
+        "docs/agents/tasks/RUN-017.task.yml"
+      ]
     },
     {
       "phase": "Lançamento",
@@ -7426,7 +8443,9 @@
         "listings_update_owner passa a checar suspensão, sem reaproveitar rascunho antigo pela chave",
         "lerCorpoJson aplica o teto antes de ler o corpo inteiro (~13,9 MB no mercado)"
       ],
-      "links": ["docs/agents/tasks/RUN-015.task.yml"]
+      "links": [
+        "docs/agents/tasks/RUN-015.task.yml"
+      ]
     },
     {
       "id": "RESUMO-CIDADE-EMAIL",
@@ -7443,7 +8462,9 @@
         "E2E: preferência gravada e resumo enfileirado"
       ],
       "dependencies": [],
-      "links": ["docs/decisions/ADR-20261107-recursos-inspirados-humhub.md"],
+      "links": [
+        "docs/decisions/ADR-20261107-recursos-inspirados-humhub.md"
+      ],
       "proof": [
         "07/11: na main pelo #157 (merge cb584e9b), RUN-026; revisão Qwen PASS + auditoria Sonnet com ressalvas corrigidas; pgTAP resumo-cidade.sql e E2E da preferência. Envio real depende de Vault e Resend em produção (PRODUCAO-PASSO-A-PASSO)."
       ],
@@ -7467,7 +8488,9 @@
         "Teste de unidade e do app"
       ],
       "dependencies": [],
-      "links": ["docs/decisions/ADR-20261107-recursos-inspirados-humhub.md"],
+      "links": [
+        "docs/decisions/ADR-20261107-recursos-inspirados-humhub.md"
+      ],
       "proof": [
         "07/11: na main pelo #155 (merge 6718b76c), RUN-025; testes de unidade, do app e CI verde."
       ],
@@ -7491,7 +8514,9 @@
         "pgTAP positivo e negativo; E2E da entrada chega com os grupos"
       ],
       "dependencies": [],
-      "links": ["docs/decisions/ADR-20261107-recursos-inspirados-humhub.md"],
+      "links": [
+        "docs/decisions/ADR-20261107-recursos-inspirados-humhub.md"
+      ],
       "proof": [
         "07/11: na main pelo #155 (merge 6718b76c), RUN-025; pgTAP grupos-cidade-padrao.sql e E2E da entrada chegando com o grupo padrão."
       ],
@@ -7515,7 +8540,9 @@
         "Testes de unidade, do app e E2E"
       ],
       "dependencies": [],
-      "links": ["docs/decisions/ADR-20261107-recursos-inspirados-humhub.md"],
+      "links": [
+        "docs/decisions/ADR-20261107-recursos-inspirados-humhub.md"
+      ],
       "proof": [
         "07/11: na main pelo #155 (merge 6718b76c), RUN-025; filtro de tópico no E2E f04-perguntas-real."
       ],
@@ -7543,7 +8570,9 @@
         "Novo aceite quando os termos mudarem"
       ],
       "dependencies": [],
-      "links": ["docs/decisions/ADR-20261107-recursos-inspirados-humhub.md"],
+      "links": [
+        "docs/decisions/ADR-20261107-recursos-inspirados-humhub.md"
+      ],
       "proof": [],
       "tests": [],
       "blockers": [],
@@ -7563,7 +8592,9 @@
         "pgTAP: excluir operador com documento decidido não falha e a trilha continua coerente",
         "Conferir o fluxo de exclusão de conta (20260915101543) para operadores"
       ],
-      "dependencies": ["LAN-OP"],
+      "dependencies": [
+        "LAN-OP"
+      ],
       "links": [
         "supabase/migrations/20260815132000_verification_documents.sql",
         "tests/e2e/lan-op-real.spec.ts"
@@ -7588,14 +8619,26 @@
         "Prova de abuso negada e de cache hit sem chamar o provedor",
         "Registro no ADR de localização ou emenda"
       ],
-      "proof": ["11/11: aberto a partir da ressalva MÉDIA do security-auditor 437d6aa3 (PR #183)."],
+      "proof": [
+        "11/11: aberto a partir da ressalva MÉDIA do security-auditor 437d6aa3 (PR #183)."
+      ],
       "tests": [],
-      "links": ["docs/decisions/ADR-20261022-localizacao-padrao-de-mercado.md"],
-      "dependencies": ["LOC-IMPL", "ADR-LOCALIZACAO"],
+      "links": [
+        "docs/decisions/ADR-20261022-localizacao-padrao-de-mercado.md"
+      ],
+      "dependencies": [
+        "LOC-IMPL",
+        "ADR-LOCALIZACAO"
+      ],
       "updatedAt": "2026-11-11",
       "sourceRevision": "4c5e7451",
       "blockers": [],
-      "completedChecklist": [false, false, false, false]
+      "completedChecklist": [
+        false,
+        false,
+        false,
+        false
+      ]
     },
     {
       "id": "LOC-CEP-SEM-COORDENADA",
@@ -7628,7 +8671,11 @@
       "updatedAt": "2026-11-12",
       "sourceRevision": "2e84c060",
       "blockers": [],
-      "completedChecklist": [true, true, true]
+      "completedChecklist": [
+        true,
+        true,
+        true
+      ]
     },
     {
       "id": "F09-B2-BLOQUEIO-E-CORRIDA",
@@ -7648,11 +8695,17 @@
       ],
       "tests": [],
       "links": [],
-      "dependencies": ["F09-ENVIO-PELA-RPC"],
+      "dependencies": [
+        "F09-ENVIO-PELA-RPC"
+      ],
       "updatedAt": "2026-11-11",
       "sourceRevision": "9b0dbf2b",
       "blockers": [],
-      "completedChecklist": [false, false, false]
+      "completedChecklist": [
+        false,
+        false,
+        false
+      ]
     },
     {
       "id": "F09-B3-INSERT-DIRETO-DM",
@@ -7672,11 +8725,17 @@
       ],
       "tests": [],
       "links": [],
-      "dependencies": ["F09-ENVIO-PELA-RPC"],
+      "dependencies": [
+        "F09-ENVIO-PELA-RPC"
+      ],
       "updatedAt": "2026-11-11",
       "sourceRevision": "9b0dbf2b",
       "blockers": [],
-      "completedChecklist": [false, false, false]
+      "completedChecklist": [
+        false,
+        false,
+        false
+      ]
     },
     {
       "id": "F09-B5-REPLAY-TEXTO-DIFERENTE",
@@ -7696,11 +8755,17 @@
       ],
       "tests": [],
       "links": [],
-      "dependencies": ["F09-ENVIO-PELA-RPC"],
+      "dependencies": [
+        "F09-ENVIO-PELA-RPC"
+      ],
       "updatedAt": "2026-11-11",
       "sourceRevision": "9b0dbf2b",
       "blockers": [],
-      "completedChecklist": [false, false, false]
+      "completedChecklist": [
+        false,
+        false,
+        false
+      ]
     },
     {
       "id": "EVENTOS-LOCALITY-LINK",
@@ -7724,11 +8789,17 @@
         "npx pnpm@11.18.0 typecheck"
       ],
       "links": [],
-      "dependencies": ["LAN-F05"],
+      "dependencies": [
+        "LAN-F05"
+      ],
       "updatedAt": "2026-11-12",
       "sourceRevision": "ca4b88c0",
       "blockers": [],
-      "completedChecklist": [true, true, true],
+      "completedChecklist": [
+        true,
+        true,
+        true
+      ],
       "completedAt": "2026-11-12"
     },
     {
@@ -7744,14 +8815,22 @@
         "Conferir o texto da tela e o E2E do convite",
         "Registrar em RATIFICACAO.md se a emenda for R3"
       ],
-      "proof": ["11/11: aberto a partir da ressalva do reviewer f29e13e9 (PR #178)."],
+      "proof": [
+        "11/11: aberto a partir da ressalva do reviewer f29e13e9 (PR #178)."
+      ],
       "tests": [],
       "links": [],
-      "dependencies": ["LAN-F01"],
+      "dependencies": [
+        "LAN-F01"
+      ],
       "updatedAt": "2026-11-11",
       "sourceRevision": "9b0dbf2b",
       "blockers": [],
-      "completedChecklist": [false, false, false]
+      "completedChecklist": [
+        false,
+        false,
+        false
+      ]
     },
     {
       "id": "EVENTOS-RESIDUOS-POS-TROCA",
@@ -7776,11 +8855,20 @@
       ],
       "tests": [],
       "links": [],
-      "dependencies": ["LAN-TROCA"],
+      "dependencies": [
+        "LAN-TROCA"
+      ],
       "updatedAt": "2026-11-14",
       "sourceRevision": "4219d15f",
       "blockers": [],
-      "completedChecklist": [false, false, false, false, false, false]
+      "completedChecklist": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
     },
     {
       "id": "BUSCA-SESSAO-VENCIDA",
@@ -7800,12 +8888,19 @@
         "13/11: descoberto na revisão independente Qwen do LT-002; o retry 632e7bf8 corrigiu só o spec (asserção nasceu da fonte), a lacuna do app fica registrada aqui. Cadeia provada: rota-do-app.ts:177 (401 JSON) -> cliente.ts:110 (throw) -> Busca.tsx:148,256-257 (EstadoDeErro). A4: negativo removido do e2e web, resta busca.test.ts:138."
       ],
       "tests": [],
-      "links": ["docs/agents/tasks/LT-002.task.yml"],
+      "links": [
+        "docs/agents/tasks/LT-002.task.yml"
+      ],
       "dependencies": [],
       "updatedAt": "2026-11-13",
       "sourceRevision": "bd69e091",
       "blockers": [],
-      "completedChecklist": [false, false, false, false]
+      "completedChecklist": [
+        false,
+        false,
+        false,
+        false
+      ]
     },
     {
       "id": "BUSCA-RETENCAO-URL",
@@ -7826,12 +8921,20 @@
         "13/11: fechado pelo LT-003, PR #216 (merge 2bd49670). 'busca' em ROTAS_COM_BUSCA + comentário generalizado. Revisão independente Qwen PASS: rodou o E2E do app local em 375/768/1440, 31 passaram (retenção do q nos dois temas + digitação vence/limpar/Voltar/endereço inválido). CI integrado: busca-redirects e global-search-flow verdes nas três larguras (retenção provada após materialização). Retry 1: waitForURL antes do poll no global-search-flow (corrida com a navegação do Enter). Gate caiu uma vez em flaky não relacionado (f10-voce-localizacao CEP mobile-375 + reports-member-flow, upstream instável — CI-E2E-UPSTREAM-INSTAVEL); rerun fechou verde. App test 504/504, tsc e2e exit 0, gate --fast verde."
       ],
       "tests": [],
-      "links": ["docs/agents/tasks/LT-002.task.yml", "docs/agents/tasks/LT-003.task.yml"],
+      "links": [
+        "docs/agents/tasks/LT-002.task.yml",
+        "docs/agents/tasks/LT-003.task.yml"
+      ],
       "dependencies": [],
       "updatedAt": "2026-11-13",
       "sourceRevision": "2bd49670",
       "blockers": [],
-      "completedChecklist": [true, true, true, true],
+      "completedChecklist": [
+        true,
+        true,
+        true,
+        true
+      ],
       "completedAt": "2026-11-13"
     },
     {
@@ -7848,14 +8951,25 @@
         "Auditoria security-auditor e revisão independente antes do merge",
         "Registro no RATIFICACAO.md"
       ],
-      "proof": ["11/11: aberto a partir do achado MÉDIO A4 do parecer R3 do PR #194."],
+      "proof": [
+        "11/11: aberto a partir do achado MÉDIO A4 do parecer R3 do PR #194."
+      ],
       "tests": [],
-      "links": ["docs/decisions/ADR-20261111-convite-familiar-pela-sessao.md"],
-      "dependencies": ["BLOCK-RESEND"],
+      "links": [
+        "docs/decisions/ADR-20261111-convite-familiar-pela-sessao.md"
+      ],
+      "dependencies": [
+        "BLOCK-RESEND"
+      ],
       "updatedAt": "2026-11-11",
       "sourceRevision": "ef72c839",
       "blockers": [],
-      "completedChecklist": [false, false, false, false]
+      "completedChecklist": [
+        false,
+        false,
+        false,
+        false
+      ]
     },
     {
       "id": "F10-R3-FIXTURE-ESCOPO",
@@ -7870,14 +8984,22 @@
         "Teste sem escrita em verification_outcomes",
         "Rodar o pgTAP no CI e registrar no cartão"
       ],
-      "proof": ["11/11: aberto a partir do achado ALTO A2 do parecer R3 do PR #194."],
+      "proof": [
+        "11/11: aberto a partir do achado ALTO A2 do parecer R3 do PR #194."
+      ],
       "tests": [],
       "links": [],
-      "dependencies": ["BLOCK-RESEND"],
+      "dependencies": [
+        "BLOCK-RESEND"
+      ],
       "updatedAt": "2026-11-11",
       "sourceRevision": "ef72c839",
       "blockers": [],
-      "completedChecklist": [false, false, false]
+      "completedChecklist": [
+        false,
+        false,
+        false
+      ]
     },
     {
       "id": "F10-R3-SILENCIO-REAL",
@@ -7892,14 +9014,22 @@
         "Caso positivo e negativo no CI",
         "Registro no cartão"
       ],
-      "proof": ["11/11: aberto a partir do achado MÉDIO A6 do parecer R3 do PR #194."],
+      "proof": [
+        "11/11: aberto a partir do achado MÉDIO A6 do parecer R3 do PR #194."
+      ],
       "tests": [],
       "links": [],
-      "dependencies": ["BLOCK-RESEND"],
+      "dependencies": [
+        "BLOCK-RESEND"
+      ],
       "updatedAt": "2026-11-11",
       "sourceRevision": "ef72c839",
       "blockers": [],
-      "completedChecklist": [false, false, false]
+      "completedChecklist": [
+        false,
+        false,
+        false
+      ]
     },
     {
       "id": "F10-R3-OUTBOX-RETENCAO",
@@ -7914,14 +9044,24 @@
         "Purga ou substituição por hash no envio",
         "pgTAP do rastro"
       ],
-      "proof": ["11/11: aberto a partir da ressalva BAIXA do parecer R3 do PR #194."],
+      "proof": [
+        "11/11: aberto a partir da ressalva BAIXA do parecer R3 do PR #194."
+      ],
       "tests": [],
-      "links": ["docs/decisions/ADR-20261111-convite-familiar-pela-sessao.md"],
-      "dependencies": ["BLOCK-RESEND"],
+      "links": [
+        "docs/decisions/ADR-20261111-convite-familiar-pela-sessao.md"
+      ],
+      "dependencies": [
+        "BLOCK-RESEND"
+      ],
       "updatedAt": "2026-11-11",
       "sourceRevision": "ef72c839",
       "blockers": [],
-      "completedChecklist": [false, false, false]
+      "completedChecklist": [
+        false,
+        false,
+        false
+      ]
     },
     {
       "id": "F10-R3-HELPER-ENUMERACAO",
@@ -7936,14 +9076,22 @@
         "pgTAP positivo e negativo",
         "Registro no RATIFICACAO.md se entrar em R3"
       ],
-      "proof": ["11/11: aberto a partir da ressalva BAIXA da auditoria R3 do PR #194."],
+      "proof": [
+        "11/11: aberto a partir da ressalva BAIXA da auditoria R3 do PR #194."
+      ],
       "tests": [],
       "links": [],
-      "dependencies": ["BLOCK-RESEND"],
+      "dependencies": [
+        "BLOCK-RESEND"
+      ],
       "updatedAt": "2026-11-11",
       "sourceRevision": "ef72c839",
       "blockers": [],
-      "completedChecklist": [false, false, false]
+      "completedChecklist": [
+        false,
+        false,
+        false
+      ]
     },
     {
       "id": "F10-R3-HINT-CURTO",
@@ -7958,14 +9106,24 @@
         "Alinhar lib/convite/hint.ts e a função SQL",
         "Cobrir com teste positivo e negativo"
       ],
-      "proof": ["11/11: aberto a partir da ressalva BAIXA da auditoria R3 do PR #194."],
+      "proof": [
+        "11/11: aberto a partir da ressalva BAIXA da auditoria R3 do PR #194."
+      ],
       "tests": [],
-      "links": ["apps/web/lib/convite/hint.ts"],
-      "dependencies": ["BLOCK-RESEND"],
+      "links": [
+        "apps/web/lib/convite/hint.ts"
+      ],
+      "dependencies": [
+        "BLOCK-RESEND"
+      ],
       "updatedAt": "2026-11-11",
       "sourceRevision": "ef72c839",
       "blockers": [],
-      "completedChecklist": [false, false, false]
+      "completedChecklist": [
+        false,
+        false,
+        false
+      ]
     },
     {
       "id": "F03-RESIDUOS-REVISAO",
@@ -7980,14 +9138,22 @@
         "Uma única regra de foco entre a folha e a lista",
         "Capturas em .visual/run-ds-021"
       ],
-      "proof": ["11/11: aberto a partir das ressalvas BAIXAS do parecer do PR #197."],
+      "proof": [
+        "11/11: aberto a partir das ressalvas BAIXAS do parecer do PR #197."
+      ],
       "tests": [],
       "links": [],
-      "dependencies": ["LAN-F03"],
+      "dependencies": [
+        "LAN-F03"
+      ],
       "updatedAt": "2026-11-11",
       "sourceRevision": "29e5c2d4",
       "blockers": [],
-      "completedChecklist": [false, false, false]
+      "completedChecklist": [
+        false,
+        false,
+        false
+      ]
     },
     {
       "id": "OUTBOX-ASSUNTO-CRLF",
@@ -8002,14 +9168,22 @@
         "Unit que rejeita CR/LF no assunto",
         "Registrar no cartão do outbox"
       ],
-      "proof": ["11/11: aberto a partir do achado MÉDIO do parecer do PR #193."],
+      "proof": [
+        "11/11: aberto a partir do achado MÉDIO do parecer do PR #193."
+      ],
       "tests": [],
       "links": [],
-      "dependencies": ["OUTBOX-INVITE-RECIPIENTS"],
+      "dependencies": [
+        "OUTBOX-INVITE-RECIPIENTS"
+      ],
       "updatedAt": "2026-11-11",
       "sourceRevision": "b89a8d4b",
       "blockers": [],
-      "completedChecklist": [false, false, false]
+      "completedChecklist": [
+        false,
+        false,
+        false
+      ]
     },
     {
       "id": "ENTRADA-CONVITE-COMUNIDADE",
@@ -8024,14 +9198,22 @@
         "E2E sem sessão e com sessão",
         "Registro do desvio no LAN-F01"
       ],
-      "proof": ["11/11: aberto a partir do parecer do PR #193 (entrada da F01 registra o desvio)."],
+      "proof": [
+        "11/11: aberto a partir do parecer do PR #193 (entrada da F01 registra o desvio)."
+      ],
       "tests": [],
       "links": [],
-      "dependencies": ["LAN-F01"],
+      "dependencies": [
+        "LAN-F01"
+      ],
       "updatedAt": "2026-11-11",
       "sourceRevision": "b89a8d4b",
       "blockers": [],
-      "completedChecklist": [false, false, false]
+      "completedChecklist": [
+        false,
+        false,
+        false
+      ]
     },
     {
       "phase": "Lançamento",
@@ -8039,7 +9221,10 @@
       "blockers": [],
       "updatedAt": "2026-11-12",
       "sourceRevision": "ea0ca6c1",
-      "links": ["docs/LANCAMENTO.md", "docs/agents/regua-nextdoor/AVALIACAO-79-FLOWS.md"],
+      "links": [
+        "docs/LANCAMENTO.md",
+        "docs/agents/regua-nextdoor/AVALIACAO-79-FLOWS.md"
+      ],
       "id": "BLIND-F02",
       "title": "Revisao as cegas da jornada F02 (Inicio e busca) contra a regua Nextdoor",
       "priority": "P1",
@@ -8066,7 +9251,10 @@
       "blockers": [],
       "updatedAt": "2026-11-12",
       "sourceRevision": "ea0ca6c1",
-      "links": ["docs/LANCAMENTO.md", "docs/agents/regua-nextdoor/AVALIACAO-79-FLOWS.md"],
+      "links": [
+        "docs/LANCAMENTO.md",
+        "docs/agents/regua-nextdoor/AVALIACAO-79-FLOWS.md"
+      ],
       "id": "BLIND-F03",
       "title": "Revisao as cegas da jornada F03 (Criar) contra a regua Nextdoor",
       "priority": "P1",
@@ -8093,7 +9281,10 @@
       "blockers": [],
       "updatedAt": "2026-11-12",
       "sourceRevision": "ea0ca6c1",
-      "links": ["docs/LANCAMENTO.md", "docs/agents/regua-nextdoor/AVALIACAO-79-FLOWS.md"],
+      "links": [
+        "docs/LANCAMENTO.md",
+        "docs/agents/regua-nextdoor/AVALIACAO-79-FLOWS.md"
+      ],
       "id": "BLIND-F07",
       "title": "Revisao as cegas da jornada F07 (Negocios e servicos) contra a regua Nextdoor",
       "priority": "P1",
@@ -8120,7 +9311,10 @@
       "blockers": [],
       "updatedAt": "2026-11-12",
       "sourceRevision": "ea0ca6c1",
-      "links": ["docs/LANCAMENTO.md", "docs/agents/regua-nextdoor/AVALIACAO-79-FLOWS.md"],
+      "links": [
+        "docs/LANCAMENTO.md",
+        "docs/agents/regua-nextdoor/AVALIACAO-79-FLOWS.md"
+      ],
       "id": "BLIND-F08",
       "title": "Revisao as cegas da jornada F08 (Guia) contra a regua Nextdoor",
       "priority": "P1",
@@ -8147,7 +9341,10 @@
       "blockers": [],
       "updatedAt": "2026-11-12",
       "sourceRevision": "e7f8cbc0",
-      "links": ["docs/LANCAMENTO.md", "docs/agents/regua-nextdoor/AVALIACAO-79-FLOWS.md"],
+      "links": [
+        "docs/LANCAMENTO.md",
+        "docs/agents/regua-nextdoor/AVALIACAO-79-FLOWS.md"
+      ],
       "id": "BLIND-JULGAMENTO",
       "title": "Julgamento cego de F02, F03, F07 e F08 por outro modelo sobre as capturas do PR #199",
       "priority": "P1",
@@ -8174,7 +9371,9 @@
       "phase": "LanÃ§amento",
       "updatedAt": "2026-11-12",
       "sourceRevision": "79eedadb",
-      "links": ["docs/LANCAMENTO.md"],
+      "links": [
+        "docs/LANCAMENTO.md"
+      ],
       "id": "CORRETA-RODAPE-CASCA",
       "title": "Corrigir o rodape de depuracao da casca que aparece em toda rota sem conteudo",
       "priority": "P1",
@@ -8194,14 +9393,21 @@
       ],
       "tests": [],
       "blockers": [],
-      "completedChecklist": [true, true, true, true],
+      "completedChecklist": [
+        true,
+        true,
+        true,
+        true
+      ],
       "completedAt": "2026-11-12"
     },
     {
       "phase": "LanÃ§amento",
       "updatedAt": "2026-11-13",
       "sourceRevision": "26e2899b",
-      "links": ["docs/LANCAMENTO.md"],
+      "links": [
+        "docs/LANCAMENTO.md"
+      ],
       "id": "CORRETA-F02-ESTADO-VAZIO",
       "title": "F02: Inicio e Busca com estado de primeira entrada real",
       "priority": "P1",
@@ -8213,21 +9419,30 @@
         "Estado vazio da Busca com buscas recentes, bairros/cidade sugeridos e atalhos do Criar",
         "Capturas 375/768/1440 claro e escuro na nova rodada cega"
       ],
-      "dependencies": ["CORRETA-RODAPE-CASCA"],
+      "dependencies": [
+        "CORRETA-RODAPE-CASCA"
+      ],
       "proof": [
         "12/12: aberto pelo parecer cego; achado 4 de F02 e correcao 1 do top 3 ('estados vazios e de primeira entrada reais em todas as rotas').",
         "13/11: fechado pelo RUN-139, PR #209 (merge 26e2899b). Estado de primeira entrada honesto no Início e na Busca (frase humana, o que existe na cidade, o caminho que resolve; buscas recentes só com registro real). E2E do lote 205/0 + specs reais alinhados; capturas 375/768/1440 nos dois temas. Revisão independente Qwen: PASS com ressalvas."
       ],
       "tests": [],
       "blockers": [],
-      "completedChecklist": [true, true, true],
+      "completedChecklist": [
+        true,
+        true,
+        true
+      ],
       "completedAt": "2026-11-13"
     },
     {
       "phase": "LanÃ§amento",
       "updatedAt": "2026-11-13",
       "sourceRevision": "26e2899b",
-      "links": ["docs/LANCAMENTO.md", "docs/agents/regua-nextdoor/PADRAO-DE-TELA.md"],
+      "links": [
+        "docs/LANCAMENTO.md",
+        "docs/agents/regua-nextdoor/PADRAO-DE-TELA.md"
+      ],
       "id": "CORRETA-F02-COLUNA-DE-LEITURA",
       "title": "F02: feed em cartoes com coluna de leitura no 1440 e barra inferior ate 1024",
       "priority": "P2",
@@ -8240,21 +9455,31 @@
         "Barra inferior ate 1024, sem rotulos quebrados no 768",
         "Capturas 375/768/1440 claro e escuro na nova rodada cega"
       ],
-      "dependencies": ["CORRETA-RODAPE-CASCA"],
+      "dependencies": [
+        "CORRETA-RODAPE-CASCA"
+      ],
       "proof": [
         "12/12: aberto pelo parecer cego; achados 2, 5 e 6 de F02 e correcao 2 do top 3.",
         "13/11: fechado pelo RUN-139, PR #209 (merge 26e2899b). Feed em cartões da biblioteca de peças, coluna de leitura + rail de contexto no 1440, barra inferior até 1024 sem rótulo quebrado no 768; espaço da barra reservado no conteúdo. E2E + capturas nos três tamanhos e dois temas. Ressalva B da revisão (breakpoint JS ainda em 720 vs CSS 1024) vira o cartão CORRETA-F02-BREAKPOINT-JS."
       ],
       "tests": [],
       "blockers": [],
-      "completedChecklist": [true, true, true, true],
+      "completedChecklist": [
+        true,
+        true,
+        true,
+        true
+      ],
       "completedAt": "2026-11-13"
     },
     {
       "phase": "LanÃ§amento",
       "updatedAt": "2026-11-13",
       "sourceRevision": "26e2899b",
-      "links": ["docs/LANCAMENTO.md", "docs/decisions/ADR-20261024-front-react-spa.md"],
+      "links": [
+        "docs/LANCAMENTO.md",
+        "docs/decisions/ADR-20261024-front-react-spa.md"
+      ],
       "id": "CORRETA-F02-BUSCA-VISIVEL",
       "title": "F02: campo 'Buscar em [cidade]' visivel nos tres tamanhos e termo tratado",
       "priority": "P1",
@@ -8267,21 +9492,30 @@
         "Estado vazio e estado de erro da busca cobertos",
         "E2E nos tres tamanhos provando do toque ao resultado"
       ],
-      "dependencies": ["CORRETA-F02-ESTADO-VAZIO"],
+      "dependencies": [
+        "CORRETA-F02-ESTADO-VAZIO"
+      ],
       "proof": [
         "12/12: aberto pelo parecer cego (achado 3 de F02) e pela depuracao das capturas cegas de 12/12, que mostrou que o campo do topo nao navega e a tela de busca nao tem campo proprio.",
         "13/11: fechado pelo RUN-139, PR #209 (merge 26e2899b). Campo 'Buscar em [cidade]' visível em 375/768/1440; o termo chega a /app/busca?q= e dispara a consulta (provado do toque ao resultado); vazio e erro cobertos. Decisão C do coordenador: o spec do lote prova 375/768/1440 (skip condicional por viewport), 320/360/430 seguem cobertos por mobile-first (verde). Decisão A: a fixture de apoio.ts foi ajustada pelo coordenador (e2239b28) para o busca-termo-url, aceita explicitamente — aditiva, sem afrouxar asserção."
       ],
       "tests": [],
       "blockers": [],
-      "completedChecklist": [true, true, true, true],
+      "completedChecklist": [
+        true,
+        true,
+        true,
+        true
+      ],
       "completedAt": "2026-11-13"
     },
     {
       "phase": "LanÃ§amento",
       "updatedAt": "2026-11-13",
       "sourceRevision": "0aa2d9eb",
-      "links": ["docs/agents/regua-nextdoor/PADRAO-DE-TELA.md"],
+      "links": [
+        "docs/agents/regua-nextdoor/PADRAO-DE-TELA.md"
+      ],
       "id": "CORRETA-F02-BREAKPOINT-JS",
       "title": "F02: alinhar o breakpoint JS da casca a 1024 (a barra inferior já é CSS até 1024)",
       "priority": "P2",
@@ -8295,21 +9529,31 @@
         "casca.spec.ts: guards de largura atualizados, asserções mantidas; comentários de 720 corrigidos",
         "E2E da casca em 375/768/1440 verde nos dois temas"
       ],
-      "dependencies": ["CORRETA-F02-COLUNA-DE-LEITURA"],
+      "dependencies": [
+        "CORRETA-F02-COLUNA-DE-LEITURA"
+      ],
       "proof": [
         "13/11: descoberto pela revisão independente Qwen do RUN-139 (ressalva B, PR #209). O CSS passou a 1024 mas o JS ficou em 720; aceito como follow-up porque os fluxos funcionam no 768 e a aceitação literal do RUN-139 foi atendida.",
         "13/11: fechado pelo RUN-143, PR #214 (merge 0aa2d9eb). JS alinhado a 1024 (casca.ts, movimento.ts, MenuCriar.tsx, NavegacaoPrincipal.tsx); a docagem do título no CSS também estava em 719.98 e foi a 1023.98 (causa real da falha 'título ainda visível' no 768, diagnosticada no retry). Guards §5.3/§6.7 do casca.spec.ts e movimento.spec.ts em 1024 com asserções mantidas; comentário de paginaEncolhe corrigido. E2E 181/0 com os testes §6.7 rodando no 768; 504 unitários, typecheck, build, Biome verdes. Revisão Qwen: FAIL → retry → PASS. CI verde (rerun dos flaky de grupo). Residual fora do escopo: Guia.tsx:179 (innerWidth<720) é comportamento de tela, não da casca."
       ],
       "tests": [],
       "blockers": [],
-      "completedChecklist": [true, true, true, true, true],
+      "completedChecklist": [
+        true,
+        true,
+        true,
+        true,
+        true
+      ],
       "completedAt": "2026-11-13"
     },
     {
       "phase": "LanÃ§amento",
       "updatedAt": "2026-11-13",
       "sourceRevision": "283562b8",
-      "links": ["docs/LANCAMENTO.md"],
+      "links": [
+        "docs/LANCAMENTO.md"
+      ],
       "id": "CORRETA-F03-FORMULARIO-PT-BR",
       "title": "F03: formulario de encontro com data pt-BR, erro no campo e primaria que reflete o estado",
       "priority": "P1",
@@ -8329,14 +9573,21 @@
       ],
       "tests": [],
       "blockers": [],
-      "completedChecklist": [true, true, true, true],
+      "completedChecklist": [
+        true,
+        true,
+        true,
+        true
+      ],
       "completedAt": "2026-11-13"
     },
     {
       "phase": "LanÃ§amento",
       "updatedAt": "2026-11-13",
       "sourceRevision": "283562b8",
-      "links": ["docs/LANCAMENTO.md"],
+      "links": [
+        "docs/LANCAMENTO.md"
+      ],
       "id": "CORRETA-F03-DESTINOS",
       "title": "F03: Comunidade, Grupo e Publicacao com identidade de destino e estados vazios",
       "priority": "P2",
@@ -8349,21 +9600,30 @@
         "Estado vazio honesto em Comunidade, Grupo e Publicacao",
         "Capturas 375/768/1440 claro e escuro"
       ],
-      "dependencies": ["CORRETA-RODAPE-CASCA"],
+      "dependencies": [
+        "CORRETA-RODAPE-CASCA"
+      ],
       "proof": [
         "12/12: aberto pelo parecer cego; achado 6 de F03 e mencao honrosa do parecer.",
         "13/11: fechado pelo RUN-140, PR #210 (merge 283562b8). Grupo e Publicação com nome do grupo e cidade, ação única por tela, estado vazio honesto em Comunidade/Grupo/Publicação (e Comunidade filtrada). E2E + capturas nos três tamanhos e dois temas. Ressalva: a cidade do cabeçalho vem de casca.cidade e não do payload (que já traz cidade) — registrada em CORRETA-F03-RESSALVAS."
       ],
       "tests": [],
       "blockers": [],
-      "completedChecklist": [true, true, true, true],
+      "completedChecklist": [
+        true,
+        true,
+        true,
+        true
+      ],
       "completedAt": "2026-11-13"
     },
     {
       "phase": "LanÃ§amento",
       "updatedAt": "2026-11-13",
       "sourceRevision": "ad5ac070",
-      "links": ["docs/LANCAMENTO.md"],
+      "links": [
+        "docs/LANCAMENTO.md"
+      ],
       "id": "CORRETA-F07-LISTA",
       "title": "F07: lista de negocios com nome de pagina proprio, contagem, ordenacao e estado vazio",
       "priority": "P2",
@@ -8377,21 +9637,31 @@
         "Aba ativa legivel nos dois temas",
         "Capturas 375/768/1440 claro e escuro"
       ],
-      "dependencies": ["CORRETA-RODAPE-CASCA"],
+      "dependencies": [
+        "CORRETA-RODAPE-CASCA"
+      ],
       "proof": [
         "12/12: aberto pelo parecer cego; achados 1 a 6 de F07.",
         "13/11: fechado pelo RUN-141, PR #212 (merge ad5ac070). Nome unico 'Mercado da cidade' derivado de tituloDaRota; segmentos com navegacao simetrica; ordenacao por proximidade e contagens parciais removidas (API sem distancia/data/totais — nao inventar dado); cadastro alinhado a 'Divulgar meu negocio'; aba ativa AA nos dois temas. E2E 594/0 (8 specs, log arquivado); spec real f07-negocios alinhado. Revisao Qwen: FAIL -> retry -> BLOCKED (borda) -> limpeza -> PASS. Escopo entregue emendado no contrato; contagem/ordenacao reais em F07-CONTAGEM-ORDENACAO."
       ],
       "tests": [],
       "blockers": [],
-      "completedChecklist": [true, true, true, true, true],
+      "completedChecklist": [
+        true,
+        true,
+        true,
+        true,
+        true
+      ],
       "completedAt": "2026-11-13"
     },
     {
       "phase": "LanÃ§amento",
       "updatedAt": "2026-11-13",
       "sourceRevision": "ad5ac070",
-      "links": ["docs/LANCAMENTO.md"],
+      "links": [
+        "docs/LANCAMENTO.md"
+      ],
       "id": "F07-CONTAGEM-ORDENACAO",
       "title": "F07: contagem real por aba e ordenacao por proximidade quando a API trouxer totais/data/distancia",
       "priority": "P3",
@@ -8404,7 +9674,9 @@
         "Ordenacao 'Mais proximos' por distancia com origem; sem origem cai para recentes e diz por que",
         "E2E da contagem e da ordenacao nos tres tamanhos"
       ],
-      "dependencies": ["LAN-F07"],
+      "dependencies": [
+        "LAN-F07"
+      ],
       "proof": [
         "13/11: aberto pelo coordenador no merge do RUN-141 (PR #212); divida registrada na emenda do contrato RUN-141.task.yml e no veredito final da revisao Qwen."
       ],
@@ -8415,7 +9687,9 @@
       "phase": "LanÃ§amento",
       "updatedAt": "2026-11-13",
       "sourceRevision": "08593fe5",
-      "links": ["docs/LANCAMENTO.md"],
+      "links": [
+        "docs/LANCAMENTO.md"
+      ],
       "id": "CORRETA-F08-ESTRUTURA",
       "title": "F08: Guia com estrutura editorial, cabecalho fixo e caminho de contribuicao",
       "priority": "P2",
@@ -8429,21 +9703,31 @@
         "Corpo com opacidade e entrelinha ajustadas no escuro",
         "Capturas 375/768/1440 claro e escuro"
       ],
-      "dependencies": ["CORRETA-RODAPE-CASCA"],
+      "dependencies": [
+        "CORRETA-RODAPE-CASCA"
+      ],
       "proof": [
         "12/12: aberto pelo parecer cego; achados 1 a 6 de F08.",
         "13/11: fechado pelo RUN-142, PR #211 (merge 08593fe5). Guia com 3-4 seções e âncoras navegáveis por teclado, cabeçalho fixo compacto, 'Guia' numa linha no 375, 'Sugerir um lugar para o Guia' ligado ao Criar, corpo escuro com token secundário + contraste AA + entrelinha (medidos). E2E 60/0; spec real f08-guia alinhado ao h1 'Guia'. Revisão Qwen: PASS com ressalva. Ressalvas em CORRETA-F08-RESSALVAS."
       ],
       "tests": [],
       "blockers": [],
-      "completedChecklist": [true, true, true, true, true],
+      "completedChecklist": [
+        true,
+        true,
+        true,
+        true,
+        true
+      ],
       "completedAt": "2026-11-13"
     },
     {
       "phase": "LanÃ§amento",
       "updatedAt": "2026-11-13",
       "sourceRevision": "283562b8",
-      "links": ["docs/LANCAMENTO.md"],
+      "links": [
+        "docs/LANCAMENTO.md"
+      ],
       "id": "CORRETA-F03-RESSALVAS",
       "title": "F03: ressalvas nao bloqueantes da revisao do RUN-140",
       "priority": "P3",
@@ -8466,7 +9750,9 @@
       "phase": "LanÃ§amento",
       "updatedAt": "2026-11-13",
       "sourceRevision": "08593fe5",
-      "links": ["docs/LANCAMENTO.md"],
+      "links": [
+        "docs/LANCAMENTO.md"
+      ],
       "id": "CORRETA-F08-RESSALVAS",
       "title": "F08: ressalvas da revisao do RUN-142 (cidade repetida no desktop, scroll-mt no 320)",
       "priority": "P3",
@@ -8490,25 +9776,49 @@
     "title": "Prontidão do Bivaque",
     "source": "docs/LANCAMENTO.md",
     "paths": {
-      "frontend": ["apps/app", "packages/tokens"],
-      "backend": ["apps/web", "supabase", "packages/contracts", "packages/domain"],
-      "integration": ["apps", "packages", "supabase", "tests", ".github/workflows"]
+      "frontend": [
+        "apps/app",
+        "packages/tokens"
+      ],
+      "backend": [
+        "apps/web",
+        "supabase",
+        "packages/contracts",
+        "packages/domain"
+      ],
+      "integration": [
+        "apps",
+        "packages",
+        "supabase",
+        "tests",
+        ".github/workflows"
+      ]
     },
     "checks": {
       "frontend": [
         {
           "workflow": "pull-request-ci.yml",
-          "steps": ["Lint", "Typecheck", "Build web app"]
+          "steps": [
+            "Lint",
+            "Typecheck",
+            "Build web app"
+          ]
         },
         {
           "workflow": "bivaque-app-visual-smoke.yml",
-          "steps": ["Verify shared visual components"]
+          "steps": [
+            "Verify shared visual components"
+          ]
         }
       ],
       "backend": [
         {
           "workflow": "pull-request-ci.yml",
-          "steps": ["Database tests", "Schema lint", "Check generated types drift"]
+          "steps": [
+            "Database tests",
+            "Schema lint",
+            "Check generated types drift"
+          ]
         }
       ],
       "integration": [
@@ -8523,87 +9833,137 @@
         }
       ]
     },
-    "gates": ["LAN-OP", "LAN-TROCA", "LAN-PROVA", "BLOCK-LEGAL-ENTRY", "BLOCK-RESEND", "LAN-LOJA"],
+    "gates": [
+      "LAN-OP",
+      "LAN-TROCA",
+      "LAN-PROVA",
+      "BLOCK-LEGAL-ENTRY",
+      "BLOCK-RESEND",
+      "LAN-LOJA"
+    ],
     "journeys": [
       {
         "id": "F01",
         "title": "Entrada e conta",
         "cardId": "LAN-F01",
         "nextStep": "Ligar a entrada ao servidor e comprovar a jornada completa.",
-        "frontend": ["LAN-F01"],
-        "backend": ["MVP-01-ADMISSION"]
+        "frontend": [
+          "LAN-F01"
+        ],
+        "backend": [
+          "MVP-01-ADMISSION"
+        ]
       },
       {
         "id": "F02",
         "title": "Início e busca",
         "cardId": "LAN-F02",
         "nextStep": "Ligar o início e a busca aos dados reais.",
-        "frontend": ["LAN-F02"],
-        "backend": ["LAN-F02"]
+        "frontend": [
+          "LAN-F02"
+        ],
+        "backend": [
+          "LAN-F02"
+        ]
       },
       {
         "id": "F03",
         "title": "Criar e publicar",
         "cardId": "LAN-F03",
         "nextStep": "Concluir os quatro tipos de criação, rascunhos e tratamento de falha.",
-        "frontend": ["LAN-F03"],
-        "backend": ["LAN-F03"]
+        "frontend": [
+          "LAN-F03"
+        ],
+        "backend": [
+          "LAN-F03"
+        ]
       },
       {
         "id": "F04",
         "title": "Comunidade e grupos",
         "cardId": "LAN-F04",
         "nextStep": "Concluir o redesenho do banco e ligar os grupos ao aplicativo.",
-        "frontend": ["LAN-F04"],
-        "backend": ["RED-003", "MVP-03-COMMUNITY"]
+        "frontend": [
+          "LAN-F04"
+        ],
+        "backend": [
+          "RED-003",
+          "MVP-03-COMMUNITY"
+        ]
       },
       {
         "id": "F05",
         "title": "Eventos",
         "cardId": "LAN-F05",
         "nextStep": "Ligar agenda, presença, criação e edição ao aplicativo integrado.",
-        "frontend": ["LAN-F05"],
-        "backend": ["MVP-03-COMMUNITY"]
+        "frontend": [
+          "LAN-F05"
+        ],
+        "backend": [
+          "MVP-03-COMMUNITY"
+        ]
       },
       {
         "id": "F06",
         "title": "Desapegos e imóveis",
         "cardId": "LAN-F06",
         "nextStep": "Comprovar anúncios, localização, filtros e conversa de interesse.",
-        "frontend": ["LAN-F06"],
-        "backend": ["LAN-F06"]
+        "frontend": [
+          "LAN-F06"
+        ],
+        "backend": [
+          "LAN-F06"
+        ]
       },
       {
         "id": "F07",
         "title": "Negócios e serviços",
         "cardId": "LAN-F07",
         "nextStep": "Concluir negócio, pedido de serviço e acompanhamento.",
-        "frontend": ["LAN-F07"],
-        "backend": ["G-TASK-1", "LAN-F07"]
+        "frontend": [
+          "LAN-F07"
+        ],
+        "backend": [
+          "G-TASK-1",
+          "LAN-F07"
+        ]
       },
       {
         "id": "F08",
         "title": "Guia",
         "cardId": "LAN-F08",
         "nextStep": "Ligar busca, leitura, salvos e sugestões aos dados reais.",
-        "frontend": ["LAN-F08"],
-        "backend": ["LAN-F08"]
+        "frontend": [
+          "LAN-F08"
+        ],
+        "backend": [
+          "LAN-F08"
+        ]
       },
       {
         "id": "F09",
         "title": "Conversas e avisos",
         "cardId": "LAN-F09",
         "nextStep": "Ligar conversas e avisos; comprovar o destino e o canal de e-mail.",
-        "frontend": ["LAN-F09"],
-        "backend": ["DONE-OUTBOX-FOUNDATION"]
+        "frontend": [
+          "LAN-F09"
+        ],
+        "backend": [
+          "DONE-OUTBOX-FOUNDATION"
+        ]
       },
       {
         "id": "F10",
         "title": "Você, família e conta",
         "cardId": "LAN-F10",
         "nextStep": "Ligar perfil, família e configurações; comprovar seus ciclos.",
-        "frontend": ["LAN-F10"],
-        "backend": ["DONE-PROFILE-RPCS", "LAN-F10"]
+        "frontend": [
+          "LAN-F10"
+        ],
+        "backend": [
+          "DONE-PROFILE-RPCS",
+          "LAN-F10"
+        ]
       }
     ]
   }
