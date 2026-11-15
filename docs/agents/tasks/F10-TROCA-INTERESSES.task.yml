@@ -1,0 +1,86 @@
+# RUN-163 — troca do /profile/interests (web) pelo app.
+#
+# A folha Interesses do app (RUN-160) cobre a tela web por completo (mesmos
+# RPCs canonicos; pgTAP + E2E real). A tela web /profile/interests e suas pecas
+# saem com redirect 307 → /app/voce no mesmo lote (criterio 6 / SPA ADR §8).
+# Perda declarada e aceita: o app landing nao abre a folha direto (folha e
+# estado da entrada, nao URL; nao construir ?folha=). A linha Interesses esta na
+# primeira dobra do Voce.
+#
+# ANTES de remover: CONFIRMAR que POST /api/app/voce/interesses exige a mesma
+# admissao que a web exigia em interests-actions.ts:90-143 (verificada OU
+# familiar admitida; cidade do vinculo). Se a rota do app NAO conferir admissao,
+# o portao de verificacao nao pode morrer com a web — portar a checagem para a
+# rota do app (modulo compartilhado) com teste positivo E negativo, e manter a
+# prova equivalente (interests-require-verification).
+#
+# /profile (proprio) e /profile/editar NAO sao deste lote (exigem decisao de
+# paridade: transferencia de cidade, afiliacao, avatar). Tocar editar So para
+# o link de interesses apontar direto ao app (link web para tela que sai).
+
+task_id: RUN-163
+
+objective: >
+  Redirect /profile/interests → /app/voce + remocao da pagina/segao/actions web;
+  ligar o link de /profile/editar ao app; provas migradas (TROCADAS + ausencia,
+  perfil.test.ts, interests-require-verification repontada a rota do app,
+  user-group-interests.spec.ts web substituido pelo 307 + prova do app). Se a
+  rota do app nao tiver o portao de admissao da web, portar com testes.
+
+authority:
+  - docs/LANCAMENTO.md (criterio 6) + ADR-20261024-front-react-spa.md §8
+  - Mapa do explorer 15/11 (cobertura total da folha; gate de admissao web :90-143)
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    apps/web/app/(shell)/profile/interests/page.tsx + interests-section.tsx +
+    interests-actions.ts servem tela de membro; unico link: editar/page.tsx:481.
+    App: Voce.tsx:222-231 linha + folha Interesses.tsx; API
+    apps/web/app/api/app/voce/interesses/route.ts (portao de admissao a confirmar).
+
+allowed_paths:
+  - docs/agents/tasks/F10-TROCA-INTERESSES.task.yml
+  - apps/web/next.config.ts
+  - apps/web/app/(shell)/profile
+  - apps/web/app/api/app/voce/interesses
+  - apps/web/lib/profile
+  - apps/app/tests
+  - tests/unit/infra/lan-troca-redirect.test.ts
+  - tests/unit/ui/perfil.test.ts
+  - tests/unit/profile
+  - tests/e2e/user-group-interests.spec.ts
+  - tests/e2e/link-crawl.spec.ts
+  - .visual/f10-troca-interests
+
+forbidden:
+  - tocar /profile/page.tsx, /profile/editar/page.tsx (salvo o link de interesses → /app/voce), /profile/[userId] (ja trocado), city/avatar/affiliation
+  - construir abertura de folha por URL (?folha=) ou mexer no mecanismo de sobreposicao
+  - perder o portao de admissao: se a rota do app nao confere, PORTAR a checagem (nao omitir)
+  - criar migration ou tocar RPCs/banco; alterar os RPCs canonicos
+  - usar skip/fixme novo ou afrouxar assercao; apagar prova sem realocar
+  - push, merge ou force-push; ler/criar/editar arquivos de ambiente; imprimir credenciais
+  - tocar em .work/main ou em outra worktree
+
+acceptance:
+  - "next.config.ts: regra exata /profile/interests → /app/voce (307, query preservada) colocada ANTES da regra /profile/:id existente (que ja nao captura interests pelo lookahead; conferir e manter a negativa dos pares). Remover page.tsx, interests-section.tsx, interests-actions.ts da pasta profile; nenhum import órfão (grep antes)."
+  - "editar/page.tsx:481: link Assuntos de interesse passa a href /app/voce (migracao direta do link, nao 307). Nada mais em editar."
+  - "Confirmar (com teste) que GET/POST /api/app/voce/interesses recusa conta nao-admitida (nao verificada e sem familiar admitido) como a web fazia; se faltou, implementar a checagem no molde das rotas app (modulo compartilhado + testes positivo/negativo)."
+  - "Provas: lan-troca-redirect.test.ts (par novo 307+query, ausencia da pasta, negativa /profile/editar e /profile/:id intactas); perfil.test.ts remove os casos da tela que sai; interests-require-verification.test.ts repontada para a rota do app (mesmas intencoes: verificada entra, nao-verificada 403, familiar admitido entra); user-group-interests.spec.ts (web) sai, a cobertura fica no E2E real do app (f10-voce-real interesses) + redirect provado. link-crawl: conferir staleAllowances."
+  - "Passam: gate --fast, tsc -p tests/e2e, pnpm test (raiz), pnpm test:scope. App test do lado tocado. E2E navegador no CI."
+
+proof:
+  - npx pnpm@11.18.0 gate --fast
+  - npx pnpm@11.18.0 test
+  - npx pnpm@11.18.0 test:scope
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/F10-TROCA-INTERESSES.task.yml
+
+risk: troca de rota com remocao de server actions; gate de admissao pode faltar na rota do app
+risk_level: R2
+
+reviewer_must_differ_from_executor: true
+retry_budget: 2
+on_budget_exhausted: HUMAN_DECISION
+
+closure:
+  requires_runtime_evidence: true
