@@ -1,0 +1,91 @@
+# RUN-168 — F06 Lote D: salvar de anuncio de VERDADE no app (listing_saves).
+#
+# O botao Salvar do app hoje e um Set local (Mercado.tsx:72/175/403,
+# Inicio.tsx:72/128/369): some no reload e nunca toca o banco. A tabela
+# listing_saves (20260911043053:198 + RLS) e as politicas proprias existem; a
+# web le/deleta por server actions mortas ou telas trocadas
+# (lib/saves/saved-items.ts:201,292). LANCAMENTO F06 pede gerenciar anuncio
+# e o criterio 1 pede fluxo inteiro real: este lote substitui o Set por
+# escrita real + leitura da lista de salvos na tela Salvos do app.
+# Sem migration. Vitrine/contagem do dono NAO e deste lote (se existir tela
+# web viva de membros/contagem, e outro card — ver acceptance).
+
+task_id: RUN-168
+
+adr: docs/decisions/ADR-20261105-porta-de-dados-do-app.md
+# A matriz R3 (termos automáticos: dado pessoal) eleva este contrato: sao rotas
+# novas de ESCRITA sobre dado pessoal do membro (o que ele salva). A decisao que
+# rege ja existe e esta ratificavel: ADR-20261105 (porta de dados do app, aceite
+# por delegacao, na RATIFICACAO) — nenhuma fronteira nova de permissao: RLS de
+# proprio ja provada, sem migration, mesma forma das rotas mercado existentes.
+
+objective: >
+  Salvar/dessalvar anuncio persistido em listing_saves pela porta do app
+  (POST/DELETE /api/app/mercado/[id]/salvo + GET /api/app/mercado/salvos),
+  estado real no detalhe e nos cartoes (Mercado/Inicio/Salvos substituem o Set
+  local), e a aba Mercado/Imoveis da tela Salvos listando o que o banco devolve.
+
+authority:
+  - docs/LANCAMENTO.md:59 (linha F06) + criterios 1-6 (:38-48)
+  - Mapa do explorer 16/11 (Lote D) + board.json F06-RESSALVAS (item 3: salvar do Início)
+  - ADR-20261105-porta-de-dados-do-app.md §5 (contrato de rota)
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    Mercado.tsx:72 useState(new Set()) e :175 toggle local; Inicio.tsx:72/128/369
+    idem; Anuncio.tsx:48 const salvo, setSalvo = useState(false) com
+    :157/:209/:220 toggle local sem POST; nenhuma rota de save em
+    apps/web/app/api/app/mercado (dir ls); listing_saves com RLS forca +
+    politicas proprias (20260911043053 — conferir os nomes exatos e o pgTAP
+    listings-moradia.sql antes de escrever a rota).
+
+allowed_paths:
+  - docs/agents/tasks/F06-SALVAR.task.yml
+  - apps/web/app/api/app/mercado/salvos
+  - apps/web/app/api/app/mercado/[id]/salvo
+  - apps/web/app/api/app/mercado/route.ts
+  - apps/web/lib/security/api-surface.ts
+  - apps/app/lib/dados/mercado.ts
+  - apps/app/src/telas/Anuncio.tsx
+  - apps/app/src/telas/Mercado.tsx
+  - apps/app/src/telas/Inicio.tsx
+  - apps/app/src/telas/Salvos.tsx
+  - apps/app/src/mercado
+  - apps/app/tests
+  - tests/unit/app-api/mercado
+  - tests/unit/security/api-surface.test.ts
+  - tests/e2e/f06-mercado-real.spec.ts
+  - .visual/f06-salvar
+
+forbidden:
+  - criar migration ou mexer em listing_saves/RPCs (tabela e politicas pre-existem)
+  - tocar alertas (Lote B), filtros server-side (Lote C), imovel (RUN-164 feito)
+  - portar vitrine/contagem de dono se isso exigir tela nova — registrar no RELATORIO e abrir card na conclusao, nao improvisar
+  - reintroduzir dados demo no caminho real; remover prova sem realocar
+  - usar skip/fixme novo ou afrouxar assercao
+  - push, merge ou force-push; ler/criar/editar arquivos de ambiente; imprimir credenciais
+  - tocar em .work/main ou em outra worktree
+
+acceptance:
+  - "POST/DELETE /api/app/mercado/[id]/salvo no ADR §5: exigirSessao + conferirEscrita (escrita por cookie), visibilidade do anuncio pela leitura sob RLS (invisivel/sumido -> 404 sem confirmar), insert/delete em listing_saves com user_id da SESSAO (nunca corpo), duplicata idempotente (23505 -> 200 mesmo estado), DELETE do proprio sempre permitido, sem service_role, sem eco, OPTIONS no molde. GET /api/app/mercado/salvos: a lista paginada dos proprios salvos (saved_at desc, join can_read_listing, kind/tipo param como o GET mercado hoje) no molde de guia/salvos. A rota lista (GET mercado) passa a incluir o flag salvo por item (uma leitura a mais da propria tabela, sem N+1)."
+  - "App: marcarSalvoAnuncio(id, ativo) + listarSalvos(...) no cliente de dados; Anuncio/Mercado/Inicio substituem o Set local pelo estado vindo do servidor (otimista com reversao em falha no botao; cartoes mostram o flag real); a tela Salvos (aba Mercado/Imoveis) lista dos salvos reais com links ao detalhe — a seccao que hoje e demo/ausente sai do demo. Sem localStorage novo; rascunhos de composicao ficam como estao."
+  - "F06-RESSALVAS item 'Salvar anuncio do Inicio (vindo do F02) persistir': passa a existir e a ser provado no fluxo do Início; os outros dois itens da ressalva (filtros property_details, price_cents) NAO sao deste lote."
+  - "Testes: unit POST/DELETE/GET salvos (positivos; 401; CSRF 403; invisivel 404; duplicata idempotente; flag salvo na lista; delete de outrem nao apaga; 503 sem eco), molde mercado/rotas.test.ts; perguntas/dados do app para os novos clients; E2E real f06-mercado-real: salvar do detalhe -> recarrega -> ainda salvo -> aparece em /app/salvos -> dessalvar de la -> some (3 larguras stateful); stub do app (mercado-gestao ou spec novo em apps/app/tests/e2e) para o caminho Inicio→salvar→estado real. Positivo E negativo em toda permissao."
+  - "Passam: gate --fast, tsc -p tests/e2e, pnpm test, test:scope, app test. TOTAL_DE_ROTAS: dois route.ts novos — recalcular CONTRA O DISCO apos rebase no estado atual da main (CIDADE-169/#243 somam antes); api-surface com as duas rotas e teste verde. E2E navegador no CI. Antes de tocar qualquer arquivo fora dos allowed_paths, EMENDAR este contrato primeiro."
+
+proof:
+  - npx pnpm@11.18.0 gate --fast
+  - npx pnpm@11.18.0 test
+  - npx pnpm@11.18.0 test:scope
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/F06-SALVAR.task.yml
+
+risk: duas rotas novas de escrita/leitura sobre tabela preexistente; substituicao de estado local em 4 telas
+risk_level: R3
+
+reviewer_must_differ_from_executor: true
+retry_budget: 2
+on_budget_exhausted: HUMAN_DECISION
+
+closure:
+  requires_runtime_evidence: true
