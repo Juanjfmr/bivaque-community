@@ -41,6 +41,8 @@ allowed_paths:
   - apps/web/app/(shell)/imoveis
   - apps/web/lib/listings
   - apps/app/lib/dados/mercado.ts
+  - apps/app/components/bivaque/formulario-imovel.tsx
+  - apps/app/src/telas/Mercado.tsx
   - apps/app/src/mercado
   - apps/app/src/criar
   - apps/app/lib/rascunhos-imoveis.ts
