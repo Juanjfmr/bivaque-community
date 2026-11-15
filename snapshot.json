@@ -3,7 +3,7 @@
   "title": "Prontidão do Bivaque",
   "scopeVersion": "2026-11-05",
   "source": "docs/LANCAMENTO.md",
-  "generatedAt": "2026-11-15T09:46:04.194Z",
+  "generatedAt": "2026-11-15T09:47:32.016Z",
   "revision": "f8974530527dd60c37d5c6c876cd7aa860a9bdef",
   "boardUpdatedAt": "2026-11-07",
   "stage": "Em construção",
@@ -36,7 +36,7 @@
       "cardId": "LAN-F01",
       "nextStep": "Ligar a entrada ao servidor e comprovar a jornada completa.",
       "frontend": {
-        "status": "unverified",
+        "status": "failed",
         "declared": true,
         "verified": false,
         "evidenceCount": 0,
@@ -69,7 +69,7 @@
         ]
       },
       "blocked": false,
-      "status": "unverified"
+      "status": "failed"
     },
     {
       "id": "F02",
@@ -77,7 +77,7 @@
       "cardId": "LAN-F02",
       "nextStep": "Ligar o início e a busca aos dados reais.",
       "frontend": {
-        "status": "pending",
+        "status": "failed",
         "declared": false,
         "verified": false,
         "evidenceCount": 0,
@@ -110,7 +110,7 @@
         ]
       },
       "blocked": false,
-      "status": "pending"
+      "status": "failed"
     },
     {
       "id": "F03",
@@ -118,7 +118,7 @@
       "cardId": "LAN-F03",
       "nextStep": "Concluir os quatro tipos de criação, rascunhos e tratamento de falha.",
       "frontend": {
-        "status": "pending",
+        "status": "failed",
         "declared": false,
         "verified": false,
         "evidenceCount": 0,
@@ -151,7 +151,7 @@
         ]
       },
       "blocked": false,
-      "status": "pending"
+      "status": "failed"
     },
     {
       "id": "F04",
@@ -159,7 +159,7 @@
       "cardId": "LAN-F04",
       "nextStep": "Concluir o redesenho do banco e ligar os grupos ao aplicativo.",
       "frontend": {
-        "status": "unverified",
+        "status": "failed",
         "declared": true,
         "verified": false,
         "evidenceCount": 0,
@@ -193,7 +193,7 @@
         ]
       },
       "blocked": false,
-      "status": "partial"
+      "status": "failed"
     },
     {
       "id": "F05",
@@ -201,7 +201,7 @@
       "cardId": "LAN-F05",
       "nextStep": "Ligar agenda, presença, criação e edição ao aplicativo integrado.",
       "frontend": {
-        "status": "unverified",
+        "status": "failed",
         "declared": true,
         "verified": false,
         "evidenceCount": 0,
@@ -234,7 +234,7 @@
         ]
       },
       "blocked": false,
-      "status": "unverified"
+      "status": "failed"
     },
     {
       "id": "F06",
@@ -242,7 +242,7 @@
       "cardId": "LAN-F06",
       "nextStep": "Comprovar anúncios, localização, filtros e conversa de interesse.",
       "frontend": {
-        "status": "pending",
+        "status": "failed",
         "declared": false,
         "verified": false,
         "evidenceCount": 0,
@@ -275,7 +275,7 @@
         ]
       },
       "blocked": false,
-      "status": "pending"
+      "status": "failed"
     },
     {
       "id": "F07",
@@ -283,7 +283,7 @@
       "cardId": "LAN-F07",
       "nextStep": "Concluir negócio, pedido de serviço e acompanhamento.",
       "frontend": {
-        "status": "pending",
+        "status": "failed",
         "declared": false,
         "verified": false,
         "evidenceCount": 0,
@@ -317,7 +317,7 @@
         ]
       },
       "blocked": false,
-      "status": "partial"
+      "status": "failed"
     },
     {
       "id": "F08",
@@ -325,7 +325,7 @@
       "cardId": "LAN-F08",
       "nextStep": "Ligar busca, leitura, salvos e sugestões aos dados reais.",
       "frontend": {
-        "status": "pending",
+        "status": "failed",
         "declared": false,
         "verified": false,
         "evidenceCount": 0,
@@ -358,7 +358,7 @@
         ]
       },
       "blocked": false,
-      "status": "pending"
+      "status": "failed"
     },
     {
       "id": "F09",
@@ -366,7 +366,7 @@
       "cardId": "LAN-F09",
       "nextStep": "Ligar conversas e avisos; comprovar o destino e o canal de e-mail.",
       "frontend": {
-        "status": "pending",
+        "status": "failed",
         "declared": false,
         "verified": false,
         "evidenceCount": 0,
@@ -399,7 +399,7 @@
         ]
       },
       "blocked": false,
-      "status": "partial"
+      "status": "failed"
     },
     {
       "id": "F10",
@@ -407,7 +407,7 @@
       "cardId": "LAN-F10",
       "nextStep": "Ligar perfil, família e configurações; comprovar seus ciclos.",
       "frontend": {
-        "status": "pending",
+        "status": "failed",
         "declared": false,
         "verified": false,
         "evidenceCount": 0,
@@ -441,7 +441,7 @@
         ]
       },
       "blocked": false,
-      "status": "partial"
+      "status": "failed"
     }
   ],
   "gates": [
@@ -479,7 +479,7 @@
   "changes": [],
   "checks": {
     "frontend": {
-      "status": "inconclusive",
+      "status": "failure",
       "revision": "f8974530527dd60c37d5c6c876cd7aa860a9bdef",
       "urls": [
         "https://github.com/Juanjfmr/bivaque-community/actions/runs/43700135146",
@@ -487,14 +487,14 @@
       ]
     },
     "backend": {
-      "status": "pending",
+      "status": "inconclusive",
       "revision": "f8974530527dd60c37d5c6c876cd7aa860a9bdef",
       "urls": [
         "https://github.com/Juanjfmr/bivaque-community/actions/runs/43700135146"
       ]
     },
     "integration": {
-      "status": "pending",
+      "status": "inconclusive",
       "revision": "f8974530527dd60c37d5c6c876cd7aa860a9bdef",
       "urls": [
         "https://github.com/Juanjfmr/bivaque-community/actions/runs/43700135146"
