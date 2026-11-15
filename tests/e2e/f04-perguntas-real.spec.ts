@@ -475,4 +475,121 @@ test.describe("F04 — perguntas reais no app", { tag: "@stateful" }, () => {
       "a resposta de pergunta não tem mais o Útil fake",
     ).toHaveCount(0)
   })
+
+  test("denunciar pergunta grava, sobrevive ao recarregar e a duplicata é recusada", async ({
+    page,
+    context,
+  }) => {
+    test.setTimeout(180_000)
+    // RUN-159: a denúncia reaproveita o mecanismo `reports` (alvos
+    // recommendation_request/reply já no enum). Denúncia não tem DELETE para o
+    // membro (é trilha de auditoria), então as três larguras da mesma persona
+    // convergem: a primeira grava, as seguintes leem 409 — por isso a primeira
+    // resposta aceita as duas frases e a segunda prova a duplicata.
+    await semearSessaoDeMembro(context, MEMBRO_SEMEADO)
+
+    async function denunciarPerguntaSemeada(): Promise<void> {
+      await page.goto("/app/comunidade")
+      await page
+        .locator('[data-tela="comunidade"] [data-linha="pergunta"]', { hasText: TEXTO_SEMEADO })
+        .click()
+      await expect(page.getByRole("heading", { level: 1, name: TEXTO_SEMEADO })).toBeVisible({
+        timeout: 30_000,
+      })
+      await page.getByRole("button", { name: "Opções da pergunta" }).click()
+      await page.getByRole("button", { name: "Denunciar pergunta" }).click()
+      await page.getByRole("radio", { name: "Spam" }).check()
+      await page.getByLabel("Explicação (opcional)").fill("Pergunta repetida no mesmo dia.")
+      await page.getByRole("button", { name: "Enviar denúncia" }).click()
+    }
+
+    await denunciarPerguntaSemeada()
+    // A repetição entre larguras cai no índice de duplicata (409) e mostra a
+    // frase no diálogo; a primeira grava (201) e mostra o aviso da tela.
+    await expect(
+      page.locator('[data-tela="pergunta"] [role="status"], [role="alert"]').first(),
+      "a denúncia é GRAVADA antes do aviso",
+    ).toContainText(/Denúncia enviada|Você já denunciou esta pergunta/, { timeout: 30_000 })
+
+    // A gravação vive no banco: recarregar e denunciar de novo encontra a linha
+    // aberta no índice de duplicata, e a tela mostra a frase do servidor.
+    await page.reload()
+    await page.getByRole("button", { name: "Opções da pergunta" }).click()
+    await page.getByRole("button", { name: "Denunciar pergunta" }).click()
+    await page.getByRole("radio", { name: "Outro" }).check()
+    await page.getByRole("button", { name: "Enviar denúncia" }).click()
+    await expect(page.getByRole("alert")).toContainText("Você já denunciou esta pergunta.", {
+      timeout: 30_000,
+    })
+
+    // A pergunta da própria persona não oferece denúncia...
+    await page.goto("/app/comunidade")
+    await page.getByRole("radio", { name: "Filtrar por Minhas" }).click()
+    await page
+      .locator('[data-tela="comunidade"] [data-linha="pergunta"]', { hasText: TEXTO_DA_PESSOA })
+      .click()
+    await expect(page.getByRole("heading", { level: 1, name: TEXTO_DA_PESSOA })).toBeVisible({
+      timeout: 30_000,
+    })
+    await expect(
+      page.getByRole("button", { name: "Opções da pergunta" }),
+      "a tela esconde a denúncia do próprio conteúdo",
+    ).toHaveCount(0)
+
+    // ...e o servidor recusa de novo, com o token da própria sessão.
+    const token = await tokenDaSessao(context)
+    const api = await apiRequest.newContext({ baseURL: new URL(page.url()).origin })
+    const recusa = await api.post(
+      "/api/app/perguntas/80000000-0000-4000-8000-000000000f00/denuncia",
+      {
+        headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
+        data: { motivo: "spam", explicacao: "" },
+      },
+    )
+    expect(recusa.status(), "denunciar o próprio conteúdo é recusado no servidor").toBe(403)
+    expect(await recusa.json()).toEqual({ erro: "proprio-conteudo" })
+    await api.dispose()
+  })
+
+  test("denunciar resposta de outra pessoa grava e a duplicata é recusada", async ({
+    page,
+    context,
+  }, testInfo) => {
+    test.setTimeout(180_000)
+    await semearSessaoDeMembro(context, MEMBRO_SEMEADO)
+
+    async function denunciarResposta(): Promise<void> {
+      await page.goto("/app/comunidade")
+      await page
+        .locator('[data-tela="comunidade"] [data-linha="pergunta"]', {
+          hasText: TEXTO_DA_OUTRA_PESSOA,
+        })
+        .click()
+      await expect(
+        page.getByRole("heading", { level: 1, name: TEXTO_DA_OUTRA_PESSOA }),
+      ).toBeVisible({ timeout: 30_000 })
+      await expect(page.getByText("A Dona Célia faz faxina na minha casa há um ano.")).toBeVisible({
+        timeout: 30_000,
+      })
+      await page.getByRole("button", { name: "Opções da resposta" }).click()
+      await page.getByRole("button", { name: "Denunciar resposta" }).click()
+      await page.getByRole("radio", { name: "Conteúdo inadequado" }).check()
+      await page.getByRole("button", { name: "Enviar denúncia" }).click()
+    }
+
+    await denunciarResposta()
+    await capturar(page, testInfo.project.name, "denuncia-de-resposta")
+    await expect(
+      page.locator('[data-tela="pergunta"] [role="status"], [role="alert"]').first(),
+    ).toContainText(/Denúncia enviada|Você já denunciou esta resposta/, { timeout: 30_000 })
+
+    await page.reload()
+    await page.getByRole("button", { name: "Opções da resposta" }).click()
+    await page.getByRole("button", { name: "Denunciar resposta" }).click()
+    await page.getByRole("radio", { name: "Spam" }).check()
+    await page.getByRole("button", { name: "Enviar denúncia" }).click()
+    await expect(page.getByRole("alert")).toContainText("Você já denunciou esta resposta.", {
+      timeout: 30_000,
+    })
+  })
 })

@@ -1,0 +1,91 @@
+# F04 — denuncia de pergunta e de resposta pelo app.
+#
+# LANCAMENTO.md:57 exige denuncia e conduta na linha F04; conduta ja existe
+# (Conduta.tsx), falta o menu de denuncia na pergunta. O mecanismo de denuncia JA
+# existe e cobre recommendation_request/reply no banco: tabela reports
+# (20260802001600), enum estendido (20260821000031), auto-denuncia bloqueada
+# (20260821000032), is_deleted (20260821000033), RPC de resolucao do operador
+# (20260821000034), destino do aviso report_resolved -> /app/pergunta/{id}. Tudo
+# com pgTAP (reports-unified-targets.sql). SEM migration — trabalho de camada de
+# aplicacao sobre mecanismo provado. Molde exato: denuncia de publicacao de grupo
+# (grupos/publicacoes/[id]/denuncia + AcoesDaPublicacao.tsx).
+#
+# Uma rota com respostaId OPCIONAL cobre pedido E resposta (a web antiga tem os
+# dois, indication-detail.tsx:493-498,588-593; a troca exige paridade). Precedente
+# do campo opcional: rota resolucao. Escopo SO pergunta+resposta (nao anuncio/
+# mensagem/outros alvos). Sem bloquear-apos-denunciar (molde do app de grupos nao
+# oferece; o bloqueio ja existe em Voce -> Pessoas bloqueadas).
+#
+# Tambem perguntar a cidade e gap SEPARADO, grande, R3 (migration de origem +
+# compositor + vinculo post-request) — NAO construir aqui; deferido com card proprio.
+
+task_id: RUN-159
+
+objective: >
+  Denunciar pergunta e resposta pelo app: rota POST /api/app/perguntas/[id]/denuncia
+  com corpo {motivo, explicacao, respostaId?} (sem respostaId alvo
+  recommendation_request, com alvo recommendation_reply), reusando a validacao
+  compartilhada de reports; cliente denunciarPergunta; menu de opcoes na Pergunta
+  com Denunciar pergunta e Denunciar resposta (dialog de motivos, molde
+  AcoesDaPublicacao). Retorno ao denunciante e fila do operador ja funcionam.
+
+authority:
+  - docs/LANCAMENTO.md:57 (F04: denuncia e conduta)
+  - Mapa do explorer 15/11 (mecanismo reports existente cobre os dois alvos, molde grupos/denuncia)
+  - ADR-20261105-porta-de-dados-do-app.md §5 (contrato de rota)
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    Pergunta.tsx (424 linhas) nao tem menu de opcoes nem acao de denuncia na
+    pergunta nem nas respostas; unica denuncia real do app e a de publicacao de
+    grupo. Nao existe rota perguntas/[id]/denuncia. O banco ja aceita os alvos
+    recommendation_request/reply (enum 20260821000031) e a web antiga denuncia
+    (indication-detail.tsx:493-498,588-593). O gap e paridade do app para a troca.
+
+allowed_paths:
+  - docs/agents/tasks/F04-DENUNCIA.task.yml
+  - apps/web/app/api/app/perguntas
+  - apps/web/lib/security/api-surface.ts
+  - apps/app/lib/dados/perguntas.ts
+  - apps/app/src/telas/Pergunta.tsx
+  - apps/app/tests
+  - tests/unit/app-api/perguntas
+  - tests/unit/security/api-surface.test.ts
+  - tests/e2e/f04-perguntas-real.spec.ts
+  - tests/scope/perguntas-porta.test.mjs
+  - .visual/f04-denuncia
+
+forbidden:
+  - criar migration, tabela ou pgTAP novo (o mecanismo reports ja existe e tem prova)
+  - denunciar outros alvos (anuncio, mensagem, grupo) — escopo so pergunta+resposta
+  - implementar Tambem perguntar a cidade (gap R3 separado, card proprio)
+  - adicionar bloquear-apos-denunciar (molde do app nao oferece; bloqueio ja existe em Voce)
+  - trocar/remover a tela web /indicacoes/[id] (passo posterior)
+  - usar skip/fixme novo ou afrouxar assercao
+  - push, merge ou force-push; ler/criar/editar arquivos de ambiente; imprimir credenciais
+  - tocar em .work/main ou em outra worktree
+
+acceptance:
+  - "POST /api/app/perguntas/[id]/denuncia no contrato ADR §5, molde exato apps/web/app/api/app/grupos/publicacoes/[id]/denuncia/route.ts:17-78: exigirSessao + conferirEscrita (CSRF), ehUuid->404, validateReportInput/composeReason de apps/web/lib/reports/reports.ts (motivos fechados spam/conteudo-inadequado/informacao-enganosa/outro, explicacao<=300). Corpo {motivo, explicacao, respostaId?}: sem respostaId alvo recommendation_request, com alvo recommendation_reply (conferir que a resposta pertence a pergunta). Visibilidade pela leitura da sessao->404; conteudo proprio->403; insert em reports com autoria do servidor; 23505->409 (duplicata), 42501->403. SEM service_role."
+  - "Registrar a rota em apps/web/lib/security/api-surface.ts (SESSAO) e bumpar TOTAL_DE_ROTAS (conferir contagem real em disco; hoje 90, deve virar 91). tests/unit/security/api-surface.test.ts verde."
+  - "apps/app/lib/dados/perguntas.ts: denunciarPergunta(id, {motivo, explicacao, respostaId?}), molde denunciarPublicacao (grupos.ts:322-334)."
+  - "Pergunta.tsx: menu de opcoes (BotaoDeIcone more_vert + Dialog) com Denunciar pergunta quando !pergunta.propria && local===null (demo nao tem banco) e Denunciar resposta por resposta quando !item.propria && !item.removida. Formulario de motivos reaproveita o padrao de AcoesDaPublicacao.tsx:138-183 (4 motivos radio + explicacao 300 + status Denuncia enviada. A moderacao vai analisar.). NAO quebrar resolver/seguir/responder existentes."
+  - "Testes: unit da rota (401, CSRF antes do banco, 4 motivos com insert e autoria do servidor, proprio->403, 404 uuid/nao-visivel, resposta de outra pergunta recusada, corpo invalido->400, 23505->409, 42501->403; molde tests/unit/app-api/grupos/denuncia.test.ts:28-131); perguntas-dados (denunciarPergunta contrato/409); E2E real f04-perguntas-real (denunciar pergunta->persiste->duplicata 409; denunciar resposta; proprio sem acao). Positivo E negativo em toda permissao."
+  - "Passam: app test, app typecheck, gate --fast, tsc -p tests/e2e, pnpm test (raiz). E2E navegador no CI. test:db so como nao-regressao (pgTAP dos alvos ja existe)."
+
+proof:
+  - npx pnpm@11.18.0 --filter @bivaque/app test
+  - npx pnpm@11.18.0 gate --fast
+  - npx pnpm@11.18.0 test
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/F04-DENUNCIA.task.yml
+
+risk: endpoint de escrita no mecanismo reports existente (validacao compartilhada); sem migration
+risk_level: R2
+
+reviewer_must_differ_from_executor: true
+retry_budget: 2
+on_budget_exhausted: HUMAN_DECISION
+
+closure:
+  requires_runtime_evidence: true
