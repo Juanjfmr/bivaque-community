@@ -34,6 +34,9 @@ allowed_paths:
   - apps/web/app/(shell)/mercado
   - tests/e2e/mercado-redirects.spec.ts
   - tests/e2e/link-crawl.spec.ts
+  - tests/e2e/provider-member-business.spec.ts
+  - tests/unit/listings/address.test.ts
+  - scripts/visual/capture.mjs
   - .visual/f06-residuo
 
 forbidden:
