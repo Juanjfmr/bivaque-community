@@ -7,6 +7,7 @@ import { ContextoDaConversa } from "@/components/bivaque/contexto-conversa"
 import { EsqueletoDeLista } from "@/components/bivaque/esqueleto"
 import { EstadoDeErro, EstadoVazio } from "@/components/bivaque/estado-vazio"
 import { Icone } from "@/components/bivaque/icone"
+import { NomeDeMembro } from "@/components/bivaque/nome-de-membro"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Textarea } from "@/components/ui/textarea"
 import { FalhaDaApi } from "@/lib/api/cliente"
@@ -16,7 +17,7 @@ import {
   enviarMensagem,
   novaChaveDeEnvio,
 } from "@/lib/dados/conversas"
-import { useRolagemEFoco } from "@/lib/navegacao/react"
+import { useNavegacao, useRolagemEFoco } from "@/lib/navegacao/react"
 import { CARGA_CONCLUIDA } from "@/lib/navegacao/restauracao"
 import { validarParametros } from "@/lib/navegacao/rotas"
 import { iniciais } from "@/lib/texto"
@@ -30,6 +31,7 @@ export function Conversa() {
   const parametros = useParams({ strict: false }) as Record<string, string | undefined>
   const id = parametros["id"] ?? ""
   const casca = useCasca()
+  const navegacao = useNavegacao()
   const [dados, setDados] = useState<DetalheDaConversa | null>(null)
   const [erro, setErro] = useState<"falhou" | "sessao" | "negado" | "ausente" | null>(null)
   const [rodada, setRodada] = useState(0)
@@ -74,6 +76,7 @@ export function Conversa() {
     ultimaChave.current = null
   }, [id])
   const nome = dados?.conversa.nome ?? ""
+  const outroId = dados?.conversa.outroId ?? ""
   const mostrarConversaNoTopo = casca.mostrarConversaNoTopo
   useEffect(() => {
     mostrarConversaNoTopo(nome ? { id, nome } : null)
@@ -163,7 +166,15 @@ export function Conversa() {
             tabIndex={-1}
             className="truncate text-[19px] font-semibold leading-6"
           >
-            {nome}
+            <NomeDeMembro
+              nome={nome}
+              aoAbrir={
+                outroId === ""
+                  ? undefined
+                  : () => void navegacao.irPara("perfil", { parametros: { id: outroId } })
+              }
+              className="truncate text-[19px] leading-6"
+            />
           </h1>
         </span>
       </div>

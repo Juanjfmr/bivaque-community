@@ -7,6 +7,7 @@ import { Campo } from "@/components/bivaque/campos"
 import { CartaoDePublicacao } from "@/components/bivaque/cartao-de-publicacao"
 import { EsqueletoDeLista } from "@/components/bivaque/esqueleto"
 import { EstadoVazio } from "@/components/bivaque/estado-vazio"
+import { NomeDeMembro } from "@/components/bivaque/nome-de-membro"
 import { Secao } from "@/components/bivaque/secao"
 import { FalhaDaApi } from "@/lib/api/cliente"
 import {
@@ -173,7 +174,14 @@ export function Publicacao() {
           {iniciais(c.propria ? "Você" : c.autor || "Membro")}
         </span>
         <div className="grid min-w-0 grow gap-1">
-          <b className="text-sm">{c.propria ? "Você" : c.autor || "Membro do grupo"}</b>
+          <NomeDeMembro
+            nome={c.propria ? "Você" : c.autor || "Membro do grupo"}
+            aoAbrir={
+              c.propria || c.autorId === ""
+                ? undefined
+                : () => void navegacao.irPara("perfil", { parametros: { id: c.autorId } })
+            }
+          />
           <small className="text-(--on-surface-variant)">{quandoDe(c.criadaEm)}</small>
           {c.respondeA ? (
             <small className="text-(--on-surface-variant)">
@@ -232,6 +240,11 @@ export function Publicacao() {
         }}
         {...(grupo.membro ? { aoMarcarUtil: () => acoes.util(p) } : {})}
         aoComentar={() => compositor.current?.querySelector("textarea")?.focus()}
+        aoAbrirAutor={
+          p.propria || p.autorId === ""
+            ? undefined
+            : () => void navegacao.irPara("perfil", { parametros: { id: p.autorId } })
+        }
       />
       {acoes.retorno}
       {p.oculta ? <p role="status">Esta publicação está oculta para você no grupo.</p> : null}

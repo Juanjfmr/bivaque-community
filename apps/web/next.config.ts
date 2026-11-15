@@ -123,6 +123,11 @@ const nextConfig: NextConfig = {
           ["/imoveis/:id((?!(?:novo|alertas)/?$)[^/]+)", "/app/anuncio/:id"],
           ["/pedidos", "/app/pedidos"],
           ["/pedidos/:id((?!novo/?$)[^/]+)", "/app/pedido/:id"],
+          // F10: o perfil de OUTRA pessoa abre no app. `/profile` (próprio),
+          // `/profile/editar` e `/profile/interests` ficam na web por enquanto
+          // (lote próprio), e o lookahead impede o id de capturar os dois
+          // segmentos fixos.
+          ["/profile/:id((?!(?:editar|interests)/?$)[^/]+)", "/app/perfil/:id"],
           ["/prestadores/:id", "/app/negocio/:id"],
           ["/configuracoes/bloqueados", "/app/bloqueados"],
           ["/configuracoes/familia", "/app/voce"],

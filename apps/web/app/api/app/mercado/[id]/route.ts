@@ -55,6 +55,7 @@ export async function GET(request: NextRequest, { params }: Context): Promise<Ne
           ...baseDoAnuncio(row),
           endereco: row.address,
           donoNome: perfil.data?.display_name ?? null,
+          donoId: row.owner_user_id,
           fotos: urls,
           meu: row.owner_user_id === userId,
           salvo: salvo.data !== null,

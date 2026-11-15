@@ -1,6 +1,6 @@
 ﻿import type { NextRequest, NextResponse } from "next/server"
 import { exigirSessao, opcoesDoApp, responder } from "../../../../lib/app-api/rota-do-app"
-import { cursorDe, nomeDaConversa } from "./_comum"
+import { cursorDe, nomeDaConversa, outroParticipante } from "./_comum"
 
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
@@ -14,7 +14,9 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   if (bruto !== null && cursor === null) return responder(request, { erro: "cursor-invalido" }, 400)
   try {
     const client = auth.sessao.cliente
-    let query = client.from("dm_conversations").select("id,context_type,context_id,created_at")
+    let query = client
+      .from("dm_conversations")
+      .select("id,participant_a,participant_b,context_type,context_id,created_at")
     if (cursor)
       query = query.or(
         `created_at.lt."${cursor.data}",and(created_at.eq."${cursor.data}",id.lt.${cursor.id})`,
@@ -42,6 +44,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         return {
           id: linha.id,
           nome,
+          outroId: outroParticipante(linha, auth.sessao.usuario.id),
           tipo: linha.context_type,
           contextoId: linha.context_id,
           ultima: ultima.data?.content ?? "",

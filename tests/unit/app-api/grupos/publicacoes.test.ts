@@ -134,6 +134,7 @@ describe("publicar, ler e comentar em grupo", () => {
       id: POST,
       grupoId: ID,
       autor: "Ana",
+      autorId: USER,
       texto: "Uma publicação real.",
       criadaEm: DATA,
       propria: true,

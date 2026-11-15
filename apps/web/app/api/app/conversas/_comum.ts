@@ -21,11 +21,22 @@ export function cursorDe(valor: string | null): { data: string; id: string } | n
 export async function conversaDaSessao(client: SupabaseClient<Database>, id: string) {
   const { data, error } = await client
     .from("dm_conversations")
-    .select("id,context_type,context_id,created_at")
+    .select("id,participant_a,participant_b,context_type,context_id,created_at")
     .eq("id", id)
     .maybeSingle()
   if (error) throw error
   return data
+}
+
+/**
+ * O outro participante: é o perfil que o cabeçalho da conversa abre. A lista e o
+ * detalhe já leem a linha sob a RLS de participante; o id não é uma porta nova.
+ */
+export function outroParticipante(
+  conversa: { participant_a: string; participant_b: string },
+  userId: string,
+): string {
+  return conversa.participant_a === userId ? conversa.participant_b : conversa.participant_a
 }
 
 export async function nomeDaConversa(client: SupabaseClient<Database>, id: string) {

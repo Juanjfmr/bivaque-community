@@ -17,6 +17,7 @@ function publicacao(id: string, extra: Partial<PublicacaoReal> = {}): Publicacao
     texto: `Texto ${id}`,
     criadaEm: "2026-11-06T12:00:00Z",
     autor: "Ana",
+    autorId: "30000000-0000-4000-8000-000000000001",
     propria: false,
     comentarios: 0,
     uteis: 0,

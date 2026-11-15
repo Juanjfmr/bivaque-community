@@ -98,6 +98,7 @@ describe("grupos — diretório e detalhe sob RLS", () => {
     expect(corpo.publicacoes[0]).toMatchObject({
       texto: post.content,
       autor: "Ana",
+      autorId: USER,
       util: true,
       uteis: 3,
       fotos: ["https://storage.example.invalid/assinada"],

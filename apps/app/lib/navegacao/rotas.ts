@@ -31,6 +31,7 @@ export type NomeDeRota =
   | "anuncio"
   | "negocio"
   | "pergunta"
+  | "perfil"
   | "grupo"
   | "publicacao"
   | "evento"
@@ -130,6 +131,9 @@ const LINHAS: readonly LinhaDoCatalogo[] = [
   ["anuncio", "/anuncio/$id", "Anúncio", "mercado", { parametro: "id", pai: "desapegos" }],
   ["negocio", "/negocio/$id", "Negócio local", "mercado", { parametro: "id", pai: "negocios" }],
   ["pergunta", "/pergunta/$id", "Indicação", "comunidade", { parametro: "id", pai: "comunidade" }],
+  // O perfil de outra pessoa (F10): identidade e atividade que o LEITOR pode
+  // ver. Não acende aba: chega-se por um nome, de qualquer jornada.
+  ["perfil", "/perfil/$id", "Perfil", "origem", { parametro: "id", pai: "inicio" }],
   ["grupo", "/grupo/$id", "Grupo", "comunidade", { parametro: "id", pai: "comunidade" }],
   [
     "publicacao",
@@ -194,7 +198,8 @@ export const NOMES_DAS_33: readonly NomeDeRota[] = ROTAS.filter(
     rota.nome !== "mercado" &&
     rota.nome !== "indisponivel" &&
     rota.nome !== "avisos" &&
-    rota.nome !== "verbete",
+    rota.nome !== "verbete" &&
+    rota.nome !== "perfil",
 ).map((rota) => rota.nome)
 
 const POR_NOME: Readonly<Record<string, Rota | undefined>> = Object.fromEntries(

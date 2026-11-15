@@ -4,6 +4,7 @@ import { MembroAvatar } from "./avatar"
 import { Botao } from "./botao"
 import { Etiqueta } from "./etiqueta"
 import { Icone } from "./icone"
+import { NomeDeMembro } from "./nome-de-membro"
 
 /**
  * Cartão de publicação (inventário §7: `gPostCard`).
@@ -47,12 +48,18 @@ export function CartaoDePublicacao({
   completo = true,
   aoMarcarUtil,
   aoComentar,
+  aoAbrirAutor,
   alvoDeFoco,
 }: {
   publicacao: Publicacao
   completo?: boolean
   aoMarcarUtil?: () => void
   aoComentar?: () => void
+  /**
+   * Com ele, o nome de quem publicou vira o link para o perfil. Sem, é texto:
+   * nem todo cartão tem uma pessoa alcançável atrás do nome.
+   */
+  aoAbrirAutor?: (() => void) | undefined
   /**
    * O cartão pode receber foco por script: quem acabou de publicar chega nele
    * depois do envio e o leitor de tela anuncia o que está lá. Como o título da
@@ -74,7 +81,11 @@ export function CartaoDePublicacao({
       <header className="flex items-center gap-3">
         <MembroAvatar nome={publicacao.autor} tamanho="pequeno" />
         <div className="grid min-w-0 grow">
-          <b className="truncate text-[15px]">{publicacao.autor}</b>
+          <NomeDeMembro
+            nome={publicacao.autor}
+            aoAbrir={aoAbrirAutor}
+            className="truncate text-[15px]"
+          />
           <small className="text-[12px] text-(--on-surface-variant)">{publicacao.quando}</small>
         </div>
         <span className="flex shrink-0 items-center gap-1.5">

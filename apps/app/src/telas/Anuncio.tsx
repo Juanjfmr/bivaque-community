@@ -10,6 +10,7 @@ import { EsqueletoDeLista } from "@/components/bivaque/esqueleto"
 import { EstadoDeErro } from "@/components/bivaque/estado-vazio"
 import { Etiqueta } from "@/components/bivaque/etiqueta"
 import { Icone } from "@/components/bivaque/icone"
+import { NomeDeMembro } from "@/components/bivaque/nome-de-membro"
 import { Secao } from "@/components/bivaque/secao"
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog"
 import { type AnuncioDetalhado, abrirInteresse, buscarAnuncio } from "@/lib/dados/mercado"
@@ -198,6 +199,8 @@ export function Anuncio() {
   const localizacaoAproximada =
     anuncio.bairro === null ? cidadeDoAnuncio : `${anuncio.bairro}, ${cidadeDoAnuncio}`
   const vendedor = anuncio.donoNome ?? "Membro da comunidade"
+  // Sem nome legível não há perfil a abrir: o link não promete o que não existe.
+  const donoId = anuncio.meu || anuncio.donoNome === null ? null : anuncio.donoId
 
   return (
     <section data-tela="anuncio" className="grid gap-2">
@@ -259,7 +262,15 @@ export function Anuncio() {
             {iniciais(vendedor)}
           </span>
           <span className="grid gap-0.5">
-            <b className="text-[15px]">{vendedor}</b>
+            <NomeDeMembro
+              nome={vendedor}
+              aoAbrir={
+                donoId === null
+                  ? undefined
+                  : () => void navegacao.irPara("perfil", { parametros: { id: donoId } })
+              }
+              className="text-[15px]"
+            />
             {anuncio.donoNome === null ? null : (
               <small className="text-(--on-surface-variant)">Membro da comunidade</small>
             )}

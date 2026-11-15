@@ -71,6 +71,7 @@ export async function GET(request: NextRequest, { params }: Context): Promise<Ne
           texto: c.content,
           criadaEm: c.created_at,
           autor: nomes.get(c.user_id) ?? "",
+          autorId: c.user_id,
           propria: c.user_id === userId,
           parentId: c.parent_id,
           respondeA: c.reply_to_id,

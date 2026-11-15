@@ -517,19 +517,18 @@ describe("rotas de mercado do app", () => {
         titulo: "Mesa",
         endereco: null,
         donoNome: "Dona da Vila",
+        donoId: OWNER,
         meu: false,
         salvo: true,
         fotos: ["https://assinada/fotos/1.jpg"],
       })
-      expect(corpo["anuncio"]).not.toHaveProperty("donoId")
     })
 
     it("identifica o próprio anúncio apenas por meu", async () => {
       const mock = mockClient({ listing: { ...ANUNCIO, owner_user_id: USER } })
       authenticate(mock)
       const corpo = await json(await detalhe(req("GET"), context))
-      expect(corpo["anuncio"]).toMatchObject({ meu: true })
-      expect(corpo["anuncio"]).not.toHaveProperty("donoId")
+      expect(corpo["anuncio"]).toMatchObject({ meu: true, donoId: USER })
     })
 
     it("sem address o endereço é null, a localização aproximada cobre", async () => {
