@@ -30,6 +30,9 @@ const TROCADAS = [
   ["/pedidos", "/app/pedidos"],
   [`/pedidos/${ID}`, `/app/pedido/${ID}`],
   [`/profile/${ID}`, `/app/perfil/${ID}`],
+  // RUN-163: a tela de interesses saiu; o link da edição vai direto ao app e a
+  // URL antiga (favorito, histórico) responde 307 com a query preservada.
+  ["/profile/interests", "/app/voce"],
   [`/prestadores/${ID}`, `/app/negocio/${ID}`],
   ["/configuracoes/bloqueados", "/app/bloqueados"],
   ["/configuracoes/familia", "/app/voce"],
@@ -193,10 +196,36 @@ describe("LAN-TROCA fase 1", () => {
     expect(sobras).toEqual([])
   })
 
-  it.each(["/profile/interests", "/profile/editar", "/profile"])(
+  it.each(["/profile/editar", "/profile"])(
     "%s (perfil próprio) continua na web, sem redirect",
     async (caminho) => {
       expect((await resolver(caminho)).headers.get("location")).toBeNull()
     },
   )
+
+  // RUN-163: quem saiu foi a tela de interesses. A do perfil alheio segue
+  // mandando o id, e a edição (vizinha da pasta removida) não é capturada.
+  it.each([ID, "membro-1"])(
+    "/profile/%s segue para /app/perfil/:id, e /profile/editar não é capturado",
+    async (id) => {
+      const resposta = await resolver(`/profile/${id}`)
+      expect(resposta.status).toBe(307)
+      expect(new URL(resposta.headers.get("location") ?? "", ORIGEM).pathname).toBe(
+        `/app/perfil/${id}`,
+      )
+      expect((await resolver("/profile/editar")).headers.get("location")).toBeNull()
+    },
+  )
+
+  // RUN-163: a tela de interesses saiu inteira — nem page.tsx, nem a seção, nem
+  // as server actions sobram para alguém "voltar" editando a pasta.
+  it("a tela antiga de interesses não deixa arquivos para trás", () => {
+    const pasta = join(shell, "profile", "interests")
+    const sobras = existsSync(pasta)
+      ? readdirSync(pasta, { recursive: true, encoding: "utf8" })
+      : []
+    expect(sobras).toEqual([])
+    expect(existsSync(join(shell, "profile", "interests-section.tsx"))).toBe(false)
+    expect(existsSync(join(shell, "profile", "interests-actions.ts"))).toBe(false)
+  })
 })

@@ -118,7 +118,7 @@ const PORTAS_FORA_DO_LINK: readonly AllowedUnreached[] = [
   {
     route: "/groups",
     porta:
-      "CONDICIONAL: 'Veja os grupos' no compositor e 'Criar o primeiro grupo' em Interesses, que só aparecem para quem não tem grupo; o painel 'Grupos ativos' saiu com o feed da Início (lote 5 N2)",
+      "CONDICIONAL: 'Veja os grupos' no compositor, que só aparece para quem ainda não participa de nenhum; o 'Criar o primeiro grupo' de Interesses saiu com a tela web (RUN-163) e o app não oferece criar grupo",
     dependeDeDados: true,
   },
   {
