@@ -130,8 +130,8 @@ export function Cidade({
           }}
         >
           <p className="text-sm text-(--on-surface-variant)">
-            Mudar de cidade avisa até quando você ainda participa de {perfil.cidade.nome}. Até lá
-            você continua lendo e publicando aqui; depois, a cidade nova é a que vale.
+            Mudar de cidade avisa até quando você ainda participa de {perfil.cidade.nome}. Até essa
+            data você ainda lê e publica aqui; depois disso, fica só leitura.
           </p>
           {falhaDoCatalogo ? (
             <div className="flex items-center justify-between gap-2">
