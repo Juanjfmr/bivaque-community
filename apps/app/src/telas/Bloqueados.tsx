@@ -77,7 +77,7 @@ export function Bloqueados() {
       ) : linhas.length === 0 ? (
         <EstadoVazio
           titulo="Ninguém bloqueado"
-          texto="Bloquear esconde o que a pessoa publicou e fecha a conversa com ela, sem avisá-la. Você desfaz quando quiser."
+          texto="Bloquear fecha a conversa com ela nos dois sentidos; o que já foi dito continua visível para vocês, e a pessoa não é avisada. Você desfaz quando quiser."
           icone="person"
           acao={{
             rotulo: "Voltar para Você",

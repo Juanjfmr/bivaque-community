@@ -193,6 +193,16 @@ export async function lerBloqueados(opcoes: Opcoes = {}): Promise<readonly Pesso
   })
 }
 
+/**
+ * Bloqueia uma pessoa (F09-A). O efeito é o do banco: a conversa fica fechada
+ * nos dois sentidos, o histórico continua legível e a pessoa não é avisada.
+ * Repetir o bloqueio é idempotente e o servidor devolve o mesmo estado.
+ */
+export async function bloquear(id: string, opcoes: Opcoes = {}): Promise<void> {
+  const corpo = await enviar("POST", "/api/app/voce/bloqueados", { id }, opcoes)
+  if (texto(registro(corpo["bloqueado"]), "id") !== id) throw foraDoContrato()
+}
+
 export async function desbloquear(id: string, opcoes: Opcoes = {}): Promise<void> {
   const corpo = await enviar(
     "DELETE",

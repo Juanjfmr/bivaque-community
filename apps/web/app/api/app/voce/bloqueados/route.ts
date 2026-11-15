@@ -1,5 +1,12 @@
 import type { NextRequest, NextResponse } from "next/server"
-import { exigirSessao, opcoesDoApp, responder } from "../../../../../lib/app-api/rota-do-app"
+import {
+  conferirEscrita,
+  exigirSessao,
+  lerCorpoJson,
+  opcoesDoApp,
+  responder,
+} from "../../../../../lib/app-api/rota-do-app"
+import { ehUuid } from "../../eventos/_comum"
 
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
@@ -42,6 +49,49 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     )
   } catch {
     return responder(request, { erro: "leitura-indisponivel" }, 503)
+  }
+}
+
+/**
+ * Bloqueia UMA pessoa (F09-A). O corpo só escolhe quem: quem bloqueia é
+ * `blocker_user_id` da sessão, e a policy confere de novo. O banco é quem
+ * autoriza — sem cliente privilegiado nesta rota — e id fora do formato é 404,
+ * que não confirma a existência de ninguém.
+ *
+ * Duplicata é idempotente: já bloqueado devolve o mesmo estado, 200. Bloqueio
+ * de si mesmo é 400 antes da escrita (o `CHECK` do banco recusaria de qualquer
+ * forma, mas a rota não manda o banco decidir o que o corpo já denuncia).
+ */
+export async function POST(request: NextRequest): Promise<NextResponse> {
+  const auth = await exigirSessao(request)
+  if (!auth.ok) return auth.resposta
+  const porta = conferirEscrita(request, auth.sessao.via)
+  if (porta !== "ok") return responder(request, { erro: porta }, 403)
+  if (!request.headers.get("content-type")?.toLowerCase().startsWith("application/json"))
+    return responder(request, { erro: "corpo-invalido" }, 400)
+  const lido = await lerCorpoJson(request)
+  if (!lido.ok) return responder(request, { erro: "corpo-invalido" }, lido.status)
+  const alvo = lido.corpo["id"]
+  if (typeof alvo !== "string") return responder(request, { erro: "dados-invalidos" }, 400)
+  if (!ehUuid(alvo)) return responder(request, { erro: "nao-encontrado" }, 404)
+  const userId = auth.sessao.usuario.id
+  if (alvo === userId) return responder(request, { erro: "dados-invalidos" }, 400)
+  try {
+    const { error } = await auth.sessao.cliente
+      .from("dm_blocks")
+      .insert({ blocker_user_id: userId, blocked_user_id: alvo })
+    if (error) {
+      // 23505: a linha já existia — o pedido alcançou o mesmo estado, então 200.
+      if (error.code === "23505") return responder(request, { bloqueado: { id: alvo } }, 200)
+      // 23503: ninguém com este id. Mesma resposta do formato inválido.
+      if (error.code === "23503") return responder(request, { erro: "nao-encontrado" }, 404)
+      if (error.code === "42501" || error.code === "23514")
+        return responder(request, { erro: "recusado" }, 403)
+      throw error
+    }
+    return responder(request, { bloqueado: { id: alvo } }, 201)
+  } catch {
+    return responder(request, { erro: "escrita-indisponivel" }, 503)
   }
 }
 

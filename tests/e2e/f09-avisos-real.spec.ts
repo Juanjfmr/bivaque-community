@@ -1,13 +1,33 @@
 import { mkdirSync } from "node:fs"
 import { join } from "node:path"
-import { expect, type Page, test } from "@playwright/test"
-import { semearSessaoDeMembro } from "./entrada-real-ajuda"
+import { type APIRequestContext, expect, type Page, request, test } from "@playwright/test"
+import { idDoUsuarioPorEmail, semearSessaoDeMembro, urlDoSupabase } from "./entrada-real-ajuda"
+import { readEnvLocal } from "./helpers/session"
 
 // O seed dá um aviso de pedido encerrado a esta persona (dona da vila).
 const MEMBRO_COM_AVISO = "dono-vila@bivaque.example.invalid"
 const AVISO = "50000000-0000-4000-8000-0000000000ca"
 const PEDIDO = "40000000-0000-4000-8000-0000000000c9"
+// Conversa da dona da vila com outra pessoa: o alvo do aviso de mensagem.
+const CONVERSA = "41000000-0000-4000-8000-0000000000c1"
 const CAPTURAS = join(process.cwd(), ".visual", "run-022")
+
+/**
+ * A chave de fixture do banco LOCAL, como os outros specs que criam a própria
+ * fixture (F04). O valor nunca é impresso; só a ausência dele vira mensagem.
+ */
+async function servicoLocal(): Promise<APIRequestContext> {
+  const url = new URL(urlDoSupabase())
+  if (!new Set(["127.0.0.1", "localhost"]).has(url.hostname))
+    throw new Error("F09 só usa banco local")
+  const chave =
+    process.env["SUPABASE_SERVICE_ROLE_KEY"] ?? readEnvLocal("SUPABASE_SERVICE_ROLE_KEY")
+  if (!chave) throw new Error("Credencial de fixture local ausente")
+  return request.newContext({
+    baseURL: url.origin,
+    extraHTTPHeaders: { apikey: chave, authorization: `Bearer ${chave}` },
+  })
+}
 
 async function capturar(page: Page, projeto: string, tela: string) {
   mkdirSync(CAPTURAS, { recursive: true })
@@ -32,6 +52,60 @@ async function capturar(page: Page, projeto: string, tela: string) {
  * preferência é devolvida ao estado inicial ao terminar.
  */
 test.describe("F09 — avisos reais", { tag: "@stateful" }, () => {
+  /**
+   * F09-A — o destino do aviso de mensagem direta, provado em runtime. O
+   * mapeamento `direct_message → messages` e o destino `/app/conversa/{id}` já
+   * são unit-provados; aqui a linha existe no banco com o tipo real e o toque
+   * leva à conversa certa. A fixture é criada e apagada pelo próprio teste
+   * (service role local), porque o seed não tem conversa de pergunta de evento.
+   */
+  test("aviso de mensagem direta abre a conversa do alvo", async ({ page, context }, testInfo) => {
+    test.setTimeout(120_000)
+    await semearSessaoDeMembro(context, MEMBRO_COM_AVISO)
+
+    const servico = await servicoLocal()
+    const destinatario = await idDoUsuarioPorEmail(MEMBRO_COM_AVISO)
+    expect(destinatario, "a persona do seed precisa existir no Auth local").not.toBeNull()
+    let aviso: string | null = null
+    try {
+      const criado = await servico.post("/rest/v1/notifications", {
+        headers: { prefer: "return=representation" },
+        data: {
+          recipient_user_id: destinatario,
+          type: "direct_message",
+          action: "question",
+          target_type: "conversation",
+          target_id: CONVERSA,
+        },
+      })
+      const corpo = await criado.text()
+      expect(criado.ok(), `notificação de fixture: ${criado.status()} ${corpo}`).toBe(true)
+      const [linha] = JSON.parse(corpo) as { id: string }[]
+      aviso = linha?.id ?? null
+      expect(aviso, "o PostgREST precisa devolver a linha criada").not.toBeNull()
+
+      await page.goto("/app/avisos")
+      const item = page.locator(`[data-aviso-item="${aviso}"]`)
+      await expect(item).toBeVisible({ timeout: 30_000 })
+      await expect(item).toContainText("mensagem direta")
+      await capturar(page, testInfo.project.name, "avisos-mensagem")
+
+      await item.click()
+      await expect(page).toHaveURL(new RegExp(`/app/conversa/${CONVERSA}$`), {
+        timeout: 30_000,
+      })
+      // É a conversa do aviso, lida pela sessão dona dela.
+      await expect(page.locator('[data-mensagens="historico"]')).toContainText("Ainda dá tempo", {
+        timeout: 30_000,
+      })
+    } finally {
+      if (aviso !== null) {
+        await servico.delete(`/rest/v1/notifications?id=eq.${aviso}`).catch(() => undefined)
+      }
+      await servico.dispose()
+    }
+  })
+
   test("aviso semeado abre o pedido, marca como lido e continua lido", async ({
     page,
     context,

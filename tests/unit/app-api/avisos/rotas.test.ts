@@ -39,6 +39,7 @@ const preferenciaGravada = {
   events: false,
   productNews: false,
   indications: true,
+  messages: true,
 }
 
 // A linha como o banco devolve: nomes de coluna.
@@ -47,6 +48,7 @@ const preferenciaLida = {
   events: false,
   product_news: false,
   indications: true,
+  messages: true,
   city_digest_frequency: "weekly",
 }
 
@@ -698,13 +700,14 @@ describe("rotas de avisos do app", () => {
         events: true,
         productNews: false,
         indications: true,
+        messages: true,
       })
       const canais = preferencias["channels"] as {
         notificationType: string
         channel: string
         enabled: boolean
       }[]
-      expect(canais).toHaveLength(12)
+      expect(canais).toHaveLength(15)
       // O e-mail das indicações é o resumo diário: nasce desligado.
       expect(
         canais.find((item) => item.notificationType === "indications" && item.channel === "email"),

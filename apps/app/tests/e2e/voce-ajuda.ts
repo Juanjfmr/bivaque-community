@@ -33,13 +33,15 @@ export async function simularVoce(
     events: boolean
     productNews: boolean
     indications: boolean
+    messages: boolean
   }) => ({
     comments: escolha.comments,
     events: escolha.events,
     productNews: escolha.productNews,
     indications: escolha.indications,
+    messages: escolha.messages,
     resumoCidade: "off" as "off" | "daily" | "weekly",
-    channels: (["comments", "events", "product_news", "indications"] as const).flatMap(
+    channels: (["comments", "events", "product_news", "indications", "messages"] as const).flatMap(
       (notificationType) =>
         (["in_app", "email", "push"] as const).map((channel) => ({
           notificationType,
@@ -56,6 +58,7 @@ export async function simularVoce(
     events: true,
     productNews: false,
     indications: true,
+    messages: true,
   })
   await page.route(/\/api\/app\/avisos\/preferencias$/, async (rota) => {
     if (rota.request().method() === "PATCH") {
@@ -64,6 +67,7 @@ export async function simularVoce(
         events: boolean
         productNews: boolean
         indications: boolean
+        messages: boolean
         resumoCidade: "off" | "daily" | "weekly"
         channels: typeof preferenciasDeAviso.channels
       }

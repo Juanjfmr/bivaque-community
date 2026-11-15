@@ -1,9 +1,38 @@
 ﻿import type { Page } from "@playwright/test"
 
 export async function simularConversas(page: Page) {
+  // A tela lê os bloqueios da sessão para saber se o compositor está fechado
+  // (F09-A). Sem esta rota, o pedido cairia no preview do Vite e a lista viria
+  // quebrada — o teste mediria um estado que não existe. O POST é o gesto de
+  // bloquear: a resposta tem o mesmo formato da rota real (`{ bloqueado }`).
+  let bloqueados: { id: string; nome: string | null; bloqueadoEm: string }[] = []
+  await page.route(/\/api\/app\/voce\/bloqueados$/, (rota) => {
+    if (rota.request().method() === "POST") {
+      const corpo = rota.request().postDataJSON() as { id: string }
+      const pessoa = { id: corpo.id, nome: null, bloqueadoEm: new Date().toISOString() }
+      if (!bloqueados.some((item) => item.id === corpo.id)) bloqueados = [...bloqueados, pessoa]
+      return rota.fulfill({ json: { bloqueado: pessoa } })
+    }
+    return rota.fulfill({ json: { bloqueados } })
+  })
+  // `outroId` é o outro participante: o cabeçalho abre o perfil por ele.
   const conversas = [
-    { id: "t1", nome: "Paulo R.", tipo: "listing", contextoId: "i3", ultima: "Olá" },
-    { id: "t2", nome: "Amazon Climatização", tipo: "provider", contextoId: "n1", ultima: "Oi" },
+    {
+      id: "t1",
+      nome: "Paulo R.",
+      outroId: "u-paulo",
+      tipo: "listing",
+      contextoId: "i3",
+      ultima: "Olá",
+    },
+    {
+      id: "t2",
+      nome: "Amazon Climatização",
+      outroId: "u-amazon",
+      tipo: "provider",
+      contextoId: "n1",
+      ultima: "Oi",
+    },
   ]
   const mensagens: Record<
     string,
@@ -18,6 +47,7 @@ export async function simularConversas(page: Page) {
     const conversa = conversas.find((item) => item.id === id) ?? {
       id,
       nome: "Conversa",
+      outroId: "u-conversa",
       tipo: "shared_group",
       contextoId: "g1",
       ultima: "",

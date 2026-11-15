@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest"
 
 import { FalhaDaApi } from "@/lib/api/cliente"
 import {
+  bloquear,
   desbloquear,
   desocultar,
   lerBloqueados,
@@ -194,6 +195,20 @@ describe("bloqueados e ocultados", () => {
     const lista = await lerBloqueados()
     expect(chamada(buscar).caminho).toBe("/api/app/voce/bloqueados")
     expect(lista[0]?.nome).toBeNull()
+  })
+
+  it("bloqueia pelo POST no corpo, com o id do servidor de volta", async () => {
+    const buscar = responder({ bloqueado: { id: "u1" } }, 201)
+    await bloquear("u1")
+    const { caminho, init } = chamada(buscar)
+    expect(caminho).toBe("/api/app/voce/bloqueados")
+    expect(init.method).toBe("POST")
+    expect(init.body).toBe('{"id":"u1"}')
+  })
+
+  it("bloqueio não confirmado é falha, não sucesso silencioso", async () => {
+    responder({ bloqueado: { id: "outra-pessoa" } })
+    await expect(bloquear("u1")).rejects.toBeInstanceOf(FalhaDaApi)
   })
 
   it("desfaz o bloqueio pelo DELETE no id", async () => {

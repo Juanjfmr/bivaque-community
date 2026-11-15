@@ -104,6 +104,36 @@ test("Grupo aberto: entrar, escrever rascunho, excluir e sair com confirmação"
   await expect(page.locator('[data-acao="grupo-participar"]')).toBeVisible()
 })
 
+test("menu da conversa abre a confirmação de bloquear e o compositor fecha", async ({ page }) => {
+  await simularConversas(page)
+  await page.goto("/app/conversa/t2")
+  await expect(page.locator('[data-compositor-conversa="sim"]')).toBeVisible()
+  const confirmacao = page.locator('[data-sobreposicao="confirmacao"]')
+  const abrirOpcoes = () => page.getByRole("button", { name: "Opções da conversa" }).click()
+  const bloquearNaConfirmacao = () =>
+    confirmacao.getByRole("button", { name: "Bloquear", exact: true }).click()
+
+  // O menu é sobreposição da entrada; a confirmação que ele abre precisa chegar
+  // inteira, sem o Voltar do menu fechá-la no caminho (RUN-165).
+  await abrirOpcoes()
+  await page.getByRole("menuitem", { name: /^Bloquear / }).click()
+  await expect(confirmacao).toBeVisible()
+  await expect(page.locator('[data-sobreposicao="menu-de-linha"]')).toHaveCount(0)
+
+  // Desistir devolve a conversa como estava.
+  await confirmacao.getByRole("button", { name: "Continuar" }).click()
+  await expect(confirmacao).toHaveCount(0)
+  await expect(page.locator('[data-compositor-conversa="sim"]')).toBeVisible()
+
+  await abrirOpcoes()
+  await page.getByRole("menuitem", { name: /^Bloquear / }).click()
+  await bloquearNaConfirmacao()
+  const bloqueada = page.locator('[data-conversa-bloqueada="sim"]')
+  await expect(bloqueada).toContainText("fechada nos dois sentidos")
+  await expect(bloqueada).toContainText("o histórico continua visível")
+  await expect(page.locator('[data-compositor-conversa="sim"]')).toHaveCount(0)
+})
+
 test("Grupo com administrador mostra pedidos, mas não oferece aprovação fictícia", async ({
   page,
 }) => {

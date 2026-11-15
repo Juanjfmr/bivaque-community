@@ -7,6 +7,11 @@ const CONVERSA = "41000000-0000-4000-8000-000000000051"
 const CONVERSA_ALHEIA = "41000000-0000-4000-8000-000000000023"
 const CAPTURAS = join(process.cwd(), ".visual", "run-011")
 
+/** A outra ponta da CONVERSA: o prestador semeado responde pelo app também. */
+const OUTRA_PESSOA = "prestador-seed@bivaque.example.invalid"
+const OUTRA_PESSOA_ID = "20000000-0000-4000-8000-00000000000a"
+const ORIGEM = "http://127.0.0.1:3000"
+
 async function capturar(page: Page, projeto: string, tela: string) {
   mkdirSync(CAPTURAS, { recursive: true })
   await page.emulateMedia({ reducedMotion: "reduce" })
@@ -76,5 +81,79 @@ test.describe("F09 — conversas reais", { tag: "@stateful" }, () => {
     await page.unroute("**/api/app/conversas")
     await page.getByRole("button", { name: "Tentar de novo" }).click()
     await expect(page.locator(`[data-thread="${CONVERSA}"]`)).toBeVisible()
+  })
+
+  /**
+   * F09-A — bloquear pelo app. Duas sessões de verdade: a da tela bloqueia, a
+   * outra tenta escrever na mesma conversa. O efeito provado é o do banco
+   * (`send_conversation_message` veta o par bloqueado nos dois sentidos); a
+   * caixa e o histórico continuam legíveis, e ninguém é avisado do bloqueio.
+   */
+  test("bloquear fecha a escrita nos dois sentidos; desbloquear em Você reabre", async ({
+    page,
+    context,
+    browser,
+  }, testInfo) => {
+    test.setTimeout(180_000)
+    await semearSessaoDeMembro(context, MEMBRO_SEMEADO)
+    const outra = await browser.newContext()
+    try {
+      await semearSessaoDeMembro(outra, OUTRA_PESSOA)
+      await page.goto(`/app/conversa/${CONVERSA}`)
+      await expect(page.locator('[data-mensagens="historico"]')).toContainText("Confirmado, 9h", {
+        timeout: 30_000,
+      })
+
+      await page.getByRole("button", { name: "Opções da conversa" }).click()
+      await page.getByRole("menuitem", { name: /^Bloquear / }).click()
+      await page.getByRole("button", { name: "Bloquear", exact: true }).click()
+
+      const bloqueada = page.locator('[data-conversa-bloqueada="sim"]')
+      await expect(bloqueada).toContainText("fechada nos dois sentidos")
+      await expect(bloqueada).toContainText("o histórico continua visível")
+      await expect(bloqueada).toContainText("a pessoa não é avisada")
+      await expect(page.locator('[data-compositor-conversa="sim"]')).toHaveCount(0)
+      // A conversa não some: o histórico fica, e é isso que a frase promete.
+      await expect(page.locator('[data-mensagens="historico"]')).toContainText("Confirmado, 9h")
+      await capturar(page, testInfo.project.name, "bloqueada")
+
+      // O estado vem do servidor, não da memória da tela.
+      await page.reload()
+      await expect(page.locator('[data-conversa-bloqueada="sim"]')).toBeVisible({
+        timeout: 30_000,
+      })
+
+      const recusada = await outra.request.post(`/api/app/conversas/${CONVERSA}/mensagens`, {
+        headers: { origin: ORIGEM, "x-bivaque-app": "bivaque-spa" },
+        data: { texto: `Bloqueada ${Date.now()}` },
+      })
+      expect(recusada.status()).toBe(403)
+
+      // O bloqueio do seed (seed.sql:1758) pertence a esta mesma pessoa: a lista
+      // certa é a NOSSA linha sumir (mais recente = topo, created_at desc em
+      // bloqueados/route.ts:29), nunca a tela ficar vazia.
+      await page.goto("/app/bloqueados")
+      const linhas = page.getByRole("button", { name: /Desbloquear/ })
+      await expect(linhas.first()).toBeVisible({ timeout: 30_000 })
+      const antes = await linhas.count()
+      expect(antes).toBeGreaterThanOrEqual(2)
+      await linhas.first().click()
+      await expect(linhas).toHaveCount(antes - 1)
+
+      const liberada = await outra.request.post(`/api/app/conversas/${CONVERSA}/mensagens`, {
+        headers: { origin: ORIGEM, "x-bivaque-app": "bivaque-spa" },
+        data: { texto: `Reaberta ${Date.now()}` },
+      })
+      expect(liberada.status()).toBe(201)
+      await capturar(page, testInfo.project.name, "desbloqueada")
+    } finally {
+      // Se o teste falhar no meio, a próxima largura não herda o bloqueio.
+      await page.request
+        .delete(`/api/app/voce/bloqueados/${OUTRA_PESSOA_ID}`, {
+          headers: { origin: ORIGEM, "x-bivaque-app": "bivaque-spa" },
+        })
+        .catch(() => undefined)
+      await outra.close()
+    }
   })
 })

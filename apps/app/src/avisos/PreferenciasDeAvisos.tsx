@@ -27,7 +27,7 @@ import {
 /**
  * Preferências de aviso por tipo e por canal (F09), na área Você.
  *
- * A escolha é a mesma matriz que a web antiga usa: quatro tipos × três canais.
+ * A escolha é a mesma matriz que a web antiga usa: cinco tipos × três canais.
  * O push nasce desligado porque ainda não há envio no celular (LAN-PUSH); a
  * escolha fica guardada e a frase diz isso, em vez de prometer o que não chega.
  */
@@ -42,6 +42,7 @@ const TIPOS: ReadonlyArray<readonly [TipoVisivel, string, string]> = [
     "Pedidos de indicação",
     "Respostas ao seu pedido e o resumo de pedidos da cidade.",
   ],
+  ["messages", "Mensagens", "Quando alguém te manda uma mensagem direta."],
 ]
 
 const CANAIS: ReadonlyArray<readonly [CanalDoAviso, string]> = [

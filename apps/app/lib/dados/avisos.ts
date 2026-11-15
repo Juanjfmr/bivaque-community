@@ -38,7 +38,13 @@ export type ListaDeAvisos = Readonly<{
   naoLidos: number
 }>
 
-export const TIPOS_DO_AVISO = ["comments", "events", "product_news", "indications"] as const
+export const TIPOS_DO_AVISO = [
+  "comments",
+  "events",
+  "product_news",
+  "indications",
+  "messages",
+] as const
 export const CANAIS_DO_AVISO = ["in_app", "email", "push"] as const
 
 export type TipoDoAviso = (typeof TIPOS_DO_AVISO)[number]
@@ -55,6 +61,7 @@ export type PreferenciasDeAviso = Readonly<{
   events: boolean
   productNews: boolean
   indications: boolean
+  messages: boolean
   resumoCidade: "off" | "daily" | "weekly"
   channels: readonly CanalDaPreferencia[]
 }>
@@ -139,6 +146,7 @@ function lerPreferenciasDoCorpo(corpo: Corpo): PreferenciasDeAviso {
     events: exigirBooleano(preferencias, "events"),
     productNews: exigirBooleano(preferencias, "productNews"),
     indications: exigirBooleano(preferencias, "indications"),
+    messages: exigirBooleano(preferencias, "messages"),
     resumoCidade,
     channels: canais.map((valor) => {
       const canal = exigirRegistro(valor)
