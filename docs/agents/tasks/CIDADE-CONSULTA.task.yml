@@ -67,6 +67,18 @@ allowed_paths:
   - tests/e2e/locality-tabs-keyboard.spec.ts
   - tests/e2e/provider-vitrine.spec.ts
   - tests/e2e/link-crawl.spec.ts
+  # EMENDA 15/11 (antes do commit): o E2E real da tela nova e arquivo proprio,
+  # como o acceptance pede (E2E real novo); nao cabia em nenhum dos specs
+  # existentes sem transformar prova pinada em prova de outra coisa.
+  - tests/e2e/cidade-consulta-real.spec.ts
+  # EMENDA 15/11 (antes do commit): a lista de excecoes do guard-rail de abas
+  # citava a tela de /localidade, que este lote remove. Sem emenda o arquivo
+  # ficaria vermelho citando caminho inexistente.
+  - tests/unit/visual/tabs-style-applied.test.ts
+  # EMENDA 15/11 (antes do commit): este teste importa o CityReference, que este
+  # lote aposenta junto com /localidade. Sem a emenda o suite fica vermelho
+  # importando componente inexistente.
+  - tests/unit/ui/city-reference.test.tsx
   - tests/unit/ui/rail-unico-alcancavel-no-telefone.test.ts
   - scripts/visual/capture.mjs
   - .visual/cidade-consulta

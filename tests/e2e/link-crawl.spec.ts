@@ -98,10 +98,6 @@ const PORTAS_FORA_DO_LINK: readonly AllowedUnreached[] = [
     porta: "FLUXO: router.push depois do cadastro e next= do link de confirmação",
   },
   {
-    route: "/cidade/[id]",
-    porta: "BOTÃO: 'Sua cidade' no cabeçalho > outra cidade (city-switcher, router.push)",
-  },
-  {
     route: "/conta-apagada",
     porta: "FLUXO: redirect depois de apagar a conta em Configurações > Conta (lote 4, PORT-006)",
   },
@@ -204,11 +200,6 @@ const PORTAS_FORA_DO_LINK: readonly AllowedUnreached[] = [
       "FLUXO: redireciona para a vista Indicações da Comunidade; fica para links antigos e ?pedir=1",
   },
   { route: "/invite/[token]", porta: "EXTERNO: link de convite compartilhado" },
-  {
-    route: "/localidade",
-    porta:
-      "DÍVIDA LAN-TROCA: a porta era o rail da Início web e a aba Sobre da comunidade, fora do percurso do rastreador (F02/F08)",
-  },
   {
     route: "/negocio",
     porta:

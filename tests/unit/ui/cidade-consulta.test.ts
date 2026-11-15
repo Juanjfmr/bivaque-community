@@ -54,15 +54,26 @@ describe("validação da mudança de cidade", () => {
 })
 
 describe("costura das telas", () => {
-  it("o chip do cabeçalho é um botão que abre a consulta, em toda largura", () => {
+  it("o chip da web manda a consulta para o app, em toda largura", () => {
     const shell = web("app", "components", "bivaque", "app-shell.tsx")
     const switcher = web("app", "components", "shell", "city-switcher.tsx")
     expect(shell).toContain("<CitySwitcher />")
     expect(switcher).toContain('data-testid="shell-locality-pill"')
-    expect(switcher).toContain("router.push(`/cidade/${city.id}` as Route)")
+    // CIDADE-169: a consulta é tela do app (/app/cidade/[id]); a tela web não
+    // existe mais e o endereço antigo responde 307 (lan-troca).
+    expect(switcher).toContain("router.push(`/app/cidade/${city.id}` as Route)")
     expect(switcher).toContain('href={"/profile#cidade" as Route}')
     // O botão tem nome acessível em toda largura (o texto visível só do md para cima).
     expect(switcher).toContain("aria-label={`Sua cidade: ${cityLabel}. Ver outra cidade`}")
+  })
+
+  it("o painel de cidade do app consulta de verdade: id do catálogo ou `atual`", () => {
+    const painel = read("apps", "app", "src", "casca", "PainelDeCidade.tsx")
+    expect(painel).not.toContain("trocarCidade(")
+    expect(painel).toContain('navegacao.irPara("cidade", { parametros: { id } })')
+    expect(painel).toContain("abrir(CIDADE_ATUAL)")
+    // O id vem do catálogo que a entrada já usa: nome de cidade não é endereço.
+    expect(painel).toContain("lerCidadesDaUf(uf")
   })
 
   it("mudar a cidade chama a transferência com o cliente da sessão, nunca service_role", () => {
@@ -83,18 +94,29 @@ describe("costura das telas", () => {
   })
 
   it("a consulta só lê: sem convite a publicar e sem as comunidades de lá", () => {
-    const consult = web("app", "(shell)", "cidade", "[id]", "city-consult.tsx")
-    expect(consult).toContain("withCommunities: false")
-    expect(consult).toContain("loadMarketHighlights(listingsClient(), localityId, [])")
-    expect(consult.match(/ consult \/>/g)?.length).toBe(4)
-    expect(consult).not.toContain("CommunitySection")
-    expect(consult).not.toContain("OpenQuestions")
+    const tela = read("apps", "app", "src", "telas", "CidadeConsulta.tsx")
+    expect(tela).toContain('irPara("verbete"')
+    expect(tela).toContain('irPara("evento"')
+    expect(tela).toContain('irPara("anuncio"')
+    // Sem convite a publicar, sem comunidades e sem perguntas: a consulta é leitura.
+    expect(tela).not.toMatch(/OpenQuestions|CommunitySection|"comunidades"|"perguntas"/)
+    // A rota que alimenta a tela é a mesma leitura aprovada: guia aprovado,
+    // encontros e anúncios ativos daquela cidade — nem perguntas, nem vitrine.
+    const rota = read("apps", "web", "app", "api", "app", "cidade", "[id]", "route.ts")
+    expect(rota).toContain("ADR-20260925-consulta-outra-cidade")
+    expect(rota).not.toContain("recommendation_requests")
+    expect(rota).not.toContain("search_providers")
   })
 
-  it("a própria cidade volta ao Início e id inválido é 404", () => {
-    const page = web("app", "(shell)", "cidade", "[id]", "page.tsx")
-    expect(page).toContain('redirect("/inicio")')
-    expect(page).toContain("if (!UUID.test(id)) notFound()")
+  it("a cidade do membro é `atual`, e id fora do formato é 404", () => {
+    const rotas = read("apps", "app", "lib", "navegacao", "rotas.ts")
+    expect(rotas).toContain('["cidade", "/cidade/$id"')
+    const tela = read("apps", "app", "src", "telas", "CidadeConsulta.tsx")
+    expect(tela).toContain('validarParametros("cidade", { id })')
+    const rota = read("apps", "web", "app", "api", "app", "cidade", "[id]", "route.ts")
+    expect(rota).toContain('if (valor === "atual") return { tipo: "atual" }')
+    expect(rota).toContain("ehUuid(valor)")
+    expect(rota).toContain('{ erro: "cidade-nao-encontrada" }, 404')
   })
 
   // O banco recusa presença, pergunta ao organizador e correção do Guia a quem

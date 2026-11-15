@@ -1,6 +1,7 @@
 "use client"
 
 import { BookOpen, ChevronRight, Luggage, Search } from "lucide-react"
+import type { Route } from "next"
 import Link from "next/link"
 import { Panel } from "../../components/ui/panel"
 import type { HubEvent, Loaded } from "./hub-loaders"
@@ -71,7 +72,7 @@ function GuideSearchCard() {
   )
 }
 
-// "De mudança?" leva ao fluxo real de transferência (/localidade).
+// "De mudança?" leva à consulta da própria cidade no app (CIDADE-169).
 export function MovingCard() {
   return (
     <Panel>
@@ -81,7 +82,7 @@ export function MovingCard() {
           <h2 className="text-sm font-semibold text-ui-ink">De mudança?</h2>
           <p className="mt-0.5 text-sm text-ui-ink-2">Prepare sua chegada em outra cidade.</p>
           <Link
-            href="/localidade"
+            href={"/app/cidade/atual" as Route}
             className="-ml-2 mt-1 inline-flex min-h-11 items-center gap-1 rounded-ui px-2 text-sm font-semibold text-ui-brand transition-colors hover:bg-ui-subtle"
           >
             Explorar destino

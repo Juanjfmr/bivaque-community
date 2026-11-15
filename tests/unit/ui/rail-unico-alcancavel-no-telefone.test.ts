@@ -57,7 +57,9 @@ describe("/inicio: o que o trilho oferece continua alcançável no telefone", ()
   })
 
   it("'De mudança?' tem porta fora do trilho", () => {
-    expect(rail).toContain('href="/localidade"')
+    // CIDADE-169: o trilho aponta para a consulta no app; o Explorar ainda usa o
+    // endereço antigo, que responde 307 para a mesma tela (provado em lan-troca).
+    expect(rail).toContain('href={"/app/cidade/atual" as Route}')
     expect(servicos).toContain('href="/localidade"')
   })
 

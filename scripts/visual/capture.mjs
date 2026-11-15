@@ -156,7 +156,8 @@ export const HEADINGS = {
   // do achado de enumeração em lote, quem lê deixa de ser a tabela (não
   // listável) e passa a ser public.profile_affiliations_for().
   "/profile/20000000-0000-4000-8000-000000000001": DYNAMIC_HEADING,
-  "/localidade": DYNAMIC_HEADING,
+  // CIDADE-169: `/localidade` não tem mais tela na web — 307 para
+  // `/app/cidade/atual`, provada no rastreador de links (tests/e2e/link-crawl).
   // RECON-040 — as 37 rotas entregues depois que o guard-rail ficou parado na
   // branch lateral. Cada valor abaixo veio do h1 que o arquivo que renderiza a
   // rota realmente escreve; a rota cujo título é o próprio dado usa
@@ -420,13 +421,13 @@ export const ROUTES = [
   { path: "/explorar/busca?q=translado", name: "explorar-busca-vazio", auth: true },
   { path: "/explorar/busca?q=manaus", name: "explorar-busca-servico", auth: true },
   { path: "/explorar/busca?q=piquenique", name: "explorar-busca-evento", auth: true },
-  // Onda T Task 4: the "cidade" container's actual landing page — NAV_ITEMS
-  // pointed here since E10 (406d4f6), but the route did not exist until T4.
-  { path: "/localidade", name: "localidade", auth: true },
-  // RECON-027: Moradia. O detalhe aponta para a fixture de anúncio que
-  // `supabase/seed.sql` precisa criar (fora do allowed_paths deste lote) — sem
-  // ela a captura cai no 404 honesto, que NÃO conta como fidelidade comprovada.
-  // Criar imóvel saiu da web (RUN-164): a folha do app publica de verdade.
+  // CIDADE-169: a tela antiga de localidade saiu (307 para /app/cidade/atual);
+  // a captura dela é a da consulta no app.
+  // RECON-027: Moradia. `/imoveis` não depende de fixture. Criar imóvel saiu da
+  // web (RUN-164): a folha do app publica de verdade — sem captura web de novo/editar.
+  // O detalhe aponta para a fixture de anúncio que `supabase/seed.sql` precisa
+  // criar (fora do allowed_paths deste lote) — sem ela a captura cai no 404
+  // honesto, que NÃO conta como fidelidade comprovada.
   { path: `/imoveis/${IMOVEIS_FIXTURE_ID}`, name: "imoveis-detail", auth: true },
   // RECON-028: gestão dos alertas (prancha 65, painel 2). A tela renderiza o
   // estado vazio honesto enquanto `supabase/seed.sql` não tiver um alerta — o

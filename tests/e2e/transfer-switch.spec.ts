@@ -4,7 +4,7 @@ import type { Page } from "@playwright/test"
 import { expect, test } from "@playwright/test"
 import { CURRENT_CONSENT, encodeAuthCookieValue } from "./helpers/session"
 
-// Onda T Task 4 — o seletor de localidade.
+// Onda T Task 4 → CIDADE-169 — a consulta de cidade.
 //
 // The seed carries `membro-transferencia@bivaque.example.invalid` already
 // declared: Manaus (origin, kind='leaving', still active) and the seeded
@@ -13,6 +13,14 @@ import { CURRENT_CONSENT, encodeAuthCookieValue } from "./helpers/session"
 // spec, keeps this test from mutating the shared `visual@` account that
 // other specs assume is a simple, single-locality member.
 //
+// The old /localidade screen offered both cities as pill tabs and switched the
+// reference by clicking. That switcher was the TRANSFER UI: it moved to
+// F10-TROCA-PERFIL-PROPRIO (recorded in .visual/cidade-consulta/RELATORIO.md),
+// and /localidade now answers 307 with the city of the session. What is proven
+// here is what the app has: the own city opens as `atual`, and the origin is
+// consulted by id — read-only, with publishing still anchored in the current
+// city.
+//
 // `import.meta.dirname` cannot be used here: Playwright transpiles specs to
 // CJS, and the emitted `require` blows up at load time. All paths resolve
 // from `process.cwd()`, which Playwright always sets to the repo root.
@@ -20,6 +28,8 @@ import { CURRENT_CONSENT, encodeAuthCookieValue } from "./helpers/session"
 const APP_URL = process.env["APP_URL"] ?? "http://127.0.0.1:3000"
 const SUPABASE_URL = process.env["SUPABASE_URL"] ?? "http://127.0.0.1:55321"
 const CONSENT_COOKIE = "bivaque-consent-version"
+/** Manaus tem UUID durável (20260802000100); o Rio nasce do ibge_code. */
+const MANAUS = "00000000-0000-4000-8000-000000000001"
 
 const TRANSFERRING_EMAIL =
   process.env["BIVAQUE_E2E_TRANSFERRING_EMAIL"] ?? "membro-transferencia@bivaque.example.invalid"
@@ -102,30 +112,36 @@ async function signInAs(page: Page, email: string): Promise<void> {
   ])
 }
 
-test.describe("locality switcher: declared transfer surfaces both cities", () => {
-  test("both cities appear, and switching changes the rendered reference", async ({ page }) => {
-    // Given a member with a declared, not-yet-degraded transfer
+test.describe("consulta de cidade para quem está em transferência", () => {
+  test("/localidade cai na consulta da cidade atual, sem pílulas das duas cidades", async ({
+    page,
+  }) => {
     await signInAs(page, TRANSFERRING_EMAIL)
 
-    // When they open the "cidade" container
     await page.goto(`${APP_URL}/localidade`, { waitUntil: "load" })
 
-    // Then both cities are offered as tabs
-    const currentTab = page.getByRole("tab", { name: "Rio de Janeiro", exact: true })
-    const originTab = page.getByRole("tab", { name: /Manaus \(saindo\)/ })
-    await expect(currentTab).toBeVisible({ timeout: 15000 })
-    await expect(originTab).toBeVisible()
+    // O endereço antigo é 307 para a consulta da cidade da sessão.
+    await expect(page).toHaveURL(/\/app\/cidade\/atual$/)
+    await expect(page.getByRole("heading", { name: "Rio de Janeiro, RJ" })).toBeVisible({
+      timeout: 15000,
+    })
+    // A tela é uma consulta, não um seletor: nenhuma pílula de cidade.
+    await expect(page.getByRole("tablist")).toHaveCount(0)
+    await expect(page.getByText(/Você está saindo de Manaus em/)).toHaveCount(0)
+  })
 
-    // And the destination reference renders by default
-    await expect(page.getByRole("heading", { name: "Rio de Janeiro" })).toBeVisible()
+  test("a cidade de origem é consultada por id, só para ler", async ({ page }) => {
+    await signInAs(page, TRANSFERRING_EMAIL)
 
-    // When they switch to the origin
-    await originTab.click()
+    await page.goto(`${APP_URL}/app/cidade/${MANAUS}`, { waitUntil: "load" })
 
-    // Then the origin identifies itself before any attempt to publish
-    await expect(page.getByText(/Você está saindo de Manaus em/)).toBeVisible()
-
-    // And the feed changes to the origin's reference
-    await expect(page.getByRole("heading", { name: "Manaus", exact: true })).toBeVisible()
+    await expect(page.getByRole("heading", { name: "Manaus, AM" })).toBeVisible({
+      timeout: 15000,
+    })
+    // Publicar continua na cidade atual da pessoa — dito na tela, não escondido.
+    await expect(
+      page.getByText("Você continua publicando e participando em Rio de Janeiro", { exact: false }),
+    ).toBeVisible()
+    await expect(page.locator('[data-acao="mudar-para-ca"]')).toBeVisible()
   })
 })

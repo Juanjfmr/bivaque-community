@@ -153,6 +153,12 @@ const nextConfig: NextConfig = {
           ["/events/:id/perguntas", "/app/evento/:id"],
           ["/events/:id", "/app/evento/:id"],
           ["/events", "/app/agenda"],
+          // CIDADE-169: a consulta de cidade (regra aprovada em 25/09/2026) e a
+          // referência da cidade passam a ser a tela do app. `/localidade` cai na
+          // cidade da própria sessão (`atual`), que é o que a tela antiga mostrava
+          // com o contexto; as pílulas de transferência foram com o F10.
+          ["/cidade/:id", "/app/cidade/:id"],
+          ["/localidade", "/app/cidade/atual"],
         ] as const
       ).map(([source, destination]) => ({
         source,
