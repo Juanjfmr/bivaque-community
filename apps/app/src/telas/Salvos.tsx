@@ -187,7 +187,7 @@ export function Salvos() {
                 icone={ICONE_DA_CATEGORIA[entrada.categoria]}
                 titulo={entrada.nome}
                 subtitulo={entrada.descricao}
-                onClick={() => void navegacao.irPara("guia")}
+                onClick={() => void navegacao.irPara("verbete", { parametros: { id: entrada.id } })}
               />
             ))}
           </Lista>

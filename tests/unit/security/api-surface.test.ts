@@ -46,7 +46,7 @@ const POSTURAS_PUBLICAS = new Set([
 ])
 
 describe("manifesto da superfície de /api", () => {
-  it("classifica exatamente as 84 rotas do disco, sem órfã", () => {
+  it("classifica exatamente as rotas do disco, sem órfã", () => {
     const disco = rotasNoDisco(BASE_DA_API)
     const manifesto = API_SURFACE.map((linha) => linha.rota).sort()
     expect(disco).toHaveLength(TOTAL_DE_ROTAS)

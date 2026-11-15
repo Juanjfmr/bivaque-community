@@ -65,9 +65,9 @@ async function tokenDaSessao(context: BrowserContext): Promise<string> {
 
 async function abrirVerbete(page: Page, nome: string): Promise<void> {
   await page.locator('[data-tela="guia"] [data-linha="lista"]', { hasText: nome }).click()
-  const folha = page.getByRole("dialog")
-  await expect(folha).toBeVisible({ timeout: 30_000 })
-  await expect(folha).toContainText(nome)
+  const verbete = page.locator('[data-tela="verbete"]')
+  await expect(verbete).toBeVisible({ timeout: 30_000 })
+  await expect(verbete).toContainText(nome)
 }
 
 test.describe("F08 — guia real no app", { tag: "@stateful" }, () => {
@@ -115,10 +115,16 @@ test.describe("F08 — guia real no app", { tag: "@stateful" }, () => {
     await capturar(page, testInfo.project.name, "guia")
 
     await abrirVerbete(page, ESCOLA_SEMEADA)
-    await expect(page.getByRole("dialog")).toContainText("turno integral")
+    // O verbete é tela própria: o id está no endereço e o Voltar do sistema
+    // devolve a lista, em vez de fechar uma folha de estado local.
+    await expect(page).toHaveURL(/\/app\/guia\/a0000000-0000-4000-8000-000000000001$/)
+    await expect(page.getByText(/turno integral/i)).toBeVisible()
     await capturar(page, testInfo.project.name, "verbete")
-    await page.getByRole("button", { name: "Fechar", exact: true }).click()
-    await expect(page.getByRole("dialog")).toHaveCount(0)
+    await page.locator('[data-acao="voltar"]').click()
+    await expect(page).toHaveURL(/\/app\/guia$/)
+    await expect(lista.locator('[data-linha="lista"]', { hasText: ESCOLA_SEMEADA })).toBeVisible({
+      timeout: 30_000,
+    })
   })
 
   test("o marcador grava e sobrevive ao recarregamento", async ({ page, context }) => {
@@ -146,9 +152,14 @@ test.describe("F08 — guia real no app", { tag: "@stateful" }, () => {
     })
     await expect(page.getByText("Guardado em Salvos.")).toBeVisible()
 
-    // Gravação que sobrevive: lida de volta do banco depois da recarga.
+    // Gravação que sobrevive: o endereço do verbete sobrevive à recarga e o
+    // marcador é lido de volta do banco.
     await page.reload()
-    await abrirVerbete(page, HOSPITAL_SEMEADO)
+    await expect(
+      page.locator('[data-tela="verbete"]'),
+      "o verbete precisa continuar aberto depois da recarga",
+    ).toBeVisible({ timeout: 30_000 })
+    await expect(page).toHaveURL(/\/app\/guia\/a0000000-0000-4000-8000-000000000002$/)
     await expect(
       page.getByRole("button", { name: "Salvo no seu guia" }),
       "o marcador precisa sobreviver ao recarregamento",
@@ -165,6 +176,12 @@ test.describe("F08 — guia real no app", { tag: "@stateful" }, () => {
     )
     expect(lidas.status(), "o salvamento precisa ser legível pela própria pessoa").toBe(200)
     expect((await lidas.json()) as { entry_id: string }[]).toHaveLength(1)
+
+    // Voltar de uma entrada recarregada (sem pai no histórico, link direto) cai
+    // no pai declarado do catálogo: a lista do Guia. Era a ressalva do F08.
+    await page.locator('[data-acao="voltar"]').click()
+    await expect(page).toHaveURL(/\/app\/guia$/)
+    await expect(page.locator('[data-tela="guia"]')).toBeVisible({ timeout: 30_000 })
 
     // A tela Salvos lê o guia salvo pela sessão, não só os anúncios da demo.
     await page.goto("/app/salvos")
@@ -196,19 +213,44 @@ test.describe("F08 — guia real no app", { tag: "@stateful" }, () => {
     await expect(page.getByLabel("O que precisa mudar?")).toHaveCount(0)
   })
 
-  test("sugestão no verbete com ficha publicada grava e confirma", async ({ page, context }) => {
+  test("sugestão no verbete com ficha publicada grava, lista e sobrevive à recarga", async ({
+    page,
+    context,
+  }) => {
     test.setTimeout(120_000)
     await semearSessaoDeMembro(context, MEMBRO_SEMEADO)
 
     await page.goto("/app/guia")
     await abrirVerbete(page, TRANSPORTADORA_SEMEADA)
-    await page.getByLabel("O que precisa mudar?").fill("O telefone do balcão mudou.")
+    await expect(
+      page.getByRole("heading", { name: "Minhas sugestões" }),
+      "o acompanhamento do que a pessoa enviou existe no verbete",
+    ).toBeVisible({ timeout: 30_000 })
+
+    const descricao = "O telefone do balcão mudou."
+    await page.getByLabel("O que precisa mudar?").fill(descricao)
     await page.getByRole("button", { name: "Enviar sugestão" }).click()
     await expect(
       page.getByText("Sugestão enviada. Ela entra na fila da curadoria."),
       "o envio precisa terminar com a confirmação, não com o formulário limpo em silêncio",
     ).toBeVisible({ timeout: 30_000 })
     await expect(page.getByLabel("O que precisa mudar?")).toHaveValue("")
+
+    // O acompanhamento recarrega depois do 201: o que a lista mostra é o que o
+    // banco gravou, com o estado que a curadoria deu a ela. A persona é a mesma
+    // entre execuções, então a linha nova pode ter irmãs de execuções antigas.
+    const minhas = page.locator('[data-correcoes="minhas"]')
+    const minhaSugestao = minhas.locator('[data-correcao="minha"]', { hasText: descricao }).first()
+    await expect(minhaSugestao).toBeVisible({ timeout: 30_000 })
+    await expect(minhaSugestao.getByText("Recebida")).toBeVisible()
+
+    await page.reload()
+    await expect(
+      page
+        .locator('[data-correcoes="minhas"] [data-correcao="minha"]', { hasText: descricao })
+        .first(),
+      "o acompanhamento precisa sobreviver à recarga",
+    ).toBeVisible({ timeout: 30_000 })
 
     // O 201 por trás da confirmação, sem passar pela interface.
     const token = await tokenDaSessao(context)

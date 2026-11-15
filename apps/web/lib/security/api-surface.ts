@@ -86,7 +86,7 @@ export type RotaClassificada = Readonly<{
 }>
 
 /** Quantas rotas o manifesto cobre. Um rota nova exige classificação explícita. */
-export const TOTAL_DE_ROTAS = 85
+export const TOTAL_DE_ROTAS = 86
 
 function teste(arquivo: string, caso: string): ProvaDaRota {
   return { tipo: "teste", arquivo, caso }
@@ -145,6 +145,7 @@ const SESSAO: readonly Linha[] = [
   ["/api/app/grupos/salvas", "exigirSessao(", PORTA],
   ["/api/app/guia", "exigirSessao(", PORTA],
   ["/api/app/guia/[id]", "exigirSessao(", PORTA],
+  ["/api/app/guia/[id]/correcoes", "exigirSessao(", PORTA],
   ["/api/app/guia/[id]/salvo", "exigirSessao(", PORTA],
   ["/api/app/guia/[id]/sugestao", "exigirSessao(", PORTA],
   ["/api/app/guia/salvos", "exigirSessao(", PORTA],

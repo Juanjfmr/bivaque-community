@@ -64,6 +64,27 @@ export function lerCursor(valor: string): { nome: string; id: string } | null {
   return { nome, id }
 }
 
+/**
+ * Os estados de uma sugestão de correção e o rótulo que a pessoa lê.
+ *
+ * Mora aqui porque a rota do app é quem responde: o `status` da sugestão sai
+ * pronto para a tela, e o app não redigita o vocabulário do banco. Status novo
+ * no banco não vira etiqueta inventada — vira "Status desconhecido".
+ */
+export const ROTULOS_DA_CORRECAO = {
+  received: "Recebida",
+  in_review: "Em análise",
+  applied: "Aplicada",
+  rejected: "Rejeitada",
+} as const
+
+export function correctionStatusLabel(status: string): string {
+  if (Object.hasOwn(ROTULOS_DA_CORRECAO, status)) {
+    return ROTULOS_DA_CORRECAO[status as keyof typeof ROTULOS_DA_CORRECAO]
+  }
+  return "Status desconhecido"
+}
+
 export type SugestaoPedida = Readonly<{ descricao: string; referencia: string | null }>
 
 /**

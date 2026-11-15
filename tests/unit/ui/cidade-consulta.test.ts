@@ -104,9 +104,11 @@ describe("costura das telas", () => {
     const event = read("apps", "app", "src", "telas", "Evento.tsx")
     expect(event).toContain("encontro.visitante")
     expect(event).toContain("Encontro de outra cidade")
-    const guide = web("app", "(shell)", "guide", "[id]", "page.tsx")
-    expect(guide).toContain("const isVisitor = localMembership === null")
-    expect(guide).toContain("{isVisitor ? null : (")
+    const guide = read("apps", "app", "src", "guia", "Verbete.tsx")
+    // O Guia saiu da web no F08 (o verbete é tela do app): quem consulta vê a
+    // referência, mas não o botão de salvar nem o formulário que a RLS recusaria.
+    expect(guide).toContain("{podeSalvar ? (")
+    expect(guide).toContain("Esta referência é de outra cidade.")
   })
 
   it("a busca de Imóveis diz sempre de que cidade é", () => {

@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest"
 
 vi.mock("web/lib/app-api/sessao-do-next", () => ({ resolverSessaoDaRequisicao: vi.fn() }))
 
+import { GET as correcoes } from "web/app/api/app/guia/[id]/correcoes/route"
 import { GET as detalhe } from "web/app/api/app/guia/[id]/route"
 import { DELETE as desmarcar, PUT as marcar } from "web/app/api/app/guia/[id]/salvo/route"
 import { POST as sugerir } from "web/app/api/app/guia/[id]/sugestao/route"
@@ -38,9 +39,17 @@ type Opcoes = {
   salvas?: string[]
   salvo?: boolean
   artigo?: { id: string } | null
+  correcoes?: Array<{
+    id: string
+    status: string
+    description: string
+    decision_note: string | null
+    created_at: string
+  }>
   erroNaTabela?: string
   erroNaEscrita?: { code: string; message: string } | null
   erroNaSugestao?: { code: string; message: string } | null
+  erroNaCorrecao?: { code: string; message: string } | null
 }
 
 function mockClient(opcoes: Opcoes = {}) {
@@ -87,8 +96,12 @@ function mockClient(opcoes: Opcoes = {}) {
         return { data: opcoes.artigo === undefined ? null : opcoes.artigo, error: null }
       }
       if (table === "guide_correction_requests") {
-        if (opcoes.erroNaSugestao) return { data: null, error: opcoes.erroNaSugestao }
-        return { data: { id: "20000000-0000-4000-8000-0000000000ff" }, error: null }
+        if (operacao === "insert") {
+          if (opcoes.erroNaSugestao) return { data: null, error: opcoes.erroNaSugestao }
+          return { data: { id: "20000000-0000-4000-8000-0000000000ff" }, error: null }
+        }
+        if (opcoes.erroNaCorrecao) return { data: null, error: opcoes.erroNaCorrecao }
+        return { data: opcoes.correcoes ?? [], error: null }
       }
       return { data: null, error: null }
     }
@@ -166,6 +179,7 @@ describe("rotas do guia do app", () => {
     ["GET guia", () => listar(req("GET"))],
     ["GET salvos do guia", () => listarSalvos(req("GET", `${BASE}/salvos`))],
     ["GET verbete", () => detalhe(req("GET"), context)],
+    ["GET correções do verbete", () => correcoes(req("GET", `${BASE}/${ID}/correcoes`), context)],
     ["PUT salvo", () => marcar(req("PUT"), context)],
     ["DELETE salvo", () => desmarcar(req("DELETE"), context)],
     ["POST sugestão", () => sugerir(req("POST", `${BASE}/${ID}/sugestao`, "{}"), context)],
@@ -421,6 +435,100 @@ describe("rotas do guia do app", () => {
       const mock = mockClient({ erroNaTabela: "arrival_guide_entries" })
       authenticate(mock)
       expect((await detalhe(req("GET"), context)).status).toBe(503)
+    })
+  })
+
+  describe("minhas sugestões", () => {
+    const ARTIGO = { id: "00000000-0000-4000-8000-0000000000cc" }
+    const linha = {
+      id: "30000000-0000-4000-8000-0000000000ff",
+      status: "received",
+      description: "O telefone do balcão mudou.",
+      decision_note: null,
+      created_at: "2026-11-14T10:00:00.000Z",
+    }
+    const caminho = `${BASE}/${ID}/correcoes`
+
+    it("devolve só as sugestões da pessoa para o artigo publicado", async () => {
+      const mock = mockClient({ artigo: ARTIGO, correcoes: [linha] })
+      authenticate(mock)
+      const resposta = await correcoes(req("GET", caminho), context)
+      expect(resposta.status).toBe(200)
+      expect(await json(resposta)).toEqual({
+        sugestoes: [
+          {
+            id: linha.id,
+            status: "Recebida",
+            descricao: "O telefone do balcão mudou.",
+            decisao: null,
+            criadaEm: "2026-11-14T10:00:00.000Z",
+          },
+        ],
+      })
+      expect(mock.eqCalls).toContainEqual({
+        table: "guide_correction_requests",
+        column: "article_id",
+        value: ARTIGO.id,
+      })
+      expect(mock.eqCalls).toContainEqual({
+        table: "guide_correction_requests",
+        column: "requester_id",
+        value: USER,
+      })
+      expect(mock.eqCalls).toContainEqual({
+        table: "guide_articles",
+        column: "status",
+        value: "published",
+      })
+    })
+
+    it("status desconhecido no banco vira o rótulo padrão", async () => {
+      const mock = mockClient({
+        artigo: ARTIGO,
+        correcoes: [{ ...linha, status: "misterio", decision_note: "Já corrigido na ficha." }],
+      })
+      authenticate(mock)
+      const corpo = await json(await correcoes(req("GET", caminho), context))
+      expect(corpo["sugestoes"]).toMatchObject([
+        { status: "Status desconhecido", decisao: "Já corrigido na ficha." },
+      ])
+    })
+
+    it("sem artigo publicado a lista é vazia — não 404 — e não consulta sugestões", async () => {
+      const mock = mockClient({ artigo: null })
+      authenticate(mock)
+      const resposta = await correcoes(req("GET", caminho), context)
+      expect(resposta.status).toBe(200)
+      expect(await json(resposta)).toEqual({ sugestoes: [] })
+      expect(mock.eqCalls.some((chamada) => chamada.table === "guide_correction_requests")).toBe(
+        false,
+      )
+    })
+
+    it("ninguém enviou nada ainda: lista vazia", async () => {
+      const mock = mockClient({ artigo: ARTIGO, correcoes: [] })
+      authenticate(mock)
+      expect(await json(await correcoes(req("GET", caminho), context))).toEqual({ sugestoes: [] })
+    })
+
+    it("entrada inexistente é 404; id fora do formato também, sem consultar o banco", async () => {
+      const semEntrada = mockClient({ entrada: null })
+      authenticate(semEntrada)
+      expect((await correcoes(req("GET", caminho), context)).status).toBe(404)
+
+      const invalido = mockClient()
+      authenticate(invalido)
+      const resposta = await correcoes(req("GET"), { params: Promise.resolve({ id: "x" }) })
+      expect(resposta.status).toBe(404)
+      expect(invalido.from).not.toHaveBeenCalled()
+    })
+
+    it("falha de leitura vira 503, nunca lista vazia", async () => {
+      const mock = mockClient({ artigo: ARTIGO, erroNaTabela: "guide_correction_requests" })
+      authenticate(mock)
+      const resposta = await correcoes(req("GET", caminho), context)
+      expect(resposta.status).toBe(503)
+      expect(await json(resposta)).toEqual({ erro: "leitura-indisponivel" })
     })
   })
 

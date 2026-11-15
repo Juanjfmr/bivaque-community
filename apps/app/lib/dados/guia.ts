@@ -40,6 +40,16 @@ export type VerbeteDoGuia = Readonly<{
   podeSugerir: boolean
 }>
 
+/** Uma sugestão de atualização da pessoa, com o que a curadoria decidiu. */
+export type CorrecaoDoGuia = Readonly<{
+  id: string
+  /** Rótulo pronto do estado: "Recebida", "Em análise", "Aplicada", "Rejeitada". */
+  status: string
+  descricao: string
+  decisao: string | null
+  criadaEm: string
+}>
+
 export type DadosDaSugestao = Readonly<{ descricao: string; referencia: string }>
 
 type Corpo = Record<string, unknown>
@@ -134,6 +144,26 @@ export async function lerVerbete(
     podeSalvar: corpo["podeSalvar"] === true,
     podeSugerir: corpo["podeSugerir"] === true,
   }
+}
+
+/** O que a pessoa já sugeriu para esta referência, do mais novo ao mais antigo. */
+export async function lerMinhasCorrecoes(
+  id: string,
+  opcoes: { signal?: AbortSignal } = {},
+): Promise<readonly CorrecaoDoGuia[]> {
+  const corpo = await ler(`/api/app/guia/${encodeURIComponent(id)}/correcoes`, opcoes)
+  const lista = corpo["sugestoes"]
+  if (!Array.isArray(lista)) throw foraDoContrato()
+  return lista.map((linha) => {
+    const registro = exigirRegistro(linha)
+    return {
+      id: exigirTexto(registro, "id"),
+      status: exigirTexto(registro, "status"),
+      descricao: exigirTexto(registro, "descricao"),
+      decisao: texto(registro["decisao"]),
+      criadaEm: exigirTexto(registro, "criadaEm"),
+    }
+  })
 }
 
 /** Marca ou desmarca: devolve o estado que ficou gravado, nunca o esperado. */
