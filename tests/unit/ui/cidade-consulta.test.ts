@@ -107,7 +107,7 @@ describe("costura das telas", () => {
     const guide = read("apps", "app", "src", "guia", "Verbete.tsx")
     // O Guia saiu da web no F08 (o verbete é tela do app): quem consulta vê a
     // referência, mas não o botão de salvar nem o formulário que a RLS recusaria.
-    expect(guide).toContain("{podeSalvar ? (")
+    expect(guide).toContain("{verbete.podeSalvar ? (")
     expect(guide).toContain("Esta referência é de outra cidade.")
   })
 
