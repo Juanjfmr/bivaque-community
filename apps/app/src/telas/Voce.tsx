@@ -17,12 +17,13 @@ import {
   salvarLocalizacao,
   salvarPerfil,
 } from "@/lib/dados/voce"
-import { useNavegacao, useRolagemEFoco } from "@/lib/navegacao/react"
+import { useNavegacao, useRolagemEFoco, useSobreposicaoDaEntrada } from "@/lib/navegacao/react"
 import { CARGA_CONCLUIDA } from "@/lib/navegacao/restauracao"
 import { iniciais } from "@/lib/texto"
 import { PreferenciasDeAvisos } from "@/src/avisos/PreferenciasDeAvisos"
 import { digitosDoCep, EdicaoDePerfil } from "@/src/voce/EdicaoDePerfil"
 import { Familia } from "@/src/voce/Familia"
+import { Interesses } from "@/src/voce/Interesses"
 
 /**
  * Você (onda 8, F10): identidade, contadores e os atalhos principais, agora
@@ -31,6 +32,10 @@ import { Familia } from "@/src/voce/Familia"
  */
 export function Voce() {
   const navegacao = useNavegacao()
+  // A folha de interesses mora nesta tela: ela lê e grava os grupos da cidade
+  // da sessão, e a porta natural é a linha abaixo.
+  const { aberto: interessesAbertos, aoMudarAberto: setInteressesAbertos } =
+    useSobreposicaoDaEntrada("interesses")
   const [conta, setConta] = useState<PerfilDaConta | null>(null)
   const [erro, setErro] = useState(false)
   const [rodada, setRodada] = useState(0)
@@ -214,8 +219,16 @@ export function Voce() {
             subtitulo="Propostas e orçamentos combinados"
             onClick={() => void navegacao.irPara("pedidos")}
           />
+          <LinhaDeAjuste
+            icone="interests"
+            titulo="Interesses"
+            subtitulo="Grupos da sua cidade que você quer ver"
+            onClick={() => setInteressesAbertos(true)}
+          />
         </div>
       </Secao>
+
+      {interessesAbertos ? <Interesses aoFechar={() => setInteressesAbertos(false)} /> : null}
 
       <Secao titulo="Família">
         <Familia />

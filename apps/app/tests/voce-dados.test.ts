@@ -5,11 +5,13 @@ import {
   desbloquear,
   desocultar,
   lerBloqueados,
+  lerInteresses,
   lerOcultados,
   lerPerfil,
   lerPublicacoes,
   pedirExclusao,
   sairDaConta,
+  salvarInteresses,
   salvarLocalizacao,
   salvarPerfil,
 } from "@/lib/dados/voce"
@@ -235,6 +237,56 @@ describe("pedido de exclusão", () => {
   it("falha do servidor não vira pedido registrado", async () => {
     responder({ erro: "exclusao-indisponivel" }, 503)
     await expect(pedirExclusao()).rejects.toMatchObject({ codigo: "indisponivel" })
+  })
+})
+
+describe("interesses", () => {
+  const GRUPO = {
+    id: "60000000-0000-4000-8000-000000000001",
+    nome: "Trocas de Livros",
+    jaMembro: false,
+  }
+
+  it("lê os grupos da cidade e o que já está marcado", async () => {
+    const buscar = responder({ grupos: [GRUPO], interesses: [GRUPO.id] })
+    const lidos = await lerInteresses()
+    expect(chamada(buscar).caminho).toBe("/api/app/voce/interesses")
+    expect(lidos.grupos).toEqual([GRUPO])
+    expect(lidos.interesses).toEqual([GRUPO.id])
+  })
+
+  it("grupo sem a marca de quem já participa é falha de formato", async () => {
+    responder({ grupos: [{ id: GRUPO.id, nome: GRUPO.nome }], interesses: [] })
+    await expect(lerInteresses()).rejects.toBeInstanceOf(FalhaDaApi)
+  })
+
+  it("interesse que não é id é falha de formato, nunca lista silenciosa", async () => {
+    responder({ grupos: [], interesses: [42] })
+    await expect(lerInteresses()).rejects.toBeInstanceOf(FalhaDaApi)
+  })
+
+  it("grava o conjunto pelo POST e devolve o que o servidor gravou", async () => {
+    const buscar = responder({ ok: true, interesses: [GRUPO.id] })
+    const gravados = await salvarInteresses([GRUPO.id])
+    const { caminho, init } = chamada(buscar)
+    expect(caminho).toBe("/api/app/voce/interesses")
+    expect(init.method).toBe("POST")
+    expect(JSON.parse(String(init.body))).toEqual({ grupos: [GRUPO.id] })
+    expect(gravados).toEqual([GRUPO.id])
+  })
+
+  it("limpar manda a lista vazia", async () => {
+    const buscar = responder({ ok: true, interesses: [] })
+    await expect(salvarInteresses([])).resolves.toEqual([])
+    expect(JSON.parse(String(chamada(buscar).init.body))).toEqual({ grupos: [] })
+  })
+
+  it("grupo de outra cidade vira falha com o motivo do servidor", async () => {
+    responder({ erro: "grupo-de-outra-cidade" }, 409)
+    await expect(salvarInteresses([GRUPO.id])).rejects.toMatchObject({
+      status: 409,
+      motivoDoServidor: "grupo-de-outra-cidade",
+    })
   })
 })
 

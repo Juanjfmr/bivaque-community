@@ -17,10 +17,12 @@ import { PainelDeCidade } from "@/src/casca/PainelDeCidade"
  * | `menu-criar` | `MenuCriar`, que traz o próprio diálogo |
  * | `menu-de-linha` | `MenuDaLinha`, na linha que o abriu |
  * | `confirmacao` | `Confirmacao` |
+ * | `grupo-novo` | `Diretorio`, com a folha de criar grupo |
+ * | `interesses` | `Voce`, com a folha de interesses |
  *
- * Por isso a casca não desenha nada para `menu-criar`, `menu-de-linha` e
- * `confirmacao`: desenhar duas vezes o mesmo id abriria dois overlays para uma
- * entrada só. O conteúdo do diálogo e da folha genéricos ainda é provisório —
+ * Por isso a casca não desenha nada para `menu-criar`, `menu-de-linha`,
+ * `confirmacao`, `grupo-novo` e `interesses`: desenhar duas vezes o mesmo id
+ * abriria dois overlays para uma entrada só. O conteúdo do diálogo e da folha genéricos ainda é provisório —
  * cada tela das ondas 2 a 8 traz o seu.
  */
 export function Sobreposicoes() {
@@ -38,7 +40,9 @@ export function Sobreposicoes() {
     aberta === "confirmacao" ||
     aberta === "paleta" ||
     // A folha de criar grupo é da tela do Diretório, que a desenha com o próprio id.
-    aberta === "grupo-novo"
+    aberta === "grupo-novo" ||
+    // A folha de interesses é da tela Você.
+    aberta === "interesses"
   )
     return null
 
