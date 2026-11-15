@@ -4,6 +4,7 @@ import { FalhaDaApi } from "@/lib/api/cliente"
 import {
   buscarPergunta,
   lerPerguntas,
+  mudarResolucao,
   responderPergunta,
   rotuloDoTopico,
   TOPICOS_DAS_PERGUNTAS,
@@ -205,6 +206,64 @@ describe("responder", () => {
     await expect(responderPergunta("q1", "ok")).rejects.toMatchObject({
       codigo: "invalido",
       mensagem: "Escreva uma resposta com pelo menos 5 caracteres.",
+    })
+  })
+})
+
+describe("resolução", () => {
+  it("a pergunta diz qual resposta resolveu, quando há uma", async () => {
+    responder({
+      pergunta: {
+        ...PERGUNTA,
+        corpo: "",
+        cidade: "Manaus",
+        resolvida: true,
+        resolvidaPorResposta: "r9",
+      },
+      respostas: [],
+    })
+    expect((await buscarPergunta("q1")).pergunta.resolvidaPorResposta).toBe("r9")
+  })
+
+  it("sem resposta marcada, o campo é nulo", async () => {
+    responder({
+      pergunta: { ...PERGUNTA, corpo: "", cidade: "Manaus" },
+      respostas: [],
+    })
+    expect((await buscarPergunta("q1")).pergunta.resolvidaPorResposta).toBeNull()
+  })
+
+  it("marcar manda a ação e a resposta, e devolve o estado gravado", async () => {
+    const buscar = responder({ resolvida: true, resolvidaPorResposta: "r1" })
+    const estado = await mudarResolucao("q1", "marcar", "r1")
+    const { caminho, init } = chamada(buscar)
+    expect(caminho).toBe("/api/app/perguntas/q1/resolucao")
+    expect(init.method).toBe("POST")
+    expect(JSON.parse(String(init.body))).toEqual({ acao: "marcar", respostaId: "r1" })
+    expect(estado).toEqual({ resolvida: true, resolvidaPorResposta: "r1" })
+  })
+
+  it("reabrir não manda resposta e devolve a pergunta aberta", async () => {
+    const buscar = responder({ resolvida: false, resolvidaPorResposta: null })
+    expect(await mudarResolucao("q1", "reabrir")).toEqual({
+      resolvida: false,
+      resolvidaPorResposta: null,
+    })
+    expect(JSON.parse(String(chamada(buscar).init.body))).toEqual({ acao: "reabrir" })
+  })
+
+  it("recusa do servidor não vira pergunta resolvida", async () => {
+    responder({ erro: "recusado", mensagem: "Só quem perguntou pode resolver." }, 403)
+    await expect(mudarResolucao("q1", "marcar", "r1")).rejects.toMatchObject({
+      codigo: "recusado",
+      mensagem: "Só quem perguntou pode resolver.",
+    })
+  })
+
+  it("falha da escrita é indisponibilidade, não sucesso silencioso", async () => {
+    responder({ erro: "escrita-indisponivel" }, 503)
+    await expect(mudarResolucao("q1", "resolver")).rejects.toMatchObject({
+      codigo: "indisponivel",
     })
   })
 })

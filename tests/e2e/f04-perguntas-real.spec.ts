@@ -36,6 +36,9 @@ const TEXTO_SEMEADO = "Alguém conhece ortopedista bom?"
 /** Pergunta semeada da PRÓPRIA persona ("Alguém conhece um bom encanador?"). */
 const TEXTO_DA_PESSOA = "Alguém conhece um bom encanador?"
 
+/** Pergunta aberta de OUTRA pessoa, com resposta na conversa (RUN-153). */
+const TEXTO_DA_OUTRA_PESSOA = "Diarista para faxina semanal no Parque Dez"
+
 async function capturar(page: Page, projeto: string, etapa: string): Promise<void> {
   mkdirSync(DIRETORIO_DAS_CAPTURAS, { recursive: true })
   await page.evaluate(async () => {
@@ -276,5 +279,106 @@ test.describe("F04 — perguntas reais no app", { tag: "@stateful" }, () => {
       "a resposta que falhou não pode aparecer na conversa",
     ).toHaveCount(0)
     expect(antes).not.toContain(texto)
+  })
+
+  test("o autor reabre e marca a resposta que resolveu, e o estado sobrevive ao recarregar", async ({
+    page,
+    context,
+  }, testInfo) => {
+    test.setTimeout(180_000)
+    // RUN-153: as RPCs de resolução já existiam; o que faltava era o caminho do
+    // app. O seed deixa a pergunta da própria persona resolvida pela resposta do
+    // Seu Antônio — este teste reabre e marca de novo, devolvendo o seed.
+    await semearSessaoDeMembro(context, MEMBRO_SEMEADO)
+    await page.goto("/app/comunidade")
+    await page.getByRole("radio", { name: "Filtrar por Minhas" }).click()
+    await page
+      .locator('[data-tela="comunidade"] [data-linha="pergunta"]', { hasText: TEXTO_DA_PESSOA })
+      .click()
+    await expect(page.getByRole("heading", { level: 1, name: TEXTO_DA_PESSOA })).toBeVisible({
+      timeout: 30_000,
+    })
+    await expect(
+      page.getByText("Resolvida", { exact: true }),
+      "o seed deixa a pergunta da própria pessoa resolvida",
+    ).toBeVisible({ timeout: 30_000 })
+
+    const respostaDoAntonio = page.locator('[data-tela="pergunta"] article', {
+      hasText: "Seu Antônio atendeu aqui em casa",
+    })
+    await expect(respostaDoAntonio).toBeVisible({ timeout: 30_000 })
+
+    await page.getByRole("button", { name: "Reabrir pergunta" }).click()
+    await expect(
+      page.getByText("Resolvida", { exact: true }),
+      "reabrir tira a etiqueta de resolvida",
+    ).toHaveCount(0, { timeout: 30_000 })
+    await capturar(page, testInfo.project.name, "pergunta-reaberta")
+
+    // O que a tela mostra depois do recarregamento é o banco, não o estado local.
+    await page.reload()
+    await expect(
+      page.getByRole("button", { name: "Reabrir pergunta" }),
+      "a pergunta reaberta continua aberta depois do recarregamento",
+    ).toHaveCount(0, { timeout: 30_000 })
+    await expect(
+      respostaDoAntonio.getByRole("button", { name: "Ajudou a resolver" }),
+      "o autor vê o botão de marcar em cada resposta",
+    ).toBeVisible({ timeout: 30_000 })
+
+    await respostaDoAntonio.getByRole("button", { name: "Ajudou a resolver" }).click()
+    await expect(
+      respostaDoAntonio.getByText("Resolveu a pergunta"),
+      "a resposta marcada é a resolução atual",
+    ).toBeVisible({ timeout: 30_000 })
+
+    await page.reload()
+    await expect(
+      page.getByText("Resolvida", { exact: true }),
+      "a marcação precisa sobreviver ao recarregamento",
+    ).toBeVisible({ timeout: 30_000 })
+    await expect(
+      page
+        .locator('[data-tela="pergunta"] article', { hasText: "Seu Antônio atendeu aqui em casa" })
+        .getByText("Resolveu a pergunta"),
+    ).toBeVisible({ timeout: 30_000 })
+    await capturar(page, testInfo.project.name, "pergunta-resolvida")
+  })
+
+  test("quem não perguntou não resolve nem reabre, e o Útil de resposta saiu", async ({
+    page,
+    context,
+  }) => {
+    test.setTimeout(120_000)
+    await semearSessaoDeMembro(context, MEMBRO_SEMEADO)
+    await page.goto("/app/comunidade")
+    await page
+      .locator('[data-tela="comunidade"] [data-linha="pergunta"]', {
+        hasText: TEXTO_DA_OUTRA_PESSOA,
+      })
+      .click()
+    await expect(page.getByRole("heading", { level: 1, name: TEXTO_DA_OUTRA_PESSOA })).toBeVisible({
+      timeout: 30_000,
+    })
+    // A resposta de outra pessoa está na tela — é sobre ela que os botões viveriam.
+    await expect(page.getByText("A Dona Célia faz faxina na minha casa há um ano.")).toBeVisible({
+      timeout: 30_000,
+    })
+
+    await expect(
+      page.getByRole("button", { name: "Ajudou a resolver" }),
+      "só quem perguntou resolve a pergunta",
+    ).toHaveCount(0)
+    await expect(
+      page.getByRole("button", { name: "Reabrir pergunta" }),
+      "só quem perguntou reabre a pergunta",
+    ).toHaveCount(0)
+
+    // O "Útil" de resposta era um Set local que não persistia: saiu do
+    // lançamento. O Útil real é o de comentário de grupo, em outra tela.
+    await expect(
+      page.locator('[data-tela="pergunta"]').getByRole("button", { name: /Útil/ }),
+      "a resposta de pergunta não tem mais o Útil fake",
+    ).toHaveCount(0)
   })
 })

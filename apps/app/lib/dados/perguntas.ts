@@ -53,12 +53,16 @@ export type PerguntaDaConversa = Readonly<{
     assunto: string
     criadaEm: string
     resolvida: boolean
+    /** Id da resposta que resolveu a pergunta; `null` quando não há, ou quando ela resolveu sem resposta. */
+    resolvidaPorResposta: string | null
     propria: boolean
     autor: string
     cidade: string
   }>
   respostas: readonly RespostaDaConversa[]
 }>
+
+export type AcaoDeResolucao = "resolver" | "reabrir" | "marcar"
 
 type Corpo = Record<string, unknown>
 
@@ -183,6 +187,7 @@ export async function buscarPergunta(
       assunto: assunto(pergunta["categoria"]),
       criadaEm: exigirTexto(pergunta, "criadaEm"),
       resolvida: pergunta["resolvida"] === true,
+      resolvidaPorResposta: texto(pergunta["resolvidaPorResposta"]),
       propria: pergunta["propria"] === true,
       autor: texto(pergunta["autor"]) ?? "",
       cidade: texto(pergunta["cidade"]) ?? "",
@@ -212,5 +217,29 @@ export async function responderPergunta(
     propria: true,
     criadaEm: exigirTexto(gravada, "criadaEm"),
     removida: false,
+  }
+}
+
+/**
+ * Resolve a pergunta na resposta escolhida, resolve sem resposta ou reabre.
+ *
+ * Quem decide se pode é o banco (só a autoria). O que volta é o estado GRAVADO,
+ * não o que a tela pediu: a tela mostra a resposta do servidor.
+ */
+export async function mudarResolucao(
+  id: string,
+  acao: AcaoDeResolucao,
+  respostaId?: string,
+  opcoes: { signal?: AbortSignal } = {},
+): Promise<{ resolvida: boolean; resolvidaPorResposta: string | null }> {
+  const corpo = await enviar(
+    "POST",
+    `/api/app/perguntas/${encodeURIComponent(id)}/resolucao`,
+    respostaId === undefined ? { acao } : { acao, respostaId },
+    opcoes,
+  )
+  return {
+    resolvida: corpo["resolvida"] === true,
+    resolvidaPorResposta: texto(corpo["resolvidaPorResposta"]),
   }
 }
