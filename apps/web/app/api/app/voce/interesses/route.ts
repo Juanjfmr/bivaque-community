@@ -53,13 +53,22 @@ type Servico = NonNullable<ReturnType<typeof clienteDeServicoOuNulo>>
  * leitura só acontece para quem não é verificado.
  */
 async function admissao(servico: Servico, userId: string): Promise<boolean | null> {
-  const status = await servico.rpc("read_verification_status", { p_user_id: userId })
-  if (status.error) return null
-  if (status.data[0]?.status === "verified") return true
+  try {
+    const status = await servico.rpc("read_verification_status", { p_user_id: userId })
+    if (status.error) return null
+    // Resposta que não é lista = não deu para conferir (503). Lista VAZIA, ao
+    // contrário, é legítima: é o familiar sem CPF admitido pelo titular (D16,
+    // sem linha em verification_outcomes) — cai na consulta do vínculo abaixo.
+    if (!Array.isArray(status.data)) return null
+    const linha = status.data[0]
+    if (linha !== undefined && linha.status === "verified") return true
 
-  const familia = await servico.rpc("has_verified_family_holder", { p_user_id: userId })
-  if (familia.error) return null
-  return familia.data === true
+    const familia = await servico.rpc("has_verified_family_holder", { p_user_id: userId })
+    if (familia.error || typeof familia.data !== "boolean") return null
+    return familia.data
+  } catch {
+    return null
+  }
 }
 
 /**

@@ -34,8 +34,10 @@ const estado = {
   chamadas: [] as Array<{ nome: string; argumentos: Record<string, unknown> }>,
   familiar: false,
   familiarFalha: false,
+  familiarSemResposta: false,
   status: null as string | null,
   statusFalha: false,
+  statusSemResposta: false,
 }
 
 const mockVinculo = vi.fn()
@@ -55,6 +57,7 @@ function clienteDeServico() {
     rpc: (nome: string, argumentos: Record<string, unknown>) => {
       estado.chamadas.push({ nome, argumentos })
       if (nome === "read_verification_status") {
+        if (estado.statusSemResposta) return Promise.resolve({ data: null, error: null })
         return Promise.resolve({
           data: estado.statusFalha
             ? null
@@ -65,6 +68,7 @@ function clienteDeServico() {
         })
       }
       if (nome === "has_verified_family_holder") {
+        if (estado.familiarSemResposta) return Promise.resolve({ data: null, error: null })
         return Promise.resolve({
           data: estado.familiarFalha ? null : estado.familiar,
           error: estado.familiarFalha ? { message: "boom" } : null,
@@ -124,8 +128,10 @@ beforeEach(() => {
   estado.chamadas = []
   estado.familiar = false
   estado.familiarFalha = false
+  estado.familiarSemResposta = false
   estado.status = null
   estado.statusFalha = false
+  estado.statusSemResposta = false
   mockVinculo.mockResolvedValue({
     data: { locality_id: CIDADE, localities: { city_name: "Manaus" } },
     error: null,
@@ -182,6 +188,27 @@ describe("interesses exigem admissão", () => {
     expect(resposta.status).toBe(503)
     expect(await resposta.json()).toEqual({ erro: "admissao-indisponivel" })
     expect(nomesDasChamadas()).toEqual(["read_verification_status"])
+    for (const rpc of LIST_RPCS) expect(nomesDasChamadas()).not.toContain(rpc)
+  })
+
+  it("RPC de verificação sem valor nem erro é 'não deu para conferir', não recusa nem crash", async () => {
+    // O achado P3 da revisão: data null sem error não pode virar TypeError (500)
+    // nem "não admitido" (403) — quem não consegue conferir não lê nem grava: 503.
+    estado.statusSemResposta = true
+
+    const resposta = await GET(leitura())
+    expect(resposta.status).toBe(503)
+    expect(await resposta.json()).toEqual({ erro: "admissao-indisponivel" })
+    for (const rpc of LIST_RPCS) expect(nomesDasChamadas()).not.toContain(rpc)
+  })
+
+  it("RPC do vínculo familiar sem valor nem erro também falha fechado em 503", async () => {
+    estado.status = "pending"
+    estado.familiarSemResposta = true
+
+    const resposta = await GET(leitura())
+    expect(resposta.status).toBe(503)
+    expect(await resposta.json()).toEqual({ erro: "admissao-indisponivel" })
     for (const rpc of LIST_RPCS) expect(nomesDasChamadas()).not.toContain(rpc)
   })
 
