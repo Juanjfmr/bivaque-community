@@ -237,6 +237,15 @@ export async function pedirExclusao(opcoes: Opcoes = {}): Promise<PedidoDeExclus
   }
 }
 
+/**
+ * Sair da conta (F10), pela rota do servidor: o app não tem cliente Supabase
+ * (ADR-20261105), então quem revoga a sessão e apaga o cookie é o servidor.
+ */
+export async function sairDaConta(opcoes: Opcoes = {}): Promise<void> {
+  const corpo = await enviar("POST", "/api/app/voce/sair", undefined, opcoes)
+  if (corpo["ok"] !== true) throw foraDoContrato()
+}
+
 function lerConvite(valor: unknown): ConvitePendente {
   const item = registro(valor)
   return {

@@ -69,6 +69,52 @@ test("falha de leitura mostra erro com tentar de novo, e a exclusão registra o 
   await expect(page.getByRole("status")).toContainText("06/12/2026")
 })
 
+test("sair da conta volta para a entrada e o cache local do aparelho sai junto", async ({
+  page,
+}) => {
+  await simularVoce(page)
+  await page.goto("/app/voce")
+  await expect(page.getByRole("heading", { level: 1, name: "Você" })).toBeVisible()
+
+  // O que a pessoa deixa no aparelho: rascunho de criação e buscas recentes.
+  await page.evaluate(() => {
+    sessionStorage.setItem("bivaque:criacao-rascunhos:manaus", "[]")
+    localStorage.setItem("bivaque:buscas-recentes", '["pediatra"]')
+  })
+
+  await page.getByRole("button", { name: "Sair da conta" }).click()
+  await expect(page.getByRole("alertdialog")).toContainText("Sair da conta?")
+  await page.getByRole("button", { name: "Sair", exact: true }).click()
+
+  await expect(page).toHaveURL(/\/app\/entrar$/)
+  await expect(
+    page.getByRole("heading", { level: 1, name: "A comunidade militar da sua cidade." }),
+  ).toBeVisible()
+  const guardado = await page.evaluate(() => ({
+    rascunhos: sessionStorage.getItem("bivaque:criacao-rascunhos:manaus"),
+    recentes: localStorage.getItem("bivaque:buscas-recentes"),
+  }))
+  expect(guardado, "o cache do aparelho não pode sobreviver à saída").toEqual({
+    rascunhos: null,
+    recentes: null,
+  })
+})
+
+test("sair com o servidor fora mantém a pessoa na conta, com a mensagem", async ({ page }) => {
+  await simularVoce(page, { respostaDoSair: "indisponivel" })
+  await page.goto("/app/voce")
+  await expect(page.getByRole("heading", { level: 1, name: "Você" })).toBeVisible()
+
+  await page.getByRole("button", { name: "Sair da conta" }).click()
+  await page.getByRole("button", { name: "Sair", exact: true }).click()
+
+  await expect(page.locator('[data-tela="voce"] [role="alert"]')).toContainText(
+    "Não foi possível sair agora",
+  )
+  await expect(page, "a sessão não foi encerrada no aparelho").toHaveURL(/\/app\/voce$/)
+  await expect(page.getByRole("heading", { level: 1, name: "Você" })).toBeVisible()
+})
+
 test("a família vem da rota: convite enviado entra na lista e a revogação some", async ({
   page,
 }) => {

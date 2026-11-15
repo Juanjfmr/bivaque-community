@@ -4,12 +4,19 @@ import { useEffect, useState } from "react"
 
 import { Botao } from "@/components/bivaque/botao"
 import { CabecaDePagina } from "@/components/bivaque/cabeca-de-pagina"
+import { Confirmacao } from "@/components/bivaque/confirmacao"
 import { EsqueletoDeLista } from "@/components/bivaque/esqueleto"
 import { EstadoDeErro } from "@/components/bivaque/estado-vazio"
 import { LinhaDeAjuste } from "@/components/bivaque/lista"
 import { Secao } from "@/components/bivaque/secao"
 import { FalhaDaApi } from "@/lib/api/cliente"
-import { lerPerfil, type PerfilDaConta, salvarLocalizacao, salvarPerfil } from "@/lib/dados/voce"
+import {
+  lerPerfil,
+  type PerfilDaConta,
+  sairDaConta,
+  salvarLocalizacao,
+  salvarPerfil,
+} from "@/lib/dados/voce"
 import { useNavegacao, useRolagemEFoco } from "@/lib/navegacao/react"
 import { CARGA_CONCLUIDA } from "@/lib/navegacao/restauracao"
 import { iniciais } from "@/lib/texto"
@@ -30,6 +37,8 @@ export function Voce() {
   const [editando, setEditando] = useState(false)
   const [salvando, setSalvando] = useState(false)
   const [mensagem, setMensagem] = useState<string | null>(null)
+  const [saindo, setSaindo] = useState(false)
+  const [falhaAoSair, setFalhaAoSair] = useState(false)
 
   useRolagemEFoco(CARGA_CONCLUIDA)
 
@@ -83,6 +92,31 @@ export function Voce() {
         )
       } finally {
         setSalvando(false)
+      }
+    })()
+  }
+
+  /**
+   * A saída (F10). A confirmação não tem estado de erro nem de espera; quem os
+   * tem é esta tela: `saindo` impede o duplo clique e `falhaAoSair` é a
+   * mensagem que fica. Sessão já inexistente (401) é sucesso — o que a pessoa
+   * pediu já é o estado atual.
+   */
+  const sair = () => {
+    if (saindo) return
+    setSaindo(true)
+    setFalhaAoSair(false)
+    void (async () => {
+      try {
+        await sairDaConta()
+        irParaEntrada()
+      } catch (falha: unknown) {
+        if (falha instanceof FalhaDaApi && falha.status === 401) {
+          irParaEntrada()
+          return
+        }
+        setSaindo(false)
+        setFalhaAoSair(true)
       }
     })()
   }
@@ -224,15 +258,46 @@ export function Voce() {
             onClick={() => void navegacao.irPara("conduta")}
           />
           <LinhaDeAjuste
+            icone="logout"
+            titulo="Sair da conta"
+            subtitulo="Encerrar a sessão neste aparelho"
+            disabled={saindo}
+            onClick={() => void navegacao.abrir("confirmacao")}
+          />
+          <LinhaDeAjuste
             icone="delete"
             titulo="Apagar a conta"
             subtitulo="Remova seus dados do Bivaque"
             onClick={() => void navegacao.irPara("apagar-conta")}
           />
+          {falhaAoSair ? (
+            <p role="alert" className="text-sm text-(--destructive)">
+              Não foi possível sair agora. Você continua na sua conta — tente de novo.
+            </p>
+          ) : null}
         </div>
       </Secao>
+
+      <Confirmacao
+        titulo="Sair da conta?"
+        texto="Você vai precisar entrar de novo com o seu e-mail. O que ainda não foi publicado aqui sai junto."
+        confirmar="Sair"
+        perigo
+        aoConfirmar={sair}
+      />
     </section>
   )
+}
+
+/**
+ * A entrada, e o cache local vai junto (SPA ADR §5.5): os rascunhos de criação
+ * e as buscas recentes são do aparelho, não da conta que saiu. O `replace`
+ * descarrega o estado do app e impede o Voltar de reabrir a tela autenticada.
+ */
+function irParaEntrada(): void {
+  sessionStorage.clear()
+  localStorage.clear()
+  window.location.replace("/app/entrar")
 }
 
 /** A falha da localização dita para a pessoa, pelo motivo que o servidor deu. */

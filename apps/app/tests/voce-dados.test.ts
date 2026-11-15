@@ -9,6 +9,7 @@ import {
   lerPerfil,
   lerPublicacoes,
   pedirExclusao,
+  sairDaConta,
   salvarLocalizacao,
   salvarPerfil,
 } from "@/lib/dados/voce"
@@ -234,5 +235,25 @@ describe("pedido de exclusão", () => {
   it("falha do servidor não vira pedido registrado", async () => {
     responder({ erro: "exclusao-indisponivel" }, 503)
     await expect(pedirExclusao()).rejects.toMatchObject({ codigo: "indisponivel" })
+  })
+})
+
+describe("sair da conta", () => {
+  it("encerra a sessão pelo POST na rota do servidor", async () => {
+    const buscar = responder({ ok: true })
+    await sairDaConta()
+    const { caminho, init } = chamada(buscar)
+    expect(caminho).toBe("/api/app/voce/sair")
+    expect(init.method).toBe("POST")
+  })
+
+  it("resposta sem confirmação é falha, nunca saída silenciosa", async () => {
+    responder({ ok: false })
+    await expect(sairDaConta()).rejects.toBeInstanceOf(FalhaDaApi)
+  })
+
+  it("servidor fora vira falha de indisponível", async () => {
+    responder({ erro: "saida-indisponivel" }, 503)
+    await expect(sairDaConta()).rejects.toMatchObject({ codigo: "indisponivel" })
   })
 })

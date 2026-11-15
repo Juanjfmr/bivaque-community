@@ -17,8 +17,15 @@ export async function simularVoce(
     distanciaDisponivel?: boolean
     /** O que a gravação do CEP responde, para o caminho de falha da tela. */
     respostaDaLocalizacao?: "sem-coordenada" | "cep-nao-encontrado" | "geocodificador-indisponivel"
+    /** O que a saída responde, para o caminho de falha da tela. */
+    respostaDoSair?: "indisponivel"
   } = {},
 ) {
+  // A entrada lê o progresso para saber se há sessão. Depois de sair não há, e
+  // é este 401 que a tela de entrada recebe do servidor de verdade.
+  await page.route(/\/api\/app\/entry\/progress$/, (rota) =>
+    rota.fulfill({ status: 401, json: { autenticado: false } }),
+  )
   // Preferências de aviso (F09): a área Você lê e grava a matriz de canais.
   // A simulação devolve o mesmo corpo de `/api/app/avisos/preferencias`.
   const canaisDeAviso = (escolha: {
@@ -222,6 +229,11 @@ export async function simularVoce(
           distanciaDisponivel: perfil.distanciaDisponivel,
         },
       })
+    }
+    if (recurso === "sair" && metodo === "POST") {
+      if (opcoes.respostaDoSair === "indisponivel")
+        return rota.fulfill({ status: 503, json: { erro: "saida-indisponivel" } })
+      return rota.fulfill({ json: { ok: true } })
     }
     if (recurso === "apagar-conta" && metodo === "POST") {
       conta.exclusaoPendente = true
