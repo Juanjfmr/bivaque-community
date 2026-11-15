@@ -139,145 +139,155 @@ export function Verbete({ id }: { readonly id: string }) {
     }
   }
 
-  if (erro === "sessao") return <EstadoDeSessaoVencida />
-  if (erro === "negado") return <EstadoNegado texto="O guia é de quem mora na cidade." />
-  if (erro === "ausente") {
-    return (
-      <EstadoVazio
-        titulo="Referência não encontrada"
-        texto="Ela saiu do guia ou o endereço está errado."
-      />
-    )
-  }
-  if (erro === "falhou") return <EstadoDeErro aoTentar={() => setRodada((atual) => atual + 1)} />
-  if (verbete === null) return <EsqueletoDeLista linhas={3} />
-
-  const { entrada, podeSalvar } = verbete
+  // Um `h1` só, em todo estado: o nome da referência quando ela chegou e o
+  // título da rota enquanto carrega ou quando a leitura falhou. É o mesmo
+  // cabeçalho que a web mostrava no lugar de "Referência" repetido.
   return (
     <div data-verbete="guia" className="grid gap-4">
-      <h2 className="text-[22px] leading-7">{entrada.nome}</h2>
-      {entrada.descricao === "" ? null : (
-        <p className="text-sm text-(--on-surface-variant)">{entrada.descricao}</p>
-      )}
+      <h1 id="titulo-da-tela" data-titulo-da-tela tabIndex={-1} className="text-[22px] leading-7">
+        {verbete?.entrada.nome ?? "Referência"}
+      </h1>
+      {erro === "sessao" ? (
+        <EstadoDeSessaoVencida />
+      ) : erro === "negado" ? (
+        <EstadoNegado texto="O guia é de quem mora na cidade." />
+      ) : erro === "ausente" ? (
+        <EstadoVazio
+          titulo="Referência não encontrada"
+          texto="Ela saiu do guia ou o endereço está errado."
+        />
+      ) : erro === "falhou" ? (
+        <EstadoDeErro aoTentar={() => setRodada((atual) => atual + 1)} />
+      ) : verbete === null ? (
+        <EsqueletoDeLista linhas={3} />
+      ) : (
+        <>
+          {verbete.entrada.descricao === "" ? null : (
+            <p className="text-sm text-(--on-surface-variant)">{verbete.entrada.descricao}</p>
+          )}
 
-      {entrada.telefone === null ? null : (
-        <a
-          href={`tel:${entrada.telefone.replace(/[^\d+]/g, "")}`}
-          className="inline-flex min-h-11 items-center gap-2 text-sm text-(--primary)"
-        >
-          <Icone nome="support" className="size-5" />
-          {entrada.telefone}
-        </a>
-      )}
-      {entrada.site === null ? null : (
-        <a
-          href={entrada.site}
-          target="_blank"
-          rel="noreferrer"
-          className="inline-flex min-h-11 items-center gap-2 text-sm text-(--primary)"
-        >
-          <Icone nome="open_in_new" className="size-5" />
-          Visitar o site
-        </a>
-      )}
+          {verbete.entrada.telefone === null ? null : (
+            <a
+              href={`tel:${verbete.entrada.telefone.replace(/[^\d+]/g, "")}`}
+              className="inline-flex min-h-11 items-center gap-2 text-sm text-(--primary)"
+            >
+              <Icone nome="support" className="size-5" />
+              {verbete.entrada.telefone}
+            </a>
+          )}
+          {verbete.entrada.site === null ? null : (
+            <a
+              href={verbete.entrada.site}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex min-h-11 items-center gap-2 text-sm text-(--primary)"
+            >
+              <Icone nome="open_in_new" className="size-5" />
+              Visitar o site
+            </a>
+          )}
 
-      <div className="flex flex-wrap items-center gap-2">
-        {podeSalvar ? (
-          <Botao
-            tom="tonal"
-            icone={entrada.salvo ? "bookmark" : "bookmark_border"}
-            disabled={ocupado}
-            onClick={() => void alternarSalvo()}
-          >
-            {entrada.salvo ? "Salvo no seu guia" : "Salvar no seu guia"}
-          </Botao>
-        ) : (
-          <p className="text-sm text-(--on-surface-variant)">
-            Esta referência é de outra cidade. Salvar e sugerir ficam no guia da cidade em que você
-            mora.
-          </p>
-        )}
-        {aviso === null ? null : (
-          <p role="status" className="text-sm text-(--on-surface-variant)">
-            {aviso}
-          </p>
-        )}
-      </div>
+          <div className="flex flex-wrap items-center gap-2">
+            {verbete.podeSalvar ? (
+              <Botao
+                tom="tonal"
+                icone={verbete.entrada.salvo ? "bookmark" : "bookmark_border"}
+                disabled={ocupado}
+                onClick={() => void alternarSalvo()}
+              >
+                {verbete.entrada.salvo ? "Salvo no seu guia" : "Salvar no seu guia"}
+              </Botao>
+            ) : (
+              <p className="text-sm text-(--on-surface-variant)">
+                Esta referência é de outra cidade. Salvar e sugerir ficam no guia da cidade em que
+                você mora.
+              </p>
+            )}
+            {aviso === null ? null : (
+              <p role="status" className="text-sm text-(--on-surface-variant)">
+                {aviso}
+              </p>
+            )}
+          </div>
 
-      {podeSalvar ? (
-        <section className="grid gap-2 border-t border-(--outline-variant) pt-4">
-          <h3 className="text-[17px]">Sugerir atualização</h3>
-          {podeSugerir ? (
-            <Formulario>
-              <Campo
-                id="sugestao-descricao"
-                rotulo="O que precisa mudar?"
-                valor={descricao}
-                aoMudar={setDescricao}
-                area
-                nota="A curadoria revisa antes de mudar o Guia."
-              />
-              <Campo
-                id="sugestao-referencia"
-                rotulo="Onde confirmar (opcional)"
-                valor={referencia}
-                aoMudar={setReferencia}
-              />
-              {erroDaSugestao === null ? null : (
-                <p role="alert" className="text-sm text-(--destructive)">
-                  {erroDaSugestao}
+          {verbete.podeSalvar ? (
+            <section className="grid gap-2 border-t border-(--outline-variant) pt-4">
+              <h3 className="text-[17px]">Sugerir atualização</h3>
+              {podeSugerir ? (
+                <Formulario>
+                  <Campo
+                    id="sugestao-descricao"
+                    rotulo="O que precisa mudar?"
+                    valor={descricao}
+                    aoMudar={setDescricao}
+                    area
+                    nota="A curadoria revisa antes de mudar o Guia."
+                  />
+                  <Campo
+                    id="sugestao-referencia"
+                    rotulo="Onde confirmar (opcional)"
+                    valor={referencia}
+                    aoMudar={setReferencia}
+                  />
+                  {erroDaSugestao === null ? null : (
+                    <p role="alert" className="text-sm text-(--destructive)">
+                      {erroDaSugestao}
+                    </p>
+                  )}
+                  {sugestaoEnviada ? (
+                    <p role="status" className="text-sm text-(--on-surface-variant)">
+                      Sugestão enviada. Ela entra na fila da curadoria.
+                    </p>
+                  ) : null}
+                  <Botao disabled={enviando} onClick={() => void enviarSugestao()}>
+                    {enviando ? "Enviando…" : "Enviar sugestão"}
+                  </Botao>
+                </Formulario>
+              ) : (
+                <p className="text-sm text-(--on-surface-variant)">
+                  Esta referência ainda não tem ficha publicada para atualizar.
                 </p>
               )}
-              {sugestaoEnviada ? (
-                <p role="status" className="text-sm text-(--on-surface-variant)">
-                  Sugestão enviada. Ela entra na fila da curadoria.
-                </p>
-              ) : null}
-              <Botao disabled={enviando} onClick={() => void enviarSugestao()}>
-                {enviando ? "Enviando…" : "Enviar sugestão"}
-              </Botao>
-            </Formulario>
-          ) : (
-            <p className="text-sm text-(--on-surface-variant)">
-              Esta referência ainda não tem ficha publicada para atualizar.
-            </p>
-          )}
-        </section>
-      ) : null}
+            </section>
+          ) : null}
 
-      {podeSugerir ? (
-        <section data-correcoes="minhas" className="grid gap-2">
-          <h3 className="text-[17px]">Minhas sugestões</h3>
-          {erroDasCorrecoes ? (
-            <EstadoDeErro
-              titulo="Não foi possível carregar suas sugestões"
-              aoTentar={() => setRodadaDasCorrecoes((atual) => atual + 1)}
-            />
-          ) : correcoes === null ? (
-            <EsqueletoDeLista linhas={2} />
-          ) : correcoes.length === 0 ? (
-            <p className="text-sm text-(--on-surface-variant)">
-              Você ainda não sugeriu nenhuma atualização para esta referência.
-            </p>
-          ) : (
-            <ul className="grid gap-2">
-              {correcoes.map((sugestao) => (
-                <li
-                  key={sugestao.id}
-                  data-correcao="minha"
-                  className="grid justify-items-start gap-1 rounded-xl bg-(--surface-lowest) p-3 ring-1 ring-(--outline-variant)"
-                >
-                  <Etiqueta tom="neutro">{sugestao.status}</Etiqueta>
-                  <p className="whitespace-pre-wrap break-words text-sm">{sugestao.descricao}</p>
-                  {sugestao.decisao === null ? null : (
-                    <p className="text-sm text-(--on-surface-variant)">{sugestao.decisao}</p>
-                  )}
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
-      ) : null}
+          {podeSugerir ? (
+            <section data-correcoes="minhas" className="grid gap-2">
+              <h3 className="text-[17px]">Minhas sugestões</h3>
+              {erroDasCorrecoes ? (
+                <EstadoDeErro
+                  titulo="Não foi possível carregar suas sugestões"
+                  aoTentar={() => setRodadaDasCorrecoes((atual) => atual + 1)}
+                />
+              ) : correcoes === null ? (
+                <EsqueletoDeLista linhas={2} />
+              ) : correcoes.length === 0 ? (
+                <p className="text-sm text-(--on-surface-variant)">
+                  Você ainda não sugeriu nenhuma atualização para esta referência.
+                </p>
+              ) : (
+                <ul className="grid gap-2">
+                  {correcoes.map((sugestao) => (
+                    <li
+                      key={sugestao.id}
+                      data-correcao="minha"
+                      className="grid justify-items-start gap-1 rounded-xl bg-(--surface-lowest) p-3 ring-1 ring-(--outline-variant)"
+                    >
+                      <Etiqueta tom="neutro">{sugestao.status}</Etiqueta>
+                      <p className="whitespace-pre-wrap break-words text-sm">
+                        {sugestao.descricao}
+                      </p>
+                      {sugestao.decisao === null ? null : (
+                        <p className="text-sm text-(--on-surface-variant)">{sugestao.decisao}</p>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </section>
+          ) : null}
+        </>
+      )}
     </div>
   )
 }

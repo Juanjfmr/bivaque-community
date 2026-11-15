@@ -244,19 +244,22 @@ export async function simularNegocios(page: Page): Promise<void> {
   })
 }
 
+/** A primeira referência da prova; é ela que o verbete da rota devolve. */
+export const VERBETE_DA_PROVA = {
+  id: "guia-escola-rio-negro",
+  categoria: "school",
+  nome: "Escola Municipal Rio Negro",
+  descricao: "Ensino fundamental no Centro.",
+  site: null,
+  telefone: null,
+  salvo: false,
+}
+
 /** A primeira página do guia, com cursor para a segunda. */
 export const GUIA_DA_PROVA = {
   cidade: "Manaus",
   entradas: [
-    {
-      id: "guia-escola-rio-negro",
-      categoria: "school",
-      nome: "Escola Municipal Rio Negro",
-      descricao: "Ensino fundamental no Centro.",
-      site: null,
-      telefone: null,
-      salvo: false,
-    },
+    VERBETE_DA_PROVA,
     {
       id: "guia-hospital-getulio",
       categoria: "hospital",
@@ -292,6 +295,19 @@ export async function simularGuia(page: Page): Promise<void> {
   await page.route(/\/api\/app\/guia(?:\?|$)/, async (rota) => {
     const depois = new URL(rota.request().url()).searchParams.get("depois")
     await rota.fulfill({ json: depois === null ? GUIA_DA_PROVA : GUIA_PAGINA_2 })
+  })
+}
+
+/**
+ * O verbete aberto pela rota `/app/guia/<id>`, no contrato que `lerVerbete` lê.
+ * Sem `podeSugerir`, a tela não pede "Minhas sugestões" — a prova do movimento
+ * reduzido só precisa da referência lida.
+ */
+export async function simularVerbeteDoGuia(page: Page): Promise<void> {
+  await page.route(/\/api\/app\/guia\/[^/?]+$/, async (rota) => {
+    await rota.fulfill({
+      json: { entrada: VERBETE_DA_PROVA, podeSalvar: true, podeSugerir: false },
+    })
   })
 }
 

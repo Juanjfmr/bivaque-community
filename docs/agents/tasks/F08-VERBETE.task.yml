@@ -54,9 +54,12 @@ allowed_paths:
   - apps/app/tests
   - tests/unit/app-api/guia
   - tests/e2e/f08-guia-real.spec.ts
+  - tests/e2e/empty-locality.spec.ts
+  - tests/e2e/portas-de-entrada.spec.ts
   - tests/e2e/guia-redirects.spec.ts
   - tests/e2e/guia-estrutura.spec.ts
   - tests/e2e/link-crawl.spec.ts
+  - apps/app/tests/e2e/acessibilidade.spec.ts
   - .visual/f08-verbete
 
 forbidden:
