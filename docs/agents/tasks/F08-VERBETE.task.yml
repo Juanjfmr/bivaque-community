@@ -56,6 +56,7 @@ allowed_paths:
   - tests/e2e/f08-guia-real.spec.ts
   - tests/e2e/guia-redirects.spec.ts
   - tests/e2e/guia-estrutura.spec.ts
+  - tests/e2e/link-crawl.spec.ts
   - .visual/f08-verbete
 
 forbidden:
