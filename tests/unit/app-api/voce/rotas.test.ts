@@ -47,15 +47,22 @@ function cliente(
     semLinhas?: boolean
     localizacaoFalha?: boolean
     semCoordenada?: boolean
+    /** Pessoa em transferência: o vínculo `leaving` existe. */
+    comSaida?: boolean
   } = {},
 ) {
   const escritas: { tabela: string; metodo: string; valor: unknown }[] = []
   const chamadasRpc: string[] = []
+  // O que a rota atualizou: a leitura do estado gravado (`perfilDaSessao`) é uma
+  // segunda consulta a `profiles`, e ela precisa ver o valor novo.
+  let atualizacao: Record<string, unknown> | null = null
 
   const from = vi.fn((tabela: string) => {
     let contagem = false
-    let atualizacao: Record<string, unknown> | null = null
     let apagando = false
+    // O recorte que a rota pediu (`kind = 'current'` | `'leaving'`): a pessoa em
+    // transferência tem duas linhas, e é o filtro que diz qual é qual.
+    const filtros: Record<string, string> = {}
 
     const resolver = () => {
       if (opcoes.erro === tabela) {
@@ -80,8 +87,23 @@ function cliente(
         }
       }
       if (tabela === "locality_memberships") {
+        if (filtros["kind"] === "leaving") {
+          if (opcoes.comSaida !== true) return { data: null, error: null }
+          return {
+            data: {
+              locality_id: "l2",
+              leaving_at: "2026-12-05",
+              access: "active",
+              localities: { city_name: "Rio de Janeiro", state_code: "RJ" },
+            },
+            error: null,
+          }
+        }
         return {
-          data: { locality_id: "l1", localities: { city_name: "Manaus" } },
+          data: {
+            locality_id: "l1",
+            localities: { city_name: "Manaus", state_code: "AM" },
+          },
           error: null,
         }
       }
@@ -138,7 +160,13 @@ function cliente(
       if (opcoesDoSelect?.count === "exact") contagem = true
       return q
     }
-    for (const metodo of ["eq", "order", "limit", "in"]) q[metodo] = () => q
+    for (const metodo of ["eq", "order", "limit", "in"]) {
+      q[metodo] = (coluna?: string, valor?: unknown) => {
+        if (metodo === "eq" && typeof coluna === "string" && typeof valor === "string")
+          filtros[coluna] = valor
+        return q
+      }
+    }
     q["update"] = (valor: Record<string, unknown>) => {
       atualizacao = valor
       escritas.push({ tabela, metodo: "update", valor })
@@ -245,12 +273,26 @@ describe("área Você do app", () => {
       perfil: {
         nome: "Ana Verificada",
         bio: null,
-        cidade: "Manaus",
+        cidade: { id: "l1", nome: "Manaus" },
+        outbound: null,
         localizacao: { cep: "69000-000", definida: true },
         distanciaDisponivel: true,
       },
       contagens: { salvos: 2, anuncios: 3, perguntas: 2, grupos: 1 },
       conta: { exclusaoPendente: false },
+    })
+  })
+
+  it("devolve a cidade de saída com a data e a marca de só leitura", async () => {
+    autenticar({ comSaida: true })
+    const corpo = await (await perfil(req("GET"))).json()
+    expect(corpo.perfil.cidade).toEqual({ id: "l1", nome: "Manaus" })
+    expect(corpo.perfil.outbound).toEqual({
+      id: "l2",
+      nome: "Rio de Janeiro",
+      uf: "RJ",
+      endsAt: "2026-12-05",
+      readOnly: false,
     })
   })
 
@@ -298,7 +340,8 @@ describe("área Você do app", () => {
       perfil: {
         nome: "Ana Editada",
         bio: null,
-        cidade: "Manaus",
+        cidade: { id: "l1", nome: "Manaus" },
+        outbound: null,
         localizacao: { cep: "69000-000", definida: true },
         distanciaDisponivel: true,
       },

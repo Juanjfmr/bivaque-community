@@ -77,7 +77,17 @@ const manterBusca: SearchMiddleware<Record<string, unknown>> = (ctx) => {
 }
 
 const BUSCA_PERSISTENTE = { middlewares: [manterBusca] }
-const ROTAS_COM_BUSCA = new Set(["desapegos", "imoveis", "catalogo", "mercado", "busca", "guia"])
+const ROTAS_COM_BUSCA = new Set([
+  "desapegos",
+  "imoveis",
+  "catalogo",
+  "mercado",
+  "busca",
+  "guia",
+  // RUN-170: `/app/voce?mudar=<id>` abre o formulário de mudança com o destino
+  // escolhido; sem a busca declarada, o roteador descarta o parâmetro.
+  "voce",
+])
 
 /**
  * As telas reais do produto entram aqui conforme cada onda. Fora do modo de

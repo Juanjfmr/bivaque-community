@@ -1,10 +1,22 @@
 import { enviar, FalhaDaApi, ler } from "../api/cliente"
 
 export type LocalizacaoDoPerfil = Readonly<{ cep: string | null; definida: boolean }>
+/** A cidade atual, com o id que a mudança de cidade usa. */
+export type CidadeDoPerfil = Readonly<{ id: string; nome: string }>
+/** A cidade que a pessoa está deixando, até `endsAt` (ADR-20260816). */
+export type SaidaDoPerfil = Readonly<{
+  id: string
+  nome: string
+  uf: string
+  /** Data do fim da participação na origem; vazio quando não declarada. */
+  endsAt: string
+  readOnly: boolean
+}>
 export type PerfilDaPessoa = Readonly<{
   nome: string
   bio: string | null
-  cidade: string
+  cidade: CidadeDoPerfil
+  outbound: SaidaDoPerfil | null
   localizacao: LocalizacaoDoPerfil
   /** false quando o CEP existe mas ainda não tem posição conhecida. */
   distanciaDisponivel: boolean
@@ -95,11 +107,29 @@ function lerLocalizacao(valor: unknown): LocalizacaoDoPerfil {
   return { cep: textoOuNulo(item, "cep"), definida: booleano(item, "definida") }
 }
 
+function lerSaida(corpo: Corpo): SaidaDoPerfil | null {
+  const valor = corpo["outbound"]
+  // `outbound` ausente é resposta fora do contrato: quem está em transferência
+  // veria a tela sem o aviso, e a próxima mudança seria recusada pelo banco.
+  if (valor === undefined) throw foraDoContrato()
+  if (valor === null) return null
+  const item = registro(valor)
+  return {
+    id: texto(item, "id"),
+    nome: textoOuNulo(item, "nome") ?? "",
+    uf: textoOuNulo(item, "uf") ?? "",
+    endsAt: textoOuNulo(item, "endsAt") ?? "",
+    readOnly: booleano(item, "readOnly"),
+  }
+}
+
 function lerPerfilDaPessoa(corpo: Corpo): PerfilDaPessoa {
+  const cidade = registro(corpo["cidade"])
   return {
     nome: texto(corpo, "nome"),
     bio: textoOuNulo(corpo, "bio"),
-    cidade: textoOuNulo(corpo, "cidade") ?? "",
+    cidade: { id: texto(cidade, "id"), nome: textoOuNulo(cidade, "nome") ?? "" },
+    outbound: lerSaida(corpo),
     localizacao: lerLocalizacao(corpo["localizacao"]),
     distanciaDisponivel: booleano(corpo, "distanciaDisponivel"),
   }
@@ -154,6 +184,65 @@ export async function salvarPerfil(
 ): Promise<PerfilDaPessoa> {
   const corpo = await enviar("PATCH", "/api/app/voce", dados, opcoes)
   return lerPerfilDaPessoa(registro(corpo["perfil"]))
+}
+
+/**
+ * Declara a mudança de cidade (F10): o destino é id de cidade do catálogo e o
+ * prazo é a data até quando a cidade atual continua valendo. Devolve o estado
+ * novo — a cidade já é o destino e a anterior vem em `outbound`.
+ */
+export async function declararMudancaDeCidade(
+  destino: string,
+  prazo: string,
+  opcoes: Opcoes = {},
+): Promise<PerfilDaPessoa> {
+  const corpo = await enviar("POST", "/api/app/voce/cidade", { destino, prazo }, opcoes)
+  return lerPerfilDaPessoa(registro(corpo["perfil"]))
+}
+
+/** A cidade de um link (`?mudar=<id>`), com a UF que o formulário precisa. */
+export type CidadeDoCatalogo = Readonly<{ id: string; nome: string; uf: string }>
+
+/**
+ * Resolve a cidade que o endereço trouxe. `null` é "esse id não está no
+ * catálogo" — o formulário abre vazio, nunca com um destino inventado.
+ */
+export async function cidadeDoLink(
+  id: string,
+  opcoes: Opcoes = {},
+): Promise<CidadeDoCatalogo | null> {
+  const corpo = await ler(`/api/app/voce/cidade?destino=${encodeURIComponent(id)}`, opcoes)
+  const valor = corpo["destino"]
+  if (valor === null) return null
+  const item = registro(valor)
+  return {
+    id: texto(item, "id"),
+    nome: textoOuNulo(item, "nome") ?? "",
+    uf: textoOuNulo(item, "uf") ?? "",
+  }
+}
+
+/** Força Armada e OM da própria pessoa — privados por construção (ADR-20261116). */
+export type AfiliacaoDaPessoa = Readonly<{ armedForce: string | null; om: string | null }>
+
+function lerAfiliacao(corpo: Corpo): AfiliacaoDaPessoa {
+  const afiliacao = registro(corpo["afiliacao"])
+  return { armedForce: textoOuNulo(afiliacao, "armedForce"), om: textoOuNulo(afiliacao, "om") }
+}
+
+export async function lerAfilicao(opcoes: Opcoes = {}): Promise<AfiliacaoDaPessoa> {
+  return lerAfiliacao(await ler("/api/app/voce/afiliacao", opcoes))
+}
+
+/**
+ * Grava Força Armada e OM. Campo vazio (ou `null`) apaga a linha; a rota não
+ * aceita campo de visibilidade, e o que fica gravado é sempre privado.
+ */
+export async function salvarAfilicao(
+  dados: { armedForce?: string | null; om?: string | null },
+  opcoes: Opcoes = {},
+): Promise<AfiliacaoDaPessoa> {
+  return lerAfiliacao(await enviar("PUT", "/api/app/voce/afiliacao", dados, opcoes))
 }
 
 /**

@@ -51,11 +51,13 @@ allowed_paths:
   - apps/web/app/api/app/voce/cidade
   - apps/web/app/api/app/voce/afiliacao
   - apps/web/app/api/app/voce/route.ts
+  - apps/web/app/api/app/voce/_comum.ts
   - apps/web/app/(shell)/profile/affiliation.ts
   - apps/web/lib/profile
   - apps/web/lib/locality
   - apps/web/lib/security/api-surface.ts
   - apps/app/lib/dados/voce.ts
+  - apps/app/src/roteador.tsx
   - apps/app/src/telas/Voce.tsx
   - apps/app/src/voce
   - apps/app/src/telas/comum.tsx
@@ -64,6 +66,8 @@ allowed_paths:
   - tests/unit/profile
   - tests/unit/locality
   - tests/unit/security/api-surface.test.ts
+  - tests/e2e/f10-voce-paridade-real.spec.ts
+  - tests/e2e/entrada-real-ajuda.ts
   - scripts/visual/capture.mjs
   - .visual/f10-paridade
 

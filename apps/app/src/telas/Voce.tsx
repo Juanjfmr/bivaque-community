@@ -1,5 +1,6 @@
 "use client"
 
+import { useLocation } from "@tanstack/react-router"
 import { useEffect, useState } from "react"
 
 import { Botao } from "@/components/bivaque/botao"
@@ -11,6 +12,9 @@ import { LinhaDeAjuste } from "@/components/bivaque/lista"
 import { Secao } from "@/components/bivaque/secao"
 import { FalhaDaApi } from "@/lib/api/cliente"
 import {
+  type CidadeDoCatalogo,
+  cidadeDoLink,
+  declararMudancaDeCidade,
   lerPerfil,
   type PerfilDaConta,
   sairDaConta,
@@ -21,9 +25,15 @@ import { useNavegacao, useRolagemEFoco, useSobreposicaoDaEntrada } from "@/lib/n
 import { CARGA_CONCLUIDA } from "@/lib/navegacao/restauracao"
 import { iniciais } from "@/lib/texto"
 import { PreferenciasDeAvisos } from "@/src/avisos/PreferenciasDeAvisos"
+import { Cidade, type PedidoDeMudanca } from "@/src/voce/Cidade"
+import { dataLegivel, destinoDoEndereco, mensagemDaMudanca } from "@/src/voce/cidade-form"
 import { digitosDoCep, EdicaoDePerfil } from "@/src/voce/EdicaoDePerfil"
 import { Familia } from "@/src/voce/Familia"
+import { ForcaEOm } from "@/src/voce/ForcaEOm"
 import { Interesses } from "@/src/voce/Interesses"
+
+/** O que a confirmação da tela vai executar. Uma por vez: o diálogo é um só. */
+type Pedido = { readonly tipo: "sair" } | ({ readonly tipo: "mudar" } & PedidoDeMudanca)
 
 /**
  * Você (onda 8, F10): identidade, contadores e os atalhos principais, agora
@@ -44,8 +54,30 @@ export function Voce() {
   const [mensagem, setMensagem] = useState<string | null>(null)
   const [saindo, setSaindo] = useState(false)
   const [falhaAoSair, setFalhaAoSair] = useState(false)
+  const [mudando, setMudando] = useState(false)
+  const [mensagemDaCidade, setMensagemDaCidade] = useState<string | null>(null)
+  const [destinoDoLink, setDestinoDoLink] = useState<CidadeDoCatalogo | null>(null)
+  const [pedido, setPedido] = useState<Pedido | null>(null)
+  const busca = useLocation({ select: (linha) => linha.search as Record<string, unknown> })
+  const destinoPedido = destinoDoEndereco(busca)
 
   useRolagemEFoco(CARGA_CONCLUIDA)
+
+  // O CTA "Vou me mudar para cá" da consulta a outra cidade chega como
+  // `/app/voce?mudar=<id>`: o formulário abre com o destino escolhido. Id que o
+  // catálogo não conhece deixa o formulário vazio — nunca uma cidade inventada.
+  useEffect(() => {
+    if (destinoPedido === null) return
+    const controle = new AbortController()
+    void cidadeDoLink(destinoPedido, { signal: controle.signal })
+      .then((cidade) => {
+        if (!controle.signal.aborted) setDestinoDoLink(cidade)
+      })
+      .catch(() => {
+        if (!controle.signal.aborted) setDestinoDoLink(null)
+      })
+    return () => controle.abort()
+  }, [destinoPedido])
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: rodada é o pedido de "tentar de novo"
   useEffect(() => {
@@ -126,6 +158,35 @@ export function Voce() {
     })()
   }
 
+  /**
+   * A mudança de cidade (F10). A confirmação é a MESMA peça da saída — a
+   * sobreposição é da entrada, então uma confirmação de cada vez: o pedido
+   * pendente é quem decide a copy e a ação. O estado novo vem do servidor e a
+   * tela relê o resto (contagens e cidade) pelo GET.
+   */
+  const mudarCidade = (alvo: PedidoDeMudanca) => {
+    if (mudando) return
+    setMudando(true)
+    setMensagemDaCidade(null)
+    void (async () => {
+      try {
+        const gravado = await declararMudancaDeCidade(alvo.destino, alvo.prazo)
+        setConta((atual) => (atual === null ? atual : { ...atual, perfil: gravado }))
+        setDestinoDoLink(null)
+        setRodada((atual) => atual + 1)
+      } catch (falha: unknown) {
+        setMensagemDaCidade(mensagemDaMudanca(falha))
+      } finally {
+        setMudando(false)
+      }
+    })()
+  }
+
+  const abrirConfirmacao = (novo: Pedido) => {
+    setPedido(novo)
+    void navegacao.abrir("confirmacao")
+  }
+
   return (
     <section data-tela="voce" className="grid gap-2">
       <CabecaDePagina titulo="Você" subtitulo="Sua conta, seus anúncios e seus ajustes." />
@@ -142,7 +203,7 @@ export function Voce() {
           <span className="grid min-w-0 grow gap-0.5">
             <b className="text-[17px]">{nome}</b>
             <small className="text-(--on-surface-variant)">
-              {perfil === null ? "perfil indisponível agora" : perfil.cidade}
+              {perfil === null ? "perfil indisponível agora" : perfil.cidade.nome}
             </small>
             {perfil?.bio === null || perfil?.bio === undefined ? null : (
               <small className="text-(--on-surface-variant)">{perfil.bio}</small>
@@ -173,6 +234,19 @@ export function Voce() {
           no mapa. Por isso a distância até o seu bairro ainda não pode ser calculada.
         </p>
       ) : null}
+
+      {perfil === null ? null : (
+        <>
+          <Cidade
+            perfil={perfil}
+            destinoInicial={destinoDoLink?.id === perfil.cidade.id ? null : destinoDoLink}
+            pendente={mudando}
+            mensagem={mensagemDaCidade}
+            aoPedirMudanca={(mudanca) => abrirConfirmacao({ tipo: "mudar", ...mudanca })}
+          />
+          <ForcaEOm />
+        </>
+      )}
 
       {editando && perfil !== null ? (
         <EdicaoDePerfil
@@ -281,7 +355,7 @@ export function Voce() {
             titulo="Sair da conta"
             subtitulo="Encerrar a sessão neste aparelho"
             disabled={saindo}
-            onClick={() => void navegacao.abrir("confirmacao")}
+            onClick={() => abrirConfirmacao({ tipo: "sair" })}
           />
           <LinhaDeAjuste
             icone="delete"
@@ -298,11 +372,22 @@ export function Voce() {
       </Secao>
 
       <Confirmacao
-        titulo="Sair da conta?"
-        texto="Você vai precisar entrar de novo com o seu e-mail. O que ainda não foi publicado aqui sai junto."
-        confirmar="Sair"
+        titulo={pedido?.tipo === "mudar" ? `Mudar para ${pedido.nome}?` : "Sair da conta?"}
+        texto={
+          pedido?.tipo === "mudar"
+            ? `Até ${dataLegivel(pedido.prazo)} você continua lendo e publicando em ${
+                perfil?.cidade.nome ?? "sua cidade"
+              }. Depois disso a cidade de onde você está saindo fica só leitura, e uma nova mudança só fica disponível depois do prazo. Não dá para desfazer pelo app.`
+            : "Você vai precisar entrar de novo com o seu e-mail. O que ainda não foi publicado aqui sai junto."
+        }
+        confirmar={pedido?.tipo === "mudar" ? "Mudar" : "Sair"}
         perigo
-        aoConfirmar={sair}
+        aoConfirmar={() => {
+          const atual = pedido
+          setPedido(null)
+          if (atual?.tipo === "mudar") mudarCidade(atual)
+          else sair()
+        }}
       />
     </section>
   )
