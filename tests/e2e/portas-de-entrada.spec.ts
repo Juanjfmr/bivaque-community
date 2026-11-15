@@ -18,22 +18,23 @@ test.describe("portas de entrada", () => {
     await expect(page).toHaveURL(new RegExp(`/app/anuncio/${PROPERTY}$`))
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible({ timeout: 20_000 })
     await expect(page.getByRole("link", { name: "Editar anúncio" })).toHaveCount(0)
-    // Com streaming, notFound() chega dentro de uma resposta 200: o que prova a negação é a
-    // tela de não encontrado no lugar do formulário.
+    // RUN-164: a edição web saiu (307 para o app). Quem não é dono aterrissa no
+    // anúncio, sem a porta de gestão — "Salvar alterações" só existe para o dono.
     await page.goto(`/imoveis/${PROPERTY}/editar`)
-    await expect(page.getByText("Imóvel não encontrado")).toBeVisible({ timeout: 20_000 })
-    await expect(page.getByRole("button", { name: /Salvar/ })).toHaveCount(0)
+    await expect(page).toHaveURL(new RegExp(`/app/anuncio/${PROPERTY}$`))
+    await expect(page.getByRole("button", { name: "Salvar alterações" })).toHaveCount(0)
   })
 
-  test("a lista migra, e as portas web de anúncio e alertas continuam acessíveis", async ({
-    page,
-  }) => {
+  test("a lista e o criar migram, e a lista de alertas continua na web", async ({ page }) => {
     await signInAs(page.context(), OTHER)
     await page.goto("/imoveis")
     await expect(page).toHaveURL(/\/app\/imoveis$/)
+    // Mesmo molde do desapego (RUN-156): o criar mora na folha do app, e a URL
+    // antiga só leva à lista.
     await page.goto("/imoveis/novo")
-    await expect(page).toHaveURL(/\/imoveis\/novo$/)
-    await expect(page.getByRole("heading", { level: 1 })).toBeVisible()
+    await expect(page).toHaveURL(/\/app\/imoveis$/)
+    await expect(page.getByRole("heading", { level: 1 })).toBeVisible({ timeout: 20_000 })
+    // Alertas é do Lote B: segue na web, sem redirect.
     await page.goto("/imoveis/alertas")
     await expect(page).toHaveURL(/\/imoveis\/alertas$/)
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible()

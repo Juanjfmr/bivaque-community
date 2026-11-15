@@ -75,7 +75,10 @@ test("as regras de criar e editar não capturam a lista nem o anúncio", async (
   }
 })
 
-test("a lista de alertas de imóvel continua na web, sem redirect", async () => {
+// Sem sessão, alertas responde com o portão da própria web (/login): é isso que
+// prova que a porta não foi trocada, e não a ausência de redirect.
+test("a lista de alertas de imóvel continua na web, fora do app", async () => {
   const resposta = await fetch(`${BASE_URL}/imoveis/alertas`, { redirect: "manual" })
-  expect(resposta.headers.get("location")).toBeNull()
+  const destino = new URL(resposta.headers.get("location") ?? "/", BASE_URL).pathname
+  expect(destino.startsWith("/app")).toBe(false)
 })
