@@ -202,6 +202,84 @@ test.describe("F06 — mercadoria real no app", { tag: "@stateful" }, () => {
     expect(linhas).toEqual([{ context_type: "listing", context_id: ITEM_ATIVO_PARA_INTERESSE }])
   })
 
+  test("salvar do detalhe grava, aparece em Salvos e dessalvar de lá some", async ({
+    page,
+    context,
+  }) => {
+    test.setTimeout(180_000)
+    await entrarComo(context, MEMBRO_SEMEADO)
+
+    await page.goto(`/app/anuncio/${ITEM_ATIVO_DE_TERCEIRO}`)
+    await expect(
+      page.getByRole("heading", { level: 1, name: "Berço portátil desmontável" }),
+    ).toBeVisible({ timeout: 30_000 })
+
+    // As três larguras rodam em série contra o mesmo banco: a prova começa do
+    // estado limpo, sem depender da execução anterior.
+    const api = await apiRequest.newContext({ baseURL: new URL(page.url()).origin })
+    const cabecalhos = {
+      authorization: `Bearer ${await tokenDaSessao(context)}`,
+      "content-type": "application/json",
+    }
+    await api.delete(`/api/app/mercado/${ITEM_ATIVO_DE_TERCEIRO}/salvo`, { headers: cabecalhos })
+
+    const gravado = page.waitForResponse(
+      (r) => r.url().includes("/salvo") && r.request().method() === "POST",
+    )
+    const marcador = page.getByRole("button", { name: "Salvar anúncio", exact: true })
+    await marcador.click()
+    expect((await gravado).status()).toBe(200)
+    await expect(
+      page.getByRole("button", { name: "Remover dos salvos", exact: true }),
+    ).toHaveAttribute("aria-pressed", "true")
+
+    // O banco tem a linha da sessão, não só a tela.
+    const salvas = await page.request.get(
+      `${urlDoSupabase()}/rest/v1/listing_saves?select=listing_id&listing_id=eq.${ITEM_ATIVO_DE_TERCEIRO}`,
+      {
+        headers: {
+          apikey: chaveAnonimaDoSupabase(),
+          authorization: `Bearer ${await tokenDaSessao(context)}`,
+        },
+      },
+    )
+    expect(salvas.status(), "o salvamento precisa ser legível por quem salvou").toBe(200)
+    expect(await salvas.json()).toEqual([{ listing_id: ITEM_ATIVO_DE_TERCEIRO }])
+
+    // Recarregar não perde o marcador: ele vem da rota, não do aparelho.
+    await page.reload()
+    await expect(
+      page.getByRole("button", { name: "Remover dos salvos", exact: true }),
+    ).toHaveAttribute("aria-pressed", "true", { timeout: 30_000 })
+
+    // A tela Salvos lista o anúncio do banco; dessalvar de lá apaga a linha.
+    await page.goto("/app/salvos")
+    const secao = page.locator('[data-salvos="anuncios"]')
+    const cartao = secao.locator('[data-cartao="anuncio"]', {
+      hasText: "Berço portátil desmontável",
+    })
+    await expect(cartao).toBeVisible({ timeout: 30_000 })
+
+    const apagado = page.waitForResponse(
+      (r) => r.url().includes("/salvo") && r.request().method() === "DELETE",
+    )
+    await cartao.getByRole("button", { name: "Remover dos salvos", exact: true }).click()
+    expect((await apagado).status()).toBe(200)
+    await expect(cartao).toHaveCount(0)
+
+    const depois = await page.request.get(
+      `${urlDoSupabase()}/rest/v1/listing_saves?select=listing_id&listing_id=eq.${ITEM_ATIVO_DE_TERCEIRO}`,
+      {
+        headers: {
+          apikey: chaveAnonimaDoSupabase(),
+          authorization: `Bearer ${await tokenDaSessao(context)}`,
+        },
+      },
+    )
+    expect(await depois.json(), "dessalvar apaga a linha do banco").toEqual([])
+    await api.dispose()
+  })
+
   test("sessão vencida e acesso negado têm saídas próprias", async ({ page, context }) => {
     test.setTimeout(120_000)
     await entrarComo(context, MEMBRO_SEMEADO)

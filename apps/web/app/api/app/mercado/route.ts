@@ -2,7 +2,15 @@ import type { NextRequest, NextResponse } from "next/server"
 import { exigirSessao, opcoesDoApp, responder } from "../../../../lib/app-api/rota-do-app"
 import { signPhotoPaths } from "../../../../lib/listings/queries"
 import { log } from "../../../../lib/logger"
-import { type AnuncioBruto, baseDoAnuncio, cidadeDaSessao, ehUuid, SELECT_ANUNCIO } from "./_comum"
+import {
+  type AnuncioBruto,
+  baseDoAnuncio,
+  cidadeDaSessao,
+  ehUuid,
+  instanteDoCursor,
+  inteiroNaFaixa,
+  SELECT_ANUNCIO,
+} from "./_comum"
 
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
@@ -25,24 +33,8 @@ interface Filtros {
 }
 
 /**
- * Instante do cursor, reescrito antes de entrar no filtro — o mesmo do F05, com
- * os microssegundos preservados.
+ * Centavos de um valor em reais; o pedido exige inteiro estritamente positivo.
  */
-function instanteDoCursor(valor: string): string | null {
-  const casado = /^(\d{4}-\d{2}-\d{2})T(\d{2}:\d{2}:\d{2})(\.\d{1,6})?(Z|[+-]00:00)$/.exec(valor)
-  if (!casado) return null
-  const [, dia, hora, fracao = ""] = casado
-  const canonico = `${dia}T${hora}${fracao}Z`
-  return Number.isFinite(Date.parse(canonico)) ? canonico : null
-}
-
-function inteiroEntre(bruto: string | null, min: number, max: number): number | null {
-  if (bruto === null || !/^\d+$/.test(bruto)) return null
-  const valor = Number(bruto)
-  return valor >= min && valor <= max ? valor : null
-}
-
-/** Centavos de um valor em reais; o pedido exige inteiro estritamente positivo. */
 function valorMaxEmCentavos(bruto: string | null): number | null {
   if (bruto === null || !/^\d+$/.test(bruto)) return null
   const reais = Number(bruto)
@@ -68,7 +60,7 @@ function lerFiltros(url: URL): Filtros | null {
     return null
   }
 
-  const quartos = temQuartos === null ? null : inteiroEntre(temQuartos, 0, 10)
+  const quartos = temQuartos === null ? null : inteiroNaFaixa(temQuartos, 0, 10)
   if (temQuartos !== null && quartos === null) return null
 
   const brutoValor = params.get("valor_max")
@@ -86,7 +78,8 @@ function lerFiltros(url: URL): Filtros | null {
   }
 
   const brutoLimite = params.get("limite")
-  const limite = brutoLimite === null ? LIMITE_PADRAO : inteiroEntre(brutoLimite, 1, LIMITE_MAXIMO)
+  const limite =
+    brutoLimite === null ? LIMITE_PADRAO : inteiroNaFaixa(brutoLimite, 1, LIMITE_MAXIMO)
   if (limite === null) return null
 
   const brutoCursor = params.get("depois")
@@ -165,6 +158,20 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     if (result.error) throw result.error
 
     const rows = (result.data ?? []) as unknown as AnuncioBruto[]
+    // O marcador de cada cartão vem em UMA leitura da própria tabela por página
+    // (sem N+1): a RLS de `listing_saves` já limita às linhas desta pessoa.
+    const salvosPorId = new Set<string>()
+    if (rows.length > 0) {
+      const salvos = await client
+        .from("listing_saves")
+        .select("listing_id")
+        .in(
+          "listing_id",
+          rows.map((row) => row.id),
+        )
+      if (salvos.error) throw salvos.error
+      for (const linha of salvos.data ?? []) salvosPorId.add(linha.listing_id)
+    }
     // A primeira foto de cada anúncio vira a capa; sem assinar, nenhum caminho
     // cru do bucket sai da rota.
     const primeiraFoto = new Map<string, string>()
@@ -180,6 +187,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       return {
         ...baseDoAnuncio(row),
         foto: path === undefined ? null : (assinadas.get(path) ?? null),
+        salvo: salvosPorId.has(row.id),
       }
     })
 

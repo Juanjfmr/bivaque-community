@@ -13,7 +13,12 @@ import { Icone } from "@/components/bivaque/icone"
 import { NomeDeMembro } from "@/components/bivaque/nome-de-membro"
 import { Secao } from "@/components/bivaque/secao"
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog"
-import { type AnuncioDetalhado, abrirInteresse, buscarAnuncio } from "@/lib/dados/mercado"
+import {
+  type AnuncioDetalhado,
+  abrirInteresse,
+  buscarAnuncio,
+  marcarSalvoAnuncio,
+} from "@/lib/dados/mercado"
 import { moeda } from "@/lib/formato"
 import { useNavegacao, useRolagemEFoco, useSobreposicaoDaEntrada } from "@/lib/navegacao/react"
 import { CARGA_CONCLUIDA } from "@/lib/navegacao/restauracao"
@@ -46,6 +51,8 @@ export function Anuncio() {
   const [erro, setErro] = useState<"falhou" | "sessao" | "negado" | "sumiu" | null>(null)
   const [rodada, setRodada] = useState(0)
   const [salvo, setSalvo] = useState(false)
+  const [gravandoSalvo, setGravandoSalvo] = useState(false)
+  const [avisoSalvo, setAvisoSalvo] = useState<string | null>(null)
   const interesse = useSobreposicaoDaEntrada("contato-interesse")
   const oferta = useSobreposicaoDaEntrada("contato-oferta")
   const tipoContato = interesse.aberto ? "interesse" : oferta.aberto ? "oferta" : null
@@ -75,6 +82,7 @@ export function Anuncio() {
     setErro(null)
     setConversaId(null)
     setAvisoInteresse(null)
+    setAvisoSalvo(null)
     void buscarAnuncio(id, { signal: controle.signal })
       .then((lido) => {
         if (controle.signal.aborted) return
@@ -156,6 +164,26 @@ export function Anuncio() {
     }
   }
 
+  /**
+   * O marcador grava de verdade (LAN-F06): a tela vira primeiro (é um toque
+   * rápido) e volta ao estado anterior se o servidor recusar, com o motivo.
+   */
+  async function alternarSalvo() {
+    if (gravandoSalvo) return
+    const alvo = !salvo
+    setSalvo(alvo)
+    setAvisoSalvo(null)
+    setGravandoSalvo(true)
+    try {
+      await marcarSalvoAnuncio(id, alvo, { signal: controle.signal })
+    } catch (falha: unknown) {
+      setSalvo(!alvo)
+      if (!foiAbortada(falha)) setAvisoSalvo(mensagemDaFalha(falha, "salvar"))
+    } finally {
+      setGravandoSalvo(false)
+    }
+  }
+
   const validacao = validarParametros("anuncio", { id })
   if (!validacao.ok) return <TelaIndisponivel motivo={validacao.motivo} />
 
@@ -220,11 +248,17 @@ export function Anuncio() {
             rotulo={salvo ? "Remover dos salvos" : "Salvar anúncio"}
             nome={salvo ? "bookmark" : "bookmark_border"}
             aria-pressed={salvo}
-            onClick={() => setSalvo((atual) => !atual)}
+            onClick={() => void alternarSalvo()}
             className="bg-(--surface-lowest)/85 backdrop-blur"
           />
         </span>
       </div>
+
+      {avisoSalvo === null ? null : (
+        <p role="alert" className="px-1 text-sm text-(--destructive)">
+          {avisoSalvo}
+        </p>
+      )}
 
       <div className="grid gap-1 px-1">
         {preco === null ? null : <b className="text-[22px]">{moeda(preco)}</b>}

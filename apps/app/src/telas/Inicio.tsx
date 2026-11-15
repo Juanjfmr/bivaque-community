@@ -18,14 +18,17 @@ import {
   type Presenca,
 } from "@/lib/dados/eventos"
 import { type InicioDaCidade, lerInicio } from "@/lib/dados/inicio"
+import { listarAnunciosSalvos, marcarSalvoAnuncio } from "@/lib/dados/mercado"
 import type { NomeDeIcone } from "@/lib/icones"
 import { useNavegacao, useRolagemEFoco } from "@/lib/navegacao/react"
 import { CARGA_CONCLUIDA } from "@/lib/navegacao/restauracao"
 import { registrarRecente } from "@/src/busca/recentes"
 import { termoAceito } from "@/src/busca/termo-url"
 import { useCasca } from "@/src/contexto/casca"
+import { foiAbortada } from "@/src/eventos/formulario"
 import { CartaoDaPublicacao } from "@/src/inicio/CartaoDaPublicacao"
 import { rotuloDaCategoria } from "@/src/inicio/categorias"
+import { mensagemDaFalha } from "@/src/mercado/falha"
 
 /**
  * O Início, com o conteúdo real da cidade da sessão (LAN-F02).
@@ -69,7 +72,11 @@ export function Inicio() {
   const [termo, setTermo] = useState("")
   const [termoCurto, setTermoCurto] = useState(false)
   const campoDaBusca = useRef<HTMLInputElement | null>(null)
+  // Negócios e perguntas do Início ainda guardam o marcador só no aparelho: eles
+  // não são deste lote. O anúncio, sim: `anunciosSalvos` vem de `listing_saves`.
   const [salvos, setSalvos] = useState<ReadonlySet<string>>(() => new Set())
+  const [anunciosSalvos, setAnunciosSalvos] = useState<ReadonlySet<string>>(() => new Set())
+  const [avisoSalvo, setAvisoSalvo] = useState<string | null>(null)
   const [presenca, setPresenca] = useState<Presenca | null>(null)
   const [erroPresenca, setErroPresenca] = useState(false)
   const [gravando, setGravando] = useState(false)
@@ -132,6 +139,45 @@ export function Inicio() {
       return proximo
     })
   }, [])
+
+  // O marcador dos anúncios é o do banco: os ids salvos das duas abas, numa
+  // leitura só. Se essa leitura falhar, o cartão abre como "não salvo" — nada
+  // de anúncio escondido — e o toque ainda grava (salvar duas vezes é o mesmo
+  // estado).
+  // biome-ignore lint/correctness/useExhaustiveDependencies: rodada solicita nova leitura
+  useEffect(() => {
+    const controle = new AbortController()
+    void Promise.all([
+      listarAnunciosSalvos({ tipo: "item", limite: 50 }, { signal: controle.signal }),
+      listarAnunciosSalvos({ tipo: "property", limite: 50 }, { signal: controle.signal }),
+    ])
+      .then((listas) => {
+        if (controle.signal.aborted) return
+        setAnunciosSalvos(new Set(listas.flatMap((lista) => lista.anuncios.map((a) => a.id))))
+      })
+      .catch(() => {})
+    return () => controle.abort()
+  }, [rodada])
+
+  /** Salvar do Início grava de verdade: otimista, com volta atrás se recusar. */
+  async function alternarSalvoDeAnuncio(id: string) {
+    const alvo = !anunciosSalvos.has(id)
+    const ajustar = (salvo: boolean) =>
+      setAnunciosSalvos((atual) => {
+        const proximo = new Set(atual)
+        if (salvo) proximo.add(id)
+        else proximo.delete(id)
+        return proximo
+      })
+    setAvisoSalvo(null)
+    ajustar(alvo)
+    try {
+      await marcarSalvoAnuncio(id, alvo)
+    } catch (falha: unknown) {
+      ajustar(!alvo)
+      if (!foiAbortada(falha)) setAvisoSalvo(mensagemDaFalha(falha, "salvar"))
+    }
+  }
 
   /**
    * Enviar o termo abre a busca já consultando (PR #195). Vazio não navega e
@@ -344,6 +390,11 @@ export function Inicio() {
                 </button>
 
                 <Secao titulo="Oportunidades perto de você">
+                  {avisoSalvo === null ? null : (
+                    <p role="alert" className="text-sm text-(--destructive)">
+                      {avisoSalvo}
+                    </p>
+                  )}
                   {anuncios.length === 0 ? (
                     <EstadoVazio
                       titulo="As primeiras oportunidades aparecem aqui"
@@ -366,9 +417,9 @@ export function Inicio() {
                               anuncio.precoCentavos === null ? null : anuncio.precoCentavos / 100,
                             icone: anuncio.tipo === "property" ? "apartment" : "sell",
                             meta: anuncio.bairro ?? cidade,
-                            salvo: salvos.has(anuncio.id),
+                            salvo: anunciosSalvos.has(anuncio.id),
                           }}
-                          aoSalvar={() => alternarSalvo(anuncio.id)}
+                          aoSalvar={() => void alternarSalvoDeAnuncio(anuncio.id)}
                           aoAbrir={() =>
                             void navegacao.irPara("anuncio", { parametros: { id: anuncio.id } })
                           }

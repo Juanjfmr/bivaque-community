@@ -8,9 +8,13 @@
  *
  * Shape servido:
  *   GET /api/app/mercado?tipo=item|property
- *     → { cidade, proximo: null, anuncios: [ … ] }
+ *     → { cidade, proximo: null, anuncios: [ … ] }  (cada item com `salvo`)
+ *   GET /api/app/mercado/salvos?tipo=item|property
+ *     → { anuncios: [ … ], proximo: null }
+ *   POST/DELETE /api/app/mercado/<id>/salvo
+ *     → { salvo: true|false }  (o estado gravado; DELETE sem linha é 404)
  *   GET /api/app/mercado/<id>
- *     → { anuncio: { …campos da tela, endereco: null, donoNome, fotos, meu: false, salvo: false } }
+ *     → { anuncio: { …campos da tela, endereco: null, donoNome, fotos, meu: false, salvo } }
  *   POST /api/app/mercado/<id>/interesse
  *     → { conversaId }
  */
@@ -205,6 +209,10 @@ function anuncioPorId(id: string): (typeof ANUNCIOS)[number] | undefined {
 
 /** Aplica interceptações em `page` para todas as rotas `/api/app/mercado*`. */
 export function aplicarStubMercado(page: Page): void {
+  // O que esta página salvou. Fica na memória do stub: recarregar a tela lê o
+  // mesmo estado, como no banco.
+  const salvos = new Set<string>()
+
   // ── PUBLICAR: POST /api/app/mercado ───────────────────────────────
   // Devolve o anúncio que a lista já serve, para a tela abrir o detalhe dele.
   page.route(/\/api\/app\/mercado$/, async (route) => {
@@ -234,6 +242,7 @@ export function aplicarStubMercado(page: Page): void {
     const resultados = listaPorTipo(tipo).map((anuncio) => ({
       ...anuncio,
       foto: anuncio.foto === null ? null : new URL(anuncio.foto, url).href,
+      salvo: salvos.has(anuncio.id),
     }))
     await route.fulfill({
       status: 200,
@@ -260,7 +269,9 @@ export function aplicarStubMercado(page: Page): void {
   })
 
   // ── DETALHE: GET /api/app/mercado/<id> (qualquer parâmetro após o id) ─
-  page.route(/\/api\/app\/mercado\/[^/?#]+(?:\?[^#]*)?$/, async (route) => {
+  // O `(?!salvos)` mantém esta interceptação exclusiva: `/mercado/salvos` é a
+  // lista dos salvos, não um anúncio com id "salvos".
+  page.route(/\/api\/app\/mercado\/(?!salvos(?:\?|$))[^/?#]+(?:\?[^#]*)?$/, async (route) => {
     if (route.request().method() !== "GET") {
       return route.continue()
     }
@@ -310,9 +321,54 @@ export function aplicarStubMercado(page: Page): void {
           donoNome: "Maria Silva",
           fotos: foto === null ? [] : [foto],
           meu: false,
-          salvo: false,
+          salvo: salvos.has(an.id),
         },
       }),
+    })
+  })
+
+  // ── MARCAR: POST/DELETE /api/app/mercado/<id>/salvo ──────────────
+  page.route(/\/api\/app\/mercado\/[^/?#]+\/salvo(?:\?[^#]*)?$/, async (route) => {
+    const metodo = route.request().method()
+    const partes = route.request().url().split("/")
+    const id = (partes[partes.length - 2] ?? "").split("?")[0] ?? ""
+    if (metodo === "POST") {
+      salvos.add(id)
+    } else if (metodo === "DELETE") {
+      if (!salvos.delete(id)) {
+        return route.fulfill({
+          status: 404,
+          contentType: "application/json",
+          body: JSON.stringify({ erro: "salvo-nao-encontrado" }),
+        })
+      }
+    } else {
+      return route.continue()
+    }
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ salvo: metodo === "POST" }),
+    })
+  })
+
+  // ── SALVOS: GET /api/app/mercado/salvos?tipo=item|property ───────
+  // Registrada por último: o Playwright casa as rotas do mais novo para o mais
+  // antigo, então ela vence o padrão de detalhe (que trataria "salvos" como id).
+  page.route(/\/api\/app\/mercado\/salvos(?:\?[^#]*)?$/, async (route) => {
+    const url = route.request().url()
+    const tipo = new URL(url, "http://localhost").searchParams.get("tipo")
+    const resultados = listaPorTipo(tipo === "property" ? "property" : "item")
+      .filter((anuncio) => salvos.has(anuncio.id))
+      .map((anuncio) => ({
+        ...anuncio,
+        foto: anuncio.foto === null ? null : new URL(anuncio.foto, url).href,
+        salvo: true,
+      }))
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ anuncios: resultados, proximo: null }),
     })
   })
 }

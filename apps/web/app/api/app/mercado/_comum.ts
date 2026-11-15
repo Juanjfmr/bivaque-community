@@ -16,6 +16,28 @@ export function ehUuid(valor: string | undefined): valor is string {
   return typeof valor === "string" && UUID.test(valor)
 }
 
+/**
+ * O que o `limite` da query pode ser; `null` é inválido (a rota responde 400).
+ * As duas listas do Mercado (a da cidade e a dos salvos) usam a mesma faixa.
+ */
+export function inteiroNaFaixa(bruto: string | null, min: number, max: number): number | null {
+  if (bruto === null || !/^\d+$/.test(bruto)) return null
+  const valor = Number(bruto)
+  return valor >= min && valor <= max ? valor : null
+}
+
+/**
+ * Instante do cursor, reescrito antes de entrar no filtro — o mesmo formato para
+ * a lista da cidade e para a dos salvos, com os microssegundos preservados.
+ */
+export function instanteDoCursor(valor: string): string | null {
+  const casado = /^(\d{4}-\d{2}-\d{2})T(\d{2}:\d{2}:\d{2})(\.\d{1,6})?(Z|[+-]00:00)$/.exec(valor)
+  if (!casado) return null
+  const [, dia, hora, fracao = ""] = casado
+  const canonico = `${dia}T${hora}${fracao}Z`
+  return Number.isFinite(Date.parse(canonico)) ? canonico : null
+}
+
 export type CidadeDaSessao = Readonly<{ id: string; nome: string }>
 
 /**
