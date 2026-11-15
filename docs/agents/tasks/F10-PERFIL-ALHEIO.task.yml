@@ -64,6 +64,8 @@ allowed_paths:
   - apps/app/src/roteador.tsx
   - apps/app/lib/dados
   - apps/app/src/telas
+  - apps/app/components/bivaque/nome-de-membro.tsx
+  - apps/app/components/bivaque/cartao-de-publicacao.tsx
   - apps/app/tests
   - tests/unit/app-api
   - tests/unit/security/api-surface.test.ts
