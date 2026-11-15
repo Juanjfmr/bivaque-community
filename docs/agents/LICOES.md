@@ -242,3 +242,23 @@ Fechamento do lote: ~45 min -> ~11 min (4x), alvo 8-12 atingido.
   seria shardar os comuns ou reduzir setup — retorno decrescente, só se o dono pedir.
 - Piso por runner: o setup da stack (~5 min) não some; paralelizar troca minutos de runner
   por wall time. ECR rate-limita com muitos pulls concorrentes (backoff + Docker Hub fallback).
+
+## Jornadas em paralelo: o que o lote de 15/11 ensinou
+
+- Lote que mexe em spec Playwright exige E2E real no CI antes de declarar pronto: `typecheck:e2e`
+  não pega quebra de runtime. F04 (etiqueta Resolvida), F08 (nome do verbete no h1, reduced-motion
+  da folha que virou rota) e F04-6 (locator Fechar ambíguo) só apareceram no E2E do CI. Ler o spec
+  e alinhar à estrutura real ajuda, mas a prova é o navegador.
+- Branches paralelos que mexem no `TOTAL_DE_ROTAS` (`apps/web/lib/security/api-surface.ts`)
+  precisam re-sync após merges: o CI do PR roda no merge com a main, então a contagem inclui rotas
+  de outros lotes já mergeados. F08 precisou bumpar 86→87 depois que a main ganhou a rota
+  `resolucao` do F04. Merge da main + reconferir a contagem antes do push final.
+- Executores DeepSeek em worktree novo param depois de escrever o código, antes de validar (o
+  `pnpm install` demora e o turno encerra). Retomar com um executor de conclusão no mesmo worktree
+  (lê `git status`/`diff`, roda a validação, commite). Não reescrever o código do zero.
+- Locators: `getByRole` name é substring por padrão — "Fechar" casa a alça "Arrastar para fechar"
+  também (strict mode violation); usar `exact:true`. E `getByText` com `exact:true` falha quando o
+  elemento carrega o ícone como ligadura no textContent ("check_circleResolvida").
+- Ressalva de revisão não é fato até confrontar o código: a nota "RPC não limpa resolved_reply_id"
+  do RUN-153 não se confirmou — a migration vigente já limpa. Registrar resíduo sem verificar
+  criaria card falso.
