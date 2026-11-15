@@ -205,6 +205,17 @@ function anuncioPorId(id: string): (typeof ANUNCIOS)[number] | undefined {
 
 /** Aplica interceptações em `page` para todas as rotas `/api/app/mercado*`. */
 export function aplicarStubMercado(page: Page): void {
+  // ── PUBLICAR: POST /api/app/mercado ───────────────────────────────
+  // Devolve o anúncio que a lista já serve, para a tela abrir o detalhe dele.
+  page.route(/\/api\/app\/mercado$/, async (route) => {
+    if (route.request().method() !== "POST") return route.continue()
+    await route.fulfill({
+      status: 201,
+      contentType: "application/json",
+      body: JSON.stringify({ anuncio: { id: "p-1" } }),
+    })
+  })
+
   // ── LISTAGEM: GET /api/app/mercado?tipo=item|property ─────────────
   page.route(/\/api\/app\/mercado\?[^#]*$/, async (route) => {
     const url = route.request().url()

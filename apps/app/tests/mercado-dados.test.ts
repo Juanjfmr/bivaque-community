@@ -8,8 +8,10 @@ import {
   abrirInteresse,
   buscarAnuncio,
   editarDesapego,
+  editarImovel,
   lerMercado,
   mudarSituacao,
+  publicarImovel,
 } from "@/lib/dados/mercado"
 
 /**
@@ -263,6 +265,75 @@ describe("gerenciar o próprio anúncio (editar e situação)", () => {
   it("situação que não vem é falha de contrato, não sucesso silencioso", async () => {
     responder({})
     await expect(mudarSituacao("a1", "pause")).rejects.toBeInstanceOf(FalhaDaApi)
+  })
+})
+
+describe("anunciar e editar imóvel", () => {
+  const IMOVEL = {
+    title: "Apartamento 2 quartos no Centro",
+    deal: "rent" as const,
+    propertyType: "apartment" as const,
+    valor: "1800",
+    bedrooms: "2",
+    areaM2: "62",
+    description: "Próximo ao comércio.",
+    neighborhood: "Centro",
+  }
+
+  it("publica pelo POST com kind property e o valor no lado do negócio", async () => {
+    const buscar = responder({ anuncio: { id: "p9" } }, 201)
+    const id = await publicarImovel({ ...IMOVEL, vagas: "1", address: "" })
+    expect(id).toBe("p9")
+    const { caminho, init } = chamada(buscar)
+    expect(caminho).toBe("/api/app/mercado")
+    expect(init.method).toBe("POST")
+    expect(JSON.parse(String(init.body))).toEqual({
+      kind: "property",
+      title: IMOVEL.title,
+      deal: "rent",
+      propertyType: "apartment",
+      rent: "1800",
+      salePrice: "",
+      bedrooms: "2",
+      areaM2: "62",
+      description: "Próximo ao comércio.",
+      neighborhood: "Centro",
+      address: "",
+      parkingSpots: "1",
+    })
+  })
+
+  it("venda manda o preço em salePrice, e o aluguel vai vazio", async () => {
+    const buscar = responder({ anuncio: { id: "p9" } }, 201)
+    await publicarImovel({ ...IMOVEL, deal: "sale", valor: "450000", vagas: "1" })
+    const corpo = JSON.parse(String(chamada(buscar).init.body)) as Record<string, unknown>
+    expect(corpo["salePrice"]).toBe("450000")
+    expect(corpo["rent"]).toBe("")
+  })
+
+  it("a edição não manda endereço, vagas nem o que a lista não mostra", async () => {
+    const buscar = responder({ anuncio: { id: "p9" } })
+    await editarImovel("p9", IMOVEL)
+    const { caminho, init } = chamada(buscar)
+    expect(caminho).toBe("/api/app/mercado/p9")
+    expect(init.method).toBe("PATCH")
+    const corpo = JSON.parse(String(init.body)) as Record<string, unknown>
+    expect(corpo).not.toHaveProperty("address")
+    expect(corpo).not.toHaveProperty("parkingSpots")
+    expect(corpo).not.toHaveProperty("kind")
+    expect(corpo["rent"]).toBe("1800")
+  })
+
+  it("resposta sem id é falha de contrato, nunca publicação fingida", async () => {
+    responder({})
+    await expect(publicarImovel({ ...IMOVEL, vagas: "1" })).rejects.toBeInstanceOf(FalhaDaApi)
+  })
+
+  it("recusa do servidor chega com o texto para a pessoa", async () => {
+    responder({ erro: "dados-invalidos", mensagem: "Revise os dados do anúncio." }, 400)
+    const falha = (await editarImovel("p9", IMOVEL).catch((erro: unknown) => erro)) as FalhaDaApi
+    expect(falha.codigo).toBe("invalido")
+    expect(falha.mensagem).toBe("Revise os dados do anúncio.")
   })
 })
 

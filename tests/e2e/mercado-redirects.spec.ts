@@ -14,12 +14,16 @@ const BASE_URL = process.env["APP_URL"] ?? "http://127.0.0.1:3000"
 
 // Caminho antigo → destino no app. O app cria pela folha do Criar (não existe
 // `/app/mercado/novo`) e edita dentro do anúncio, por isso a lista e o anúncio.
+// RUN-164: o imóvel segue o mesmo molde — a folha de Imóveis publica e a
+// gestão do anúncio edita.
 const TROCAS = [
   ["/mercado?preco_min=10000&pagina=2", "/app/mercado"],
   ["/imoveis?q=centro&quartos=2&valor_max=4000", "/app/imoveis"],
   ["/meus-anuncios", "/app/meus-anuncios"],
   ["/mercado/novo?categoria=eletronicos", "/app/mercado"],
   [`/mercado/${ANUNCIO_ID}/editar?aba=fotos`, `/app/anuncio/${ANUNCIO_ID}`],
+  ["/imoveis/novo", "/app/imoveis"],
+  [`/imoveis/${ANUNCIO_ID}/editar`, `/app/anuncio/${ANUNCIO_ID}`],
 ] as const
 
 test("telas antigas do mercado levam ao app, sem sessão, nas três larguras", async ({ page }) => {
@@ -48,6 +52,8 @@ test("as regras de criar e editar não capturam a lista nem o anúncio", async (
   for (const [caminho, destino] of [
     ["/mercado", "/app/mercado"],
     [`/mercado/${ANUNCIO_ID}`, `/app/anuncio/${ANUNCIO_ID}`],
+    ["/imoveis", "/app/imoveis"],
+    [`/imoveis/${ANUNCIO_ID}`, `/app/anuncio/${ANUNCIO_ID}`],
   ] as const) {
     const resposta = await fetch(`${BASE_URL}${caminho}`, { redirect: "manual" })
     expect(resposta.status, `status de ${caminho}`).toBe(307)
@@ -57,9 +63,19 @@ test("as regras de criar e editar não capturam a lista nem o anúncio", async (
   }
   // Subcaminho que não é `editar` não vira anúncio (quem não casa segue o
   // caminho normal, o portão), e `novo/editar` não vira um anúncio "novo".
-  for (const caminho of [`/mercado/${ANUNCIO_ID}/denunciar`, "/mercado/novo/editar"]) {
+  for (const caminho of [
+    `/mercado/${ANUNCIO_ID}/denunciar`,
+    "/mercado/novo/editar",
+    `/imoveis/${ANUNCIO_ID}/denunciar`,
+    "/imoveis/novo/editar",
+  ]) {
     const resposta = await fetch(`${BASE_URL}${caminho}`, { redirect: "manual" })
     const destino = new URL(resposta.headers.get("location") ?? "/", BASE_URL).pathname
     expect(destino.startsWith("/app/anuncio"), `destino de ${caminho}`).toBe(false)
   }
+})
+
+test("a lista de alertas de imóvel continua na web, sem redirect", async () => {
+  const resposta = await fetch(`${BASE_URL}/imoveis/alertas`, { redirect: "manual" })
+  expect(resposta.headers.get("location")).toBeNull()
 })

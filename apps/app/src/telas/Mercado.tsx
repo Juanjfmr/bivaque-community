@@ -14,7 +14,6 @@ import { FormularioImovel } from "@/components/bivaque/formulario-imovel"
 import { Grade } from "@/components/bivaque/grade"
 import { Icone } from "@/components/bivaque/icone"
 import { type ListaDoMercado, lerMercado } from "@/lib/dados/mercado"
-import { moeda } from "@/lib/formato"
 import { iconeDeDado } from "@/lib/icones"
 import {
   useNavegacao,
@@ -23,11 +22,6 @@ import {
   useSobreposicaoDaEntrada,
 } from "@/lib/navegacao/react"
 import { CARGA_CONCLUIDA } from "@/lib/navegacao/restauracao"
-import {
-  excluirRascunhoImovel,
-  lerRascunhosImoveis,
-  type RascunhoImovel,
-} from "@/lib/rascunhos-imoveis"
 import { useCasca } from "@/src/contexto/casca"
 import { EstadoDeSessaoVencida, EstadoNegado } from "@/src/eventos/EstadosDeAcesso"
 import { acessoNegado, sessaoVencida } from "@/src/eventos/formulario"
@@ -53,11 +47,12 @@ import { Segmentos } from "@/src/pecas/segmentos"
  * O Mercado do app, do banco (LAN-F06, no molde do F05).
  *
  * O desenho é o mesmo de sempre: uma lista por aba (Desapegos, Imóveis,
- * Negócios), sub-abas navegando de verdade, contagem, salvar local, filtros no
- * cliente e rascunhos. Mudou de onde vem o dado — `lib/dados/mercado`, que fala
+ * Negócios), sub-abas navegando de verdade, contagem, salvar local e filtros no
+ * cliente. Mudou de onde vem o dado — `lib/dados/mercado`, que fala
  * com `/api/app/mercado` — e por isso a tela distingue carregando, vazio de
  * verdade, falha recuperável, sessão vencida e acesso negado. Banco fora não
- * vira "nada anunciado".
+ * vira "nada anunciado". Em Imóveis, "Anunciar imóvel" publica de verdade e
+ * leva ao anúncio criado.
  */
 
 export type AbaDoMercado = "desapegos" | "imoveis"
@@ -100,8 +95,6 @@ export function ListaDeMercado({ inicial }: { inicial: AbaDoMercado }) {
   const [modoLista, setModoLista] = useState(false)
   const { aberto: criandoImovel, aoMudarAberto: setCriandoImovel } =
     useSobreposicaoDaEntrada("rascunho-imovel")
-  const [rascunhos, setRascunhos] = useState<RascunhoImovel[]>([])
-  const [erroRascunho, setErroRascunho] = useState("")
 
   useRolagemEFoco(CARGA_CONCLUIDA)
 
@@ -126,20 +119,6 @@ export function ListaDeMercado({ inicial }: { inicial: AbaDoMercado }) {
       })
     return () => controle.abort()
   }, [inicial, rodada, filtros.pagina])
-
-  useEffect(() => {
-    if (inicial !== "imoveis") return
-    setRascunhos(lerRascunhosImoveis(casca.cidade))
-  }, [inicial, casca.cidade])
-
-  const removerRascunho = (id: string) => {
-    if (!excluirRascunhoImovel(casca.cidade, id)) {
-      setErroRascunho("Não foi possível excluir o rascunho nesta sessão.")
-      return
-    }
-    setErroRascunho("")
-    setRascunhos(lerRascunhosImoveis(casca.cidade))
-  }
 
   const itens = useMemo(() => {
     if (dados === null) return []
@@ -233,49 +212,12 @@ export function ListaDeMercado({ inicial }: { inicial: AbaDoMercado }) {
           aberto={criandoImovel}
           cidade={casca.cidade}
           aoFechar={() => setCriandoImovel(false)}
-          aoSalvar={() => {
-            setCriandoImovel(false)
-            setRascunhos(lerRascunhosImoveis(casca.cidade))
-            setErroRascunho("")
-          }}
+          // Publicado: o app abre o próprio anúncio, como o desapego do Criar.
+          // Não fechar a folha antes: `irPara` já substitui a entrada aberta (é
+          // o `entrarEmRota` que fecha a sobreposição); um `back()` aqui
+          // correria com a navegação e voltaria para a lista.
+          aoSalvar={(id) => void navegacao.irPara("anuncio", { parametros: { id }, replace: true })}
         />
-      ) : null}
-
-      {inicial === "imoveis" && rascunhos.length > 0 ? (
-        <section
-          data-rascunhos-imoveis="sim"
-          aria-label="Rascunhos de imóveis"
-          className="grid gap-2 rounded-2xl bg-(--surface-container) p-3"
-        >
-          <b className="text-sm">Seus rascunhos ({rascunhos.length}) — não publicados</b>
-          {rascunhos.map((rascunho) => (
-            <article
-              key={rascunho.id}
-              data-rascunho-imovel={rascunho.id}
-              className="flex min-w-0 items-center gap-2 rounded-xl bg-(--surface-lowest) px-3 py-2"
-            >
-              <span className="grid min-w-0 grow gap-0.5">
-                <b className="truncate text-sm">{rascunho.titulo}</b>
-                <small className="text-xs text-(--on-surface-variant)">
-                  {rascunho.bairro} · {rascunho.finalidade === "aluguel" ? "Aluguel" : "Venda"} ·{" "}
-                  {moeda(rascunho.preco)}
-                </small>
-              </span>
-              <Botao
-                tom="texto"
-                data-acao="excluir-rascunho"
-                onClick={() => removerRascunho(rascunho.id)}
-              >
-                Excluir
-              </Botao>
-            </article>
-          ))}
-          {erroRascunho === "" ? null : (
-            <p role="alert" className="text-xs text-(--destructive)">
-              {erroRascunho}
-            </p>
-          )}
-        </section>
       ) : null}
 
       <Segmentos

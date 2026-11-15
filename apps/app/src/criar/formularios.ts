@@ -89,6 +89,99 @@ export function errosDoDesapego(entrada: {
   return erros
 }
 
+export const LIMITES_DO_IMOVEL = {
+  /** `TITLE_MIN` de apps/web/lib/listings/types.ts: a régua do servidor. */
+  titulo: 2,
+  tituloMaximo: 120,
+  bairro: 80,
+  descricao: 2000,
+  quartos: 20,
+  vagas: 20,
+  /** O mesmo teto de `optionalCents` do servidor, em reais. */
+  valorMaximo: 100_000_000,
+  areaMaxima: 100_000,
+} as const
+
+export type CampoDoImovel =
+  | "titulo"
+  | "bairro"
+  | "valor"
+  | "quartos"
+  | "vagas"
+  | "area"
+  | "descricao"
+
+export type ErrosDoImovel = Readonly<Partial<Record<CampoDoImovel, string>>>
+
+/** Número inteiro opcional, com o mesmo teto do servidor: vazio é válido. */
+function inteiroAte(valor: string, maximo: number): string | null {
+  const limpo = valor.trim()
+  if (limpo === "") return null
+  if (!/^\d+$/.test(limpo)) return "Informe um número inteiro."
+  return Number.parseInt(limpo, 10) > maximo ? "Número acima do limite." : null
+}
+
+/**
+ * A régua do imóvel, a mesma de `apps/web/lib/listings/validation.ts` (o app é
+ * outro pacote e não importa código do servidor): quem manda é o servidor; aqui
+ * só se evita mandar o que já se sabe que volta 400, com a frase do campo.
+ */
+export function errosDoImovel(entrada: {
+  readonly titulo: string
+  readonly bairro: string
+  readonly valor: string
+  readonly quartos: string
+  readonly vagas: string
+  readonly area: string
+  readonly descricao: string
+}): ErrosDoImovel {
+  const erros: {
+    titulo?: string
+    bairro?: string
+    valor?: string
+    quartos?: string
+    vagas?: string
+    area?: string
+    descricao?: string
+  } = {}
+  const titulo = entrada.titulo.trim()
+  if (titulo.length < LIMITES_DO_IMOVEL.titulo) erros.titulo = "Dê um título ao imóvel."
+  else if (titulo.length > LIMITES_DO_IMOVEL.tituloMaximo) {
+    erros.titulo = `O título passa de ${LIMITES_DO_IMOVEL.tituloMaximo} caracteres.`
+  }
+  const bairro = entrada.bairro.trim()
+  if (bairro === "") erros.bairro = "Informe o bairro."
+  else if (bairro.length > LIMITES_DO_IMOVEL.bairro) {
+    erros.bairro = "O bairro passa de 80 caracteres."
+  }
+  // Aluguel e venda são reais inteiros no servidor: centavos voltam 400.
+  const valor = entrada.valor.trim()
+  if (valor === "") erros.valor = "Informe o valor do imóvel."
+  else if (!/^\d+$/.test(valor))
+    erros.valor = "Informe um valor em reais, sem centavos e sem símbolo."
+  else if (Number.parseInt(valor, 10) > LIMITES_DO_IMOVEL.valorMaximo) {
+    erros.valor = "Valor acima do limite permitido."
+  }
+  const quartos = inteiroAte(entrada.quartos, LIMITES_DO_IMOVEL.quartos)
+  if (quartos !== null) erros.quartos = quartos
+  const vagas = inteiroAte(entrada.vagas, LIMITES_DO_IMOVEL.vagas)
+  if (vagas !== null) erros.vagas = vagas
+  const area = entrada.area.trim().replace(",", ".")
+  if (area !== "") {
+    if (!/^\d+(\.\d{1,2})?$/.test(area)) erros.area = "Informe a área em metros quadrados."
+    else {
+      const metragem = Number.parseFloat(area)
+      if (metragem <= 0 || metragem > LIMITES_DO_IMOVEL.areaMaxima) {
+        erros.area = "Área fora do intervalo permitido."
+      }
+    }
+  }
+  if (entrada.descricao.trim().length > LIMITES_DO_IMOVEL.descricao) {
+    erros.descricao = "A descrição passa de 2000 caracteres."
+  }
+  return erros
+}
+
 /** `true` quando dá para revisar: é o que habilita a ação primária. */
 export function semErros(erros: Readonly<Partial<Record<string, string>>>): boolean {
   return Object.values(erros).every((erro) => erro === undefined)

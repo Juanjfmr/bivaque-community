@@ -199,7 +199,6 @@ export const HEADINGS = {
   // captura só mostrava o Guia e a ausência das outras seções parecia defeito.
   "/explorar/busca?q=manaus": "^Resultados para “manaus”$",
   "/explorar/busca?q=piquenique": "^Resultados para “piquenique”$",
-  "/imoveis/novo": "^Novo anúncio de moradia$",
   // A ficha do imóvel é nomeada pelo título do anúncio.
   "/imoveis/b2000000-0000-4000-8000-000000000001": DYNAMIC_HEADING,
   "/imoveis/alertas": "^Meus alertas$",
@@ -424,11 +423,10 @@ export const ROUTES = [
   // Onda T Task 4: the "cidade" container's actual landing page — NAV_ITEMS
   // pointed here since E10 (406d4f6), but the route did not exist until T4.
   { path: "/localidade", name: "localidade", auth: true },
-  // RECON-027: Moradia. `/imoveis` e `/imoveis/novo` não dependem de fixture.
-  // O detalhe aponta para a fixture de anúncio que `supabase/seed.sql` precisa
-  // criar (fora do allowed_paths deste lote) — sem ela a captura cai no 404
-  // honesto, que NÃO conta como fidelidade comprovada.
-  { path: "/imoveis/novo", name: "imoveis-novo", auth: true },
+  // RECON-027: Moradia. O detalhe aponta para a fixture de anúncio que
+  // `supabase/seed.sql` precisa criar (fora do allowed_paths deste lote) — sem
+  // ela a captura cai no 404 honesto, que NÃO conta como fidelidade comprovada.
+  // Criar imóvel saiu da web (RUN-164): a folha do app publica de verdade.
   { path: `/imoveis/${IMOVEIS_FIXTURE_ID}`, name: "imoveis-detail", auth: true },
   // RECON-028: gestão dos alertas (prancha 65, painel 2). A tela renderiza o
   // estado vazio honesto enquanto `supabase/seed.sql` não tiver um alerta — o

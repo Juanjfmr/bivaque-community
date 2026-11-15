@@ -117,9 +117,14 @@ const nextConfig: NextConfig = {
           // lookahead impede que "novo" vire id. Na regra de editar o `$` não
           // fecha (há "/editar" atrás), então o bloqueio é de "novo/" — sem ele,
           // `/mercado/novo/editar` viraria o anúncio "novo".
+          // RUN-164: criar e editar imóvel seguem o mesmo molde — a folha do
+          // app publica e o gerenciar edita. `/imoveis/alertas` e o detalhe
+          // (`:id`) não são capturados: o lookahead exclui "novo" e "alertas".
           ["/mercado/novo", "/app/mercado"],
           ["/mercado/:id((?!novo/)[^/]+)/editar", "/app/anuncio/:id"],
           ["/mercado/:id((?!novo/?$)[^/]+)", "/app/anuncio/:id"],
+          ["/imoveis/novo", "/app/imoveis"],
+          ["/imoveis/:id((?!novo/)[^/]+)/editar", "/app/anuncio/:id"],
           ["/imoveis/:id((?!(?:novo|alertas)/?$)[^/]+)", "/app/anuncio/:id"],
           ["/pedidos", "/app/pedidos"],
           ["/pedidos/:id((?!novo/?$)[^/]+)", "/app/pedido/:id"],

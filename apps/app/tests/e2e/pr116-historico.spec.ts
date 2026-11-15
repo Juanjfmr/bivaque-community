@@ -96,50 +96,6 @@ test("Voltar fecha escrever/sair do grupo e preserva o texto", async ({ page }) 
   await expect(page.locator('[data-estado-participacao="membro"]')).toBeVisible()
 })
 
-test("limite de imóveis informa o problema e preserva o rascunho antigo e o texto novo", async ({
-  page,
-}) => {
-  aplicarStubMercado(page)
-  await page.addInitScript(() => {
-    // Entrada sintética da prova; o resultado é conferido na interface.
-    sessionStorage.setItem(
-      "bivaque:rascunhos-imoveis:manaus",
-      JSON.stringify(
-        Array.from({ length: 10 }, (_, i) => ({
-          id: `rascunho-imovel-fixture-${i}`,
-          cidade: "Manaus",
-          titulo: `Apartamento existente ${i}`,
-          tipo: "apartamento",
-          finalidade: "aluguel",
-          bairro: "Centro",
-          preco: 1000,
-          quartos: 2,
-          area: 60,
-          vagas: 1,
-          descricao: "Exemplo",
-          criadoEm: "2026-10-26T00:00:00Z",
-        })),
-      ),
-    )
-  })
-  await page.goto("/app/imoveis")
-  const anteriores = page.locator("[data-rascunho-imovel]")
-  await expect(anteriores).toHaveCount(10)
-  await page.getByRole("button", { name: "Anunciar imóvel", exact: true }).click()
-  const painel = page.locator('[data-fluxo="rascunho-imovel"]')
-  await painel.locator("#imovel-titulo").fill("Apartamento novo ainda não salvo")
-  await painel.locator("#imovel-bairro").fill("Centro")
-  await painel.locator("#imovel-preco").fill("1500")
-  await painel.locator("#imovel-area").fill("80")
-  await painel.getByRole("button", { name: "Salvar rascunho", exact: true }).click()
-  await expect(painel.getByRole("alert")).toContainText("Limite de 10 rascunhos")
-  await expect(painel.locator("#imovel-titulo")).toHaveValue("Apartamento novo ainda não salvo")
-  await page.screenshot({ path: test.info().outputPath("limite-imoveis.png") })
-  await page.keyboard.press("Escape")
-  await expect(anteriores).toHaveCount(10)
-  await expect(anteriores.filter({ hasText: "Apartamento existente 0" })).toBeVisible()
-})
-
 test("limite do grupo avisa dentro do diálogo e mantém o texto digitado", async ({ page }) => {
   await simularGrupos(page, { membro: true })
   await page.addInitScript(() => {

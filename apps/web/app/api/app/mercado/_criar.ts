@@ -4,9 +4,16 @@ import {
   exigirSessao,
   lerCorpoJson,
   responder,
+  type SessaoAutenticada,
 } from "../../../../lib/app-api/rota-do-app"
 import { lerNovoDesapego } from "../../../../lib/listings/create"
+import {
+  anuncioDoRascunho,
+  detalhesDoRascunho,
+  lerRascunhoDoImovel,
+} from "../../../../lib/listings/property"
 import { MAX_PHOTO_BYTES } from "../../../../lib/listings/types"
+import { validatePropertyDraft } from "../../../../lib/listings/validation"
 import { enviarFotoDoAnuncio, FalhaDaFoto } from "../../../../lib/storage/listing-photo"
 import { cidadeDaSessao, ehUuid, interpretarErroDoBanco, lerFotoDoCorpo } from "./_comum"
 
@@ -22,6 +29,10 @@ export async function criarDesapego(request: NextRequest): Promise<NextResponse>
   const lido = await lerCorpoJson(request, Math.ceil((MAX_PHOTO_BYTES * 4) / 3) + 32768)
   if (!lido.ok) return responder(request, { erro: "corpo-invalido" }, 400)
   const corpo = lido.corpo
+  // `kind` ausente é desapego: o app do desapego já chamava esta rota sem ele.
+  const tipo = corpo["kind"] ?? "item"
+  if (tipo === "property") return criarImovel(request, auth.sessao, corpo)
+  if (tipo !== "item") return responder(request, { erro: "dados-invalidos" }, 400)
   const id = corpo["chave"]
   if (typeof id !== "string" || !ehUuid(id)) {
     return responder(request, { erro: "dados-invalidos" }, 400)
@@ -117,6 +128,59 @@ export async function criarDesapego(request: NextRequest): Promise<NextResponse>
     if (erro instanceof FalhaDaFoto) {
       return responder(request, { erro: "falha-na-foto", mensagem: erro.message }, erro.status)
     }
+    return responder(request, { erro: "escrita-indisponivel" }, 503)
+  }
+}
+
+/**
+ * Imóvel (kind property): a RPC transacional `create_property_listing` cria
+ * `listings` e `property_details` juntos, com o dono vindo de `auth.uid()` — o
+ * mesmo ciclo da antiga action da web. Nasce publicado, como o desapego.
+ *
+ * shortcut: sem chave idempotente, porque a RPC é quem gera o id; repetir
+ * depois de uma resposta perdida cria outro imóvel (a action da web tinha a
+ * mesma limitação). Quando isso doer, a chave vira uma coluna própria.
+ */
+async function criarImovel(
+  request: NextRequest,
+  sessao: SessaoAutenticada,
+  corpo: Record<string, unknown>,
+): Promise<NextResponse> {
+  // A foto do imóvel tem fluxo próprio na web (uma por chamada); aqui ela não
+  // entra calada num corpo que ninguém lê.
+  if (corpo["foto"] !== undefined && corpo["foto"] !== null) {
+    return responder(request, { erro: "foto-invalida" }, 400)
+  }
+  const client = sessao.cliente
+  const userId = sessao.usuario.id
+  try {
+    const cidade = await cidadeDaSessao(client, userId)
+    if (cidade === null) return responder(request, { erro: "sem-cidade" }, 403)
+    const rascunho = lerRascunhoDoImovel(corpo)
+    const validacao = validatePropertyDraft(rascunho)
+    if (!validacao.ok) {
+      return responder(
+        request,
+        { erro: "dados-invalidos", campo: validacao.field, mensagem: validacao.message },
+        400,
+      )
+    }
+    const criado = await client.rpc("create_property_listing", {
+      p_listing: anuncioDoRascunho(rascunho, { status: "active", localityId: cidade.id }),
+      p_details: detalhesDoRascunho(rascunho),
+    })
+    if (criado.error) {
+      const falha = interpretarErroDoBanco(criado.error.code, {
+        recusado: "Sua conta não pode anunciar nesta cidade.",
+        dados: "Revise os dados do anúncio.",
+      })
+      return responder(request, falha.corpo, falha.status)
+    }
+    if (typeof criado.data !== "string" || criado.data === "") {
+      throw new Error("create without id")
+    }
+    return responder(request, { anuncio: { id: criado.data } }, 201)
+  } catch {
     return responder(request, { erro: "escrita-indisponivel" }, 503)
   }
 }

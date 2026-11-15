@@ -776,7 +776,9 @@ describe("rotas de mercado do app", () => {
       expect(mock.updateCalls).toHaveLength(0)
     })
 
-    it("imóvel não é editável pelo app", async () => {
+    it("corpo de desapego num imóvel é 400, e nada é gravado", async () => {
+      // RUN-164: o imóvel tem edição própria (tests/unit/app-api/mercado/imovel.test.ts);
+      // aqui se prova só que o corpo do desapego não atravessa o tipo.
       const mock = mockClient({ listing: { ...IMOVEL, owner_user_id: USER } })
       authenticate(mock)
       const resposta = await editar(req("PATCH", `${BASE}/${ID}`, EDICAO), context)
@@ -785,13 +787,15 @@ describe("rotas de mercado do app", () => {
       expect(mock.updateCalls).toHaveLength(0)
     })
 
-    it("campos obrigatórios ausentes são 400 antes de tocar o banco", async () => {
+    it("campos obrigatórios ausentes são 400 sem gravar", async () => {
       const mock = mockClient()
       authenticate(mock)
       const resposta = await editar(req("PATCH", `${BASE}/${ID}`, '{"titulo":"Mesa"}'), context)
       expect(resposta.status).toBe(400)
       expect(await json(resposta)).toEqual({ erro: "dados-invalidos" })
-      expect(mock.from).not.toHaveBeenCalled()
+      // A rota lê o anúncio para saber o tipo (item ou imóvel) antes de validar;
+      // o que não acontece é a escrita.
+      expect(mock.updateCalls).toHaveLength(0)
     })
 
     it("a validação da web devolve os campos em erro, sem gravar", async () => {
