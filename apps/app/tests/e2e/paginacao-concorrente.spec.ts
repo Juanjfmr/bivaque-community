@@ -6,6 +6,7 @@ const POST = {
   texto: "Publicação atual",
   criadaEm: "2026-11-08T10:00:00.000Z",
   autor: "Ana",
+  autorId: "u-ana",
   propria: false,
   comentarios: 0,
   uteis: 0,
