@@ -4,6 +4,8 @@ import { FalhaDaApi } from "@/lib/api/cliente"
 import {
   buscarPergunta,
   lerPerguntas,
+  lerPerguntasSalvas,
+  marcarSalvaPergunta,
   mudarResolucao,
   responderPergunta,
   rotuloDoTopico,
@@ -165,6 +167,79 @@ describe("pergunta e respostas", () => {
   it("resposta quebrada é falha, não conversa vazia", async () => {
     responder({ pergunta: PERGUNTA })
     await expect(buscarPergunta("q1")).rejects.toBeInstanceOf(FalhaDaApi)
+  })
+
+  it("lê o marcador de quem segue respostas", async () => {
+    responder({ pergunta: { ...PERGUNTA, salva: true }, respostas: [] })
+    expect((await buscarPergunta("q1")).pergunta.salva).toBe(true)
+  })
+
+  it("sem marcador, o seguimento é falso — nunca inventado", async () => {
+    responder({ pergunta: PERGUNTA, respostas: [] })
+    expect((await buscarPergunta("q1")).pergunta.salva).toBe(false)
+  })
+})
+
+describe("seguir respostas", () => {
+  it("segue pelo PUT e devolve o estado gravado", async () => {
+    const buscar = responder({ salvo: true })
+    await expect(marcarSalvaPergunta("q1", true)).resolves.toBe(true)
+    const { caminho, init } = chamada(buscar)
+    expect(caminho).toBe("/api/app/perguntas/q1/salvo")
+    expect(init.method).toBe("PUT")
+  })
+
+  it("deixa de seguir pelo DELETE", async () => {
+    const buscar = responder({ salvo: false })
+    await expect(marcarSalvaPergunta("q1", false)).resolves.toBe(false)
+    expect(chamada(buscar).init.method).toBe("DELETE")
+  })
+
+  it("resposta sem o marcador é falha, não sucesso presumido", async () => {
+    responder({ ok: true })
+    await expect(marcarSalvaPergunta("q1", true)).rejects.toBeInstanceOf(FalhaDaApi)
+  })
+
+  it("recusa do servidor chega com o motivo e a frase dele", async () => {
+    responder(
+      { erro: "recusado", mensagem: "Perguntas de grupo ainda não podem ser seguidas." },
+      403,
+    )
+    await expect(marcarSalvaPergunta("q1", true)).rejects.toMatchObject({
+      codigo: "recusado",
+      status: 403,
+      mensagem: "Perguntas de grupo ainda não podem ser seguidas.",
+    })
+  })
+
+  it("lista as perguntas seguidas, na ordem do servidor", async () => {
+    const buscar = responder({
+      perguntas: [
+        {
+          id: "q1",
+          titulo: "Alguém indica pediatra?",
+          categoria: "saude_bem_estar",
+          criadaEm: "2026-11-01T12:00:00.000Z",
+          resolvida: true,
+        },
+      ],
+    })
+    const salvas = await lerPerguntasSalvas()
+    expect(chamada(buscar).caminho).toBe("/api/app/perguntas/salvas")
+    expect(salvas).toEqual([
+      {
+        id: "q1",
+        titulo: "Alguém indica pediatra?",
+        assunto: "Saúde",
+        criadaEm: "2026-11-01T12:00:00.000Z",
+        resolvida: true,
+      },
+    ])
+  })
+
+  it("lista quebrada é falha, não Salvos vazio", async () => {
+    responder({ perguntas: [{ id: "q1" }] })
+    await expect(lerPerguntasSalvas()).rejects.toBeInstanceOf(FalhaDaApi)
   })
 })
 

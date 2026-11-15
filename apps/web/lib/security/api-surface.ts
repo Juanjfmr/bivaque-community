@@ -1,5 +1,5 @@
 /**
- * A postura de cada rota de `apps/web/app/api/**` — as 88 rotas, uma por linha,
+ * A postura de cada rota de `apps/web/app/api/**` — as 90 rotas, uma por linha,
  * com a guarda que a rota de fato usa e a prova negativa (ou o motivo explícito
  * de ser pública).
  *
@@ -86,7 +86,7 @@ export type RotaClassificada = Readonly<{
 }>
 
 /** Quantas rotas o manifesto cobre. Um rota nova exige classificação explícita. */
-export const TOTAL_DE_ROTAS = 88
+export const TOTAL_DE_ROTAS = 90
 
 function teste(arquivo: string, caso: string): ProvaDaRota {
   return { tipo: "teste", arquivo, caso }
@@ -164,6 +164,8 @@ const SESSAO: readonly Linha[] = [
   ["/api/app/perguntas/[id]", "exigirSessao(", PORTA],
   ["/api/app/perguntas/[id]/resolucao", "exigirSessao(", PORTA],
   ["/api/app/perguntas/[id]/respostas", "exigirSessao(", PORTA],
+  ["/api/app/perguntas/[id]/salvo", "exigirSessao(", PORTA],
+  ["/api/app/perguntas/salvas", "exigirSessao(", PORTA],
   ["/api/app/voce", "exigirSessao(", PORTA],
   ["/api/app/voce/apagar-conta", "exigirSessao(", PORTA],
   ["/api/app/voce/bloqueados", "exigirSessao(", PORTA],

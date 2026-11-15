@@ -11,6 +11,7 @@ import { LinhaDeLista, Lista } from "@/components/bivaque/lista"
 import { type DadosDaCidade, dadosDoApp } from "@/lib/dados"
 import { lerPublicacoesSalvas, type PublicacaoReal } from "@/lib/dados/grupos"
 import { type EntradaDoGuia, lerSalvosDoGuia } from "@/lib/dados/guia"
+import { lerPerguntasSalvas, type PerguntaSalva } from "@/lib/dados/perguntas"
 import { iconeDeDado } from "@/lib/icones"
 import { useNavegacao, useRolagemEFoco } from "@/lib/navegacao/react"
 import { CARGA_CONCLUIDA } from "@/lib/navegacao/restauracao"
@@ -19,9 +20,10 @@ import { ICONE_DA_CATEGORIA } from "@/src/guia/comum"
 import { registro, texto } from "@/src/telas/comum"
 
 /**
- * Salvos: os anúncios da demonstração, as publicações de grupo e as referências
- * do guia salvas pelo membro. A seção de anúncios continua de leitura; as outras
- * duas vêm das rotas da sessão (`/api/app/grupos/salvas` e `/api/app/guia/salvos`),
+ * Salvos: os anúncios da demonstração, as publicações de grupo, as perguntas
+ * que a pessoa segue e as referências do guia que ela salvou. A seção de
+ * anúncios continua de leitura; as outras vêm das rotas da sessão
+ * (`/api/app/grupos/salvas`, `/api/app/perguntas/salvas` e `/api/app/guia/salvos`),
  * então sobrevivem ao recarregar e valem para a conta, não para o aparelho.
  */
 export function Salvos() {
@@ -36,6 +38,9 @@ export function Salvos() {
   const [guia, setGuia] = useState<readonly EntradaDoGuia[] | null>(null)
   const [erroDoGuia, setErroDoGuia] = useState(false)
   const [rodadaDoGuia, setRodadaDoGuia] = useState(0)
+  const [perguntas, setPerguntas] = useState<readonly PerguntaSalva[] | null>(null)
+  const [erroDasPerguntas, setErroDasPerguntas] = useState(false)
+  const [rodadaDasPerguntas, setRodadaDasPerguntas] = useState(0)
 
   useRolagemEFoco(CARGA_CONCLUIDA)
 
@@ -84,6 +89,21 @@ export function Salvos() {
       })
     return () => controle.abort()
   }, [rodadaDasPublicacoes])
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: rodada é o pedido de "tentar de novo"
+  useEffect(() => {
+    const controle = new AbortController()
+    setPerguntas(null)
+    setErroDasPerguntas(false)
+    void lerPerguntasSalvas({ signal: controle.signal })
+      .then((lidas) => {
+        if (!controle.signal.aborted) setPerguntas(lidas)
+      })
+      .catch(() => {
+        if (!controle.signal.aborted) setErroDasPerguntas(true)
+      })
+    return () => controle.abort()
+  }, [rodadaDasPerguntas])
 
   const itens = useMemo(() => {
     if (dados === null) return []
@@ -159,6 +179,38 @@ export function Salvos() {
                 tituloMultilinha
                 onClick={() =>
                   void navegacao.irPara("publicacao", { parametros: { id: publicacao.id } })
+                }
+              />
+            ))}
+          </Lista>
+        )}
+      </section>
+
+      <section data-salvos="perguntas" className="grid gap-2">
+        <h2 className="text-[17px]">Perguntas que você segue</h2>
+        {erroDasPerguntas ? (
+          <EstadoDeErro
+            titulo="Não foi possível carregar suas perguntas"
+            aoTentar={() => setRodadaDasPerguntas((atual) => atual + 1)}
+          />
+        ) : perguntas === null ? (
+          <EsqueletoDeLista linhas={2} />
+        ) : perguntas.length === 0 ? (
+          <p className="text-sm text-(--on-surface-variant)">
+            Nenhuma pergunta seguida ainda. Toque em Seguir respostas em uma pergunta para
+            acompanhar as respostas dela.
+          </p>
+        ) : (
+          <Lista>
+            {perguntas.map((pergunta) => (
+              <LinhaDeLista
+                key={pergunta.id}
+                icone="forum"
+                titulo={pergunta.titulo}
+                subtitulo={pergunta.resolvida ? "Resolvida" : pergunta.assunto}
+                tituloMultilinha
+                onClick={() =>
+                  void navegacao.irPara("pergunta", { parametros: { id: pergunta.id } })
                 }
               />
             ))}

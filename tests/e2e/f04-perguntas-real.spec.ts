@@ -219,6 +219,11 @@ test.describe("F04 — perguntas reais no app", { tag: "@stateful" }, () => {
       data: { texto: "Resposta de quem não é da cidade." },
     })
     expect(escrita.status(), "responder de outra cidade é recusado no servidor").toBe(404)
+
+    const seguir = await api.put(`/api/app/perguntas/${PERGUNTA_SEMEADA}/salvo`, {
+      headers: cabecalhos,
+    })
+    expect(seguir.status(), "seguir de outra cidade é recusado no servidor").toBe(404)
     await api.dispose()
   })
 
@@ -345,6 +350,93 @@ test.describe("F04 — perguntas reais no app", { tag: "@stateful" }, () => {
         .getByText("Resolveu a pergunta"),
     ).toBeVisible({ timeout: 30_000 })
     await capturar(page, testInfo.project.name, "pergunta-resolvida")
+  })
+
+  test("seguir respostas grava, aparece em Salvos e devolve o seed ao desseguir", async ({
+    page,
+    context,
+  }, testInfo) => {
+    test.setTimeout(180_000)
+    // RUN-158: salvar e seguir são a MESMA ação (um registro em
+    // `recommendation_saves`). O seed não tem seguimentos: as três larguras
+    // usam a mesma persona, então o teste devolve o estado no fim.
+    await semearSessaoDeMembro(context, MEMBRO_SEMEADO)
+
+    await page.goto("/app/comunidade")
+    await page
+      .locator('[data-tela="comunidade"] [data-linha="pergunta"]', { hasText: TEXTO_SEMEADO })
+      .click()
+    await expect(page.getByRole("heading", { level: 1, name: TEXTO_SEMEADO })).toBeVisible({
+      timeout: 30_000,
+    })
+
+    const seguindo = page.getByRole("button", { name: "Seguindo respostas" })
+    if ((await seguindo.count()) > 0) {
+      await seguindo.click()
+      await expect(page.getByRole("button", { name: "Seguir respostas" })).toBeVisible({
+        timeout: 30_000,
+      })
+    }
+
+    await page.getByRole("button", { name: "Seguir respostas" }).click()
+    await expect(
+      page.getByRole("button", { name: "Seguindo respostas" }),
+      "o rótulo muda quando o servidor grava",
+    ).toBeVisible({ timeout: 30_000 })
+    await capturar(page, testInfo.project.name, "pergunta-seguindo")
+
+    // Gravação que sobrevive: o marcador é lido de volta do banco.
+    await page.reload()
+    await expect(
+      page.getByRole("button", { name: "Seguindo respostas" }),
+      "o seguimento precisa sobreviver ao recarregamento",
+    ).toBeVisible({ timeout: 30_000 })
+
+    // A tela Salvos lê a pergunta seguida pela sessão.
+    await page.goto("/app/salvos")
+    const linha = page.locator('[data-salvos="perguntas"] [data-linha="lista"]', {
+      hasText: TEXTO_SEMEADO,
+    })
+    await expect(linha, "a pergunta seguida precisa aparecer em Salvos").toBeVisible({
+      timeout: 30_000,
+    })
+
+    // A linha leva à pergunta; desseguir devolve a persona ao estado do seed.
+    await linha.click()
+    await expect(page.getByRole("heading", { level: 1, name: TEXTO_SEMEADO })).toBeVisible({
+      timeout: 30_000,
+    })
+    await page.getByRole("button", { name: "Seguindo respostas" }).click()
+    await expect(page.getByRole("button", { name: "Seguir respostas" })).toBeVisible({
+      timeout: 30_000,
+    })
+  })
+
+  test("seguir que falha desfaz o estado otimista e diz o motivo", async ({ page, context }) => {
+    test.setTimeout(180_000)
+    await semearSessaoDeMembro(context, MEMBRO_SEMEADO)
+
+    await page.goto("/app/comunidade")
+    await page
+      .locator('[data-tela="comunidade"] [data-linha="pergunta"]', { hasText: TEXTO_SEMEADO })
+      .click()
+    await expect(page.getByRole("heading", { level: 1, name: TEXTO_SEMEADO })).toBeVisible({
+      timeout: 30_000,
+    })
+
+    // O seed não tem seguimento: a tela parte de "Seguir respostas". A rota cai
+    // depois do clique, e o rótulo otimista precisa voltar sozinho.
+    await page.route("**/api/app/perguntas/*/salvo", (rota) => rota.abort())
+    await page.getByRole("button", { name: "Seguir respostas" }).click()
+    await expect(page.locator('[data-tela="pergunta"] [role="alert"]')).toContainText(
+      "Não foi possível seguir esta pergunta",
+      { timeout: 30_000 },
+    )
+    await expect(
+      page.getByRole("button", { name: "Seguir respostas" }),
+      "a falha devolve o rótulo anterior",
+    ).toBeVisible()
+    await expect(page.getByRole("button", { name: "Seguindo respostas" })).toHaveCount(0)
   })
 
   test("quem não perguntou não resolve nem reabre, e o Útil de resposta saiu", async ({
