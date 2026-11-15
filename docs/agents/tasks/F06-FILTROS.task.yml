@@ -1,0 +1,87 @@
+# RUN-171 — F06 Lote C: filtros do Mercado sobre o universo (server-side), espelhando a web.
+#
+# O GET /api/app/mercado ja aceita quartos/valor_max/tipo_imovel/ordem, mas com
+# dois furos provados (mapa F06 16/11; F06-RESSALVAS itens 1 e 2 abertos): o
+# embed de property_details e LEFT JOIN (SELECT_ANUNCIO em _comum.ts com
+# comentario explicito de que !inner nao e usado), entao gte/eq nas colunas do
+# satellite NAO restringem o pai; e preco de imovel mora no satellite
+# (rent_cents/sale_price_cents por deal) enquanto o filtro usa price_cents (NULL
+# em imovel → imoveis somem em silencio com filtro de valor). A tela agrava:
+# Mercado.tsx so envia tipo+pagina ao servidor e q/preco/quartos/ordem sao
+# client-side sobre A PAGINA CARREGADA — filtro truncado, o pior tipo de meio
+# feito. A web resolve isso do lado certo: lib/listings/queries.ts
+# searchProperties :121-157 (property_details!inner + deal→coluna de preco :143
+# + ilike title/neighborhood + gte bedrooms). Sem migration — o mecanismo ja
+# funciona em PostgREST na web.
+
+task_id: RUN-171
+
+objective: >
+  Filtrar o Mercado do app no servidor pelo mesmo criterio que a web aplicava
+  (q, quartos, tipo do imovel, deal/tipo_negocio, bairro, valor maximo por deal,
+  ordem), com embed !inner restringindo o pai, a tela consumindo o servidor em
+  vez da pagina carregada, e os links de alerta (alertSearchHref) passando a
+  levar bairro/tipo_negocio de verdade — fechando a perda declarada do RUN-169 e
+  os itens 1 e 2 do F06-RESSALVAS.
+
+authority:
+  - docs/LANCAMENTO.md:59 (linha F06 "com filtros") + criterios 1-6 (:38-48)
+  - Mapa do explorer 16/11 (Lote C) + board.json F06-RESSALVAS (itens 1-2)
+  - lib/listings/queries.ts searchProperties (a regra a espelhar, nao re-inventar)
+  - ADR-20261105 §5 (contrato de rota)
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    _comum.ts SELECT_ANUNCIO com comentario de que property_details!inner nao e
+    usado; route.ts filtra quartos/valor por colunas que nao restringem o pai
+    (left join) e usa price_cents para valor (NULL em imovel); Mercado.tsx:116-118
+    envia so tipo+pagina e filtra o resto client-side sobre a pagina;
+    alertSearchHref gera bairro/tipo_negocio que o app ignora (perda declarada do
+    RUN-169, RELATORIO §3).
+
+allowed_paths:
+  - docs/agents/tasks/F06-FILTROS.task.yml
+  - apps/web/app/api/app/mercado
+  - apps/web/lib/listings
+  - apps/app/src/mercado
+  - apps/app/src/telas/Mercado.tsx
+  - apps/app/lib/dados/mercado.ts
+  - apps/app/tests
+  - tests/unit/app-api/mercado
+  - tests/e2e/f06-mercado-real.spec.ts
+  - .visual/f06-filtros
+
+forbidden:
+  - criar migration ou mexer em banco/RPCs/permissoes (o mecanismo e PostgREST puro, a web ja usa)
+  - tocar alertas (RUN-169 fundido), salvar (RUN-168 fundido), imovel criar/editar (RUN-164) ou voce/cidade (RUN-170 em voo)
+  - copiar o scope withCommunities/communities_id do searchProperties web (comunidades sao legadas; o app filtra pela cidade da sessao como hoje)
+  - ordenar ou filtrar client-side sobre a pagina carregada como fallback silencioso — ou o servidor faz, ou o controle nao existe na aba (decisao registrada)
+  - adicionar controles novos de filtro que a tela nao tem hoje (categoria/condicao/regiao do painel web NAO sao linha do lancamento)
+  - usar skip/fixme novo ou afrouxar assercao; remover prova sem realocar
+  - push, merge ou force-push; ler/criar/editar arquivos de ambiente; imprimir credenciais
+  - tocar em .work/main ou em outra worktree
+
+acceptance:
+  - "GET /api/app/mercado (branch por kind): property — embed property_details!inner na SELECT (restringe o pai), filtros deal→eq property_details.deal, tipo_imovel→eq property_details.property_type, quartos→gte bedrooms, valor→lte na coluna por deal exatamente como queries.ts:143 (deal sale→sale_price_cents, senao rent_cents), bairro→ilike neighborhood, q→ilike title (espelhar o que o web faz; nao inventar descricao); item — q/bairro/valor como hoje (price_cents vale), deal/tipo/quartos ignorados com honestidade (nao ha satellite); ordem aceita recent|price_asc|price_desc e so onde a web aplicava sort naquela superficie — leia queries.ts inteiro e espelhe; se price sort nao existia para a superficie, a aba mantem recent e o controle de ordem some daquela aba (decisao registrada no RELATORIO, sem filtro silencioso)."
+  - "Tela Mercado.tsx (abas Desapegos e Imoveis): filtros ativos viram query string do GET (q/quartos/tipo_imovel/deal/bairro/valor/ordem) com revalidacao ao mudar e RESET de cursor/pagina; a filtragem client-side sobre a pagina carregada sai do caminho; estado vazio honesto quando o servidor devolve zero; chip removivel por filtro vindo de link (inclusive bairro/tipo_negocio do alerta — a perda declarada do RUN-169 fecha aqui e o RELATORIO do B e referenciado); recarregar mantem; compartilhar link recria a lista."
+  - "alertSearchHref (lib/listings/alerts.ts): volta a gerar bairro/tipo_negocio/sort que o app consome — harmonizar com as chaves aceitas; so o que o servidor nao trata permanece de fora (e declarado no RELATORIO item a item)."
+  - "S6 'So disponiveis': o servidor ja pinna status=active na lista — pinnar em unit (filtro ativo jamais lista pausado/vendido/encerrado) e registrar o item do checklist LAN-F06 como prova, sem criar UI nova."
+  - "Testes: unit da rota por filtro (cada um restringe o PAI no branch property — asser no mock a query com !inner/column deal; valor nao exclui imovel com rent valido acima? provado o inverso do furo: antes sumia, agora fica fora so quem passa do teto; item nao e tocado por filtros de satellite), ordem onde existe; E2E real f06-mercado-real estendido: abrir /app/mercado?quartos=2&valor_max=... , a 2a pagina respeita o filtro (o bug era exatamente so a 1a pagina filtrar); alerta→link do resultado abre com bairro aplicado e chip visivel; recarga mantem. Playwright do app com fetch mockado cobrindo reset de cursor ao digitar (debounce). Positivo e negativo em todo filtro."
+  - "Sem rota nova: TOTAL_DE_ROTAS inalterado (conferir disco apos git rebase origin/main no fim — lanes em voo somam; nao gravar numero no escuro). Passam: gate --fast, tsc -p tests/e2e, pnpm test, test:scope, app test. Antes de tocar fora dos allowed_paths, EMENDAR este contrato primeiro (cada '- ' em linha unica; sem aspas em comentarios de cabecalho)."
+
+proof:
+  - npx pnpm@11.18.0 gate --fast
+  - npx pnpm@11.18.0 test
+  - npx pnpm@11.18.0 test:scope
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/F06-FILTROS.task.yml
+
+risk: query de leitura com semantica de filtros cruzando duas tabs; o furo historico era silencioso — os testes tem que provar o pai restrito, nao a lista vazia
+risk_level: R2
+
+reviewer_must_differ_from_executor: true
+retry_budget: 2
+on_budget_exhausted: HUMAN_DECISION
+
+closure:
+  requires_runtime_evidence: true
