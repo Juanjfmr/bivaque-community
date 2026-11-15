@@ -10,6 +10,10 @@
 # Efeito vigente do bloqueio (nao inventar outro): escrita fechada nos dois sentidos
 # (is_dm_blocked_by_other veta insert), caixa mantem historico legivel, bloqueado nao
 # descobre. D1/D2 (esconder conteudo/cortar fila) e frente adiada — FORA deste lote.
+# RECONCILIACAO DO TEXTO (emenda 16/11, decisao do coordenador): a copia de
+# Bloqueados.tsx:80 prometia esconde-o-que-a-pessoa-publicou — o que vale HOJE e
+# fechar a conversa nos dois sentidos mantendo o historico legivel. O texto deve
+# dizer a regra vigente (sem prometer D1/D2).
 
 task_id: RUN-165
 
@@ -50,6 +54,8 @@ allowed_paths:
   - apps/app/tests
   - tests/unit/app-api/voce
   - tests/unit/app-api/mensagens
+  - tests/unit/app-api/avisos/rotas.test.ts
+  - apps/app/src/telas/Bloqueados.tsx
   - tests/unit/notifications
   - tests/unit/security/api-surface.test.ts
   - tests/e2e/f09-conversas-real.spec.ts
