@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest"
 
 import { FalhaDaApi } from "@/lib/api/cliente"
-import { forcaDoValor, OPCOES_DE_FORCA, SEM_FORCA, valorDaForca } from "@/src/voce/afiliacao"
+import { forcaDoValor, OPCOES_DE_FORCA, SEM_FORCA, valorDaForca } from "@/lib/voce/afiliacao"
 import {
   DIAS_DE_SAIDA,
   DIAS_MAXIMOS_DE_SAIDA,
@@ -10,7 +10,7 @@ import {
   mensagemDaMudanca,
   prazoMaximo,
   prazoPadrao,
-} from "@/src/voce/cidade-form"
+} from "@/lib/voce/cidade"
 
 // A conta do formulário de mudança de cidade e os valores da afiliação
 // (RUN-170). O que se prova aqui é o que a tela decide sozinha: o prazo que o

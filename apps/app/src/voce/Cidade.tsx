@@ -6,14 +6,16 @@ import { Botao } from "@/components/bivaque/botao"
 import { Campo, Selecao } from "@/components/bivaque/campos"
 import { Secao } from "@/components/bivaque/secao"
 import type { CidadeDoCatalogo, PerfilDaPessoa } from "@/lib/dados/voce"
-import { carregarEstados, carregarMunicipios, type Municipio } from "./catalogo"
 import {
+  carregarEstados,
+  carregarMunicipios,
   DIAS_MAXIMOS_DE_SAIDA,
   dataLegivel,
   hojeIso,
+  type Municipio,
   prazoMaximo,
   prazoPadrao,
-} from "./cidade-form"
+} from "@/lib/voce/cidade"
 
 /** O que o formulário entrega para a confirmação: id de cidade, prazo e o nome. */
 export type PedidoDeMudanca = Readonly<{ destino: string; prazo: string; nome: string }>

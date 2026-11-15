@@ -1,14 +1,55 @@
 /**
- * A conta da mudança de cidade na tela (F10 / RUN-170): datas, o prazo do
- * endereço e a copy da falha.
+ * O que a tela "Sua cidade" precisa saber sem falar HTTP nem desenhar nada
+ * (F10 / RUN-170): o catálogo público de cidades, as datas do prazo e a copy da
+ * falha.
  *
- * Os números são os do módulo compartilhado `apps/web/lib/locality/move-city.ts`
+ * O catálogo reusa as duas rotas que a entrada já consome (`/api/localities` e
+ * `/api/localities/[uf]`) — rota nova de catálogo seria uma segunda fonte de
+ * município. O que interessa aqui é o `id` da cidade: o destino da transferência
+ * é id, nunca nome (`declare_locality_transfer` recusa id fora do catálogo).
+ *
+ * Os prazos são os do módulo compartilhado `apps/web/lib/locality/move-city.ts`
  * (30 dias de padrão, 180 de teto). Aqui eles são só a afordância do campo —
  * quem decide é a rota, que chama aquele módulo; repetir a regra aqui seria ter
  * duas verdades sobre o teto.
  */
 
-import { FalhaDaApi } from "@/lib/api/cliente"
+import { FalhaDaApi, ler } from "@/lib/api/cliente"
+
+export type Municipio = Readonly<{ id: string; nome: string }>
+
+function foraDoContrato(): FalhaDaApi {
+  return new FalhaDaApi("indisponivel", 0, null, "Resposta do catálogo fora do contrato.")
+}
+
+let estados: readonly string[] | null = null
+const municipios = new Map<string, readonly Municipio[]>()
+
+export async function carregarEstados(): Promise<readonly string[]> {
+  if (estados !== null) return estados
+  const corpo = await ler("/api/localities")
+  const ufs = corpo["ufs"]
+  if (!Array.isArray(ufs)) throw foraDoContrato()
+  estados = ufs.filter((uf): uf is string => typeof uf === "string" && uf.length === 2)
+  return estados
+}
+
+export async function carregarMunicipios(uf: string): Promise<readonly Municipio[]> {
+  const guardados = municipios.get(uf)
+  if (guardados !== undefined) return guardados
+  const corpo = await ler(`/api/localities/${encodeURIComponent(uf)}`)
+  const lista = corpo["municipalities"]
+  if (!Array.isArray(lista)) throw foraDoContrato()
+  const cidades = lista.flatMap((linha): Municipio[] => {
+    if (typeof linha !== "object" || linha === null) return []
+    const dados = linha as Record<string, unknown>
+    return typeof dados["id"] === "string" && typeof dados["cityName"] === "string"
+      ? [{ id: dados["id"], nome: dados["cityName"] }]
+      : []
+  })
+  municipios.set(uf, cidades)
+  return cidades
+}
 
 export const DIAS_DE_SAIDA = 30
 export const DIAS_MAXIMOS_DE_SAIDA = 180
@@ -35,9 +76,7 @@ function iso(data: Date): string {
   return data.toISOString().slice(0, 10)
 }
 
-/**
- * O prazo que o campo já traz: 30 dias, como o provisionamento.
- */
+/** O prazo que o campo já traz: 30 dias, como o provisionamento. */
 export function prazoPadrao(hoje: Date): string {
   return iso(new Date(hoje.getTime() + DIAS_DE_SAIDA * DIA_MS))
 }

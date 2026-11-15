@@ -57,6 +57,7 @@ allowed_paths:
   - apps/web/lib/locality
   - apps/web/lib/security/api-surface.ts
   - apps/app/lib/dados/voce.ts
+  - apps/app/lib/voce
   - apps/app/src/roteador.tsx
   - apps/app/src/telas/Voce.tsx
   - apps/app/src/voce

@@ -7,7 +7,13 @@ import { Campo, Selecao } from "@/components/bivaque/campos"
 import { Secao } from "@/components/bivaque/secao"
 import { FalhaDaApi } from "@/lib/api/cliente"
 import { type AfiliacaoDaPessoa, lerAfilicao, salvarAfilicao } from "@/lib/dados/voce"
-import { forcaDoValor, LIMITE_DA_OM, OPCOES_DE_FORCA, SEM_FORCA, valorDaForca } from "./afiliacao"
+import {
+  forcaDoValor,
+  LIMITE_DA_OM,
+  OPCOES_DE_FORCA,
+  SEM_FORCA,
+  valorDaForca,
+} from "@/lib/voce/afiliacao"
 
 const PRIVADO = "Opcional e privado — outras pessoas não veem."
 

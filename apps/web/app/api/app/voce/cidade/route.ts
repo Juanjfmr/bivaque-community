@@ -29,7 +29,7 @@ export const dynamic = "force-dynamic"
  *
  * A escrita é `declare_locality_transfer` pelo cliente da SESSÃO: a função é
  * SECURITY DEFINER e resolve o dono por `auth.uid()`, então quem muda é sempre
- * quem está logado. `service_role` não entra nesta rota — sob ele a função
+ * quem está logado. Um cliente de privilégio não entra aqui: sob ele a função
  * perderia a identidade e a fronteira de escrita do próprio perfil.
  *
  * `23505` é o índice de uma saída por vez: é a mensagem vigente de mudança em

@@ -211,8 +211,7 @@ test.describe("F10 — paridade de cidade e afiliação no app", { tag: "@statef
     await secao.getByLabel("Organização Militar (OM)").fill("12º BIS")
     const gravou = page.waitForResponse(
       (resposta) =>
-        resposta.url().includes("/api/app/voce/afiliacao") &&
-        resposta.request().method() === "PUT",
+        resposta.url().includes("/api/app/voce/afiliacao") && resposta.request().method() === "PUT",
       { timeout: 30_000 },
     )
     await secao.getByRole("button", { name: "Gravar Força e OM" }).click()
