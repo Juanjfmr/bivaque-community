@@ -387,7 +387,7 @@ test.describe("F05 — eventos reais no app", { tag: "@stateful" }, () => {
     context,
   }, testInfo) => {
     test.setTimeout(240_000)
-    const titulo = `Encontro cancelado ${testInfo.project.name}`
+    const titulo = `Feira de trocas ${testInfo.project.name}`
     await entrarComo(context, MEMBRO_SEMEADO)
 
     // O encontro é criado pelo teste, com título do projeto: as três larguras

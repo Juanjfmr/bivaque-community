@@ -42,6 +42,7 @@ allowed_paths:
   - apps/web/app/api/app/eventos
   - apps/web/lib/events
   - apps/app/lib/dados/eventos.ts
+  - apps/app/src/eventos/formulario.ts
   - apps/app/src/telas/Evento.tsx
   - apps/app/tests
   - tests/unit/app-api/eventos
