@@ -6304,7 +6304,7 @@
         "Portões do proxy movidos com teste por perfil",
         "Código, testes e ferramentas antigas removidos",
         "Fase 1 (RUN-019, decisão revista em 06/11): 307 das 11 rotas autorizadas, IDs/query preservados, sem ciclo; /indicacoes/:id fica na web até F04 para preservar Ajudou a resolver; demais rotas e edições ficam na web",
-        "Lacunas seguintes: filtros/IDs de Guia e busca FECHADOS (RUN-162); cidade/localidade = jornada de troca propria (card CIDADE-LOCALIDADE-TROCA); F05: criar/editar era drift (ja feito — f05-eventos-real:319-375, tela trocada PR #176), fan-out de convites NAO e linha F05 do LANCAMENTO (decisao 16/11; parte de e-mail em OUTBOX-INVITE-RECIPIENTS), falta cancelar-encontro do organizador (card F05-CANCELAR-EVENTO); Meus anuncios e alertas (F06; criar/editar RUN-156, imovel em RUN-164, alertas/filtros/salvar em lotes B-D); F07; seguranca na conversa e preferencias (F09; RUN-165 em curso; troca da pasta /messages depois); troca de /profile proprio + editar (F10; funcionalidades RUN-157/158/160/161/163 completas; paridade pendente no card F10-TROCA-PERFIL-PROPRIO)",
+        "Lacunas seguintes: filtros/IDs de Guia e busca FECHADOS (RUN-162); cidade/localidade = jornada de troca propria (card CIDADE-LOCALIDADE-TROCA); F05: criar/editar era drift (ja feito — f05-eventos-real:319-375, tela trocada PR #176), fan-out de convites NAO e linha F05 do LANCAMENTO (decisao 16/11; parte de e-mail em OUTBOX-INVITE-RECIPIENTS), cancelar-encontro do organizador FECHADO (RUN-167, 0f0098f9); F05 COMPLETO; Meus anuncios e alertas (F06; criar/editar RUN-156, imovel FECHADO (RUN-164, b3a2786d), alertas/filtros/salvar em lotes B/C/D — salvar em curso); F07; seguranca na conversa e preferencias (F09; RUN-165 em curso; troca da pasta /messages depois); troca de /profile proprio + editar (F10; funcionalidades RUN-157/158/160/161/163 completas; paridade pendente no card F10-TROCA-PERFIL-PROPRIO)",
         "Provar a revisão da fase 1 no CI: E2E integrado e rastreador; manter as portas de /profile e /community enquanto suas jornadas ficam na web"
       ],
       "dependencies": [
@@ -6953,6 +6953,58 @@
       "completedChecklist": [true, true, true]
     },
     {
+      "id": "RUN-164",
+      "title": "F06 Lote A: criar e editar imóvel no app (aposentar telas web de imóvel)",
+      "phase": "Lançamento",
+      "priority": "P1",
+      "category": "frontend",
+      "status": "done",
+      "completedAt": "2026-11-16",
+      "description": "POST /api/app/mercado aceita kind property (validacao unica em lib/listings/property.ts, RPC transacional create_property_listing com dono de auth.uid() e cidade da sessao, sem service_role); PATCH aceita editar property preservando os campos do satellite; folha 'Anunciar imovel' deixa de ser rascunho sessionStorage e publica de verdade; gerenciar abre formulario de imovel. Troca: /imoveis/novo → /app/imoveis e /imoveis/:id/editar → /app/anuncio/:id (307, lookahead conferido), paginas/property-form/actions mortas, TROCADAS+ausencias+negativas, portas-de-entrada repinadas, capture atualizado. Sem migration. Fotos de imovel no app ficam fora (detail mostra as existentes).",
+      "checklist": [
+        "POST/PATCH property com validacao unica",
+        "Folha real + gerenciar de imovel",
+        "Troca das 2 telas com provas",
+        "CI verde"
+      ],
+      "dependencies": [],
+      "tests": ["tests/e2e/f06-mercado-real.spec.ts", "tests/unit/app-api/mercado/imovel.test.ts"],
+      "blockers": [],
+      "updatedAt": "2026-11-16",
+      "sourceRevision": "b3a2786d",
+      "links": ["docs/agents/tasks/F06-IMOVEL.task.yml"],
+      "proof": [
+        "16/11: PR #244 mergeado em b3a2786d. DeepSeek (dbe41376 + emendas de contrato 99e981eb/587b5bdc + fix portas-de-entrada/redirect 53d596f5 apos diagnostico de merge antigo no fast). Revisao R2 Qwen: PASS (regua de escrita espelha a action web; idempotencia/400/403/CSRF provados). Pull Request CI 43756003029 TODO verde (fast/core/stateful×3/agregador). O P2 do redirect ((?!novo$) nao casava UUID-editar) corrigido para (?!novo/) na emenda. Sobras declaradas: fotos imovel fora; rascunho-imovel sobreposicao renomeada? NAO — id permanece (MenuCriar fora do lote)."
+      ],
+      "completedChecklist": [true, true, true, true]
+    },
+    {
+      "id": "RUN-167",
+      "title": "F05: cancelar encontro pelo organizador no app (fecha F05)",
+      "phase": "Lançamento",
+      "priority": "P2",
+      "category": "frontend",
+      "status": "done",
+      "completedAt": "2026-11-16",
+      "description": "Ramo exclusivo status=cancelled no PATCH /api/app/eventos/[id] (intencaoDoPatch em lib/events/event-form.ts: outro status 400 ANTES de tocar o banco; update leva so {status}; posse events_update_organizer no banco; idempotente sem escrita); botao 'Cancelar encontro' (perigo) com Confirmacao da entrada para organizador de evento ativo; sucesso revalida pelo servidor; aviso em cascata pelo trigger notify_event_change existente. Sem migration. Fecha a linha F05 do LANCAMENTO.",
+      "checklist": [
+        "PATCH cancelar exclusivo + unit",
+        "Botao + Confirmacao na ficha",
+        "E2E duas personas com aviso",
+        "CI verde"
+      ],
+      "dependencies": [],
+      "tests": ["tests/e2e/f05-eventos-real.spec.ts", "tests/unit/app-api/eventos/rotas.test.ts"],
+      "blockers": [],
+      "updatedAt": "2026-11-16",
+      "sourceRevision": "0f0098f9",
+      "links": ["docs/agents/tasks/F05-CANCELAR.task.yml"],
+      "proof": [
+        "16/11: PR #245 mergeado em 0f0098f9. DeepSeek (ef98198c) + fix strict-mode e2b75921 (titulo do evento colidia com a etiqueta 'Encontro cancelado' no getByText — achado da revisao virou prova: stateful×3 verdes no CI do head corrigido). Revisao R2: aprovada com ressalvas (fronteira formulario.ts emendada no contrato ANTES do push; strict-mode resolvido). Pull Request CI 43756793532 todo verde. TOTAL inalterado."
+      ],
+      "completedChecklist": [true, true, true, true]
+    },
+    {
       "id": "CIDADE-LOCALIDADE-TROCA",
       "title": "Cidade/localidade: telas de membro ainda na web precisam de jornada de troca própria",
       "phase": "Lançamento",
@@ -6981,7 +7033,8 @@
       "phase": "Lançamento",
       "priority": "P2",
       "category": "frontend",
-      "status": "repo",
+      "status": "done",
+      "completedAt": "2026-11-16",
       "description": "LANCAMENTO F05 exige presenca e cancelamento; cancelar PRESENCA existe (Evento.tsx:258-262) e o app renderiza cancelado, mas o ORGANIZADOR nao cancela o evento pelo app — a cancelEventAction da web morreu na troca (375c336d) e o PATCH atual nao expoe status. Menor forma: situacao=cancelled restrito ao organizador no PATCH /api/app/eventos/[id] + botao Cancelar encontro com Confirmacao; o trigger notify_event_change ja avisa quem foi (20260911054812:269-297). Sem migration (policy events_update_organizer provada no RUN-017).",
       "checklist": [
         "Escrita do cancelamento pela rota com posse de organizador",
@@ -6995,8 +7048,10 @@
       "sourceRevision": "9ca86c53",
       "links": ["docs/decisions/ADR-20261105-porta-de-dados-do-app.md"],
       "proof": [
-        "16/11: aberto pelo mapa F05 — unico resquicio real da linha; fan-out de convites ficou FORA (nao e linha do LANCAMENTO; decisao no LAN-TROCA)."
-      ]
+        "16/11: aberto pelo mapa F05 — unico resquicio real da linha; fan-out de convites ficou FORA (nao e linha do LANCAMENTO; decisao no LAN-TROCA).",
+        "16/11: FECHADO pelo RUN-167 (PR #245, merge 0f0098f9): PATCH com ramo exclusivo cancelled (regra unica em event-form; 400 antes de tocar o banco; idempotente; posse no banco), botao perigo com Confirmacao da entrada no Evento.tsx, aviso em cascata pelo trigger existente (E2E real com duas personas provando etiqueta, fim das acoes, aviso em /app/avisos e agenda sem o cancelado). Revisao R2 aprovada; ressalvas tratadas (drift formulario.ts declarado na emenda do contrato; strict-mode do E2E resolvido no fix e2b75921 e provado no CI). Sem UI de DESFAZER cancelamento (web antiga tambem nao tinha; linha F05 nao pede) — fica como nota de pos-lancamento se o dono quiser."
+      ],
+      "completedChecklist": [true, true, true]
     },
     {
       "id": "F10-TROCA-PERFIL-PROPRIO",
