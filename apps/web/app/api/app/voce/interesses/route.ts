@@ -25,7 +25,9 @@ export const dynamic = "force-dynamic"
 // passam sempre o id da sessão — nunca um id do corpo.
 //
 // A cidade é a do vínculo `current` da sessão (ADR-20261105 §3.3). Grupo de
-// outra cidade é recusado pelo próprio RPC (42501), que vira 409.
+// outra cidade é recusado pelo próprio RPC (42501), que vira 409. Por isso a
+// leitura devolve `interesses` sempre dentro de `grupos`: o que sobrou de uma
+// cidade anterior não volta para a folha nem é reenviado no Salvar.
 
 const CORPO_MAXIMO = 32 * 1024
 const LIMITE_DE_GRUPOS = 20
@@ -78,19 +80,21 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     if (disponiveis.error) throw disponiveis.error
     if (gravados.error) throw gravados.error
 
-    return responder(
-      request,
-      {
-        grupos: disponiveis.data.map((grupo) => ({
-          id: grupo.id,
-          nome: grupo.name,
-          jaMembro: grupo.already_member,
-        })),
-        interesses: gravados.data.map((interesse) => interesse.group_id),
-      },
-      200,
-      cabecalhos,
-    )
+    const grupos = disponiveis.data.map((grupo) => ({
+      id: grupo.id,
+      nome: grupo.name,
+      jaMembro: grupo.already_member,
+    }))
+    // Trocar de cidade não apaga os interesses antigos, e o RPC recusa o conjunto
+    // inteiro quando um grupo é de outra cidade (42501). Devolver só os que estão
+    // em `grupos` mantém `interesses ⊆ grupos`: a folha não reenvia o passado, e o
+    // replace-set do Salvar o descarta.
+    const daCidade = new Set(grupos.map((grupo) => grupo.id))
+    const interesses = gravados.data
+      .map((interesse) => interesse.group_id)
+      .filter((id) => daCidade.has(id))
+
+    return responder(request, { grupos, interesses }, 200, cabecalhos)
   } catch (falha) {
     // A mensagem do banco não volta para o cliente nem os ids entram no log.
     log.error("voce interests: read failed", {

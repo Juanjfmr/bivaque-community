@@ -26,6 +26,8 @@ const CIDADE = "00000000-0000-4000-8000-000000000001"
 const CIDADE_DO_CORPO = "00000000-0000-4000-8000-000000000999"
 const GRUPO_A = "60000000-0000-4000-8000-000000000001"
 const GRUPO_B = "60000000-0000-4000-8000-000000000002"
+// Grupo de uma cidade anterior: gravado, mas fora de `grupos` na cidade atual.
+const GRUPO_ANTIGO = "60000000-0000-4000-8000-0000000000ff"
 
 const mockVinculo = vi.fn()
 const mockRpc = vi.fn()
@@ -172,6 +174,36 @@ describe("GET /api/app/voce/interesses", () => {
     const resposta = await GET(leitura())
     expect(resposta.status).toBe(200)
     expect(await resposta.json()).toEqual({ grupos: [], interesses: [] })
+  })
+
+  it("interesses devolvidos são sempre subconjunto dos grupos da cidade", async () => {
+    // Trocar de cidade não apaga os interesses antigos. Se o GET devolvesse o
+    // conjunto completo, a folha o reenviaria no Salvar e o RPC recusaria tudo.
+    rpcs({
+      disponiveis: GRUPOS_DISPONIVEIS,
+      gravados: [{ group_id: GRUPO_A }, { group_id: GRUPO_ANTIGO }],
+    })
+    const resposta = await GET(leitura())
+    expect(resposta.status).toBe(200)
+    expect(await resposta.json()).toEqual({
+      grupos: [
+        { id: GRUPO_A, nome: "Trocas de Livros", jaMembro: false },
+        { id: GRUPO_B, nome: "Pesca e Trilha", jaMembro: true },
+      ],
+      interesses: [GRUPO_A],
+    })
+  })
+
+  it("só interesse de outra cidade vira lista vazia, não o interesse antigo", async () => {
+    rpcs({ disponiveis: GRUPOS_DISPONIVEIS, gravados: [{ group_id: GRUPO_ANTIGO }] })
+    const resposta = await GET(leitura())
+    expect(await resposta.json()).toEqual({
+      grupos: [
+        { id: GRUPO_A, nome: "Trocas de Livros", jaMembro: false },
+        { id: GRUPO_B, nome: "Pesca e Trilha", jaMembro: true },
+      ],
+      interesses: [],
+    })
   })
 
   it("sem vínculo com cidade responde 409 sem-cidade", async () => {
@@ -397,6 +429,69 @@ describe("POST /api/app/voce/interesses", () => {
     const resposta = await POST(requisicao({ corpo: { grupos: [GRUPO_A] } }))
     expect(resposta.status).toBe(503)
     expect(await resposta.json()).toEqual({ erro: "indisponivel" })
+  })
+})
+
+// F1 da revisão do RUN-160: quem trocou de cidade ficava com a folha travada em
+// 409, porque o GET devolvia os interesses antigos e o Salvar reenviava o
+// conjunto inteiro. O recorte no GET devolve a saída pela UI sem quebrar o
+// replace-set: salvar descarta o passado e limpar esvazia tudo.
+describe("pessoa com interesses de uma cidade anterior", () => {
+  const CIDADE_DOS_GRUPOS = new Set(GRUPOS_DISPONIVEIS.map((grupo) => grupo.id))
+
+  /** O RPC real recusa o conjunto inteiro quando um grupo não é da cidade. */
+  function rpcsComRegraDaCidade(): void {
+    mockRpc.mockImplementation((nome: string, argumentos?: { p_group_ids?: string[] }) => {
+      if (nome === "list_available_groups_for_interests")
+        return Promise.resolve({ data: GRUPOS_DISPONIVEIS, error: null })
+      if (nome === "list_user_group_interests")
+        return Promise.resolve({
+          data: [{ group_id: GRUPO_ANTIGO }, { group_id: GRUPO_A }],
+          error: null,
+        })
+      if (nome === "record_user_group_interests") {
+        const fora = (argumentos?.p_group_ids ?? []).some((id) => !CIDADE_DOS_GRUPOS.has(id))
+        return Promise.resolve({
+          data: null,
+          error: fora ? { message: "group not in caller locality", code: "42501" } : null,
+        })
+      }
+      return Promise.reject(new Error(`rpc inesperada: ${nome}`))
+    })
+  }
+
+  it("abre a folha, salva e limpa sem 409, e o conjunto antigo é descartado", async () => {
+    rpcsComRegraDaCidade()
+
+    // O que a folha recebe hoje: só o recorte da cidade atual.
+    const lido = await GET(leitura())
+    const corpo = (await lido.json()) as { interesses: string[] }
+    expect(corpo.interesses).toEqual([GRUPO_A])
+
+    // Negativo: era este reenvio que travava a tela, sem saída.
+    const completo = await POST(requisicao({ corpo: { grupos: [GRUPO_ANTIGO, GRUPO_A] } }))
+    expect(completo.status).toBe(409)
+
+    // Positivo: com o recorte, o Salvar passa e o replace-set descarta o antigo.
+    const salvo = await POST(requisicao({ corpo: { grupos: corpo.interesses } }))
+    expect(salvo.status).toBe(200)
+    expect(await salvo.json()).toEqual({ ok: true, interesses: [GRUPO_A] })
+    expect(mockRpc).toHaveBeenCalledWith("record_user_group_interests", {
+      p_user_id: PESSOA.id,
+      p_locality_id: CIDADE,
+      p_group_ids: [GRUPO_A],
+    })
+
+    // Limpar também passa: esvazia tudo, inclusive o interesse antigo.
+    mockRpc.mockClear()
+    const limpo = await POST(requisicao({ corpo: { grupos: [] } }))
+    expect(limpo.status).toBe(200)
+    expect(await limpo.json()).toEqual({ ok: true, interesses: [] })
+    expect(mockRpc).toHaveBeenCalledWith("record_user_group_interests", {
+      p_user_id: PESSOA.id,
+      p_locality_id: CIDADE,
+      p_group_ids: [],
+    })
   })
 })
 

@@ -289,7 +289,7 @@ export type GrupoParaInteresse = Readonly<{ id: string; nome: string; jaMembro: 
 export type InteressesDaPessoa = Readonly<{
   /** Grupos da cidade que podem ser marcados; `jaMembro` já participa. */
   grupos: readonly GrupoParaInteresse[]
-  /** Os grupos marcados hoje — a fonte é o banco, não o rascunho da tela. */
+  /** Os grupos marcados hoje, sempre entre os de `grupos` — a fonte é o banco, não o rascunho. */
   interesses: readonly string[]
 }>
 
