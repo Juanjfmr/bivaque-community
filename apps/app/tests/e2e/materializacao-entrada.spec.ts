@@ -12,7 +12,7 @@ test("trocar de cidade no primeiro quadro não perde a sobreposição", async ({
     await chip.click()
     const painel = page.locator('[data-sobreposicao="cidade"]')
     await expect(painel, `tentativa ${tentativa + 1}`).toBeVisible()
-    await expect(painel.locator('[data-campo="cidade"]')).toBeVisible()
+    await expect(painel.locator('[data-selecao="cidade-municipio"]')).toBeVisible()
 
     await page.goBack()
     await expect(painel).toHaveCount(0)

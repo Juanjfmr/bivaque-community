@@ -70,12 +70,12 @@ test.describe("vitrine de prestadores", () => {
     await page.goto("/app/negocios")
 
     // O filtro da tela é por categoria; a busca por nome é do Mercado global.
-    const categoria = page.getByRole("button", { name: "Assistência técnica", exact: true })
-    await expect(categoria).toBeVisible({ timeout: 20000 })
-    await categoria.click()
+    // O chip é um item de ToggleGroup cujo nome acessível é "Filtrar por <rótulo>",
+    // então o contrato da peça é o data-chip (mesmo de f07-negocios-real).
+    await page.locator('[data-chip="assistencia_tecnica"]').click()
 
-    const ficha = page.getByRole("button", { name: "Ver negócio: Climatiza Manaus" })
-    await expect(ficha).toBeVisible({ timeout: 10000 })
+    const ficha = page.getByRole("button", { name: "Ver negócio: Climatiza Manaus", exact: true })
+    await expect(ficha).toBeVisible({ timeout: 20000 })
     await ficha.click()
 
     await expect(page.getByRole("heading", { name: "Climatiza Manaus" })).toBeVisible({
