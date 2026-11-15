@@ -15,7 +15,8 @@ describe("toda porta de um pedido leva a /indicacoes/<id>", () => {
     ["notificação de resposta e alvo de denúncia", ["lib", "notifications", "deep-links.ts"]],
     ["denúncia", ["lib", "reports", "reports.ts"]],
     ["salvos", ["lib", "saves", "saved-items.ts"]],
-    ["origem de um item do Guia", ["app", "(shell)", "guide", "[id]", "page.tsx"]],
+    // O verbete do Guia é do app desde o F08: a página web que abria um pedido
+    // de indicação saiu com a jornada, e a porta do pedido não mora mais ali.
     ["perguntas abertas do Início", ["app", "(shell)", "inicio", "questions-guide.tsx"]],
   ])("%s", (_name, path) => {
     const source = web(...path)

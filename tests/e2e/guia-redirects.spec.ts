@@ -1,19 +1,20 @@
 import { expect, test } from "@playwright/test"
 
 const BASE_URL = process.env["APP_URL"] ?? "http://127.0.0.1:3000"
+const VERBETE_ID = "a0000000-0000-4000-8000-000000000001"
+const VERBETE = `/guide/${VERBETE_ID}`
 const TROCAS = [
   ["/guide", "/app/guia"],
   ["/guide?q=escola&categoria=school", "/app/guia"],
+  // F08: o verbete e o acompanhamento da correção são do app, com o id no destino.
+  [VERBETE, `/app/guia/${VERBETE_ID}`],
+  [`${VERBETE}/correcao`, `/app/guia/${VERBETE_ID}`],
 ] as const
-// As subrotas que ficam na web: o verbete, a porta de sugestão de lugar novo e o
-// acompanhamento de correção. Nenhuma delas é capturada pela regra exata /guide.
-const SUBCAMINHOS = [
-  "/guide/sugerir",
-  "/guide/a0000000-0000-4000-8000-000000000001",
-  "/guide/a0000000-0000-4000-8000-000000000001/correcao",
-] as const
+// A única subrota que fica na web: sugerir um lugar novo está fora do escopo do
+// lançamento, e a regra do verbete não captura "sugerir" como id.
+const SUBCAMINHOS = ["/guide/sugerir"] as const
 
-test("a lista antiga do Guia leva ao app, sem sessão, nas três larguras", async ({ page }) => {
+test("as telas antigas do Guia levam ao app, sem sessão, nas três larguras", async ({ page }) => {
   for (const [caminho, destino] of TROCAS) {
     const resposta = await fetch(`${BASE_URL}${caminho}`, { redirect: "manual" })
     expect(resposta.status).toBe(307)
@@ -35,12 +36,12 @@ test("a lista antiga do Guia leva ao app, sem sessão, nas três larguras", asyn
   }
 })
 
-test("a regra é exata: as subrotas do Guia não são capturadas", async () => {
+test("sugerir um lugar continua na web: a regra do verbete é de id", async () => {
   for (const caminho of SUBCAMINHOS) {
     const resposta = await fetch(`${BASE_URL}${caminho}`, { redirect: "manual" })
     const local = new URL(resposta.headers.get("location") ?? "", BASE_URL)
     // Sem sessão, a subrota cai no portão da web com o caminho de volta — nunca
-    // na lista do app. É a prova negativa de que /guide não captura /guide/…
+    // na lista do app. É a prova negativa de que /guide/:id não captura /guide/sugerir.
     expect(local.pathname, caminho).toBe("/login")
     expect(local.searchParams.get("redirect"), caminho).toBe(caminho)
   }

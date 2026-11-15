@@ -10,11 +10,9 @@ import { EsqueletoDeLista } from "@/components/bivaque/esqueleto"
 import { EstadoDeErro, EstadoVazio } from "@/components/bivaque/estado-vazio"
 import { Icone } from "@/components/bivaque/icone"
 import { LinhaDeLista, Lista } from "@/components/bivaque/lista"
-import { Sobreposicao } from "@/components/bivaque/sobreposicao"
 import {
   CATEGORIAS_DO_GUIA,
   type CategoriaDoGuia,
-  type EntradaDoGuia,
   type GuiaDaCidade,
   lerGuia,
 } from "@/lib/dados/guia"
@@ -37,7 +35,6 @@ import {
 } from "@/src/guia/EstruturaDoGuia"
 import { filtrosDaUrl } from "@/src/guia/filtros-da-url"
 import { type Passo, SECOES } from "@/src/guia/secoes"
-import { Verbete } from "@/src/guia/Verbete"
 
 /**
  * O Guia da cidade, do banco (F08 / ADR-20261105).
@@ -50,12 +47,12 @@ import { Verbete } from "@/src/guia/Verbete"
  *
  * A estrutura é editorial: quatro seções com âncora no cabeçalho fixo, e a
  * cidade aparece uma vez só, no cabeçalho — o título é "Guia", que cabe numa
- * linha no 375. Quem não acha o lugar que precisa tem o caminho de sugestão do
- * Criar na última seção e no estado vazio.
+ * linha no 375.
  *
- * A leitura do verbete abre numa folha sobre a lista. A folha é estado local da
- * tela: o Voltar do sistema não a fecha — quem fecha é o botão, o Escape ou o
- * arrasto —, e o histórico do roteador não é empilhado por ela.
+ * A leitura do verbete é uma tela própria (`/app/guia/<id>`): a linha leva pela
+ * rota, então a recarga mantém a referência aberta e o Voltar do sistema volta
+ * para a lista. O Guia não tem folha nem botão de sugestão de lugar novo —
+ * sugerir um lugar está fora do escopo do lançamento.
  *
  * O termo e a categoria também chegam pelo endereço (LAN-TROCA):
  * `/app/guia?q=<termo>&categoria=<cat>` abre a tela já filtrada, e o endereço
@@ -107,7 +104,6 @@ export function Guia() {
   const [dados, setDados] = useState<GuiaDaCidade | null>(null)
   const [erro, setErro] = useState<"falhou" | "sessao" | "negado" | null>(null)
   const [rodada, setRodada] = useState(0)
-  const [aberta, setAberta] = useState<EntradaDoGuia | null>(null)
   const [carregandoMais, setCarregandoMais] = useState(false)
   const [erroAoCarregarMais, setErroAoCarregarMais] = useState<string | null>(null)
   const montada = useRef(true)
@@ -185,31 +181,6 @@ export function Guia() {
     }
   }
 
-  function abrirVerbete(entrada: EntradaDoGuia) {
-    setAberta(entrada)
-  }
-
-  function atualizarSalvo(id: string, salvo: boolean) {
-    setDados((atual) =>
-      atual === null
-        ? atual
-        : {
-            ...atual,
-            entradas: atual.entradas.map((entrada) =>
-              entrada.id === id ? { ...entrada, salvo } : entrada,
-            ),
-          },
-    )
-  }
-
-  /** O caminho real de sugestão de lugar é o Criar: o menu abre com as portas. */
-  async function sugerirLugar() {
-    // No celular o Criar só tem o FAB como âncora nas raízes; sair do Guia pelo
-    // Início é o caminho que existe, e o menu abre lá com todas as portas.
-    if (window.innerWidth < 720) await navegacao.irPara("inicio")
-    await navegacao.abrir("menu-criar")
-  }
-
   const filtros = [
     { id: "todas", rotulo: "Todas" },
     ...CATEGORIAS_DO_GUIA.map((id) => ({ id, rotulo: ROTULO_DA_CATEGORIA[id] })),
@@ -261,20 +232,20 @@ export function Guia() {
                   texto={
                     filtrando
                       ? "Tente outro termo ou veja todas as categorias."
-                      : "A curadoria publica as referências da cidade por aqui. Você pode sugerir o primeiro lugar."
+                      : "A curadoria publica as referências da cidade por aqui. As primeiras chegam assim que forem conferidas."
                   }
                   icone="search_off"
-                  acao={
-                    filtrando
-                      ? {
+                  {...(filtrando
+                    ? {
+                        acao: {
                           rotulo: "Limpar filtros",
                           aoAcionar: () => {
                             setTermo("")
                             setCategoria(null)
                           },
-                        }
-                      : { rotulo: "Sugerir um lugar para o Guia", aoAcionar: sugerirLugar }
-                  }
+                        },
+                      }
+                    : {})}
                 />
               ) : dados === null ? null : (
                 <>
@@ -290,7 +261,9 @@ export function Guia() {
                             <Icone nome="bookmark" className="size-5 shrink-0 text-(--primary)" />
                           ) : undefined
                         }
-                        onClick={() => abrirVerbete(entrada)}
+                        onClick={() =>
+                          void navegacao.irPara("verbete", { parametros: { id: entrada.id } })
+                        }
                       />
                     ))}
                   </Lista>
@@ -313,42 +286,8 @@ export function Guia() {
               )}
             </>
           ) : null}
-
-          {secao.id === "contribuir" ? (
-            <div
-              data-guia="contribuicao"
-              className="grid gap-3 rounded-2xl bg-(--surface-lowest) p-4 ring-1 ring-(--outline-variant)"
-            >
-              <CorpoDoGuia>
-                Conhece um colégio, hospital, transporte ou despachante que deveria estar aqui? A
-                indicação entra no Criar e a curadoria confere antes de publicar.
-              </CorpoDoGuia>
-              <Botao
-                tom="contornado"
-                icone="add_business"
-                data-acao="sugerir-lugar"
-                onClick={sugerirLugar}
-                className="justify-self-start"
-              >
-                Sugerir um lugar para o Guia
-              </Botao>
-            </div>
-          ) : null}
         </SecaoDoGuia>
       ))}
-
-      {aberta === null ? null : (
-        // O título é o nome da referência: sem ele a folha não diz o que a
-        // pessoa abriu. O verbete carrega o resto pelo id.
-        <Sobreposicao
-          id="folha"
-          titulo={aberta.nome}
-          descricao={ROTULO_DA_CATEGORIA[aberta.categoria]}
-          aoFechar={() => setAberta(null)}
-        >
-          <Verbete id={aberta.id} aoMudarSalvo={atualizarSalvo} />
-        </Sobreposicao>
-      )}
     </section>
   )
 }

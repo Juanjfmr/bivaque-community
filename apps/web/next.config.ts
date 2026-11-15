@@ -102,9 +102,12 @@ const nextConfig: NextConfig = {
           ["/mercado", "/app/mercado"],
           ["/imoveis", "/app/imoveis"],
           ["/meus-anuncios", "/app/meus-anuncios"],
-          // F08: só a lista do Guia. A regra é exata, então `/guide/[id]`,
-          // `/guide/sugerir` e `/guide/[id]/correcao` seguem na web; a query
-          // (q/categoria) continua pelo Next e o app a consome (LT-006).
+          // F08: a lista, o verbete e o acompanhamento de correção são do app.
+          // As regras de dois segmentos vêm antes da exata, e `/guide/sugerir`
+          // fica na web (sugerir lugar novo está fora do escopo do lançamento):
+          // o id não captura "sugerir".
+          ["/guide/:id/correcao", "/app/guia/:id"],
+          ["/guide/:id((?!sugerir/?$)[^/]+)", "/app/guia/:id"],
           ["/guide", "/app/guia"],
           // As páginas estáticas continuam na web.
           // F06 resíduo: criar e editar desapego saem com a troca. O app cria

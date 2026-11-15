@@ -1,16 +1,16 @@
 import { mkdirSync } from "node:fs"
 import { join } from "node:path"
 import { expect, type Page, test } from "@playwright/test"
-import { SELETOR_CONTEUDO, SELETOR_MENU_CRIAR, simularGuia, simularProgresso } from "./apoio"
-import { simularCriar } from "./criar-ajuda"
+import { SELETOR_CONTEUDO, simularGuia, simularProgresso } from "./apoio"
 
 /**
  * A estrutura editorial do Guia (RUN-142).
  *
  * Mede o que a pessoa vê: a cidade uma vez só, o título numa linha no 375, as
  * seções com âncora de teclado, o cabeçalho preso com o nome da seção em
- * leitura, o caminho real de sugestão no Criar e o contraste do corpo. A matriz
- * de capturas usa a largura do projeto — 320, 360, 375, 430,
+ * leitura e o contraste do corpo. Sugerir um lugar novo está fora do escopo do
+ * lançamento: nem a seção nem o vazio oferecem essa porta. A matriz de capturas
+ * usa a largura do projeto — 320, 360, 375, 430,
  * 768 e 1440 —, então 375/768/1440 saem dos próprios projetos.
  */
 
@@ -188,56 +188,34 @@ test.describe("estrutura do Guia", () => {
     )
   })
 
-  test("'Sugerir um lugar para o Guia' leva ao caminho real do Criar no celular", async ({
+  test("a seção de contribuição leva ao caminho real, sem porta de sugestão de lugar", async ({
     page,
   }) => {
-    await simularCriar(page)
     await page.setViewportSize({ width: 375, height: 812 })
     await abrirGuia(page)
 
-    const sugestao = page.locator('[data-guia="contribuicao"] [data-acao="sugerir-lugar"]')
-    await expect(sugestao).toContainText("Sugerir um lugar para o Guia")
-    await sugestao.click()
+    const contribuir = page.locator("#contribuir")
+    await expect(
+      contribuir.getByRole("heading", { name: "5. Compartilhe o que funcionou" }),
+    ).toBeVisible()
+    // Sugerir um lugar novo está fora do escopo do lançamento: o botão que
+    // abria o Criar sem porta de guia saiu, e nada promete esse caminho.
+    await expect(page.locator('[data-acao="sugerir-lugar"]')).toHaveCount(0)
+    await expect(page.getByRole("button", { name: /Sugerir um lugar/ })).toHaveCount(0)
 
-    // No celular o Criar só tem o FAB como âncora nas raízes: o caminho real
-    // passa pelo Início e abre o menu lá, com as sete portas.
-    await expect(page).toHaveURL(/\/app\/inicio$/)
-    await expect(page.locator(SELETOR_MENU_CRIAR)).toBeVisible()
-    await expect(page.locator("[data-escolha]")).toHaveCount(7)
-
-    // Negativo: Esc fecha o Criar e a tela continua utilizável.
-    await page.keyboard.press("Escape")
-    await expect(page.locator(SELETOR_MENU_CRIAR)).toHaveCount(0)
-    await expect(page.locator('[data-tela="inicio"]')).toBeVisible()
-
-    // Positivo: a porta de indicação do Criar é o caminho de sugestão.
-    await page.locator('[data-acao="criar"]').click()
-    await page.locator('[data-escolha="indicate"]').click()
-    const formulario = page.locator('[data-formulario-criacao="indicate"]')
-    await expect(formulario).toBeVisible()
-    await expect(formulario.getByRole("heading", { name: "Indicar negócio" })).toBeVisible()
+    // A porta que resta é real: a conversa da comunidade, onde a indicação mora.
+    await contribuir.getByRole("button", { name: "Abrir a comunidade" }).click()
+    await expect(page).toHaveURL(/\/app\/comunidade$/)
+    await expect(page.locator('[data-tela="comunidade"]')).toBeVisible()
   })
 
-  test("no computador o Criar abre sobre o próprio Guia", async ({ page }) => {
-    await simularCriar(page)
-    await page.setViewportSize({ width: 1440, height: 900 })
-    await abrirGuia(page)
-
-    await page.locator('[data-guia="contribuicao"] [data-acao="sugerir-lugar"]').click()
-    await expect(page).toHaveURL(/\/app\/guia$/)
-    await expect(page.locator(SELETOR_MENU_CRIAR)).toBeVisible()
-    await page.locator('[data-escolha="indicate"]').click()
-    await expect(page.locator('[data-formulario-criacao="indicate"]')).toBeVisible()
-  })
-
-  test("o guia vazio mostra o caminho de sugestão em vez de conteúdo inventado", async ({
+  test("o guia vazio declara a curadoria em vez de prometer uma porta inexistente", async ({
     page,
   }) => {
     // A rota registrada depois vence: o guia da cidade responde sem referências.
     await page.route(/\/api\/app\/guia(?:\?|$)/, async (rota) => {
       await rota.fulfill({ json: { cidade: CIDADE, entradas: [], proximo: null } })
     })
-    await simularCriar(page)
     await page.setViewportSize({ width: 375, height: 812 })
     await page.goto("/app/guia")
     await expect(page.locator('[data-tela="guia"]')).toBeVisible()
@@ -245,12 +223,10 @@ test.describe("estrutura do Guia", () => {
     const vazio = page.locator('[data-estado="vazio"]')
     await expect(vazio).toBeVisible()
     await expect(vazio).toContainText("O guia ainda está sendo montado")
-    const acao = vazio.locator('[data-acao="acao-do-vazio"]')
-    await expect(acao).toContainText("Sugerir um lugar para o Guia")
-
-    await acao.click()
-    await expect(page).toHaveURL(/\/app\/inicio$/)
-    await expect(page.locator(SELETOR_MENU_CRIAR)).toBeVisible()
+    // Negativo: sem caminho de sugestão de lugar novo, o vazio não oferece ação
+    // que não leva a lugar nenhum.
+    await expect(vazio.locator('[data-acao="acao-do-vazio"]')).toHaveCount(0)
+    await expect(vazio).not.toContainText("Sugerir um lugar")
   })
 
   test("corpo com token secundário, contraste AA, entrelinha e captura", async ({ page }) => {

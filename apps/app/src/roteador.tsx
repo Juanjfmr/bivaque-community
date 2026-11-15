@@ -40,6 +40,7 @@ import { Publicacao } from "@/src/telas/Publicacao"
 import { Salvos } from "@/src/telas/Salvos"
 import { TelaDeProva } from "@/src/telas/TelaDeProva"
 import { TelaIndisponivel } from "@/src/telas/TelaIndisponivel"
+import { VerbeteDoGuia } from "@/src/telas/VerbeteDoGuia"
 import { Voce } from "@/src/telas/Voce"
 
 /**
@@ -117,6 +118,7 @@ const TELAS_REAIS: Readonly<Partial<Record<string, ComponentType>>> = {
   pergunta: Pergunta,
   publicacao: Publicacao,
   salvos: Salvos,
+  verbete: VerbeteDoGuia,
 }
 
 function TelaDaRota({ nome }: { nome: string }) {

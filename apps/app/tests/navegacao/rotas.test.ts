@@ -68,6 +68,7 @@ const PARAMETRIZADAS: ReadonlyArray<readonly [nome: string, chave: string, exemp
   ["publicacao", "id", "g-1~p-1"],
   ["evento", "id", "e-1"],
   ["pedido", "id", "p-1"],
+  ["verbete", "id", "a-1"],
   ["entrar", "estado", "conta"],
   ["ajuda", "topico", "apagar-conta"],
 ]
@@ -172,5 +173,16 @@ describe("catálogo de rotas", () => {
     expect(rotaPorNome("ajuda")?.pai).toBe("voce")
     expect(rotaPorNome("inicio")?.pai).toBeNull()
     expect(ROTAS.filter((rota) => rota.nome === "inicio")).toHaveLength(1)
+  })
+
+  it("o verbete do Guia é endereço próprio, fora dos 33 do inventário", () => {
+    const verbete = rotaPorNome("verbete")
+    expect(verbete?.caminho).toBe("/guia/$id")
+    expect(verbete?.parametro).toBe("id")
+    expect(verbete?.titulo).toBe("Referência")
+    // O Voltar de um link direto ao verbete cai na lista do Guia.
+    expect(verbete?.pai).toBe("guia")
+    expect(urlPublica("verbete", { id: "a-1" })).toBe("/app/guia/a-1")
+    expect(NOMES_DAS_33).not.toContain("verbete")
   })
 })

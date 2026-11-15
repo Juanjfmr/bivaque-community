@@ -39,7 +39,7 @@ test.describe("portas de entrada", () => {
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible()
   })
 
-  test("a lista do Guia migra, e a referência completa segue na web", async ({ page }) => {
+  test("a lista e o verbete do Guia migram para o app", async ({ page }) => {
     await signInAs(page.context(), OTHER)
     // A lista antiga agora responde 307 para o Guia do app.
     await page.goto("/guide")
@@ -47,12 +47,17 @@ test.describe("portas de entrada", () => {
     await expect(page.getByRole("heading", { level: 1, name: "Guia", exact: true })).toBeVisible({
       timeout: 20_000,
     })
-    // O cartão da lista era a porta do verbete web; o app abre o verbete em folha
-    // (f08-guia-real). A referência continua de pé por URL direta, com a ficha e
-    // a porta de correção.
+    // O verbete também: a URL direta aterrissa na tela da referência, com o
+    // nome no `h1` (o mesmo cabeçalho que a web mostrava) e a porta de correção.
     await page.goto(`/guide/${GUIDE_ENTRY}`)
-    await expect(page.getByRole("heading", { level: 1 })).toContainText("Transportadora Ajuricaba")
-    await expect(page.getByRole("link", { name: "Sugerir atualização" })).toBeVisible()
+    await expect(page).toHaveURL(new RegExp(`/app/guia/${GUIDE_ENTRY}$`))
+    await expect(page.getByRole("heading", { level: 1 })).toContainText(
+      "Transportadora Ajuricaba",
+      {
+        timeout: 20_000,
+      },
+    )
+    await expect(page.getByRole("heading", { name: "Sugerir atualização" })).toBeVisible()
   })
 })
 

@@ -22,6 +22,7 @@ import {
   simularNegocios,
   simularPedido,
   simularProgresso,
+  simularVerbeteDoGuia,
   test as testDaProva,
 } from "./apoio"
 import { simularConversas } from "./conversas-ajuda"
@@ -577,18 +578,27 @@ test.describe("teclado nas superfícies novas", () => {
 })
 
 test.describe("movimento reduzido nas telas reais", () => {
-  test("com prefers-reduced-motion a folha do guia não anima", async ({ page }) => {
+  test("com prefers-reduced-motion o verbete do guia entra sem animação", async ({ page }) => {
     await page.emulateMedia({ reducedMotion: "reduce" })
     await simularProgresso(page)
     await simularGuia(page)
+    await simularVerbeteDoGuia(page)
     await page.goto("/app/guia")
     await expect(page.locator('[data-tela="guia"]')).toBeVisible()
 
+    // O verbete é tela própria desde o F08: a folha local saiu, e a linha leva
+    // pela rota. O nome da referência é o `h1` da tela.
     await page.locator('[data-linha="lista"]').first().click()
-    const folha = page.locator('[data-sobreposicao="folha"]')
-    await expect(folha).toBeVisible()
+    await expect(page).toHaveURL(/\/app\/guia\/guia-escola-rio-negro$/)
+    await expect(
+      page.getByRole("heading", { level: 1, name: "Escola Municipal Rio Negro" }),
+    ).toBeVisible()
 
-    const animacao = await folha.evaluate((elemento) => {
+    // A troca de página é a entrada que resta na rota: com movimento reduzido
+    // ela não chega a ser montada, e nada anima.
+    const pagina = page.locator('[data-animacao="pagina"]')
+    await expect(pagina).toHaveAttribute("data-entrando", "nao")
+    const animacao = await pagina.evaluate((elemento) => {
       const estilo = getComputedStyle(elemento)
       return { nome: estilo.animationName, duracao: estilo.animationDuration }
     })

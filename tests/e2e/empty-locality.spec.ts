@@ -176,13 +176,11 @@ test.describe("locality below the §3.4 density threshold: honest empty state", 
     await expect(
       vazio.getByRole("heading", { name: "O guia ainda está sendo montado" }),
     ).toBeVisible()
-    await expect(vazio).toContainText("Você pode sugerir o primeiro lugar.")
+    await expect(vazio).toContainText("As primeiras chegam assim que forem conferidas.")
 
-    // And the way forward is the real suggestion port, not a promise that the
-    // place enters the guide by itself: the operator curates the queue.
-    await expect(vazio.locator('[data-acao="acao-do-vazio"]')).toHaveText(
-      "Sugerir um lugar para o Guia",
-    )
+    // E nada promete uma porta que não existe: sugerir um lugar novo está fora
+    // do escopo do lançamento, então o vazio não oferece ação nenhuma.
+    await expect(vazio.locator('[data-acao="acao-do-vazio"]')).toHaveCount(0)
   })
 
   test("the empty state is not a blank page or an error message", async ({ page }) => {

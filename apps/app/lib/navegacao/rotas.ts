@@ -39,6 +39,7 @@ export type NomeDeRota =
   | "meus-anuncios"
   | "minhas"
   | "guia"
+  | "verbete"
   | "pedidos"
   | "pedido"
   | "dono"
@@ -144,6 +145,10 @@ const LINHAS: readonly LinhaDoCatalogo[] = [
   ["minhas", "/minhas", "Minhas indicações", "comunidade", { pai: "comunidade" }],
   // Título dependente da cidade: o molde fica no catálogo e a cidade é dado.
   ["guia", "/guia", "Guia de {cidade}", "origem", { pai: "inicio" }],
+  // O verbete do Guia (F08) é a referência em tela própria, alcançável por
+  // endereço: `/app/guia/<id>` sobrevive à recarga e o Voltar do sistema volta
+  // para a lista.
+  ["verbete", "/guia/$id", "Referência", "origem", { parametro: "id", pai: "guia" }],
   ["pedidos", "/pedidos", "Pedidos de serviço", "voce", { pai: "voce" }],
   ["pedido", "/pedido/$id", "Pedido de serviço", "origem", { parametro: "id", pai: "pedidos" }],
   ["dono", "/dono", "Painel do Bivaque", "sem-aba", { casca: "painel", pai: "inicio" }],
@@ -185,7 +190,11 @@ export const ROTAS: readonly Rota[] = LINHAS.map(([nome, caminho, titulo, dono, 
 
 /** Os 33 nomes da seção 1 do inventário, sem as rotas internas do app. */
 export const NOMES_DAS_33: readonly NomeDeRota[] = ROTAS.filter(
-  (rota) => rota.nome !== "mercado" && rota.nome !== "indisponivel" && rota.nome !== "avisos",
+  (rota) =>
+    rota.nome !== "mercado" &&
+    rota.nome !== "indisponivel" &&
+    rota.nome !== "avisos" &&
+    rota.nome !== "verbete",
 ).map((rota) => rota.nome)
 
 const POR_NOME: Readonly<Record<string, Rota | undefined>> = Object.fromEntries(

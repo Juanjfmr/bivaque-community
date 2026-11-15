@@ -75,8 +75,8 @@ export const SECOES: readonly SecaoDoGuia[] = [
   { id: "referencias", titulo: "Referências da cidade", curto: "Referências", passos: [] },
   {
     id: "contribuir",
-    titulo: "Sugerir um lugar",
-    curto: "Sugerir",
+    titulo: "Compartilhar o que funcionou",
+    curto: "Contribuir",
     passos: [
       {
         titulo: "5. Compartilhe o que funcionou",
