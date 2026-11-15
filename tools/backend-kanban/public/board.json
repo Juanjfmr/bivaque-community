@@ -6730,6 +6730,54 @@
       "completedChecklist": [true, true, true]
     },
     {
+      "id": "RUN-157",
+      "title": "F10: sair da conta pelo app (POST /api/app/voce/sair, escopo local)",
+      "phase": "Lançamento",
+      "priority": "P1",
+      "category": "frontend",
+      "status": "done",
+      "completedAt": "2026-11-15",
+      "description": "Sign-out no app: rota POST /api/app/voce/sair (exigirSessao -> conferirEscrita -> auth.signOut({scope:local}) -> responder 200 com cookies de remoção; GoTrue fora -> 503). O app segue sem cliente Supabase (ADR-20261105) — o servidor revoga. sairDaConta() em lib/dados/voce.ts; LinhaDeAjuste Sair da conta (logout) antes de Apagar a conta, Confirmacao perigo; busy/erro na tela sem estender a peça; 401=ja saiu; sucesso/401 limpa sessionStorage+localStorage e window.location.replace(/app/entrar) (SPA §5.5). Decisão: escopo LOCAL (encerra só neste aparelho, coerente com o subtítulo; não desloga outros aparelhos). SEM migration; não troca /profile web.",
+      "checklist": [
+        "Rota sair + cookies de remoção + escopo local",
+        "LinhaDeAjuste + Confirmacao + limpeza de cache + replace",
+        "Testes positivo/negativo (rota/cliente/E2E stub+real) + CI verde"
+      ],
+      "dependencies": [],
+      "tests": ["tests/e2e/f10-voce-real.spec.ts", "tests/unit/app-api/voce/sair.test.ts"],
+      "blockers": [],
+      "updatedAt": "2026-11-15",
+      "sourceRevision": "55af2822",
+      "links": ["docs/agents/tasks/F10-SAIR.task.yml"],
+      "proof": [
+        "15/11: PR #236 mergeado em 55af2822. Implementado pelo DeepSeek (0fb04433) + fixes: escopo local (c177fade, decisão do coordenador — signOut global revogava todos os aparelhos mas a cópia diz neste aparelho; teste distingue o escopo + ramo 401), rota gateada no E2E real (f57b5585: /community em vez de /configuracoes/familia que é trocada p/ /app/voce público). Revisão R2 Qwen PASS. CI run 43695984691 todo verde. Runtime real provado pelo trace do CI: POST sair 200, cookie sb-127-auth-token Max-Age=0, /app/entrar carrega, entry/progress 401, porta renderizada. Follow-up: causa-raiz do cookie (card SESSAO-COOKIES-WEAKMAP)."
+      ],
+      "completedChecklist": [true, true, true]
+    },
+    {
+      "id": "SESSAO-COOKIES-WEAKMAP",
+      "title": "exigirSessao só registra cookies no WeakMap quando o array já vem preenchido",
+      "phase": "Lançamento",
+      "priority": "P3",
+      "category": "backend",
+      "status": "repo",
+      "description": "Causa-raiz achada no RUN-157: exigirSessao registra cookiesParaGravar no WeakMap cookiesDaRequisicao só quando o array já é não-vazio no momento da resolução (rota-do-app.ts:180,210, condição length>0). Fluxos que preenchem o array DEPOIS (ex.: signOut, que pede a remoção dos cookies) não têm os cookies aplicados pelo responder. O RUN-157 contornou na rota sair com aplicarCookies(responder(...), cookiesParaGravar) (idempotente, documentado). Corrigir a causa-raiz: registrar a referência do array mesmo vazio (manter !== undefined, tirar length>0) para o responder capturar mutações posteriores, e remover o contorno da rota sair. Helper compartilhado — exige teste positivo/negativo e revisão (afeta todas as rotas app).",
+      "checklist": [
+        "Registrar cookiesParaGravar mesmo vazio (referência) no WeakMap",
+        "Remover o aplicarCookies extra da rota sair",
+        "Testes: signOut limpa cookie sem o contorno; renovação segue ok"
+      ],
+      "dependencies": [],
+      "tests": ["tests/unit/app-api/voce/sair.test.ts", "tests/unit/app-api/rota-do-app.test.ts"],
+      "blockers": [],
+      "updatedAt": "2026-11-15",
+      "sourceRevision": "55af2822",
+      "links": ["docs/agents/tasks/F10-SAIR.task.yml"],
+      "proof": [
+        "15/11: registrado pelo coordenador ao fechar RUN-157; causa-raiz confirmada em rota-do-app.ts:180,210 e no trace do CI (o contorno atual funciona)."
+      ]
+    },
+    {
       "id": "TEMA-CLARO-LANDING-WEB",
       "title": "Landing pública (apps/web) ainda segue o escuro do sistema - portar para claro-only",
       "phase": "Lançamento",
