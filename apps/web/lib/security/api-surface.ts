@@ -1,5 +1,5 @@
 /**
- * A postura de cada rota de `apps/web/app/api/**` — as 97 rotas, uma por linha,
+ * A postura de cada rota de `apps/web/app/api/**` — as 99 rotas, uma por linha,
  * com a guarda que a rota de fato usa e a prova negativa (ou o motivo explícito
  * de ser pública).
  *
@@ -86,7 +86,7 @@ export type RotaClassificada = Readonly<{
 }>
 
 /** Quantas rotas o manifesto cobre. Um rota nova exige classificação explícita. */
-export const TOTAL_DE_ROTAS = 97
+export const TOTAL_DE_ROTAS = 99
 
 function teste(arquivo: string, caso: string): ProvaDaRota {
   return { tipo: "teste", arquivo, caso }
@@ -157,6 +157,22 @@ const SESSAO: readonly Linha[] = [
   ["/api/app/guia/[id]/salvo", "exigirSessao(", PORTA],
   ["/api/app/guia/[id]/sugestao", "exigirSessao(", PORTA],
   ["/api/app/guia/salvos", "exigirSessao(", PORTA],
+  [
+    "/api/app/imoveis/alertas",
+    "exigirSessao(",
+    teste(
+      "tests/unit/app-api/imoveis/rotas.test.ts",
+      "POST /api/app/imoveis/alertas: sessão, CSRF, critérios e 503 sem eco",
+    ),
+  ],
+  [
+    "/api/app/imoveis/alertas/[id]",
+    "exigirSessao(",
+    teste(
+      "tests/unit/app-api/imoveis/rotas.test.ts",
+      "PATCH e DELETE de alerta alheio respondem 404 sem confirmar existência",
+    ),
+  ],
   ["/api/app/inicio", "exigirSessao(", PORTA],
   ["/api/app/mercado", "exigirSessao(", PORTA],
   ["/api/app/mercado/[id]", "exigirSessao(", PORTA],

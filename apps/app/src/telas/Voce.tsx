@@ -208,6 +208,12 @@ export function Voce() {
             onClick={() => void navegacao.irPara("meus-anuncios")}
           />
           <LinhaDeAjuste
+            icone="notifications_active"
+            titulo="Alertas de imóvel"
+            subtitulo="Avisos de imóveis novos com o que você procura"
+            onClick={() => void navegacao.irPara("alertas-de-imovel")}
+          />
+          <LinhaDeAjuste
             icone="forum"
             titulo="Minhas indicações"
             subtitulo="Perguntas que você fez e as respostas"

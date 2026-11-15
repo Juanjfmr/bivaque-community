@@ -38,6 +38,7 @@ export type NomeDeRota =
   | "evento"
   | "agenda"
   | "salvos"
+  | "alertas-de-imovel"
   | "meus-anuncios"
   | "minhas"
   | "guia"
@@ -151,6 +152,9 @@ const LINHAS: readonly LinhaDoCatalogo[] = [
   ["evento", "/evento/$id", "Encontro", "origem", { parametro: "id", pai: "agenda" }],
   ["agenda", "/agenda", "Agenda da cidade", "origem", { pai: "inicio" }],
   ["salvos", "/salvos", "Salvos", "origem", { pai: "voce" }],
+  // Alertas de busca de imóvel (F06, RUN-169): a tela que a web servia em
+  // /imoveis/alertas. Entra por Você, como as irmãs, e não acende aba própria.
+  ["alertas-de-imovel", "/imoveis/alertas", "Alertas de imóvel", "origem", { pai: "voce" }],
   ["meus-anuncios", "/meus-anuncios", "Meus anúncios", "origem", { pai: "voce" }],
   ["minhas", "/minhas", "Minhas indicações", "comunidade", { pai: "comunidade" }],
   // Título dependente da cidade: o molde fica no catálogo e a cidade é dado.
@@ -206,7 +210,8 @@ export const NOMES_DAS_33: readonly NomeDeRota[] = ROTAS.filter(
     rota.nome !== "avisos" &&
     rota.nome !== "verbete" &&
     rota.nome !== "perfil" &&
-    rota.nome !== "cidade",
+    rota.nome !== "cidade" &&
+    rota.nome !== "alertas-de-imovel",
 ).map((rota) => rota.nome)
 
 const POR_NOME: Readonly<Record<string, Rota | undefined>> = Object.fromEntries(

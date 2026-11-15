@@ -200,9 +200,9 @@ export const HEADINGS = {
   // captura só mostrava o Guia e a ausência das outras seções parecia defeito.
   "/explorar/busca?q=manaus": "^Resultados para “manaus”$",
   "/explorar/busca?q=piquenique": "^Resultados para “piquenique”$",
-  // A ficha do imóvel é nomeada pelo título do anúncio.
+  // A ficha do imóvel é nomeada pelo título do anúncio. Criar imóvel saiu da
+  // web (RUN-164) e a gestão dos alertas também (RUN-169): as duas são do app.
   "/imoveis/b2000000-0000-4000-8000-000000000001": DYNAMIC_HEADING,
-  "/imoveis/alertas": "^Meus alertas$",
   "/pedidos/novo?prestador=30000000-0000-4000-8000-000000000010": "^Do que você precisa\\?$",
   // Prancha 79, painel 2: o H1 da tela que o prestador convidado abre.
   [`/prestador-convite/${PROVIDER_INVITE_TOKEN}`]: "^Ofereça seus serviços no Bivaque$",
@@ -429,11 +429,6 @@ export const ROUTES = [
   // criar (fora do allowed_paths deste lote) — sem ela a captura cai no 404
   // honesto, que NÃO conta como fidelidade comprovada.
   { path: `/imoveis/${IMOVEIS_FIXTURE_ID}`, name: "imoveis-detail", auth: true },
-  // RECON-028: gestão dos alertas (prancha 65, painel 2). A tela renderiza o
-  // estado vazio honesto enquanto `supabase/seed.sql` não tiver um alerta — o
-  // seed está fora do allowed_paths deste lote, então a captura prova o estado
-  // vazio real, não fidelidade de cartão populado.
-  { path: "/imoveis/alertas", name: "imoveis-alertas", auth: true },
   // Onda T Task 5: o console do fundador. Com a conta global (sem operador) ele
   // rende o estado vazio honesto; a captura da tela real usa operador@.
   { path: "/arrivals", name: "admin-arrivals", auth: true, account: "operador" },

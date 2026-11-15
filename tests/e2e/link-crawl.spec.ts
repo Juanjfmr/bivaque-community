@@ -190,11 +190,6 @@ const PORTAS_FORA_DO_LINK: readonly AllowedUnreached[] = [
       "DÍVIDA LAN-TROCA: a porta era 'Sugerir um lugar' na lista /guide, trocada para o app (F08); o app ainda não tem a porta de sugestão de lugar novo (gap em F08-RESSALVAS)",
   },
   {
-    route: "/imoveis/alertas",
-    porta:
-      "DÍVIDA LAN-TROCA: 'Criar alerta' dentro de /imoveis antigos, sem equivalente no app (F06)",
-  },
-  {
     route: "/indicacoes",
     porta:
       "FLUXO: redireciona para a vista Indicações da Comunidade; fica para links antigos e ?pedir=1",

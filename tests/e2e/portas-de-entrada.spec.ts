@@ -25,7 +25,7 @@ test.describe("portas de entrada", () => {
     await expect(page.getByRole("button", { name: "Salvar alterações" })).toHaveCount(0)
   })
 
-  test("a lista e o criar migram, e a lista de alertas continua na web", async ({ page }) => {
+  test("a lista, o criar e os alertas migram para o app", async ({ page }) => {
     await signInAs(page.context(), OTHER)
     await page.goto("/imoveis")
     await expect(page).toHaveURL(/\/app\/imoveis$/)
@@ -34,10 +34,13 @@ test.describe("portas de entrada", () => {
     await page.goto("/imoveis/novo")
     await expect(page).toHaveURL(/\/app\/imoveis$/)
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible({ timeout: 20_000 })
-    // Alertas é do Lote B: segue na web, sem redirect.
+    // RUN-169: a gestão dos alertas também é do app. A URL antiga aterrissa na
+    // tela nova, com o título real dela.
     await page.goto("/imoveis/alertas")
-    await expect(page).toHaveURL(/\/imoveis\/alertas$/)
-    await expect(page.getByRole("heading", { level: 1 })).toBeVisible()
+    await expect(page).toHaveURL(/\/app\/imoveis\/alertas$/)
+    await expect(
+      page.getByRole("heading", { level: 1, name: "Alertas de imóvel", exact: true }),
+    ).toBeVisible({ timeout: 20_000 })
   })
 
   test("a lista e o verbete do Guia migram para o app", async ({ page }) => {
