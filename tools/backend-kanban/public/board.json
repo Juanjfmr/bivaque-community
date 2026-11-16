@@ -6143,7 +6143,8 @@
         "04/11: o dono pôs o push no celular no lançamento; F09 passa a incluir o canal push nas preferências (LAN-PUSH).",
         "05/11: RUN-011 (GPT Terra 6.1) — caixa e conversa do F09 ligadas às rotas autenticadas do app (sessão do membro, RLS, paginação, carregamento, vazio e falha recuperável; resposta só conta após confirmação do servidor e o texto é preservado na falha). Commits f7b92ca8, e7702a9d e 19e5ef5a. Provas: app 240/240 e unitários 2.122/2.122, privacidade 189/189, escopo 192/192, Playwright com API simulada 192/192 em 375/768/1440 e 3/3 de captura claro/escuro (simulada: não prova RLS nem banco). Não rodado: E2E real com banco (Docker recusou o pipe), gate completo e build Next. Revisão Qwen (.visual/run-011/revisao-qwen.md): PASS COM RESSALVAS. Revisão security-auditor (Sonnet): LIBERA COM RESSALVAS. Ressalvas viraram os cartões DM-INSERT-VETO-EXCLUSAO e F09-ENVIO-PELA-RPC; o 'Ver origem' removido fica registrado no segundo.",
         "07/11: conversas (#135) e avisos (#151) na main, com E2E real no CI. Fecha quando NOTIF-DEEPLINKS e LAN-PUSH fecharem (dependências do card).",
-        "16/11: RUN-165 (2b48e8bd) colocou bloquear, denunciar mensagem e a preferencia Mensagens no app e provou em runtime o destino do aviso de DM (duas sessoes no CI). O card segue next por LAN-PUSH (canal push nasce desligado, decisao donia) e pela remocao da tela web /messages (RUN-166)."
+        "16/11: RUN-165 (2b48e8bd) colocou bloquear, denunciar mensagem e a preferencia Mensagens no app e provou em runtime o destino do aviso de DM (duas sessoes no CI). O card segue next por LAN-PUSH (canal push nasce desligado, decisao donia) e pela remocao da tela web /messages (RUN-166).",
+        "16/11: RUN-166 (000cdd89) removeu a tela web de conversas — lado-troca das conversas fechado. O card ainda depende de LAN-PUSH (canal; chaves FCM sao ato do dono) para fechar."
       ],
       "id": "LAN-F09",
       "title": "F09 Conversas e avisos ligados ao banco",
@@ -6274,7 +6275,7 @@
       "tests": [],
       "blockers": [],
       "updatedAt": "2026-11-16",
-      "sourceRevision": "74d58714",
+      "sourceRevision": "000cdd89",
       "links": ["docs/LANCAMENTO.md"],
       "proof": [
         "02/11: aberto na definição do lançamento (docs/LANCAMENTO.md), por mandato do dono.",
@@ -6295,7 +6296,8 @@
         "16/11: RUN-162 (PR #241, f237d683) fecha F08-RESSALVAS so com testes. RUN-163 (PR #242, 9ca86c53) troca /profile/interests → /app/voce e PORTA O PORTAO DE ADMISSAO para a rota do app (a web exigia verified OU familiar admitido antes de listar com service_role; a rota nao conferia — a troca mataria a fronteira). F05 reclassificado: criar/editar era drift; convites fan-out nao e linha do LANCAMENTO.",
         "16/11: RUN-165 mergeado (2b48e8bd). A pasta (shell)/messages nao serve mais tela (307) e perdeu seu unico gesto vivo (bloquear) para o app — a remocao dela (RUN-166) esta destravada.",
         "16/11: CIDADE-169 mergeado (1c488b1f) — /cidade e /localidade deixaram de servir tela de membro; o painel de cidade do app navega por id real.",
-        "16/11: RUN-168 (8c3224fa), RUN-169 (9100ab6b) e RUN-170 (74d58714) fundidos; F06 so fecha com RUN-171 + LOC-IMPL (dependencia registrada no card); F10 tem paridade completa no app e so espera a troca."
+        "16/11: RUN-168 (8c3224fa), RUN-169 (9100ab6b) e RUN-170 (74d58714) fundidos; F06 so fecha com RUN-171 + LOC-IMPL (dependencia registrada no card); F10 tem paridade completa no app e so espera a troca.",
+        "16/11: RUN-166 mergeado. Do inventario de RUN-166, seguem servindo tela de membro na web: indicacoes/[id] (pre-condicao do F09-B3 migrar o report-button antes), /profile+/editar (RUN-172 em curso), negocio/pedidos/configuracoes-familia e o resto da casca — a fase 6 acompanha por jornada."
       ],
       "id": "LAN-TROCA",
       "title": "Fase 6: varredura da troca — nenhuma rota de membro no apps/web servindo tela",
@@ -6308,7 +6310,7 @@
         "Portões do proxy movidos com teste por perfil",
         "Código, testes e ferramentas antigas removidos",
         "Fase 1 (RUN-019, decisão revista em 06/11): 307 das 11 rotas autorizadas, IDs/query preservados, sem ciclo; /indicacoes/:id fica na web até F04 para preservar Ajudou a resolver; demais rotas e edições ficam na web",
-        "Lacunas seguintes: filtros/IDs de Guia e busca FECHADOS (RUN-162); cidade/localidade FECHADA (CIDADE-169, 1c488b1f — consulta no app + 307 das duas telas); F05: criar/editar era drift (ja feito — f05-eventos-real:319-375, tela trocada PR #176), fan-out de convites NAO e linha F05 do LANCAMENTO (decisao 16/11; parte de e-mail em OUTBOX-INVITE-RECIPIENTS), cancelar-encontro do organizador FECHADO (RUN-167, 0f0098f9); F05 COMPLETO; Meus anuncios e alertas (F06; criar/editar RUN-156, imovel RUN-164, salvar FECHADO (RUN-168, 8c3224fa), alertas FECHADOS (RUN-169, 9100ab6b); resta filtros server-side no RUN-171 (em curso; fecha a perda bairro/tipo_negocio do B). Falha visual do glyph do salvo virou card SALVAR-GLYPH; F07; seguranca na conversa e preferencias FECHADA (F09; RUN-165, 2b48e8bd — bloquear, denunciar, Mensagens na matriz, destino do aviso DM em runtime); REMOCAO da pasta /messages no PR #250 (revisada com os 2 defeitos tratados; CI em curso); troca de /profile proprio + editar (F10; paridade FECHA aqui — RUN-170, 74d58714; resta o Lote B do card F10-TROCA-PERFIL-PROPRIO: redirects + ~20 pins + morte do toggle Exibir/upload de foto)",
+        "Lacunas seguintes: filtros/IDs de Guia e busca FECHADOS (RUN-162); cidade/localidade FECHADA (CIDADE-169, 1c488b1f — consulta no app + 307 das duas telas); F05: criar/editar era drift (ja feito — f05-eventos-real:319-375, tela trocada PR #176), fan-out de convites NAO e linha F05 do LANCAMENTO (decisao 16/11; parte de e-mail em OUTBOX-INVITE-RECIPIENTS), cancelar-encontro do organizador FECHADO (RUN-167, 0f0098f9); F05 COMPLETO; Meus anuncios e alertas (F06; criar/editar RUN-156, imovel RUN-164, salvar FECHADO (RUN-168, 8c3224fa), alertas FECHADOS (RUN-169, 9100ab6b); resta filtros server-side no RUN-171 (em curso; fecha a perda bairro/tipo_negocio do B). Falha visual do glyph do salvo virou card SALVAR-GLYPH; F07; seguranca na conversa e preferencias FECHADA (F09; RUN-165, 2b48e8bd — bloquear, denunciar, Mensagens na matriz, destino do aviso DM em runtime); pasta /messages REMOVIDA (RUN-166, 000cdd89) — LAN-F09 so espera LAN-PUSH; troca de /profile proprio + editar (F10; paridade FECHA aqui — RUN-170, 74d58714; resta o Lote B do card F10-TROCA-PERFIL-PROPRIO: redirects + ~20 pins + morte do toggle Exibir/upload de foto)",
         "Provar a revisão da fase 1 no CI: E2E integrado e rastreador; manter as portas de /profile e /community enquanto suas jornadas ficam na web"
       ],
       "dependencies": [
@@ -7222,20 +7224,25 @@
       "phase": "Lançamento",
       "priority": "P2",
       "category": "frontend",
-      "status": "repo",
+      "status": "done",
       "description": "O 307 de /messages ja manda todo usuario real para /app/conversas, mas a pasta com 6 arquivos (page, [id], conversation-inbox com o insert direto de dm_blocks, etc.) continua em disco servindo rota de membro — fase 6 nao fecha com ela viva, e o AGENTS manda a tela sair COM codigo e testes. destravado pelo RUN-165 (os gestos que ela carregava — bloquear/denunciar — agora moram no app). Pins a migrar na remocao: prova de ausencia no molde das trocas (lan-troca-redirect.test.ts), link-crawl :357-373, specs que visitam /messages (f09-conversas-real:29, manaus-pilot-*, recon-032-messages, copy-fala-com-a-pessoa:93, shell-*), sidebar web que ainda linka (shell-sidebar-labels.test.ts:62), capturas. Sem mudanca de redirect.",
       "checklist": [
-        "Inventario de importadores/pins antes de remover (licao LT-007)",
-        "Remover pasta + migrar provas que ainda valem para o app",
-        "Prova de ausencia + link-crawl sem porta stale + CI verde"
+        "[x] Inventario de importadores/pins antes de remover (licao LT-007)",
+        "[x] Remover pasta + migrar provas que ainda valem para o app",
+        "[x] Prova de ausencia + link-crawl sem porta stale + CI verde"
       ],
       "dependencies": ["RUN-165"],
       "tests": ["tests/unit/infra/lan-troca-redirect.test.ts", "tests/e2e/link-crawl.spec.ts"],
       "blockers": [],
       "updatedAt": "2026-11-16",
-      "sourceRevision": "2b48e8bd",
+      "sourceRevision": "000cdd89",
       "links": ["docs/decisions/ADR-20261024-front-react-spa.md"],
-      "proof": ["16/11: aberto no fechamento do RUN-165 (mapa F09 do explorer 16/11, secao (e)5)."]
+      "proof": [
+        "16/11: aberto no fechamento do RUN-165 (mapa F09 do explorer 16/11, secao (e)5).",
+        "16/11: FECHADO pelo proprio lote: PR #250 mergeado em 000cdd89 (39f3b08c + emendas de contrato eb3ca4b5/17713f80). Os 6 arquivos fora de disco; redirects intocados; prova de ausencia no molde notifications; tabela garantia→novo-lar no RELATORIO (link-crawl, capture, recon-032, sidebar exige /app/conversas com negativa, app-shell/atalho do profile direto). Revisao R2 Qwen: aprovada com 2 defeitos tratados antes do merge — (1) a afirmacao 'unico produtor de bloqueio vivo' era FALSA: report-button.tsx:167 insere dm_blocks pelo browser, vivo em /indicacoes/[id] (indication-detail.tsx:832) — pre-condicao registrada no F09-B3; (2) app-shell.tsx nao estava nos allowed_paths — emenda 17713f80. chat-thread.tsx orfao → TROCA-RESIDUOS. CI 43777560959 todo verde no head entregue."
+      ],
+      "completedAt": "2026-11-16",
+      "completedChecklist": [true, true, true]
     },
     {
       "id": "F05-CANCELAR-EVENTO",
