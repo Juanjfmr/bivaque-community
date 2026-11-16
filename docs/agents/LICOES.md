@@ -292,6 +292,11 @@ Fechamento do lote: ~45 min -> ~11 min (4x), alvo 8-12 atingido.
   linha; e aspas duplas em linha de comentário de cabeçalho viram conteúdo e estouram "esperava
   chave: valor". Cada `- ` em uma linha; comentários sem aspas. Paga 3× em 16/11 (CIDADE, RUN-169,
   RUN-170).
+- Search do roteador: valores numéricos viajam como números. O serializador padrão do TanStack
+  entre aspas em strings que parecem número (preserva o round-trip de tipo), e o link do alerta
+  virou `quartos=%222%22` — invisível no app (o parser aceitou os dois formatos), visível no CI
+  @stateful que assertou o endereço cru. Nunca pré-String() um número destinado ao search; o
+  inverso (leitura tolerante a string e número) continua obrigatório. RUN-171, 42f80426.
 - Item de menu que abre sobreposição: NÃO abrir a nova folha no mesmo clique que fecha o menu —
   o fechamento do Radix Menu é um history.back() da entrada, que popa a sobreposição recém-aberta
   (o gesto de bloquear nunca abria a confirmação; trace do CI: click sem after, 180 s pendurado).

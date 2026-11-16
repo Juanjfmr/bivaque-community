@@ -6275,7 +6275,7 @@
       "tests": [],
       "blockers": [],
       "updatedAt": "2026-11-16",
-      "sourceRevision": "000cdd89",
+      "sourceRevision": "1e668045",
       "links": ["docs/LANCAMENTO.md"],
       "proof": [
         "02/11: aberto na definição do lançamento (docs/LANCAMENTO.md), por mandato do dono.",
@@ -6310,7 +6310,7 @@
         "Portões do proxy movidos com teste por perfil",
         "Código, testes e ferramentas antigas removidos",
         "Fase 1 (RUN-019, decisão revista em 06/11): 307 das 11 rotas autorizadas, IDs/query preservados, sem ciclo; /indicacoes/:id fica na web até F04 para preservar Ajudou a resolver; demais rotas e edições ficam na web",
-        "Lacunas seguintes: filtros/IDs de Guia e busca FECHADOS (RUN-162); cidade/localidade FECHADA (CIDADE-169, 1c488b1f — consulta no app + 307 das duas telas); F05: criar/editar era drift (ja feito — f05-eventos-real:319-375, tela trocada PR #176), fan-out de convites NAO e linha F05 do LANCAMENTO (decisao 16/11; parte de e-mail em OUTBOX-INVITE-RECIPIENTS), cancelar-encontro do organizador FECHADO (RUN-167, 0f0098f9); F05 COMPLETO; Meus anuncios e alertas (F06; criar/editar RUN-156, imovel RUN-164, salvar FECHADO (RUN-168, 8c3224fa), alertas FECHADOS (RUN-169, 9100ab6b); resta filtros server-side no RUN-171 (em curso; fecha a perda bairro/tipo_negocio do B). Falha visual do glyph do salvo virou card SALVAR-GLYPH; F07; seguranca na conversa e preferencias FECHADA (F09; RUN-165, 2b48e8bd — bloquear, denunciar, Mensagens na matriz, destino do aviso DM em runtime); pasta /messages REMOVIDA (RUN-166, 000cdd89) — LAN-F09 so espera LAN-PUSH; troca de /profile proprio + editar (F10; paridade FECHA aqui — RUN-170, 74d58714; resta o Lote B do card F10-TROCA-PERFIL-PROPRIO: redirects + ~20 pins + morte do toggle Exibir/upload de foto)",
+        "Lacunas seguintes: filtros/IDs de Guia e busca FECHADOS (RUN-162); cidade/localidade FECHADA (CIDADE-169, 1c488b1f — consulta no app + 307 das duas telas); F05: criar/editar era drift (ja feito — f05-eventos-real:319-375, tela trocada PR #176), fan-out de convites NAO e linha F05 do LANCAMENTO (decisao 16/11; parte de e-mail em OUTBOX-INVITE-RECIPIENTS), cancelar-encontro do organizador FECHADO (RUN-167, 0f0098f9); F05 COMPLETO; Meus anuncios e alertas (F06; criar/editar RUN-156, imovel RUN-164, salvar FECHADO (RUN-168, 8c3224fa), alertas FECHADOS (RUN-169, 9100ab6b); filtros FECHADOS (RUN-171, 1e668045). F06 fecha em funcionalidades com B/C/D fundidos; o cartao LAN-F06 ainda espera LOC-IMPL (dependencia registrada) e o card SALVAR-GLYPH (P1 pre-lancamento); F07; seguranca na conversa e preferencias FECHADA (F09; RUN-165, 2b48e8bd — bloquear, denunciar, Mensagens na matriz, destino do aviso DM em runtime); pasta /messages REMOVIDA (RUN-166, 000cdd89) — LAN-F09 so espera LAN-PUSH; troca de /profile proprio + editar (F10; paridade FECHA aqui — RUN-170, 74d58714; resta o Lote B do card F10-TROCA-PERFIL-PROPRIO: redirects + ~20 pins + morte do toggle Exibir/upload de foto)",
         "Provar a revisão da fase 1 no CI: E2E integrado e rastreador; manter as portas de /profile e /community enquanto suas jornadas ficam na web"
       ],
       "dependencies": [
@@ -7245,6 +7245,36 @@
       "completedChecklist": [true, true, true]
     },
     {
+      "id": "RUN-171",
+      "title": "F06 Lote C: filtros do Mercado no servidor (espelho searchProperties da web)",
+      "phase": "Lançamento",
+      "priority": "P1",
+      "category": "backend",
+      "status": "done",
+      "completedAt": "2026-11-16",
+      "description": "GET /api/app/mercado filtra o universo, nao a pagina carregada: lista de IMOVEL passa a usar property_details!inner (restringe o pai; desapego/detalhe seguem left join — item nao tem satellite), teto de valor na coluna do deal (rent_cents/sale_price_cents, como queries.ts:143), quartos gte, tipo/deal eq, q/bairro ilike title/neighborhood. Ordem por preco aceita so no item (a web nunca ordenou moradia por preco; imovel com price_* responde 400, sem ignorar em silencio, e o controle saiu da aba). status=active pinnado (S6 'So disponiveis'). Tela: filtros viram query do GET com reset de cursor, chips removiveis inclusive bairro/negocio vindos de link, vazio do servidor. alertSearchHref volta a emitir bairro/tipo_negocio (fecha a perda declarada do RUN-169) e passa a gravar NUMEROS como numeros (fix do CI: o serializador do roteador entre aspas strings que parecem numero). Sem migration, sem rota nova.",
+      "checklist": [
+        "!inner restringe o pai + coluna do deal (itens 1-2 do F06-RESSALVAS)",
+        "Tela consome o servidor com reset de cursor e chips",
+        "alertSearchHref harmonizado (perda do B fechada)",
+        "CI completo verde na revisao entregue"
+      ],
+      "dependencies": [],
+      "tests": [
+        "tests/unit/app-api/mercado/rotas.test.ts",
+        "apps/app/tests/e2e/mercado-filtros.spec.ts",
+        "tests/e2e/f06-mercado-real.spec.ts"
+      ],
+      "blockers": [],
+      "updatedAt": "2026-11-16",
+      "sourceRevision": "1e668045",
+      "links": ["docs/agents/tasks/F06-FILTROS.task.yml"],
+      "proof": [
+        "16/11: PR #251 mergeado em 1e668045 (executor 97d2aa81 + fix do stateful 42f80426 + limpeza semAcento b1240524). Revisao R2 Qwen: PASS com 4 ressalvas nao-bloqueantes — R3/R4/R2 respondidas no RELATORIO §6 com evidencia (RPC atomica create_property_listing desde SEC-006 torna o cenario 'imovel sem details' inexistente por escrita; o app espelha a regra que a web JA roda); R4b virou commit de remocao do codigo orfao. O E2E @stateful pegou de primeira o bug do serializador (quartos=%222%22) — prova de que a assercao no endereco cru foi bem escolhida. CI 43793746858 todo verde (fast/core/stateful×3/agregador) + Visual 43793746899 com 7 shards + mobile-first verdes."
+      ],
+      "completedChecklist": [true, true, true, true]
+    },
+    {
       "id": "F05-CANCELAR-EVENTO",
       "title": "F05: cancelar o encontro pelo organizador no app",
       "phase": "Lançamento",
@@ -7279,7 +7309,7 @@
       "status": "repo",
       "description": "O RUN-163 deixou claro: /profile (proprio) e /profile/editar nao sao redirect puro — a web tem 3 recursos sem casa no app. (1) TRANSFERENCIA DE CIDADE com data de saida (CitySection/moveCityAction; decisao do dono 25/09; a casca so muda a cidade VISTA) — plano: PORTAR (produto aprovado que a troca nao pode matar). (2) AUTODECLARACAO Forca/OM (ADR-20260908 D2) — portar declaracao; aposentar o toggle Exibir (sem visivel-a-outros no lancamento) com registro para ratificacao no marco. (3) FOTO DE AVATAR — aposentar no lancamento (iniciais sao a identidade da regua; a linha F10 nao pede foto), dados no banco intactos, card pos-lancamento. Depois: redirects /profile e /profile/editar → /app/voce, remover telas/pecas, pins migrados (shell-navigation ancora em /profile, sidebar hrefs, persistent-login logout via /profile, city-switcher #cidade, capture).",
       "checklist": [
-        "Decidir e portar a transferencia de cidade",
+        "[x] Decidir e portar a transferencia de cidade (RUN-170, 74d58714 — declaracao + estado no app; 'desfazer' permanece inexistente por decisao do ADR-20261116)",
         "Portar autodeclaracao Forca/OM (toggle Exibir aposentado, item no marco)",
         "Aposentar foto de avatar com card pos-lancamento",
         "Redirects + remocao das telas + pins migrados"
@@ -7290,7 +7320,10 @@
       "updatedAt": "2026-11-16",
       "sourceRevision": "9ca86c53",
       "links": [],
-      "proof": ["16/11: aberto pelo mapa da troca /profile + fechamento do RUN-163."]
+      "proof": [
+        "16/11: aberto pelo mapa da troca /profile + fechamento do RUN-163.",
+        "16/11: paridade de cidade fechada pelo RUN-170; afiliação privada idem. Troca em si segue no lote em curso (RUN-172)."
+      ]
     },
     {
       "id": "SESSAO-COOKIES-WEAKMAP",
@@ -7650,21 +7683,24 @@
       "phase": "Lançamento",
       "priority": "P3",
       "category": "backend",
-      "status": "repo",
+      "status": "done",
       "description": "Ressalvas do RUN-013 (F06) integrado pelo PR #141 sem bloquear a integração.",
       "checklist": [
-        "Filtros de quartos e tipo via property_details restringirem o anúncio pai",
-        "Imóvel com price_cents nulo não ser excluído da ordenação e do filtro de preço",
-        "Salvar anúncio do Início (vindo do F02) persistir"
+        "[x] Filtros de quartos e tipo via property_details restringirem o anúncio pai (RUN-171: lista de imovel passou a property_details!inner, com unit asserindo as duas SELECTs)",
+        "[x] Imovel com price_cents nulo nao ser excluido da ordenacao e do filtro de preco (RUN-171: teto na coluna do deal — rent_cents/sale_price_cents, como queries.ts:143; unit prova dentro-mantem/fora-sai)",
+        "[x] Salvar anuncio do Inicio (vindo do F02) persistir (RUN-168, 8c3224fa)"
       ],
       "proof": [
-        "16/11: item 3 (salvar do Início persistir) FECHADO pelo RUN-168 (8c3224fa). Itens 1-2 (filtros restringirem o pai; preco do satellite) em execucao no RUN-171 (ds/f06-filtros) — o mecanismo existe na web (queries.ts searchProperties usa property_details!inner + coluna por deal), entao e espelhar, nao migrar."
+        "16/11: item 3 (salvar do Início persistir) FECHADO pelo RUN-168 (8c3224fa). Itens 1-2 (filtros restringirem o pai; preco do satellite) em execucao no RUN-171 (ds/f06-filtros) — o mecanismo existe na web (queries.ts searchProperties usa property_details!inner + coluna por deal), entao e espelhar, nao migrar.",
+        "16/11: FECHADO — itens 1-2 pelo RUN-171 (1e668045), item 3 pelo RUN-168 (8c3224fa). A contagem na vitrine do anunciante continua fora (pertence ao Dono/portal, nao a ressalva)."
       ],
       "tests": [],
       "links": ["docs/agents/tasks/RUN-013.task.yml"],
       "dependencies": [],
       "updatedAt": "2026-11-16",
-      "sourceRevision": "83470086"
+      "sourceRevision": "1e668045",
+      "completedAt": "2026-11-16",
+      "completedChecklist": [true, true, true]
     },
     {
       "id": "GUIA-SUBMITTED-BY-COLUNA",
