@@ -1,0 +1,87 @@
+# CI mais rápido, sem vermelho falso e com trava mecânica de merge.
+#
+# Autoridade: diagnóstico de CI de 16/11 (.work/orq/relatorios/diagnostico-ci.md, propostas
+# P1 a P5 e a meta de zero merge com completo vermelho) e pedido do dono de 16/11 de aprimorar o
+# CI, os testes e o processo. Medido desde 14/11: PR CI com 35 por cento de falha e p90 de 21,7
+# min; cerca de 895 min de parede em runs obsoletos sem cancelamento; 1477 runner-min com a
+# label ci:full grudada depois do primeiro completo; Claude Review falhando em 93 de 93 runs;
+# quatro merges com o Visual Smoke vermelho; imagens do Supabase baixadas em quatro stacks e o
+# Chromium em onze jobs por fechamento.
+#
+# Decisão do coordenador, 16/11, por delegação, emenda do ADR-20261114 neste lote: as quatro
+# medidas abaixo e a trava de merge por script; não se adota branch protection, mantendo a
+# alternativa 4 do ADR. Painel semanal, quarentena e pular reprova de árvore idêntica ficam para
+# lote seguinte.
+
+task_id: HRN-005
+
+objective: >
+  Cada push novo num PR cancela o run anterior do mesmo PR; nenhum PR nasce com check vermelho
+  de serviço sem chave; a label ci:full sai sozinha quando o PR é mergeado; navegadores e imagens
+  do Supabase vêm de cache; flake absorvido pelo retry aparece como aviso no check; e o merge
+  feito pela orquestração só acontece com o PR CI completo e o Visual Smoke verdes no mesmo SHA.
+
+authority:
+  - .work/orq/relatorios/diagnostico-ci.md (P1, P2, P3, P4, P5 e as metas da seção 5)
+  - docs/decisions/ADR-20261114-ci-ciclo-rapido-e-completo-no-fechamento.md (emendado neste lote)
+  - Pedido do dono de 16/11 (CI, testes e processo)
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    .github/workflows/pull-request-ci.yml e bivaque-app-visual-smoke.yml sem bloco concurrency;
+    claude-review.yml roda em todo PR e falhou 93 de 93 desde 14/11; nenhum workflow remove a label
+    ci:full; Pre-pull Supabase e playwright install sem cache nas linhas 104, 133, 208, 376 e 418
+    do pull-request-ci.yml e 61 do visual; PRs 240, 241, 244 e 245 mergeados com Visual vermelho.
+
+allowed_paths:
+  - .github/workflows/pull-request-ci.yml
+  - .github/workflows/bivaque-app-visual-smoke.yml
+  - .github/workflows/bivaque-r72-mobile-comparison.yml
+  - .github/workflows/claude-review.yml
+  - .github/workflows/ci-label-cleanup.yml
+  - scripts/agents/merge-seguro.mjs
+  - scripts/ci/anotar-flakes.mjs
+  - tests/scope/merge-seguro.test.mjs
+  - tests/scope/anotar-flakes.test.mjs
+  - tests/scope/workflows-ci.test.mjs
+  - docs/decisions/ADR-20261114-ci-ciclo-rapido-e-completo-no-fechamento.md
+  - docs/decisions/RATIFICACAO.md
+  - docs/agents/LICOES.md
+  - docs/agents/tasks/HRN-005.task.yml
+
+forbidden:
+  - remover, pular ou enfraquecer qualquer passo de verificação dos jobs existentes
+  - cancelar runs de push na main (o cancelamento vale só para pull_request)
+  - mudar o pin do Playwright, a versão do CLI do Supabase, o runner ou dependências
+  - mudar retries do Playwright ou ligar fail-on-flaky-tests
+  - adotar branch protection ou mudar configuração do repositório no GitHub
+  - push, merge, abrir PR, force-push; ler, criar ou imprimir segredos ou arquivos de ambiente
+
+acceptance:
+  - "pull-request-ci.yml, bivaque-app-visual-smoke.yml e bivaque-r72-mobile-comparison.yml ganham concurrency agrupado por workflow e número do PR, com cancel-in-progress verdadeiro só quando o evento é pull_request."
+  - "claude-review.yml só executa o job quando a variável de repositório CLAUDE_REVIEW_ENABLED for true ou o PR tiver a label review:claude; comentário diz que religar é ato do dono."
+  - "Workflow novo ci-label-cleanup.yml, em pull_request closed com merged verdadeiro, remove a label ci:full com permissão mínima de pull-requests write."
+  - "Os navegadores do Playwright vêm de actions/cache com chave pela versão pinada e pelo lockfile, com o playwright install mantido como passo de fallback no cache miss; as imagens do Supabase vêm de cache por tag com docker save e load, mantendo o pre-pull com backoff como fallback."
+  - "Depois de cada passo de E2E, um passo lê o relatório JSON do Playwright e emite ::warning:: por teste que passou só no retry, sem mudar o código de saída do job; scripts/ci/anotar-flakes.mjs tem teste de escopo com relatório de exemplo."
+  - "scripts/agents/merge-seguro.mjs recebe o número do PR, confere pela API que o SHA do head tem o PR CI completo (job ci-core presente e verde) e o Visual Smoke verdes, ou o Visual pulado legitimamente por paths, e só então faz o merge por squash com o SHA completo; recusa com mensagem clara em qualquer outro caso. Teste de escopo cobre os casos verde, vermelho, pendente, Visual ausente por paths e SHA divergente, com a API simulada."
+  - "Teste de escopo tests/scope/workflows-ci.test.mjs lê os YAML e prova os itens de concurrency, gate do Claude e presença dos fallbacks de cache."
+  - "ADR-20261114 ganha a emenda de 16/11 com as decisões; LICOES.md ganha uma linha mandando fazer o merge só pelo merge-seguro.mjs."
+
+proof:
+  - node --test tests/scope/merge-seguro.test.mjs tests/scope/anotar-flakes.test.mjs tests/scope/workflows-ci.test.mjs
+  - "node scripts/agents/prova-fila.mjs -- npx pnpm@11.18.0 test"
+  - npx pnpm@11.18.0 lint
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/HRN-005.task.yml
+  - "prova de execução no PR deste lote: um push novo cancela o run anterior; o completo com ci:full roda com cache hit no segundo run e mede o tempo; o Claude Review aparece como pulado"
+
+risk: infra e CI, merge e gates de verificação
+risk_level: R3
+adr: docs/decisions/ADR-20261114-ci-ciclo-rapido-e-completo-no-fechamento.md
+
+reviewer_must_differ_from_executor: true
+retry_budget: 2
+on_budget_exhausted: HUMAN_DECISION
+
+closure:
+  requires_runtime_evidence: true
