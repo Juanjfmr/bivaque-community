@@ -6274,7 +6274,7 @@
       "tests": [],
       "blockers": [],
       "updatedAt": "2026-11-16",
-      "sourceRevision": "1c488b1f",
+      "sourceRevision": "74d58714",
       "links": ["docs/LANCAMENTO.md"],
       "proof": [
         "02/11: aberto na definição do lançamento (docs/LANCAMENTO.md), por mandato do dono.",
@@ -6294,7 +6294,8 @@
         "15/11: RUN-161 F10 perfil alheio (6f5119cd, BLOCK-AFFILIATION respeitado, reuse das RPCs DONE-PROFILE-RPCS sem migration) — 10º lote, FECHA O F10 (funcionalidades). Regressão caught+fix: campo aditivo autorId tornou o parser do cliente estrito mas o POST do comentário não o devolvia (o fio recusava o comentário); lição: campo aditivo entra em TODOS os caminhos que devolvem o objeto parseado, inclusive escritas. Resta a troca de /profile próprio + /profile/interests. Gap: invitation_accepted cai em /app/voce.",
         "16/11: RUN-162 (PR #241, f237d683) fecha F08-RESSALVAS so com testes. RUN-163 (PR #242, 9ca86c53) troca /profile/interests → /app/voce e PORTA O PORTAO DE ADMISSAO para a rota do app (a web exigia verified OU familiar admitido antes de listar com service_role; a rota nao conferia — a troca mataria a fronteira). F05 reclassificado: criar/editar era drift; convites fan-out nao e linha do LANCAMENTO.",
         "16/11: RUN-165 mergeado (2b48e8bd). A pasta (shell)/messages nao serve mais tela (307) e perdeu seu unico gesto vivo (bloquear) para o app — a remocao dela (RUN-166) esta destravada.",
-        "16/11: CIDADE-169 mergeado (1c488b1f) — /cidade e /localidade deixaram de servir tela de membro; o painel de cidade do app navega por id real."
+        "16/11: CIDADE-169 mergeado (1c488b1f) — /cidade e /localidade deixaram de servir tela de membro; o painel de cidade do app navega por id real.",
+        "16/11: RUN-168 (8c3224fa), RUN-169 (9100ab6b) e RUN-170 (74d58714) fundidos; F06 so fecha com RUN-171 + LOC-IMPL (dependencia registrada no card); F10 tem paridade completa no app e so espera a troca."
       ],
       "id": "LAN-TROCA",
       "title": "Fase 6: varredura da troca — nenhuma rota de membro no apps/web servindo tela",
@@ -6307,7 +6308,7 @@
         "Portões do proxy movidos com teste por perfil",
         "Código, testes e ferramentas antigas removidos",
         "Fase 1 (RUN-019, decisão revista em 06/11): 307 das 11 rotas autorizadas, IDs/query preservados, sem ciclo; /indicacoes/:id fica na web até F04 para preservar Ajudou a resolver; demais rotas e edições ficam na web",
-        "Lacunas seguintes: filtros/IDs de Guia e busca FECHADOS (RUN-162); cidade/localidade FECHADA (CIDADE-169, 1c488b1f — consulta no app + 307 das duas telas); F05: criar/editar era drift (ja feito — f05-eventos-real:319-375, tela trocada PR #176), fan-out de convites NAO e linha F05 do LANCAMENTO (decisao 16/11; parte de e-mail em OUTBOX-INVITE-RECIPIENTS), cancelar-encontro do organizador FECHADO (RUN-167, 0f0098f9); F05 COMPLETO; Meus anuncios e alertas (F06; criar/editar RUN-156, imovel RUN-164, salvar RUN-168 e alertas RUN-169 em revisao/CI; resta filtros server-side no Lote C — herdara bairro/tipo_negocio da perda declarada do B); F07; seguranca na conversa e preferencias FECHADA (F09; RUN-165, 2b48e8bd — bloquear, denunciar, Mensagens na matriz, destino do aviso DM em runtime); sobra a REMOCAO da pasta /messages (RUN-166); troca de /profile proprio + editar (F10; funcionalidades RUN-157/158/160/161/163 completas; paridade pendente no card F10-TROCA-PERFIL-PROPRIO)",
+        "Lacunas seguintes: filtros/IDs de Guia e busca FECHADOS (RUN-162); cidade/localidade FECHADA (CIDADE-169, 1c488b1f — consulta no app + 307 das duas telas); F05: criar/editar era drift (ja feito — f05-eventos-real:319-375, tela trocada PR #176), fan-out de convites NAO e linha F05 do LANCAMENTO (decisao 16/11; parte de e-mail em OUTBOX-INVITE-RECIPIENTS), cancelar-encontro do organizador FECHADO (RUN-167, 0f0098f9); F05 COMPLETO; Meus anuncios e alertas (F06; criar/editar RUN-156, imovel RUN-164, salvar FECHADO (RUN-168, 8c3224fa), alertas FECHADOS (RUN-169, 9100ab6b); resta filtros server-side no RUN-171 (em curso; fecha a perda bairro/tipo_negocio do B). Falha visual do glyph do salvo virou card SALVAR-GLYPH; F07; seguranca na conversa e preferencias FECHADA (F09; RUN-165, 2b48e8bd — bloquear, denunciar, Mensagens na matriz, destino do aviso DM em runtime); REMOCAO da pasta /messages no PR #250 (revisada com os 2 defeitos tratados; CI em curso); troca de /profile proprio + editar (F10; paridade FECHA aqui — RUN-170, 74d58714; resta o Lote B do card F10-TROCA-PERFIL-PROPRIO: redirects + ~20 pins + morte do toggle Exibir/upload de foto)",
         "Provar a revisão da fase 1 no CI: E2E integrado e rastreador; manter as portas de /profile e /community enquanto suas jornadas ficam na web"
       ],
       "dependencies": [
@@ -7074,6 +7075,123 @@
       "completedChecklist": [true, true, true, true]
     },
     {
+      "id": "RUN-168",
+      "title": "F06 Lote D: salvar de anúncio persistido em listing_saves",
+      "phase": "Lançamento",
+      "priority": "P1",
+      "category": "backend",
+      "status": "done",
+      "completedAt": "2026-11-16",
+      "description": "POST/DELETE /api/app/mercado/[id]/salvo + GET /api/app/mercado/salvos (molde ADR §5, dono sempre da sessão, posse decide o banco, duplicata idempotente, 404 sem confirmar, sem service_role, sem eco). Lista do mercado com flag salvo por item numa única leitura .in() (sem N+1) — campo aditivo coberto em todos os caminhos. Anuncio/Mercado/Inicio/Salvos trocam o Set local por estado do servidor (otimista com reversão); aba Mercado/Imóveis de /app/salvos lista os reais. Sem migration (policies de dono preexistentes). R3 pela matriz (dado pessoal) sob o guarda-chuva do ADR-20261105 — nenhuma fronteira nova.",
+      "checklist": [
+        "[x] Rotas POST/DELETE/GET salvos com unit positivo/negativo",
+        "[x] Flag salvo na lista sem N+1, em todos os caminhos do parser",
+        "[x] 4 telas com estado real + Salvos listando o banco",
+        "[x] E2E stub local + @stateful no CI"
+      ],
+      "dependencies": [],
+      "tests": [
+        "tests/unit/app-api/mercado/rotas.test.ts",
+        "apps/app/tests/e2e/mercado-salvos.spec.ts",
+        "tests/e2e/f06-mercado-real.spec.ts"
+      ],
+      "blockers": [],
+      "updatedAt": "2026-11-16",
+      "sourceRevision": "8c3224fa",
+      "links": ["docs/agents/tasks/F06-SALVAR.task.yml"],
+      "proof": [
+        "16/11: PR #247 mergeado em 8c3224fa (executor 3e9e484f + rebane/reconciliacao do manifesto pelo coordenado: conflito triplo do api-surface resolvido a mao, TOTAL 96=disco, 12/12 no teste do manifesto). Revisao independente COM LENTE DE SEGURANCA (Qwen; security-auditor indisponivel no harness — parecer registrado cobrindo a lente): PASS, zero bloqueante; dupla defesa insert (leitura RLS + policy insert_reader) conferida na migration 20260911043053:441-460; cursor com regex estrita sem injecao; fotos so assinadas. Achados: mensagem de commit dizia 93->95 (contagem certa no codigo); corrida de milissegundos visibilidade→insert devolve 403 em vez de 404 (aceito). CI 43768097192 todo verde no head rebasado.",
+        "16/11: defeito visual declarado pelo executor e confirmado: o subset de Material Symbols desenha bookmark identico a bookmark_border — o estado salvo NAO muda visualmente nos cartoes (label/aria-pressed mudam; a arte nao). Virou card proprio SALVAR-GLYPH (pre-lancamento, P1) — regenerar public/fonts."
+      ],
+      "completedChecklist": [true, true, true, true]
+    },
+    {
+      "id": "RUN-169",
+      "title": "F06 Lote B: gestão de alertas de busca de imóvel no app (troca de /imoveis/alertas)",
+      "phase": "Lançamento",
+      "priority": "P1",
+      "category": "frontend",
+      "status": "done",
+      "completedAt": "2026-11-16",
+      "description": "GET+POST /api/app/imoveis/alertas e PATCH+DELETE /[id] sobre listing_alerts sob RLS de dono preexistente (POST espelha createListingAlertAction coluna a coluna, kind property fixo, validacao num modulo so — lib/listings/alerts.ts); tela AlertasDeImovel (criar/editar/ativar/pausar/apagar com Confirmacao da entrada); 307 /imoveis/alertas com a saida da pasta web + alert-form + alert-manager + as 4 server actions sem importador vivo. A linha F06 nao pedia alerta novo — fase 6 nao fecha com tela de membro na web. Sem migration. Perda declarada: alertSearchHref perdia bairro/tipo_negocio (colunas que o app nao lia) — o RUN-171 fecha.",
+      "checklist": [
+        "[x] Rotas CRUD com unit payload==action e negativos",
+        "[x] Tela com estados honestos + Confirmacao sem empilhamento",
+        "[x] Troca 307 + remocao em cadeia + pins",
+        "[x] E2E @stateful criar→listar→desligar→apagar"
+      ],
+      "dependencies": [],
+      "tests": [
+        "tests/unit/app-api/imoveis/rotas.test.ts",
+        "tests/e2e/imoveis-alertas-real.spec.ts"
+      ],
+      "blockers": [],
+      "updatedAt": "2026-11-16",
+      "sourceRevision": "9100ab6b",
+      "links": ["docs/agents/tasks/F06-ALERTAS.task.yml"],
+      "proof": [
+        "16/11: PR #248 mergeado em 9100ab6b (executor a3cf603f + rebane sobre #247 com TOTAL 99=disco, manifesto 12/12). Revisao independente com lente de seguranca (Qwen): PASS com notas — posse so pelo banco (linha alheia some sem confirmar), limites identicos aos CHECKs da migration, corpo nao toca locality_id no PATCH (preserva cidade de alertas antigos), grep do revisor confirmou zero importador vivo das actions mortas. Notas nao-bloqueantes: N-1 PATCH sem campo 'ativo' reativa (default true; par com a action morta — exigir explicito num card futuro se alguem expor API publica); N-3 a lente registrada e Qwen, nao security-auditor (mesmo tratamento do RUN-165). CI: o primeiro desktop-1440 falhou por rate-limit do Docker no pull do kong:2.8.1 (stack nem subiu — infra), rerun verde; run final todo verde (core+stateful×3+fast+visual×7)."
+      ],
+      "completedChecklist": [true, true, true, true]
+    },
+    {
+      "id": "RUN-170",
+      "title": "F10 Lote A (paridade): transferência de cidade + afiliação privada no app",
+      "phase": "Lançamento",
+      "priority": "P1",
+      "category": "backend",
+      "status": "done",
+      "completedAt": "2026-11-16",
+      "description": "POST /api/app/voce/cidade sobre o RPC declare_locality_transfer com o cliente da sessao (SECURITY DEFINER/auth.uid(); validacao compartilhada lib/locality/move-city.ts reusa; 23505→409 com a frase vigente; sem service_role; sem migration) + GET cidade?destino= p/ o link ?mudar=. GET/PUT /api/app/voce/afiliacao sobre profile_affiliations com is_visible SEMPRE false por construcao (lista branca de chaves recusa qualquer sinônimo de visibilidade antes do banco; limpar=apaga; posse so pelo RLS dono). Seções no Voce (Sua cidade com estado saindo-ate, form so sem saida; Forca/OM privada) e leitura de ?mudar= com /voce em ROTAS_COM_BUSCA. Validaçao de afiliacao movida p/ lib/profile/affiliation.ts (re-export de 1 linha na (shell)). R3 por delegacao: ADR-20261116 + linha na RATIFICACAO.",
+      "checklist": [
+        "[x] POST cidade no molde ADR §5 com todos os negativos",
+        "[x] Afiliaçao privada por construcao (sem porta de visibilidade)",
+        "[x] Campo aditivo cidade.id/outbound nos 3 caminhos do GET voçe + mutacao",
+        "[x] Seçoes na UI + param ?mudar=",
+        "[x] E2E stub local + @stateful no CI"
+      ],
+      "dependencies": [],
+      "tests": [
+        "tests/unit/app-api/voce/cidade.test.ts",
+        "tests/unit/app-api/voce/afiliacao.test.ts",
+        "apps/app/tests/e2e/voce-cidade.spec.ts",
+        "tests/e2e/f10-voce-paridade-real.spec.ts"
+      ],
+      "blockers": [],
+      "updatedAt": "2026-11-16",
+      "sourceRevision": "74d58714",
+      "links": [
+        "docs/agents/tasks/F10-PARIDADE.task.yml",
+        "docs/decisions/ADR-20261116-perfil-transferencia-e-afiliacao-no-app.md"
+      ],
+      "proof": [
+        "16/11: PR #249 mergeado em 74d58714 (executor 19d592eb + copy/ADR a14bfc9c + rebane sobre #248 com TOTAL 101=disco, 12/12). Revisao independente com lente de seguranca (Qwen; mesmo tratamento de auditoria dos lotes R3 do dia): PASS com 2 ressalvas menores, ambas tratadas ANTES do merge — R1 o app zera is_visible ao editar linha deixada visivel pela web (menos exposicao, aceitavel; registrado em linha propria no ADR para o dono na ratificacao) e R2 ponto duplicado na copy (fixado). Lente confirmou BLOCK-AFFILIATION por construcao: lista branca de chaves (:101) recusa sinonimo de visibilidade; zero profile_affiliations_for; zero service_role nos arquivos novos; destino do RPC so por id validado contra catalogo. CI 43776818269 todo verde no head final (stateful×3 inclusive o f10-voce-paridade-real novo).",
+        "16/11: o que NAO veio (por decisao, no ADR): UI de desfazer transferencia (reverse_locality_transfer e hatch service_role sem produto em lugar nenhum), foto de avatar, e a troca em si de /profile+/editar com os ~20 pins — Lote B do F10, destravado por este lote + CIDADE-169."
+      ],
+      "completedChecklist": [true, true, true, true, true]
+    },
+    {
+      "id": "SALVAR-GLYPH",
+      "title": "Glifos bookmark/bookmark_border identicos no subset: estado salvo invisivel nos cartoes",
+      "phase": "Lançamento",
+      "priority": "P1",
+      "category": "frontend",
+      "status": "repo",
+      "description": "O subset self-hosted de Material Symbols (apps/app/public/fonts) desenha bookmark identico a bookmark_border, entao depois do RUN-168 o estado SALVO nao muda visualmente nos cartoes de Mercado/Inicio (o label e o aria-pressed mudam; a arte nao — achado declarado pelo executor no fechamento). Corrigir exige regenerar o subset com o glifo real de preenchimento (molde do que preencheu os glifos usados hoje), checar os tres tamanhos nos dois temas, e pinar em teste visual que salvar/dessalvar troca o pixel do icone. Pre-lancamento: o criterio 1 do lancamento pede feedback visível do fluxo F06.",
+      "checklist": [
+        "Regenerar o subset com bookmark preenchido distinto do outline",
+        "Prova visual 375/768/1440 x2 temas de salvo vs nao-salvo",
+        "Pin automatizado no spec de cartao"
+      ],
+      "dependencies": ["RUN-168"],
+      "tests": ["apps/app/tests/e2e/mercado-salvos.spec.ts"],
+      "blockers": [],
+      "updatedAt": "2026-11-16",
+      "sourceRevision": "8c3224fa",
+      "links": ["docs/agents/tasks/F06-SALVAR.task.yml"],
+      "proof": ["16/11: aberto no fechamento do RUN-168 (relatorio do executor + revisao Qwen)."]
+    },
+    {
       "id": "CIDADE-LOCALIDADE-TROCA",
       "title": "Cidade/localidade: telas de membro ainda na web precisam de jornada de troca própria",
       "phase": "Lançamento",
@@ -7532,11 +7650,13 @@
         "Imóvel com price_cents nulo não ser excluído da ordenação e do filtro de preço",
         "Salvar anúncio do Início (vindo do F02) persistir"
       ],
-      "proof": [],
+      "proof": [
+        "16/11: item 3 (salvar do Início persistir) FECHADO pelo RUN-168 (8c3224fa). Itens 1-2 (filtros restringirem o pai; preco do satellite) em execucao no RUN-171 (ds/f06-filtros) — o mecanismo existe na web (queries.ts searchProperties usa property_details!inner + coluna por deal), entao e espelhar, nao migrar."
+      ],
       "tests": [],
       "links": ["docs/agents/tasks/RUN-013.task.yml"],
       "dependencies": [],
-      "updatedAt": "2026-11-06",
+      "updatedAt": "2026-11-16",
       "sourceRevision": "83470086"
     },
     {
@@ -7576,7 +7696,8 @@
         "Atualizar create-menu/market-strip para a porta do app (ou aceitar o redirect)",
         "Confirmar e remover ações de foto de listing órfãs, se sem página viva",
         "Confirmar e remover apps/web/lib/user-group-interests-rpcs.ts (órfão após RUN-163)",
-        "Cosmético CIDADE-169: links /localidade residuais (explorar/servicos:466, communities/[id]:544 — caem no 307) e active-nav.ts:82 mapeia tela morta; repontar quando essas telas forem editadas"
+        "Cosmético CIDADE-169: links /localidade residuais (explorar/servicos:466, communities/[id]:544 — caem no 307) e active-nav.ts:82 mapeia tela morta; repontar quando essas telas forem editadas",
+        "chat-thread.tsx ficou sem importador vivo apos RUN-166 — confirmar e remover (limpeza, nao conducta)"
       ],
       "dependencies": [],
       "tests": [],
@@ -7587,7 +7708,8 @@
       "proof": [
         "15/11: registrado pelo coordenador ao fechar RUN-154/156, confrontado no disco (git grep). NÃO inclui o RPC mark_recommendation_resolved: a migration vigente (20261024110000_lote5_pergunta.sql:276) JÁ limpa resolved_reply_id — a ressalva da revisão do RUN-153 não se confirma no código.",
         "16/11: RUN-163 deixou o modulo de RPCs de interesses 6rfao com a morte da action web (declarado no relatorio do lote, fora do allowed_paths dele).",
-        "16/11: aberto pela condicao 3 da revisao do CIDADE-169."
+        "16/11: aberto pela condicao 3 da revisao do CIDADE-169.",
+        "16/11: achado da revisao do RUN-166."
       ]
     },
     {
@@ -7942,17 +8064,19 @@
       "status": "repo",
       "description": "O grant select,insert em dm_messages para authenticated (20260802001500:97) permite INSERT direto que pula a transição do pedido e a idempotência. Revogar o insert ou endurecer a policy, com prova positiva/negativa; é pré-existente, mas a RPC nova torna o caminho oficial.",
       "checklist": [
+        "PRECONDICAO (achado da revisao do RUN-166): migrar o dm_blocks.insert do report-button.tsx:167 (vivo em /indicacoes/[id] via indication-detail.tsx:832) para a rota do app ANTES de revogar o grant",
         "Revogar INSERT direto ou restringir por policy",
         "pgTAP positivo (RPC) e negativo (INSERT direto)",
         "Registro em RATIFICACAO.md se entrar em R3"
       ],
       "proof": [
-        "11/11: aberto a partir da ressalva B3 do parecer de segurança e89e33e0 (PR #181)."
+        "11/11: aberto a partir da ressalva B3 do parecer de segurança e89e33e0 (PR #181).",
+        "16/11: RUN-166 (#250) matou o INSERT do conversation-inbox mas o segundo produtor continua vivo e so foi visto na revisao independente — revogar o grant hoje quebraria a denuncia-com-bloqueio da indicacao. Ordem: report-button → rota do app (molde RUN-165) → revogacao."
       ],
       "tests": [],
       "links": [],
       "dependencies": ["F09-ENVIO-PELA-RPC"],
-      "updatedAt": "2026-11-11",
+      "updatedAt": "2026-11-16",
       "sourceRevision": "9b0dbf2b",
       "blockers": [],
       "completedChecklist": [false, false, false]
