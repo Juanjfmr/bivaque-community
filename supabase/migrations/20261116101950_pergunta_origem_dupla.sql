@@ -62,13 +62,17 @@ with check (
       locality_id is not null
       and group_id is not null
       and private.is_group_member(group_id)
+      -- As colunas da linha são qualificadas pelo nome da tabela: dentro do
+      -- subselect, `locality_id` sem qualificação resolveria para a coluna de
+      -- `groups` (que tem o mesmo nome) e a comparação viraria tautologia —
+      -- o teste do veto da cidade diferente pegou exatamente isso.
       and exists (
         select 1
         from public.groups as g
-        where g.id = group_id
+        where g.id = recommendation_requests.group_id
           and g.visibility = 'public'::public.group_visibility
           and g.is_deleted = false
-          and g.locality_id = locality_id
+          and g.locality_id = recommendation_requests.locality_id
       )
     )
   )

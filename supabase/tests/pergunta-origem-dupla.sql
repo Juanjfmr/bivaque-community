@@ -16,7 +16,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(18);
+select plan(20);
 
 \ir fixtures/foundation.inc
 \ir fixtures/groups.inc
@@ -57,6 +57,53 @@ select is(
   ),
   '40000000-0000-4000-8000-000000000001'::uuid,
   'D+ — a linha guarda o grupo de origem'
+);
+
+-- ── VETO 0: linha sem cidade e sem grupo é escopo inválido ────────────────
+-- Dois andares, de propósito: quem chama pela Data API esbarra na policy
+-- (42501) antes de o CHECK opinar; o CHECK segue valendo como defesa em
+-- profundidade para quem escreve fora da RLS (dono da tabela), e é ele que
+-- impede uma linha sem origem de existir no banco.
+
+select throws_ok(
+  $$
+    insert into public.recommendation_requests (
+      author_id, title, body, category
+    )
+    values (
+      '10000000-0000-4000-8000-000000000002',
+      'Pergunta sem cidade e sem grupo',
+      'Corpo valido o suficiente para passar pela regra de tamanho.',
+      'outros'
+    )
+  $$,
+  42501,
+  null,
+  'D- — linha sem cidade e sem grupo é recusada para quem usa a Data API'
+);
+
+reset role;
+select throws_ok(
+  $$
+    insert into public.recommendation_requests (
+      author_id, title, body, category
+    )
+    values (
+      '10000000-0000-4000-8000-000000000002',
+      'Pergunta sem cidade e sem grupo',
+      'Corpo valido o suficiente para passar pela regra de tamanho.',
+      'outros'
+    )
+  $$,
+  23514,
+  null,
+  'D- — o CHECK de origem recusa a linha sem cidade e sem grupo fora da RLS'
+);
+set local role authenticated;
+select set_config(
+  'request.jwt.claim.sub',
+  '10000000-0000-4000-8000-000000000004',
+  true
 );
 
 -- ── VETO 1: não membro do grupo ────────────────────────────────────────────
