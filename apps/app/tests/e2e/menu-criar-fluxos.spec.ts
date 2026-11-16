@@ -10,12 +10,6 @@ const CASOS = [
     titulo: "Oficina automotiva de confiança",
     extra: "Manutenção automotiva",
   },
-  {
-    id: "my-biz",
-    nome: "Meu negócio",
-    titulo: "Serviços residenciais e pintura",
-    extra: "Manutenção residencial",
-  },
 ] as const
 
 for (const caso of CASOS) {
@@ -87,7 +81,7 @@ test("As sete escolhas do Criar têm destinos ou formulário, sem ação silenci
   await page.goto("/app/inicio")
   await page.locator('[data-acao="criar"]').click()
   await expect(page.locator("[data-escolha]")).toHaveCount(7)
-  for (const id of ["create-item", "indicate", "my-biz"]) {
+  for (const id of ["create-item", "indicate"]) {
     await page.locator(`[data-escolha="${id}"]`).click()
     await expect(page.locator(`[data-formulario-criacao="${id}"]`)).toBeVisible()
     await page.getByRole("button", { name: "Voltar" }).click()
@@ -95,8 +89,14 @@ test("As sete escolhas do Criar têm destinos ou formulário, sem ação silenci
   await page.locator('[data-escolha="create-event"]').click()
   await expect(page.getByRole("heading", { name: "Novo encontro" })).toBeVisible()
   await page.getByRole("button", { name: "Fechar", exact: true }).click()
+  // F07 (RUN-177): contratar serviço abre a folha do pedido com endereço
+  // próprio; divulgar o negócio abre a gestão da ficha, que é onde ela nasce.
   await page.locator('[data-escolha="create-request"]').click()
-  await expect(page).toHaveURL(/\/app\/negocios$/)
+  await expect(page).toHaveURL(/\/app\/pedidos\/novo$/)
+  await page.goto("/app/inicio")
+  await page.locator('[data-acao="criar"]').click()
+  await page.locator('[data-escolha="my-biz"]').click()
+  await expect(page).toHaveURL(/\/app\/meu-negocio$/)
   // Negócios é rota filha: a barra com o Criar só existe nas raízes no celular.
   await page.goto("/app/inicio")
   await page.locator('[data-acao="criar"]').click()

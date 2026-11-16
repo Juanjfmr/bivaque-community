@@ -157,7 +157,13 @@ export function MenuCriar({ aoFechar }: { readonly aoFechar: () => void }) {
           return
         }
         if (escolha.id === "create-request") {
-          void navegacao.irPara("negocios")
+          void navegacao.irPara("pedido-novo")
+          return
+        }
+        if (escolha.id === "my-biz") {
+          // F07 (RUN-177): a página do negócio é real e mora em Meu negócio; o
+          // rascunho de sessão que esta escolha abria não publicava nada.
+          void navegacao.irPara("meu-negocio")
           return
         }
         if (TIPOS_RASCUNHO.some((item) => item === escolha.id)) {

@@ -262,12 +262,6 @@ const PORTAS_FORA_DO_LINK: readonly PortaDeclarada[] = [
     dono: "dono de vila",
   },
   {
-    route: "/negocio/catalogo",
-    porta: "CONDICIONAL: 'Catálogo' em /negocio, só depois que a página do negócio existe",
-    dependeDeDados: true,
-    dono: "prestador",
-  },
-  {
     route: "/nova-senha",
     porta: "EXTERNO: link do e-mail de recuperação de senha",
     dono: "visitante",
@@ -295,9 +289,6 @@ const PORTAS_FORA_DO_LINK: readonly PortaDeclarada[] = [
     dono: "visitante",
   },
   { route: "/onboarding/welcome", porta: "FLUXO: fim do onboarding", dono: "visitante" },
-  // Sem semente de propósito: sem `?prestador=` a tela faz notFound(), e o id do destinatário
-  // vem do botão na ficha (que já mora no app). A declaração segue sendo a porta.
-  { route: "/pedidos/novo", porta: "BOTÃO: 'Pedir serviço' na ficha do prestador" },
   { route: "/prestador-convite/[token]", porta: "EXTERNO: e-mail de convite do prestador" },
   {
     route: "/recommendations",
@@ -439,6 +430,13 @@ test.describe("rastreador de links", { tag: "@stateful" }, () => {
         "/configuracoes/familia",
         "/inicio",
         "/explorar",
+        // RUN-177: a gestão do negócio próprio e o catálogo dele saíram da web
+        // (307 para /app/meu-negocio). Continuam destino válido de <a href> — o
+        // "Ofereça seus serviços" da lista de serviços e o link do painel do
+        // prestador —, então precisam de padrão; sem ele, todo link para lá vira
+        // "rota inexistente" (medido no rastreador em 17/11).
+        "/negocio",
+        "/negocio/catalogo",
       ],
     )
     const reached = new Set<string>()

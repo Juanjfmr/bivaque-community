@@ -70,9 +70,9 @@ export function Negocios() {
     }
   }
 
-  // O caminho real de cadastro é o menu Criar, o mesmo do botão da casca: não
-  // existe rota própria de cadastro de negócio.
-  const anunciar = () => void navegacao.abrir("menu-criar")
+  // O caminho real de cadastro é o Meu negócio: a ficha é criada na tela que
+  // gerencia a página, e o botão leva direto para lá (F07, RUN-177).
+  const anunciar = () => void navegacao.irPara("meu-negocio")
 
   const segmentos: readonly ItemDeSegmento[] = [
     {

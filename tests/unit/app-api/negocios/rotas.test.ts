@@ -6,7 +6,11 @@ vi.mock("web/lib/app-api/sessao-do-next", () => ({ resolverSessaoDaRequisicao: v
 import { POST as criar, OPTIONS as opcoesCriar } from "web/app/api/app/negocios/[id]/pedidos/route"
 import { GET as detalhe, OPTIONS as opcoesDetalhe } from "web/app/api/app/negocios/[id]/route"
 import { GET as listar, OPTIONS as opcoesLista } from "web/app/api/app/negocios/route"
-import { OPTIONS as opcoesPedido, GET as pedido } from "web/app/api/app/pedidos/[id]/route"
+import {
+  PATCH as acaoDoPedido,
+  OPTIONS as opcoesPedido,
+  GET as pedido,
+} from "web/app/api/app/pedidos/[id]/route"
 import { OPTIONS as opcoesPedidos, GET as pedidos } from "web/app/api/app/pedidos/route"
 import { resolverSessaoDaRequisicao } from "web/lib/app-api/sessao-do-next"
 import { requestInputFromBody } from "web/lib/service-requests/request-form"
@@ -37,6 +41,8 @@ const negocio = {
 const linhaPedido = {
   id: PEDIDO,
   provider_id: ID,
+  requester_user_id: USER,
+  provider_user_id: "10000000-0000-4000-8000-000000000011",
   description: "Limpar o ar-condicionado",
   when_text: "Nesta semana",
   status: "open",
@@ -65,10 +71,17 @@ function cliente(opcoes: Opcoes = {}) {
   const alcances: string[] = []
   const cursores: { tabela: string; coluna: string; valor: unknown }[] = []
   const selecoes: { tabela: string; campos: string }[] = []
-  const rpc = vi.fn(async () => ({
-    data: opcoes.erroRpc || opcoes.rpcSemId ? null : PEDIDO,
-    error: opcoes.erroRpc ? { code: opcoes.erroRpc, message: "segredo do Postgres" } : null,
-  }))
+  // O banco muda de estado quando a RPC de cancelar/encerrar roda: a rota relê
+  // o pedido depois da ação, e o mock precisa devolver a situação nova.
+  let situacaoAposAcao: string | null = null
+  const rpc = vi.fn(async (nome: string) => {
+    if (nome === "cancel_service_request" && !opcoes.erroRpc) situacaoAposAcao = "cancelled"
+    if (nome === "close_service_request" && !opcoes.erroRpc) situacaoAposAcao = "closed"
+    return {
+      data: opcoes.erroRpc || opcoes.rpcSemId ? null : PEDIDO,
+      error: opcoes.erroRpc ? { code: opcoes.erroRpc, message: "segredo do Postgres" } : null,
+    }
+  })
   const assinar = vi.fn(async () => ({
     data: opcoes.erroFoto ? null : { signedUrl: "https://midia.example.invalid/assinada" },
     error: opcoes.erroFoto ? { message: "segredo do storage" } : null,
@@ -101,15 +114,18 @@ function cliente(opcoes: Opcoes = {}) {
           data: opcoes.comFoto ? [{ photo_path: "privado/foto.jpg", caption: "Trabalho" }] : [],
           error: null,
         }
-      if (tabela === "service_requests")
+      if (tabela === "service_requests") {
+        const comEstado = (linha: typeof linhaPedido | null) =>
+          linha === null || situacaoAposAcao === null
+            ? linha
+            : { ...linha, status: situacaoAposAcao }
         return {
           data: unico
-            ? opcoes.pedido === undefined
-              ? linhaPedido
-              : opcoes.pedido
-            : (opcoes.pedidos ?? [linhaPedido]),
+            ? comEstado(opcoes.pedido === undefined ? linhaPedido : opcoes.pedido)
+            : (opcoes.pedidos ?? [linhaPedido]).map((linha) => comEstado(linha)),
           error: null,
         }
+      }
       throw new Error(`Tabela inesperada: ${tabela}`)
     }
     const query: Record<string, unknown> = {}
@@ -392,26 +408,48 @@ describe("F07 — rotas sob a sessão", () => {
       id: PEDIDO,
       descricao: "Limpar o ar-condicionado",
       situacao: "open",
+      lado: "solicitante",
     })
-    expect(mock.filtros).toContainEqual({
-      tabela: "service_requests",
-      coluna: "requester_user_id",
-      valor: USER,
-    })
+    expect(mock.alcances).toContainEqual(`requester_user_id.eq.${USER},provider_user_id.eq.${USER}`)
   })
 
+  // O teto de 5 pedidos abertos por par (ADR-20260923) e as recusas conhecidas
+  // têm de sair do servidor como frase COM SAÍDA — o texto genérico faz a pessoa
+  // reenviar o mesmo pedido recusado. A frase é a de lib/service-requests/
+  // request-form.ts, a mesma que a ação web usava antes do RUN-177: aqui ela é
+  // provada pela PORTA, que é o caminho vivo depois da troca.
   it.each([
-    ["42501", 403],
-    ["22023", 400],
-    ["P0002", 404],
-    ["54000", 429],
-    ["XX000", 503],
-  ])("traduz recusa %s sem eco do Postgres", async (codigo, status) => {
-    autenticar(cliente({ erroRpc: codigo }))
-    const resposta = await criar(req(`negocios/${ID}/pedidos`, "POST", corpo), contexto)
-    expect(resposta.status).toBe(status)
-    expect(await resposta.text()).not.toContain("segredo")
-  })
+    [
+      "42501",
+      403,
+      "recusado",
+      "Sua conta não pode enviar um pedido a este negócio. Seu texto continua aqui.",
+    ],
+    [
+      "54000",
+      429,
+      "limite",
+      "Você já tem cinco pedidos em aberto com este prestador. Feche ou cancele um para enviar outro.",
+    ],
+    ["22023", 400, "dados-invalidos", "Revise a descrição e o prazo do serviço."],
+    ["P0002", 404, "negocio-nao-encontrado", "Este negócio não está disponível."],
+    [
+      "XX000",
+      503,
+      "escrita-indisponivel",
+      "Não foi possível confirmar o pedido agora. Seu texto continua aqui — tente novamente.",
+    ],
+  ])(
+    "traduz a recusa %s na frase com saída, sem eco do Postgres",
+    async (codigo, status, erro, mensagem) => {
+      autenticar(cliente({ erroRpc: codigo }))
+      const resposta = await criar(req(`negocios/${ID}/pedidos`, "POST", corpo), contexto)
+      expect(resposta.status).toBe(status)
+      const dados = await resposta.json()
+      expect(dados).toEqual({ erro, mensagem })
+      expect(JSON.stringify(dados)).not.toContain("segredo")
+    },
+  )
 
   it.each([{ rpcSemId: true }, { pedido: null }])(
     "escrita sem confirmação não vira sucesso",
@@ -421,7 +459,7 @@ describe("F07 — rotas sob a sessão", () => {
     },
   )
 
-  it("lista só pedidos do solicitante, inclusive quando a RLS também permitiria recebidos", async () => {
+  it("lista os pedidos dos dois lados, com o lado de quem lê", async () => {
     const mock = cliente()
     autenticar(mock)
     const resposta = await pedidos(req("pedidos?user_id=outro"))
@@ -429,12 +467,22 @@ describe("F07 — rotas sob a sessão", () => {
     expect((await resposta.json()).pedidos[0]).toMatchObject({
       id: PEDIDO,
       negocioNome: "Climatiza",
+      lado: "solicitante",
     })
-    expect(mock.filtros).toContainEqual({
-      tabela: "service_requests",
-      coluna: "requester_user_id",
-      valor: USER,
+    // O filtro é "sou solicitante OU sou o dono do negócio"; a RLS continua
+    // sendo quem decide o que a sessão enxerga.
+    expect(mock.alcances).toContainEqual(`requester_user_id.eq.${USER},provider_user_id.eq.${USER}`)
+    expect(mock.filtros).not.toContainEqual({ tabela: "service_requests", coluna: "user_id" })
+  })
+
+  it("o dono do negócio vê o pedido recebido com o próprio lado", async () => {
+    const mock = cliente({
+      pedido: { ...linhaPedido, requester_user_id: "outro", provider_user_id: USER },
     })
+    autenticar(mock)
+    const resposta = await pedido(req(`pedidos/${PEDIDO}`), contextoPedido)
+    expect(resposta.status).toBe(200)
+    expect((await resposta.json()).pedido.lado).toBe("dono")
   })
 
   it("detalhe do próprio pedido tem descrição e situação persistidas", async () => {
@@ -446,13 +494,10 @@ describe("F07 — rotas sob a sessão", () => {
       id: PEDIDO,
       situacao: "open",
       quando: "Nesta semana",
+      lado: "solicitante",
     })
     expect(mock.filtros).toContainEqual({ tabela: "service_requests", coluna: "id", valor: PEDIDO })
-    expect(mock.filtros).toContainEqual({
-      tabela: "service_requests",
-      coluna: "requester_user_id",
-      valor: USER,
-    })
+    expect(mock.alcances).toContainEqual(`requester_user_id.eq.${USER},provider_user_id.eq.${USER}`)
   })
 
   it("pedido alheio ou inexistente é 404", async () => {
@@ -493,6 +538,146 @@ describe("F07 — rotas sob a sessão", () => {
     expect(
       requestInputFromBody({ descricao: " Limpar ", quando: " ", chave: CHAVE, user_id: USER }),
     ).toEqual({ descricao: "Limpar", quando: null, chave: CHAVE })
+  })
+})
+
+describe("F07 — cancelar e encerrar o pedido", () => {
+  const acao = (body: string, cabecalhos = headers) =>
+    new NextRequest(`${BASE}/pedidos/${PEDIDO}`, {
+      method: "PATCH",
+      headers: cabecalhos,
+      body,
+    })
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+    resolver.mockResolvedValue({
+      estado: "recusada",
+      sessao: { estado: "recusada", motivo: "sem-credencial" },
+    } as never)
+  })
+
+  it("exige sessão e traduz indisponibilidade", async () => {
+    expect((await acaoDoPedido(acao('{"acao":"cancelar"}'), contextoPedido)).status).toBe(401)
+    resolver.mockResolvedValue({ estado: "indisponivel" } as never)
+    expect((await acaoDoPedido(acao('{"acao":"cancelar"}'), contextoPedido)).status).toBe(503)
+  })
+
+  it.each([
+    { ...headers, origin: "https://fora.example.invalid" },
+    { ...headers, "x-bivaque-app": "errado" },
+  ])("recusa escrita sem a porta correta antes do banco", async (cabecalhos) => {
+    const mock = cliente()
+    autenticar(mock)
+    expect(
+      (await acaoDoPedido(acao('{"acao":"cancelar"}', cabecalhos), contextoPedido)).status,
+    ).toBe(403)
+    expect(mock.from).not.toHaveBeenCalled()
+  })
+
+  it.each(["{}", "[]", '{"acao":"apagar"}', "{", '{"acao":1}'])(
+    "recusa corpo inválido antes do banco (%s)",
+    async (body) => {
+      const mock = cliente()
+      autenticar(mock)
+      expect((await acaoDoPedido(acao(body), contextoPedido)).status).toBe(400)
+      expect(mock.rpc).not.toHaveBeenCalled()
+    },
+  )
+
+  it("cancelar chama o RPC do solicitante e devolve a situação relida", async () => {
+    const mock = cliente()
+    autenticar(mock)
+    const resposta = await acaoDoPedido(acao('{"acao":"cancelar"}'), contextoPedido)
+    expect(resposta.status).toBe(200)
+    expect((await resposta.json()).pedido).toMatchObject({
+      id: PEDIDO,
+      situacao: "cancelled",
+      lado: "solicitante",
+    })
+    expect(mock.rpc).toHaveBeenCalledWith("cancel_service_request", { p_request_id: PEDIDO })
+  })
+
+  it("cancelar já cancelado é sucesso sem nova escrita", async () => {
+    const mock = cliente({ pedido: { ...linhaPedido, status: "cancelled" } })
+    autenticar(mock)
+    expect((await acaoDoPedido(acao('{"acao":"cancelar"}'), contextoPedido)).status).toBe(200)
+    expect(mock.rpc).not.toHaveBeenCalled()
+  })
+
+  it("cancelar pedido encerrado é 409, sem RPC", async () => {
+    const mock = cliente({ pedido: { ...linhaPedido, status: "closed" } })
+    autenticar(mock)
+    const resposta = await acaoDoPedido(acao('{"acao":"cancelar"}'), contextoPedido)
+    expect(resposta.status).toBe(409)
+    expect(mock.rpc).not.toHaveBeenCalled()
+  })
+
+  it("o dono não cancela o pedido que recebeu", async () => {
+    const mock = cliente({
+      pedido: { ...linhaPedido, requester_user_id: "outro", provider_user_id: USER },
+    })
+    autenticar(mock)
+    const resposta = await acaoDoPedido(acao('{"acao":"cancelar"}'), contextoPedido)
+    expect(resposta.status).toBe(403)
+    expect(mock.rpc).not.toHaveBeenCalled()
+  })
+
+  it("encerrar é dos dois lados: o dono chama o RPC de encerramento", async () => {
+    const mock = cliente({
+      pedido: { ...linhaPedido, requester_user_id: "outro", provider_user_id: USER },
+    })
+    autenticar(mock)
+    const resposta = await acaoDoPedido(acao('{"acao":"encerrar"}'), contextoPedido)
+    expect(resposta.status).toBe(200)
+    expect((await resposta.json()).pedido).toMatchObject({ lado: "dono", situacao: "closed" })
+    expect(mock.rpc).toHaveBeenCalledWith("close_service_request", { p_request_id: PEDIDO })
+  })
+
+  it("encerrar já encerrado é idempotente e não reescreve", async () => {
+    const mock = cliente({ pedido: { ...linhaPedido, status: "closed" } })
+    autenticar(mock)
+    expect((await acaoDoPedido(acao('{"acao":"encerrar"}'), contextoPedido)).status).toBe(200)
+    expect(mock.rpc).not.toHaveBeenCalled()
+  })
+
+  it("encerrar pedido cancelado é 409", async () => {
+    const mock = cliente({ pedido: { ...linhaPedido, status: "cancelled" } })
+    autenticar(mock)
+    expect((await acaoDoPedido(acao('{"acao":"encerrar"}'), contextoPedido)).status).toBe(409)
+    expect(mock.rpc).not.toHaveBeenCalled()
+  })
+
+  it.each([
+    ["42501", 403],
+    ["22023", 409],
+    ["P0002", 404],
+    ["XX000", 503],
+  ])("traduz recusa %s sem eco do Postgres", async (codigo, status) => {
+    autenticar(cliente({ erroRpc: codigo }))
+    const resposta = await acaoDoPedido(acao('{"acao":"encerrar"}'), contextoPedido)
+    expect(resposta.status).toBe(status)
+    expect(await resposta.text()).not.toContain("segredo")
+  })
+
+  it("pedido alheio ou inexistente é 404", async () => {
+    const mock = cliente({ pedido: null })
+    autenticar(mock)
+    expect((await acaoDoPedido(acao('{"acao":"encerrar"}'), contextoPedido)).status).toBe(404)
+    expect(mock.rpc).not.toHaveBeenCalled()
+  })
+
+  it("id inválido é 404 sem consulta", async () => {
+    const mock = cliente()
+    autenticar(mock)
+    expect(
+      (
+        await acaoDoPedido(acao('{"acao":"encerrar"}'), {
+          params: Promise.resolve({ id: "invalido" }),
+        })
+      ).status,
+    ).toBe(404)
+    expect(mock.from).not.toHaveBeenCalled()
   })
 })
 

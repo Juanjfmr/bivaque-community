@@ -52,7 +52,8 @@ const ITENS: readonly Item[] = [
     rotulo: "Contratar serviço",
     icone: "build",
     grupo: "Ações",
-    destino: "pedidos",
+    // F07 (RUN-177): o pedido tem endereço próprio; a paleta leva à folha.
+    destino: "pedido-novo",
   },
   {
     id: "acao-desapego",

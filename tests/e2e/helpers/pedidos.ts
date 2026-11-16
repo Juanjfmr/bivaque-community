@@ -3,9 +3,10 @@
 // Sem encerrar o pedido que o spec abriu, a execução stateful soma uma vaga por
 // largura e a terceira persona recebe 429 no lugar do 201.
 //
-// O caminho é o do produto: o mesmo RPC que a ação do servidor chama
-// (apps/web/app/(shell)/pedidos/[id]/actions.ts), com a sessão de quem pediu,
-// sob RLS — nada de cliente administrativo.
+// O caminho é o do produto: o mesmo RPC que `PATCH /api/app/pedidos/[id]` chama
+// (acao=encerrar) e que a tela do dono usa, com a sessão de quem pediu, sob RLS
+// — nada de cliente administrativo. Aqui sai em REST direto porque o helper
+// devolve a vaga entre larguras, fora da jornada da tela.
 import { type BrowserContext, expect } from "@playwright/test"
 import { apiForSession } from "./session"
 

@@ -415,6 +415,8 @@ export const PEDIDO_DA_PROVA = {
   criadoEm: "2026-11-05T12:00:00.000Z",
   atualizadoEm: "2026-11-06T09:30:00.000Z",
   conversaId: null,
+  // RUN-177: campo aditivo do contrato do pedido (lado de quem lê).
+  lado: "solicitante",
 }
 
 /** O pedido da prova em `/api/app/pedidos/<id>`. */
