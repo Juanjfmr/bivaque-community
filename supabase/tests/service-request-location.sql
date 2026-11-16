@@ -8,8 +8,12 @@
 --     publicadas, continua legível (a recusa não é RLS disfarçada); nem o dono
 --     lê o próprio CEP de volta;
 --   * `create_service_request` grava CEP, coordenada e bairro na mesma
---     transação, mantém a idempotência e recusa CEP torto e coordenada ímpar;
---   * CEP conhecido sem coordenada é sucesso parcial (cep + bairro, sem ponto);
+--     transação, mantém a idempotência e recusa CEP torto — e a coordenada e o
+--     bairro NUNCA vêm do chamador: os parâmetros continuam na assinatura e são
+--     IGNORADOS, porque os dois saem do `cep_geocodes` pelo CEP (SEC-013/F4);
+--   * sem CEP, ou com CEP fora do cache, o pedido entra sem coordenada e sem
+--     bairro (nunca com valor do corpo, nunca com zero); bairro que parece CEP
+--     não entra na coluna `region`;
 --   * `service_request_distance` responde METROS à centena só a participante, a
 --     origem vem de `auth.uid()` (não é parâmetro: a função tem UM argumento),
 --     e é NULL sem origem, sem coordenada ou para terceiro;
@@ -18,7 +22,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(43);
+select plan(47);
 
 \ir fixtures/foundation.inc
 \ir fixtures/communities.inc
@@ -28,6 +32,14 @@ select plan(43);
 -- ---------------------------------------------------------------------------
 
 set local role postgres;
+
+-- O cache de CEP é a ÚNICA fonte da coordenada e do bairro do pedido
+-- (SEC-013/F4). "69000000" é o CEP que a solicitante informa; "69999998" tem
+-- bairro com cara de CEP, para provar que ele não entra na coluna `region`.
+insert into public.cep_geocodes (cep, latitude, longitude, source, neighborhood)
+values
+  ('69000000', -3.10194, -60.025, 'brasilapi', 'Centro'),
+  ('69999998', -3.2, -60.1, 'brasilapi', '69000-000');
 
 insert into auth.users (id, email)
 values ('10000000-0000-4000-8000-000000000025', 'provider-request-location@example.invalid');
@@ -171,7 +183,7 @@ select is(
 );
 
 -- ---------------------------------------------------------------------------
--- 3. Criação grava a localização na mesma transação
+-- 3. Criação grava a localização do CACHE, nunca a do chamador
 -- ---------------------------------------------------------------------------
 
 set local role authenticated;
@@ -185,16 +197,47 @@ select lives_ok(
       'Preciso de uma instalação elétrica',
       'A combinar',
       'k-local-1',
-      '69000000',
-      -3.10194,
-      -60.025,
-      'Centro'
+      '69000000'
     )
   $$,
-  'a solicitante cria o pedido com CEP, coordenada e bairro'
+  'a solicitante cria o pedido com o CEP'
+);
+
+-- A porta antiga está fechada sem quebrar a chamada: coordenada e bairro do
+-- chamador continuam aceitos na assinatura e são IGNORADOS (SEC-013/F4). O que
+-- fica gravado é o que o cache diz do CEP.
+select lives_ok(
+  $$
+    select public.create_service_request(
+      '30000000-0000-4000-8000-000000000025',
+      'Pedido com localização forjada',
+      null,
+      'k-forjado',
+      '69000000',
+      -23.55,
+      -46.63,
+      'Bairro Inventado'
+    )
+  $$,
+  'coordenada e bairro do chamador não impedem o pedido'
 );
 
 reset role;
+
+select is(
+  (select region from public.service_requests where idempotency_key = 'k-forjado'),
+  'Centro',
+  'o bairro forjado não é gravado: vale o bairro do cache'
+);
+select results_eq(
+  $$
+    select latitude, longitude
+      from public.service_requests
+     where idempotency_key = 'k-forjado'
+  $$,
+  $$ values (-3.10194::double precision, -60.025::double precision) $$,
+  'a coordenada forjada não é gravada: vale a do cache'
+);
 
 select is(
   (select cep from public.service_requests where idempotency_key = 'k-local-1'),
@@ -204,17 +247,17 @@ select is(
 select is(
   (select region from public.service_requests where idempotency_key = 'k-local-1'),
   'Centro',
-  'o bairro derivado foi gravado na coluna region'
+  'o bairro vem do cache do CEP, não do chamador'
 );
 select is(
   (select latitude from public.service_requests where idempotency_key = 'k-local-1'),
   -3.10194::double precision,
-  'a latitude derivada ficou gravada'
+  'a latitude vem do cache do CEP'
 );
 select is(
   (select longitude from public.service_requests where idempotency_key = 'k-local-1'),
   -60.025::double precision,
-  'a longitude derivada ficou gravada'
+  'a longitude vem do cache do CEP'
 );
 
 -- Idempotência preservada: a mesma chave devolve o mesmo pedido, com os dados
@@ -226,10 +269,7 @@ select results_eq(
              'Texto reenviado',
              'A combinar',
              'k-local-1',
-             '69999999',
-             -3.2,
-             -60.1,
-             'Outro bairro'
+             '69999998'
            )
          = (select id from public.service_requests where idempotency_key = 'k-local-1')
   $$,
@@ -242,7 +282,7 @@ select is(
   'o reenvio idempotente não reescreve o bairro gravado'
 );
 select results_eq(
-  'select count(*) from public.service_requests',
+  'select count(*) from public.service_requests where idempotency_key = ''k-local-1''',
   array[1::bigint],
   'reenviar não duplica o pedido'
 );
@@ -395,7 +435,7 @@ select is(
 );
 
 -- ---------------------------------------------------------------------------
--- 6. CEP conhecido sem coordenada: sucesso parcial
+-- 6. CEP fora do cache: pedido sem coordenada e sem bairro
 -- ---------------------------------------------------------------------------
 
 set local role authenticated;
@@ -409,13 +449,10 @@ select lives_ok(
       'Pedido do interior, sem posição',
       null,
       'k-local-2',
-      '69000-000',
-      null,
-      null,
-      'Flores'
+      '69000-000'
     )
   $$,
-  'CEP sem coordenada não impede o pedido (sucesso parcial)'
+  'CEP fora do cache não impede o pedido'
 );
 
 reset role;
@@ -423,12 +460,14 @@ reset role;
 select is(
   (select cep from public.service_requests where idempotency_key = 'k-local-2'),
   '69000000',
-  'o CEP do pedido parcial é normalizado para oito dígitos'
+  'o CEP do pedido é normalizado para oito dígitos'
 );
+-- O cache é a única fonte do bairro: fora dele não há bairro a publicar — e o
+-- bairro do corpo da chamada não existe mais (SEC-013/F4).
 select is(
   (select region from public.service_requests where idempotency_key = 'k-local-2'),
-  'Flores',
-  'o bairro do pedido parcial fica gravado'
+  null,
+  'CEP fora do cache deixa o pedido sem bairro'
 );
 
 select results_eq(
@@ -438,7 +477,65 @@ select results_eq(
      where idempotency_key = 'k-local-2'
   $$,
   $$ values (null::double precision, null::double precision) $$,
-  'o pedido parcial fica sem coordenada, nunca com zero'
+  'fora do cache o pedido fica sem coordenada, nunca com zero'
+);
+
+-- Bairro com cara de CEP não entra na coluna `region` (CHECK de 20261022120200):
+-- o texto vem da fonte do CEP, então vira ausência de bairro — não erro na
+-- criação do pedido.
+set local role authenticated;
+select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000001', true);
+select set_config('request.jwt.claim.role', 'authenticated', true);
+
+do $$
+begin
+  perform public.create_service_request(
+    '30000000-0000-4000-8000-000000000025',
+    'Pedido com bairro que parece CEP',
+    null,
+    'k-local-5',
+    '69999998'
+  );
+end $$;
+
+reset role;
+
+select is(
+  (select region from public.service_requests where idempotency_key = 'k-local-5'),
+  null,
+  'bairro com cara de CEP vira ausência de bairro'
+);
+
+-- Sem CEP não há de onde derivar: nada de coordenada, nada de bairro — e a
+-- coordenada que o chamador mandar continua ignorada.
+set local role authenticated;
+select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000001', true);
+select set_config('request.jwt.claim.role', 'authenticated', true);
+
+do $$
+begin
+  perform public.create_service_request(
+    '30000000-0000-4000-8000-000000000025',
+    'Pedido sem CEP nenhum',
+    null,
+    'k-sem-cep',
+    null,
+    -23.55,
+    -46.63,
+    'Bairro Inventado'
+  );
+end $$;
+
+reset role;
+
+select results_eq(
+  $$
+    select latitude, longitude, region
+      from public.service_requests
+     where idempotency_key = 'k-sem-cep'
+  $$,
+  $$ values (null::double precision, null::double precision, null::text) $$,
+  'sem CEP o pedido fica sem coordenada e sem bairro'
 );
 
 set local role authenticated;
@@ -470,22 +567,6 @@ select throws_ok(
   '22023',
   null,
   'CEP torto é recusado pelo RPC'
-);
-
-select throws_ok(
-  $$
-    select public.create_service_request(
-      '30000000-0000-4000-8000-000000000025',
-      'Coordenada sem par',
-      null,
-      'k-local-4',
-      '69000000',
-      -3.1
-    )
-  $$,
-  '22023',
-  null,
-  'coordenada sem o par é recusada pelo RPC'
 );
 
 -- ---------------------------------------------------------------------------
