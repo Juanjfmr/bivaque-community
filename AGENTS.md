@@ -93,10 +93,10 @@ definition or observed runtime.
 
 - Keep material transitions with the work: proof, blocker, drift, priority/status or completion;
   merely starting work is not a board transition. Routine read-only answers need no update.
-- Edit canonical `tools/backend-kanban/public/board.json`, never BOARD.md by hand. Regenerate with
-  `node tools/backend-kanban/src/board.mjs --write-summary`; CI rejects invalid data
-  or a stale summary. Do not create a second task system or mark done without applicable acceptance
-  and evidence.
+- Edit canonical `tools/backend-kanban/public/board.json` and BOARD.md only through
+  `node tools/backend-kanban/src/board.mjs --apply <patch.json>`; never by hand and never with a
+  throwaway script. CI rejects invalid data or a stale summary. Do not create a second task system
+  or mark done without applicable acceptance and evidence.
 - **Resolve cards; do not stop at drift.** Reconcile the stale source, implement the missing
   behavior or record a real blocker and concrete resolution step. A `done`
   card may not keep open drift.

@@ -1,0 +1,10 @@
+{
+  "operations": [
+    {
+      "op": "move",
+      "id": "MINI-NAO-EXISTE",
+      "status": "done",
+      "completedAt": "2026-11-16"
+    }
+  ]
+}

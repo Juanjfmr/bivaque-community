@@ -1,0 +1,21 @@
+{
+  "operations": [
+    {
+      "op": "create",
+      "card": {
+        "id": "MINI-01",
+        "title": "Cartão duplicado da fixture",
+        "phase": "Teste",
+        "priority": "P2",
+        "category": "infra",
+        "status": "next",
+        "description": "Mesmo id de MINI-01 com conteúdo diferente: create deve falhar.",
+        "checklist": ["nascer válido"],
+        "proof": ["operação create da fixture"],
+        "dependencies": [],
+        "updatedAt": "2026-11-16",
+        "sourceRevision": "a1b2c3d"
+      }
+    }
+  ]
+}

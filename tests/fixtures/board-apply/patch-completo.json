@@ -1,0 +1,46 @@
+{
+  "operations": [
+    {
+      "op": "create",
+      "card": {
+        "id": "MINI-03",
+        "title": "Cartão criado pela fixture",
+        "phase": "Teste",
+        "priority": "P2",
+        "category": "infra",
+        "status": "next",
+        "description": "Criado por --apply a partir de tests/fixtures/board-apply/patch-completo.json.",
+        "checklist": ["nascer válido"],
+        "proof": ["operação create da fixture"],
+        "dependencies": [],
+        "updatedAt": "2026-11-16",
+        "sourceRevision": "a1b2c3d"
+      }
+    },
+    {
+      "op": "update",
+      "id": "MINI-02",
+      "set": {
+        "priority": "P1",
+        "updatedAt": "2026-11-16"
+      }
+    },
+    {
+      "op": "move",
+      "id": "MINI-01",
+      "status": "done",
+      "completedAt": "2026-11-16"
+    },
+    {
+      "op": "note",
+      "id": "MINI-02",
+      "field": "proof",
+      "text": "nota acrescentada pela fixture"
+    },
+    {
+      "op": "checklist",
+      "id": "MINI-02",
+      "item": "segundo item"
+    }
+  ]
+}
