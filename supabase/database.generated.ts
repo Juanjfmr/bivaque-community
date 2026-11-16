@@ -1363,6 +1363,7 @@ export type Database = {
           address: string | null
           available_until: string | null
           category: string | null
+          cep: string | null
           closed_at: string | null
           community_id: string | null
           condition: Database["public"]["Enums"]["listing_condition"] | null
@@ -1370,7 +1371,10 @@ export type Database = {
           description: string | null
           id: string
           kind: Database["public"]["Enums"]["listing_kind"]
+          latitude: number | null
           locality_id: string | null
+          localizacao_publica: string | null
+          longitude: number | null
           neighborhood: string | null
           owner_user_id: string
           pickup_note: string | null
@@ -1384,6 +1388,7 @@ export type Database = {
           address?: string | null
           available_until?: string | null
           category?: string | null
+          cep?: string | null
           closed_at?: string | null
           community_id?: string | null
           condition?: Database["public"]["Enums"]["listing_condition"] | null
@@ -1391,7 +1396,10 @@ export type Database = {
           description?: string | null
           id?: string
           kind: Database["public"]["Enums"]["listing_kind"]
+          latitude?: number | null
           locality_id?: string | null
+          localizacao_publica?: string | null
+          longitude?: number | null
           neighborhood?: string | null
           owner_user_id: string
           pickup_note?: string | null
@@ -1405,6 +1413,7 @@ export type Database = {
           address?: string | null
           available_until?: string | null
           category?: string | null
+          cep?: string | null
           closed_at?: string | null
           community_id?: string | null
           condition?: Database["public"]["Enums"]["listing_condition"] | null
@@ -1412,7 +1421,10 @@ export type Database = {
           description?: string | null
           id?: string
           kind?: Database["public"]["Enums"]["listing_kind"]
+          latitude?: number | null
           locality_id?: string | null
+          localizacao_publica?: string | null
+          longitude?: number | null
           neighborhood?: string | null
           owner_user_id?: string
           pickup_note?: string | null
@@ -3147,6 +3159,14 @@ export type Database = {
       finalize_account_deletion: {
         Args: { p_error?: string; p_user_id: string }
         Returns: string
+      }
+      get_listing_location: {
+        Args: { p_listing_id?: string }
+        Returns: {
+          cep: string
+          listing_id: string
+          localizacao_publica: string
+        }[]
       }
       get_my_profile_location: {
         Args: never
