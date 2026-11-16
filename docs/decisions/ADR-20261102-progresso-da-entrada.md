@@ -115,9 +115,11 @@ manter histórico.
 
 ## Consequences — emenda de 04/11/2026 (SEC-007, lote A do F01)
 
-- **O rascunho sai dentro do provisionamento.** `provision_member_entry` é o ponto comum dos três caminhos de conclusão
-  (rota do app, `/api/onboarding` da web e convite familiar). Apagar a linha ali fecha o defeito de a web e o convite
-  deixarem nome e cidade parados no banco, e de a limpeza da rota do app falhar só com log. Uma falha do provisionamento
+- **O rascunho sai dentro do provisionamento.** `provision_member_entry` apaga o rascunho
+  atomicamente nos caminhos que o chamam (rota do app e
+  `/api/onboarding` da web). O convite familiar por código chama `family_invite_code_accept` e
+  grava o marcador `interesses` em uma chamada posterior; essa gravação falha fechada com 503 e pode
+  ser repetida com segurança (emenda SEC-012, 16/11). Uma falha do provisionamento
   desfaz também a remoção do rascunho (pgTAP em `entry-provision-atomic.sql`).
 - **O destino vem do estado canônico.** O GET devolve a etapa final (`inicio`) a quem já tem vínculo com a cidade, lido
   pelo cliente do usuário sob RLS; um rascunho que sobrou não manda a pessoa de volta à porta.
@@ -170,6 +172,14 @@ aceitar escrita do cliente:
 - **Prova.** `entry-provision-atomic.sql` passa a exigir o marcador em vez da ausência da linha;
   `entry-progress-route.test.ts` cobre o 409 e a retomada pelo marcador. A prova de "sem linha no fim"
   é a rota dos avisos apagando (teste unitário) mais a consulta no E2E.
+
+## Consequences — emenda de 16/11/2026 (SEC-012: convite familiar)
+
+O aceite por código familiar chama `family_invite_code_accept` e grava o marcador `interesses`
+numa segunda chamada, fora da transação do aceite. Se essa gravação falhar, a rota responde
+503 `gravacao-indisponivel` sem expor o erro do banco e registra apenas uma mensagem estática.
+A nova tentativa é segura porque o aceite do mesmo código é idempotente e regrava o marcador.
+Assim, a pessoa não recebe sucesso enquanto um rascunho pessoal anterior pode continuar vivo.
 
 ## Reversal cost
 
