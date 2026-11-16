@@ -2866,6 +2866,7 @@ export type Database = {
         Returns: undefined
       }
       close_service_request: { Args: { p_request_id: string }; Returns: Json }
+      count_indications: { Args: { p_locality_id: string }; Returns: number }
       complete_event: {
         Args: { p_caller_user_id?: string; p_event_id: string }
         Returns: undefined
