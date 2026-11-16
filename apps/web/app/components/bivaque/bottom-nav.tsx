@@ -73,7 +73,9 @@ export const NAV_ITEMS: NavItem[] = [
     id: "perfil",
     label: "Perfil",
     shortLabel: "Perfil",
-    href: "/profile",
+    // RUN-172: o perfil próprio é tela do app; o 307 de `/profile` é rede de
+    // segurança para link antigo, não porta (LT-007).
+    href: "/app/voce",
     Icon: UserCircleIcon,
     IconActive: UserCircleSolid,
   },

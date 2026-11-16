@@ -63,7 +63,9 @@ export const AREA_CONTAINERS: ReadonlyArray<readonly [string, PrimaryContainer]>
   ["/communities", "comunidades"],
   ["/community", "comunidades"],
   ["/groups", "comunidades"],
-  ["/profile", "perfil"],
+  // Sem `/profile`: o perfil próprio é do app desde o RUN-172, e a tela web não
+  // existe mais. O perfil alheio (`/profile/:id`) também é redirect. O que ainda
+  // é da pessoa nesta casca: negócio, configurações e a conversa contextual.
   ["/negocio", "perfil"],
   ["/configuracoes", "perfil"],
   ["/messages", "perfil"],

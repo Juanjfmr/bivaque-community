@@ -150,13 +150,9 @@ export const HEADINGS = {
   "/groups/60000000-0000-4000-8000-000000000001": DYNAMIC_HEADING,
   "/communities/71000000-0000-4000-8000-000000000001/indicar-prestador": DYNAMIC_HEADING,
   "/prestadores/30000000-0000-4000-8000-000000000010": DYNAMIC_HEADING,
-  "/profile": DYNAMIC_HEADING,
-  "/profile/editar": "^Editar perfil$",
-  // Perfil de TERCEIRO (prancha 51): a visão que lê a afiliação declarada. Nunca
-  // foi capturada, e é justamente a tela que a leitura por alvo serve — depois
-  // do achado de enumeração em lote, quem lê deixa de ser a tabela (não
-  // listável) e passa a ser public.profile_affiliations_for().
-  "/profile/20000000-0000-4000-8000-000000000001": DYNAMIC_HEADING,
+  // RUN-172: `/profile`, `/profile/editar` e o perfil alheio na web saíram —
+  // os três são 307 para o app (`/app/voce` e `/app/perfil/:id`), então
+  // capturá-los mediria o redirect.
   // CIDADE-169: `/localidade` não tem mais tela na web — 307 para
   // `/app/cidade/atual`, provada no rastreador de links (tests/e2e/link-crawl).
   // RECON-040 — as 37 rotas entregues depois que o guard-rail ficou parado na
@@ -300,11 +296,6 @@ export const ROUTES = [
   { path: "/groups", name: "groups", auth: true },
   // Grupos do seed são 60000000-… (70000000-… é a faixa dos eventos).
   { path: "/groups/60000000-0000-4000-8000-000000000001", name: "group-detail", auth: true },
-  { path: "/profile", name: "profile", auth: true },
-  { path: "/profile/editar", name: "profile-editar", auth: true },
-  // Perfil de terceiro (prancha 51): a visão que consome a leitura por alvo.
-  // O alvo tem Força Armada declarada e visível no seed.
-  { path: "/profile/20000000-0000-4000-8000-000000000001", name: "profile-member", auth: true },
   { path: "/events", name: "events", auth: true },
   // O id antigo (80000000-…) é de POST no seed, não de evento: a rota de detalhe
   // capturava o 404 honesto há runs. Eventos são 70000000-… no seed.
@@ -492,7 +483,7 @@ export const ROUTES = [
     name: "indicacao-resolvida",
     auth: true,
   },
-  { path: "/profile", name: "profile", auth: true },
+
   // RECON-032 (pranchas 54 e 56). Fixtures concretas, não templates:
   // - /denuncias/nova: alvo é um post do seed que o visual@ vê pela RLS e
   //   ainda não denunciou (medido em 10/09/2026 com o token dele via REST);

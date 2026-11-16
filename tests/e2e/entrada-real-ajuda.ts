@@ -144,7 +144,7 @@ function senhaDaPersona(): string {
 }
 
 export function mascararEmail(email: string): string {
-  // Mesma regra de `emailHint` (apps/web/app/(shell)/profile/family-invite-email-hint.ts):
+  // Mesma regra de `emailHint` (apps/web/lib/convite/hint.ts):
   // o CHECK de family_invitations recusa domínio com mais de um rótulo visível.
   const [usuario = "", dominio = ""] = email.trim().split("@")
   const visivelLocal = usuario.length <= 2 ? usuario.slice(0, 1) : usuario.slice(0, 2)

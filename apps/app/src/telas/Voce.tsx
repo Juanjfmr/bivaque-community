@@ -237,13 +237,17 @@ export function Voce() {
 
       {perfil === null ? null : (
         <>
-          <Cidade
-            perfil={perfil}
-            destinoInicial={destinoDoLink?.id === perfil.cidade.id ? null : destinoDoLink}
-            pendente={mudando}
-            mensagem={mensagemDaCidade}
-            aoPedirMudanca={(mudanca) => abrirConfirmacao({ tipo: "mudar", ...mudanca })}
-          />
+          {/* Âncora de `/app/voce#cidade`: é o destino do rodapé do seletor de
+              cidade da casca web. */}
+          <div id="cidade">
+            <Cidade
+              perfil={perfil}
+              destinoInicial={destinoDoLink?.id === perfil.cidade.id ? null : destinoDoLink}
+              pendente={mudando}
+              mensagem={mensagemDaCidade}
+              aoPedirMudanca={(mudanca) => abrirConfirmacao({ tipo: "mudar", ...mudanca })}
+            />
+          </div>
           <ForcaEOm />
         </>
       )}

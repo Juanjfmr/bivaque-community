@@ -6,15 +6,16 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 
 // Prancha 52: a coluna vertical de seções fica dentro do cartão, à esquerda do
-// conteúdo. "Perfil" leva ao perfil real; as outras três abrem as subrotas de
+// conteúdo. "Perfil" leva ao Você do app; as outras três abrem as subrotas de
 // configurações. O item ativo usa `aria-current="page"` — a auditoria exige
-// exatamente um item ativo por navegação.
+// exatamente um item ativo por navegação. RUN-172: o perfil próprio saiu da web,
+// então nenhum item deste menu se acende por estar nele.
 const ITEMS = [
   {
-    href: "/profile",
+    href: "/app/voce" as Route,
     label: "Perfil",
     icon: User,
-    matches: ["/profile"],
+    matches: [],
   },
   {
     href: "/app/voce" as Route,
@@ -51,7 +52,7 @@ export function ConfiguracoesNav() {
           )
           const Icon = item.icon
           return (
-            <li key={item.href} className="flex-1 md:flex-none">
+            <li key={item.label} className="flex-1 md:flex-none">
               <Link
                 href={item.href}
                 aria-current={active ? "page" : undefined}

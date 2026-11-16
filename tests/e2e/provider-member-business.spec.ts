@@ -167,15 +167,16 @@ test.describe("página de negócio do membro", { tag: "@stateful" }, () => {
     await page.goto("/explorar/servicos?q=vizinhanca")
     await expect(page.getByText(BUSINESS_NAME, { exact: true }).first()).toBeVisible()
 
-    await page.goto("/profile")
-    await page.getByRole("link", { name: "Seu negócio" }).click()
-    await expect(page.getByRole("heading", { name: "Seu negócio" })).toBeVisible()
-
+    // RUN-172: o atalho "Seu negócio" morava no perfil da web, que saiu. O
+    // caminho pessoal ↔ negócio que fica provado é o do próprio formulário: a
+    // volta é o Você do app. A porta de entrada do negócio é dívida declarada
+    // em link-crawl (F07 leva a gestão para o app).
     await page.goto("/negocio")
+    await expect(page.getByRole("link", { name: "Perfil" })).toHaveAttribute("href", "/app/voce")
     await expect(page.getByRole("heading", { name: "Seu negócio" })).toBeVisible()
 
     // F06 resíduo: /mercado/novo saiu da web com a porta extra de criar negócio.
-    // A criação segue provada acima por /explorar/servicos, /profile e /negocio;
+    // A criação segue provada acima por /explorar/servicos e /negocio;
     // o endereço antigo agora chega à lista do app.
     await page.goto("/mercado/novo")
     await expect(page).toHaveURL(/\/app\/mercado(\?.*)?$/)

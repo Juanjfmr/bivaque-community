@@ -131,12 +131,17 @@ const nextConfig: NextConfig = {
           ["/imoveis/:id((?!(?:novo|alertas)/?$)[^/]+)", "/app/anuncio/:id"],
           ["/pedidos", "/app/pedidos"],
           ["/pedidos/:id((?!novo/?$)[^/]+)", "/app/pedido/:id"],
-          // F10: o perfil de OUTRA pessoa abre no app. `/profile` (próprio) e
-          // `/profile/editar` ficam na web por enquanto (lote próprio), e o
-          // lookahead impede o id de capturar os dois segmentos fixos. RUN-163:
-          // a tela de interesses saiu, e a regra exata dela vem ANTES da regra
-          // do id — com o lookahead a ordem não muda o resultado, mas a exata
-          // primeiro deixa o destino determinístico.
+          // F10: o perfil de OUTRA pessoa abre no app. RUN-172 (ADR-20261116): o
+          // perfil próprio e a edição também saíram da web — transferência de
+          // cidade e Força/OM privada já são do Você — e as regras EXATAS vêm
+          // antes da regra do id, que segue levando o perfil alheio. A query
+          // segue pelo Next: `/profile?mudar=<id>` ainda chega ao Você. O
+          // lookahead continua impedindo o id de capturar os segmentos fixos.
+          ["/profile", "/app/voce"],
+          ["/profile/editar", "/app/voce"],
+          // RUN-163: a tela de interesses saiu, e a regra exata dela vem ANTES da
+          // regra do id — com o lookahead a ordem não muda o resultado, mas a
+          // exata primeiro deixa o destino determinístico.
           ["/profile/interests", "/app/voce"],
           ["/profile/:id((?!(?:editar|interests)/?$)[^/]+)", "/app/perfil/:id"],
           ["/prestadores/:id", "/app/negocio/:id"],

@@ -5,13 +5,14 @@
 // fechado, varredura de conteúdo e a semântica das duas afordâncias. A
 // persistência existe (migration 20260909020733_profile_affiliations.sql —
 // `public.profile_affiliations`, uma linha por campo) e as operações de
-// escrita ficam em `affiliation-actions.ts` (tela web) e em
-// `app/api/app/voce/afiliacao/route.ts` (app).
+// escrita ficam em `app/api/app/voce/afiliacao/route.ts` — desde o RUN-172 é a
+// única porta; a action da tela web saiu com ela.
 //
-// Mora em `lib/profile` desde RUN-170 (16/11) para a rota do app e a tela web
-// chamarem a MESMA regra; `app/(shell)/profile/affiliation.ts` reexporta. No
-// caminho do app a visibilidade não existe: `is_visible` é sempre false
-// (ADR-20261116), e o toggle abaixo fala só da tela web, que sai no Lote B.
+// Mora em `lib/profile` desde RUN-170 (16/11). No caminho do app a visibilidade
+// não existe: `is_visible` é sempre false (ADR-20261116). O que o toggle
+// abaixo descreve é a tela web aposentada; as constantes e a metade de
+// visibilidade de `normalizeAffiliation`/`isAffiliationUntouched` seguem
+// exportadas sem chamador, à espera da faxina.
 //
 // D2: SOMENTE Força Armada (Marinha, Exército, Aeronáutica) e OM (texto
 // curto). Nenhum outro campo entra — o check do banco é a fronteira, não a

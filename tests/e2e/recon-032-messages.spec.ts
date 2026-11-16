@@ -150,7 +150,9 @@ test.describe("leitura de notificacoes persiste (prancha 54)", () => {
     await seedAs(context, MEMBRO_1_EMAIL)
     const page = await context.newPage()
 
-    await page.goto("/profile")
+    // RUN-172: o host era /profile; o contador da sidebar é o da casca web, viva
+    // em toda rota de membro do grupo (/salvos é uma delas).
+    await page.goto("/salvos")
     const badge = page.locator('a[href="/app/avisos"] span.ml-auto')
     await expect(badge).toBeVisible({ timeout: 10_000 })
     const unreadCount = Number(await badge.textContent())

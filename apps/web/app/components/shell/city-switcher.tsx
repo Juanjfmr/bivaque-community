@@ -71,7 +71,7 @@ export function CitySwitcher() {
                 <p className="text-sm text-ui-ink-2">
                   Mudou de cidade?{" "}
                   <Link
-                    href={"/profile#cidade" as Route}
+                    href={"/app/voce#cidade" as Route}
                     onClick={dialog.close}
                     className="inline-flex min-h-11 items-center font-semibold text-ui-brand underline-offset-2 hover:underline"
                   >

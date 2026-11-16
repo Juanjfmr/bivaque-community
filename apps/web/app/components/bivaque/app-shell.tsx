@@ -229,7 +229,7 @@ export function AppShell({ children }: AppShellProperties) {
 
             {/* No celular o avatar repetia a aba Perfil da barra inferior. */}
             <a
-              href="/profile"
+              href="/app/voce"
               aria-label="Perfil"
               className="hidden h-11 w-11 shrink-0 items-center justify-center rounded-full transition-colors hover:bg-ui-subtle md:flex"
             >

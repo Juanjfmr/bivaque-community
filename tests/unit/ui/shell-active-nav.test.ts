@@ -20,7 +20,8 @@ const PRIMARY = [
   { id: "inicio", href: "/inicio" },
   { id: "explorar", href: "/explorar" },
   { id: "comunidades", href: "/communities" },
-  { id: "perfil", href: "/profile" },
+  // RUN-172: a aba Perfil leva ao Você do app, não mais a `/profile`.
+  { id: "perfil", href: "/app/voce" },
 ]
 
 function isDeclaredContainer(pathname: string): boolean {
@@ -55,7 +56,7 @@ describe("resolveActiveNav deriva o item ativo da rota", () => {
       kind: "primary",
       id: "comunidades",
     })
-    expect(resolveActiveNav("/profile", PRIMARY)).toEqual({ kind: "primary", id: "perfil" })
+    expect(resolveActiveNav("/app/voce", PRIMARY)).toEqual({ kind: "primary", id: "perfil" })
   })
 
   it("preserva o fallback DS-011: mensagens caem em Perfil", () => {

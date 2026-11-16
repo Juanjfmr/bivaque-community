@@ -2,8 +2,8 @@
 #
 # A paridade que faltava fechou: transferencia de cidade e autodeclaracao
 # Forca/OM privada pousaram no app com o RUN-170 (74d58714, ADR-20261116);
-# nomes/bio/CEP/salvos/interesses/familia/avisos/ocultados/bloqueados/sair/
-# apagar ja eram do app (RUN-157/158/160/161/163/165). Sobrou a tela em si:
+# nomes, bio, CEP, salvos, interesses, familia, avisos, ocultados, bloqueados,
+# sair e apagar ja eram do app (RUN-157/158/160/161/163/165). Sobrou a tela em si:
 # (shell)/profile (page.tsx + city-section + city-actions + bio-actions +
 # affiliation re-export + avatar-section/avatar-actions + profile-indications +
 # editar/) ainda serve membro. O ADR-20261116 decide o resto: o toggle Exibir
@@ -64,6 +64,18 @@ allowed_paths:
   - tests/unit/ui/profile-affiliation.test.ts
   - tests/unit/profile
   - tests/unit/security/photo-upload-action.test.ts
+  - tests/unit/ui/perfil.test.ts
+  - tests/unit/ui/profile-affiliation-actions.test.ts
+  - tests/unit/ui/cidade-consulta.test.ts
+  - tests/unit/convite/familia-reenvio.test.ts
+  - tests/unit/app-api/voce/cidade.test.ts
+  - tests/e2e/recon-032-messages.spec.ts
+  - tests/e2e/entrada-real-ajuda.ts
+  - apps/web/lib/profile/nome.ts
+  - apps/web/lib/profile/affiliation.ts
+  - apps/web/app/(preauth)/onboarding/perfil
+  - apps/web/app/api/app/voce/cidade/route.ts
+  - apps/web/lib/notifications/deep-links.ts
   - tests/e2e/link-crawl.spec.ts
   - tests/e2e/persistent-login.spec.ts
   - tests/e2e/shell-navigation.spec.ts

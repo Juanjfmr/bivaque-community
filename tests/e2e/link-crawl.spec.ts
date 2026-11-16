@@ -53,13 +53,16 @@ const PERSONAS: Array<{ nome: string; email: string | null; entradas: string[]; 
   {
     nome: "membro",
     email: "membro-1@bivaque.example.invalid",
-    entradas: ["/inicio", "/profile"],
+    // RUN-172: a segunda entrada era `/profile`, hoje 307 para o app. O Início
+    // é a porta da casca web, e os destinos da pessoa (Salvos, Configurações,
+    // o Você no app) saem dos links dele.
+    entradas: ["/inicio"],
     chega: /^\/app\/inicio$/,
   },
   {
     nome: "dono de vila",
     email: "dono-vila@bivaque.example.invalid",
-    entradas: ["/inicio", "/profile"],
+    entradas: ["/inicio"],
     chega: /^\/app\/inicio$/,
   },
   {
@@ -332,8 +335,9 @@ test.describe("rastreador de links", { tag: "@stateful" }, () => {
       caminhosDoCatalogo(ROTAS),
       // Continuam sendo links válidos e são visitados; deixaram de ser telas
       // da web cuja porta o inventário exige (LAN-TROCA fase 1). /messages saiu
-      // desta lista no RUN-166: sem page.tsx, não há padrão a reclassificar, e
-      // nenhuma tela web linka a URL antiga (os links migraram para o app).
+      // desta lista no RUN-166 e `/profile/[userId]` no RUN-172, pela mesma
+      // regra: sem page.tsx não há padrão a reclassificar, e nenhuma tela web
+      // linka a URL antiga (os links migraram para o app).
       [
         "/mercado/[id]",
         "/imoveis/[id]",
@@ -344,9 +348,6 @@ test.describe("rastreador de links", { tag: "@stateful" }, () => {
         "/configuracoes/familia",
         "/inicio",
         "/explorar",
-        // F10: o perfil alheio saiu da web (page.tsx removido) e é 307 para o
-        // app; a entrada em PORTAS_FORA_DO_LINK deixou de existir.
-        "/profile/[userId]",
       ],
     )
     const reached = new Set<string>()

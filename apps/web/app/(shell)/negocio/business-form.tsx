@@ -103,7 +103,7 @@ export function BusinessForm({ profile }: { profile: BusinessProfile | null }) {
   return (
     <div className="mx-auto w-full max-w-3xl space-y-4 px-4 pt-4 pb-10 sm:pt-6">
       <Link
-        href="/profile"
+        href={"/app/voce" as Route}
         className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-ui-brand transition-colors hover:underline"
       >
         <ArrowLeft size={16} aria-hidden="true" />

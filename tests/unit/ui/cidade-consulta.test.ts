@@ -62,7 +62,9 @@ describe("costura das telas", () => {
     // CIDADE-169: a consulta é tela do app (/app/cidade/[id]); a tela web não
     // existe mais e o endereço antigo responde 307 (lan-troca).
     expect(switcher).toContain("router.push(`/app/cidade/${city.id}` as Route)")
-    expect(switcher).toContain('href={"/profile#cidade" as Route}')
+    // RUN-172: a mudança de cidade é do Você no app, e o rodapé do chip chega
+    // na seção ancorada em `#cidade`.
+    expect(switcher).toContain('href={"/app/voce#cidade" as Route}')
     // O botão tem nome acessível em toda largura (o texto visível só do md para cima).
     expect(switcher).toContain("aria-label={`Sua cidade: ${cityLabel}. Ver outra cidade`}")
   })
@@ -76,20 +78,23 @@ describe("costura das telas", () => {
     expect(painel).toContain("lerCidadesDaUf(uf")
   })
 
+  // RUN-172: a tela de transferência saiu da web e é a rota do app que grava —
+  // com o cliente da SESSÃO (a RPC é SECURITY DEFINER e resolve o dono por
+  // auth.uid()), nunca com privilégio, e com a mesma validação compartilhada.
   it("mudar a cidade chama a transferência com o cliente da sessão, nunca service_role", () => {
-    const action = web("app", "(shell)", "profile", "city-actions.ts")
-    expect(action).toContain('supabase.rpc("declare_locality_transfer"')
-    expect(action).toContain("createServerClient<Database>(url, anonKey")
-    expect(action).not.toContain("SUPABASE_SERVICE_ROLE_KEY")
-    expect(action).toContain("validateMove(")
+    const rota = web("app", "api", "app", "voce", "cidade", "route.ts")
+    expect(rota).toContain('rpc("declare_locality_transfer"')
+    expect(rota).toContain("auth.sessao.cliente")
+    expect(rota).not.toContain("SUPABASE_SERVICE_ROLE_KEY")
+    expect(rota).toContain("validateMove(")
   })
 
-  it("o perfil mostra a cidade e não pede endereço", () => {
-    const page = web("app", "(shell)", "profile", "page.tsx")
-    const section = web("app", "(shell)", "profile", "city-section.tsx")
-    expect(page).toContain("<CitySection />")
-    expect(section).toContain('id="cidade"')
-    expect(section).toContain("não pede nem guarda o seu endereço")
+  it("o Você mostra a cidade numa seção ancorada e não pede endereço", () => {
+    const voce = read("apps", "app", "src", "telas", "Voce.tsx")
+    const section = read("apps", "app", "src", "voce", "Cidade.tsx")
+    expect(voce).toContain('<div id="cidade">')
+    expect(voce).toContain("<Cidade")
+    expect(section).toContain("o Bivaque não pede nem guarda o seu endereço")
     expect(section).not.toMatch(/name="(endereco|address|rua|cep)"/i)
   })
 

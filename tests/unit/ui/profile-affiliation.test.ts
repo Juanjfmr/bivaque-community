@@ -1,8 +1,13 @@
 // RECON-005 — prova do contrato de afiliação da prancha 51 (ADR-20260908).
 // O Vitest da casa roda em node, sem DOM, então a prova é no módulo puro que a
-// tela importa — exatamente a convenção de `inicio-recon.test.tsx` (RECON-002).
-// Cada via tem positivo e negativo: aceitar OM legítima não prova nada sobre
-// rejeitar CPF; default desligado não prova que limpar o campo oculta.
+// rota do app importa — exatamente a convenção de `inicio-recon.test.tsx`
+// (RECON-002). Cada via tem positivo e negativo: aceitar OM legítima não prova
+// nada sobre rejeitar CPF; default desligado não prova que limpar o campo oculta.
+//
+// RUN-172: a tela web saiu e o import passou a ser o módulo compartilhado
+// (`lib/profile/affiliation.ts`), o mesmo que `/api/app/voce/afiliacao` chama.
+// O que descreve o toggle "Exibir no perfil" segue aqui porque o módulo ainda o
+// exporta; a única porta viva o aposentou (ADR-20261116).
 
 import { describe, expect, it } from "vitest"
 import {
@@ -21,7 +26,7 @@ import {
   VISIBILITY_STATE_LABELS,
   VISIBILITY_TOGGLE_LABEL,
   validateOm,
-} from "web/app/(shell)/profile/affiliation"
+} from "web/lib/profile/affiliation"
 
 const touchedOmittedCopy: string[] = [
   VISIBILITY_TOGGLE_LABEL,
