@@ -1,0 +1,115 @@
+# RUN-172 — F10 Lote B: troca de /profile (proprio) + /profile/editar pelo app; telas morrem.
+#
+# A paridade que faltava fechou: transferencia de cidade e autodeclaracao
+# Forca/OM privada pousaram no app com o RUN-170 (74d58714, ADR-20261116);
+# nomes/bio/CEP/salvos/interesses/familia/avisos/ocultados/bloqueados/sair/
+# apagar ja eram do app (RUN-157/158/160/161/163/165). Sobrou a tela em si:
+# (shell)/profile (page.tsx + city-section + city-actions + bio-actions +
+# affiliation re-export + avatar-section/avatar-actions + profile-indications +
+# editar/) ainda serve membro. O ADR-20261116 decide o resto: o toggle Exibir
+# morre com o editar, a PORTA DE UPLOAD de avatar morre com a tela (leituras
+# web do bucket ficam intactas — nao ha coluna; a rota /api/avatar/[userId] e
+# os consumidores feed/comunidade/indicacao seguem servindo as fotos existentes),
+# e nao ha UI de desfazer transferencia em lugar nenhum.
+
+task_id: RUN-172
+
+adr: docs/decisions/ADR-20261116-perfil-transferencia-e-afiliacao-no-app.md
+
+objective: >
+  Redirects exatos /profile e /profile/editar → /app/voce (query preservada,
+  antes da regra de :id, lookahead mantido), remocao das telas web com codigo e
+  testes, movimento dos sobreviventes de familia para lib/convite, e migracao
+  completa dos pins (link-crawl, lan-troca-redirect, sidebar/active-nav/create-
+  action, persistent-login, shell-navigation, journey-pedir-servico,
+  provider-member-business, manaus-pilot, global-search-flow, cidade do
+  city-switcher, capture.mjs, testes unit das pecas mortas).
+
+authority:
+  - docs/LANCAMENTO.md criterio 6 (:47-48) e fase 6 (:101)
+  - ADR-20261116 (toggle Exibir e upload de avatar aposentados; sem reversao)
+  - ADR-20261024-front-react-spa.md §8 (a tela sai com codigo e testes no mesmo PR)
+  - Card F10-TROCA-PERFIL-PROPRIO no board + mapa do explorer 16/11 (inventario de pins)
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    apps/web/app/(shell)/profile/ serve /profile e /profile/editar (next.config
+    so troca :id com lookahead (?!editar|interests); lan-troca-redirect.test.ts
+    asserta HOJE que /profile e /editar seguem na web — sera invertida);
+    persistent-login.spec.ts:281-307 faz logout pelo botao da tela;
+    shell-navigation.spec.ts ancora ~10 casos em /profile;
+    configuracoes/familia/page.tsx:14 importa family-invite-section-actions.ts
+    da pasta profile (sobrevivente que precisa de casa nova).
+
+allowed_paths:
+  - docs/agents/tasks/F10-TROCA-PERFIL.task.yml
+  - apps/web/next.config.ts
+  - apps/web/app/(shell)/profile
+  - apps/web/lib/convite
+  - apps/web/app/(shell)/configuracoes/familia
+  - apps/web/app/components/bivaque/app-shell.tsx
+  - apps/web/app/components/bivaque/bottom-nav.tsx
+  - apps/web/app/components/shell/active-nav.ts
+  - apps/web/app/components/shell/city-switcher.tsx
+  - apps/web/app/(shell)/configuracoes/configuracoes-nav.tsx
+  - apps/web/app/(shell)/negocio/business-form.tsx
+  - apps/app/src/telas/CidadeConsulta.tsx
+  - apps/app/src/telas/Voce.tsx
+  - tests/unit/infra/lan-troca-redirect.test.ts
+  - tests/unit/ui/shell-sidebar-labels.test.ts
+  - tests/unit/ui/shell-active-nav.test.ts
+  - tests/unit/ui/shell-create-action.test.ts
+  - tests/unit/ui/profile-bio-actions.test.ts
+  - tests/unit/ui/profile-affiliation.test.ts
+  - tests/unit/profile
+  - tests/unit/security/photo-upload-action.test.ts
+  - tests/e2e/link-crawl.spec.ts
+  - tests/e2e/persistent-login.spec.ts
+  - tests/e2e/shell-navigation.spec.ts
+  - tests/e2e/shell-locality-truth.spec.ts
+  - tests/e2e/journey-pedir-servico.spec.ts
+  - tests/e2e/provider-member-business.spec.ts
+  - tests/e2e/manaus-pilot-full-journey.spec.ts
+  - tests/e2e/manaus-pilot-denials.spec.ts
+  - tests/e2e/onboarding-denials.spec.ts
+  - tests/e2e/global-search-flow.spec.ts
+  - tests/e2e/user-group-interests.spec.ts
+  - tests/scope/f10-voce-porta.test.mjs
+  - scripts/visual/capture.mjs
+  - .visual/f10-troca-perfil
+
+forbidden:
+  - criar migration ou tocar banco/policies/RPCs (tudo ja existe; a coluna de avatar nao existe — o bucket e so leitura daqui em diante)
+  - remover a rota /api/avatar/[userId], os leitores de foto do bucket, ou qualquer consumo de avatar nas telas web vivas (feed, comunidade, indicacao, compositor)
+  - criar UI de desfazer transferencia (reverse_locality_transfer e hatch service_role — ADR-20261116)
+  - recriar o toggle Exibir ou qualquer campo de visibilidade no caminho do app
+  - mexer em /community ou em telas de membro que nao sao as duas trocadas; (shell)/messages ja morreu (RUN-166) — nao reabrir
+  - apagar prova sem realocar: cada spec da tabela de pins migra com a garantia nomeada no RELATORIO (molde RUN-166)
+  - usar skip/fixme novo ou afrouxar assercao
+  - push, merge ou force-push; ler/criar/editar arquivos de ambiente; imprimir credenciais
+  - tocar em .work/main ou em outra worktree
+
+acceptance:
+  - "next.config.ts: regras exatas /profile → /app/voce e /profile/editar → /app/voce ANTES da regra de :id, query preservada; o lookahead da regra de :id permanece protegendo o que restou; sem ciclo (/app/voce nao re-redirecta). Provas no lan-troca-redirect: par novo em TROCADAS com query, INVERSAO da assercao atual de 'segue na web', prova de ausencia da pasta (molde notifications/messages), negativas de /profile/<uuid> intactas."
+  - "Remocao: page.tsx, editar/, city-section.tsx, city-actions.ts, bio-actions.ts, affiliation.ts (re-export obsoleto), affiliation-actions.ts, avatar-section.tsx, avatar-actions.ts, profile-indications.tsx — cada um com grep de importadores ANTES (licao LT-007). SOBREVIVENTES com casa nova: family-invite-section-actions.ts e family-invite-email-hint.ts vao para apps/web/lib/convite/ (a tela configuracoes/familia e a unica consumidora), importadores e o scope test f10-voce-porta atualizados no mesmo commit."
+  - "Pins de interface web: app-shell (avatar do cabecalho) e bottom-nav (aba Perfil) e configuracoes-nav e business-form passam a linkar /app/voce direto (o 307 nao serve de porta — LT-007); active-nav: as chaves de /profile caem ou apontam para o destino novo (decidir com o que a casca web ainda serve); city-switcher rodape 'Mude a sua cidade no perfil' passa a /app/voce#cidade; o CTA da consulta no app (CidadeConsulta) aponta /app/voce?mudar=<id> (o app le o param desde o RUN-170) e a ancora #cidade do Voce abre a secao (se o Voce ainda nao ancora em cidade, uma linha de id — nada alem)."
+  - "persistent-login: o passo de logout migra para a linha Sair da conta do /app/voce (a acao real ja existe, POST /api/app/voce/sair) — a garantia 'sessao morre e cai na entrada' continua provada de ponta a ponta, agora pelo caminho real. shell-navigation: os casos ancorados em /profile realocam para /app/voce (goto cai no 307? nao — a regra exata manda para o app; o spec web visita rotas web: reancorar em rota web viva equivalente OU declarar o caso migrado para o e2e do app, com nome, no RELATORIO). global-search-flow: o campo de busca lido no /profile migra para outro host web vivo (ler o spec e decidir com evidencia). journey-pedir-servico/provider-member-business: os atalhos 'Seu espaco/Seu negocio' que liam /profile apontam o destino novo. manaus-pilot-denials/onboarding-denials: /profile em PROTECTED_ROUTES continua correto (a rota responde 307 autenticando antes? conferir o portao do proxy com teste — a negativa nao pode virar visita anonima que passa)."
+  - "Upload de avatar aposentado: avatar-section/avatar-actions morrem; photo-upload-action.test.ts trata o que morre com eles SEM perder a garantia de sanitize-image onde upload continua vivo (grupos/guia/listings tem os seus — ler o teste e realocar assercoes que valem para o compartilhado). RELATORIO declara a perda (porta de upload) e aponta o card pos-lancamento AVATAR-FOTO-APP aberto pelo coordenador no fechamento."
+  - "Provas: unit/infra acima; link-crawl sem portas velhas e sem allowance obsoleta; capture.mjs sem /profile e /editar (e sem o /profile/<uuid> que ja era app); e2E do app: /app/voce continua provado (f10-voce-real nao regride). Rodar local: pnpm test, test:scope, gate --fast, tsc -p tests/e2e, vitest dos unitarios tocados; @stateful ficam pro CI. git rebase origin/main no fim (o #250 anda na frente) e TOTAL_DE_ROTAS conferido em disco (nenhuma API nasce/morre aqui — 101, salvo o que a main ja tiver)."
+
+proof:
+  - npx pnpm@11.18.0 gate --fast
+  - npx pnpm@11.18.0 test
+  - npx pnpm@11.18.0 test:scope
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/F10-TROCA-PERFIL.task.yml
+
+risk: troca de tela com 20+ pins e sobreviventes de familia na pasta; negativas de portao que nao podem virar visita anonima
+risk_level: R2
+
+reviewer_must_differ_from_executor: true
+retry_budget: 2
+on_budget_exhausted: HUMAN_DECISION
+
+closure:
+  requires_runtime_evidence: true
