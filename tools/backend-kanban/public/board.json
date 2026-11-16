@@ -6275,7 +6275,7 @@
       "tests": [],
       "blockers": [],
       "updatedAt": "2026-11-16",
-      "sourceRevision": "1e668045",
+      "sourceRevision": "076396aa",
       "links": ["docs/LANCAMENTO.md"],
       "proof": [
         "02/11: aberto na definição do lançamento (docs/LANCAMENTO.md), por mandato do dono.",
@@ -6297,7 +6297,8 @@
         "16/11: RUN-165 mergeado (2b48e8bd). A pasta (shell)/messages nao serve mais tela (307) e perdeu seu unico gesto vivo (bloquear) para o app — a remocao dela (RUN-166) esta destravada.",
         "16/11: CIDADE-169 mergeado (1c488b1f) — /cidade e /localidade deixaram de servir tela de membro; o painel de cidade do app navega por id real.",
         "16/11: RUN-168 (8c3224fa), RUN-169 (9100ab6b) e RUN-170 (74d58714) fundidos; F06 so fecha com RUN-171 + LOC-IMPL (dependencia registrada no card); F10 tem paridade completa no app e so espera a troca.",
-        "16/11: RUN-166 mergeado. Do inventario de RUN-166, seguem servindo tela de membro na web: indicacoes/[id] (pre-condicao do F09-B3 migrar o report-button antes), /profile+/editar (RUN-172 em curso), negocio/pedidos/configuracoes-familia e o resto da casca — a fase 6 acompanha por jornada."
+        "16/11: RUN-166 mergeado. Do inventario de RUN-166, seguem servindo tela de membro na web: indicacoes/[id] (pre-condicao do F09-B3 migrar o report-button antes), /profile+/editar (RUN-172 em curso), negocio/pedidos/configuracoes-familia e o resto da casca — a fase 6 acompanha por jornada.",
+        "16/11: RUN-172 mergeado — nenhuma tela de membro das linhas F02-F10 fora das trocadas; o que resta na web pertence a jornadas com card proprio. AVATAR-FOTO-APP e o item M-3 da familia estao registrados."
       ],
       "id": "LAN-TROCA",
       "title": "Fase 6: varredura da troca — nenhuma rota de membro no apps/web servindo tela",
@@ -6310,7 +6311,7 @@
         "Portões do proxy movidos com teste por perfil",
         "Código, testes e ferramentas antigas removidos",
         "Fase 1 (RUN-019, decisão revista em 06/11): 307 das 11 rotas autorizadas, IDs/query preservados, sem ciclo; /indicacoes/:id fica na web até F04 para preservar Ajudou a resolver; demais rotas e edições ficam na web",
-        "Lacunas seguintes: filtros/IDs de Guia e busca FECHADOS (RUN-162); cidade/localidade FECHADA (CIDADE-169, 1c488b1f — consulta no app + 307 das duas telas); F05: criar/editar era drift (ja feito — f05-eventos-real:319-375, tela trocada PR #176), fan-out de convites NAO e linha F05 do LANCAMENTO (decisao 16/11; parte de e-mail em OUTBOX-INVITE-RECIPIENTS), cancelar-encontro do organizador FECHADO (RUN-167, 0f0098f9); F05 COMPLETO; Meus anuncios e alertas (F06; criar/editar RUN-156, imovel RUN-164, salvar FECHADO (RUN-168, 8c3224fa), alertas FECHADOS (RUN-169, 9100ab6b); filtros FECHADOS (RUN-171, 1e668045). F06 fecha em funcionalidades com B/C/D fundidos; o cartao LAN-F06 ainda espera LOC-IMPL (dependencia registrada) e o card SALVAR-GLYPH (P1 pre-lancamento); F07; seguranca na conversa e preferencias FECHADA (F09; RUN-165, 2b48e8bd — bloquear, denunciar, Mensagens na matriz, destino do aviso DM em runtime); pasta /messages REMOVIDA (RUN-166, 000cdd89) — LAN-F09 so espera LAN-PUSH; troca de /profile proprio + editar (F10; paridade FECHA aqui — RUN-170, 74d58714; resta o Lote B do card F10-TROCA-PERFIL-PROPRIO: redirects + ~20 pins + morte do toggle Exibir/upload de foto)",
+        "Lacunas seguintes: filtros/IDs de Guia e busca FECHADOS (RUN-162); cidade/localidade FECHADA (CIDADE-169, 1c488b1f — consulta no app + 307 das duas telas); F05: criar/editar era drift (ja feito — f05-eventos-real:319-375, tela trocada PR #176), fan-out de convites NAO e linha F05 do LANCAMENTO (decisao 16/11; parte de e-mail em OUTBOX-INVITE-RECIPIENTS), cancelar-encontro do organizador FECHADO (RUN-167, 0f0098f9); F05 COMPLETO; Meus anuncios e alertas (F06; criar/editar RUN-156, imovel RUN-164, salvar FECHADO (RUN-168, 8c3224fa), alertas FECHADOS (RUN-169, 9100ab6b); filtros FECHADOS (RUN-171, 1e668045). F06 fecha em funcionalidades com B/C/D fundidos; o cartao LAN-F06 ainda espera LOC-IMPL (dependencia registrada) e o card SALVAR-GLYPH (P1 pre-lancamento); F07; seguranca na conversa e preferencias FECHADA (F09; RUN-165, 2b48e8bd — bloquear, denunciar, Mensagens na matriz, destino do aviso DM em runtime); pasta /messages REMOVIDA (RUN-166, 000cdd89) — LAN-F09 so espera LAN-PUSH; troca de /profile proprio + editar FECHADA (RUN-172) — F10 COMPLETO em funcionalidades e troca; do inventario de membro na web sobem para as jornadas grandes: indicacoes (pre-condicao F09-B3), configuracoes/familia (F10-FAMILIA), negocio/pedidos (F07) e o restante da casca ate a fase 6 varrer por jornada",
         "Provar a revisão da fase 1 no CI: E2E integrado e rastreador; manter as portas de /profile e /community enquanto suas jornadas ficam na web"
       ],
       "dependencies": [
@@ -7275,6 +7276,41 @@
       "completedChecklist": [true, true, true, true]
     },
     {
+      "id": "RUN-172",
+      "title": "F10 Lote B: /profile e /editar viram 307; telas web morrem com codigo e testes",
+      "phase": "Lançamento",
+      "priority": "P1",
+      "category": "frontend",
+      "status": "done",
+      "completedAt": "2026-11-16",
+      "description": "Fecha o card F10-TROCA-PERFIL-PROPRIO. Redirects exatos /profile e /profile/editar → /app/voce (antes da regra de :id, query preservada, sem ciclo); pasta (shell)/profile morreu inteira (12 arquivos: telas, city-section/city-actions, bio-actions, affiliation+actions, avatar-section/avatar-actions, profile-indications, family-invite-*) com grep de importadores antes de cada rm. Sobreviventes de familia vivem em lib/convite/familia-acoes.ts (configuracoes/familia importa a casa nova; o email-hint era re-export e morreu — a casa ja existia). Pins migrados com tabela garantia→lar no RELATORIO: app-shell/bottom-nav/configuracoes-nav/business-form/city-switcher direto ao app; active-nav sem a chave /profile; CidadeConsulta CTA → /app/voce?mudar=<id> (ancora #cidade adicionada no Voce); deep-links invitation_accepted → /app/perfil/<actor> (DESVIO ACEITO do contrato: o aviso abre OUTRA pessoa — /app/voce seria errado; e onde o 307 de /profile/:id pousa); persistent-login logout pelo caminho real do app; /profile saiu de PROTECTED_ROUTES com negativa nova do app (anônimo não carrega dado). Perdas declaradas (ADR-20261116): porta de upload de avatar (card AVATAR-FOTO-APP), toggle Exibir, atalho 'Seu negócio' (F07), etiquetas de vínculo do cabeçalho web. Leituras do bucket e /api/avatar/[userId] INTACTAS.",
+      "checklist": [
+        "Redirects + ausencia da pasta + inversao das assercoes antigas",
+        "Familia com casa nova em lib/convite sem perder importadores",
+        "20+ pins com garantia nomeada (molde RUN-166)",
+        "Leituras de avatar intactas; upload aposentado com card",
+        "CI verde na revisao entregue"
+      ],
+      "dependencies": ["RUN-170", "CIDADE-169"],
+      "tests": [
+        "tests/unit/infra/lan-troca-redirect.test.ts",
+        "tests/e2e/persistent-login.spec.ts",
+        "tests/e2e/shell-navigation.spec.ts"
+      ],
+      "blockers": [],
+      "updatedAt": "2026-11-16",
+      "sourceRevision": "076396aa",
+      "links": [
+        "docs/agents/tasks/F10-TROCA-PERFIL.task.yml",
+        "docs/decisions/ADR-20261116-perfil-transferencia-e-afiliacao-no-app.md"
+      ],
+      "proof": [
+        "16/11: PR #252 (executor 4fabf177, base 1e668045 pos-RUN-171). Revisao R2 Qwen: PASS com ressalvas — confere no disco redirect exato + lookahead, pasta 0 arquivos, zero importador vivo das pecas mortas, sobreviventes de familia realocados no mesmo commit, Denial 1b sem virar visita anonima, sanitize com 8 portas + bug de indice paths[7] corrigido pelo proprio teste. Ressalva 1 do revisor (falta commit da main) nao se aplica: o avanco era quadro/LICOES, arvore disjunta do diff do lote — o squash nao toca nesses arquivos. CI na revisao entregue: ver prova de merge abaixo.",
+        "16/11: achado M-3 (R3 de 11/11) sem dono ganhou item no card F10-FAMILIA: familia-acoes.ts ecoa mensagem do Postgres ao navegador — registrar/corrigir com a familia real (RUN do F10-FAMILIA)."
+      ],
+      "completedChecklist": [true, true, true, true, true]
+    },
+    {
       "id": "F05-CANCELAR-EVENTO",
       "title": "F05: cancelar o encontro pelo organizador no app",
       "phase": "Lançamento",
@@ -7306,24 +7342,27 @@
       "phase": "Lançamento",
       "priority": "P1",
       "category": "frontend",
-      "status": "repo",
+      "status": "done",
       "description": "O RUN-163 deixou claro: /profile (proprio) e /profile/editar nao sao redirect puro — a web tem 3 recursos sem casa no app. (1) TRANSFERENCIA DE CIDADE com data de saida (CitySection/moveCityAction; decisao do dono 25/09; a casca so muda a cidade VISTA) — plano: PORTAR (produto aprovado que a troca nao pode matar). (2) AUTODECLARACAO Forca/OM (ADR-20260908 D2) — portar declaracao; aposentar o toggle Exibir (sem visivel-a-outros no lancamento) com registro para ratificacao no marco. (3) FOTO DE AVATAR — aposentar no lancamento (iniciais sao a identidade da regua; a linha F10 nao pede foto), dados no banco intactos, card pos-lancamento. Depois: redirects /profile e /profile/editar → /app/voce, remover telas/pecas, pins migrados (shell-navigation ancora em /profile, sidebar hrefs, persistent-login logout via /profile, city-switcher #cidade, capture).",
       "checklist": [
-        "[x] Decidir e portar a transferencia de cidade (RUN-170, 74d58714 — declaracao + estado no app; 'desfazer' permanece inexistente por decisao do ADR-20261116)",
-        "Portar autodeclaracao Forca/OM (toggle Exibir aposentado, item no marco)",
-        "Aposentar foto de avatar com card pos-lancamento",
-        "Redirects + remocao das telas + pins migrados"
+        "[x] Decidir e portar a transferencia de cidade (RUN-170: POST /api/app/voce/cidade sobre o RPC existente; 'desfazer' permanece hatch de suporte por decisao do ADR-20261116)",
+        "[x] Portar autodeclaracao Forca/OM privada (RUN-170: GET/PUT /api/app/voce/afiliacao, is_visible=false por construcao; toggle Exibir aposentado com linha na RATIFICACAO)",
+        "[x] Aposentar foto de avatar com card pos-lancamento (RUN-172 matou a porta de upload; AVATAR-FOTO-APP aberto no fechamento; leituras do bucket intactas)",
+        "[x] Redirects + remocao das telas + pins migrados (RUN-172, 20+ pins com tabela garantia→lar no RELATORIO)"
       ],
       "dependencies": [],
       "tests": ["tests/e2e/persistent-login.spec.ts", "tests/e2e/shell-navigation.spec.ts"],
       "blockers": [],
       "updatedAt": "2026-11-16",
-      "sourceRevision": "9ca86c53",
+      "sourceRevision": "076396aa",
       "links": [],
       "proof": [
         "16/11: aberto pelo mapa da troca /profile + fechamento do RUN-163.",
-        "16/11: paridade de cidade fechada pelo RUN-170; afiliação privada idem. Troca em si segue no lote em curso (RUN-172)."
-      ]
+        "16/11: paridade de cidade fechada pelo RUN-170; afiliação privada idem. Troca em si segue no lote em curso (RUN-172).",
+        "16/11: FECHADO pelos lotes RUN-170 (74d58714) e RUN-172 (ver card). A linha F10 do lancamento fica completa em funcionalidades e troca; LAN-F10 fecha no gate final da fase 6."
+      ],
+      "completedAt": "2026-11-16",
+      "completedChecklist": [true, true, true, true]
     },
     {
       "id": "SESSAO-COOKIES-WEAKMAP",
@@ -7740,7 +7779,8 @@
         "Confirmar e remover ações de foto de listing órfãs, se sem página viva",
         "Confirmar e remover apps/web/lib/user-group-interests-rpcs.ts (órfão após RUN-163)",
         "Cosmético CIDADE-169: links /localidade residuais (explorar/servicos:466, communities/[id]:544 — caem no 307) e active-nav.ts:82 mapeia tela morta; repontar quando essas telas forem editadas",
-        "chat-thread.tsx ficou sem importador vivo apos RUN-166 — confirmar e remover (limpeza, nao conducta)"
+        "chat-thread.tsx ficou sem importador vivo apos RUN-166 — confirmar e remover (limpeza, nao conducta)",
+        "Cosmetico pos-RUN-172: configuracoes-nav com dois itens para /app/voce (nenhum acende), exports de visibilidade sem chamador em lib/profile/affiliation.ts, comentario do voce-cidade.spec ancora linhas de arquivo morto — faxina quando essas areas forem editadas"
       ],
       "dependencies": [],
       "tests": [],
@@ -7752,7 +7792,8 @@
         "15/11: registrado pelo coordenador ao fechar RUN-154/156, confrontado no disco (git grep). NÃO inclui o RPC mark_recommendation_resolved: a migration vigente (20261024110000_lote5_pergunta.sql:276) JÁ limpa resolved_reply_id — a ressalva da revisão do RUN-153 não se confirma no código.",
         "16/11: RUN-163 deixou o modulo de RPCs de interesses 6rfao com a morte da action web (declarado no relatorio do lote, fora do allowed_paths dele).",
         "16/11: aberto pela condicao 3 da revisao do CIDADE-169.",
-        "16/11: achado da revisao do RUN-166."
+        "16/11: achado da revisao do RUN-166.",
+        "16/11: ressalva 4 da revisao do RUN-172."
       ]
     },
     {
@@ -7789,9 +7830,10 @@
       "blockers": [],
       "proof": [
         "13/11: reconciliado pelo coordenador — o cartão estava desatualizado (06/11). A jornada JÁ está ligada e provada: rotas GET/POST/DELETE /api/app/voce/familia + tela Familia.tsx pela sessão (RUN-018, PR #147, merge 3093390f); service_role só no servidor após exigirSessao, id sempre da sessão, nunca do corpo. pgTAP positivo/negativo (plan 20) + revisão R3 sem CRÍTICO/ALTO (RUN-030/031, PR #194, ef72c839; docs/agents/reviews/2026-11-11-revisao-r3-f10-familia.md). E2E real f10-voce-real.spec.ts:180 (convite entra na lista, revogação some) em 375/768/1440. ADR-20261111-convite-familiar-pela-sessao listado em RATIFICACAO.md. Limite de envio (5704b78d) e corrida de convites (261a1ab5) corrigidos.",
-        "Pendência que impede fechar como 'posse derivada da sessão' (ADR-20261111): o banco ainda aceita o id do titular por parâmetro; a posse é verificada na rota, não derivada de auth.uid() no banco. O hardening F10-R3-SESSION-DERIVED não é trivial: o caminho usa service_role, que não carrega o JWT do usuário, então auth.uid() seria nulo — exige redesenhar como a posse chega ao banco."
+        "Pendência que impede fechar como 'posse derivada da sessão' (ADR-20261111): o banco ainda aceita o id do titular por parâmetro; a posse é verificada na rota, não derivada de auth.uid() no banco. O hardening F10-R3-SESSION-DERIVED não é trivial: o caminho usa service_role, que não carrega o JWT do usuário, então auth.uid() seria nulo — exige redesenhar como a posse chega ao banco.",
+        "16/11: item acrescentado no fechamento do RUN-172 — a acao foi movida como estava (correto) e o achado M-3 estava sem dono."
       ],
-      "updatedAt": "2026-11-13",
+      "updatedAt": "2026-11-16",
       "sourceRevision": "ad5ac070",
       "id": "F10-FAMILIA",
       "title": "F10 família: ligar convite e vínculo familiar ao app",
@@ -7803,7 +7845,8 @@
         "Caminho de convite por migration nova ou rota com verificação de posse, sem editar migration aplicada",
         "pgTAP positivo (titular cria convite) e negativo (outro membro ou não titular é recusado)",
         "Jornada inteira com dados reais: entrada, ação, gravação, retorno e falha principal, em 375/768/1440",
-        "Revisão de segurança R3 antes da integração"
+        "Revisão de segurança R3 antes da integração",
+        "Silencio real nas Server Actions da familia (M-3 do parecer R3 de 11/11, hoje em lib/convite/familia-acoes.ts): nao ecoar mensagem do Postgres ao navegador — assercao real positivo/negativo"
       ],
       "links": ["docs/agents/tasks/RUN-016.task.yml"]
     },
@@ -8929,6 +8972,72 @@
       ],
       "tests": [],
       "blockers": []
+    },
+    {
+      "id": "AVATAR-FOTO-APP",
+      "title": "Pos-lancamento: foto de avatar no app (porta de upload)",
+      "phase": "Pos-lancamento",
+      "priority": "P2",
+      "category": "frontend",
+      "status": "repo",
+      "description": "O RUN-172 aposentou a PORTA DE UPLOAD que vivia em /profile/editar (avatar-section/avatar-actions), por decisao do ADR-20261116: o app e iniciais por regua e nenhuma linha do lancamento pede foto. As leituras seguem vivas — bucket 'avatars', rota /api/avatar/[userId] (autorizada pela RLS de profiles), consumidores web (feed, comunidade, indicacao, compositor) e o fallback de iniciais. Recriar no app = POST pela porta /api/app/voce (upload <5MB png/jpeg/webp, sanitize-image obrigatorio, service_role so no servidor) + secao no Voce + E2E com fixture (media-fixture.mjs ja semeia os avatares do seed). Decidir junto: substituir ou conviver com o render web.",
+      "checklist": [
+        "POST /api/app/voce/avatar no molde das rotas de escrita (sanitize-image, CSRF, sem service_role no cliente)",
+        "Secao no Voce com preview e remocao",
+        "E2E real 3 larguras x 2 temas + prova de que a foto aparece nos destinos que ja a leem"
+      ],
+      "dependencies": [],
+      "tests": ["tests/unit/security/photo-upload-action.test.ts"],
+      "blockers": [],
+      "updatedAt": "2026-11-16",
+      "sourceRevision": "076396aa",
+      "links": ["docs/decisions/ADR-20261116-perfil-transferencia-e-afiliacao-no-app.md"],
+      "proof": [
+        "16/11: aberto no fechamento do RUN-172 (perda declarada no RELATORIO do lote e no ADR)."
+      ]
+    },
+    {
+      "id": "CASCA-WEB-SEM-ENTRADA",
+      "title": "A casca web perdeu toda entrada por link; o rastreador nao inventaria mais as telas de membro restantes",
+      "phase": "Lançamento",
+      "priority": "P2",
+      "category": "testing",
+      "status": "repo",
+      "description": "Ate o RUN-172 o /profile era a raiz de alcancabilidade do rastreador para a casca de membro; com a troca, todo membro entra por /app, e as sete portas declaradas em PORTAS_FORA_DO_LINK (/salvos, /configuracoes, /configuracoes/conta, /recuperar-senha, /communities, /communities/[id], /indicacoes/[id]) sao so a parte visivel: o rastreador parou de CAMINHAR ate mercado/[id], imoveis/[id], pedidos etc. — uma regressao de cobertura por link que passa batida se alguem 'so consertar o teste'. Opcoes (decidir ao abrir): porta sintetica de teste que injeta a lista de rotas de membro a caminhar (mantendo o rastreador honesto), ou aceitar e inverter o rastreador para o app quando a casca morrer de vez na varredura final da fase 6. Enquanto vive: cada tela trocada precisa continuar repontando as portas que dela descendiam, como o RUN-172 fez com declaracao explicita.",
+      "checklist": [
+        "Decidir sintese de entrada (rota de teste) vs varredura por lista",
+        "Rastreador volta a cobrir as telas de membro sobreviventes",
+        "Prova: remover uma porta viva quebra o teste"
+      ],
+      "dependencies": ["RUN-172"],
+      "tests": ["tests/e2e/link-crawl.spec.ts"],
+      "blockers": [],
+      "updatedAt": "2026-11-16",
+      "sourceRevision": "076396aa",
+      "links": ["docs/agents/tasks/F10-TROCA-PERFIL.task.yml"],
+      "proof": [
+        "16/11: aberto pelo achado colateral do fix do CI do RUN-172 (fixer ses_e1da76dd8ffeVXU0502WxBi9nR, RELATORIO 'Correcao do CI')."
+      ]
+    },
+    {
+      "id": "VOCE-CONTADORES-ERRO",
+      "title": "Contadores do Voce desenham 0 quando a leitura falha (stado de erro virou zero)",
+      "phase": "Lançamento",
+      "priority": "P2",
+      "category": "frontend",
+      "status": "repo",
+      "description": "Achado colateral declarado no fix do RUN-172: com a leitura do perfil sem sessao/falha, os 4 contadores da tela desenham '0' em vez do estado de erro. A regra do app e explicita ('uma query que falhou e virou lista vazia e um bug'). Custo baixo: mesma fonte de verdade do painel de identidade ('perfil indisponivel agora') — quando a leitura falha, os contadores vao junto para o estado indisponivel. NAO e deste lote (nenhum arquivo apps/app foi tocado no fix), e e do app, logo antes do marco de visao final do F10.",
+      "checklist": [
+        "Falha de leitura marca contadores como indisponiveis, nunca 0",
+        "Prova no stub do app com API 500"
+      ],
+      "dependencies": [],
+      "tests": ["apps/app/tests/e2e/voce.spec.ts"],
+      "blockers": [],
+      "updatedAt": "2026-11-16",
+      "sourceRevision": "076396aa",
+      "links": ["docs/agents/tasks/F10-TROCA-PERFIL.task.yml"],
+      "proof": ["16/11: aberto pelo achado colateral do fix do CI do RUN-172."]
     }
   ],
   "launch": {
