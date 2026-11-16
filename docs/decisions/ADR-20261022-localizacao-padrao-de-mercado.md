@@ -121,3 +121,34 @@ Médio. Colunas novas e dados geocodificados; apagar volta ao bairro.
 ## Reopen condition
 
 Reabrir se houver incidente com localização, ou se o custo da geocodificação passar do previsto.
+
+## Emenda de 16/11/2026 — SEC-013: o que o pedido publica, e a trilateração
+
+Auditoria independente do `security-auditor` de 16/11 sobre a main `2bb231d8`
+(`.work/orq/relatorios/auditoria-r3-lote2a.md`). Decisão do coordenador por
+delegação, na mesma data; o detalhe de implementação está na emenda SEC-013 do
+ADR-20261116 (F1, F2, F4 e F5) e esta emenda fecha o §3 acima:
+
+1. **O §3 é sobre distância e bairro, não sobre publicar localização.** O pedido
+   de serviço guarda o CEP e a coordenada derivada dele só para o cálculo
+   privado da distância e para o bairro que o prestador vê. Nenhuma RPC do
+   pedido devolve `cep`, `latitude` ou `longitude` — nem para o prestador, nem
+   para a própria solicitante —, e a coordenada e o bairro são derivados no
+   banco a partir do CEP, nunca aceitos do corpo da chamada. (F1 e F4.)
+2. **A trilateração do pedido fica aceita no lançamento, com residual ~100 m.**
+   A distância é a funcionalidade pedida no §3; a origem é mutável pelo próprio
+   chamador, então qualquer distância publicada permite recombinar medidas. Com
+   três origens não colineares o ponto do pedido volta a ~100 m — a ordem da
+   precisão do CEP de origem. A régua de privacidade deste ADR (§4) é a
+   coordenada do **perfil**, que continua nunca exibida; a localização do pedido
+   foi entregue pelo titular para o atendimento, e o baseline de mercado
+   (iFood, OLX) entrega o endereço exato.
+3. **Correção de registro:** a afirmação de que "o arredondamento é a mitigação"
+   da trilateração é falsa e fica corrigida aqui. O arredondamento — 300 a 500 m
+   do anúncio aproximado (§1) e a centena da distância do pedido — limita a
+   precisão de UMA leitura; ele não impede a interseção de várias consultas de
+   origens diferentes. Endurecimento (teto de consultas de distância por
+   participante, origem congelada no primeiro cálculo ou piso mais grosso) entra
+   como cartão pós-lançamento, não como mitigação já existente.
+4. A métrica de sucesso do §Success metric continua valendo sem mudança:
+   nenhuma leitura de outro membro devolve a coordenada ou o CEP do perfil.

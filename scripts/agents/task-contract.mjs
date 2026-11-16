@@ -172,6 +172,7 @@ function readLines(source) {
   let blockIndent = null
   for (let index = 0; index < rawLines.length; index += 1) {
     const raw = rawLines[index]
+    if (/^\s*#/.test(raw)) continue
     const indent = raw.length - raw.trimStart().length
     if (blockIndent !== null && raw.trim() !== "" && indent <= blockIndent) blockIndent = null
     const insideBlock = blockIndent !== null && indent > blockIndent

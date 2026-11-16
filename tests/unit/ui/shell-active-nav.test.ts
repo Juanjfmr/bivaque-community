@@ -48,6 +48,9 @@ describe("resolveActiveNav deriva o item ativo da rota", () => {
   it("cada container primário acende a si mesmo", () => {
     expect(resolveActiveNav("/inicio", PRIMARY)).toEqual({ kind: "primary", id: "inicio" })
     expect(resolveActiveNav("/explorar", PRIMARY)).toEqual({ kind: "primary", id: "explorar" })
+    // RUN-181: `/explorar/servicos` deixou de ser tela (307 para /app/busca).
+    // O prefixo continua resolvendo o endereço antigo — link velho que ainda
+    // cai na casca acende Explorar em vez de uma lateral sem item ativo.
     expect(resolveActiveNav("/explorar/servicos", PRIMARY)).toEqual({
       kind: "primary",
       id: "explorar",

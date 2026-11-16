@@ -46,7 +46,15 @@ failure path work in the integrated app and are proven at 375/768/1440 in both t
    [location](docs/decisions/ADR-20261022-localizacao-padrao-de-mercado.md),
    [data foundation](docs/decisions/ADR-20261022-fundacao-dados-bairros-ocultar-chamados.md) and the
    two of 01/11 ([entry by code](docs/decisions/ADR-20261101-entrada-unica-por-codigo.md),
-   [photo and reply in groups](docs/decisions/ADR-20261101-foto-e-resposta-nos-grupos.md)). A later ADR
+   [photo and reply in groups](docs/decisions/ADR-20261101-foto-e-resposta-nos-grupos.md),
+   [data access boundary](docs/decisions/ADR-20261105-porta-de-dados-do-app.md),
+   [lean execution and R3 without stopping](docs/decisions/ADR-20261105-entrada-enxuta-e-r3-sem-parada.md),
+   [public proxy surface](docs/decisions/ADR-20261110-superficie-publica-do-proxy.md),
+   [two-stage CI](docs/decisions/ADR-20261114-ci-ciclo-rapido-e-completo-no-fechamento.md),
+   and the accepted 16/11 journey ADRs: [profile transfer and private affiliation](docs/decisions/ADR-20261116-perfil-transferencia-e-afiliacao-no-app.md),
+   [dual-origin questions](docs/decisions/ADR-20261116-execucao-pergunta-origem-dupla.md),
+   [CEP on listings](docs/decisions/ADR-20261116-cep-no-anuncio-avo-limite-e-coordenada-ausente.md),
+   and [blocking and reporting in the app](docs/decisions/ADR-20261116-bloqueio-e-denuncia-pela-porta-do-app.md)). A later ADR
    or a later explicit owner instruction wins over an older one.
 4. Visual and interaction bar: [docs/agents/regua-nextdoor/](docs/agents/regua-nextdoor/) — Nextdoor
    (via Mobbin) is the bar; every rebuilt screen starts from cited Mobbin references.
@@ -59,6 +67,8 @@ Declared OM may be used privately for the person's own distance calculations; ex
 other members stays out of scope (BLOCK-AFFILIATION).
 
 ## Execution and evidence
+
+- The canonical lean-execution rules are in [RISK_MATRIX.md, section Lean execution](docs/decisions/RISK_MATRIX.md#lean-execution-owner-05112026).
 
 - Work in an isolated worktree per line of work. One executor writes per checkout; parallel
   executors need disjoint paths and separate servers/ports. Worktrees do not isolate databases:

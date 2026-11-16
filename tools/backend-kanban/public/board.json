@@ -5757,7 +5757,8 @@
         "02/11: posto em now por instrução do dono; a ordem do docs/LANCAMENTO.md manda entregar o F01 ligado ao banco (ADR-20261101-entrada-unica-por-codigo). Dependência ainda aberta: AJUDA-PUBLICA, que é feita antes; LAN-F1-IDENTIDADE, APP-F01-ENTRADA-VISUAL e APP-001 estão fechadas.",
         "02/11: aberto na definição do lançamento (docs/LANCAMENTO.md), por mandato do dono.",
         "05/11: pelo ADR-20261105 a entrada fica congelada; a revisão às cegas Nextdoor e a auditoria de acessibilidade separada deixam de ser portão do F01 (a acessibilidade mínima é a do E2E); a retirada da tela antiga do apps/web vai para ENTRADA-WEB-ANTIGA.",
-        "10/11: fechamento — revisão independente da rodada 2 PASS (reviewers d780600d e f29e13e9) no head 257ad182; o documento de I-4/I-5 foi reconstruído e mergeado no #178 (d6c9039d); E2E f01-entrada-real 27/27 (9 casos × 3 larguras, incluindo o 9º caso em tema escuro); CI do PR verde; SEC-008 e RUN-004 com revisão de contrato e auditoria do security-auditor PASS com ressalvas (RATIFICACAO.md:13); o resíduo do /auth/v1/verify fica em BLOCK-RESEND e não bloqueia o F01. Card fecha."
+        "10/11: fechamento — revisão independente da rodada 2 PASS (reviewers d780600d e f29e13e9) no head 257ad182; o documento de I-4/I-5 foi reconstruído e mergeado no #178 (d6c9039d); E2E f01-entrada-real 27/27 (9 casos × 3 larguras, incluindo o 9º caso em tema escuro); CI do PR verde; SEC-008 e RUN-004 com revisão de contrato e auditoria do security-auditor PASS com ressalvas (RATIFICACAO.md:13); o resíduo do /auth/v1/verify fica em BLOCK-RESEND e não bloqueia o F01. Card fecha.",
+        "16/11: SEC-012 fecha o caminho de falha do convite por código na entrada. A gravação do marcador depois do aceite passa a responder 503 {erro:gravacao-indisponivel} como as rotas irmãs (log sem dado pessoal), e o retry da mesma sessão retoma o vínculo direto pelo family_invite_code_accept, sem preview e sem consumir o limite; código aceito por outra pessoa mantém a 400 genérica. O E2E f01 agora afirma zero rascunho em entry_progress ao fim da entrada por código. 2ª rodada: revisão independente PASS COM RESSALVAS (.work/orq/relatorios/SEC-012-revisao.md) e auditoria LIBERA COM RESSALVAS (.work/orq/relatorios/SEC-012-auditoria.md); PR #261, merge 63d0a042, CI completo verde no SHA 92977f4d (run 43972906862) com o caso do convite ✓ em 375/768/1440 e pgTAP family-invite-code ok. Ressalvas LOW no cartão SEC-013."
       ],
       "id": "LAN-F01",
       "title": "F01 Entrada e onboarding ligada ao banco",
@@ -9245,6 +9246,98 @@
       "dependencies": ["HRN-001"],
       "updatedAt": "2026-11-16",
       "sourceRevision": "d597b3d"
+    },
+    {
+      "id": "SEC-012",
+      "title": "SEC-012: falha do marcador no aceite por convite responde 503 e a retomada conclui",
+      "phase": "Segurança pré-lançamento",
+      "priority": "P1",
+      "category": "backend",
+      "status": "done",
+      "completedAt": "2026-11-16",
+      "updatedAt": "2026-11-16",
+      "sourceRevision": "63d0a04",
+      "description": "Origem: auditoria do security-auditor de 16/11 (auditoria-r3-lote1.md, A1-1 MEDIUM e A1-3 LOW): a rota de aceite por código gravava o marcador do rascunho depois do aceite e, na falha, só logava e devolvia 200 — rascunho pessoal vivo depois da entrada concluída e retomada presa. Correção: 503 gravacao-indisponivel como as rotas irmãs de interesses e combinado, log estático sem dado pessoal, e a rota deixa de pré-validar com o preview — quem reconhece a aceitante no retry é o family_invite_code_accept, sem consumir o limite. Contrato docs/agents/tasks/SEC-012.task.yml (R3); ADR-20261102 emendado em 16/11. A 1ª rodada bloqueou (retomada inatingível porque o preview exigia pending); resolvida em 8cc59ab6 + adfbb2b8.",
+      "dependencies": ["LAN-F01"],
+      "checklist": [
+        "[x] A1: falha do marcador responde 503 {erro:gravacao-indisponivel} igual às rotas irmãs e loga sem dado pessoal",
+        "[x] A2: unitário negativo — 503 sem vazar a mensagem do erro; upsert ok continua 200 com localityMember",
+        "[x] A3: unitário da retomada pela sequência real — 503, retry sem preview com aceite retomando → 200; código de outra pessoa → 400 genérica; retomada com marcador falhando de novo → 503",
+        "[x] A4: E2E f01-entrada-real afirma zero rascunho em entry_progress ao fim da entrada por código",
+        "[x] A5: ADR-20261102 com a emenda de 16/11 do caminho real do convite; texto 'todos os caminhos' corrigido",
+        "[x] Rito R3: revisão independente e auditoria da 2ª rodada sem bloqueio; prova de runtime no CI completo do SHA mergeado"
+      ],
+      "proof": [
+        "Fechamento 16/11: PR #261 (https://github.com/Juanjfmr/bivaque-community/pull/261), merge squash 63d0a0424f4adeec96d1de354d8325582aaaf657 da revisão 92977f4d33956bcec70eb7dbc1a3ce13fef99b30 (branch ds/entrada-marcador-convite, rebasada sobre e26ecec5). CI completo run 43972906862 verde no MESMO SHA com label ci:full: pgTAP family-invite-code.sql ok, entry-provision-atomic.sql ok, db:lint sem erro; E2E f01-entrada-real caso do convite (spec.ts:417) ✓ nos três tamanhos — stateful mobile-375 115/115, tablet-768 e desktop-1440 success; e2e comuns 703 passed. Run 43972894645 (push sem label): Fast checks success, completo skipado — gate esperado do ADR-20261114.",
+        "Provas locais no HEAD final (E2E/pgTAP não rodam local: sandbox nega Docker; prova de banco e E2E é o CI completo no mesmo SHA): task-contract ok (1 contrato válido, R3); lint exit 0 só com avisos preexistentes; next typegen + typecheck da web ok; prova-fila -- pnpm test completo: unit 270 arquivos/3617, app 659, mobile 76, web 19, privacy 189, scope 256 — 0 falhas.",
+        "Pareceres da 2ª rodada: revisão independente (GLM) PASS COM RESSALVAS — nenhum bloqueante, nenhum médio, 2 LOW (.work/orq/relatorios/SEC-012-revisao.md); auditoria de segurança (Qwen4 Max) LIBERA COM RESSALVAS — sem CRITICAL/HIGH, F1 da 1ª rodada resolvido, ressalvas LOW viram SEC-013 (.work/orq/relatorios/SEC-012-auditoria.md). Pareceres da 1ª rodada (FAIL/BLOQUEIA) arquivados em SEC-012-revisao-r1.md e SEC-012-auditoria-r1.md."
+      ],
+      "links": [
+        "docs/agents/tasks/SEC-012.task.yml",
+        "docs/decisions/ADR-20261102-progresso-da-entrada.md"
+      ],
+      "tests": [
+        "tests/unit/app-api/entrada-convite.test.ts",
+        "tests/e2e/f01-entrada-real.spec.ts",
+        "supabase/tests/family-invite-code.sql"
+      ],
+      "notes": [
+        "Ressalvas LOW dos dois pareceres (prova pgTAP do caminho real do convite quanto ao marcador e rótulo do bloco em entry-provision-atomic.sql; asserção de que a retomada não consome o limite; teste integrado rota+banco do retry pós-503; estado intermediário no E2E) reunidas no cartão SEC-013. Registro pendente fora deste lote, pedido pela auditoria de origem: A1-2 (corrida PUT × provisionamento) e A1-4 (grupos padrão no convite) ainda sem cartão."
+      ]
+    },
+    {
+      "id": "SEC-013",
+      "title": "SEC-013: provas das ressalvas LOW do SEC-012 (convite por código no banco e no E2E)",
+      "phase": "Segurança pré-lançamento",
+      "priority": "P3",
+      "category": "backend",
+      "status": "next",
+      "updatedAt": "2026-11-16",
+      "sourceRevision": "63d0a04",
+      "description": "Reúne as ressalvas LOW dos dois pareceres da 2ª rodada do SEC-012 (revisão GLM e auditoria Qwen4 Max, 16/11), todas fora dos allowed_paths daquele lote. Nada bloqueou o merge; é fechamento de cobertura de prova do caminho real do convite por código. Itens numerados em .work/orq/relatorios/SEC-012-auditoria.md (§2 F2, §3 faltas 1-4) e §4 da revisão.",
+      "dependencies": ["SEC-012"],
+      "checklist": [
+        "[ ] Renomear o bloco '3. Convite familiar' de supabase/tests/entry-provision-atomic.sql:216-268 para o que ele exercita (provision_member_entry sem momento) e criar prova pgTAP do caminho real family_invite_code_accept quanto ao marcador (F2 da auditoria)",
+        "[ ] pgTAP afirma que a retomada pela aceitante não consome o limite: contagem de family_invite_code_attempts inalterada depois do aceite de retomada e retomada ok mesmo com a origem estourada (auditoria §3.1)",
+        "[ ] Teste integrado rota+banco da sequência retry pós-503, hoje provada por composição unitário+pgTAP (auditoria §3.2)",
+        "[ ] E2E f01 afirma o estado intermediário logo após o aceite — uma linha em entry_progress, etapa interesses, estado vazio, sem nome/cidade (O3); e o contador de rascunho declara o que soma, hoje todas as linhas do usuário (LOW da revisão)"
+      ],
+      "proof": [
+        "Ressalvas LOW registradas nos pareceres de fechamento do SEC-012: .work/orq/relatorios/SEC-012-revisao.md §4 e .work/orq/relatorios/SEC-012-auditoria.md §2 F2 e §3."
+      ],
+      "tests": [
+        "supabase/tests/family-invite-code.sql",
+        "supabase/tests/entry-provision-atomic.sql",
+        "tests/e2e/f01-entrada-real.spec.ts"
+      ],
+      "notes": []
+    },
+    {
+      "id": "HRN-004",
+      "title": "Diretrizes alinhadas com a execução real; validador aceita qualquer comentário YAML",
+      "phase": "HRN — Harness do quadro (16/11)",
+      "priority": "P2",
+      "category": "infra",
+      "status": "done",
+      "completedAt": "2026-11-16",
+      "description": "AGENT_ARCHITECTURE §3 ganha a tabela do roteamento real em uso desde 16/11 (DeepSeek/GLM/Qwen/GPT via OpenCode e Codex; Claude coordenador), mantendo a tabela de papéis de .claude/agents; AGENTS.md lista os ADRs regentes até 16/11 com um link por ADR; processo enxuto com fonte canônica única na RISK_MATRIX citada em uma linha; TASK_CONTRACT documenta os prefixos DS, RUN, EXP, HRN, SEC, LT e F06; task-contract.mjs aceita qualquer linha iniciada por # (inclusive crase e parêntese) com teste de escopo provando os dois casos e a recusa de chave inválida.",
+      "checklist": [
+        "[x] AGENT_ARCHITECTURE §3 com a tabela do roteamento real e a frase de continuidade dos papéis — trava nova em agent-architecture.test.mjs; node --test dos dois specs 12/12 verde",
+        "[x] AGENTS.md lista os ADRs regentes até 16/11 (porta de dados, entrada enxuta, superfície do proxy, CI em dois tempos + os 4 de 16/11), um link por ADR — conferido contra docs/decisions/",
+        "[x] Processo enxuto com fonte canônica na RISK_MATRIX (#lean-execution-owner-05112026); AGENTS.md e TASK_CONTRACT citam em uma linha; ADR-20261105 intocado",
+        "[x] TASK_CONTRACT.md documenta DS, RUN, EXP, HRN, SEC + LT e F06 sem mudar o que o validador aceita",
+        "[x] Parser aceita # com crase e parêntese (1 linha em task-contract.mjs:175); teste novo prova os dois casos e a recusa de chave inválida; nenhuma checagem removida",
+        "[x] agent-architecture.test.mjs ajustado para a tabela nova sem perder as checagens de papéis somente leitura"
+      ],
+      "proof": [
+        "Contrato docs/agents/tasks/HRN-004.task.yml (R1, retry 2) validado. Provas locais no HEAD final 4e160ede: pnpm test 259/259 via prova-fila, lint exit 0 com zero diagnóstico nos 7 arquivos do diff, validador ok. E2E e pgTAP não rodam localmente nesta orquestração (sandbox nega o Docker): prova é o CI completo no mesmo SHA.",
+        "PR #265 com label ci:full; runs 43975664667 (fast) e 43975682656 (completo verde: Fast checks, Install-test-build com Supabase/pgTAP, core, stateful 375/768/1440) no SHA 4e160ede; merge squash 6b247595.",
+        "Parecer GLM 5.3 Flash (revisor ≠ executor): PASS COM RESSALVAS em .work/orq/relatorios/HRN-004-revisao.md. Sem ressalvas MÉDIAS; os dois achados BAIXO ficam registrados no parecer: mojibake 'coment?rios' no fixture de tests/scope/task-contract.test.mjs (corrigir no próximo toque no arquivo) e o skip de comentário antes da detecção de bloco escalar no parser (duvidoso; virar cartão só se confirmado indesejado).",
+        "Verificação de fechamento: .work/orq/relatorios/HRN-004-verificacao.md"
+      ],
+      "dependencies": [],
+      "updatedAt": "2026-11-16",
+      "sourceRevision": "6b247595"
     }
   ],
   "launch": {
