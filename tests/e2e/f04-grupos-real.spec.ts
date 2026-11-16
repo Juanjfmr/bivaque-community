@@ -678,10 +678,23 @@ test.describe("F04 — grupos reais", { tag: "@stateful" }, () => {
       await test.step("limpeza: pergunta e grupo da fixture saem do banco", async () => {
         try {
           if (perguntaCriada !== "") {
-            await conferir(
-              "apagar a pergunta da fixture",
-              await servico.delete(`/rest/v1/recommendation_requests?id=eq.${perguntaCriada}`),
-            )
+            // A pergunta sai pela sessão de QUEM A ESCREVEU, sob RLS
+            // (`recommendation_requests_delete_own`), como o app apaga. Não pelo
+            // service_role: no banco do CI ele não tem DELETE nesta tabela (o
+            // grant é só SELECT e UPDATE(is_deleted), 20260821000033) e a
+            // limpeza virava 42501 "permission denied for table
+            // recommendation_requests" em cima do teste. Entrar de novo aqui
+            // garante a identidade da autora mesmo se o teste falhou antes.
+            await signInAs(context, "visual@bivaque.example.invalid")
+            const autor = await apiForSession(context)
+            try {
+              await conferir(
+                "apagar a pergunta da fixture",
+                await autor.delete(`/rest/v1/recommendation_requests?id=eq.${perguntaCriada}`),
+              )
+            } finally {
+              await autor.dispose()
+            }
           }
           await limpar(servico, [grupo])
         } finally {

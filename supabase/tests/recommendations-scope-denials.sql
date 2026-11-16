@@ -152,7 +152,16 @@ select lives_ok(
   'commercial terms in reply ("pagamento", "desconto", "contrato") are accepted (D21)'
 );
 
--- ── origin scope CHECK: cannot set both locality AND group ─────────────────
+-- ── origem dupla: o veto saiu do CHECK e passou para a policy ──────────────
+--
+-- O ADR-20261024 §1 (aceito pelo dono) fez `recommendation_origin_scope`
+-- aceitar cidade e grupo juntos: a pergunta de grupo Aberto aparece também na
+-- cidade. O que era "não pode ter os dois" virou "só com participação, grupo
+-- Aberto, grupo vivo e a cidade do grupo" — e isso vive na policy de INSERT.
+-- A matriz completa dessa regra está em `pergunta-origem-dupla.sql`; aqui fica
+-- a denegação que este arquivo já cobria: anexar um grupo do qual não se
+-- participa continua recusado, agora com 42501 pela policy (antes o CHECK dava
+-- 23514 antes de a policy opinar).
 
 set local role authenticated;
 select set_config(
@@ -181,9 +190,9 @@ select throws_ok(
       'outros'
     )
   $$,
-  23514,
+  42501,
   null,
-  'setting both locality_id and group_id is rejected by origin scope CHECK'
+  'setting both scopes without belonging to the group is rejected by the insert policy'
 );
 
 -- ── origin scope CHECK: must set at least one scope ────────────────────────
