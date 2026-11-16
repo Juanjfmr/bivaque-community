@@ -454,7 +454,9 @@ export function Escrever({
               ) : null}
               {recusa.tipo === "recusa" && recusa.tentavel ? (
                 <small className="text-(--on-surface-variant)">
-                  Seu texto e suas fotos continuam aqui.
+                  {tipo === "pergunta"
+                    ? "Sua pergunta continua aqui."
+                    : "Seu texto e suas fotos continuam aqui."}
                 </small>
               ) : null}
             </div>
