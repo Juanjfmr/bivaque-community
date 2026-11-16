@@ -198,6 +198,46 @@ const PORTAS_FORA_DO_LINK: readonly AllowedUnreached[] = [
       "FLUXO: redireciona para a vista Indicações da Comunidade; fica para links antigos e ?pedir=1",
   },
   { route: "/invite/[token]", porta: "EXTERNO: link de convite compartilhado" },
+  // RUN-172: as sete rotas abaixo perderam a porta no mesmo dia. O perfil web
+  // (`(shell)/profile`) era a única tela da casca a que uma persona chegava — o
+  // membro agora entra direto no app (`/inicio` é 307) — e dela saíam Salvos,
+  // Configurações, Comunidades e, duas telas adiante, Conta, senha e o detalhe
+  // da indicação. A coluna lateral da casca web ainda linka Salvos e
+  // Configurações (app-shell.tsx:113 e :161), mas o rastreador não entra na
+  // casca por persona nenhuma, então a porta existe sem ser medida. Cada linha
+  // nomeia o equivalente VIVO no app e o lote que fecha a tela web.
+  {
+    route: "/salvos",
+    porta:
+      "DÍVIDA F10: 'Salvos' morava no perfil web (RUN-172); a tela viva é /app/salvos e a web sai no lote F10 que traz salvos e conta para o app",
+  },
+  {
+    route: "/configuracoes",
+    porta:
+      "DÍVIDA F10: 'Configurações' morava no perfil web (RUN-172); os ajustes vivos estão no Você do app (/app/voce) e a tela web sai no lote F10 de conta e privacidade",
+  },
+  {
+    route: "/configuracoes/conta",
+    porta: "CONDICIONAL: coluna de /configuracoes, que perdeu a porta com o perfil web (RUN-172)",
+  },
+  {
+    route: "/recuperar-senha",
+    porta:
+      "CONDICIONAL: 'Alterar senha' em /configuracoes/conta; a recuperação viva é 'Esqueci minha senha' na entrada do app",
+  },
+  {
+    route: "/communities",
+    porta:
+      "DÍVIDA F04: 'Minhas comunidades' morava no perfil web (RUN-172); a lista viva é a Comunidade do app (/app/comunidade)",
+  },
+  {
+    route: "/communities/[id]",
+    porta: "CONDICIONAL: lista de /communities, que perdeu a porta com o perfil web (RUN-172)",
+  },
+  {
+    route: "/indicacoes/[id]",
+    porta: "CONDICIONAL: lista de /salvos, que perdeu a porta com o perfil web (RUN-172)",
+  },
   {
     route: "/negocio",
     porta:

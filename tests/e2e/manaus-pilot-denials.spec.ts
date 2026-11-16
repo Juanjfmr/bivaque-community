@@ -59,11 +59,16 @@ test.describe("anonymous visitor: protected route denial", () => {
 
     await expect(page).toHaveURL(/\/app\/voce$/)
     await expect(page.locator('[data-tela="voce"]')).toBeVisible({ timeout: 15_000 })
-    await expect(page.locator('[data-estado="erro"]')).toBeVisible()
-    // A recusa é real: sem sessão o app não anuncia a cidade nem oferece a edição
-    // do perfil que não conseguiu ler.
+    // A recusa é a da LEITURA do perfil, e a tela a nomeia no cartão de
+    // identidade: sem sessão não há nome nem cidade a mostrar. Não se assere
+    // `[data-estado="erro"]` no geral porque o Você compõe três leituras
+    // (perfil, família, avisos) e as três falham juntas — o locator casaria 3
+    // painéis e a asserção mediria a tela errada.
+    await expect(page.getByText("perfil indisponível agora")).toBeVisible()
     await expect(page.getByText(/Sua cidade é/)).toHaveCount(0)
+    // Sem leitura não há edição do perfil, nem a cidade que ele traria.
     await expect(page.getByRole("button", { name: /Editar/ })).toHaveCount(0)
+    await expect(page.locator("#cidade")).toHaveCount(0)
   })
 
   test("an anonymous visitor cannot reach community by way of login", async ({ page }) => {
