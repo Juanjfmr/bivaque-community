@@ -9311,6 +9311,33 @@
         "tests/e2e/f01-entrada-real.spec.ts"
       ],
       "notes": []
+    },
+    {
+      "id": "HRN-004",
+      "title": "Diretrizes alinhadas com a execução real; validador aceita qualquer comentário YAML",
+      "phase": "HRN — Harness do quadro (16/11)",
+      "priority": "P2",
+      "category": "infra",
+      "status": "done",
+      "completedAt": "2026-11-16",
+      "description": "AGENT_ARCHITECTURE §3 ganha a tabela do roteamento real em uso desde 16/11 (DeepSeek/GLM/Qwen/GPT via OpenCode e Codex; Claude coordenador), mantendo a tabela de papéis de .claude/agents; AGENTS.md lista os ADRs regentes até 16/11 com um link por ADR; processo enxuto com fonte canônica única na RISK_MATRIX citada em uma linha; TASK_CONTRACT documenta os prefixos DS, RUN, EXP, HRN, SEC, LT e F06; task-contract.mjs aceita qualquer linha iniciada por # (inclusive crase e parêntese) com teste de escopo provando os dois casos e a recusa de chave inválida.",
+      "checklist": [
+        "[x] AGENT_ARCHITECTURE §3 com a tabela do roteamento real e a frase de continuidade dos papéis — trava nova em agent-architecture.test.mjs; node --test dos dois specs 12/12 verde",
+        "[x] AGENTS.md lista os ADRs regentes até 16/11 (porta de dados, entrada enxuta, superfície do proxy, CI em dois tempos + os 4 de 16/11), um link por ADR — conferido contra docs/decisions/",
+        "[x] Processo enxuto com fonte canônica na RISK_MATRIX (#lean-execution-owner-05112026); AGENTS.md e TASK_CONTRACT citam em uma linha; ADR-20261105 intocado",
+        "[x] TASK_CONTRACT.md documenta DS, RUN, EXP, HRN, SEC + LT e F06 sem mudar o que o validador aceita",
+        "[x] Parser aceita # com crase e parêntese (1 linha em task-contract.mjs:175); teste novo prova os dois casos e a recusa de chave inválida; nenhuma checagem removida",
+        "[x] agent-architecture.test.mjs ajustado para a tabela nova sem perder as checagens de papéis somente leitura"
+      ],
+      "proof": [
+        "Contrato docs/agents/tasks/HRN-004.task.yml (R1, retry 2) validado. Provas locais no HEAD final 4e160ede: pnpm test 259/259 via prova-fila, lint exit 0 com zero diagnóstico nos 7 arquivos do diff, validador ok. E2E e pgTAP não rodam localmente nesta orquestração (sandbox nega o Docker): prova é o CI completo no mesmo SHA.",
+        "PR #265 com label ci:full; runs 43975664667 (fast) e 43975682656 (completo verde: Fast checks, Install-test-build com Supabase/pgTAP, core, stateful 375/768/1440) no SHA 4e160ede; merge squash 6b247595.",
+        "Parecer GLM 5.3 Flash (revisor ≠ executor): PASS COM RESSALVAS em .work/orq/relatorios/HRN-004-revisao.md. Sem ressalvas MÉDIAS; os dois achados BAIXO ficam registrados no parecer: mojibake 'coment?rios' no fixture de tests/scope/task-contract.test.mjs (corrigir no próximo toque no arquivo) e o skip de comentário antes da detecção de bloco escalar no parser (duvidoso; virar cartão só se confirmado indesejado).",
+        "Verificação de fechamento: .work/orq/relatorios/HRN-004-verificacao.md"
+      ],
+      "dependencies": [],
+      "updatedAt": "2026-11-16",
+      "sourceRevision": "6b247595"
     }
   ],
   "launch": {
