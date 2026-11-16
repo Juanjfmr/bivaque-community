@@ -503,6 +503,10 @@ test.describe("F01 — entrada real no app", { tag: "@stateful" }, () => {
     })
     expect(sonda.status, "GET /api/app/entry/verification").toBe(200)
     expect(sonda.corpo?.membroDaCidade, "o convite precisa ter criado o vínculo").toBe(true)
+    expect(
+      await contarRascunhosDaEntrada(email),
+      "entry_progress não pode manter rascunho pessoal após o aceite do convite",
+    ).toBe(0)
   })
 
   test("código errado mostra a mensagem única de erro e o código certo ainda entra", async ({
