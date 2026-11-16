@@ -1,0 +1,87 @@
+# RUN-181 - TROCA-EXPLORAR-SERVICOS: a ultima tela de busca da web morre para o app.
+#
+# Fase 6 do lancamento nao fecha com rota de membro servindo tela; /explorar/servicos e a
+# unica que sobrou da jornada F02. O RUN-177 tentou troca-la e o CI provou importador vivo
+# (be50a0d4 a devolveu). O mapa de 16/11 mediu o que resta de verdade: o campo do cabecalho
+# web JA entrega ao /app/busca (global-search-field.tsx:22); /explorar e /explorar/busca ja
+# caem no 307 LT-002; groups.ts esta orfa de producao (morte alocada no card
+# EVENTOS-RESIDUOS-POS-TROCA - NAO e daqui); e a linha F02 do LANCAMENTO (:55) pede busca nas
+# lane F02 ja esta entregue pelo /app/busca. Os filtros do painel web (bairro/tipo/page na URL,
+# contagem total, linha provider_reach, Trocar de cidade no vazio, estado de sessao vencida) nao
+# sao linha de lancamento; o painel morre com perdas DECLARADAS em tabela, nao por silencio
+# (regra do board).
+
+task_id: RUN-181
+
+adr: docs/decisions/ADR-20261024-front-react-spa.md
+
+objective: >
+  /explorar/servicos vira 307 para /app/busca?q= no molde LT-002; a pasta morre; importadores
+  vivos remanescentes (hub-shortcuts, active-nav) repontados; global-search-flow realocado com
+  tabela garantia→lar/morte; link-crawl e capture sem a tela; nenhuma garantia apagada sem lar
+  ou declaracao.
+
+authority:
+  - docs/LANCAMENTO.md :55 (linha F02) + :101 (fase 6) + criterio 6 (:47-48)
+  - Card TROCA-EXPLORAR-SERVICOS (checklist proprio: "destino novo com q preservado OU substitui o painel")
+  - ADR-20261024 §8 (ordem da troca; redirect no mesmo PR) e a regra LT-002 vigente em next.config.ts:160-186
+  - Mapa do explorer 16/11 (importadores nomeados com file:line; 8 testes do global-search-flow com as garantias exatas)
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    (shell)/explorar/servicos/page.tsx (538 linhas, use client) serve tela de membro; sem regra
+    de redirect (comentario next.config.ts:160-163 declara a espera); global-search-flow.spec.ts
+    :99-215 exercita a tela (6 dos 8 testes); f07-negocios-real.spec.ts:483-489 devolveu para la
+    a garantia do spec morto; hub-shortcuts.tsx:108 e active-nav.ts:79 linkam/mapeiam a rota;
+    link-crawl.spec.ts:142-146 a declara como semente do membro; capture.mjs :110,114,188,385-397
+    a inventaria; rail-unico-alcancavel-no-telefone.test.ts:41-63 LE os arquivos que vao morrer
+    (licao LT-002 do ENOENT).
+
+allowed_paths:
+  - docs/agents/tasks/TROCA-EXPLORAR.task.yml
+  - apps/web/next.config.ts
+  - apps/web/app/(shell)/explorar
+  - apps/web/app/(shell)/inicio/hub-shortcuts.tsx
+  - apps/web/app/components/shell/active-nav.ts
+  - tests/unit/ui/shell-active-nav.test.ts
+  - tests/unit/ui/rail-unico-alcancavel-no-telefone.test.ts
+  - tests/unit/infra/lan-troca-redirect.test.ts
+  - tests/e2e/global-search-flow.spec.ts
+  - tests/e2e/f07-negocios-real.spec.ts
+  - tests/e2e/link-crawl.spec.ts
+  - scripts/visual/capture.mjs
+  - apps/app/tests/e2e
+  - .visual/troca-explorar
+
+forbidden:
+  - tocar lib/search/groups.ts, lib/search/params.ts ou tests/unit/search/groups.test.ts (morte alocada no EVENTOS-RESIDUOS-POS-TROCA; o href obsoleto deles fica declarado neste RELATORIO, nao consertado aqui)
+  - recriar painel de filtros no app (bairro/tipo/page) - produto nao nomeado pelo LANCAMENTO; a linha F02 ja esta entregue pelo /app/busca
+  - mexer em proxy.ts (a config-redirect roda antes; nao ha portao proprio a mover - fato do mapa)
+  - apagar garantia do global-search-flow sem linha na tabela garantia→lar ou garantia de morte declarada
+  - rodar stack com outra lane no ar (coordenador libera); NUNCA --linked; nao tocar schema
+  - usar skip/fixme novo ou afrouxar assercao; push, merge ou force-push; editar kanban; tocar .work/main ou outra worktree
+
+acceptance:
+  - "next.config.ts: regra nova no MESMO molde LT-002 (/explorar/servicos → /app/busca com query preservada; o app le q e o alias search via termo-url.ts - nao reescrever o alias na borda, o app ja tolera); comentario :160-163 atualizado (a espera acabou); pasta (shell)/explorar REMOVIDA inteira (servicos + page/loading/error/not-found) com grep provando zero importador de codigo vivo restante (hub-shortcuts e active-nav repontados para /app/busca?q= antes; os testes que LEEM os arquivos mortos - rail-unico :41-63 - realocam as tres provas para arquivos que sobrevivem, com tabela)."
+  - "global-search-flow: testes 1-2 intocados (campo→app e 307 do /explorar/busca ja provam o destino); testes 3-8 realocados com tabela item a item no RELATORIO: o que ganha lar no app (3: resultado negocio + Ver ficha aterrissa /app/negocio/<id> - novo caso no stub apps/app/tests/e2e da Busca com fetch mockado; 5: negacao RLS via REST e de servidor e sobrevive identico; 4-parcial: vazio honesto ja existe no app :399-408) e o que MORRE DECLARADO com a razao (6 page/filtros na URL, 7 reescrita canonica do alias, 8 limpar-filtros, contagem total, provider_reach, 'Trocar de cidade', sessao vencida - esta ultima ja tem card proprio BUSCA-SESSAO-VENCIDA, nomear)."
+  - "f07-negocios-real:483-489 (a garantia 'busca acha o negocio' que o RUN-177 devolveu ao painel): passa a exercer /app/busca?q= (ou a rota de API direto se o e2e real do app for pesado - decidir e registrar; NAO deletar sem lar)."
+  - "link-crawl: /explorar/servicos sai de PORTAS_FORA_DO_LINK (agora redirect, nao tela); /explorar permanece na lista de destino-valido-sem-porta; as sete linhas do comentario RUN-172/176 que citam o painel (inclusive o padrao /negocio derivado do link 'Ofereca seus servicos' :253) reconciliadas com a realidade nova sem apagar a historia (comentario, nao silencio)."
+  - "capture.mjs: as 6 entradas do explorar saem (inclusive as 4 mortas de /explorar/busca - nomear que EVENTOS-RESIDUOS as reivindica? NAO: saem daqui por serem do mesmo arquivo; registrar no RELATORIO)."
+  - "Provas: unit do redirect par+nova-ausencia em lan-troca-redirect.test.ts (molde LT-002); app stub novo do caso 3 rodado LOCAL (vite, 3 larguras); global-search-flow re-rodado completo LOCAL com stack+seed (os 2-3 testes sobreviventes + os realocados); f07-negocios-real tocado re-rodado; link-crawl desktop+tablet+mobile ate verde; gate --fast + pnpm test + tsc -p tests/e2e + test:scope + biome + task-contract. Interface/troca provada em navegador local ANTES do push (licao LICOES 16/11)."
+
+proof:
+  - npx pnpm@11.18.0 gate --fast
+  - npx pnpm@11.18.0 test
+  - npx pnpm@11.18.0 test:scope
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/TROCA-EXPLORAR.task.yml
+
+risk: reducao funcional percebida (filtros do painel morrem) - e a decisao registrada do card, com tabela; o risco tecnico e o ENOENT dos testes que leem arquivo e o staleAllowances do crawl
+risk_level: R3
+
+reviewer_must_differ_from_executor: true
+retry_budget: 1
+on_budget_exhausted: HUMAN_DECISION
+
+closure:
+  requires_runtime_evidence: true
