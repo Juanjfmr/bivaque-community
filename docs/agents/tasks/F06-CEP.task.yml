@@ -67,6 +67,8 @@ allowed_paths:
   - tests/unit/listings
   - tests/scope/f03-criar.test.mjs
   - tests/e2e/f06-mercado-real.spec.ts
+  - tests/e2e/f03-criar-real.spec.ts
+  - apps/app/tests/e2e/r72-mobile-p1.spec.ts
   - scripts/visual/capture.mjs
   - .visual/f06-cep
 
