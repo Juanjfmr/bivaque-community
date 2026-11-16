@@ -7,17 +7,16 @@ import { geocodificarCep } from "./geocodificador"
 import { consumirConsulta } from "./limite"
 
 /**
- * A localização do ANÚNCIO (RUN-175 / ADR-20261022 §§1, 2 e 7 + ADR-20261116).
+ * A localização que nasce de um CEP (RUN-175 no anúncio, RUN-179 no pedido).
  *
- * Um módulo só, chamado pelo POST e pelo PATCH do Mercado — o anúncio nasce e é
- * editado com a mesma régua: cache-first (`public.cep_geocodes`), limitador por
- * pessoa só na chamada real de rede, bairro derivado casado com `neighborhoods`
- * pelo nome normalizado (o mesmo vizinho que o perfil grava) e coordenada
- * arredondada no servidor quando a escolha é aproximada.
+ * Um módulo só: cache-first (`public.cep_geocodes`), limitador por pessoa só na
+ * chamada real de rede e bairro casado com `neighborhoods` pelo nome normalizado
+ * (o mesmo vizinho que o perfil grava). O anúncio publica esse ponto; o pedido
+ * nunca publica — só usa a distância e o bairro.
  *
  * CEP conhecido sem coordenada é SUCESSO PARCIAL (ADR-20261116 §3): cidade e
- * bairro valem, a posição fica nula e a escolha é forçada a aproximada — o
- * anúncio interiorano não trava.
+ * bairro valem, a posição fica nula — nem o anúncio nem o pedido interiorano
+ * travam.
  *
  * Nada aqui imprime CEP nem coordenada.
  */
@@ -26,24 +25,13 @@ type Cliente = SupabaseClient<Database>
 
 export type LocalizacaoPublica = "exata" | "aproximada"
 
-export type LocalizacaoDoAnuncio = Readonly<{
-  cep: string
-  latitude: number | null
-  longitude: number | null
-  localizacaoPublica: LocalizacaoPublica
-  /** Bairro que veio do CEP, já na grafia de `neighborhoods`; `null` se não veio. */
-  bairroDerivado: string | null
-}>
-
 export type FalhaDALocalizacao =
   | "cep-invalido"
   | "cep-nao-encontrado"
   | "geocodificador-indisponivel"
   | "limite-de-consultas"
 
-export type ResultadoDALocalizacao =
-  | Readonly<{ ok: true; localizacao: LocalizacaoDoAnuncio }>
-  | Readonly<{ ok: false; erro: FalhaDALocalizacao; esperarMs?: number }>
+type Falha = Readonly<{ ok: false; erro: FalhaDALocalizacao; esperarMs?: number }>
 
 /**
  * O aproximado é uma GRADE, não só um deslocamento — e a grade é o que o banco
@@ -60,6 +48,9 @@ export type ResultadoDALocalizacao =
  *
  * O CHECK repete `(coordenada + DESLOCAMENTO) / PASSO` inteiro; um UPDATE bruto
  * pelo PostgREST com a coordenada crua não fecha essa conta e é recusado (23514).
+ *
+ * O PEDIDO não passa por aqui: a coordenada dele nunca é publicada, então não há
+ * o que arredondar (e a distância ao prestador fica na precisão do CEP).
  */
 /** A grade publicada e o deslocamento — exportados para o teste e para o relatório. */
 export const PASSO_DA_GRADE = 0.001
@@ -112,27 +103,41 @@ async function bairroCanonico(
   return casado?.name ?? null
 }
 
-export type PedidoDALocalizacao = Readonly<{
+/** O que um CEP resolve, antes de qualquer decisão de publicação. */
+export type CepConhecido = Readonly<{
+  cep: string
+  coordenada: Readonly<{ latitude: number; longitude: number }> | null
+  /** Bairro como a fonte devolveu (texto livre; pode não ser do catálogo). */
+  bairroDoCep: string | null
+  /** O mesmo bairro na grafia de `neighborhoods`, quando casa. */
+  bairroDerivado: string | null
+}>
+
+export type PedidoDoCep = Readonly<{
   cliente: Cliente
-  /** Quem está anunciando: a chave do limitador de geocodificação. */
+  /** Quem está consultando: a chave do limitador de geocodificação. */
   pessoa: string
   /** O CEP como veio do corpo (com máscara ou não). */
   cepBruto: string
-  /** A escolha do anunciante; o servidor decide se ela vale. */
-  escolha: LocalizacaoPublica
-  /** Desapego: a coordenada é sempre aproximada, sem oferta de exata. */
-  forcarAproximada: boolean
+  /** A cidade da sessão: é nela que o bairro é procurado no catálogo. */
   cidadeId: string
 }>
 
-export async function localizarAnuncio(
-  pedido: PedidoDALocalizacao,
-): Promise<ResultadoDALocalizacao> {
+/**
+ * O CEP vira ponto e bairro — cache primeiro, provedor só no miss, e só sob o
+ * limitador de quem está pedindo. É o único caminho de consulta: o anúncio e o
+ * pedido passam por aqui (o que muda entre eles é só o que se publica).
+ */
+async function localizarCep(
+  pedido: PedidoDoCep,
+): Promise<Readonly<{ ok: true; local: CepConhecido }> | Falha> {
   const cep = normalizarCep(pedido.cepBruto)
   if (cep === null) return { ok: false, erro: "cep-invalido" }
 
-  let coordenada = await lerCepDoCache(pedido.cliente, cep)
-  let bairroDerivado: string | null = null
+  const emCache = await lerCepDoCache(pedido.cliente, cep)
+  let coordenada: Readonly<{ latitude: number; longitude: number }> | null =
+    emCache === null ? null : { latitude: emCache.latitude, longitude: emCache.longitude }
+  let bairroDoCep = emCache?.bairro ?? null
 
   if (coordenada === null) {
     // Cache hit não consome cota: só a chamada real ao provedor é limitada.
@@ -145,30 +150,75 @@ export async function localizarAnuncio(
     if (geocodificada.estado === "indisponivel") {
       return { ok: false, erro: "geocodificador-indisponivel" }
     }
+    bairroDoCep = geocodificada.endereco.bairro ?? bairroDoCep
     if (geocodificada.estado === "encontrado") {
-      coordenada = { cep, ...geocodificada.coordenada }
+      coordenada = geocodificada.coordenada
       try {
-        await gravarCepNoCache(pedido.cliente, cep, geocodificada.coordenada)
+        // O bairro é gravado junto: sem ele o cache hit perderia o bairro e só a
+        // PRIMEIRA geocodificação de cada CEP no país teria esse dado (RUN-179).
+        await gravarCepNoCache(pedido.cliente, cep, geocodificada.coordenada, bairroDoCep)
       } catch {
         // Sem cache o próximo pedido geocodifica de novo; não é motivo para
-        // recusar o anúncio que a pessoa está publicando.
+        // recusar o anúncio ou o pedido que a pessoa está enviando.
       }
     }
-    // `sem-coordenada`: a coordenada fica nula e a escolha é forçada abaixo.
-    const bairroDoCep = geocodificada.endereco.bairro
-    if (bairroDoCep !== null) {
-      bairroDerivado = await bairroCanonico(pedido.cliente, pedido.cidadeId, bairroDoCep)
-    }
+    // `sem-coordenada`: a coordenada fica nula e o ponto publicado é decidido
+    // pelo chamador (anúncio força aproximada; pedido fica sem distância).
   }
 
-  const semPosicao = coordenada === null
-  const aproximada = pedido.forcarAproximada || semPosicao || pedido.escolha === "aproximada"
+  const bairroDerivado =
+    bairroDoCep === null ? null : await bairroCanonico(pedido.cliente, pedido.cidadeId, bairroDoCep)
+
+  return {
+    ok: true,
+    local: {
+      cep,
+      coordenada:
+        coordenada === null
+          ? null
+          : { latitude: coordenada.latitude, longitude: coordenada.longitude },
+      bairroDoCep,
+      bairroDerivado,
+    },
+  }
+}
+
+export type LocalizacaoDoAnuncio = Readonly<{
+  cep: string
+  latitude: number | null
+  longitude: number | null
+  localizacaoPublica: LocalizacaoPublica
+  /** Bairro que veio do CEP, já na grafia de `neighborhoods`; `null` se não veio. */
+  bairroDerivado: string | null
+}>
+
+export type ResultadoDALocalizacao =
+  | Readonly<{ ok: true; localizacao: LocalizacaoDoAnuncio }>
+  | Falha
+
+export type PedidoDALocalizacao = PedidoDoCep &
+  Readonly<{
+    /** A escolha do anunciante; o servidor decide se ela vale. */
+    escolha: LocalizacaoPublica
+    /** Desapego: a coordenada é sempre aproximada, sem oferta de exata. */
+    forcarAproximada: boolean
+  }>
+
+export async function localizarAnuncio(
+  pedido: PedidoDALocalizacao,
+): Promise<ResultadoDALocalizacao> {
+  const resultado = await localizarCep(pedido)
+  if (!resultado.ok) return resultado
+  const { cep, coordenada, bairroDerivado } = resultado.local
+
+  const aproximada =
+    pedido.forcarAproximada || coordenada === null || pedido.escolha === "aproximada"
   const ponto =
     coordenada === null
       ? { latitude: null, longitude: null }
       : aproximada
         ? aproximarCoordenada(coordenada.latitude, coordenada.longitude)
-        : { latitude: coordenada.latitude, longitude: coordenada.longitude }
+        : coordenada
 
   return {
     ok: true,
@@ -178,6 +228,44 @@ export async function localizarAnuncio(
       longitude: ponto.longitude,
       localizacaoPublica: aproximada ? "aproximada" : "exata",
       bairroDerivado,
+    },
+  }
+}
+
+export type LocalizacaoDoPedido = Readonly<{
+  cep: string
+  latitude: number | null
+  longitude: number | null
+  /**
+   * O bairro que vai para o prestador. O catálogo empresta a grafia quando
+   * conhece o nome; fora dele, o texto da fonte vale — é o mesmo bairro, e a
+   * coluna `region` aceita texto livre.
+   */
+  bairro: string | null
+}>
+
+export type ResultadoDoPedido = Readonly<{ ok: true; localizacao: LocalizacaoDoPedido }> | Falha
+
+/**
+ * A localização do PEDIDO (RUN-179 / ADR-20261022 §3): mesmo cache, mesmo
+ * limitador, mesmo geocodificador — e nenhum arredondamento, porque a coordenada
+ * do pedido nunca é publicada. O que sai daqui vai para colunas que ninguém lê
+ * cruas (grant por coluna em `service_requests`).
+ */
+export async function localizarPedido(pedido: PedidoDoCep): Promise<ResultadoDoPedido> {
+  const resultado = await localizarCep(pedido)
+  if (!resultado.ok) return resultado
+  const { cep, coordenada, bairroDerivado, bairroDoCep } = resultado.local
+  return {
+    ok: true,
+    localizacao: {
+      cep,
+      latitude: coordenada?.latitude ?? null,
+      longitude: coordenada?.longitude ?? null,
+      // A coluna `region` proíbe CEP no lugar do bairro (CHECK de 20261022120200):
+      // um texto que seja só dígitos não entra.
+      bairro:
+        bairroDerivado ?? (bairroDoCep !== null && !/^\d+$/.test(bairroDoCep) ? bairroDoCep : null),
     },
   }
 }

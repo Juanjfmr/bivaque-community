@@ -417,6 +417,10 @@ export const PEDIDO_DA_PROVA = {
   conversaId: null,
   // RUN-177: campo aditivo do contrato do pedido (lado de quem lê).
   lado: "solicitante",
+  // RUN-179: bairro e distância também são aditivos; `null` é o pedido sem CEP
+  // (o parser do app é estrito — o fixture acompanha o contrato).
+  bairro: null,
+  distanciaMetros: null,
 }
 
 /** O pedido da prova em `/api/app/pedidos/<id>`. */

@@ -43,12 +43,21 @@ test("F07: todas as rotas usam sessão e preflight, escrita confere CSRF", () =>
         assert.match(fonte, /conferirEscrita\(/)
       }
       if (/clienteDeServicoOuNulo\(/.test(fonte)) {
-        // A única escrita privilegiada é a FOTO: a SEC-006 tirou o INSERT de
-        // imagem do papel `authenticated`, então o servidor grava e reconfere a
-        // autorização e passa a imagem por sanitize-image.
-        assert.match(join(base, rota), /fotos/)
-        assert.match(fonte, /can_manage_provider_profile/)
-        assert.match(fonte, /sanitizeImage|provider-photos/)
+        if (/pedidos[/\\]route\.ts$/.test(join(base, rota))) {
+          // RUN-179: o CEP do pedido usa o MESMO módulo do anúncio, e o cache
+          // `cep_geocodes` é tabela de serviço (nenhuma sessão lê nem escreve).
+          // A coordenada vem do geocodificador do servidor (nunca do corpo) e a
+          // escrita do pedido continua no RPC, com o ator tirado de auth.uid().
+          assert.match(fonte, /localizarPedido/)
+          assert.match(fonte, /create_service_request/)
+        } else {
+          // A única escrita privilegiada é a FOTO: a SEC-006 tirou o INSERT de
+          // imagem do papel `authenticated`, então o servidor grava e reconfere a
+          // autorização e passa a imagem por sanitize-image.
+          assert.match(join(base, rota), /fotos/)
+          assert.match(fonte, /can_manage_provider_profile/)
+          assert.match(fonte, /sanitizeImage|provider-photos/)
+        }
       }
     }
   }

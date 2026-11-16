@@ -66,6 +66,20 @@ export function validateRequestPhotos(files: { size: number; type: string }[]): 
   return ok
 }
 
+/**
+ * O CEP do pedido é OPCIONAL (ADR-20261022 §3): vazio é válido, preenchido tem
+ * que ter os oito dígitos. A máscara é da tela; aqui vale o que o banco aceita.
+ */
+export function validateRequestCep(value: string | null): FieldValidation {
+  if (value === null) return ok
+  // Vazio é "não informei"; qualquer outra coisa tem que ser um CEP. Um texto
+  // que não vira oito dígitos ("abc", "6900-000") é recusa, não silêncio.
+  if (value.trim() === "") return ok
+  const digitos = value.replace(/[^0-9]/g, "")
+  if (digitos.length !== 8) return fail("cep", "Informe os oito dígitos do CEP.")
+  return ok
+}
+
 export function firstFailure(...results: FieldValidation[]): FieldValidation {
   return results.find((result) => !result.ok) ?? ok
 }
@@ -74,6 +88,8 @@ export type RequestInput = Readonly<{
   descricao: string
   quando: string | null
   chave: string | null
+  /** Os oito dígitos do CEP, ou `null` quando a pessoa não informou. */
+  cep: string | null
 }>
 
 export function validateServiceRequest(description: string, when: string | null): FieldValidation {
@@ -85,12 +101,16 @@ export function requestInputFromBody(body: Record<string, unknown>): RequestInpu
   if (typeof body["descricao"] !== "string") return null
   if (body["quando"] != null && typeof body["quando"] !== "string") return null
   if (body["chave"] != null && typeof body["chave"] !== "string") return null
+  if (body["cep"] != null && typeof body["cep"] !== "string") return null
   const descricao = body["descricao"].trim()
   const quando = typeof body["quando"] === "string" ? body["quando"].trim() || null : null
   const chave = typeof body["chave"] === "string" ? body["chave"].trim() || null : null
+  const cepBruto = typeof body["cep"] === "string" ? body["cep"] : null
   if (!validateServiceRequest(descricao, quando).ok || (chave !== null && chave.length > 200))
     return null
-  return { descricao, quando, chave }
+  if (!validateRequestCep(cepBruto).ok) return null
+  const cep = cepBruto === null ? null : cepBruto.replace(/[^0-9]/g, "") || null
+  return { descricao, quando, chave, cep }
 }
 
 /** A mesma recusa na web antiga e no app; mensagem técnica nunca sai do servidor. */

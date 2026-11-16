@@ -7,7 +7,11 @@ import type { CoordenadaDoCep, FonteDaCoordenada } from "./geocodificador"
  * O cache de CEP do servidor (`public.cep_geocodes`).
  *
  * É tabela de serviço: nenhuma sessão lê nem escreve nela — só o cliente de
- * serviço da rota de localização. O cache é por CEP, nunca por pessoa.
+ * serviço das rotas. O cache é por CEP, nunca por pessoa.
+ *
+ * O bairro que a fonte devolve junto do CEP é guardado aqui (RUN-179): sem ele,
+ * só a primeira geocodificação de cada CEP no país teria bairro e todo o resto da
+ * base cairia no cache hit sem `region` no pedido.
  */
 
 type Cliente = SupabaseClient<Database>
@@ -17,6 +21,11 @@ export type CoordenadaEmCache = Readonly<{
   latitude: number
   longitude: number
   fonte: FonteDaCoordenada
+  /**
+   * Texto da fonte; `null`/ausente nas linhas gravadas antes desta coluna
+   * existir (o caminho do perfil ainda grava só a coordenada).
+   */
+  bairro?: string | null
 }>
 
 function fonte(valor: string): FonteDaCoordenada {
@@ -31,7 +40,7 @@ export async function lerCepDoCache(
 ): Promise<CoordenadaEmCache | null> {
   const { data, error } = await client
     .from("cep_geocodes")
-    .select("latitude,longitude,source")
+    .select("latitude,longitude,source,neighborhood")
     .eq("cep", cep)
     .maybeSingle()
   if (error) throw error
@@ -41,20 +50,23 @@ export async function lerCepDoCache(
     latitude: data.latitude,
     longitude: data.longitude,
     fonte: fonte(data.source),
+    bairro: data.neighborhood,
   }
 }
 
-/** Guarda a coordenada recém-geocodificada. Erro de banco sobe. */
+/** Guarda a coordenada recém-geocodificada (e o bairro, quando veio). Erro sobe. */
 export async function gravarCepNoCache(
   client: Cliente,
   cep: string,
   coordenada: CoordenadaDoCep,
+  bairro: string | null = null,
 ): Promise<void> {
   const { error } = await client.from("cep_geocodes").upsert({
     cep,
     latitude: coordenada.latitude,
     longitude: coordenada.longitude,
     source: coordenada.fonte,
+    neighborhood: bairro,
     fetched_at: new Date().toISOString(),
   })
   if (error) throw error
