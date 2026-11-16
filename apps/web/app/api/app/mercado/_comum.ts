@@ -123,6 +123,11 @@ export const SELECT_ANUNCIO =
   "property_details(deal, property_type, bedrooms, area_m2, condo_fee_cents, rent_cents, sale_price_cents), " +
   "listing_photos(id, path, position)"
 
+// A lista de IMÓVEIS (RUN-171): `!inner` porque filtro no satélite tem que
+// restringir o pai. Sem ele o PostgREST filtra só o embed e a lista devolve
+// imóvel fora do critério — a mesma razão do `SELECT` de `queries.ts` na web.
+export const SELECT_IMOVEL = SELECT_ANUNCIO.replace("property_details(", "property_details!inner(")
+
 export interface AnuncioBruto {
   id: string
   kind: "item" | "property"

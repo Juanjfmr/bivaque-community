@@ -202,16 +202,17 @@ export function alertStatusLabel(alert: ListingAlert): string {
 
 /**
  * As chaves de filtro que a busca do app lê (`src/mercado/filtros-url.ts`: `q`,
- * `tipo`, `quartos`, `valor_max`, `preco_min`, `preco_max`). O alerta só tem
- * valor e quartos para oferecer.
+ * `bairro`, `tipo_negocio`, `tipo`, `quartos`, `valor_max`, `preco_min`,
+ * `preco_max`). O alerta guarda bairro, negócio, valor e quartos — os quatro
+ * entram, e o servidor do Mercado filtra por eles (RUN-171).
  *
- * PERDA DECLARADA (RUN-169): o formulário antigo também gravava `bairro` e
- * `tipo_negocio`, e a busca antiga levava `sort` — o app não lê nenhuma das
- * três, então elas não entram na URL. A perda está no RELATORIO do lote e nos
- * filtros do Mercado (Lote C), não escondida num filtro que não filtra.
+ * `sort` não entra porque o alerta não guarda ordem: quem gravava aquela chave
+ * era o formulário de busca da web, não o alerta.
  */
 export function alertSearchParams(alerta: ListingAlert): Record<string, string> {
   const busca: Record<string, string> = {}
+  if (alerta.neighborhood !== null) busca["bairro"] = alerta.neighborhood
+  if (alerta.deal !== null) busca["tipo_negocio"] = alerta.deal
   // A busca do app conta reais inteiros; um teto quebrado (centavos) não vira
   // filtro arredondado — é omitido, e a tela mostra o critério no texto.
   if (alerta.maxValueCents !== null && alerta.maxValueCents % 100 === 0)

@@ -107,6 +107,20 @@ const IMOVEL_VENDA: AnuncioBruto = {
   },
 }
 
+const IMOVEL_CARO: AnuncioBruto = {
+  ...IMOVEL,
+  id: "10000000-0000-4000-8000-000000000005",
+  property_details: {
+    deal: "rent",
+    property_type: "apartment",
+    bedrooms: 3,
+    area_m2: 90,
+    condo_fee_cents: 60000,
+    rent_cents: 250000,
+    sale_price_cents: null,
+  },
+}
+
 /** Corpo válido de edição (desapego), no mesmo formato do criar. */
 const EDICAO_OBJ = {
   titulo: "Mesa de jantar",
@@ -155,9 +169,33 @@ function mockClient(options: Options = {}) {
   const notCalls: string[] = []
   const gteCalls: Array<{ column: string; value: unknown }> = []
   const lteCalls: Array<{ column: string; value: unknown }> = []
+  const ilikeCalls: Array<{ column: string; value: unknown }> = []
+  const selectCalls: Array<{ table: string; colunas: string }> = []
   const orderCalls: Array<{ column: string; ascending: boolean }> = []
   const rpcCalls: Array<{ name: string; args: Record<string, unknown> }> = []
   const updateCalls: Record<string, unknown>[] = []
+
+  /**
+   * O valor da linha no caminho que o filtro citou (`property_details.bedrooms`),
+   * para a lista falsa obedecer `gte`/`lte` como o PostgREST obedeceria. Sem
+   * isto o mock devolveria sempre o mesmo fixture e nenhum teste de filtro
+   * provaria que algo foi restringido.
+   */
+  const valorNoCaminho = (linha: AnuncioBruto, caminho: string): unknown => {
+    if (caminho === "price_cents") return linha.price_cents
+    const [, coluna] = caminho.split(".")
+    const detalhes = linha.property_details as Record<string, unknown> | null
+    return detalhes?.[coluna ?? ""] ?? null
+  }
+  const dentroDaFaixa = (linha: AnuncioBruto): boolean =>
+    gteCalls.every(({ column, value }) => {
+      const atual = valorNoCaminho(linha, column)
+      return typeof atual === "number" && typeof value === "number" && atual >= value
+    }) &&
+    lteCalls.every(({ column, value }) => {
+      const atual = valorNoCaminho(linha, column)
+      return typeof atual === "number" && typeof value === "number" && atual <= value
+    })
 
   const rpc = (name: string, args: Record<string, unknown>) => {
     rpcCalls.push({ name, args })
@@ -206,7 +244,7 @@ function mockClient(options: Options = {}) {
                 : { ...(options.listing ?? ANUNCIO), locality_id: CIDADE },
             error: null,
           }
-        return { data: options.listings ?? [ANUNCIO], error: null }
+        return { data: (options.listings ?? [ANUNCIO]).filter(dentroDaFaixa), error: null }
       }
       if (table === "profiles") {
         return {
@@ -231,7 +269,10 @@ function mockClient(options: Options = {}) {
       return { data: null, error: null }
     }
     const query: Record<string, unknown> = {}
-    query["select"] = () => query
+    query["select"] = (colunas?: string) => {
+      selectCalls.push({ table, colunas: colunas ?? "" })
+      return query
+    }
     query["insert"] = (payload: Record<string, unknown>) => {
       operacao = "insert"
       insertCalls.push({ table, payload })
@@ -271,6 +312,10 @@ function mockClient(options: Options = {}) {
       lteCalls.push({ column, value })
       return query
     }
+    query["ilike"] = (column: string, value: unknown) => {
+      ilikeCalls.push({ column, value })
+      return query
+    }
     query["order"] = (column: string, opts?: { ascending?: boolean }) => {
       orderCalls.push({ column, ascending: opts?.ascending ?? true })
       return query
@@ -296,6 +341,8 @@ function mockClient(options: Options = {}) {
     notCalls,
     gteCalls,
     lteCalls,
+    ilikeCalls,
+    selectCalls,
     orderCalls,
     rpcCalls,
     updateCalls,
@@ -391,6 +438,12 @@ describe("rotas de mercado do app", () => {
       ["quartos com item", "?tipo=item&quartos=2"],
       ["valor_max com item", "?tipo=item&valor_max=1000"],
       ["tipo_imovel com item", "?tipo=item&tipo_imovel=casa"],
+      ["tipo_negocio com item", "?tipo=item&tipo_negocio=rent"],
+      ["preco_min com imóvel", "?tipo=property&preco_min=10000"],
+      ["ordem por preço em imóvel", "?tipo=property&ordem=price_asc"],
+      ["q acima do teto", `?tipo=item&q=${"a".repeat(121)}`],
+      ["bairro acima do teto", `?tipo=property&bairro=${"a".repeat(81)}`],
+      ["tipo_negocio inválido", "?tipo=property&tipo_negocio=doacao"],
       ["quartos fora da faixa", "?tipo=property&quartos=11"],
       ["valor_max não positivo", "?tipo=property&valor_max=0"],
       ["tipo_imovel inválido", "?tipo=property&tipo_imovel=loja"],
@@ -534,6 +587,114 @@ describe("rotas de mercado do app", () => {
         column: "locality_id",
         value: OUTRA_CIDADE,
       })
+    })
+
+    it("a lista só pede anúncio ativo — o pausado/vendido não entra (S6)", async () => {
+      const mock = mockClient({ listings: [IMOVEL] })
+      authenticate(mock)
+      await listar(req("GET", `${BASE}?tipo=property`))
+      expect(mock.eqCalls).toContainEqual({
+        table: "listings",
+        column: "status",
+        value: "active",
+      })
+    })
+
+    it("a lista de imóveis pede o satélite com !inner; o desapego segue no left join", async () => {
+      const imovel = mockClient({ listings: [IMOVEL] })
+      authenticate(imovel)
+      await listar(req("GET", `${BASE}?tipo=property`))
+      const colunasDoImovel = imovel.selectCalls.find(({ table }) => table === "listings")
+      expect(colunasDoImovel?.colunas).toContain("property_details!inner(")
+
+      const desapego = mockClient({ listings: [ANUNCIO] })
+      authenticate(desapego)
+      await listar(req("GET", `${BASE}?tipo=item`))
+      const colunasDoItem = desapego.selectCalls.find(({ table }) => table === "listings")
+      // Sem `!inner`: item legítimo não tem satélite e não pode sumir.
+      expect(colunasDoItem?.colunas).toContain("property_details(")
+      expect(colunasDoItem?.colunas).not.toContain("!inner")
+    })
+
+    it("deal, tipo do imóvel e quartos restringem o PAI pelo satélite", async () => {
+      const mock = mockClient({ listings: [IMOVEL] })
+      authenticate(mock)
+      const corpo = await json(
+        await listar(
+          req("GET", `${BASE}?tipo=property&tipo_negocio=rent&tipo_imovel=apartamento&quartos=2`),
+        ),
+      )
+      expect(mock.eqCalls).toContainEqual({
+        table: "listings",
+        column: "property_details.deal",
+        value: "rent",
+      })
+      expect(mock.eqCalls).toContainEqual({
+        table: "listings",
+        column: "property_details.property_type",
+        value: "apartment",
+      })
+      expect(mock.gteCalls).toContainEqual({ column: "property_details.bedrooms", value: 2 })
+      // Quartos 3 não devolve o imóvel de 2: quem restringe é a query, não a tela.
+      expect(corpo["anuncios"]).toEqual([expect.objectContaining({ id: IMOVEL.id })])
+    })
+
+    it("quartos acima do imóvel não devolve nada — e não é lista vazia silenciosa", async () => {
+      const mock = mockClient({ listings: [IMOVEL, IMOVEL_CARO] })
+      authenticate(mock)
+      const corpo = await json(await listar(req("GET", `${BASE}?tipo=property&quartos=3`)))
+      expect(mock.gteCalls).toContainEqual({ column: "property_details.bedrooms", value: 3 })
+      expect(corpo["anuncios"]).toEqual([expect.objectContaining({ id: IMOVEL_CARO.id })])
+    })
+
+    it("o teto de valor usa a coluna do negócio: aluguel fica, venda sem aluguel sai", async () => {
+      const mock = mockClient({ listings: [IMOVEL, IMOVEL_CARO, IMOVEL_VENDA] })
+      authenticate(mock)
+      const corpo = await json(await listar(req("GET", `${BASE}?tipo=property&valor_max=2000`)))
+      expect(mock.lteCalls).toContainEqual({
+        column: "property_details.rent_cents",
+        value: 200000,
+      })
+      // O furo antigo era o inverso: o imóvel (price_cents NULL) sumia. Agora o
+      // que está DENTRO do teto fica, o que passa de R$ 2.000 sai, e o de venda
+      // (sem aluguel) não entra num teto de aluguel.
+      expect(corpo["anuncios"]).toEqual([expect.objectContaining({ id: IMOVEL.id })])
+    })
+
+    it("com tipo_negocio=sale o teto vai para o preço de venda", async () => {
+      const mock = mockClient({ listings: [IMOVEL, IMOVEL_VENDA] })
+      authenticate(mock)
+      const corpo = await json(
+        await listar(req("GET", `${BASE}?tipo=property&tipo_negocio=sale&valor_max=500000`)),
+      )
+      expect(mock.lteCalls).toContainEqual({
+        column: "property_details.sale_price_cents",
+        value: 50000000,
+      })
+      expect(corpo["anuncios"]).toEqual([expect.objectContaining({ id: IMOVEL_VENDA.id })])
+    })
+
+    it("q e bairro buscam no título e no bairro, sem inventar descrição", async () => {
+      const mock = mockClient({ listings: [IMOVEL] })
+      authenticate(mock)
+      await listar(req("GET", `${BASE}?tipo=property&q=casa&bairro=centro`))
+      expect(mock.ilikeCalls).toEqual([
+        { column: "title", value: "%casa%" },
+        { column: "neighborhood", value: "%centro%" },
+      ])
+    })
+
+    it("no desapego a faixa de preço é price_cents e não toca o satélite", async () => {
+      const mock = mockClient({ listings: [ANUNCIO] })
+      authenticate(mock)
+      const corpo = await json(
+        await listar(req("GET", `${BASE}?tipo=item&preco_min=10000&preco_max=99900`)),
+      )
+      expect(mock.gteCalls).toContainEqual({ column: "price_cents", value: 10000 })
+      expect(mock.lteCalls).toContainEqual({ column: "price_cents", value: 99900 })
+      expect(mock.gteCalls.some(({ column }) => column.startsWith("property_details"))).toBe(false)
+      expect(mock.lteCalls.some(({ column }) => column.startsWith("property_details"))).toBe(false)
+      expect(corpo["anuncios"]).toEqual([expect.objectContaining({ id: ANUNCIO.id })])
     })
 
     it("sem vínculo de cidade a lista é vazia, não erro", async () => {

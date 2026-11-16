@@ -585,4 +585,155 @@ test.describe("F06 — mercadoria real no app", { tag: "@stateful" }, () => {
       }
     }
   })
+
+  // RUN-171 — o filtro do imóvel é do servidor (o furo do F06 era ele valer só
+  // para a página carregada). A prova visível é o imóvel com `price_cents` NULL
+  // DENTRO do teto continuar na grade; a do cursor é a segunda página não
+  // devolver quem o filtro exclui.
+  test("o filtro do imóvel vale no servidor, inclusive na segunda página", async ({
+    page,
+    context,
+  }) => {
+    test.setTimeout(180_000)
+    await entrarComo(context, MEMBRO_SEMEADO)
+
+    await page.goto("/app/imoveis?quartos=2&valor_max=2000")
+    const cartoes = page.locator('[data-tela="imoveis"] [data-cartao="anuncio"]')
+    await expect(
+      cartoes.filter({ hasText: APARTAMENTO }),
+      "o imóvel dentro do teto de aluguel continua na grade",
+    ).toBeVisible({ timeout: 30_000 })
+    // O de venda não tem aluguel: um teto de aluguel o exclui — como na web.
+    await expect(
+      cartoes.filter({ hasText: CASA }),
+      "quem passa do critério não aparece",
+    ).toHaveCount(0)
+
+    // O link é o estado: os chips mostram o critério e recarregar não o perde.
+    await expect(page.locator('[data-filtro="quartos"]')).toContainText("2+ quartos")
+    await expect(page.locator('[data-filtro="valor_max"]')).toContainText(/Até R\$\s*2\.000/)
+    await page.reload()
+    await expect(
+      cartoes.filter({ hasText: APARTAMENTO }),
+      "recarregar mantém o filtro do endereço",
+    ).toBeVisible({ timeout: 30_000 })
+    await expect(cartoes.filter({ hasText: CASA })).toHaveCount(0)
+
+    // A segunda página, pela rota: `limite=1` devolve o apartamento primeiro e
+    // NADA depois. O bug antigo era a segunda vir sem filtro — com a casa.
+    const api = await apiRequest.newContext({ baseURL: new URL(page.url()).origin })
+    const cabecalhos = { authorization: `Bearer ${await tokenDaSessao(context)}` }
+    try {
+      const daPagina = (depois: string | null) =>
+        `/api/app/mercado?tipo=property&quartos=1&valor_max=2000&limite=1${
+          depois === null ? "" : `&depois=${encodeURIComponent(depois)}`
+        }`
+
+      const primeira = await api.get(daPagina(null), { headers: cabecalhos })
+      expect(primeira.status()).toBe(200)
+      const corpo = (await primeira.json()) as {
+        anuncios: { id: string }[]
+        proximo: string | null
+      }
+      expect(corpo.anuncios.map((anuncio) => anuncio.id)).toEqual([
+        "b2000000-0000-4000-8000-000000000001",
+      ])
+      expect(corpo.proximo, "a primeira página cheia entrega o cursor").not.toBeNull()
+
+      const segunda = await api.get(daPagina(corpo.proximo), { headers: cabecalhos })
+      expect(segunda.status()).toBe(200)
+      expect(
+        ((await segunda.json()) as { anuncios: { id: string }[] }).anuncios,
+        "a segunda página respeita o filtro: nada de imóvel de venda no teto de aluguel",
+      ).toEqual([])
+    } finally {
+      await api.dispose()
+    }
+  })
+
+  // RUN-171 fecha a perda do RUN-169: o link do alerta leva bairro e negócio, e
+  // o Mercado os aplica no servidor. O alerta é criado PELA UI (o seed pode ter
+  // outros) e apagado no fim.
+  test("o link do alerta abre a lista com o bairro aplicado", async ({ page, context }) => {
+    test.setTimeout(240_000)
+    await entrarComo(context, MEMBRO_SEMEADO)
+
+    const nome = `Alerta do filtro ${Date.now()}`
+    let alertaId = ""
+
+    try {
+      await page.goto("/app/imoveis/alertas")
+      await expect(
+        page.getByRole("heading", { level: 1, name: "Alertas de imóvel", exact: true }),
+      ).toBeVisible({ timeout: 30_000 })
+
+      await page.locator('[data-acao="criar-alerta"]').click()
+      const formulario = page.locator('[data-formulario="alerta"]')
+      await expect(formulario).toBeVisible()
+      await formulario.locator("#alerta-nome").fill(nome)
+      await formulario.locator("#alerta-bairro").fill("Centro")
+      await formulario.locator("#alerta-negocio").click()
+      await page.getByRole("option", { name: "Alugar", exact: true }).click()
+      await formulario.locator("#alerta-valor").click()
+      await page.getByRole("option", { name: /2\.500/ }).click()
+      await formulario.locator("#alerta-quartos").click()
+      await page.getByRole("option", { name: "2+", exact: true }).click()
+
+      const criacao = page.waitForResponse(
+        (r) =>
+          /\/api\/app\/imoveis\/alertas$/.test(new URL(r.url()).pathname) &&
+          r.request().method() === "POST",
+      )
+      await formulario.getByRole("button", { name: "Criar alerta", exact: true }).click()
+      const resposta = await criacao
+      const gravado = (await resposta.json()) as { alerta?: { id?: string } }
+      alertaId = gravado.alerta?.id ?? ""
+      expect(alertaId).toMatch(/^[0-9a-f-]{36}$/)
+
+      // "Ver resultados" abre o Mercado com os critérios do alerta no endereço.
+      await page.locator(`[data-acao="ver-resultados"][data-valor="${alertaId}"]`).click()
+      await expect(page).toHaveURL(/\/app\/imoveis\?/, { timeout: 30_000 })
+      const endereco = new URL(page.url())
+      expect(endereco.searchParams.get("bairro")).toBe("Centro")
+      expect(endereco.searchParams.get("tipo_negocio")).toBe("rent")
+      expect(endereco.searchParams.get("quartos")).toBe("2")
+      expect(endereco.searchParams.get("valor_max")).toBe("2500")
+
+      // O bairro filtra de verdade: só o imóvel do Centro, com o chip visível.
+      const cartoes = page.locator('[data-tela="imoveis"] [data-cartao="anuncio"]')
+      await expect(page.locator('[data-filtro="bairro"]')).toContainText("Bairro: Centro")
+      await expect(page.locator('[data-filtro="tipo_negocio"]')).toContainText("Aluguel")
+      await expect(cartoes.filter({ hasText: APARTAMENTO })).toBeVisible({ timeout: 30_000 })
+      await expect(
+        cartoes.filter({ hasText: CASA }),
+        "o imóvel de outro bairro não entra",
+      ).toHaveCount(0)
+
+      // Compartilhar/recarregar recria a mesma lista.
+      await page.reload()
+      await expect(page.locator('[data-filtro="bairro"]')).toContainText("Bairro: Centro")
+      await expect(cartoes.filter({ hasText: APARTAMENTO })).toBeVisible({ timeout: 30_000 })
+
+      // Tirar o chip do bairro refaz a busca sem ele; o teto de aluguel segue
+      // excluindo a casa de venda (é a regra da web, declarada no RELATORIO).
+      await page.locator('[data-filtro="bairro"]').click()
+      await expect(page.locator('[data-filtro="bairro"]')).toHaveCount(0)
+      await expect(cartoes.filter({ hasText: CASA })).toHaveCount(0)
+      await expect(cartoes.filter({ hasText: APARTAMENTO })).toBeVisible({ timeout: 30_000 })
+    } finally {
+      if (alertaId !== "") {
+        const api = await apiRequest.newContext({ baseURL: new URL(page.url()).origin })
+        try {
+          const removido = await api.delete(`/api/app/imoveis/alertas/${alertaId}`, {
+            headers: { authorization: `Bearer ${await tokenDaSessao(context)}` },
+          })
+          expect([200, 404], `limpar o alerta do teste falhou (${removido.status()})`).toContain(
+            removido.status(),
+          )
+        } finally {
+          await api.dispose()
+        }
+      }
+    }
+  })
 })

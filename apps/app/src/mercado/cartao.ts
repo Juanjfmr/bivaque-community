@@ -28,25 +28,6 @@ export function eAluguel(anuncio: AnuncioDaLista): boolean {
   return anuncio.deal === "rent"
 }
 
-/**
- * Total por mês: aluguel + condomínio. Sem aluguel não há mensal, e condomínio
- * que não consta do anúncio não vira zero — quem não informou fica de fora do
- * filtro em vez de aparecer como "R$ 0 de condomínio".
- */
-export function totalMensal(anuncio: AnuncioDaLista): number | null {
-  if (anuncio.precoCents === null || !eAluguel(anuncio)) return null
-  return (anuncio.precoCents + (anuncio.condoFeeCents ?? 0)) / 100
-}
-
-export function doTipo(anuncio: AnuncioDaLista, tipo: string): boolean {
-  const rotulo =
-    anuncio.tipoImovel === null
-      ? ""
-      : (ROTULOS_DE_TIPO_IMOVEL[anuncio.tipoImovel] ?? anuncio.tipoImovel)
-  if (rotulo.toLocaleLowerCase("pt-BR") === tipo) return true
-  return anuncio.titulo.toLocaleLowerCase("pt-BR").includes(tipo)
-}
-
 /** Só atributos explicitamente informados por quem anuncia. */
 export function atributosDoImovel(anuncio: AnuncioDaLista): string[] {
   const itens: string[] = []
