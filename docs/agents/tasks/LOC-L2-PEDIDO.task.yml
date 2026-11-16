@@ -1,0 +1,92 @@
+# RUN-179 - LOC-IMPL L2: CEP no pedido, bairro ao prestador, distancia em metros.
+#
+# Regra-mae aceita pelo dono: ADR-20261022 secoes 3 e 4 (pedido com CEP opcional,
+# para distancia ao prestador e atendimento por bairro; origem de perfil e
+# calculo-only). Este lote EXECUTA a regra aceita - nenhum ADR novo, nenhuma
+# linha nova de ratificacao; as escolhas de implementacao (CEP cru fora de toda
+# leitura, bairro na coluna region viva-orfa, distancia por RPC definer) ficam
+# registradas no card LOC-IMPL no fechamento, como manda a clausula de decisao
+# unica do mandato. Reaproveita a infraestrutura do RUN-175 (modulo geocodificador
+# + cache + limitador) - nao recria nada.
+# Ordenacao perto-de-mim do Mercado CONTINUA fora daqui (card F07-CONTAGEM-ORDENACAO
+# e o dono do controle; aqui e so o pedido, que e o que o ADR secao 3 nomeia).
+
+task_id: RUN-179
+
+adr: docs/decisions/ADR-20261022-localizacao-padrao-de-mercado.md
+
+objective: >
+  Pedido de servico aceita CEP opcional: geocodificacao cache-first sob o mesmo
+  limitador por pessoa; o outro participante ve o bairro derivado e a distancia
+  aproximada em metros, NUNCA o CEP ou a coordenada; o solicitante tambem nao le
+  o proprio CEP de volta por GET (nenhuma leitura expoe as colunas cruas).
+
+authority:
+  - docs/LANCAMENTO.md linha F07 (:60 pedido e acompanhamento) + card LOC-IMPL (checklist item 1, pedido)
+  - ADR-20261022-localizacao-padrao-de-mercado.md secoes 3 e 4 (dono aceitou; secao 7 geocodificacao/cache)
+  - RUN-175 mergeado 39597c24: apps/web/lib/geo/anuncio.ts (localizarAnuncio), limite.ts (consumirConsulta), cache.ts, molde de grants por coluna e CHECK de paridade da migration 20261116143824
+  - Card LOC-IMPL (parcial L1 registrado 16/11) + RELATORIOs .visual/f06-cep e .visual/f07-ficha
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    service_requests nao tem cep/latitude/longitude (20260911032309:28-47); a
+    coluna region existe desde 20260912063553:35 e NINGUEM escreve nela (o RPC
+    create_service_request tem 4 argumentos, sem regiao); o form do app ensina
+    'Inclua o bairro' em texto livre (FormularioDePedido.tsx:69); a ficha do
+    negocio mostra 'Onde atende' = so cidade (Negocio.tsx:96-100); o payload dos
+    dois lados nao traz localizacao do pedido (app-pedidos.ts select nomeado).
+
+allowed_paths:
+  - docs/agents/tasks/LOC-L2-PEDIDO.task.yml
+  - supabase/migrations
+  - supabase/tests
+  - supabase/database.generated.ts
+  - apps/web/app/api/app/negocios
+  - apps/web/app/api/app/pedidos
+  - apps/web/lib/service-requests
+  - apps/web/lib/geo
+  - apps/app/lib/dados/negocios.ts
+  - apps/app/src/negocios
+  - apps/app/src/telas/Pedido.tsx
+  - apps/app/tests
+  - tests/unit/app-api/negocios
+  - tests/unit/app-api/pedidos
+  - tests/unit/geo
+  - tests/e2e/f07-negocios-real.spec.ts
+  - .visual/loc-l2
+
+forbidden:
+  - editar migration aplicada (nova via npx pnpm@11.18.0 exec supabase migration new; create_service_request e redefinido por CREATE OR REPLACE na migration nova, mantendo os 4 argumentoshistoricos + novos opcionais)
+  - expor cep/latitude/longitude crus de pedido a QUALQUER leitura via PostgREST (grants por coluna no molde listings 20261116143824; o DONO da linha tambem nao le de volta - sem GET de localizacao de pedido)
+  - RPC de distancia que aceite origem parametrizada pelo cliente (a origem do chamador vem de auth.uid() no banco - molde profile-location.sql:292-309; coordenada nunca sai do servidor)
+  - CEP/coordenada REAL de pessoa ou de teste de rua em fixtures (CEPs sinteticos pre-gravados no cache no molde f06-mercado-real; example-style)
+  - ordenacao ou filtro perto-de-mim na lista do Mercado (card F07-CONTAGEM-ORDENACAO), mapa (card LOC-MAPA-POS-LANCAMENTO), area de atendimento editavel do prestador civil (card F07-PAINEL-CIVIL-APP)
+  - criar rotas de API novas alem das existentes (TOTAL_DE_ROTAS inalterado - conferir disco apos rebase)
+  - chamar Google sem chave; logar CEP; rodar reset/test:db com outra lane no stack (voce e o exclusivo; devolva COM SEED)
+  - usar skip/fixme novo ou afrouxar assercao; push, merge ou force-push; ler/criar/editar arquivos de ambiente; imprimir credenciais
+  - tocar em .work/main ou em outra worktree
+
+acceptance:
+  - "Migration nova: service_requests + cep text (norm 8 digitos, null), latitude/longitude double precision null com CHECK de paridade (ambos ou nenhum, molde listings); CHECK de granularidade NAO se aplica (a coordenada do pedido nao e publicada - nunca sai); region passa a GRAVAR o bairro derivado (coluna viva-orfa reaproveitada, sem duplicar dado); create_service_request redefinido com parametros opcionais p_cep/p_latitude/p_longitude/p_region SECURITY DEFINER mantendo semantica existente (posse, teto de abertos, conversa, idempotencia) e gravando as colunas novas; authenticate perde SELECT das 3 colunas (pgTAP: select-* do participante NAO devolve cep/lat/lng; a linha continua visivel pelo resto); RPC publica service_request_distance(p_request_id) SECURITY DEFINER search_path='' que so responde a PARTICIPANTE, compara a coordenada do pedido com a ORIGEM DO CHAMADOR (profiles.latitude/longitude do proprio auth.uid(); sem origem cadastrada ou sem coordenada no pedido -> null, nunca erro) e devolve METROS arredondados a centena, jamais a coordenada; finalize_account_deletion conhece as colunas; pgTAP positivo + negativos (terceiro nao le a linha; nao-participante chama distance e nao recebe; origem nunca parametrizavel; sem-coordenada parcial: cep sem pos grava cep+bairro, coords null, distance null)."
+  - "Servidor: POST /api/app/negocios/[id]/pedidos aceita cep opcional -> modulo unico (lib/geo/anuncio.ts estendido ou wrapper pedido): normaliza, cache-first, miss sob consumirConsulta do CHAMADOR (429 honesto compartilhando a janela do anuncio - mesma pessoa, mesmo teto), deriva cidade/bairro (bairro vai para region; CEP sem coordenada = parcial, fecha a UX do interiorano no pedido tambem); corpo malicioso com latitude/longitude diretas e IGNORADO (coordenada so do geocode server-side); payload do POST e dos GETs de pedidos (ambos os lados) trazem bairro (region) e distanciaKm do ponto de vista do CHAMADOR (o GET calcula por linha paginada com a RPC; sem origem -> campo null); sem cep/lat/lng em lugar nenhum (unit asserta shape completo da resposta)."
+  - "App: FormularioDePedido ganha campo CEP opcional com mascara e nota honesta ('opcional - mostramos seu bairro, nunca seu CEP ou endereco'); a descricao larga de 'Inclua o bairro' sai quando ha CEP (bairro derivado aparece); detalhe do pedido: solicitante ve 'Bairro informado ao prestador: X' (+ a distancia dele ao negocio quando a ORIGEM DELE existe? NAO - distancia e do ponto de vista de quem ve: o prestador ve 'a ~X km de voce'; o solicitante ve distancia so se cadastrar origem? Mantem simples: o campo distancia existe para o lado que le com origem; sem origem, some); Pedidos.tsx lista mostra o bairro do enviado/recebido quando houver; nada de nova rota no catalogo (pedido-novo ja existe e passa o cep pelo search lido? NAO - o CEP e do form, nao da URL)."
+  - "Provas: pgTAP (lista acima, assercoes novas em arquivo proprio service-request-location.sql + ajuste de service-requests.sql vigente se o create redefinido mudar shape); unit das rotas (criacao com cep sintetico do cache fixture grava region e NAO devolve cep; 429 com janela gasta; cep invalido 400; sem cep comportamento identico ao de hoje - os 15 specs existentes de pedido nao podem tremer); unit do modulo geo-pedido (cache-hit nao consome; parcial sem-coordenada); app vitest do form (campo opcional, nota certa); stub e2e do app (cria pedido com CEP -> bairro aparece; sem origem -> sem chip de distancia); @stateful real estendendo f07-negocios-real: persona com origem no perfil cria pedido com CEP em prestador com origem -> bloco do dono ve o bairro e 'a ~X km', recarga persiste, e o select-* do participante nao devolve cep; 3 larguras no CI."
+  - "TOTAL_DE_ROTAS inalterado (nenhuma route.ts nova) - conferir disco apos rebase e api-surface verde. Passam: gate completo com test:db e db:lint (voce e a lane exclusiva do stack), pnpm test, test:scope, app test, tsc -p tests/e2e. Antes de tocar fora dos allowed_paths, EMENDAR o contrato primeiro (cada '- ' em UMA linha; SEM aspas em comentarios de cabecalho - o parser morde)."
+
+proof:
+  - npx pnpm@11.18.0 gate
+  - npx pnpm@11.18.0 test:db
+  - npx pnpm@11.18.0 db:lint
+  - npx pnpm@11.18.0 test:scope
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/LOC-L2-PEDIDO.task.yml
+
+risk: dados pessoais em service_requests (CEP do solicitante visivel ao prestador como bairro) e o shape novo nos dois lados; mitigado por CEP cru fora de toda leitura e bairro como unidade publicada
+risk_level: R3
+
+reviewer_must_differ_from_executor: true
+retry_budget: 2
+on_budget_exhausted: HUMAN_DECISION
+
+closure:
+  requires_runtime_evidence: true
