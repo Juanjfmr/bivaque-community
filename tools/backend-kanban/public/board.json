@@ -9162,6 +9162,29 @@
       "proof": [
         "16/11: exceção decidida pelo coordenador no despacho do RUN-177 (opção (b) do mapa F07: 'convite e aceite já funcionam na web; portar shell = card pós-lançamento') e reafirmada no fechamento com o painel intacto (intocado pelo lote)."
       ]
+    },
+    {
+      "id": "GLYPH-SPEC-FLAKE",
+      "title": "salvar-glyph.spec.ts flake em CI (shard desktop + mobile-first) — endurecer a medicao de pixels",
+      "phase": "Lançamento",
+      "priority": "P2",
+      "category": "testing",
+      "status": "next",
+      "description": "O spec de pixels do RUN-173 (#256) falhou 1 teste em desktop-1440 no run 43932203007 (tip 3d16ee7c, docs-only) depois de verde no mesmo codigo em 43931584624/43879418254; rerun --failed do mesmo tip voltou todo verde — flake medido, nao regressao. Causa provavel (a confirmar no trace): a medicao pega a transicao do eixo FILL em andamento (font-variation-settings animada) ou timing de load da fonte sob carga do runner. Endurecer: aguardar o fim da transicao (ou reduced-motion + valor final deterministico) antes de medir; registrar o retry/trace no proprio spec. Enquanto nao endurece, o sinal e: rerun uma vez antes de culpar qualquer diff.",
+      "checklist": [
+        "Baixar o trace do run 43932203007 e confirmar a causa (transicao vs fonte vs layout)",
+        "Endurecer a medicao (transicao resolvida antes do clip) sem afrouxar a assercao",
+        "Prova: o spec roda N vezes seguidas (loop local) sem um unico flip"
+      ],
+      "dependencies": [],
+      "tests": ["apps/app/tests/e2e/salvar-glyph.spec.ts"],
+      "blockers": [],
+      "updatedAt": "2026-11-16",
+      "sourceRevision": "3d16ee7c",
+      "links": ["docs/agents/tasks/SALVAR-GLYPH.task.yml"],
+      "proof": [
+        "16/11: aberto pela falha 43932203007 shard 7 (✘ salvar-glyph.spec.ts:165, 1 failed | 297 passed) + job mobile-first sem ✘; rerun do MESMO tip verde (watcher confirmou 'conclusao final: success'). Codigo identico ao tip anterior verde (39597c24) — diff era docs/board."
+      ]
     }
   ],
   "launch": {
