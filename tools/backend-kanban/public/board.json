@@ -9188,6 +9188,63 @@
       "proof": [
         "16/11: aberto pela falha 43932203007 shard 7 (✘ salvar-glyph.spec.ts:165, 1 failed | 297 passed) + job mobile-first sem ✘; rerun do MESMO tip verde (watcher confirmou 'conclusao final: success'). Codigo identico ao tip anterior verde (39597c24) — diff era docs/board."
       ]
+    },
+    {
+      "id": "HRN-001",
+      "title": "Escrita do quadro só pelo --apply e guarda de codificação no pnpm test",
+      "phase": "HRN — Harness do quadro (16/11)",
+      "priority": "P2",
+      "category": "infra",
+      "status": "done",
+      "completedAt": "2026-11-16",
+      "description": "board.mjs --apply <patch.json> cria, atualiza, move, anota e marca checklist com validação compartilhada do --check, formato biome, UTF-8 sem BOM/LF, dry-run e idempotência; AGENTS.md e LICOES.md proíbem script avulso no board.json; tests/scope/encoding.test.mjs recusa mojibake e BOM em arquivo rastreado, com lista de exceções datada (prazo 2026-12-05, teto 24).",
+      "checklist": [
+        "[x] --apply declarativo atômico com as regras do --check, dry-run, idempotência e mensagens em PT — escopo 27/27, pnpm test 256/256, lint exit 0, board --check 263 cards ok",
+        "[x] prova de execução (contrato): cópia real do board.json em diretório temporário — apply cria/move/nota com hash mudando, biome check no resultante exit 0, reaplicar não muda nada, patch inválido sai com erro PT deixando o arquivo byte a byte igual",
+        "[x] guarda de codificação com pares U+00C3+..., U+00C2+A0, U+FFFD e BOM sobre git ls-files; SALVAR-GLYPH.task.yml já estava limpo na main (Q2 do parecer)"
+      ],
+      "proof": [
+        "Contrato docs/agents/tasks/HRN-001.task.yml validado (R1, retry 2); PR #260 com label ci:full; CI completa verde no SHA 4e169a4d (run 43966780061: Fast checks, Install-test-build, core e2e, stateful 375/768/1440); merge squash d597b3d; parecer GLM PASS COM RESSALVAS em .work/orq/relatorios/HRN-001-revisao.md",
+        "Ressalvas MÉDIAS viraram cartões HRN-002 (gravação via temp+rename) e HRN-003 (biome dentro da suíte); duvidosos Q1/Q2 e baixos B1-B3 ficam registrados no parecer"
+      ],
+      "dependencies": [],
+      "updatedAt": "2026-11-16",
+      "sourceRevision": "d597b3d"
+    },
+    {
+      "id": "HRN-002",
+      "title": "Gravação do --apply via arquivo temporário e rename (ressalva M1 do HRN-001)",
+      "phase": "HRN — Harness do quadro (16/11)",
+      "priority": "P2",
+      "category": "infra",
+      "status": "next",
+      "description": "board-apply.mjs grava o board.json com writeFileSync direto: queda no meio da gravação (disco cheio, kill) deixa o JSON truncado. Como o --apply virou o único caminho de escrita do quadro, trocar por temp+rename na mesma partição fecha a classe inteira, com teste cobrindo o caminho.",
+      "checklist": [
+        "[ ] gravar board.json e BOARD.md via arquivo temporário + rename",
+        "[ ] teste: conteúdo do destino permanece íntegro se a gravação for interrompida"
+      ],
+      "proof": [
+        "Ressalva M1 do parecer .work/orq/relatorios/HRN-001-revisao.md; código atual em tools/backend-kanban/src/board-apply.mjs:199-200"
+      ],
+      "dependencies": ["HRN-001"],
+      "updatedAt": "2026-11-16",
+      "sourceRevision": "d597b3d"
+    },
+    {
+      "id": "HRN-003",
+      "title": "Provar o biome dentro da suíte do --apply (ressalva M2 do HRN-001)",
+      "phase": "HRN — Harness do quadro (16/11)",
+      "priority": "P2",
+      "category": "infra",
+      "status": "next",
+      "description": "Nenhum teste da suíte executa o biome: o teste 'formato canônico do biome' só prova autoestabilidade do formatador. Hoje a compatibilidade depende de caminhos fora da suíte (ponto fixo no arquivo real e pnpm lint). Rodar biome check no fixture gerado dentro de board-apply.test.mjs (com skip documentado se o binário não estiver instalado) pega a divergência antes de um --apply gravar formato que o lint rejeita.",
+      "checklist": ["[ ] biome check executado no resultado do apply dentro do teste de escopo"],
+      "proof": [
+        "Ressalva M2 do parecer .work/orq/relatorios/HRN-001-revisao.md; hoje provado manualmente: biome exit 0 no board.json real e no fixture esperado-board.json"
+      ],
+      "dependencies": ["HRN-001"],
+      "updatedAt": "2026-11-16",
+      "sourceRevision": "d597b3d"
     }
   ],
   "launch": {
