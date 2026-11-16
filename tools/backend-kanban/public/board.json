@@ -9025,19 +9025,24 @@
       "phase": "Lançamento",
       "priority": "P2",
       "category": "frontend",
-      "status": "repo",
+      "status": "done",
       "description": "Achado colateral declarado no fix do RUN-172: com a leitura do perfil sem sessao/falha, os 4 contadores da tela desenham '0' em vez do estado de erro. A regra do app e explicita ('uma query que falhou e virou lista vazia e um bug'). Custo baixo: mesma fonte de verdade do painel de identidade ('perfil indisponivel agora') — quando a leitura falha, os contadores vao junto para o estado indisponivel. NAO e deste lote (nenhum arquivo apps/app foi tocado no fix), e e do app, logo antes do marco de visao final do F10.",
       "checklist": [
-        "Falha de leitura marca contadores como indisponiveis, nunca 0",
-        "Prova no stub do app com API 500"
+        "[x] Falha de leitura marca contadores como indisponiveis, nunca 0 (estado so na tela: o cliente de dados ja falhava alto com contagens ausentes)",
+        "[x] Prova no stub do app com API 500 (voce-contadores.test.ts: falha sem nenhum 0 + nome acessivel; zerado legitimo mostra 0; populado mostra os numeros; mutacao verificada)"
       ],
       "dependencies": [],
       "tests": ["apps/app/tests/e2e/voce.spec.ts"],
       "blockers": [],
       "updatedAt": "2026-11-16",
-      "sourceRevision": "076396aa",
+      "sourceRevision": "72a7f293",
       "links": ["docs/agents/tasks/F10-TROCA-PERFIL.task.yml"],
-      "proof": ["16/11: aberto pelo achado colateral do fix do CI do RUN-172."]
+      "proof": [
+        "16/11: aberto pelo achado colateral do fix do CI do RUN-172.",
+        "16/11: PR #253 mergeado em 72a7f293 (executor e937298a; revisao independente pelo coordenado lendo o diff real apos alerta de encoding do proprio executor — nenhum mojibake no commit). App 637/637, typecheck 0, gate --fast verde; CI 43845119623 todo verde (fast/core/stateful×3/agregador + visual 7 shards). Playwright do app nao rodou local (portas da lane glyph na epoca) — visual do traco nos 3 tamanhos entra no gate visual da fase."
+      ],
+      "completedAt": "2026-11-16",
+      "completedChecklist": [true, true]
     }
   ],
   "launch": {
