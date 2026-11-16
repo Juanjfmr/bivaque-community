@@ -6831,26 +6831,34 @@
       "phase": "Lançamento",
       "priority": "P1",
       "category": "backend",
-      "status": "repo",
+      "status": "done",
       "description": "No escopo F04 do LANCAMENTO (linha 57) mas deferido do RUN-159 por ser R3 grande. Pergunta feita em grupo Aberto aparece também nas Indicações da cidade com o nome do grupo (ADR-20261024-redesenho-da-comunidade.md:60-70). Exige migration única: CHECK recommendation_origin_scope deixa de ser XOR (20260802001100_recommendations.sql:32-35), policy de INSERT nova (membro ativo + grupo Aberto/não Encerrado + cidade do grupo) e leituras; tipo pergunta no compositor de grupo (Escrever.tsx hoje só texto+foto, rota publicacoes não aceita post_type); vínculo post↔request; exibição 'Também perguntada em {grupo}'; propagação de edição/exclusão. A lista da cidade filtra por localidade (list_indications p_locality_id). Só existe no protótipo congelado.",
       "checklist": [
-        "ADR R3 por delegação + security-auditor + revisão independente (RATIFICACAO.md)",
-        "Migration: origem não-XOR + policy de insert + leituras, pgTAP positivo/negativo por escrita direta",
-        "Tipo pergunta no compositor + vínculo post↔request + exibição na cidade + propagação edição/exclusão",
-        "E2E 375/768/1440 claro; troca da tela web se aplicável"
+        "[x] ADR-20261116-execucao-pergunta-origem-dupla (Aceito por delegacao, linha 23 da RATIFICACAO); security-auditor do harness indisponivel — lente de seguranca coberta pela revisao independente Qwen (declarado, nao fingido): PASS com condicoes; F1 (CI verde na revisao entregue) satisfeita no run 43883072226",
+        "[x] Migration 20261116101950 unica: CHECK aceita origem dupla + policy de INSERT com os 4 vetos na MESMA migration + policy de seguir revisada + leituras; pgTAP pergunta-origem-dupla.sql com 20 asserções (positivos, os 4 negativos por escrita direta, seguir membro/nao-membro, 42501 via Data API e 23514 fora da RLS). Fix de defeito real achado so em execucao: locality_id sem qualificar dentro do subselect resolvia para groups.locality_id (tautologia aceitando cidade diferente) — qualificado. Drift de prova no legado: recommendations-scope-denials teste 10 reescrito para a regra nova (veto saiu do CHECK, vive na policy), nenhuma cobertura apagada",
+        "[x] Forma = LINHA UNICA (decidida e registrada no ADR; o vinculo post↔request do texto original deste card foi substituido — sem post espelho, edicao/exclusao/cascade de graca): compositor com modo Pergunta so em grupo Aberto com a copy do aviso antes de publicar; POST /api/app/grupos/[id]/perguntas com cidade SEMPRE derivada do grupo no banco; feed do grupo com bloco de perguntas (escolha registrada: nao fundir cursores); ficha mostra o grupo de origem com link; contagem sem o shortcut de origem dupla (numeros ajustados no mesmo commit)",
+        "[x] E2E nas 3 larguras CI verde (f04-grupos-real 6/6; PGRST201 do embed ambiguo recommendation_replies corrigido com dica de FK — o 'so desktop' era cache de schema do PostgREST, nao viewport, registrado em LICOES); limpeza da fixture pela sessao da autora sob RLS (o service_role do CI nao tem DELETE — tambem LICOES). Troca web nao aplicavel: painel de Indicacoes ja lia group_name"
       ],
       "dependencies": [],
-      "tests": [],
+      "tests": [
+        "supabase/tests/pergunta-origem-dupla.sql",
+        "tests/e2e/f04-grupos-real.spec.ts",
+        "tests/unit/app-api/grupos/perguntas.test.ts"
+      ],
       "blockers": [],
-      "updatedAt": "2026-11-15",
-      "sourceRevision": "ecc2d95d",
+      "updatedAt": "2026-11-16",
+      "sourceRevision": "2ed84668",
       "links": [
         "docs/decisions/ADR-20261024-redesenho-da-comunidade.md",
-        "docs/agents/tasks/F04-DENUNCIA.task.yml"
+        "docs/agents/tasks/F04-DENUNCIA.task.yml",
+        "docs/agents/tasks/F04-PERGUNTA-CIDADE.task.yml"
       ],
       "proof": [
-        "15/11: registrado pelo coordenador ao fechar RUN-159 (explorer confirmou: nenhuma camada feita, CHECK ainda XOR, compositor sem tipo pergunta). Deferido por ser R3 grande; exige ADR + migration antes de executar. Drift reconciliado: a lista de lacunas do LAN-TROCA omitia este gap."
-      ]
+        "15/11: registrado pelo coordenador ao fechar RUN-159 (explorer confirmou: nenhuma camada feita, CHECK ainda XOR, compositor sem tipo pergunta). Deferido por ser R3 grande; exige ADR + migration antes de executar. Drift reconciliado: a lista de lacunas do LAN-TROCA omitia este gap.",
+        "16/11: PR #255 mergeado em 2ed84668 (revisoes do lote: f2d60cd4 contrato/ADR, 476132ca migration+pgTAP, e8925be8 rota/compositor/feed, 7694753b recusa honesta, 5b478d36+1014f1ba fixes de prova/CI, 6f7c0a0b head verde no CI cheio). Nota de privacidade para o dono (F4 da revisao, contexto da ratificacao): a dupla origem revela a participacao da pessoa no grupo Aberto ao publicar pergunta para a cidade — e a regra que o proprio dono aceitou no ADR-20261024 §1 ('com o nome do grupo'), registrada aqui para a ratificacao nao ser pega de surpresa. Achado F2 pre-existente virou card proprio (REC-SAVES-SOFT-DELETED): recommendation_saves_insert_own nao checa is_deleted do alvo — fora do escopo deste lote (a linha dupla nao o agravou; a fragilidade existe desde as perguntas de cidade)."
+      ],
+      "completedAt": "2026-11-16",
+      "completedChecklist": [true, true, true, true]
     },
     {
       "id": "RUN-160",
@@ -7179,20 +7187,28 @@
       "phase": "Lançamento",
       "priority": "P1",
       "category": "frontend",
-      "status": "repo",
+      "status": "done",
       "description": "O subset self-hosted de Material Symbols (apps/app/public/fonts) desenha bookmark identico a bookmark_border, entao depois do RUN-168 o estado SALVO nao muda visualmente nos cartoes de Mercado/Inicio (o label e o aria-pressed mudam; a arte nao — achado declarado pelo executor no fechamento). Corrigir exige regenerar o subset com o glifo real de preenchimento (molde do que preencheu os glifos usados hoje), checar os tres tamanhos nos dois temas, e pinar em teste visual que salvar/dessalvar troca o pixel do icone. Pre-lancamento: o criterio 1 do lancamento pede feedback visível do fluxo F06.",
       "checklist": [
-        "Regenerar o subset com bookmark preenchido distinto do outline",
-        "Prova visual 375/768/1440 x2 temas de salvo vs nao-salvo",
-        "Pin automatizado no spec de cartao"
+        "[x] Causa real provada por fontTools (fonte oficial + subset): bookmark_border e LIGADURA para o glifo bookmark; o cheio e o eixo variavel FILL, que o subset ja traz. A aceitacao 'regenerar o subset' do contrato era fato impossivel como descrita — divergencia registrada no proprio yml (bloco divergencia:) e no PR #256; a woff2 NAO mudou (sha256 3B911A4C…, 52772 bytes)",
+        "[x] Prova visual 375/768/1440 x2 temas de salvo vs nao-salvo: salvar-glyph.spec.ts mede pixels e tinta nos dois estados; baseline CONTRA o codigo antigo: 8 falhas (Expected > 40, Received 0); corrigido: 18/18 verdes",
+        "[x] Pin automatizado: o mesmo spec e guarda anti-tofu; correcao vive em Botao/BotaoDeIcone (derivam FILL de aria-pressed) + cartao-vitrine/Guia/Verbete/Pergunta. Regra da casa registrada no PR: icone cheio so quando ligado (todos os consumidores de aria-pressed sao toggles de estado)"
       ],
       "dependencies": ["RUN-168"],
-      "tests": ["apps/app/tests/e2e/mercado-salvos.spec.ts"],
+      "tests": [
+        "apps/app/tests/e2e/mercado-salvos.spec.ts",
+        "apps/app/tests/e2e/salvar-glyph.spec.ts"
+      ],
       "blockers": [],
       "updatedAt": "2026-11-16",
-      "sourceRevision": "8c3224fa",
+      "sourceRevision": "e5d11a13",
       "links": ["docs/agents/tasks/F06-SALVAR.task.yml"],
-      "proof": ["16/11: aberto no fechamento do RUN-168 (relatorio do executor + revisao Qwen)."]
+      "proof": [
+        "16/11: aberto no fechamento do RUN-168 (relatorio do executor + revisao Qwen).",
+        "16/11: PR #256 mergeado em e5d11a13 (head 61fb1ae2; a main ganhou um squash vazio b57013e0 por corrida de merge — arvore inalterada). CI cheio verde (run 43879418254: fast/core/stateful×3/build) + Visual Smoke 7 shards. Revisao independente (Qwen) PASS com 4 ressalvas: (1) allowed_paths emendado via registro de divergencia no PR — o fix mora no componente compartilhado; (2) ressalva aceita como regra da casa; (3) este card reconciliado; (4) claims de runtime cobertos pelo CI verde. Risco anotado: se alguem 'otimizar' a woff2 para instancia estatica (FILL fixo), o marcador volta a nao mudar — o spec e quem grita. LICOES.md tem a secao dos icones."
+      ],
+      "completedAt": "2026-11-16",
+      "completedChecklist": [true, true, true]
     },
     {
       "id": "CIDADE-LOCALIDADE-TROCA",
@@ -9002,22 +9018,25 @@
       "phase": "Lançamento",
       "priority": "P2",
       "category": "testing",
-      "status": "repo",
+      "status": "done",
       "description": "Ate o RUN-172 o /profile era a raiz de alcancabilidade do rastreador para a casca de membro; com a troca, todo membro entra por /app, e as sete portas declaradas em PORTAS_FORA_DO_LINK (/salvos, /configuracoes, /configuracoes/conta, /recuperar-senha, /communities, /communities/[id], /indicacoes/[id]) sao so a parte visivel: o rastreador parou de CAMINHAR ate mercado/[id], imoveis/[id], pedidos etc. — uma regressao de cobertura por link que passa batida se alguem 'so consertar o teste'. Opcoes (decidir ao abrir): porta sintetica de teste que injeta a lista de rotas de membro a caminhar (mantendo o rastreador honesto), ou aceitar e inverter o rastreador para o app quando a casca morrer de vez na varredura final da fase 6. Enquanto vive: cada tela trocada precisa continuar repontando as portas que dela descendiam, como o RUN-172 fez com declaracao explicita.",
       "checklist": [
-        "Decidir sintese de entrada (rota de teste) vs varredura por lista",
-        "Rastreador volta a cobrir as telas de membro sobreviventes",
-        "Prova: remover uma porta viva quebra o teste"
+        "[x] Decisao: as portas declaradas viram SEMENTE da fronteira da persona dona (uma lista, dois papeis) — chegada por semente nao satisfaz o invariante 'alcancavel por link', guardado por teste interno (semente nao satisfaz o invariante de porta)",
+        "[x] Rastreador voltou a caminhar a casca: 91 visitas, 43 rotas alcancadas, quebrados 0; sete portas (/salvos, /configuracoes, /configuracoes/conta, /recuperar-senha, /communities/[id], /groups/[id], /negocio) ressuscitaram por link e sairam da lista com o link nomeado",
+        "[x] Prova de que porta envelhecida quebra o teste: medida de verdade pelo CI desktop-1440, que acusou portasVelhas=[/communities] (o card Entrar na comunidade de /community virou link vivo) — reclassificada como ENTRADA declarada da persona, nao engolida"
       ],
       "dependencies": ["RUN-172"],
       "tests": ["tests/e2e/link-crawl.spec.ts"],
       "blockers": [],
       "updatedAt": "2026-11-16",
-      "sourceRevision": "076396aa",
+      "sourceRevision": "074dcdfc",
       "links": ["docs/agents/tasks/F10-TROCA-PERFIL.task.yml"],
       "proof": [
-        "16/11: aberto pelo achado colateral do fix do CI do RUN-172 (fixer ses_e1da76dd8ffeVXU0502WxBi9nR, RELATORIO 'Correcao do CI')."
-      ]
+        "16/11: aberto pelo achado colateral do fix do CI do RUN-172 (fixer ses_e1da76dd8ffeVXU0502WxBi9nR, RELATORIO 'Correcao do CI').",
+        "16/11: PR #254 mergeado em 074dcdfc (head 453b39a4). CI cheio verde na revisao entregue (run 43879431082: core com link-crawl nos 3 projects, stateful×3, fast, build). Buracos nomeados no RELATORIO, nao engolidos: /pedidos e /pedidos/[id] (redirect-classified, F07 muda em voo), /indicacoes/[id] sem semente (seed nao tem indicacao salva), /pedidos/novo sem ?prestador= cai em notFound. Runtime local foi impossivel na 1a rodada (docker do host morto na epoca) e passou a medido na correcao (docker voltou; saida identica ao CI)."
+      ],
+      "completedAt": "2026-11-16",
+      "completedChecklist": [true, true, true]
     },
     {
       "id": "VOCE-CONTADORES-ERRO",
@@ -9043,6 +9062,29 @@
       ],
       "completedAt": "2026-11-16",
       "completedChecklist": [true, true]
+    },
+    {
+      "id": "REC-SAVES-SOFT-DELETED",
+      "title": "recommendation_saves_insert_own nao checa is_deleted do alvo: seguir pergunta excluida e aceito",
+      "phase": "Lançamento",
+      "priority": "P2",
+      "category": "backend",
+      "status": "repo",
+      "description": "Achado pre-existente F2 da revisao independente do RUN-178 (mesma lente que checou a policy nova): a policy de INSERT em recommendation_saves aceita salvar (seguir) uma recommendation_request com is_deleted=true — a exclusao e soft, e o buraco nao e da origem dupla (existe desde as perguntas de cidade so). Consequencia a medir: linha de follow optando por conteudo morto, possivel eco em contagens/avisos. Corrigir numa migration: policy passa a exigir alvo is_deleted=false; pgTAP negativo por escrita direta; conferir os outros alvos de save (guide_entry, listing, encontro) contra o mesmo padrao antes de fechar — se o buraco for so de recommendation_saves, e o escopo.",
+      "checklist": [
+        "Reproduzir: INSERT de save apontando recommendation_requests is_deleted=true hoje passa (pgTAP vermelho primeiro)",
+        "Migration: policy de saves exige alvo vivo; pgTAP negativo + positivo no mesmo commit",
+        "Varredura honesta dos outros alvos de save contra o mesmo padrao; o que nao reproduz, declara"
+      ],
+      "dependencies": [],
+      "tests": ["supabase/tests/"],
+      "blockers": [],
+      "updatedAt": "2026-11-16",
+      "sourceRevision": "2ed84668",
+      "links": ["docs/decisions/ADR-20261116-execucao-pergunta-origem-dupla.md"],
+      "proof": [
+        "16/11: aberto pelo parecer Qwen do RUN-178 (revisao-qwen.md, achado F2) — pre-existente, nao introduzido pela origem dupla; CI do #255 verde com o buraco intacto (fora do escopo do lote)."
+      ]
     }
   ],
   "launch": {

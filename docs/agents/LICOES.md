@@ -305,3 +305,43 @@ Fechamento do lote: ~45 min -> ~11 min (4x), alvo 8-12 atingido.
   persona: "Ninguém bloqueado" após desbloquear era mentira por construção — seed.sql:1758 já
   bloqueia alguém para o membro do teste. Asserte a SUA linha sumindo (contagem antes/depois) e o
   efeito no servidor (POST 201), nunca a vacuidade da tela. RUN-165.
+
+## Falhas que fingem ser de viewport (16/11, RUN-178)
+
+- Teste que quebra SÓ em desktop-1440 não é layout até provar. No f04-grupos-real a causa era
+  `PGRST201` (embed ambíguo): `recommendation_requests` aponta duas vezes para
+  `recommendation_replies` (respostas + `last_resolved_reply_id`), então `recommendation_replies(count)`
+  sem dica de FK devolve 300/503. Por que "só desktop": o reload do cache de schema do PostgREST
+  depois do reset decide quando a segunda FK passa a ser vista — ordem dos projetos na fila do CI,
+  não viewport. Jeito certo: qualificar o embed pela FK (`recommendation_replies!recommendation_replies_request_id_fkey(count)`),
+  e reproduzir local em outro project antes de culpar o breakpoint.
+- Reset local como `postgres` mascarou grants que o CI NÃO tem: as *default privileges* do schema
+  public deram DELETE ao `service_role` em `recommendation_requests`, e a limpeza do E2E por REST
+  passou local / quebrou no CI (42501). O estado de grants do CI é o que as migrations concedem
+  (20260821000033:32-38: service_role só SELECT/UPDATE(is_deleted)). Regra: limpeza de fixture de
+  E2E usa a SESSÃO DA PESSOA AUTORA sob RLS (molde `apiForSession` + `recommendations_requests_delete_own`),
+  nunca `service_role`; e antes de confiar em prova local de permissão, confirme que o banco local
+  foi reconstruído pelo mesmo caminho do CI. RUN-178, corrida 43869129000.
+- PgTAP LEGADO que contradiz regra nova é drift de prova, não cobertúra a preservar: o teste 10 de
+  `recommendations-scope-denials.sql` exigia 23514 para origem dupla — exatamente o que o
+  ADR-20261024 §1 passou a PERMITIR. Reescreva para o que a regra nova veta (os mesmos casos pela
+  policy, 42501) e mantenha "nenhuma origem" 23514 como defesa em profundidade; nada de apagar o
+  teste para o verde. RUN-178.
+- Endpoint de merge do GitHub (GraphQL e REST) pode devolver 502 por minutos enquanto leituras
+  funcionam. O laço `gh api -X PUT /pulls/N/merge -f sha=…` com retry venceu onde `gh pr merge`
+  desistiu (#253, tentativa 5/8). Nunca assuma que o merge falhou porque o comando falhou: confira
+  `state`/`mergeCommit` antes de repetir.
+
+## Ícones Material Symbols no app (16/11, RUN-173)
+
+- `bookmark_border` NÃO é glifo separado no Material Symbols moderno: é LIGADURA que resolve para o
+  glifo `bookmark`; o "cheio" é o eixo variável `FILL` (0..1), que o subset já traz (gvar). Trocar o
+  nome do ícone não muda um pixel — o consumidor precisa acionar o eixo (classe
+  `.bv-icone-preenchido` / `font-variation-settings: "FILL" 1`, via `aria-pressed` nos botões
+  compartilhados). Antes de "regenerar a fonte", meça com fontTools na fonte oficial e no subset: a
+  woff2 pode estar certa e o bug no consumidor. Risco registrado: se alguém "otimizar" a woff2 para
+  instância estática, o spec de pixels (salvar-glyph.spec.ts) é quem grita.
+- Se a correção mora no componente compartilhado (`components/bivaque/`), o contrato precisa listar
+  esse path — emenda ANTES de escrever (ressalva de revisão #256: divergência aceita, registrada no
+  PR e no card; regra da casa: ícone cheio só quando ligado, vale para todo toggle com estado).
+
