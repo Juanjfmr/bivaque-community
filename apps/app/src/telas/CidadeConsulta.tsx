@@ -215,7 +215,7 @@ function Consulta({ id }: { id: string }) {
           <a
             data-acao="mudar-para-ca"
             href={`/app/voce?mudar=${encodeURIComponent(dados.cidade.id)}`}
-            className="inline-flex min-h-11 w-fit items-center gap-2 rounded-xl bg-(--primary) px-4 text-sm font-semibold text-(--on-primary)"
+            className="inline-flex min-h-11 w-fit items-center gap-2 rounded-xl bg-(--primary) px-4 text-sm font-semibold text-(--primary-foreground)"
           >
             Vou me mudar para cá
           </a>
