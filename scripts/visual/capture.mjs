@@ -107,9 +107,11 @@ export const HEADINGS = {
   "/arrivals": "^Chegadas declaradas$",
   "/guide-queue": "Guia|Referências",
   "/inicio": "Bom dia|Boa tarde|Boa noite|Olá",
-  // RUN-177 (F07): `/explorar`, `/explorar/servicos` e `/explorar/busca` são
-  // 307 para o app (`/app/negocios` e `/app/busca`) e as pastas saíram com o
-  // lote: capturá-las mediria o redirect.
+  "/explorar": "Explorar",
+  // h1 medido no arquivo que renderiza a rota (servicos/page.tsx:520): sem
+  // termo a tela é "Prestadores de serviço"; com termo, "Resultados para …" —
+  // e a variante com termo é chave própria logo abaixo.
+  "/explorar/servicos": "^Prestadores de serviço$",
   // /configuracoes/page.tsx redireciona para a única seção web que fica, e é
   // isso que a captura registra; a rota declara expectedPath para o destino.
   "/configuracoes": "^Configurações · Conta$",
@@ -183,8 +185,16 @@ export const HEADINGS = {
   "/communities/71000000-0000-4000-8000-000000000001/admin/pending": "^Pedidos de entrada$",
   "/auth/callback-error": "^Não foi possível entrar$",
   "/guide/a0000000-0000-4000-8000-000000000001/correcao": "^Sugerir atualização$",
-  // RUN-177 (F07): `/explorar/busca` e `/explorar/servicos` saíram (307 para o
-  // app) e as telas de pedido da web também — a captura delas é a do app.
+  "/explorar/servicos?q=climatiza": "^Resultados para “climatiza”$",
+  "/explorar/busca?q=escola": "^Resultados para “escola”$",
+  // Prancha 84 painel 2: o estado vazio da busca agrupada. Termo que não casa
+  // com nada no seed — a captura prova o estado real, não um card inventado.
+  "/explorar/busca?q=translado": "^Resultados para “translado”$",
+  // RECON-049 (par 84): o termo que casa com um PRESTADOR e com o evento
+  // semeado prova as seções "Serviços" e "Eventos" do agrupamento — sem ele, a
+  // captura só mostrava o Guia e a ausência das outras seções parecia defeito.
+  "/explorar/busca?q=manaus": "^Resultados para “manaus”$",
+  "/explorar/busca?q=piquenique": "^Resultados para “piquenique”$",
   // A ficha do imóvel é nomeada pelo título do anúncio. Criar imóvel saiu da
   // web (RUN-164) e a gestão dos alertas também (RUN-169): as duas são do app.
   "/imoveis/b2000000-0000-4000-8000-000000000001": DYNAMIC_HEADING,
@@ -372,6 +382,19 @@ export const ROUTES = [
   },
   // G0 (reconstrução visual 2026-09-06): containers novos da navegação.
   { path: "/inicio", name: "inicio", auth: true },
+  { path: "/explorar", name: "explorar", auth: true },
+  { path: "/explorar/servicos", name: "explorar-servicos", auth: true },
+  // RECON-021: painel direito da prancha 61 com o fixture real do seed —
+  // capturar com BIVAQUE_VISUAL_EMAIL=membro-25@ (unico ator que ve o
+  // prestador pela RLS).
+  { path: "/explorar/servicos?q=climatiza", name: "explorar-servicos-termo", auth: true },
+  // RECON-021: fixture concreta do seed de Manaus — "escola" casa com a
+  // entrada aprovada "Escola Modelo do Centro" e NÃO pode casar com a
+  // pendente "Escola de Acolhimento Militar" (status pending, RLS).
+  { path: "/explorar/busca?q=escola", name: "explorar-busca", auth: true },
+  { path: "/explorar/busca?q=translado", name: "explorar-busca-vazio", auth: true },
+  { path: "/explorar/busca?q=manaus", name: "explorar-busca-servico", auth: true },
+  { path: "/explorar/busca?q=piquenique", name: "explorar-busca-evento", auth: true },
   // CIDADE-169: a tela antiga de localidade saiu (307 para /app/cidade/atual);
   // a captura dela é a da consulta no app.
   // RECON-027: Moradia. `/imoveis` não depende de fixture. Criar imóvel saiu da

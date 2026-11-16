@@ -157,10 +157,10 @@ const nextConfig: NextConfig = {
           ["/configuracoes/notificacoes", "/app/voce"],
           ["/inicio", "/app/inicio"],
           ["/notifications", "/app/avisos"],
-          // F07 (RUN-177): a lista de serviços é o Mercado da cidade no app. A
-          // regra exata vem ANTES de `/explorar` porque o Next aplica a
-          // primeira que casa.
-          ["/explorar/servicos", "/app/negocios"],
+          // RUN-177 (F07): `/explorar/servicos` NÃO é trocada. A busca global da
+          // web linka para lá (lib/search/groups.ts) e global-search-flow a
+          // exercita; a troca fica para o card da jornada da busca web. Só
+          // `/explorar/busca` e `/explorar` seguem no app (LT-002).
           ["/explorar/busca", "/app/busca"],
           ["/explorar", "/app/busca"],
           // F05: a tela antiga de eventos sai inteira. `/events/novo` vem antes

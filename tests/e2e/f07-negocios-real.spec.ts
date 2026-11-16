@@ -474,10 +474,10 @@ test.describe("F07 — página de negócio do membro (dono)", { tag: "@stateful"
     })
     await capturar(page, testInfo.project.name, "11-meu-negocio")
 
-    // A ficha aparece na lista de negócios da cidade (a antiga busca web agora é
-    // 307 para o Mercado da cidade).
-    await page.goto("/explorar/servicos")
-    await expect(page).toHaveURL(/\/app\/negocios$/)
+    // A ficha aparece na busca de serviços da cidade. RUN-177: `/explorar/servicos`
+    // NÃO foi trocada (a busca global da web linka para lá e o global-search-flow
+    // a exercita); a garantia do spec morto volta a ser provada na tela web viva.
+    await page.goto("/explorar/servicos?q=vizinhanca")
     await expect(page.getByText(NOME_DO_NEGOCIO, { exact: true }).first()).toBeVisible({
       timeout: 30_000,
     })
