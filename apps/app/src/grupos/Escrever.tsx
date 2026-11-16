@@ -6,7 +6,9 @@ import { FalhaDaApi } from "@/lib/api/cliente"
 import {
   anexarFotoAoGrupo,
   type GrupoReal,
+  type PerguntaDoGrupo,
   type PublicacaoCriada,
+  perguntarNoGrupo,
   publicarNoGrupo,
 } from "@/lib/dados/grupos"
 import {
@@ -15,6 +17,13 @@ import {
   lerRascunhosDoGrupo,
 } from "@/lib/grupos-locais"
 import { useSobreposicaoDaEntrada } from "@/lib/navegacao/react"
+import {
+  AVISO_DA_CIDADE,
+  corpoDaPergunta,
+  errosDaPerguntaDoGrupo,
+  perguntaValida,
+  podePerguntar,
+} from "./pergunta"
 import { type Recusa, recusaAoPublicar } from "./publicacao"
 
 type Foto = { caminho: string; previa: string }
@@ -30,24 +39,34 @@ export const LIMITE_DO_TEXTO = 2000
  * servidor é traduzida em frase com próximo passo (`recusaAoPublicar`) — o
  * texto e as fotos continuam no compositor, aberto, para a pessoa corrigir ou
  * tentar de novo.
+ *
+ * Em grupo Aberto o compositor também pergunta (RUN-178): a pergunta é uma
+ * linha de origem dupla no banco — nasce no grupo e aparece nas Indicações da
+ * cidade com o nome dele — e por isso não tem foto.
  */
 export function Escrever({
   grupo,
   cidade,
   aoPublicar,
+  aoPerguntar,
 }: {
   grupo: GrupoReal
   cidade: string
   aoPublicar: (criada: PublicacaoCriada) => void
+  aoPerguntar: (pergunta: PerguntaDoGrupo) => void
 }) {
   const { aberto, aoMudarAberto: setAberto } = useSobreposicaoDaEntrada("grupo-escrever")
   const [texto, setTexto] = useState("")
+  const [tipo, setTipo] = useState<"publicacao" | "pergunta">("publicacao")
+  const [titulo, setTitulo] = useState("")
+  const [assunto, setAssunto] = useState("")
   const [fotos, setFotos] = useState<readonly Foto[]>([])
   const [rascunhos, setRascunhos] = useState<readonly string[]>([])
   const [erro, setErro] = useState("")
   // O erro do texto e o da foto ficam no campo que os originou, não no rodapé.
   const [erroDoTexto, setErroDoTexto] = useState("")
   const [erroDaFoto, setErroDaFoto] = useState("")
+  const [erroDaPergunta, setErroDaPergunta] = useState("")
   const [recusa, setRecusa] = useState<Recusa | null>(null)
   const [ocupado, setOcupado] = useState(false)
   // O limite é dito antes do envio: texto que o servidor recusaria não sai.
@@ -113,6 +132,32 @@ export function Escrever({
     if (ocupado || enviandoFoto) return
     setAvisoDoLimite(false)
     setErroDoTexto("")
+    if (tipo === "pergunta") {
+      const escrita = corpoDaPergunta({ titulo, assunto })
+      const erros = errosDaPerguntaDoGrupo(escrita)
+      if (!perguntaValida(escrita)) {
+        setRecusa(null)
+        setErroDaPergunta(erros.titulo ?? erros.assunto ?? "Revise a pergunta antes de publicar.")
+        return
+      }
+      setOcupado(true)
+      setErro("")
+      setErroDaPergunta("")
+      setRecusa(null)
+      try {
+        const criada = await perguntarNoGrupo(grupo.id, escrita, { signal: controle.signal })
+        if (controle.signal.aborted) return
+        setTitulo("")
+        setAssunto("")
+        setAberto(false)
+        aoPerguntar(criada)
+      } catch (falha: unknown) {
+        if (!controle.signal.aborted) setRecusa(recusaAoPublicar(falha))
+      } finally {
+        if (!controle.signal.aborted) setOcupado(false)
+      }
+      return
+    }
     const escrito = texto.trim()
     if (escrito.length < 1) {
       setRecusa(null)
@@ -241,81 +286,160 @@ export function Escrever({
             A publicação será lida por quem tem acesso a {grupo.nome}. As fotos são tratadas para
             remover a localização.
           </DialogDescription>
-          <div className="grid gap-1.5">
-            <label htmlFor="texto-grupo" className="text-sm font-medium">
-              Sua publicação
-            </label>
-            <Textarea
-              id="texto-grupo"
-              value={texto}
-              onChange={(evento) => {
-                const valor = evento.target.value
-                setTexto(valor)
-                setErroDoTexto("")
-                if (valor.trim().length <= LIMITE_DO_TEXTO) setAvisoDoLimite(false)
-              }}
-              aria-invalid={passouDoLimite || erroDoTexto !== "" ? true : undefined}
-              aria-describedby="texto-grupo-contagem texto-grupo-erro"
-              className="min-h-24 rounded-xl"
-            />
-            <p id="texto-grupo-contagem" className="text-xs text-(--muted-foreground)">
-              {texto.length}/{LIMITE_DO_TEXTO} caracteres
-            </p>
-            <p id="texto-grupo-erro" aria-live="polite" className="text-sm text-(--destructive)">
-              {passouDoLimite
-                ? `Sua publicação tem ${texto.length} caracteres; o limite é ${LIMITE_DO_TEXTO}. Encurte o texto para publicar — ele continua aqui.`
-                : erroDoTexto}
-            </p>
-          </div>
+          {podePerguntar(grupo) ? (
+            <fieldset data-tipo-grupo="sim" className="grid gap-2">
+              <legend className="text-sm font-medium">O que você quer escrever?</legend>
+              <div className="flex flex-wrap gap-2">
+                <Botao
+                  tom={tipo === "publicacao" ? "tonal" : "contornado"}
+                  aria-pressed={tipo === "publicacao"}
+                  disabled={ocupado}
+                  onClick={() => setTipo("publicacao")}
+                >
+                  Publicação
+                </Botao>
+                <Botao
+                  tom={tipo === "pergunta" ? "tonal" : "contornado"}
+                  aria-pressed={tipo === "pergunta"}
+                  disabled={ocupado}
+                  onClick={() => setTipo("pergunta")}
+                >
+                  Pergunta
+                </Botao>
+              </div>
+            </fieldset>
+          ) : null}
+          {tipo === "pergunta" ? (
+            <div className="grid gap-2">
+              <div className="grid gap-1.5">
+                <label htmlFor="titulo-pergunta-grupo" className="text-sm font-medium">
+                  Sua pergunta
+                </label>
+                <Textarea
+                  id="titulo-pergunta-grupo"
+                  value={titulo}
+                  onChange={(evento) => {
+                    setTitulo(evento.target.value)
+                    setErroDaPergunta("")
+                  }}
+                  aria-invalid={erroDaPergunta === "" ? undefined : true}
+                  aria-describedby="titulo-pergunta-grupo-contagem titulo-pergunta-grupo-erro"
+                  className="min-h-24 rounded-xl"
+                />
+                <p
+                  id="titulo-pergunta-grupo-contagem"
+                  className="text-xs text-(--muted-foreground)"
+                >
+                  {titulo.trim().length}/300 caracteres
+                </p>
+                <p
+                  id="titulo-pergunta-grupo-erro"
+                  aria-live="polite"
+                  className="text-sm text-(--destructive)"
+                >
+                  {erroDaPergunta}
+                </p>
+              </div>
+              <div className="grid gap-1.5">
+                <label htmlFor="assunto-pergunta-grupo" className="text-sm font-medium">
+                  Assunto (opcional)
+                </label>
+                <input
+                  id="assunto-pergunta-grupo"
+                  value={assunto}
+                  maxLength={60}
+                  onChange={(evento) => setAssunto(evento.target.value)}
+                  className="min-h-11 rounded-xl border border-(--outline-variant) bg-(--surface-lowest) px-3 text-sm"
+                />
+              </div>
+              <p
+                data-aviso-cidade="sim"
+                className="rounded-xl bg-(--secondary-container) px-3 py-2 text-sm"
+              >
+                {AVISO_DA_CIDADE}
+              </p>
+            </div>
+          ) : (
+            <div className="grid gap-1.5">
+              <label htmlFor="texto-grupo" className="text-sm font-medium">
+                Sua publicação
+              </label>
+              <Textarea
+                id="texto-grupo"
+                value={texto}
+                onChange={(evento) => {
+                  const valor = evento.target.value
+                  setTexto(valor)
+                  setErroDoTexto("")
+                  if (valor.trim().length <= LIMITE_DO_TEXTO) setAvisoDoLimite(false)
+                }}
+                aria-invalid={passouDoLimite || erroDoTexto !== "" ? true : undefined}
+                aria-describedby="texto-grupo-contagem texto-grupo-erro"
+                className="min-h-24 rounded-xl"
+              />
+              <p id="texto-grupo-contagem" className="text-xs text-(--muted-foreground)">
+                {texto.length}/{LIMITE_DO_TEXTO} caracteres
+              </p>
+              <p id="texto-grupo-erro" aria-live="polite" className="text-sm text-(--destructive)">
+                {passouDoLimite
+                  ? `Sua publicação tem ${texto.length} caracteres; o limite é ${LIMITE_DO_TEXTO}. Encurte o texto para publicar — ele continua aqui.`
+                  : erroDoTexto}
+              </p>
+            </div>
+          )}
           <p className="text-sm">
             {grupo.regras || "O grupo ainda não informou regras sobre fotos."}
           </p>
-          <label className="grid gap-2 text-sm" htmlFor="texto-grupo-fotos">
-            Adicionar fotos (até 4, de até 5 MB)
-            <input
-              id="texto-grupo-fotos"
-              type="file"
-              accept="image/jpeg,image/png,image/webp"
-              multiple
-              disabled={ocupado || enviandoFoto || fotos.length >= 4}
-              aria-describedby="texto-grupo-fotos-erro"
-              aria-invalid={erroDaFoto === "" ? undefined : true}
-              onChange={(evento) => {
-                const arquivos = Array.from(evento.currentTarget.files ?? [])
-                evento.currentTarget.value = ""
-                void anexar(arquivos)
-              }}
-              className="min-h-11 max-w-full"
-            />
-          </label>
-          <p
-            id="texto-grupo-fotos-erro"
-            aria-live="polite"
-            className="text-sm text-(--destructive)"
-          >
-            {erroDaFoto}
-          </p>
-          {enviandoFoto ? <p role="status">Enviando foto…</p> : null}
-          <div className="grid grid-cols-2 gap-2">
-            {fotos.map((foto, indice) => (
-              <div key={foto.caminho} className="grid gap-1">
-                <img
-                  src={foto.previa}
-                  alt={`Foto ${indice + 1} escolhida para a publicação`}
-                  className="h-28 w-full rounded-xl object-cover"
+          {tipo === "pergunta" ? null : (
+            <>
+              <label className="grid gap-2 text-sm" htmlFor="texto-grupo-fotos">
+                Adicionar fotos (até 4, de até 5 MB)
+                <input
+                  id="texto-grupo-fotos"
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  multiple
+                  disabled={ocupado || enviandoFoto || fotos.length >= 4}
+                  aria-describedby="texto-grupo-fotos-erro"
+                  aria-invalid={erroDaFoto === "" ? undefined : true}
+                  onChange={(evento) => {
+                    const arquivos = Array.from(evento.currentTarget.files ?? [])
+                    evento.currentTarget.value = ""
+                    void anexar(arquivos)
+                  }}
+                  className="min-h-11 max-w-full"
                 />
-                <Botao
-                  tom="texto"
-                  disabled={ocupado}
-                  onClick={() =>
-                    setFotos((atuais) => atuais.filter((item) => item.caminho !== foto.caminho))
-                  }
-                >
-                  Remover foto {indice + 1}
-                </Botao>
+              </label>
+              <p
+                id="texto-grupo-fotos-erro"
+                aria-live="polite"
+                className="text-sm text-(--destructive)"
+              >
+                {erroDaFoto}
+              </p>
+              {enviandoFoto ? <p role="status">Enviando foto…</p> : null}
+              <div className="grid grid-cols-2 gap-2">
+                {fotos.map((foto, indice) => (
+                  <div key={foto.caminho} className="grid gap-1">
+                    <img
+                      src={foto.previa}
+                      alt={`Foto ${indice + 1} escolhida para a publicação`}
+                      className="h-28 w-full rounded-xl object-cover"
+                    />
+                    <Botao
+                      tom="texto"
+                      disabled={ocupado}
+                      onClick={() =>
+                        setFotos((atuais) => atuais.filter((item) => item.caminho !== foto.caminho))
+                      }
+                    >
+                      Remover foto {indice + 1}
+                    </Botao>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
+            </>
+          )}
           {recusa !== null ? (
             <div
               role="alert"
@@ -330,7 +454,9 @@ export function Escrever({
               ) : null}
               {recusa.tipo === "recusa" && recusa.tentavel ? (
                 <small className="text-(--on-surface-variant)">
-                  Seu texto e suas fotos continuam aqui.
+                  {tipo === "pergunta"
+                    ? "Sua pergunta continua aqui."
+                    : "Seu texto e suas fotos continuam aqui."}
                 </small>
               ) : null}
             </div>
@@ -344,24 +470,27 @@ export function Escrever({
             <Botao tom="texto" onClick={() => setAberto(false)}>
               Cancelar
             </Botao>
-            <Botao
-              tom="contornado"
-              data-acao="salvar-rascunho-grupo"
-              disabled={ocupado || enviandoFoto}
-              onClick={salvar}
-            >
-              Salvar rascunho
-            </Botao>
+            {tipo === "pergunta" ? null : (
+              <Botao
+                tom="contornado"
+                data-acao="salvar-rascunho-grupo"
+                disabled={ocupado || enviandoFoto}
+                onClick={salvar}
+              >
+                Salvar rascunho
+              </Botao>
+            )}
             <Botao
               disabled={
                 ocupado ||
                 enviandoFoto ||
-                texto.trim().length < 1 ||
-                texto.trim().length > LIMITE_DO_TEXTO
+                (tipo === "pergunta"
+                  ? !perguntaValida(corpoDaPergunta({ titulo, assunto }))
+                  : texto.trim().length < 1 || texto.trim().length > LIMITE_DO_TEXTO)
               }
               onClick={() => void publicar()}
             >
-              {ocupado ? "Publicando…" : "Publicar"}
+              {ocupado ? "Publicando…" : tipo === "pergunta" ? "Perguntar à cidade" : "Publicar"}
             </Botao>
           </div>
         </DialogContent>

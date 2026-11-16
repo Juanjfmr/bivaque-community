@@ -86,6 +86,20 @@ export async function simularGrupos(
       membros: 1,
       fixada: null as string | null,
     },
+    {
+      // Fechado COM participação: o compositor aparece, mas não oferece
+      // perguntar à cidade (RUN-178) — o banco também veta.
+      id: "g-biblio",
+      nome: "Clube do Livro",
+      descricao: "Leituras do mês.",
+      regras: "Respeite as opiniões.",
+      fechado: true,
+      membro: true,
+      pendente: false,
+      admin: false,
+      membros: 9,
+      fixada: null as string | null,
+    },
   ]
   const publicacoes = [
     {
@@ -131,6 +145,17 @@ export async function simularGrupos(
     para: string
     uteis: number
     util: boolean
+  }[] = []
+  const perguntas: {
+    id: string
+    titulo: string
+    criadaEm: string
+    autor: string
+    autorId: string
+    propria: boolean
+    respostas: number
+    resolvida: boolean
+    grupo: { id: string; nome: string } | null
   }[] = []
   let sequencia = 1
   const recusas: RespostaDePublicacao[] = [...(opcoes.recusas ?? [])]
@@ -244,6 +269,31 @@ export async function simularGrupos(
     }
     if (partes[1] === "fotos") {
       await rota.fulfill({ status: 201, json: { caminho: "u/grupos/foto.png" } })
+      return
+    }
+    if (partes[1] === "perguntas") {
+      // RUN-178: a pergunta do grupo é uma linha de origem dupla. O stub reflete
+      // o contrato real: GET devolve o bloco do feed, POST cria com a origem que
+      // o servidor deriva do grupo (o corpo só tem texto).
+      if (metodo === "GET") {
+        await rota.fulfill({
+          json: { perguntas: perguntas.filter((p) => p.grupo?.id === grupo.id) },
+        })
+        return
+      }
+      const pergunta = {
+        id: `q-real-${sequencia++}`,
+        titulo: String(corpo["titulo"] ?? "").trim(),
+        criadaEm: new Date().toISOString(),
+        autor: "Você",
+        autorId: "u-eu",
+        propria: true,
+        respostas: 0,
+        resolvida: false,
+        grupo: { id: grupo.id, nome: grupo.nome },
+      }
+      perguntas.unshift(pergunta)
+      await rota.fulfill({ status: 201, json: { pergunta } })
       return
     }
     if (partes[1] === "publicacoes" && metodo === "POST") {

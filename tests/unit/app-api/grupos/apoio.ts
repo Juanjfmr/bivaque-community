@@ -66,6 +66,22 @@ type Opcoes = {
   reacoesComentarios?: { comment_id: string; user_id: string }[]
   /** Id que a RPC `create_group` devolve. */
   criado?: string
+  /** Perguntas do grupo: a linha crua do banco, como o select a devolve. */
+  perguntas?: Record<string, unknown>[]
+  /** A linha que o insert de pergunta devolve. */
+  perguntaGravada?: Record<string, unknown>
+  /** A recusa da policy no insert de pergunta. */
+  perguntaErro?: { code: string; message: string }
+}
+export const pergunta = {
+  id: "90000000-0000-4000-8000-00000000000a",
+  author_id: USER,
+  title: "Alguém indica veterinário perto do centro?",
+  category: "servicos_locais",
+  created_at: DATA,
+  is_resolved: false,
+  group_id: ID,
+  recommendation_replies: [{ count: 2 }],
 }
 export function mockClient(opcoes: Opcoes = {}) {
   const chamadas: { tabela: string; metodo: string; args: unknown[] }[] = []
@@ -105,7 +121,19 @@ export function mockClient(opcoes: Opcoes = {}) {
         data = singular ? (linhas[0] ?? null) : linhas
       }
       if (tabela === "feed_group") data = (opcoes.posts ?? [post]).map((p) => ({ id: p["id"] }))
-      if (operacao === "insert")
+      if (tabela === "recommendation_requests") {
+        if (operacao === "insert" && opcoes.perguntaErro) {
+          return { data: null, count: null, error: opcoes.perguntaErro }
+        }
+        if (operacao === "insert") {
+          data = singular
+            ? (opcoes.perguntaGravada ?? { ...pergunta, ...payload })
+            : [{ ...pergunta, ...payload }]
+        } else {
+          data = singular ? (opcoes.perguntas ?? [pergunta])[0] : (opcoes.perguntas ?? [pergunta])
+        }
+      }
+      if (operacao === "insert" && tabela !== "recommendation_requests")
         data = singular
           ? tabela === "comments"
             ? (opcoes.comentarioGravado ?? {

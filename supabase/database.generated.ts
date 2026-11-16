@@ -2882,6 +2882,7 @@ export type Database = {
         Args: { p_conversation_id: string }
         Returns: string
       }
+      count_indications: { Args: { p_locality_id: string }; Returns: number }
       create_community: {
         Args: {
           p_description: string

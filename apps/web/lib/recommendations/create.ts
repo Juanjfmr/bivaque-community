@@ -13,6 +13,11 @@ const TOPICOS = new Set<string>(INDICATION_CATEGORIES.map((item) => item.id))
  * `topico` é a escolha de quem pergunta, sempre um id da lista fechada; tópico
  * livre não entra no banco. Sem tópico, vale a sugestão do texto (comportamento
  * antigo, e é o que a web sem seletor manda).
+ *
+ * É o módulo ÚNICO dos dois caminhos de escrita: perguntar à cidade
+ * (`POST /api/app/perguntas`) e perguntar de dentro do grupo
+ * (`POST /api/app/grupos/[id]/perguntas`, RUN-178). A origem — cidade e grupo —
+ * nunca está no que volta daqui: cada rota a deriva do banco.
  */
 export function lerNovaPergunta(corpo: Record<string, unknown>) {
   const titulo = corpo["titulo"]

@@ -13,7 +13,7 @@ import {
 import { log } from "../../../../lib/logger"
 import { lerNovaPergunta } from "../../../../lib/recommendations/create"
 import { cidadeDaSessao, interpretarErroDoBanco } from "../eventos/_comum"
-import { nomesDeAutores } from "./_comum"
+import { apresentarPergunta, nomesDeAutores } from "./_comum"
 
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
@@ -91,18 +91,14 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     const regra = FILTROS[filtro]
     // O número do cabeçalho ("indicações resolvidas") não sai da página: a
     // função de lista não devolve total. A contagem é da cidade que a sessão
-    // alcança, sob RLS, e só é pedida na primeira página.
-    // shortcut: não desconta o que a pessoa ocultou nem soma pergunta de grupo
-    // da cidade; upgrade quando a RPC devolver o total (ou quando a contagem
-    // virar parte da memória de indicações).
+    // alcança, sob RLS, e só é pedida na primeira página. Ela usa a MESMA régua
+    // da lista — pergunta de origem dupla entra, e o que quem lê ocultou sai —
+    // por `count_indications` (RUN-178); antes, um atalho na tabela ignorava as
+    // duas coisas.
     const contagem =
       depois === 0
-        ? await client
-            .from("recommendation_requests")
-            .select("id", { count: "exact", head: true })
-            .eq("locality_id", cidade.id)
-            .eq("is_resolved", true)
-        : { data: null, count: null, error: null }
+        ? await client.rpc("count_indications", { p_locality_id: cidade.id })
+        : { data: null, error: null }
     if (contagem.error) throw contagem.error
 
     const { data, error } = await client.rpc("list_indications", {
@@ -133,27 +129,30 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     }
     const nomes = await nomesDeAutores(client, [...autores.values()])
 
-    const perguntas = linhas.map((linha) => {
-      const autorId = autores.get(linha.id) ?? ""
-      return {
-        id: linha.id,
-        titulo: linha.title,
-        categoria: linha.category,
-        criadaEm: linha.created_at,
-        resolvida: linha.is_resolved === true,
-        respostas: linha.reply_count,
-        propria: autorId !== "" && autorId === userId,
-        autor: nomes.get(autorId) ?? "",
-        autorId,
-      }
-    })
+    const perguntas = linhas.map((linha) =>
+      apresentarPergunta(
+        {
+          id: linha.id,
+          title: linha.title,
+          category: linha.category,
+          created_at: linha.created_at,
+          is_resolved: linha.is_resolved === true,
+          reply_count: linha.reply_count,
+          author_id: autores.get(linha.id) ?? "",
+          group_id: linha.group_id,
+          group_name: linha.group_name,
+        },
+        nomes,
+        userId,
+      ),
+    )
     return responder(
       request,
       {
         perguntas,
         proximo: linhas.length === limite ? String(depois + limite) : null,
         cidade: cidade.nome,
-        resolvidas: contagem.count ?? 0,
+        resolvidas: contagem.data ?? 0,
       },
       200,
     )

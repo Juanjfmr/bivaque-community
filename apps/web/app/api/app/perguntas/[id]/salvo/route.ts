@@ -20,9 +20,10 @@ type Context = { params: Promise<{ id: string }> }
  * quem salvou quando aparece resposta (migration 20260821000012).
  *
  * A pergunta é conferida antes da escrita para que "não existe para você" seja
- * 404 e não o 403 genérico da policy. A exceção real é o pedido de grupo: ele é
- * visível, mas `recommendation_saves_insert_own` só aceita pedido da cidade —
- * o banco recusa com 42501 e a rota traduz em 403 com uma frase que diz isso.
+ * 404 e não o 403 genérico da policy. A linha de origem dupla (RUN-178) é
+ * visível pela cidade e pelos membros do grupo, e a policy
+ * `recommendation_saves_insert_own` aceita exatamente o que é visível — o 403
+ * que sobra é o de uma pergunta fora do alcance de quem pediu.
  */
 async function perguntaVisivel(client: SupabaseClient<Database>, id: string): Promise<boolean> {
   const result = await client
@@ -55,7 +56,8 @@ export async function PUT(request: NextRequest, { params }: Context): Promise<Ne
     // é isso que ela lê de volta.
     if (result.error && result.error.code !== "23505") {
       const falha = interpretarErroDoBanco(result.error.code, {
-        recusado: "Perguntas de grupo ainda não podem ser seguidas pela sua conta.",
+        recusado:
+          "Sua conta não pode seguir esta pergunta. Entre de novo e tente outra vez; se continuar, fale com a moderação.",
         dados: "Não foi possível seguir esta pergunta.",
       })
       if (falha.status !== 503) return responder(request, falha.corpo, falha.status)
