@@ -201,7 +201,7 @@ test.describe("groups journey", () => {
       await expect(page.locator(BOTTOM_NAV)).toBeHidden()
       const sidebar = page.locator(SIDEBAR)
       await expect(sidebar).toBeVisible()
-      for (const href of ["/inicio", "/explorar", "/communities", "/profile"]) {
+      for (const href of ["/inicio", "/explorar", "/communities", "/app/voce"]) {
         await expect(sidebar.locator(`a[href="${href}"]`).first()).toBeVisible()
       }
     }

@@ -3,7 +3,9 @@ import { BOTTOM_NAV, SIDEBAR, seedSession } from "./helpers/session"
 
 // The shell chrome only exists under the app's `(shell)` route group, and every
 // route there is behind the session gate. These specs sign in and assert
-// against /profile — uma tela que permanece na web na fase 1.
+// against /salvos — uma rota de membro que segue na casca web (o Início já é
+// 307 para o app). RUN-172: o host era /profile; o perfil próprio saiu da web e
+// o destino da aba Perfil passou a ser o Você do app.
 //
 // PROCESSO-DE-CONSTRUCAO §7 (2026-09-06) replaced the four historical containers
 // of ADR-20260816 (Cidade / Minha comunidade / Grupos / Eu) with
@@ -22,7 +24,7 @@ test.describe("BottomNav visibility across viewports", () => {
     await seedSession(context)
 
     // When they open the home route
-    await page.goto("/profile")
+    await page.goto("/salvos")
 
     // Then all 4 bottom navigation items are visible, in NAV_ITEMS order
     const nav = page.locator(BOTTOM_NAV)
@@ -43,7 +45,7 @@ test.describe("BottomNav visibility across viewports", () => {
     await page.setViewportSize({ width: 768, height: 1024 })
 
     // When they open the home route
-    await page.goto("/profile")
+    await page.goto("/salvos")
 
     // Then the BottomNav is gone and the sidebar takes over as a 4rem rail.
     // The labels stay in the accessibility tree even though they are not drawn.
@@ -64,7 +66,7 @@ test.describe("BottomNav visibility across viewports", () => {
     await page.setViewportSize({ width: 1440, height: 900 })
 
     // When they open the home route
-    await page.goto("/profile")
+    await page.goto("/salvos")
 
     // Then the BottomNav is hidden and the sidebar is expanded with labels
     await expect(page.locator(BOTTOM_NAV)).toBeHidden()
@@ -82,7 +84,7 @@ test.describe("Indicações discoverable entry", () => {
     await page.setViewportSize({ width: 375, height: 812 })
 
     // When they open the home route
-    await page.goto("/profile")
+    await page.goto("/salvos")
 
     // Then Indicações is a labelled header entry, visible at every width — not
     // a BottomNav tab (the ceiling of four containers has no room for it).
@@ -99,7 +101,7 @@ test.describe("Indicações discoverable entry", () => {
     await page.setViewportSize({ width: 768, height: 1024 })
 
     // When they open the home route
-    await page.goto("/profile")
+    await page.goto("/salvos")
 
     // Then the header entry is still named and reachable
     const indications = page.getByRole("link", { name: "Indicações" })
@@ -113,7 +115,7 @@ test.describe("Indicações discoverable entry", () => {
     await page.setViewportSize({ width: 1440, height: 900 })
 
     // When they open the home route
-    await page.goto("/profile")
+    await page.goto("/salvos")
 
     // Then Indicações is reachable from the header, where it is a link
     const indications = page.getByRole("link", { name: "Indicações" })
@@ -129,12 +131,12 @@ test.describe("Navigation tab links", () => {
     await page.setViewportSize({ width: 375, height: 812 })
 
     // When they open the home route
-    await page.goto("/profile")
+    await page.goto("/salvos")
 
     // Then each tab links to the expected route
     const tabs = page.locator(BOTTOM_NAV).getByRole("tab")
 
-    const expectedHrefs = ["/inicio", "/explorar", "/communities", "/profile"]
+    const expectedHrefs = ["/inicio", "/explorar", "/communities", "/app/voce"]
 
     for (let index = 0; index < expectedHrefs.length; index++) {
       const href = await tabs.nth(index).getAttribute("href")
@@ -143,8 +145,8 @@ test.describe("Navigation tab links", () => {
   })
 })
 
-test.describe("Profile reachable on mobile", () => {
-  test("the bottom nav reaches /profile and the header has no avatar on mobile", async ({
+test.describe("Você reachable on mobile", () => {
+  test("the bottom nav reaches the app's Você and the header has no avatar on mobile", async ({
     page,
     context,
   }) => {
@@ -153,18 +155,18 @@ test.describe("Profile reachable on mobile", () => {
     await page.setViewportSize({ width: 375, height: 812 })
 
     // When they open the home route
-    await page.goto("/profile")
+    await page.goto("/salvos")
 
     // Then the header does not repeat Perfil: no celular o avatar repetia a aba
     // Perfil da barra inferior e saiu do cabeçalho (app-shell.tsx).
     await expect(page.locator("header").getByRole("link", { name: "Perfil" })).toBeHidden()
 
-    // And the Perfil tab of the bottom nav lands on the profile route
+    // And the Perfil tab lands on the Você screen of the app (RUN-172)
     const tab = page
       .locator('[data-slot="tabs-list"][aria-label="Seções do aplicativo"]')
       .getByRole("tab", { name: /Perfil/ })
     await expect(tab).toBeVisible()
     await tab.click()
-    await expect(page).toHaveURL(/\/profile/)
+    await expect(page).toHaveURL(/\/app\/voce$/)
   })
 })

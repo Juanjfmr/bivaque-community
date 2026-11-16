@@ -209,12 +209,12 @@ function Consulta({ id }: { id: string }) {
 
       {dados.minha ? null : (
         <Secao className="pb-6">
-          {/* Enquanto a transferência de cidade não pousa no app
-              (F10-TROCA-PERFIL-PROPRIO), o caminho de mudar é o do perfil da
-              web — o mesmo que o chip do cabeçalho web usa. */}
+          {/* RUN-172: a transferência é do Você no app (RUN-170), e o destino
+              vai na query que a tela lê. O chip do cabeçalho web usa a mesma
+              porta; o 307 de `/profile` é só rede para link antigo. */}
           <a
             data-acao="mudar-para-ca"
-            href={`/profile?mudar=${encodeURIComponent(dados.cidade.id)}#cidade`}
+            href={`/app/voce?mudar=${encodeURIComponent(dados.cidade.id)}`}
             className="inline-flex min-h-11 w-fit items-center gap-2 rounded-xl bg-(--primary) px-4 text-sm font-semibold text-(--on-primary)"
           >
             Vou me mudar para cá

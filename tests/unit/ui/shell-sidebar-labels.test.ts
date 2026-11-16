@@ -13,7 +13,8 @@ const DESTINO_POR_ROTULO: Record<string, string> = {
   Início: "/inicio",
   Explorar: "/explorar",
   Comunidades: "/communities",
-  Perfil: "/profile",
+  // RUN-172: o perfil próprio é tela do app; a casca web linka o destino direto.
+  Perfil: "/app/voce",
   Salvos: "/salvos",
   Notificações: "/app/avisos",
   Configurações: "/configuracoes",
@@ -70,9 +71,9 @@ describe("RECON-042, defeito 1 — o rótulo do item da lateral corresponde ao d
     expect(source).not.toContain('href="/messages"')
   })
 
-  it("o avatar do cabeçalho continua levando a /profile", () => {
+  it("o avatar do cabeçalho continua levando ao perfil próprio, agora no app", () => {
     const source = readFileSync(appShell, "utf8")
-    expect(source).toContain('href="/profile"')
+    expect(source).toContain('href="/app/voce"')
   })
 
   it("todo item de NAV_ITEMS tem rótulo que corresponde ao destino", () => {

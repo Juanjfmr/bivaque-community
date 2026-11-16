@@ -3,7 +3,7 @@
 // Cobre 3 cenarios:
 // (1) cookie de sessao com Max-Age=34560000 (400 dias) + /community=200
 // (2) fechar e reabrir o browser -> sessao persiste
-// (3) logout via "Sair da conta" no /profile
+// (3) logout via "Sair da conta" no /app/voce (RUN-172: o perfil próprio é do app)
 //
 // Pre-requisitos: supabase local stack + next.js server.
 // NOTA: o endpoint do mailpit local (/api/v1/mailbox) nao responde
@@ -278,26 +278,16 @@ test.describe("Login persistente Instagram-style", { tag: "@stateful" }, () => {
       "/app/entrar",
     )
 
-    await page.goto(`${APP_URL}/profile`, { waitUntil: "load" })
-    const configTab = page.getByRole("tab", { name: /Configurações/i })
-    // The profile page is a client component: with waitUntil "load" the React
-    // tree may still be hydrating, so an instant count() can read 0 and skip
-    // the click that reveals the sign-out button inside the tab panel. Wait
-    // for the tab to become visible (or give up quietly if it is not there).
-    await configTab.waitFor({ state: "visible", timeout: 5000 }).catch(() => {})
-    if (await configTab.isVisible()) {
-      await configTab.click()
-      await page.waitForTimeout(500)
-    }
-    page.on("dialog", (d) => d.accept())
-    const sairBtn = page.getByRole("button", { name: /Sair da conta/i })
-    await expect(sairBtn, "Botao 'Sair da conta' presente").toBeVisible({ timeout: 5000 })
+    // RUN-172: a saída é a linha "Sair da conta" do Você, no app — a mesma
+    // garantia (o cookie desta sessão morre) provada pelo caminho real.
+    await page.goto(`${APP_URL}/app/voce`, { waitUntil: "load" })
+    const sairBtn = page.getByRole("button", { name: "Sair da conta" })
+    await expect(sairBtn, "Linha 'Sair da conta' presente").toBeVisible({ timeout: 20_000 })
     await sairBtn.click()
-    // O modal de confirmacao (adicionado como guard de UX contra saida
-    // acidental) exige um segundo clique no botao "Sair" para efetivamente
-    // chamar supabase.auth.signOut(). Sem isso, a URL permanece em /profile.
-    const confirmarBtn = page.getByRole("button", { name: /^Sair$/i })
-    await expect(confirmarBtn, "Botao 'Sair' do modal de confirmacao presente").toBeVisible({
+    // A confirmação é a peça única do app (perigo): um segundo clique em "Sair"
+    // é o que chama a rota de saída. Sem ele, a pessoa continua na conta.
+    const confirmarBtn = page.getByRole("button", { name: "Sair", exact: true })
+    await expect(confirmarBtn, "Botao 'Sair' da confirmacao presente").toBeVisible({
       timeout: 5000,
     })
     await confirmarBtn.click()

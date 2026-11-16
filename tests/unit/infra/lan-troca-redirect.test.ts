@@ -34,6 +34,11 @@ const TROCADAS = [
   ["/pedidos", "/app/pedidos"],
   [`/pedidos/${ID}`, `/app/pedido/${ID}`],
   [`/profile/${ID}`, `/app/perfil/${ID}`],
+  // RUN-172: o perfil próprio e a edição saíram da web (ADR-20261116). As duas
+  // regras exatas vêm antes da regra do id, que segue mandando o perfil alheio;
+  // `?mudar=<id>` (CTA da consulta de cidade e rodapé do chip) chega ao Você.
+  ["/profile", "/app/voce"],
+  ["/profile/editar", "/app/voce"],
   // RUN-163: a tela de interesses saiu; o link da edição vai direto ao app e a
   // URL antiga (favorito, histórico) responde 307 com a query preservada.
   ["/profile/interests", "/app/voce"],
@@ -265,36 +270,30 @@ describe("LAN-TROCA fase 1", () => {
     expect(sobras).toEqual([])
   })
 
-  // F10: o perfil de outra pessoa saiu da web — nenhuma tela sobra para alguém
-  // "voltar" editando a pasta, e o próprio perfil (`/profile`) segue na web.
-  it("a tela antiga de perfil alheio não deixa page.tsx para trás", () => {
-    const pasta = join(shell, "profile", "[userId]")
-    const sobras = existsSync(pasta)
-      ? readdirSync(pasta, { recursive: true, encoding: "utf8" })
-      : []
-    expect(sobras).toEqual([])
+  // F10: o perfil saiu inteiro da web. A prova é de ausência — nem o perfil de
+  // outra pessoa, nem o próprio, nem a edição deixam tela ou action para
+  // alguém "voltar" editando a pasta (RUN-163 e RUN-172).
+  it("a pasta antiga do perfil não deixa tela nem action para trás", () => {
+    const pasta = join(shell, "profile")
+    expect(existsSync(pasta), `pasta que sobrou: ${pasta}`).toBe(false)
   })
 
-  it.each(["/profile/editar", "/profile"])(
-    "%s (perfil próprio) continua na web, sem redirect",
-    async (caminho) => {
-      expect((await resolver(caminho)).headers.get("location")).toBeNull()
-    },
-  )
+  // RUN-163/RUN-172: `:id` continua mandando o id do perfil alheio, e as duas
+  // rotas fixas (a edição e o próprio perfil) não são capturadas por ela — cada
+  // uma tem a sua regra exata, que vence por vir antes.
+  it.each([ID, "membro-1"])("/profile/%s segue para /app/perfil/:id", async (id) => {
+    const resposta = await resolver(`/profile/${id}`)
+    expect(resposta.status).toBe(307)
+    expect(new URL(resposta.headers.get("location") ?? "", ORIGEM).pathname).toBe(
+      `/app/perfil/${id}`,
+    )
+  })
 
-  // RUN-163: quem saiu foi a tela de interesses. A do perfil alheio segue
-  // mandando o id, e a edição (vizinha da pasta removida) não é capturada.
-  it.each([ID, "membro-1"])(
-    "/profile/%s segue para /app/perfil/:id, e /profile/editar não é capturado",
-    async (id) => {
-      const resposta = await resolver(`/profile/${id}`)
-      expect(resposta.status).toBe(307)
-      expect(new URL(resposta.headers.get("location") ?? "", ORIGEM).pathname).toBe(
-        `/app/perfil/${id}`,
-      )
-      expect((await resolver("/profile/editar")).headers.get("location")).toBeNull()
-    },
-  )
+  it.each(["editar", "interests"])("/profile/%s não é capturado pela regra do id", async (fixa) => {
+    expect(
+      new URL((await resolver(`/profile/${fixa}`)).headers.get("location") ?? "", ORIGEM).pathname,
+    ).toBe("/app/voce")
+  })
 
   // RUN-163: a tela de interesses saiu inteira — nem page.tsx, nem a seção, nem
   // as server actions sobram para alguém "voltar" editando a pasta.

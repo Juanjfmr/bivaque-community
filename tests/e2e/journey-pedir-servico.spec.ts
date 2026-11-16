@@ -63,9 +63,10 @@ test.describe("jornada simulada: pedir e responder um serviço", { tag: "@statef
         },
       )
 
-      // O cabeçalho continua na web; a caixa de avisos abre o pedido no app.
+      // O cabeçalho continua na web (RUN-172: o host é /salvos, rota de membro na
+      // casca web); a caixa de avisos abre o pedido no app.
       const glance = await memberContext.newPage()
-      await glance.goto("/profile")
+      await glance.goto("/salvos")
       await expect(
         glance.getByRole("link", { name: /^Conversas, \d+ com mensagem nova/ }),
       ).toBeVisible({ timeout: 20_000 })
@@ -105,12 +106,9 @@ test.describe("jornada simulada: pedir e responder um serviço", { tag: "@statef
         timeout: 20_000,
       })
 
-      // A porta do Perfil continua viva e agora leva à lista do app.
-      await member.goto("/profile")
-      await member
-        .getByRole("region", { name: "Seu espaço" })
-        .getByRole("link", { name: /Meus orçamentos/ })
-        .click()
+      // A porta do Você (RUN-172: o perfil próprio é do app) leva à lista.
+      await member.goto("/app/voce")
+      await member.getByRole("button", { name: /Pedidos de serviço/ }).click()
       await expect(member).toHaveURL(/\/app\/pedidos$/)
       await expect(
         member.getByRole("heading", { level: 1, name: "Pedidos de serviço" }),

@@ -8,12 +8,13 @@ import { resolverSessaoDaRequisicao } from "web/lib/app-api/sessao-do-next"
 import { moveErrorMessage } from "web/lib/locality/move-city"
 
 // A mudança de cidade no app (F10 / RUN-170, ADR-20261116): a transferência que
-// a web já tem, pela mesma função do banco. O que este teste guarda:
+// a web tinha, pela mesma função do banco. Desde o RUN-172 esta rota é a única
+// porta (a tela web saiu). O que este teste guarda:
 //
 //   1. a validação é a compartilhada (destino diferente da atual, prazo entre
 //      hoje e +180) — nenhuma regra própria da rota;
-//   2. o payload do RPC é exatamente o da action web
-//      (`(shell)/profile/city-actions.ts:64-67`): destino e prazo, nada mais;
+//   2. o payload do RPC é o mesmo da action web que saiu: destino e prazo, nada
+//      mais;
 //   3. o cliente é o da SESSÃO (a função é SECURITY DEFINER sobre auth.uid()) e
 //      o destino nunca vem de nome;
 //   4. `23505` é a mensagem vigente de mudança em andamento, e nenhum código do
@@ -170,7 +171,7 @@ describe("POST /api/app/voce/cidade", () => {
     const resposta = await POST(pedido({ destino: RIO, prazo }))
 
     expect(resposta.status).toBe(200)
-    // `(shell)/profile/city-actions.ts:64-67`: a RPC recebe só destino e prazo.
+    // A RPC recebe só destino e prazo — o contrato da action web que saiu.
     expect(mock.chamadasRpc.filter(({ nome }) => nome === "declare_locality_transfer")).toEqual([
       {
         nome: "declare_locality_transfer",

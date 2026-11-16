@@ -15,9 +15,9 @@ import { emailHint } from "./hint"
 /**
  * A família do titular (RUN-018): um módulo, duas portas.
  *
- * A tela antiga do `apps/web` (Server Actions em
- * `app/(shell)/profile/family-invite-section-actions.ts`) e as rotas
- * `/api/app/voce/familia` do app leem e gravam por aqui. As regras são as do
+ * A tela de Configurações do `apps/web` (Server Actions em
+ * `lib/convite/familia-acoes.ts`) e as rotas `/api/app/voce/familia` do app
+ * leem e gravam por aqui. As regras são as do
  * banco, não uma cópia: titular verificado, teto de 5 convites ativos, 7 dias,
  * só o próprio titular revoga (ver `supabase/tests/family-invite-wrappers.sql`).
  *

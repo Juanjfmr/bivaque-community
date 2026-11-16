@@ -154,9 +154,12 @@ export function resolveNotificationHref(
       // O alvo é o grupo: a publicação vive no feed dele.
       return `/groups/${notification.target_id}`
     case "invitation_accepted":
-      // O perfil de terceiro é /profile/[userId]. Sem ator (linha de convite
-      // órfã), não se navega para "/profile/" vazio nem para o próprio perfil.
-      return notification.actor_user_id ? `/profile/${notification.actor_user_id}` : null
+      // O perfil de terceiro é do app desde o RUN-172 (/app/perfil/:id). O 307
+      // de `/profile/<id>` continua valendo para link antigo, mas a constante
+      // aponta o destino vivo — a cadeia de e-mail legada segue funcionando
+      // porque o redirect preserva o id. Sem ator (linha de convite órfã), não
+      // se navega para um id vazio nem para o próprio perfil.
+      return notification.actor_user_id ? `/app/perfil/${notification.actor_user_id}` : null
     case "event_rsvp":
     case "event_change":
     case "event_reminder":

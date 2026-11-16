@@ -27,8 +27,11 @@ async function setConsentCookie(page: import("@playwright/test").Page) {
 // creation".
 // ---------------------------------------------------------------------------
 
+// RUN-172: `/profile` saiu desta lista — o redirect de configuração roda ANTES
+// do portão e entrega a pessoa ao Você do app. A recusa não desapareceu, mudou
+// de dono: o app recebe a rota e a leitura sem sessão é recusada (Denial 1b).
 test.describe("anonymous visitor: protected route denial", () => {
-  const PROTECTED_ROUTES = ["/community", "/groups", "/profile", "/recommendations"]
+  const PROTECTED_ROUTES = ["/community", "/groups", "/recommendations"]
 
   for (const route of PROTECTED_ROUTES) {
     test(`${route} refuses an anonymous visitor and sends them to the app entry`, async ({
@@ -47,6 +50,26 @@ test.describe("anonymous visitor: protected route denial", () => {
       ).toBeVisible()
     })
   }
+
+  // 1b — RUN-172: o perfil próprio é do app. O endereço antigo é 307 e a tela
+  // do app recusa a leitura sem sessão: nenhum dado da pessoa aparece. Não é
+  // visita anônima que passa.
+  test("the old profile URL lands on the app and the read is refused", async ({ page }) => {
+    await page.goto("/profile")
+
+    await expect(page).toHaveURL(/\/app\/voce$/)
+    await expect(page.locator('[data-tela="voce"]')).toBeVisible({ timeout: 15_000 })
+    // A recusa é a da LEITURA do perfil, e a tela a nomeia no cartão de
+    // identidade: sem sessão não há nome nem cidade a mostrar. Não se assere
+    // `[data-estado="erro"]` no geral porque o Você compõe três leituras
+    // (perfil, família, avisos) e as três falham juntas — o locator casaria 3
+    // painéis e a asserção mediria a tela errada.
+    await expect(page.getByText("perfil indisponível agora")).toBeVisible()
+    await expect(page.getByText(/Sua cidade é/)).toHaveCount(0)
+    // Sem leitura não há edição do perfil, nem a cidade que ele traria.
+    await expect(page.getByRole("button", { name: /Editar/ })).toHaveCount(0)
+    await expect(page.locator("#cidade")).toHaveCount(0)
+  })
 
   test("an anonymous visitor cannot reach community by way of login", async ({ page }) => {
     // Given an unauthenticated browser

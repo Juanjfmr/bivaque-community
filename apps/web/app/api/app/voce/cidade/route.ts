@@ -22,10 +22,10 @@ export const dynamic = "force-dynamic"
  * recusa id fora do catálogo. A cidade atual vem do vínculo `current` da sessão,
  * nunca do pedido.
  *
- * A validação é `lib/locality/move-city.ts`, o MESMO módulo que a action web
- * chama (`(shell)/profile/city-actions.ts`): destino diferente da atual, prazo
- * entre hoje e +180 dias, padrão de 30. Duplicar a regra aqui faria as duas
- * telas discordarem na primeira mudança de teto.
+ * A validação é `lib/locality/move-city.ts`: destino diferente da atual, prazo
+ * entre hoje e +180 dias, padrão de 30. Era o módulo que a action da tela web
+ * chamava; desde o RUN-172 esta rota é a única porta, e a regra fica no módulo
+ * para não virar duas versões do teto no dia em que a transferência crescer.
  *
  * A escrita é `declare_locality_transfer` pelo cliente da SESSÃO: a função é
  * SECURITY DEFINER e resolve o dono por `auth.uid()`, então quem muda é sempre
