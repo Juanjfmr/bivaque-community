@@ -88,6 +88,8 @@ export function BotaoDeIcone({
   compacto?: boolean
   preenchido?: boolean
 }) {
+  // O eixo FILL da fonte é o que desenha o "ligado"; `aria-pressed` já o diz.
+  const ligado = preenchido || props["aria-pressed"] === true || props["aria-pressed"] === "true"
   return (
     <button
       type={type}
@@ -97,7 +99,7 @@ export function BotaoDeIcone({
       data-tamanho={compacto ? "compacto" : undefined}
       {...props}
     >
-      <Icone nome={nome} preenchido={preenchido} />
+      <Icone nome={nome} preenchido={ligado} />
     </button>
   )
 }

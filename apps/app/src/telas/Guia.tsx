@@ -258,7 +258,11 @@ export function Guia() {
                         subtitulo={entrada.descricao}
                         fim={
                           entrada.salvo ? (
-                            <Icone nome="bookmark" className="size-5 shrink-0 text-(--primary)" />
+                            <Icone
+                              nome="bookmark"
+                              preenchido
+                              className="size-5 shrink-0 text-(--primary)"
+                            />
                           ) : undefined
                         }
                         onClick={() =>

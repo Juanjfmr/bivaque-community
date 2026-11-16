@@ -192,6 +192,7 @@ export function Verbete({ id }: { readonly id: string }) {
               <Botao
                 tom="tonal"
                 icone={verbete.entrada.salvo ? "bookmark" : "bookmark_border"}
+                aria-pressed={verbete.entrada.salvo}
                 disabled={ocupado}
                 onClick={() => void alternarSalvo()}
               >
