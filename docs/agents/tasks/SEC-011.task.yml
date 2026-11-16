@@ -1,0 +1,109 @@
+# Convite familiar: posse derivada da sessão no banco, limite atômico e saída do código morto.
+#
+# Autoridade: auditoria independente do security-auditor de 16/11 sobre a main 3c4dc55f
+# (.work/orq/relatorios/auditoria-r3-lote1.md, a ser arquivada em docs/agents/reviews no lote
+# de ratificação): LIBERA COM RESSALVAS, com quatro itens antes do lançamento — A2-1 (item 1 do
+# ADR-20261111 não implementado), A2-2 (sem Upstash o limite de envio não existe: fail-open),
+# A2-3 (corrida do teto de 5 convites ativos no banco) e A2-4 (Server Actions antigas ecoam
+# error.message e devolvem { code, token } ao navegador).
+#
+# Decisão do coordenador (16/11, por delegação, registrada no ADR-20261111 neste lote):
+# - A2-1: a rota deixa de criar o convite com o cliente service_role passando o id do titular.
+#   Ela chama, com o cliente da sessão (JWT do usuário), uma função `security definer` em
+#   public que deriva o titular de auth.uid() (molde 20260819021416_locality_transfer.sql:105-110,
+#   com raise unauthenticated e errcode 28000) e só então chama a lógica privada.
+#   `execute` só para `authenticated`. O parâmetro `p_inviter_user_id` some do caminho público.
+# - A2-2/A2-3: como a função passa a ser chamável direto pela Data API, o limite NÃO pode
+#   depender da rota: teto de envio por titular e teto de ativos conferidos DENTRO da função,
+#   sob `pg_advisory_xact_lock` por titular (molde lock_family_invite_code_attempts). O limitador
+#   Upstash na rota continua como primeira barreira, mas a rota responde 503 quando ele não está
+#   configurado (fail-closed, mesmo desenho de limitadorConfigurado() em entry/invite/route.ts).
+# - A2-4: /configuracoes/familia já é 307 para /app/voce (next.config.ts:156); a página e as
+#   Server Actions de lib/convite/familia-acoes.ts são código morto e saem, com seus testes.
+#   Reenvio e revogação pela porta do app usam a mesma derivação de posse.
+
+task_id: SEC-011
+
+objective: >
+  O convite familiar passa a ter a posse do titular decidida pelo banco a partir da sessão
+  (auth.uid()), nunca por um id passado pelo chamador; os limites de envio e de convites ativos
+  passam a ser atômicos e conferidos no banco, valendo mesmo para chamada direta pela Data API
+  e mesmo sem o limitador externo; e o código antigo que ecoava mensagem do Postgres e devolvia
+  código e token ao navegador deixa de existir.
+
+authority:
+  - docs/decisions/ADR-20261111-convite-familiar-pela-sessao.md (item 1 da decisão; emendado neste lote)
+  - .work/orq/relatorios/auditoria-r3-lote1.md (A2-1, A2-2, A2-3, A2-4), auditoria do security-auditor de 16/11
+  - cartões F10-R3-SESSION-DERIVED (P1) e F10-FAMILIA do quadro
+  - docs/decisions/ADR-20261024-front-react-spa.md §8 (saída das telas antigas)
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    private.create_family_invitation recebe p_inviter_user_id e não compara auth.uid()
+    (supabase/migrations/20260820000004_family_invite_delivery.sql:82-107); a contagem de
+    ativos e o insert não têm trava (mesmo arquivo); permitirEnvioDeConvite devolve true sem
+    UPSTASH_* (apps/web/lib/convite/familia.ts:122-133); familia-acoes.ts:83,141,158,164 ecoa
+    error.message e devolve { code, token }; next.config.ts:156 já redireciona a página que as usa.
+
+allowed_paths:
+  - supabase/migrations
+  - supabase/tests/family-invite-holder-only.sql
+  - supabase/tests/family-invite-session-derived.sql
+  - supabase/tests/family-invite-limits.sql
+  - supabase/tests/family-invite-wrappers.sql
+  - supabase/tests/family-invite-resend.sql
+  - supabase/database.generated.ts
+  - apps/web/app/api/app/voce/familia
+  - apps/web/lib/convite/familia.ts
+  - apps/web/lib/convite/familia-acoes.ts
+  - apps/web/lib/convite/hint.ts
+  - apps/web/app/(shell)/configuracoes/familia
+  - apps/web/app/(shell)/configuracoes/configuracoes-nav.tsx
+  - apps/web/app/(shell)/configuracoes/conta/page.tsx
+  - tests/unit/convite
+  - tests/unit/ui/configuracoes-subtitles.test.ts
+  - tests/unit/infra/lan-troca-redirect.test.ts
+  - tests/scope/f10-voce-porta.test.mjs
+  - tests/e2e/f10-voce-real.spec.ts
+  - tests/e2e/onboarding-holder-family.spec.ts
+  - tests/e2e/link-crawl.spec.ts
+  - docs/decisions/ADR-20261111-convite-familiar-pela-sessao.md
+  - docs/decisions/RATIFICACAO.md
+  - docs/agents/tasks/SEC-011.task.yml
+
+forbidden:
+  - mudar o fluxo de aceite do convite (family_invite_code_accept), a entrada (F01, congelada) ou o envio de e-mail/outbox além do necessário para o reenvio usar a posse derivada
+  - dar ao cliente do navegador acesso a tabela do schema private ou a qualquer função que receba o id do titular
+  - expor e-mail, digest, hash, token ou código em recusa, log ou resposta (as dez frases fixas do pgTAP continuam valendo)
+  - alterar apps/app (a tela do app já usa a porta /api/app/voce/familia e não muda)
+  - mexer em outras rotas de /configuracoes além das referências à página de família que sai
+  - push, merge, abrir PR, force-push; ler, criar ou imprimir arquivos de ambiente
+
+acceptance:
+  - "Migration nova cria a função pública de criação de convite que deriva o titular de auth.uid() (28000 sem sessão), confere titular verificado, o teto de convites ativos e um teto de envios por titular numa janela, tudo sob pg_advisory_xact_lock por titular; execute só para authenticated; revoke explícito de public/anon na mesma migration. O caminho público não aceita id de titular."
+  - "Reenvio e revogação seguem a mesma regra: o titular vem de auth.uid() no banco; convite alheio e inexistente respondem igual (sem oráculo)."
+  - "pgTAP novo prova: titular cria (positivo); outro membro autenticado não cria em nome de ninguém nem revoga/reenvia convite alheio; anon recebe 42501/28000; duas criações concorrentes não ultrapassam o teto de ativos (prova de serialização pela trava, no molde dos testes de trava existentes); o teto de envios por janela recusa com frase fixa. As dez frases fixas das recusas continuam provadas."
+  - "A rota /api/app/voce/familia (POST, DELETE e reenvio) usa o cliente da sessão para chamar as funções públicas, mapeia código de erro para HTTP sem repassar error.message, e responde 503 quando o limitador externo não está configurado; teste unitário negativo para o 503 e para a ausência de error.message na resposta."
+  - "apps/web/lib/convite/familia-acoes.ts e apps/web/app/(shell)/configuracoes/familia saem do repositório; referências (nav, conta, testes) ajustadas; o 307 de /configuracoes/familia para /app/voce continua provado (lan-troca-redirect e link-crawl)."
+  - "supabase/database.generated.ts reflete as funções novas e removidas (edição à mão permitida pelo processo documentado; o check de drift do CI é a prova)."
+  - "O ADR-20261111 ganha a emenda de 16/11 com a decisão acima (função pública com auth.uid(), limites no banco, fail-closed na rota, saída das actions) e a linha da RATIFICACAO.md passa a citar a auditoria de 16/11 e este lote."
+
+proof:
+  - npx pnpm@11.18.0 test
+  - npx pnpm@11.18.0 lint
+  - npx pnpm@11.18.0 --filter web build
+  - "node scripts/agents/prova-fila.mjs -- node scripts/agents/prova-sequencia.mjs e2e tests/e2e/f10-voce-real.spec.ts tests/e2e/onboarding-holder-family.spec.ts tests/e2e/link-crawl.spec.ts"
+  - "pgTAP (family-invite-*.sql e o novo) — só no CI, pelo job completo com a label ci:full"
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/SEC-011.task.yml
+
+risk: RLS, migration, schema private, convite e posse do titular
+risk_level: R3
+adr: docs/decisions/ADR-20261111-convite-familiar-pela-sessao.md
+
+reviewer_must_differ_from_executor: true
+retry_budget: 2
+on_budget_exhausted: HUMAN_DECISION
+
+closure:
+  requires_runtime_evidence: true
