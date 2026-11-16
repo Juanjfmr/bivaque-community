@@ -10,6 +10,7 @@ import {
   instanteDoCursor,
   inteiroNaFaixa,
   SELECT_ANUNCIO,
+  SELECT_IMOVEL,
 } from "./_comum"
 
 export const runtime = "nodejs"
@@ -21,12 +22,18 @@ const LIMITE_PADRAO = 20
 const LIMITE_MAXIMO = 50
 
 type Ordem = "recent" | "price_asc" | "price_desc"
+type Negocio = "rent" | "sale"
 
 interface Filtros {
   tipo: "item" | "property"
   ordem: Ordem
+  q: string | null
+  bairro: string | null
+  negocio: Negocio | null
   quartos: number | null
   valorMaxCents: number | null
+  precoMinCents: number | null
+  precoMaxCents: number | null
   tipoImovel: "apartment" | "house" | null
   limite: number
   cursor: { campo: string; id: string } | null
@@ -41,6 +48,24 @@ function valorMaxEmCentavos(bruto: string | null): number | null {
   return Number.isSafeInteger(reais) && reais > 0 ? reais * 100 : null
 }
 
+/**
+ * Texto de filtro (`q`, `bairro`): vazio é "sem filtro", acima do teto é pedido
+ * inválido. `undefined` é inválido — não se confunde com ausência de critério.
+ */
+function textoDeBusca(bruto: string | null, teto: number): string | null | undefined {
+  if (bruto === null) return null
+  const valor = bruto.trim()
+  if (valor === "") return null
+  return valor.length <= teto ? valor : undefined
+}
+
+/** Centavos já na unidade do banco (`preco_min`/`preco_max` do desapego). */
+function centavos(bruto: string | null): number | null {
+  if (bruto === null || !/^\d+$/.test(bruto)) return null
+  const valor = Number(bruto)
+  return Number.isSafeInteger(valor) ? valor : null
+}
+
 /** Lê e valida a query. `null` é "inválido" — a rota responde 400. */
 function lerFiltros(url: URL): Filtros | null {
   const params = url.searchParams
@@ -50,13 +75,35 @@ function lerFiltros(url: URL): Filtros | null {
   const brutoOrdem = params.get("ordem")
   const ordem: Ordem = brutoOrdem === null ? "recent" : (brutoOrdem as Ordem)
   if (ordem !== "recent" && ordem !== "price_asc" && ordem !== "price_desc") return null
+  // A web nunca ordenou Moradia por preço (`searchProperties` ordena por data) e
+  // o preço do imóvel está no satélite, em duas colunas: com `ordem` de preço a
+  // aba mentiria. O desapego tem `price_cents` e mantém a ordenação.
+  if (tipo === "property" && ordem !== "recent") return null
+
+  // A busca é a mesma das duas abas; o teto do bairro é o da coluna do alerta.
+  const q = textoDeBusca(params.get("q"), 120)
+  const bairro = textoDeBusca(params.get("bairro"), 80)
+  if (q === undefined || bairro === undefined) return null
 
   // Filtros de imóvel só existem com `tipo=property`; presentes com `tipo=item`
-  // é pedido contraditório, recusado antes de tocar o banco.
+  // é pedido contraditório, recusado antes de tocar o banco. A faixa de preço do
+  // desapego (`preco_min`/`preco_max`, em centavos) é o inverso: só com item.
   const temQuartos = params.get("quartos")
   const temValorMax = params.get("valor_max")
   const temTipoImovel = params.get("tipo_imovel")
-  if (tipo === "item" && (temQuartos !== null || temValorMax !== null || temTipoImovel !== null)) {
+  const temNegocio = params.get("tipo_negocio")
+  const temPrecoMin = params.get("preco_min")
+  const temPrecoMax = params.get("preco_max")
+  if (tipo === "item") {
+    if (
+      temQuartos !== null ||
+      temValorMax !== null ||
+      temTipoImovel !== null ||
+      temNegocio !== null
+    ) {
+      return null
+    }
+  } else if (temPrecoMin !== null || temPrecoMax !== null) {
     return null
   }
 
@@ -70,10 +117,21 @@ function lerFiltros(url: URL): Filtros | null {
     if (valorMaxCents === null) return null
   }
 
+  const precoMinCents = temPrecoMin === null ? null : centavos(temPrecoMin)
+  const precoMaxCents = temPrecoMax === null ? null : centavos(temPrecoMax)
+  if (precoMinCents === null && temPrecoMin !== null) return null
+  if (precoMaxCents === null && temPrecoMax !== null) return null
+
   let tipoImovel: "apartment" | "house" | null = null
   if (temTipoImovel !== null) {
     if (temTipoImovel === "apartamento") tipoImovel = "apartment"
     else if (temTipoImovel === "casa") tipoImovel = "house"
+    else return null
+  }
+
+  let negocio: Negocio | null = null
+  if (temNegocio !== null) {
+    if (temNegocio === "rent" || temNegocio === "sale") negocio = temNegocio
     else return null
   }
 
@@ -101,7 +159,20 @@ function lerFiltros(url: URL): Filtros | null {
     }
   }
 
-  return { tipo, ordem, quartos, valorMaxCents, tipoImovel, limite, cursor }
+  return {
+    tipo,
+    ordem,
+    q,
+    bairro,
+    negocio,
+    quartos,
+    valorMaxCents,
+    precoMinCents,
+    precoMaxCents,
+    tipoImovel,
+    limite,
+    cursor,
+  }
 }
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
@@ -119,19 +190,33 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
     let query = client
       .from("listings")
-      .select(SELECT_ANUNCIO)
+      // `!inner` no imóvel: o filtro do satélite tem que excluir o pai, não só
+      // o embed (o furo silencioso do F06 — ver SELECT_IMOVEL em _comum.ts).
+      .select(filtros.tipo === "property" ? SELECT_IMOVEL : SELECT_ANUNCIO)
       .eq("kind", filtros.tipo)
       .eq("status", "active")
       .eq("locality_id", cidade.id)
 
+    // Busca e bairro, como a web: `ilike` no título e no bairro — a descrição
+    // não entra (não é filtro da prancha).
+    if (filtros.q !== null) query = query.ilike("title", `%${filtros.q}%`)
+    if (filtros.bairro !== null) query = query.ilike("neighborhood", `%${filtros.bairro}%`)
     if (filtros.quartos !== null && filtros.quartos > 0) {
       query = query.gte("property_details.bedrooms", filtros.quartos)
     }
-    // shortcut: preço efetivo de imóvel está no satélite; quando a tela passar a filtrar no servidor, casar por precoEfetivo (coluna gerada exigiria migration)
-    if (filtros.valorMaxCents !== null) query = query.lte("price_cents", filtros.valorMaxCents)
     if (filtros.tipoImovel !== null) {
       query = query.eq("property_details.property_type", filtros.tipoImovel)
     }
+    if (filtros.negocio !== null) query = query.eq("property_details.deal", filtros.negocio)
+    // O preço do imóvel mora no satélite, na coluna do negócio — a mesma regra
+    // de `searchProperties` (lib/listings/queries.ts:143). Sem `deal` no pedido
+    // o teto vale para o aluguel. O desapego usa `price_cents`, que é dele.
+    if (filtros.valorMaxCents !== null) {
+      const coluna = filtros.negocio === "sale" ? "sale_price_cents" : "rent_cents"
+      query = query.lte(`property_details.${coluna}`, filtros.valorMaxCents)
+    }
+    if (filtros.precoMinCents !== null) query = query.gte("price_cents", filtros.precoMinCents)
+    if (filtros.precoMaxCents !== null) query = query.lte("price_cents", filtros.precoMaxCents)
 
     if (filtros.ordem === "recent") {
       query = query.order("created_at", { ascending: false }).order("id", { ascending: false })

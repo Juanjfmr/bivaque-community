@@ -10,8 +10,12 @@
  */
 
 export type FiltrosDaUrl = Readonly<{
-  /** Busca de texto (título/descrição); "" quando ausente. */
+  /** Busca de texto (título); "" quando ausente. */
   q: string
+  /** Bairro do link (alerta, busca antiga); "" quando ausente. */
+  bairro: string
+  /** Negócio do link: "rent" | "sale"; null é "qualquer". */
+  tipoNegocio: "rent" | "sale" | null
   /** Tipo de imóvel no vocabulário da tela: "todos" | "apartamento" | "casa". */
   tipoImovel: string
   /** Quartos mínimos; 0 é "qualquer". */
@@ -27,6 +31,8 @@ export type FiltrosDaUrl = Readonly<{
 
 export const FILTROS_DA_URL_PADRAO: FiltrosDaUrl = {
   q: "",
+  bairro: "",
+  tipoNegocio: null,
   tipoImovel: "todos",
   quartos: 0,
   valorMaxReais: null,
@@ -61,8 +67,11 @@ export function lerFiltrosDaUrl(busca: Record<string, unknown>): FiltrosDaUrl {
         : "todos"
 
   const pagina = inteiro(busca["pagina"])
+  const negocio = texto(busca["tipo_negocio"])?.toLowerCase()
   return {
     q: texto(busca["q"]) ?? "",
+    bairro: texto(busca["bairro"]) ?? "",
+    tipoNegocio: negocio === "rent" || negocio === "sale" ? negocio : null,
     tipoImovel,
     quartos: inteiro(busca["quartos"]) ?? 0,
     valorMaxReais: inteiro(busca["valor_max"]),
@@ -70,14 +79,6 @@ export function lerFiltrosDaUrl(busca: Record<string, unknown>): FiltrosDaUrl {
     precoMaxCents: inteiro(busca["preco_max"]),
     pagina: pagina === null || pagina < 1 ? 1 : pagina,
   }
-}
-
-/** Normaliza para comparar `q` sem depender de acento ou caixa. */
-export function semAcento(valor: string): string {
-  return valor
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
 }
 
 /**
@@ -90,11 +91,16 @@ export function filtrosParaUrl(
 ): Record<string, string | number | null> {
   const valores: Record<string, string | number | null> = {}
   if (filtros.q !== undefined) valores["q"] = filtros.q === "" ? null : filtros.q
+  if (filtros.bairro !== undefined)
+    valores["bairro"] = filtros.bairro === "" ? null : filtros.bairro
+  if (filtros.tipoNegocio !== undefined) valores["tipo_negocio"] = filtros.tipoNegocio ?? null
   if (filtros.tipoImovel !== undefined)
     valores["tipo"] = filtros.tipoImovel === "todos" ? null : filtros.tipoImovel
   if (filtros.quartos !== undefined)
     valores["quartos"] = filtros.quartos > 0 ? filtros.quartos : null
   if (filtros.valorMaxReais !== undefined) valores["valor_max"] = filtros.valorMaxReais ?? null
+  if (filtros.precoMinCents !== undefined) valores["preco_min"] = filtros.precoMinCents
+  if (filtros.precoMaxCents !== undefined) valores["preco_max"] = filtros.precoMaxCents
   if (filtros.pagina !== undefined) valores["pagina"] = filtros.pagina > 1 ? filtros.pagina : null
   return valores
 }

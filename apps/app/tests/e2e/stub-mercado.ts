@@ -238,12 +238,39 @@ export function aplicarStubMercado(page: Page): void {
       })
     }
 
+    // O servidor de verdade filtra a lista inteira (RUN-171); o stub obedece os
+    // mesmos parâmetros para a tela não passar por filtrada quando não foi.
+    const p = parsed.searchParams
+    const quartos = Number(p.get("quartos") ?? 0)
+    const teto = p.get("valor_max")
+    const piso = p.get("preco_min")
+    const topo = p.get("preco_max")
+    const tipoImovel = p.get("tipo_imovel")
+    const negocio = p.get("tipo_negocio")
+    const bairro = (p.get("bairro") ?? "").toLocaleLowerCase("pt-BR")
+    const termo = (p.get("q") ?? "").toLocaleLowerCase("pt-BR")
+    const naFaixa = (a: (typeof ANUNCIOS)[number]): boolean => {
+      if (quartos > 0 && (a.quartos === null || a.quartos < quartos)) return false
+      if (tipoImovel !== null && a.tipoImovel !== tipoImovel) return false
+      if (negocio !== null && a.deal !== negocio) return false
+      if (bairro !== "" && !(a.bairro ?? "").toLocaleLowerCase("pt-BR").includes(bairro))
+        return false
+      if (termo !== "" && !a.titulo.toLocaleLowerCase("pt-BR").includes(termo)) return false
+      if (teto !== null && (a.precoCents === null || a.precoCents > Number(teto) * 100))
+        return false
+      if (piso !== null && (a.precoCents === null || a.precoCents < Number(piso))) return false
+      if (topo !== null && (a.precoCents === null || a.precoCents > Number(topo))) return false
+      return true
+    }
+
     // A API entrega URLs prontas; os arquivos da demonstração são servidos pelo preview.
-    const resultados = listaPorTipo(tipo).map((anuncio) => ({
-      ...anuncio,
-      foto: anuncio.foto === null ? null : new URL(anuncio.foto, url).href,
-      salvo: salvos.has(anuncio.id),
-    }))
+    const resultados = listaPorTipo(tipo)
+      .filter(naFaixa)
+      .map((anuncio) => ({
+        ...anuncio,
+        foto: anuncio.foto === null ? null : new URL(anuncio.foto, url).href,
+        salvo: salvos.has(anuncio.id),
+      }))
     await route.fulfill({
       status: 200,
       contentType: "application/json",

@@ -19,6 +19,7 @@ import {
   lerMercado,
   marcarSalvoAnuncio,
 } from "@/lib/dados/mercado"
+import { moeda } from "@/lib/formato"
 import { iconeDeDado } from "@/lib/icones"
 import {
   useNavegacao,
@@ -33,32 +34,30 @@ import { acessoNegado, foiAbortada, sessaoVencida } from "@/src/eventos/formular
 import {
   atributosDoImovel,
   complementoDoImovel,
-  doTipo,
   eAluguel,
   ehImovel,
   precoEmReais,
   rotuloDaCapa,
-  totalMensal,
 } from "@/src/mercado/cartao"
 import { mensagemDaFalha } from "@/src/mercado/falha"
-import {
-  type FiltrosDaUrl,
-  lerFiltrosDaUrl,
-  mudarFiltroNaUrl,
-  semAcento,
-} from "@/src/mercado/filtros-url"
+import { type FiltrosDaUrl, lerFiltrosDaUrl, mudarFiltroNaUrl } from "@/src/mercado/filtros-url"
 import { Segmentos } from "@/src/pecas/segmentos"
 
 /**
  * O Mercado do app, do banco (LAN-F06, no molde do F05).
  *
  * O desenho é o mesmo de sempre: uma lista por aba (Desapegos, Imóveis,
- * Negócios), sub-abas navegando de verdade, contagem, salvar local e filtros no
- * cliente. Mudou de onde vem o dado — `lib/dados/mercado`, que fala
+ * Negócios), sub-abas navegando de verdade, contagem, salvar local e filtros.
+ * Mudou de onde vem o dado — `lib/dados/mercado`, que fala
  * com `/api/app/mercado` — e por isso a tela distingue carregando, vazio de
  * verdade, falha recuperável, sessão vencida e acesso negado. Banco fora não
  * vira "nada anunciado". Em Imóveis, "Anunciar imóvel" publica de verdade e
  * leva ao anúncio criado.
+ *
+ * Os filtros (RUN-171) são do SERVIDOR: a tela manda q/bairro/tipo/quarto/teto
+ * na query e desenha o que voltou. Filtrar a página carregada era o meio feito
+ * — o filtro valia só para os 20 primeiros. O que o servidor não filtra não tem
+ * controle aqui.
  */
 
 export type AbaDoMercado = "desapegos" | "imoveis"
@@ -97,7 +96,6 @@ export function ListaDeMercado({ inicial }: { inicial: AbaDoMercado }) {
   // filtra (o filtro numérico usa `filtros`, não o rótulo exibido).
   const minimoQuartos = String(filtros.quartos)
   const maximoMensal = filtros.valorMaxReais === null ? "todos" : String(filtros.valorMaxReais)
-  const [ordenacao, setOrdenacao] = useState("relevancia")
   const [modoLista, setModoLista] = useState(false)
   const { aberto: criandoImovel, aoMudarAberto: setCriandoImovel } =
     useSobreposicaoDaEntrada("rascunho-imovel")
@@ -106,14 +104,28 @@ export function ListaDeMercado({ inicial }: { inicial: AbaDoMercado }) {
 
   // A cidade é a da sessão, devolvida pela rota; `casca.cidade` segue no cabeçalho
   // enquanto a rota não traz nome (vazio honesto, nunca cidade inventada).
-  // A `pagina` da URL persegue o cursor do servidor até a página pedida.
-  // biome-ignore lint/correctness/useExhaustiveDependencies: rodada é o pedido de "tentar de novo"
+  // A `pagina` da URL persegue o cursor do servidor até a página pedida, e a
+  // chave abaixo refaz a busca do zero quando qualquer filtro muda: o cursor da
+  // página anterior não significa nada para outro critério.
+  const chaveDosFiltros = JSON.stringify(filtros)
+  // biome-ignore lint/correctness/useExhaustiveDependencies: rodada é o "tentar de novo"; chaveDosFiltros já resume os filtros
   useEffect(() => {
     const controle = new AbortController()
     setDados(null)
     setErro(null)
     void lerMercado(
-      { tipo: inicial === "imoveis" ? "property" : "item", pagina: filtros.pagina },
+      {
+        tipo: inicial === "imoveis" ? "property" : "item",
+        pagina: filtros.pagina,
+        q: filtros.q,
+        bairro: filtros.bairro,
+        ...(filtros.tipoNegocio === null ? {} : { tipoNegocio: filtros.tipoNegocio }),
+        quartos: filtros.quartos,
+        ...(filtros.valorMaxReais === null ? {} : { valorMax: filtros.valorMaxReais }),
+        tipoImovel: filtros.tipoImovel,
+        ...(filtros.precoMinCents === null ? {} : { precoMinCents: filtros.precoMinCents }),
+        ...(filtros.precoMaxCents === null ? {} : { precoMaxCents: filtros.precoMaxCents }),
+      },
       { signal: controle.signal },
     )
       .then((lidos) => {
@@ -124,58 +136,87 @@ export function ListaDeMercado({ inicial }: { inicial: AbaDoMercado }) {
         setErro(sessaoVencida(falha) ? "sessao" : acessoNegado(falha) ? "negado" : "falhou")
       })
     return () => controle.abort()
-  }, [inicial, rodada, filtros.pagina])
+  }, [inicial, rodada, chaveDosFiltros])
 
-  const itens = useMemo(() => {
-    if (dados === null) return []
-    const q = semAcento(filtros.q)
-    return dados.anuncios.filter((anuncio) => {
-      if (inicial === "imoveis" ? !ehImovel(anuncio) : ehImovel(anuncio)) return false
-      if (q !== "" && !semAcento(`${anuncio.titulo} ${anuncio.descricao ?? ""}`).includes(q))
-        return false
-      if (inicial !== "imoveis") {
-        if (
-          filtros.precoMinCents !== null &&
-          (anuncio.precoCents === null || anuncio.precoCents < filtros.precoMinCents)
-        )
-          return false
-        if (
-          filtros.precoMaxCents !== null &&
-          (anuncio.precoCents === null || anuncio.precoCents > filtros.precoMaxCents)
-        )
-          return false
-      }
-      return true
-    })
-  }, [dados, inicial, filtros])
-
-  const imoveisFiltrados = useMemo(() => {
-    if (inicial !== "imoveis") return itens
-    const filtrados = itens.filter((anuncio) => {
-      if (tipo !== "todos" && !doTipo(anuncio, tipo)) return false
-      if (filtros.quartos > 0 && (anuncio.quartos === null || anuncio.quartos < filtros.quartos))
-        return false
-      if (filtros.valorMaxReais !== null) {
-        const mensal = totalMensal(anuncio)
-        if (mensal === null || mensal > filtros.valorMaxReais) return false
-      }
-      return true
-    })
-    return filtrados.sort((a, b) => {
-      if (ordenacao === "relevancia") return 0
-      const precoA = totalMensal(a)
-      const precoB = totalMensal(b)
-      if (precoA === null && precoB === null) return 0
-      if (precoA === null) return 1
-      if (precoB === null) return -1
-      return ordenacao === "menor" ? precoA - precoB : precoB - precoA
-    })
-  }, [inicial, itens, tipo, filtros, ordenacao])
+  // O servidor já filtrou: a tela desenha o que voltou, sem recortar a página.
+  const itens = dados?.anuncios ?? []
 
   const limparFiltros = () => {
-    gravarFiltros({ q: "", tipoImovel: "todos", quartos: 0, valorMaxReais: null })
-    setOrdenacao("relevancia")
+    gravarFiltros({
+      q: "",
+      bairro: "",
+      tipoNegocio: null,
+      tipoImovel: "todos",
+      quartos: 0,
+      valorMaxReais: null,
+      precoMinCents: null,
+      precoMaxCents: null,
+    })
   }
+
+  /**
+   * Um chip por filtro ativo, inclusive os que vêm de link (bairro e negócio do
+   * alerta): o critério fica visível e sai com um toque. Filtro que filtra sem
+   * aparecer faz a lista parecer quebrada.
+   */
+  const chips: { chave: string; rotulo: string; remover: () => void }[] = []
+  if (filtros.q !== "") {
+    chips.push({
+      chave: "q",
+      rotulo: `Busca: ${filtros.q}`,
+      remover: () => gravarFiltros({ q: "" }),
+    })
+  }
+  if (filtros.bairro !== "") {
+    chips.push({
+      chave: "bairro",
+      rotulo: `Bairro: ${filtros.bairro}`,
+      remover: () => gravarFiltros({ bairro: "" }),
+    })
+  }
+  if (filtros.tipoNegocio !== null) {
+    chips.push({
+      chave: "tipo_negocio",
+      rotulo: filtros.tipoNegocio === "sale" ? "Venda" : "Aluguel",
+      remover: () => gravarFiltros({ tipoNegocio: null }),
+    })
+  }
+  if (filtros.tipoImovel !== "todos") {
+    chips.push({
+      chave: "tipo",
+      rotulo: filtros.tipoImovel === "casa" ? "Casa" : "Apartamento",
+      remover: () => gravarFiltros({ tipoImovel: "todos" }),
+    })
+  }
+  if (filtros.quartos > 0) {
+    chips.push({
+      chave: "quartos",
+      rotulo: `${filtros.quartos}+ quartos`,
+      remover: () => gravarFiltros({ quartos: 0 }),
+    })
+  }
+  if (filtros.valorMaxReais !== null) {
+    chips.push({
+      chave: "valor_max",
+      rotulo: `Até ${moeda(filtros.valorMaxReais)}`,
+      remover: () => gravarFiltros({ valorMaxReais: null }),
+    })
+  }
+  if (filtros.precoMinCents !== null) {
+    chips.push({
+      chave: "preco_min",
+      rotulo: `A partir de ${moeda(filtros.precoMinCents / 100)}`,
+      remover: () => gravarFiltros({ precoMinCents: null }),
+    })
+  }
+  if (filtros.precoMaxCents !== null) {
+    chips.push({
+      chave: "preco_max",
+      rotulo: `Até ${moeda(filtros.precoMaxCents / 100)}`,
+      remover: () => gravarFiltros({ precoMaxCents: null }),
+    })
+  }
+  const temFiltros = chips.length > 0
 
   /**
    * O marcador do cartão grava em `listing_saves` (LAN-F06). A tela vira antes,
@@ -254,19 +295,24 @@ export function ListaDeMercado({ inicial }: { inicial: AbaDoMercado }) {
         grupo="mercado"
       />
 
-      {filtros.q === "" ? null : (
-        <Botao
-          tom="texto"
-          icone="close"
-          data-acao="limpar-busca"
-          className="justify-self-start"
-          onClick={() => gravarFiltros({ q: "" })}
-        >
-          Limpar busca: {filtros.q}
-        </Botao>
+      {chips.length === 0 ? null : (
+        <div data-chips="filtros-mercado" className="flex flex-wrap gap-1">
+          {chips.map((chip) => (
+            <Botao
+              key={chip.chave}
+              tom="texto"
+              icone="close"
+              data-acao="remover-filtro"
+              data-filtro={chip.chave}
+              onClick={chip.remover}
+            >
+              {chip.rotulo}
+            </Botao>
+          ))}
+        </div>
       )}
 
-      {inicial === "imoveis" && !carregando && erro === null ? (
+      {inicial === "imoveis" && erro === null ? (
         <div data-filtros-imoveis="sim" className="mt-2 grid gap-2">
           <div className="flex items-center justify-between gap-2">
             <Botao
@@ -280,7 +326,7 @@ export function ListaDeMercado({ inicial }: { inicial: AbaDoMercado }) {
               Filtros
             </Botao>
             <span className="text-xs text-(--on-surface-variant)">
-              {imoveisFiltrados.length} {imoveisFiltrados.length === 1 ? "imóvel" : "imóveis"}
+              {itens.length} {itens.length === 1 ? "imóvel" : "imóveis"}
             </span>
           </div>
           {filtrosAbertos ? (
@@ -312,8 +358,12 @@ export function ListaDeMercado({ inicial }: { inicial: AbaDoMercado }) {
               />
               <div className="col-span-2">
                 <Selecao
-                  id="total-mensal-imovel"
-                  rotulo="Total por mês até (aluguel + condomínio informado)"
+                  id="valor-imovel"
+                  // O teto do servidor é a coluna do negócio (aluguel ou venda),
+                  // não aluguel+condomínio: a copy promete o que ele faz.
+                  rotulo={
+                    filtros.tipoNegocio === "sale" ? "Preço de venda até" : "Aluguel até, por mês"
+                  }
                   valor={maximoMensal}
                   aoMudar={(v) =>
                     gravarFiltros({ valorMaxReais: v === "todos" ? null : Number(v) })
@@ -337,20 +387,6 @@ export function ListaDeMercado({ inicial }: { inicial: AbaDoMercado }) {
             </div>
           ) : null}
           <div className="flex flex-wrap items-end justify-between gap-2">
-            <div className="min-w-43 flex-1 max-w-xs">
-              <Selecao
-                id="ordenar-imoveis"
-                className="bv-ordenar-imoveis"
-                rotulo="Ordenar por"
-                valor={ordenacao}
-                aoMudar={setOrdenacao}
-                opcoes={[
-                  { valor: "relevancia", titulo: "Mais relevantes" },
-                  { valor: "menor", titulo: "Menor total mensal" },
-                  { valor: "maior", titulo: "Maior total mensal" },
-                ]}
-              />
-            </div>
             <fieldset aria-label="Modo de visualização" className="flex gap-1">
               <button
                 type="button"
@@ -391,22 +427,24 @@ export function ListaDeMercado({ inicial }: { inicial: AbaDoMercado }) {
         <EstadoDeErro aoTentar={() => setRodada((atual) => atual + 1)} />
       ) : carregando ? (
         <EsqueletoDeLista linhas={4} />
-      ) : (inicial === "imoveis" ? imoveisFiltrados.length === 0 : itens.length === 0) ? (
+      ) : itens.length === 0 ? (
         <EstadoVazio
+          // O vazio é do servidor: sem filtro é "nada anunciado"; com filtro é
+          // "nada com esse critério" — e o caminho de saída é tirar o filtro.
           titulo={
-            inicial === "imoveis" && itens.length > 0
-              ? "Nenhum imóvel corresponde aos filtros"
+            temFiltros
+              ? inicial === "imoveis"
+                ? "Nenhum imóvel corresponde aos filtros"
+                : "Nenhum anúncio corresponde aos filtros"
               : "Nada anunciado nesta seção"
           }
           texto={
-            inicial === "imoveis" && itens.length > 0
-              ? "Amplie os critérios para ver outros imóveis desta cidade."
+            temFiltros
+              ? "Tire um filtro para ver mais anúncios desta cidade."
               : "Quando alguém publicar, o anúncio aparece aqui para toda a cidade."
           }
           icone="sell"
-          {...(inicial === "imoveis" && itens.length > 0
-            ? { acao: { rotulo: "Limpar filtros", aoAcionar: limparFiltros } }
-            : {})}
+          {...(temFiltros ? { acao: { rotulo: "Limpar filtros", aoAcionar: limparFiltros } } : {})}
         />
       ) : (
         <>
@@ -419,7 +457,7 @@ export function ListaDeMercado({ inicial }: { inicial: AbaDoMercado }) {
             formato="cartoes"
             className={inicial === "imoveis" && modoLista ? "bv-lista-imoveis" : ""}
           >
-            {(inicial === "imoveis" ? imoveisFiltrados : itens).map((anuncio) => (
+            {itens.map((anuncio) => (
               <CartaoDeFoto
                 key={anuncio.id}
                 anuncio={{

@@ -159,7 +159,7 @@ describe("GET /api/app/imoveis/alertas", () => {
           quartos: 2,
           ativo: true,
           criadoEm: DATA,
-          busca: { valor_max: "2500", quartos: "2" },
+          busca: { bairro: "Centro", tipo_negocio: "rent", valor_max: 2500, quartos: 2 },
         },
       ],
     })

@@ -63,11 +63,19 @@ describe("alerta de Moradia — apresentação", () => {
 })
 
 describe("link do alerta para a busca do app", () => {
-  it("só gera as chaves que a busca do app lê", () => {
-    expect(alertSearchParams(alert)).toEqual({ valor_max: "2500", quartos: "2" })
-    // Bairro e tipo de negócio são critério do alerta, mas a busca do app não os
-    // lê — a perda está declarada no RELATORIO do RUN-169, não escondida aqui.
-    expect(alertSearchHref(alert)).toBe("/app/imoveis?valor_max=2500&quartos=2")
+  it("leva bairro, negócio, teto e quartos — as chaves que o Mercado filtra", () => {
+    // RUN-171: bairro e tipo_negocio fecharam a perda declarada no RUN-169.
+    // RUN-171-fix: números saem números — o roteador entre aspas strings que
+    // parecem número, e a URL crua da web (?quartos=2) é o contrato do link.
+    expect(alertSearchParams(alert)).toEqual({
+      bairro: "Águas Claras",
+      tipo_negocio: "rent",
+      valor_max: 2500,
+      quartos: 2,
+    })
+    expect(alertSearchHref(alert)).toBe(
+      "/app/imoveis?bairro=%C3%81guas+Claras&tipo_negocio=rent&valor_max=2500&quartos=2",
+    )
   })
 
   it("sem critério, o link leva à busca limpa", () => {
@@ -83,7 +91,9 @@ describe("link do alerta para a busca do app", () => {
   })
 
   it("teto com centavos não vira filtro arredondado", () => {
-    expect(alertSearchParams({ ...alert, maxValueCents: 250050 })).toEqual({ quartos: "2" })
+    expect(
+      alertSearchParams({ ...alert, neighborhood: null, deal: null, maxValueCents: 250050 }),
+    ).toEqual({ quartos: 2 })
   })
 })
 
@@ -192,7 +202,7 @@ describe("linha do banco e corpo da rota", () => {
       quartos: 2,
       ativo: true,
       criadoEm: alert.createdAt,
-      busca: { valor_max: "2500", quartos: "2" },
+      busca: { bairro: "Águas Claras", tipo_negocio: "rent", valor_max: 2500, quartos: 2 },
     })
   })
 })

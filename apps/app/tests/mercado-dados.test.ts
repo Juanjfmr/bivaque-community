@@ -102,6 +102,27 @@ describe("lista do Mercado", () => {
     expect(chamada(comItem).caminho).toBe("/api/app/mercado?tipo=item")
   })
 
+  it("leva busca, bairro, negócio e a faixa de preço de cada aba", async () => {
+    const imovel = responder({ anuncios: [], proximo: null, cidade: null })
+    await lerMercado({
+      tipo: "property",
+      q: "casa",
+      bairro: "Centro",
+      tipoNegocio: "sale",
+      valorMax: 500_000,
+    })
+    expect(chamada(imovel).caminho).toBe(
+      "/api/app/mercado?tipo=property&q=casa&bairro=Centro&valor_max=500000&tipo_negocio=sale",
+    )
+
+    // A faixa do desapego é em centavos e só vai na aba de item.
+    const desapego = responder({ anuncios: [], proximo: null, cidade: null })
+    await lerMercado({ tipo: "item", q: "mesa", precoMinCents: 10_000, precoMaxCents: 99_900 })
+    expect(chamada(desapego).caminho).toBe(
+      "/api/app/mercado?tipo=item&q=mesa&preco_min=10000&preco_max=99900",
+    )
+  })
+
   it("mantém os nulos do servidor sem virar zero", async () => {
     responder({
       anuncios: [{ ...ANUNCIO, tipo: "item", descricao: null, foto: null, quartos: null }],

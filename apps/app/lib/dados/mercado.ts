@@ -53,8 +53,17 @@ export type AnuncioDetalhado = Readonly<
 export type FiltrosDoMercado = Readonly<{
   tipo: AnuncioTipo
   ordem?: "recent" | "price_asc" | "price_desc"
+  /** Busca no título, no servidor. */
+  q?: string
+  /** Bairro (`ilike`), inclusive o que vem do link de alerta. */
+  bairro?: string
+  /** Aluguel ou venda — só o imóvel tem o satélite que responde por ele. */
+  tipoNegocio?: "rent" | "sale"
   quartos?: number
   valorMax?: number
+  /** Faixa do desapego, em centavos: é o preço de `price_cents`. */
+  precoMinCents?: number
+  precoMaxCents?: number
   tipoImovel?: string
   depois?: string
   /** Página (1-based) que a URL pediu: a porta persegue o cursor até ela. */
@@ -155,6 +164,8 @@ async function lerPaginaMercado(
 ): Promise<ListaDoMercado> {
   const busca = new URLSearchParams({ tipo: exigirTipo(filtros.tipo) })
   if (filtros.ordem !== undefined) busca.set("ordem", filtros.ordem)
+  if (filtros.q !== undefined && filtros.q !== "") busca.set("q", filtros.q)
+  if (filtros.bairro !== undefined && filtros.bairro !== "") busca.set("bairro", filtros.bairro)
   if (filtros.tipo === "property") {
     if (filtros.quartos !== undefined && filtros.quartos > 0) {
       busca.set("quartos", String(filtros.quartos))
@@ -162,12 +173,22 @@ async function lerPaginaMercado(
     if (filtros.valorMax !== undefined && filtros.valorMax > 0) {
       busca.set("valor_max", String(filtros.valorMax))
     }
+    if (filtros.tipoNegocio !== undefined) busca.set("tipo_negocio", filtros.tipoNegocio)
     if (
       filtros.tipoImovel !== undefined &&
       filtros.tipoImovel !== "" &&
       filtros.tipoImovel !== "todos"
     ) {
       busca.set("tipo_imovel", filtros.tipoImovel)
+    }
+  } else {
+    // A faixa do desapego é `price_cents` em centavos; com imóvel a rota
+    // recusaria a chave, então ela só vai na aba certa.
+    if (filtros.precoMinCents !== undefined && filtros.precoMinCents > 0) {
+      busca.set("preco_min", String(filtros.precoMinCents))
+    }
+    if (filtros.precoMaxCents !== undefined && filtros.precoMaxCents > 0) {
+      busca.set("preco_max", String(filtros.precoMaxCents))
     }
   }
   if (filtros.depois !== undefined) busca.set("depois", filtros.depois)

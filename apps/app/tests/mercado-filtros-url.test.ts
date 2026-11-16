@@ -6,7 +6,6 @@ import {
   lerFiltrosDaUrl,
   mesclarFiltrosNaUrl,
   mudarFiltroNaUrl,
-  semAcento,
 } from "@/src/mercado/filtros-url"
 
 /**
@@ -30,6 +29,8 @@ describe("lerFiltrosDaUrl", () => {
     })
     expect(filtros).toEqual({
       q: "vista pro rio",
+      bairro: "",
+      tipoNegocio: null,
       tipoImovel: "apartamento",
       quartos: 2,
       valorMaxReais: 4000,
@@ -37,6 +38,22 @@ describe("lerFiltrosDaUrl", () => {
       precoMaxCents: null,
       pagina: 3,
     })
+  })
+
+  it("lê o link do alerta: bairro e negócio entram no filtro (RUN-171)", () => {
+    const filtros = lerFiltrosDaUrl({
+      bairro: " Águas Claras ",
+      tipo_negocio: "sale",
+      valor_max: "2500",
+      quartos: "2",
+    })
+    expect(filtros).toMatchObject({
+      bairro: "Águas Claras",
+      tipoNegocio: "sale",
+      valorMaxReais: 2500,
+      quartos: 2,
+    })
+    expect(lerFiltrosDaUrl({ tipo_negocio: "doacao" }).tipoNegocio).toBeNull()
   })
 
   it("lê a faixa de preço do desapego em centavos, como a web antiga gravava", () => {
@@ -82,6 +99,19 @@ describe("escrever filtros na URL", () => {
     ).toEqual({ q: "mesa", tipo: "casa", quartos: 2, valor_max: 4000, pagina: 2 })
   })
 
+  it("bairro, negócio e faixa de centavos também voltam ao endereço", () => {
+    expect(filtrosParaUrl({ bairro: "Centro", tipoNegocio: "rent", precoMinCents: 10000 })).toEqual(
+      { bairro: "Centro", tipo_negocio: "rent", preco_min: 10000 },
+    )
+    // Remover o filtro apaga a chave em vez de gravar `null` literal.
+    expect(
+      mesclarFiltrosNaUrl(
+        { bairro: "Centro", tipo_negocio: "rent", preco_min: "10000" },
+        filtrosParaUrl({ bairro: "", tipoNegocio: null, precoMinCents: null }),
+      ),
+    ).toEqual({})
+  })
+
   it("merge grava o novo e apaga o que voltou ao padrão, preservando o resto", () => {
     const atual = { q: "mesa", tipo: "apartamento", preco_min: "10000" }
     expect(mesclarFiltrosNaUrl(atual, filtrosParaUrl({ tipoImovel: "todos", quartos: 3 }))).toEqual(
@@ -124,12 +154,5 @@ describe("mudarFiltroNaUrl", () => {
 
   it("voltar ao padrão remove a chave em vez de deixar null literal", () => {
     expect(mudarFiltroNaUrl({ q: "mesa", pagina: 2 }, { q: "" })).toEqual({})
-  })
-})
-
-describe("semAcento", () => {
-  it("casa busca sem depender de acento ou caixa", () => {
-    expect(semAcento("Notebook 14 Polgadas")).toContain("polgadas")
-    expect(semAcento("CASA")).toBe("casa")
   })
 })

@@ -63,7 +63,7 @@ test("R72 P0: Perguntar revisa e abre detalhe da resposta simulada da API", asyn
   await expect(page.getByText("Alguém indica uma escola para crianças pequenas?")).toBeVisible()
 })
 
-test("R72 P0: Imóveis filtra, ordena e alterna entre lista e grade", async ({ page }) => {
+test("R72 P0: Imóveis filtra e alterna entre lista e grade", async ({ page }) => {
   aplicarStubMercado(page)
   await page.goto("/app/imoveis")
   await expect(page.locator('[data-tela="imoveis"] [data-cartao="anuncio"]')).toHaveCount(2)
@@ -71,9 +71,12 @@ test("R72 P0: Imóveis filtra, ordena e alterna entre lista e grade", async ({ p
   await page.locator("#quartos-imovel").click()
   await page.getByRole("option", { name: "3 ou mais" }).click()
   await expect(page.locator('[data-tela="imoveis"] [data-cartao="anuncio"]')).toHaveCount(1)
+  // O filtro é do servidor (RUN-171): ordenar por preço de imóvel não existe —
+  // a web nunca ordenou Moradia por preço, e o preço mora em duas colunas.
+  await expect(page.getByLabel("Ordenar por")).toHaveCount(0)
   await page.locator("#quartos-imovel").click()
   await page.getByRole("option", { name: "Qualquer" }).click()
-  await page.locator("#total-mensal-imovel").click()
+  await page.locator("#valor-imovel").click()
   await page.getByRole("option", { name: "R$ 3.000" }).click()
   await expect(page.locator('[data-tela="imoveis"] [data-cartao="anuncio"]')).toHaveCount(1)
   await page.locator('[data-acao="modo-lista"]').click()
