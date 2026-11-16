@@ -1,0 +1,73 @@
+# RUN-173 — SALVAR-GLYPH: o icone de salvo precisa MUDAR de verdade nos cartoes.
+#
+# Fechamento do RUN-168 declarou (e a revisao confirmou): o subset self-hosted
+# apps/app/public/fonts/material-symbols-outlined.woff2 desenha `bookmark`
+# IDENTICO a `bookmark_border` — o estado salvo nao muda visualmente nos cartoes
+# de Mercado/Inicio (label e aria-pressed mudam; a arte nao). No sheet do
+# anuncio o texto do botao troca, mas a regua do lancamento pede feedback
+# VISIVEL no fluxo inteiro (criterio 1). Corrigir = gerar o subset certo, com o
+# glifo preenchido distinto do contorno, e PINAR pixel a pixel. Sem isso, o
+# item de checklist de salvar-visivel do LAN-F06 fica pela metade.
+
+task_id: RUN-173
+
+objective: >
+  Fazer o estado salvo ser visivelmente distinto (bookmark preenchido vs
+  contorno) em Anuncio/Mercado/Inicio/Salvos, regenerando o subset da Material
+  Symbols com a dupla correta, e pinar a diferenca com prova de pixels no
+  navegador local.
+
+authority:
+  - docs/LANCAMENTO.md criterios 1 e 5 (:38-48) — feedback visual do fluxo
+  - Card SALVAR-GLYPH (board.json) + prova do RUN-168 (defeito declarado)
+  - apps/app/AGENTS.md (Material Symbols self-hosted, apenas os glifos usados, decorativos com aria-hidden)
+  - ADR-20261020-identidade-visual-e-tema-escuro.md (a familia de icones)
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    apps/app/public/fonts/material-symbols-outlined.woff2 estatico (o unco
+    material-symbols no repo; nenhum script de geracao por grep em scripts/);
+    RUN-168 RELATORIO: 'o subset da fonte desenha bookmark identico a
+    bookmark_border, entao o estado salvo nao muda visualmente em
+    Mercado/Inicio/Anuncio — corrigir exige regenerar public/fonts'.
+
+allowed_paths:
+  - docs/agents/tasks/SALVAR-GLYPH.task.yml
+  - apps/app/public/fonts
+  - apps/app/src
+  - apps/app/tests
+  - tools/fonts
+  - scripts/visual
+  - .visual/salvar-glyph
+
+forbidden:
+  - trocar a familia de icones, adicionar dependencias de producao, ou mover o bookmark para SVG desenhado a mao sem decisao registrada (a regua e a familia Material Symbols self-hosted; se o subset estiver irrecuperavel, o caminho e gerar de novo a partir da fonte oficial, nao improvisar outra)
+  - tocar rotas de API, banco, ou a logica de salvar do RUN-168
+  - baixar e commitar a familia COMPLETA da Material Symbols (o repo so carrega os glifos usados — manter o principio; se nao houver como gerar o subset offline com o que existe no host, reporte BLOCKED com o comando exato de regeneracao em vez de engordar o repo)
+  - usar skip/fixme novo ou afrouxar assercao; prova de pixels nao pode virar espera-de-label
+  - push, merge ou force-push; ler/criar/editar arquivos de ambiente; imprimir credenciais
+  - tocar em .work/main ou em outra worktree
+
+acceptance:
+  - "Prova do defeito PRIMEIRO: um spec do app (Playwright local, vite) renderiza o mesmo cartao com salvo=false e salvo=true e mede pixels do icone — hoje falha (identicos), depois passa (distintos). Use a infra de captura/comparacao que o repo ja tem (scripts de visual existem; nao inventar framework novo)."
+  - "Gerar a correcao: descobrir a procedencia do subset atual (git log --follow da woff2; docs da familia; scripts de recon) e regenerar apps/app/public/fonts/material-symbols-outlined.woff2 mantendo TODOS os glifos hoje usados e corrigindo `bookmark` para o preenchido distinto de `bookmark_border` (codepoints reais do Material Symbols). Se a geracao exigir ferramenta ausente no host (fonttools, por exemplo), o passo pode rodar com tooling local ja disponivel (python/PowerShell) — mas o ARTEFATO final commitado e apenas a woff2, sem dependencia nova no package.json."
+  - "Ninguem ve quadrado: checar no mesmo spec que a troca nao quebra outros icones do subset (renderizar uma amostra dos glifos usados — o gallery de previa do app ja lista Material Symbols; screenshot da folha de previas antes/depois no RELATORIO)."
+  - "Estados escuros: o teste roda nos dois temas (a fonte e a mesma; o contraste e do CSS — o spec deve cobrir claro E escuro com o bookmark preenchido visivel)."
+  - "Passam: --filter @bivaque/app test; typecheck; gate --fast; o spec novo roda de verdade no navegador local nas 3 larguras minimas e FECHA VERDE; capture.mjs nao precisa mudar se nenhuma rota nova existir."
+
+proof:
+  - npx pnpm@11.18.0 --filter @bivaque/app test
+  - npx pnpm@11.18.0 --filter @bivaque/app test:e2e
+  - npx pnpm@11.18.0 gate --fast
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/SALVAR-GLYPH.task.yml
+
+risk: geracao offline do subset (a unica woff2 no repo e estatica; se nao houver origem local, BLOCKED com comando exato de regeneracao)
+risk_level: R1
+
+reviewer_must_differ_from_executor: true
+retry_budget: 2
+on_budget_exhausted: HUMAN_DECISION
+
+closure:
+  requires_runtime_evidence: true
