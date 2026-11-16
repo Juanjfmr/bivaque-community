@@ -8,6 +8,14 @@ on:
     types: [opened, synchronize, reopened, labeled]
   workflow_dispatch:
 
+# Cada push novo no mesmo PR cancela o run anterior: só a última árvore do PR
+# interessa, e run obsoleto vira vermelho que ninguém olha. `cancel-in-progress` só
+# é verdadeiro em pull_request — run de push na main nunca é cancelado, porque cada
+# árvore da main precisa da própria prova (ADR-20261114, emenda de 16/11).
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 permissions:
   contents: read
 
@@ -101,7 +109,24 @@ jobs:
       # ECR still refuses, take the same tag from Docker Hub and retag it under
       # the name the CLI asks for, so `supabase start` finds it locally.
       # Tags are the defaults of the pinned CLI (2.107.0), from `supabase services`.
+      #
+      # O pull da stack custa ~6 min por run completo (diagnóstico de 16/11, P4). O
+      # cache é por CONJUNTO de tags: um `docker load` devolve os mesmos bytes, e um
+      # tag novo muda a chave e nada mais. O pre-pull com backoff abaixo continua
+      # sendo o caminho do cache miss.
+      - name: Cache Supabase stack images
+        id: supabase-images
+        uses: actions/cache@v6
+        with:
+          path: /tmp/supabase-images.tar
+          key: supabase-images-2.107.0-postgres-17.6.1.136-gotrue-v2.190.0-postgrest-v14.13-storage-api-v1.60.20-postgres-meta-v0.96.6-studio-2026.06.15-sha-a412298-kong-2.8.1-imgproxy-v3.8.0-mailpit-v1.22.3
+
+      - name: Load Supabase stack images from cache
+        if: steps.supabase-images.outputs.cache-hit == 'true'
+        run: docker load -i /tmp/supabase-images.tar
+
       - name: Pre-pull Supabase stack images
+        if: steps.supabase-images.outputs.cache-hit != 'true'
         run: |
           pull() {
             local ecr="public.ecr.aws/supabase/$1" hub="$2"
@@ -120,6 +145,20 @@ jobs:
           pull kong:2.8.1 kong:2.8.1
           pull imgproxy:v3.8.0 darthsim/imgproxy:v3.8.0
           pull mailpit:v1.22.3 axllent/mailpit:v1.22.3
+          # Grava o conjunto para o cache do próximo run. Imagem que faltou não
+          # derruba o passo (o pull acima já avisou); o cache simplesmente não é
+          # gravado e o run seguinte baixa de novo.
+          docker save -o /tmp/supabase-images.tar \
+            public.ecr.aws/supabase/postgres:17.6.1.136 \
+            public.ecr.aws/supabase/gotrue:v2.190.0 \
+            public.ecr.aws/supabase/postgrest:v14.13 \
+            public.ecr.aws/supabase/storage-api:v1.60.20 \
+            public.ecr.aws/supabase/postgres-meta:v0.96.6 \
+            public.ecr.aws/supabase/studio:2026.06.15-sha-a412298 \
+            public.ecr.aws/supabase/kong:2.8.1 \
+            public.ecr.aws/supabase/imgproxy:v3.8.0 \
+            public.ecr.aws/supabase/mailpit:v1.22.3 \
+            || echo "::warning::nem todas as imagens foram salvas; o proximo run baixa de novo"
 
       - name: Start local Supabase
         run: pnpm exec supabase start
@@ -204,7 +243,18 @@ jobs:
       - name: Schema lint
         run: pnpm db:lint
 
+      - name: Cache Playwright browsers
+        id: playwright-browsers
+        uses: actions/cache@v6
+        with:
+          # Versão pinada em package.json (1.51.1) + lockfile: bump de pin muda a chave.
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-1.51.1-${{ hashFiles('pnpm-lock.yaml') }}
+
+      # Fallback do cache miss. No cache hit não roda: a imagem ubuntu-24.04 do
+      # runner já traz as bibliotecas de sistema que o --with-deps instalaria.
       - name: Install Playwright Chromium
+        if: steps.playwright-browsers.outputs.cache-hit != 'true'
         run: pnpm exec playwright install --with-deps chromium
 
       - name: Reset local database (with seed)
@@ -267,7 +317,18 @@ jobs:
       # viewport, banco independente, serial dentro de cada um). Ver o contrato em
       # tests/scope/local-command-surface.test.mjs.
       - name: Root E2E tests (parallel, excluding @stateful)
-        run: pnpm test:e2e
+        env:
+          # O `--reporter` do CLI substitui o do config: aqui vai o mesmo par do
+          # playwright.config.ts (html em playwright-report/, list no log) mais o
+          # json que o passo seguinte lê para anotar flake.
+          PLAYWRIGHT_JSON_OUTPUT_FILE: ${{ github.workspace }}/ci-e2e-report.json
+        run: pnpm test:e2e --reporter=html,list,json
+
+      # Flake absorvido pelo retry vira aviso no check em vez de sumir no artefato.
+      # Roda mesmo em falha, e nunca muda o código de saída do job.
+      - name: Annotate flaky E2E tests
+        if: always()
+        run: node scripts/ci/anotar-flakes.mjs ci-e2e-report.json
 
       # Testemunha do flaky (CI-E2E-UPSTREAM-INSTAVEL): em falha, guarda os logs da
       # stack local. O tail de 200 linhas do Kong só pegava access log e o evento 502
@@ -373,7 +434,19 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Cache Supabase stack images
+        id: supabase-images
+        uses: actions/cache@v6
+        with:
+          path: /tmp/supabase-images.tar
+          key: supabase-images-2.107.0-postgres-17.6.1.136-gotrue-v2.190.0-postgrest-v14.13-storage-api-v1.60.20-postgres-meta-v0.96.6-studio-2026.06.15-sha-a412298-kong-2.8.1-imgproxy-v3.8.0-mailpit-v1.22.3
+
+      - name: Load Supabase stack images from cache
+        if: steps.supabase-images.outputs.cache-hit == 'true'
+        run: docker load -i /tmp/supabase-images.tar
+
       - name: Pre-pull Supabase stack images
+        if: steps.supabase-images.outputs.cache-hit != 'true'
         run: |
           pull() {
             local ecr="public.ecr.aws/supabase/$1" hub="$2"
@@ -392,6 +465,17 @@ jobs:
           pull kong:2.8.1 kong:2.8.1
           pull imgproxy:v3.8.0 darthsim/imgproxy:v3.8.0
           pull mailpit:v1.22.3 axllent/mailpit:v1.22.3
+          docker save -o /tmp/supabase-images.tar \
+            public.ecr.aws/supabase/postgres:17.6.1.136 \
+            public.ecr.aws/supabase/gotrue:v2.190.0 \
+            public.ecr.aws/supabase/postgrest:v14.13 \
+            public.ecr.aws/supabase/storage-api:v1.60.20 \
+            public.ecr.aws/supabase/postgres-meta:v0.96.6 \
+            public.ecr.aws/supabase/studio:2026.06.15-sha-a412298 \
+            public.ecr.aws/supabase/kong:2.8.1 \
+            public.ecr.aws/supabase/imgproxy:v3.8.0 \
+            public.ecr.aws/supabase/mailpit:v1.22.3 \
+            || echo "::warning::nem todas as imagens foram salvas; o proximo run baixa de novo"
 
       - name: Start local Supabase
         run: pnpm exec supabase start
@@ -414,7 +498,18 @@ jobs:
       - name: Build web app
         run: pnpm build
 
+      - name: Cache Playwright browsers
+        id: playwright-browsers
+        uses: actions/cache@v6
+        with:
+          # Versão pinada em package.json (1.51.1) + lockfile: bump de pin muda a chave.
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-1.51.1-${{ hashFiles('pnpm-lock.yaml') }}
+
+      # Fallback do cache miss. No cache hit não roda: a imagem ubuntu-24.04 do
+      # runner já traz as bibliotecas de sistema que o --with-deps instalaria.
       - name: Install Playwright Chromium
+        if: steps.playwright-browsers.outputs.cache-hit != 'true'
         run: pnpm exec playwright install --with-deps chromium
 
       - name: Reset local database (with seed)
@@ -451,7 +546,14 @@ jobs:
 
       # Serial dentro do viewport (workers:1 no script); banco independente por runner.
       - name: Root E2E tests (stateful, ${{ matrix.project }})
-        run: pnpm test:e2e:stateful --project=${{ matrix.project }} --trace=retain-on-failure
+        env:
+          # Mesmo par do playwright.config.ts + json para o passo de anotação.
+          PLAYWRIGHT_JSON_OUTPUT_FILE: ${{ github.workspace }}/ci-e2e-report-${{ matrix.project }}.json
+        run: pnpm test:e2e:stateful --project=${{ matrix.project }} --trace=retain-on-failure --reporter=html,list,json
+
+      - name: Annotate flaky E2E tests
+        if: always()
+        run: node scripts/ci/anotar-flakes.mjs ci-e2e-report-${{ matrix.project }}.json
 
       - name: Collect local Supabase diagnostics
         if: failure()

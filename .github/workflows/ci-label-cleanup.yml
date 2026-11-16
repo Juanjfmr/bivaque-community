@@ -1,0 +1,37 @@
+name: CI label cleanup
+
+# A label `ci:full` dispara o CI completo em TODO push seguinte do PR (ADR-20261114,
+# decisão 4). Sem esta limpeza ela fica grudada no PR depois do merge e o próximo PR
+# aberto a partir daquele branch herda o custo — foram 40 completos repetidos em 24
+# branches na janela do diagnóstico de 16/11 (P3). Aqui a label sai sozinha quando o
+# PR é mergeado.
+on:
+  pull_request:
+    types: [closed]
+
+permissions:
+  contents: read
+  pull-requests: write # mínimo: remover label de um PR
+
+jobs:
+  remove-ci-full:
+    name: Remove ci:full after merge
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    # PR de fork recebe GITHUB_TOKEN só de leitura: a remoção falharia e viraria
+    # vermelho na main. Nesses PRs a label não é do nosso fluxo; o job não roda.
+    if: >-
+      github.event.pull_request.merged == true &&
+      github.event.pull_request.head.repo.full_name == github.repository
+    steps:
+      - name: Remove the ci:full label
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          PR: ${{ github.event.pull_request.number }}
+        # Falhar aqui não conserta nada e sujaria a main de vermelho: 404 é "já não
+        # estava lá" e 403 é permissão. Os dois viram aviso, nunca erro.
+        run: |
+          if ! gh api -X DELETE "repos/$GH_REPO/issues/$PR/labels/ci%3Afull" --silent; then
+            echo "::warning::label ci:full não foi removida do PR #$PR (ausente ou sem permissão); remova à mão"
+          fi

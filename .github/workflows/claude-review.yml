@@ -23,6 +23,13 @@ jobs:
     name: Claude Code review (DeepSeek V4.1 Flash)
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    # DESLIGADO por padrão desde 16/11: rodou em todo PR e falhou em 93 de 93 runs
+    # desde 14/11 (falso vermelho em 100% dos PRs, diagnóstico de CI §P2). Só executa
+    # quando a chave existe e está ligada (variável de repositório
+    # CLAUDE_REVIEW_ENABLED=true) ou quando o PR pede explicitamente a label
+    # review:claude. RELIGAR É ATO DO DONO: criar a variável com a chave válida e pôr
+    # a label quando quiser a revisão; sem isso o check aparece pulado, em verde.
+    if: vars.CLAUDE_REVIEW_ENABLED == 'true' || contains(github.event.pull_request.labels.*.name, 'review:claude')
 
     steps:
       - name: Checkout
