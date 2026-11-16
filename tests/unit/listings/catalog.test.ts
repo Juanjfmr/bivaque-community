@@ -172,10 +172,15 @@ describe("validateNewListing", () => {
     if (!result.ok) expect(result.errors.price).toBeDefined()
   })
 
-  it("rejects an item without a neighborhood", () => {
-    const result = validateNewListing({ ...validDraft, neighborhood: "" })
-    expect(result.ok).toBe(false)
-    if (!result.ok) expect(result.errors.neighborhood).toBeDefined()
+  // RUN-175 / ADR-20261022 §2: o desapego pode aparecer só com a cidade.
+  it("accepts an item without a neighborhood, and still refuses an address there", () => {
+    const semBairro = validateNewListing({ ...validDraft, neighborhood: "" })
+    expect(semBairro.ok).toBe(true)
+    if (semBairro.ok) expect(semBairro.value.neighborhood).toBe("")
+
+    const comEndereco = validateNewListing({ ...validDraft, neighborhood: "Rua das Flores, 100" })
+    expect(comEndereco.ok).toBe(false)
+    if (!comEndereco.ok) expect(comEndereco.errors.neighborhood).toBeDefined()
   })
 })
 

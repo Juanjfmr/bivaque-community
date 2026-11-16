@@ -212,11 +212,32 @@ export function aplicarStubMercado(page: Page): void {
   // O que esta página salvou. Fica na memória do stub: recarregar a tela lê o
   // mesmo estado, como no banco.
   const salvos = new Set<string>()
+  // O imóvel recém-publicado (RUN-175): o detalhe dele mostra a escolha real de
+  // quem anunciou, como a rota de verdade faz.
+  let criado:
+    | {
+        titulo: string
+        bairro: string | null
+        endereco: string | null
+        localizacaoPublica: "exata" | "aproximada"
+      }
+    | undefined
 
   // ── PUBLICAR: POST /api/app/mercado ───────────────────────────────
   // Devolve o anúncio que a lista já serve, para a tela abrir o detalhe dele.
   page.route(/\/api\/app\/mercado$/, async (route) => {
     if (route.request().method() !== "POST") return route.continue()
+    const corpo = (route.request().postDataJSON() ?? {}) as Record<string, unknown>
+    if (corpo["kind"] === "property") {
+      const escolha = corpo["localizacaoPublica"] === "exata" ? "exata" : "aproximada"
+      criado = {
+        titulo: typeof corpo["title"] === "string" ? corpo["title"] : "Imóvel",
+        bairro: typeof corpo["neighborhood"] === "string" ? corpo["neighborhood"] : null,
+        endereco:
+          escolha === "exata" && typeof corpo["address"] === "string" ? corpo["address"] : null,
+        localizacaoPublica: escolha,
+      }
+    }
     await route.fulfill({
       status: 201,
       contentType: "application/json",
@@ -309,6 +330,43 @@ export function aplicarStubMercado(page: Page): void {
     const ultimoParte = partes[partes.length - 1] ?? ""
     // Remove query string se houver
     const id = ultimoParte.split("?")[0]
+
+    // O imóvel que esta sessão acabou de publicar: o detalhe mostra a escolha
+    // que o formulário mandou (RUN-175), inclusive o endereço do local exato.
+    if (id === "p-1" && criado !== undefined) {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          anuncio: {
+            id: "p-1",
+            tipo: "property",
+            titulo: criado.titulo,
+            descricao: "Publicado agora",
+            precoCents: 320_000,
+            deal: "rent",
+            bairro: criado.bairro,
+            cidade: "Manaus",
+            status: "active",
+            condicao: null,
+            categoria: null,
+            quartos: 2,
+            tipoImovel: "apartment",
+            areaM2: 62,
+            condoFeeCents: null,
+            foto: null,
+            criadoEm: "2026-11-16T12:00:00Z",
+            localizacaoPublica: criado.localizacaoPublica,
+            endereco: criado.endereco,
+            donoNome: "Maria Silva",
+            fotos: [],
+            meu: false,
+            salvo: false,
+          },
+        }),
+      })
+      return
+    }
 
     if (!id || !anuncioPorId(id)) {
       return route.fulfill({

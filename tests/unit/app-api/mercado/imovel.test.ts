@@ -18,14 +18,38 @@ vi.mock("web/lib/storage/listing-photo", () => ({
     }
   },
 }))
-// `create_property_listing` é security invoker: a rota nunca precisa do
-// service_role, e este mock torna a dependência uma falha alta.
-const { clienteDeServico } = vi.hoisted(() => ({
-  clienteDeServico: vi.fn(() => {
-    throw new Error("a rota do imóvel não deve abrir o cliente privilegiado")
-  }),
-}))
-vi.mock("web/lib/supabase/server", () => ({ createServerClient: clienteDeServico }))
+// `create_property_listing` é security invoker: o dono vem de auth.uid(). O
+// cliente de serviço é aberto só para o cache `cep_geocodes`, que nenhuma sessão
+// lê nem escreve — o mesmo recorte da rota de localização do perfil.
+const servico = vi.hoisted(() => {
+  const tabelas: string[] = []
+  const cache: { coordenada: { latitude: number; longitude: number } | null } = { coordenada: null }
+  const cliente = {
+    from: vi.fn((tabela: string) => {
+      tabelas.push(tabela)
+      let escrevendo = false
+      const query: Record<string, unknown> = {
+        select: () => query,
+        eq: () => query,
+        maybeSingle: async () => ({
+          data: cache.coordenada === null ? null : { ...cache.coordenada, source: "brasilapi" },
+          error: null,
+        }),
+        upsert: async () => {
+          escrevendo = true
+          return { error: null }
+        },
+      }
+      if (tabela !== "cep_geocodes" && escrevendo) throw new Error("fora do cache")
+      return query
+    }),
+  }
+  return { cliente, tabelas, cache }
+})
+vi.mock("web/lib/supabase/server", () => ({ createServerClient: () => servico.cliente }))
+
+const geocodificador = vi.hoisted(() => ({ geocodificarCep: vi.fn() }))
+vi.mock("web/lib/geo/geocodificador", () => geocodificador)
 
 import { PATCH as editar } from "web/app/api/app/mercado/[id]/_editar"
 import { POST as anunciar } from "web/app/api/app/mercado/route"
@@ -54,6 +78,9 @@ const IMOVEL = {
   areaM2: "62",
   description: "Próximo ao comércio.",
   neighborhood: "Centro",
+  address: "Rua A, 100",
+  cep: "69000-000",
+  localizacaoPublica: "exata",
 }
 
 /** A linha que a edição relê, no formato do SELECT da rota. */
@@ -61,6 +88,7 @@ const LINHA = {
   id: ID,
   kind: "property",
   owner_user_id: USER,
+  locality_id: CIDADE,
   address: "Rua A, 100",
   status: "active",
   title: "Apartamento 2 quartos no Centro",
@@ -89,6 +117,9 @@ type Opcoes = {
   erroDetalhe?: { code: string; message: string } | null
   erroRpc?: { code?: string; message: string } | null
   idCriado?: unknown
+  /** O CEP gravado que `get_listing_location` devolve ao dono. */
+  cepGravado?: string | null
+  escolhaGravada?: string | null
 }
 
 function cliente(opcoes: Opcoes = {}) {
@@ -142,6 +173,14 @@ function cliente(opcoes: Opcoes = {}) {
   })
   const rpc = vi.fn(async (nome: string, argumentos: Record<string, unknown>) => {
     rpcCalls.push({ nome, argumentos })
+    if (nome === "get_listing_location") {
+      const cep = opcoes.cepGravado === undefined ? "69000000" : opcoes.cepGravado
+      const publica = opcoes.escolhaGravada === undefined ? "exata" : opcoes.escolhaGravada
+      return {
+        data: cep === null ? [] : [{ listing_id: ID, cep, localizacao_publica: publica }],
+        error: null,
+      }
+    }
     if (opcoes.erroRpc) return { data: null, error: opcoes.erroRpc }
     return { data: "idCriado" in opcoes ? opcoes.idCriado : ID, error: null }
   })
@@ -177,6 +216,15 @@ async function json(resposta: Response) {
 
 beforeEach(() => {
   vi.clearAllMocks()
+  servico.tabelas.length = 0
+  // Por padrão o CEP já está no cache: nenhum teste fala com o provedor sem
+  // querer, e o limitador fica intocado.
+  servico.cache.coordenada = { latitude: -3.10194, longitude: -60.025 }
+  geocodificador.geocodificarCep.mockResolvedValue({
+    estado: "encontrado",
+    coordenada: { latitude: -3.10194, longitude: -60.025, fonte: "brasilapi" },
+    endereco: { cidade: "Manaus", bairro: "Flores" },
+  })
   resolver.mockResolvedValue({
     estado: "recusada",
     sessao: { estado: "recusada", motivo: "sem-credencial" },
@@ -190,7 +238,9 @@ describe("POST de imóvel", () => {
     expect(resposta.status).toBe(201)
     expect(await json(resposta)).toEqual({ anuncio: { id: ID } })
     expect(mock.escritas).toHaveLength(0)
-    expect(clienteDeServico).not.toHaveBeenCalled()
+    // Só o cache de CEP fala com o cliente de serviço; a escrita do anúncio é
+    // da sessão, sob RLS.
+    expect(servico.tabelas).toEqual(["cep_geocodes"])
     expect(mock.rpcCalls).toHaveLength(1)
     const [chamada] = mock.rpcCalls
     expect(chamada?.nome).toBe("create_property_listing")
@@ -199,7 +249,11 @@ describe("POST de imóvel", () => {
       title: "Apartamento 2 quartos no Centro",
       description: "Próximo ao comércio.",
       neighborhood: "Centro",
-      address: null,
+      address: "Rua A, 100",
+      cep: "69000000",
+      latitude: -3.10194,
+      longitude: -60.025,
+      localizacao_publica: "exata",
       locality_id: CIDADE,
       community_id: null,
     })
@@ -344,6 +398,10 @@ describe("PATCH de imóvel", () => {
         description: "Próximo ao comércio.",
         neighborhood: "Centro",
         address: "Rua A, 100",
+        cep: "69000000",
+        latitude: -3.10194,
+        longitude: -60.025,
+        localizacao_publica: "exata",
       },
     })
     expect(mock.escritas[1]).toEqual({
@@ -475,9 +533,9 @@ describe("PATCH de imóvel", () => {
     expect(mock.from).not.toHaveBeenCalled()
   })
 
-  it("não abre o cliente privilegiado em nenhum caminho", async () => {
+  it("não abre o cliente de serviço fora do cache de CEP em nenhum caminho", async () => {
     cliente({ linha: LINHA })
     await editar(patch(IMOVEL), context)
-    expect(clienteDeServico).not.toHaveBeenCalled()
+    expect(servico.tabelas).toEqual(["cep_geocodes"])
   })
 })

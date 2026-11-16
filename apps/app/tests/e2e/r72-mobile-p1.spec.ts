@@ -157,6 +157,9 @@ test("P1: Anunciar imóvel publica de verdade e abre o anúncio devolvido", asyn
   // O texto da demonstração saiu: a folha publica.
   await expect(folha.getByText("nada é publicado")).toHaveCount(0)
   await folha.locator("#imovel-titulo").fill("Apartamento reformado com três quartos")
+  // RUN-175: o imóvel nasce do CEP. Sem ele a folha não publica (a régua do
+  // servidor espelhada na tela); a escolha fica no padrão aproximado.
+  await folha.locator("#imovel-cep").fill("69000-000")
   await folha.locator("#imovel-bairro").fill("Flores")
   await folha.locator("#imovel-preco").fill("3200")
   await folha.locator("#imovel-area").fill("98")
@@ -176,7 +179,7 @@ test("P1: Anunciar imóvel publica de verdade e abre o anúncio devolvido", asyn
   await folha.locator('[data-acao="publicar-imovel"]').click()
   const enviado = await publicacao
   // O corpo fala o vocabulário do formulário de Moradia: a mesma validação do
-  // servidor, com o preço no lado do negócio.
+  // servidor, com o preço no lado do negócio e o CEP em dígitos.
   expect(enviado.postDataJSON()).toMatchObject({
     kind: "property",
     title: "Apartamento reformado com três quartos",
@@ -189,11 +192,16 @@ test("P1: Anunciar imóvel publica de verdade e abre o anúncio devolvido", asyn
     areaM2: "98",
     description: "Condomínio informado pelo proprietário",
     neighborhood: "Flores",
+    cep: "69000000",
+    localizacaoPublica: "aproximada",
   })
   await expect(page).toHaveURL(/\/app\/anuncio\/p-1$/)
+  // O detalhe abre o anúncio que a folha acabou de publicar (o stub devolve o
+  // criado, como o servidor), com a escolha aproximada à mostra.
   await expect(
-    page.getByRole("heading", { level: 1, name: "Apartamento 3 quartos Ponta Negra" }),
+    page.getByRole("heading", { level: 1, name: "Apartamento reformado com três quartos" }),
   ).toBeVisible()
+  await expect(page.getByText("Local aproximado, sem o endereço exato.")).toBeVisible()
   await expect(folha).toHaveCount(0)
 })
 
@@ -206,7 +214,15 @@ test("P1: a folha de imóvel recusa o que o servidor recusaria, sem sair da tela
   const folha = page.locator('[data-fluxo="rascunho-imovel"]')
   await folha.locator("#imovel-titulo").fill("Apartamento reformado")
   await folha.locator("#imovel-bairro").fill("Flores")
-  // Centavos voltam 400 do servidor: a régua do app avisa antes de sair.
+  await folha.locator("#imovel-preco").fill("3200")
+  // A primeira recusa é a do CEP: o imóvel não existe sem ele (RUN-175).
+  await folha.locator('[data-acao="publicar-imovel"]').click()
+  await expect(folha.getByRole("alert")).toContainText("Informe o CEP do imóvel.")
+  await expect(page).toHaveURL(/\/app\/imoveis$/)
+
+  // Com o CEP, a recusa seguinte é a mesma de antes: centavos voltam 400 do
+  // servidor e a régua do app avisa antes de sair.
+  await folha.locator("#imovel-cep").fill("69000-000")
   await folha.locator("#imovel-preco").fill("3200.5")
   await folha.locator('[data-acao="publicar-imovel"]').click()
   await expect(folha.getByRole("alert")).toContainText("sem centavos")

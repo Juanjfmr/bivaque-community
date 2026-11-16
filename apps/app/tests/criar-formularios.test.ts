@@ -57,9 +57,22 @@ describe("desapego", () => {
     expect(errosDoDesapego({ ...valido, titulo: "" }).titulo).toBe(
       "O título precisa de pelo menos 3 caracteres.",
     )
-    expect(errosDoDesapego({ ...valido, bairro: " " }).bairro).toBe("Informe o bairro.")
     expect(errosDoDesapego({ ...valido, preco: "" }).preco).toBe("Informe o preço do item.")
     expect(errosDoDesapego({ ...valido, descricao: "" }).descricao).toBe("Descreva o item.")
+  })
+
+  // RUN-175 / ADR-20261022 §2: o desapego pode aparecer só com a cidade.
+  it("bairro é opcional: vazio não é erro", () => {
+    expect(errosDoDesapego({ ...valido, bairro: "" }).bairro).toBeUndefined()
+    expect(errosDoDesapego({ ...valido, bairro: "x".repeat(81) }).bairro).toBe(
+      "O bairro passa de 80 caracteres.",
+    )
+  })
+
+  it("CEP opcional: preenchido, exige oito dígitos", () => {
+    expect(errosDoDesapego({ ...valido, cep: "" }).cep).toBeUndefined()
+    expect(errosDoDesapego({ ...valido, cep: "69000-000" }).cep).toBeUndefined()
+    expect(errosDoDesapego({ ...valido, cep: "6900" }).cep).toBe("Informe um CEP com oito dígitos.")
   })
 
   it("o preço aceita ponto ou vírgula com centavos e recusa o resto", () => {
@@ -90,6 +103,7 @@ describe("imóvel", () => {
   const valido = {
     titulo: "Apartamento 2 quartos no Centro",
     bairro: "Centro",
+    cep: "69000-000",
     valor: "1800",
     quartos: "2",
     vagas: "1",
@@ -102,6 +116,27 @@ describe("imóvel", () => {
     expect(errosDoImovel({ ...valido, quartos: "", vagas: "", area: "", descricao: "" })).toEqual(
       {},
     )
+  })
+
+  // RUN-175: o imóvel nasce do CEP; sem ele não há geocodificação nem anúncio.
+  it("o CEP é obrigatório e precisa ter oito dígitos", () => {
+    expect(errosDoImovel({ ...valido, cep: "" }).cep).toBe("Informe o CEP do imóvel.")
+    expect(errosDoImovel({ ...valido, cep: "6900" }).cep).toBe("Informe o CEP do imóvel.")
+    expect(errosDoImovel({ ...valido, cep: "69000000" }).cep).toBeUndefined()
+  })
+
+  // O local exato é o endereço publicado: sem endereço, a escolha não existe.
+  it("local exato exige endereço; aproximado não", () => {
+    expect(errosDoImovel({ ...valido, localizacaoPublica: "exata" }).localizacaoPublica).toBe(
+      "Para o local exato, informe o endereço.",
+    )
+    expect(
+      errosDoImovel({ ...valido, localizacaoPublica: "exata", endereco: "Rua A, 100" })
+        .localizacaoPublica,
+    ).toBeUndefined()
+    expect(
+      errosDoImovel({ ...valido, localizacaoPublica: "aproximada" }).localizacaoPublica,
+    ).toBeUndefined()
   })
 
   it("cada obrigatório vazio volta no próprio campo", () => {

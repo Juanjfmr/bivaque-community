@@ -19,9 +19,16 @@ export type CoordenadaDoCep = Readonly<{
   fonte: FonteDaCoordenada
 }>
 
+/**
+ * Cidade e bairro que a fonte devolve junto do CEP (RUN-175: o anúncio deriva o
+ * bairro daqui). São texto da fonte, não validados: quem casa com
+ * `neighborhoods` é o módulo da localização do anúncio.
+ */
+export type EnderecoDoCep = Readonly<{ cidade: string | null; bairro: string | null }>
+
 export type ResultadoDaGeocodificacao =
-  | Readonly<{ estado: "encontrado"; coordenada: CoordenadaDoCep }>
-  | Readonly<{ estado: "sem-coordenada" }>
+  | Readonly<{ estado: "encontrado"; coordenada: CoordenadaDoCep; endereco: EnderecoDoCep }>
+  | Readonly<{ estado: "sem-coordenada"; endereco: EnderecoDoCep }>
   | Readonly<{ estado: "nao-encontrado" }>
   | Readonly<{ estado: "indisponivel" }>
 
@@ -35,9 +42,14 @@ type Opcoes = Readonly<{
 }>
 
 type Tentativa =
-  | Readonly<{ estado: "encontrado"; latitude: number; longitude: number }>
+  | Readonly<{
+      estado: "encontrado"
+      latitude: number
+      longitude: number
+      endereco: EnderecoDoCep
+    }>
   /** A fonte respondeu que conhece o CEP, mas sem posição utilizável. */
-  | Readonly<{ estado: "conhecido" }>
+  | Readonly<{ estado: "conhecido"; endereco: EnderecoDoCep }>
   | Readonly<{ estado: "nao-encontrado" }>
   | Readonly<{ estado: "falhou" }>
 
@@ -48,6 +60,13 @@ const URL_DO_GOOGLE = "https://maps.googleapis.com/maps/api/geocode/json"
 function registro(valor: unknown): Record<string, unknown> | null {
   if (valor === null || typeof valor !== "object" || Array.isArray(valor)) return null
   return valor as Record<string, unknown>
+}
+
+/** Texto aparado da fonte, ou `null` quando vazio/ausente. */
+function textoDaFonte(valor: unknown): string | null {
+  if (typeof valor !== "string") return null
+  const aparado = valor.trim()
+  return aparado === "" ? null : aparado
 }
 
 function numero(valor: unknown): number | null {
@@ -78,6 +97,9 @@ async function tentarBrasilApi(
       headers: { accept: "application/json" },
       signal: AbortSignal.timeout(tempoLimiteMs),
       cache: "no-store",
+      // A URL é montada por concatenação: um 3xx para outro host não pode ser
+      // seguido (SSRF defensivo). O CEP já vem validado por `geocodificarCep`.
+      redirect: "error",
     })
     if (resposta.status === 404) return { estado: "nao-encontrado" }
     if (!resposta.ok) return { estado: "falhou" }
@@ -90,7 +112,15 @@ async function tentarBrasilApi(
     const local = registro(corpo?.["location"])
     const coordenadas = registro(local?.["coordinates"])
     const coordenada = coordenadaValida(coordenadas?.["latitude"], coordenadas?.["longitude"])
-    return coordenada === null ? { estado: "conhecido" } : { estado: "encontrado", ...coordenada }
+    // A BrasilAPI v2 devolve cidade e bairro junto do CEP; é deles que o anúncio
+    // deriva o bairro (RUN-175).
+    const endereco = {
+      cidade: textoDaFonte(corpo?.["city"]),
+      bairro: textoDaFonte(corpo?.["neighborhood"]),
+    }
+    return coordenada === null
+      ? { estado: "conhecido", endereco }
+      : { estado: "encontrado", ...coordenada, endereco }
   } catch {
     return { estado: "falhou" }
   }
@@ -109,6 +139,7 @@ async function tentarGoogle(
     const resposta = await buscar(url.toString(), {
       signal: AbortSignal.timeout(tempoLimiteMs),
       cache: "no-store",
+      redirect: "error",
     })
     if (!resposta.ok) return { estado: "falhou" }
     const corpo = registro((await resposta.json()) as unknown)
@@ -120,7 +151,12 @@ async function tentarGoogle(
     if (!Array.isArray(resultados) || resultados.length === 0) return { estado: "falhou" }
     const local = registro(registro(registro(resultados[0])?.["geometry"])?.["location"])
     const coordenada = coordenadaValida(local?.["lat"], local?.["lng"])
-    return coordenada === null ? { estado: "conhecido" } : { estado: "encontrado", ...coordenada }
+    // A reserva só serve para a POSIÇÃO: cidade e bairro vêm da BrasilAPI
+    // (RUN-175), então aqui eles chegam vazios.
+    const endereco = { cidade: null, bairro: null }
+    return coordenada === null
+      ? { estado: "conhecido", endereco }
+      : { estado: "encontrado", ...coordenada, endereco }
   } catch {
     return { estado: "falhou" }
   }
@@ -138,6 +174,10 @@ export async function geocodificarCep(
   cep: string,
   opcoes: Opcoes = {},
 ): Promise<ResultadoDaGeocodificacao> {
+  // A URL da BrasilAPI é montada por concatenação, então a entrada é validada
+  // aqui também: oito dígitos ou nada sai deste processo (os chamadores já
+  // normalizam e respondem 400 antes — isto é a segunda barreira, RUN-175 R3).
+  if (!/^\d{8}$/.test(cep)) return { estado: "nao-encontrado" }
   const buscar = opcoes.buscar ?? fetch
   const tempoLimiteMs = opcoes.tempoLimiteMs ?? TEMPO_LIMITE_PADRAO
   const chaveGoogle = opcoes.chaveGoogle ?? process.env["GOOGLE_MAPS_API_KEY"] ?? ""
@@ -151,6 +191,7 @@ export async function geocodificarCep(
         longitude: brasil.longitude,
         fonte: "brasilapi",
       },
+      endereco: brasil.endereco,
     }
   }
 
@@ -161,14 +202,17 @@ export async function geocodificarCep(
       return {
         estado: "encontrado",
         coordenada: { latitude: google.latitude, longitude: google.longitude, fonte: "google" },
+        // A cidade e o bairro só a BrasilAPI conta; a reserva dá a posição.
+        endereco: brasil.estado === "conhecido" ? brasil.endereco : google.endereco,
       }
     }
   }
 
   // Uma fonte que conhece o CEP vale mais que outra que falhou: dá para
   // guardar a localização sem posição em vez de recusar um CEP verdadeiro.
-  if (brasil.estado === "conhecido" || google?.estado === "conhecido") {
-    return { estado: "sem-coordenada" }
+  if (brasil.estado === "conhecido") return { estado: "sem-coordenada", endereco: brasil.endereco }
+  if (google?.estado === "conhecido") {
+    return { estado: "sem-coordenada", endereco: google.endereco }
   }
   if (brasil.estado === "falhou" || google?.estado === "falhou") {
     return { estado: "indisponivel" }

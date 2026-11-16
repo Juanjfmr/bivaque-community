@@ -43,6 +43,7 @@ export type ImovelGravado = Readonly<{
   description: string | null
   neighborhood: string | null
   address: string | null
+  locality_id: string
   property_details: Readonly<{
     deal: string
     property_type: string

@@ -24,6 +24,13 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     const result = await query
     if (result.error) throw result.error
     const rows = (result.data ?? []) as unknown as AnuncioBruto[]
+    // O CEP não é legível pela sessão (grant por coluna): o dono recebe o dele
+    // pela função própria, para o formulário de edição poder mostrá-lo.
+    const locais = await client.rpc("get_listing_location")
+    if (locais.error) throw locais.error
+    const cepPorId = new Map(
+      (locais.data ?? []).map((linha) => [linha.listing_id, linha.cep] as const),
+    )
     const capas = rows.map(
       (row) => [...(row.listing_photos ?? [])].sort((a, b) => a.position - b.position)[0]?.path,
     )
@@ -39,6 +46,8 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         anuncios: rows.map((row, index) => ({
           ...baseDoAnuncio(row),
           foto: assinadas.get(capas[index] ?? "") ?? null,
+          // Só o dono chega aqui: o CEP é para ele, nunca para terceiro.
+          cep: cepPorId.get(row.id) ?? null,
         })),
         proximo: rows.length === 20 ? (rows.at(-1)?.id ?? null) : null,
         cidade: null,

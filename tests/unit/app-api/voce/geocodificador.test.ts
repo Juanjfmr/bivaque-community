@@ -35,11 +35,38 @@ describe("geocodificarCep", () => {
     expect(resultado).toEqual({
       estado: "encontrado",
       coordenada: { latitude: -3.119, longitude: -60.0217, fonte: "brasilapi" },
+      endereco: { cidade: null, bairro: null },
     })
     expect(buscar).toHaveBeenCalledTimes(1)
     expect(vi.mocked(buscar).mock.calls[0]?.[0]).toBe(
       "https://brasilapi.com.br/api/cep/v2/69000000",
     )
+  })
+
+  it("CEP que não é de oito dígitos nunca chega a montar URL (guarda interna)", async () => {
+    const buscar = buscarCom(() => resposta({}, 200))
+
+    const resultado = await geocodificarCep("../../etc/passwd", { buscar, chaveGoogle: "x" })
+
+    expect(resultado).toEqual({ estado: "nao-encontrado" })
+    expect(buscar).not.toHaveBeenCalled()
+  })
+
+  it("as duas fontes são chamadas sem seguir redirecionamento (SSRF defensivo)", async () => {
+    const buscar = buscarCom((url) =>
+      ehBrasilApi(url)
+        ? resposta({}, 503)
+        : resposta({
+            status: "OK",
+            results: [{ geometry: { location: { lat: -3.1, lng: -60 } } }],
+          }),
+    )
+
+    await geocodificarCep(CEP, { buscar, chaveGoogle: "chave-de-teste" })
+
+    const chamadas = vi.mocked(buscar).mock.calls
+    expect(chamadas).toHaveLength(2)
+    for (const [, init] of chamadas) expect(init?.redirect).toBe("error")
   })
 
   it("CEP desconhecido na BrasilAPI é nao-encontrado, sem gastar a reserva", async () => {
@@ -66,6 +93,7 @@ describe("geocodificarCep", () => {
     expect(resultado).toEqual({
       estado: "encontrado",
       coordenada: { latitude: -3.1, longitude: -60, fonte: "google" },
+      endereco: { cidade: null, bairro: null },
     })
     const chamadas = vi.mocked(buscar).mock.calls
     expect(chamadas).toHaveLength(2)
@@ -133,7 +161,10 @@ describe("geocodificarCep", () => {
 
     const resultado = await geocodificarCep(CEP, { buscar, chaveGoogle: "" })
 
-    expect(resultado).toEqual({ estado: "sem-coordenada" })
+    expect(resultado).toEqual({
+      estado: "sem-coordenada",
+      endereco: { cidade: null, bairro: null },
+    })
   })
 
   it("coordenada fora da faixa é recusada e não vira posição inventada", async () => {
@@ -141,7 +172,10 @@ describe("geocodificarCep", () => {
 
     const resultado = await geocodificarCep(CEP, { buscar, chaveGoogle: "" })
 
-    expect(resultado).toEqual({ estado: "sem-coordenada" })
+    expect(resultado).toEqual({
+      estado: "sem-coordenada",
+      endereco: { cidade: null, bairro: null },
+    })
   })
 
   it("200 com corpo vazio na BrasilAPI não é prova de que o CEP existe", async () => {
@@ -178,13 +212,17 @@ describe("geocodificarCep", () => {
   it("BrasilAPI conhece o CEP sem coordenada: sem-coordenada, não CEP inexistente", async () => {
     const buscar = buscarCom((url) =>
       ehBrasilApi(url)
-        ? resposta({ cep: CEP, city: "Manaus" })
+        ? resposta({ cep: CEP, city: "Manaus", neighborhood: "Flores" })
         : resposta({ status: "ZERO_RESULTS" }),
     )
 
     const resultado = await geocodificarCep(CEP, { buscar, chaveGoogle: "chave-de-teste" })
 
-    expect(resultado).toEqual({ estado: "sem-coordenada" })
+    // Cidade e bairro vêm da fonte mesmo sem posição: é o que o anúncio publica.
+    expect(resultado).toEqual({
+      estado: "sem-coordenada",
+      endereco: { cidade: "Manaus", bairro: "Flores" },
+    })
     // O Google é tentado antes de concluir que não há posição.
     expect(buscar).toHaveBeenCalledTimes(2)
   })
@@ -204,6 +242,7 @@ describe("geocodificarCep", () => {
     expect(resultado).toEqual({
       estado: "encontrado",
       coordenada: { latitude: -3.1, longitude: -60, fonte: "google" },
+      endereco: { cidade: null, bairro: null },
     })
   })
 
@@ -220,7 +259,10 @@ describe("geocodificarCep", () => {
     const resultado = await geocodificarCep(CEP, { buscar, chaveGoogle: "chave-de-teste" })
 
     // O Google disse que conhece o CEP: sem posição não é CEP inexistente.
-    expect(resultado).toEqual({ estado: "sem-coordenada" })
+    expect(resultado).toEqual({
+      estado: "sem-coordenada",
+      endereco: { cidade: null, bairro: null },
+    })
   })
 
   it("Google OK com results vazio não é prova: indisponivel, não CEP inexistente", async () => {

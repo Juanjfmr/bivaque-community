@@ -1,21 +1,31 @@
 import type { NextRequest, NextResponse } from "next/server"
 import {
+  clienteDeServicoOuNulo,
   conferirEscrita,
   exigirSessao,
   lerCorpoJson,
   responder,
   type SessaoAutenticada,
 } from "../../../../lib/app-api/rota-do-app"
+import { lerEscolha, localizarAnuncio } from "../../../../lib/geo/anuncio"
 import { lerNovoDesapego } from "../../../../lib/listings/create"
 import {
   anuncioDoRascunho,
   detalhesDoRascunho,
+  enderecoDoRascunho,
   lerRascunhoDoImovel,
 } from "../../../../lib/listings/property"
 import { MAX_PHOTO_BYTES } from "../../../../lib/listings/types"
 import { validatePropertyDraft } from "../../../../lib/listings/validation"
 import { enviarFotoDoAnuncio, FalhaDaFoto } from "../../../../lib/storage/listing-photo"
-import { cidadeDaSessao, ehUuid, interpretarErroDoBanco, lerFotoDoCorpo } from "./_comum"
+import {
+  cepDoCorpo,
+  cidadeDaSessao,
+  ehUuid,
+  interpretarErroDoBanco,
+  lerFotoDoCorpo,
+  respostaDaLocalizacao,
+} from "./_comum"
 
 /** Chave de envio estável no rascunho: repetir após falha não cria outro anúncio. */
 export async function criarDesapego(request: NextRequest): Promise<NextResponse> {
@@ -47,6 +57,34 @@ export async function criarDesapego(request: NextRequest): Promise<NextResponse>
     if (!cidade) return responder(request, { erro: "sem-cidade" }, 403)
     const dados = lerNovoDesapego(corpo, cidade.id)
     if (!dados) return responder(request, { erro: "dados-invalidos" }, 400)
+
+    // Desapego com CEP (ADR-20261022 §2): opcional, e a coordenada é SEMPRE
+    // aproximada — não há oferta de local exato do item.
+    const cepDoDesapego = cepDoCorpo(corpo["cep"])
+    let localizacao: Readonly<{
+      cep: string
+      latitude: number | null
+      longitude: number | null
+      localizacaoPublica: string
+      bairroDerivado: string | null
+    }> | null = null
+    if (cepDoDesapego !== null) {
+      const servico = clienteDeServicoOuNulo()
+      if (servico === null) {
+        return responder(request, { erro: "localizacao-indisponivel" }, 503)
+      }
+      const localizado = await localizarAnuncio({
+        cliente: servico,
+        pessoa: userId,
+        cepBruto: cepDoDesapego,
+        escolha: "aproximada",
+        forcarAproximada: true,
+        cidadeId: cidade.id,
+      })
+      if (!localizado.ok) return respostaDaLocalizacao(request, localizado)
+      localizacao = localizado.localizacao
+    }
+
     const existente = await client
       .from("listings")
       .select("id,status,locality_id,kind")
@@ -69,10 +107,18 @@ export async function criarDesapego(request: NextRequest): Promise<NextResponse>
     const payload = {
       title: dados.title,
       description: dados.description,
-      neighborhood: dados.neighborhood,
+      neighborhood: dados.neighborhood || localizacao?.bairroDerivado || null,
       price_cents: dados.priceCents,
       category: dados.category,
       condition: dados.condition,
+      ...(localizacao === null
+        ? {}
+        : {
+            cep: localizacao.cep,
+            latitude: localizacao.latitude,
+            longitude: localizacao.longitude,
+            localizacao_publica: localizacao.localizacaoPublica,
+          }),
     }
     const escrita = existente.data
       ? await client
@@ -165,8 +211,71 @@ async function criarImovel(
         400,
       )
     }
+
+    // Imóvel NOVO sempre tem CEP (ADR-20261116 §1). O avô sem CEP é o que já
+    // estava publicado; a primeira edição dele é que passa a exigir.
+    const cep = cepDoCorpo(corpo["cep"])
+    if (cep === null) {
+      return responder(
+        request,
+        { erro: "dados-invalidos", campo: "cep", mensagem: "Informe o CEP do imóvel." },
+        400,
+      )
+    }
+    const escolha = lerEscolha(corpo["localizacaoPublica"])
+    if (escolha === null) {
+      return responder(
+        request,
+        {
+          erro: "dados-invalidos",
+          campo: "localizacaoPublica",
+          mensagem: "Escolha o local exato ou aproximado.",
+        },
+        400,
+      )
+    }
+    // Local exato é o endereço publicado: sem endereço, a escolha não se
+    // sustenta na tela.
+    if (escolha === "exata" && (rascunho.address ?? "").trim() === "") {
+      return responder(
+        request,
+        {
+          erro: "dados-invalidos",
+          campo: "address",
+          mensagem: "Para publicar o local exato, informe o endereço.",
+        },
+        400,
+      )
+    }
+
+    const servico = clienteDeServicoOuNulo()
+    if (servico === null) {
+      return responder(request, { erro: "localizacao-indisponivel" }, 503)
+    }
+    const localizado = await localizarAnuncio({
+      cliente: servico,
+      pessoa: userId,
+      cepBruto: cep,
+      escolha,
+      forcarAproximada: false,
+      cidadeId: cidade.id,
+    })
+    if (!localizado.ok) return respostaDaLocalizacao(request, localizado)
+    const localizacao = localizado.localizacao
+
     const criado = await client.rpc("create_property_listing", {
-      p_listing: anuncioDoRascunho(rascunho, { status: "active", localityId: cidade.id }),
+      p_listing: {
+        ...anuncioDoRascunho(rascunho, { status: "active", localityId: cidade.id }),
+        // Aproximada não publica endereço: guardá-lo seria vazar o que a pessoa
+        // escolheu esconder.
+        address:
+          localizacao.localizacaoPublica === "exata" ? enderecoDoRascunho(rascunho.address) : null,
+        neighborhood: rascunho.neighborhood.trim() || localizacao.bairroDerivado,
+        cep: localizacao.cep,
+        latitude: localizacao.latitude,
+        longitude: localizacao.longitude,
+        localizacao_publica: localizacao.localizacaoPublica,
+      },
       p_details: detalhesDoRascunho(rascunho),
     })
     if (criado.error) {

@@ -34,11 +34,18 @@ export type AnuncioDaLista = Readonly<{
   /** O marcador da pessoa, vindo da lista/detalhe — nunca do aparelho. */
   salvo: boolean
   criadoEm: string | null
+  /**
+   * Como o anunciante escolheu aparecer (RUN-175). `null` no anúncio publicado
+   * antes do CEP; a tela mostra bairro · cidade nos dois casos.
+   */
+  localizacaoPublica: "exata" | "aproximada" | null
+  /** CEP do próprio anúncio — só o dono recebe (lista de gestão e detalhe). */
+  cep: string | null
 }>
 
 export type AnuncioDetalhado = Readonly<
   AnuncioDaLista & {
-    /** Só existe para o nível que o anunciante escolheu — a tela nunca mostra. */
+    /** Só existe quando o anunciante escolheu o local exato. */
     endereco: string | null
     donoNome: string | null
     /** Id de quem anuncia, para abrir o perfil. */
@@ -110,6 +117,11 @@ function exigirTipo(valor: unknown): AnuncioTipo {
   throw foraDoContrato()
 }
 
+/** A escolha publicada: só os dois valores do contrato; o resto é "sem escolha". */
+function lerLocalizacaoPublica(valor: unknown): "exata" | "aproximada" | null {
+  return valor === "exata" || valor === "aproximada" ? valor : null
+}
+
 function lerAnuncio(corpo: Corpo): AnuncioDaLista {
   return {
     id: exigirTexto(corpo, "id"),
@@ -131,6 +143,10 @@ function lerAnuncio(corpo: Corpo): AnuncioDaLista {
     // Campo aditivo: a lista da cidade e a dos salvos mandam; detalhe também.
     salvo: corpo["salvo"] === true,
     criadoEm: texto(corpo["criadoEm"]),
+    // Aditivo do RUN-175: anúncio publicado antes do CEP não tem escolha.
+    localizacaoPublica: lerLocalizacaoPublica(corpo["localizacaoPublica"]),
+    // Só a lista de gestão e o detalhe do dono mandam o CEP.
+    cep: texto(corpo["cep"]),
   }
 }
 
@@ -260,6 +276,8 @@ export type EdicaoDoDesapego = Readonly<{
   descricao: string
   categoria: string
   condicao: string
+  /** RUN-175: opcional; com CEP a coordenada é sempre aproximada. */
+  cep?: string
   /** Data URL local; ausente ou vazio = as fotos continuam como estão. */
   foto?: string
 }>
@@ -290,6 +308,7 @@ export async function editarDesapego(
       descricao: dados.descricao,
       categoria: dados.categoria,
       condicao: dados.condicao,
+      ...(dados.cep === undefined ? {} : { cep: dados.cep }),
       ...(foto ? { foto: { tipo: foto[1], conteudo: foto[2] } } : {}),
     },
     opcoes,
@@ -314,6 +333,13 @@ export type DadosDoImovel = Readonly<{
   neighborhood: string
   /** Opcional: vazio é "não informar", nunca erro. Ausente preserva o gravado. */
   address?: string
+  /**
+   * RUN-175: o CEP do imóvel é obrigatório no criar e na primeira edição do
+   * imóvel antigo. Ausente preserva o gravado (quem preenche é a edição).
+   */
+  cep?: string
+  /** Como o anúncio aparece; ausente no PATCH preserva o gravado. */
+  localizacaoPublica?: "exata" | "aproximada"
 }>
 
 function corpoDoImovel(dados: DadosDoImovel, extras: { vagas?: string } = {}) {
@@ -329,6 +355,10 @@ function corpoDoImovel(dados: DadosDoImovel, extras: { vagas?: string } = {}) {
     description: dados.description,
     neighborhood: dados.neighborhood,
     ...(dados.address === undefined ? {} : { address: dados.address }),
+    ...(dados.cep === undefined ? {} : { cep: dados.cep }),
+    ...(dados.localizacaoPublica === undefined
+      ? {}
+      : { localizacaoPublica: dados.localizacaoPublica }),
     ...(extras.vagas === undefined ? {} : { parkingSpots: extras.vagas }),
   }
 }

@@ -1,0 +1,108 @@
+# RUN-175 — LOC-IMPL L1: CEP no anuncio (imovel obrigatorio com avo, desapego opcional),
+# exato/aproximado por escolha, sem mapa.
+#
+# A regra-matriz e o ADR-20261022 (aceito pelo dono 22/10, R3): secoes 1 e 2. As
+# tres lacunas de execucao que ele nao respondeu (avo de imovel sem CEP,
+# limitador do geocode, CEP sem coordenada) e a saida de mapa-fora estao no
+# ADR-20261116 deste lote, por delegacao, com linha na RATIFICACAO.
+# Infra reaproveitada, nao recriada: geocodificador BrasilAPI+Google-reserva
+# (apps/web/lib/geo/geocodificador.ts, sem chave obrigatoria), cache
+# public.cep_geocodes e os helpers lerCepDoCache/gravarCepDoCache — tudo do
+# RUN-029 (perfil). Escrita de anuncio hoje passa SO pela porta do app
+# (POST/PATCH /api/app/mercado + lib/listings/property.ts); as actions web
+# morreram no RUN-164, logo modulo unico e a rota.
+# Bairro opcional no desapego (secao 2 do ADR) entra: o CHECK
+# listings_item_required_fields (20260911043053:66-75) faz neighborhood
+# NOT NULL no item — a migration relaxa.
+# PEDIDO e distancias perto-de-mim sao o L2, nao daqui.
+
+task_id: RUN-175
+
+adr: docs/decisions/ADR-20261116-cep-no-anuncio-avo-limite-e-coordenada-ausente.md
+
+objective: >
+  Anuncio com CEP: imovel exige CEP no criar (avo sem CEP segue valido ate a
+  primeira edicao, que passa a exigir); desapego aceita CEP opcional e bairro
+  opcional; geocodificacao cache-first com limitador por pessoa no servidor;
+  escolha exata/aproximada no imovel com arredondamento de piso ~300 m no
+  servidor; terceira pessoa nunca le cep/coordenada crus (grants por coluna no
+  molde do perfil); display honesto em texto, sem mapa e sem coordenada vazada.
+
+authority:
+  - docs/LANCAMENTO.md linha F06 (:59, criterio endereco exato ou aproximado por escolha) + fase 5 e 6
+  - ADR-20261022-localizacao-padrao-de-mercado.md secoes 1, 2 e 7 (matriz, dono aceitou)
+  - ADR-20261116-cep-no-anuncio-avo-limite-e-coordenada-ausente.md (delegacao; avo, limite, sem-coordenada, mapa-fora)
+  - Card LOC-IMPL + cards LOC-LIMITE-GEOCODIFICACAO e LOC-CEP-SEM-COORDENADA (este lote fecha os dois)
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    listings nao tem cep/latitude/longitude/coluna de escolha
+    (20260911043053:39-76; CHECK D5 :58-59 diz que coordenada nao tem coluna);
+    item nao pode ter bairro vazio (:66-75); POST/PATCH mercado gravam
+    neighborhood/address sem geocodificacao (lib/listings/property.ts,
+    _criar.ts, _editar.ts); Anuncio.tsx:196-199,244-250 mostra bairro-cidade e
+    um endereco que nenhuma tela escreve; geocodificador e cache existem mas so
+    o perfil os usa (voce/localizacao/route.ts:94-126).
+
+allowed_paths:
+  - docs/agents/tasks/F06-CEP.task.yml
+  - supabase/migrations
+  - supabase/tests
+  - supabase/database.generated.ts
+  - apps/web/lib/geo
+  - apps/web/lib/listings
+  - apps/web/app/api/app/mercado
+  - apps/app/lib/dados/mercado.ts
+  - apps/app/lib/dados/criar.ts
+  - apps/app/src/criar
+  - apps/app/src/mercado
+  - apps/app/src/telas/Anuncio.tsx
+  - apps/app/src/telas/Mercado.tsx
+  - apps/app/components/bivaque/formulario-imovel.tsx
+  - apps/app/tests
+  - tests/unit/app-api/mercado
+  - tests/unit/app-api/voce
+  - tests/unit/geo
+  - tests/unit/listings
+  - tests/scope/f03-criar.test.mjs
+  - tests/e2e/f06-mercado-real.spec.ts
+  - tests/e2e/f03-criar-real.spec.ts
+  - apps/app/tests/e2e/r72-mobile-p1.spec.ts
+  - scripts/visual/capture.mjs
+  - .visual/f06-cep
+
+forbidden:
+  - editar migration aplicada (nova via npx pnpm@11.18.0 exec supabase migration new)
+  - inventar coordenada em backfill (imovel sem CEP fica cep null ate edicao; nunca lat/lng chutado)
+  - expor cep/latitude/longitude crus a terceiro em qualquer leitura (GET lista/detalhe/busca/negocios) — grants por coluna e teste de que select-star nao devolve
+  - portar o L2 (service_requests, perto-de-mim) ou mapa/tile-server/biblioteca de mapa
+  - chamar Google sem GOOGLE_MAPS_API_KEY definida; logar CEP em qualquer lugar
+  - rodar reset/test:db enquanto outra lane usar o stack local (RUN-178 pode estar na stack; pgTAP e prova de CI se o host estiver ocupado)
+  - usar skip/fixme novo ou afrouxar assercao; push, merge ou force-push; imprimir credenciais
+  - tocar em .work/main ou em outra worktree
+
+acceptance:
+  - "Migration nova: listings + cep text(9)-norm, latitude/longitude double precision null, localizacao_publica text in (exata, aproximada) null; CHECKs: imovel criado APOS a troca exige cep (avo sem cep continua valido — a exigicao vive na validacao da rota, nao num CHECK que quebraria linhas antigas; registrar isso no comentario da migration); item libera o bairro-obrigatorio (relaxar listings_item_required_fields no CHECK novo, mantendo titulo/descricao); grants por coluna no molde profiles (authenticated perde leitura de cep/lat/lng, dono ve via leitura propria explicita); purga de conta conhece as colunas; cep_geocodes intacto."
+  - "Modulo unico de localizacao do anuncio (novo em apps/web/lib/geo ou lib/listings): recebe cep cru, normaliza, consulta cache (lerCepDoCache), miss chama geocodificador sob LIMITADOR por usuario (429 com mensagem propria; cache hit nao consome) e GRAVA cache; deriva cidade e bairro casando o address da BrasilAPI com neighborhoods por name_key (se derivar bairro, corrigir para vizinho como faz o perfil — espelhar o comportamento, nao reinventar); arredonda coordenada para baixo com piso ~300 m quando aproximada; CEP sem coordenada = sucesso parcial (cidade/bairro derivados, lat/lng null, localizacao forcada a aproximada — fecha LOC-CEP-SEM-COORDENADA com teste; nada de 422 travando anuncio interiorano)."
+  - "POST /api/app/mercado kind=property exige cep + localizacao_publica (default aproximada se omitida — registrar); kind=item aceita cep opcional (com cep, coordenada aproximada FORCADA sem oferta de exata; com cep, bairro pode vir da derivacao ou do usuario; sem cep e sem bairro => 400 honesto agora que bairro e opcional so com cep? NAO: com o relaxo, item sem cep e sem bairro e valido mas a cidade da sessao permanece — espelhar ADR secao 2). PATCH aceita os mesmos ramos; editar imovel avo (cep null) sem fornecer cep => 400 com mensagem de primeira-edicao do ADR. Respostas das rotas NUNCA incluem cep/lat/lng crus; endereco publicado segue opcional e so aparece quando exata com endereco preenchido."
+  - "SPA: formulario-imovel (criar) ganha campo CEP (inputmode numerico, mascara) + escolha exata/aproximada (aproximada default e unica opcao quando sem endereco digitado); Desapego ganha CEP opcional e bairro passa a opcional; lib/dados/mercado e filtros-url dao o formato ao POST; Anuncio.tsx mostra a escolha REAL do anunciante (aproximada: bairro-cidade + nota 'Local aproximado'; exata: endereco publicado quando houver) e some com a frase 'pode ser combinado na conversa' mentirosa onde o endereco agora existe."
+  - "Provas: pgTAP novo (select-star de authenticated nao devolve cep/lat/lng; dono le a propria localizacao; to_jsonb 42501; purga de conta limpa; neighborhoods-match); unit da rota (property sem cep 400; avo PATCH sem cep 400-com-frase-do-avo; item sem bairro agora valido; cep-erro-formato; limitador 429 apos N misses com cache mockado; cache-hit nao conta); unit do modulo geo (arredondamento nunca abaixo do piso; sem-coordenada vira aproximada com cidade e bairro); E2E do app stub (criar imovel CEP-exato mostra endereco; criar sem-cep e impossivel no form); @stateful real: seed nao tem cep de anuncio — criar pelo UI com CEP sintetico pre-gravado no cache em fixTURE propria do spec (padrao seed.sql:235-240 de cache) e verificar o detalhe; recarga persiste; capture/rotas se algo mudou."
+  - "LOC-LIMITE-GEOCODIFICACAO e LOC-CEP-SEM-COORDENADA: este lote fecha ambos com provas nomeadas no RELATORIO. TOTAL_DE_ROTAS inalterado (nenhuma rota nova — conferir disco apos rebase). Passam: gate completo incl. test:db e db:lint (lote mexe banco!), app test, pnpm test, test:scope, tsc -p tests/e2e. Antes de tocar fora dos allowed_paths, EMENDAR o contrato primeiro (itens em uma linha; sem aspas em comentarios)."
+
+proof:
+  - npx pnpm@11.18.0 gate
+  - npx pnpm@11.18.0 test:db
+  - npx pnpm@11.18.0 db:lint
+  - npx pnpm@11.18.0 test:scope
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/F06-CEP.task.yml
+
+risk: migration com dados de producao futura (avo), geocodificacao com mundo real (limitada por cache e fixture), privacidade de coordenada
+risk_level: R3
+
+reviewer_must_differ_from_executor: true
+retry_budget: 2
+on_budget_exhausted: HUMAN_DECISION
+
+closure:
+  requires_runtime_evidence: true

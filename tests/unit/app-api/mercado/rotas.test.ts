@@ -473,6 +473,8 @@ describe("rotas de mercado do app", () => {
           deal: null,
           bairro: "Centro",
           cidade: "Manaus",
+          // RUN-175: campo aditivo — a tela mostra a escolha real do anunciante.
+          localizacaoPublica: null,
           status: "active",
           condicao: "used",
           categoria: "casa_moveis",

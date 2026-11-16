@@ -39,6 +39,16 @@ export async function GET(request: NextRequest, { params }: Context): Promise<Ne
     ])
     if (perfil.error || salvo.error) throw perfil.error ?? salvo.error
 
+    // O dono precisa do CEP para editar; o CEP não é legível pela sessão, então
+    // ele vem da função própria — e só para o dono. Terceiro recebe `null`.
+    const meu = row.owner_user_id === userId
+    let cepDoDono: string | null = null
+    if (meu) {
+      const local = await client.rpc("get_listing_location", { p_listing_id: id })
+      if (local.error) throw local.error
+      cepDoDono = local.data[0]?.cep ?? null
+    }
+
     const fotos = [...(row.listing_photos ?? [])].sort((a, b) => a.position - b.position)
     const assinadas = await signPhotoPaths(
       client,
@@ -53,11 +63,14 @@ export async function GET(request: NextRequest, { params }: Context): Promise<Ne
       {
         anuncio: {
           ...baseDoAnuncio(row),
-          endereco: row.address,
+          // O endereço só sai no nível que o anunciante escolheu publicar: a
+          // escolha aproximada mostra bairro · cidade (ADR-20261022 §1).
+          endereco: row.localizacao_publica === "exata" ? row.address : null,
+          cepDoAnuncio: cepDoDono,
           donoNome: perfil.data?.display_name ?? null,
           donoId: row.owner_user_id,
           fotos: urls,
-          meu: row.owner_user_id === userId,
+          meu,
           salvo: salvo.data !== null,
         },
       },

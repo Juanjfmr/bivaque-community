@@ -2,7 +2,13 @@ import { useEffect, useRef, useState } from "react"
 import { FalhaDaApi } from "@/lib/api/cliente"
 import { publicarDesapego } from "@/lib/dados/criar"
 import { AreaDeTexto, Botao, Campo, CampoDeArquivo, CampoDeEscolha } from "@/src/pecas/pecas"
-import { type CampoDoDesapego, errosDoDesapego, precoBRL, semErros } from "./formularios"
+import {
+  type CampoDoDesapego,
+  cepComMascara,
+  errosDoDesapego,
+  precoBRL,
+  semErros,
+} from "./formularios"
 import { excluirRascunho, guardarRascunho, lerRascunho } from "./rascunho"
 
 const CATEGORIAS = [
@@ -34,6 +40,7 @@ export function Desapego({
       chave: crypto.randomUUID(),
       titulo: "",
       bairro: "",
+      cep: "",
       preco: "",
       descricao: "",
       categoria: "outros",
@@ -126,7 +133,9 @@ export function Desapego({
             <b>Revise seu anúncio</b>
             <p className="break-words">{dados.titulo}</p>
             <p className="text-sm">
-              {precoBRL(dados.preco)} · {dados.bairro} ·{" "}
+              {precoBRL(dados.preco)}
+              {dados.bairro.trim() === "" ? "" : ` · ${dados.bairro}`}
+              {dados.cep === undefined || dados.cep === "" ? "" : ` · CEP ${dados.cep}`} ·{" "}
               {dados.condicao === "new" ? "Novo" : "Usado"}
             </p>
             <p className="whitespace-pre-wrap break-words text-sm">{dados.descricao}</p>
@@ -147,16 +156,29 @@ export function Desapego({
             />
             <div className="grid gap-3 sm:grid-cols-2">
               <Campo
+                id="criacao-cep"
+                rotulo="CEP de retirada (opcional)"
+                value={dados.cep ?? ""}
+                onChange={(evento) => mudar({ cep: cepComMascara(evento.target.value) })}
+                onBlur={() => tocar("cep")}
+                erro={erroDe("cep")}
+                ajuda="Com o CEP, o anúncio mostra a região aproximada."
+                inputMode="numeric"
+                autoComplete="postal-code"
+                maxLength={9}
+              />
+              <Campo
                 id="criacao-complemento"
-                rotulo="Bairro de retirada"
+                rotulo="Bairro de retirada (opcional)"
                 value={dados.bairro}
                 onChange={(evento) => mudar({ bairro: evento.target.value })}
                 onBlur={() => tocar("bairro")}
                 erro={erroDe("bairro")}
                 maxLength={80}
                 autoComplete="off"
-                required
               />
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2">
               <Campo
                 id="criacao-preco"
                 rotulo="Preço pedido (R$)"

@@ -16,6 +16,8 @@ export type DadosDoDesapego = Readonly<{
   descricao: string
   categoria: string
   condicao: string
+  /** RUN-175: opcional; com CEP a coordenada é sempre aproximada. */
+  cep?: string
   /** Data URL local; nunca é exibida como mídia de um anúncio já publicado. */
   foto: string
 }>
