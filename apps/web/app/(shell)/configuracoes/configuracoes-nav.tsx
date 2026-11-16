@@ -33,7 +33,7 @@ const ITEMS = [
     href: "/configuracoes/bloqueados",
     label: "Privacidade",
     icon: ShieldCheck,
-    matches: ["/configuracoes/bloqueados", "/configuracoes/familia"],
+    matches: ["/configuracoes/bloqueados"],
   },
 ] as const
 

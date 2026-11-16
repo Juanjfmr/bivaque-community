@@ -43,6 +43,7 @@ export const CPF_SINTETICO = "52998224725"
 export const MEMBRO_SEMEADO = "visual@bivaque.example.invalid"
 
 // Titular verificado com cidade no seed (Manaus): é quem "convida" nos testes.
+// É a persona `MEMBRO_SEMEADO` — o harness entra como ela para criar convite.
 const INVITER_VERIFICADO = "20000000-0000-4000-8000-000000000001"
 
 const URL_DO_MAILPIT_PADRAO = "http://127.0.0.1:55324"
@@ -241,6 +242,36 @@ function resumoDoCorpo(corpo: unknown): string {
 
 function cabecalhosDeServico(chave: string): Record<string, string> {
   return { apikey: chave, Authorization: `Bearer ${chave}` }
+}
+
+/**
+ * Cabeçalhos do titular semeado, com o JWT dele.
+ *
+ * SEC-011 (auditoria de 16/11, A2-1): as funções públicas de convite derivam o
+ * dono de `auth.uid()` e recusam 28000 sem sessão. O papel de serviço não é
+ * identidade de ninguém (supabase/AGENTS.md), então semear um convite exige
+ * entrar como a persona que convida — o mesmo caminho da tela.
+ */
+async function cabecalhosDoTitular(): Promise<Record<string, string>> {
+  const chave = exigirChaveAnonima()
+  const resposta = await pedirJson(
+    `${urlDoSupabase()}/auth/v1/token?grant_type=password`,
+    {
+      metodo: "POST",
+      cabecalhos: { apikey: chave },
+      corpo: { email: MEMBRO_SEMEADO, password: senhaDaPersona() },
+    },
+    "Supabase (password grant do titular)",
+  )
+  const token = textoDe(resposta.corpo, "access_token")
+  if (resposta.status !== 200 || token === null) {
+    throw new Error(
+      `Não foi possível entrar como o titular de teste (HTTP ${resposta.status}). A persona ` +
+        `${mascararEmail(MEMBRO_SEMEADO)} é criada pelo seed local: rode ` +
+        "`npx pnpm@11.18.0 exec supabase db reset`.",
+    )
+  }
+  return { apikey: chave, Authorization: `Bearer ${token}` }
 }
 
 function textoDe(corpo: unknown, chave: string): string | null {
@@ -496,9 +527,12 @@ async function marcarVinculoVerificado(userId: string, classe: string): Promise<
  * O titular do seed tem teto de 5 convites ativos. Como cada rodada deixa o
  * convite pendente quando o fluxo falha antes do aceite, a rodada seguinte
  * esbarraria no teto. Revoga os pendentes do próprio titular de teste antes de
- * criar o próximo — sempre no banco local, com service_role.
+ * criar o próximo — sempre no banco local, e a revogação vai com o JWT dele
+ * (a função deriva o dono de auth.uid()).
  */
-async function revogarConvitesPendentesDoTitular(): Promise<void> {
+async function revogarConvitesPendentesDoTitular(
+  cabecalhosDoTitularDaRodada: Readonly<Record<string, string>>,
+): Promise<void> {
   const chave = exigirChaveDeServico()
   const listagem = await pedirJson(
     `${urlDoSupabase()}/rest/v1/rpc/list_pending_invites_with_hint`,
@@ -524,8 +558,8 @@ async function revogarConvitesPendentesDoTitular(): Promise<void> {
       `${urlDoSupabase()}/rest/v1/rpc/revoke_family_invitation`,
       {
         metodo: "POST",
-        cabecalhos: cabecalhosDeServico(chave),
-        corpo: { p_invitation_id: id, p_inviter_user_id: INVITER_VERIFICADO },
+        cabecalhos: cabecalhosDoTitularDaRodada,
+        corpo: { p_invitation_id: id },
       },
       "Supabase (revogar convite pendente)",
     )
@@ -533,21 +567,22 @@ async function revogarConvitesPendentesDoTitular(): Promise<void> {
       throw new Error(
         `Não foi possível revogar o convite pendente de teste: HTTP ${revogacao.status} ` +
           `(${resumoDoCorpo(revogacao.corpo)}). A ponte é ` +
-          "public.revoke_family_invitation, concedida a service_role.",
+          "public.revoke_family_invitation, que deriva o titular da sessão.",
       )
     }
   }
 }
 
 /**
- * Cria um convite familiar PENDENTE para `email`, pelo RPC que a tela do titular
- * usa (`create_family_invitation`). Quem convida é a persona verificada com
+ * Cria um convite familiar PENDENTE para `email`, pela função que a tela do
+ * titular usa (`create_family_invitation`), com o JWT da persona verificada com
  * cidade do seed. Devolve o código em claro — ele só existe aqui e na tela; o
  * banco guarda o hash.
  */
 export async function criarConvitePendente(email: string): Promise<{ codigo: string }> {
   const alvo = exigirEmailSintetico(email)
-  await revogarConvitesPendentesDoTitular()
+  const cabecalhos = await cabecalhosDoTitular()
+  await revogarConvitesPendentesDoTitular(cabecalhos)
   const alfabeto = "ABCDEFGHJKMNPQRSTUVWXYZ23456789"
   let codigo = ""
   for (let indice = 0; indice < 8; indice += 1) {
@@ -558,10 +593,9 @@ export async function criarConvitePendente(email: string): Promise<{ codigo: str
     `${urlDoSupabase()}/rest/v1/rpc/create_family_invitation`,
     {
       metodo: "POST",
-      cabecalhos: cabecalhosDeServico(exigirChaveDeServico()),
+      cabecalhos,
       corpo: {
         p_code_hash: `\\x${sha256(codigo)}`,
-        p_inviter_user_id: INVITER_VERIFICADO,
         p_token_digest: `\\x${sha256(randomBytes(32).toString("hex"))}`,
         p_invitee_email_digest: `\\x${sha256(alvo.trim().toLowerCase())}`,
         p_invitee_email_hint: mascararEmail(alvo),
@@ -573,7 +607,7 @@ export async function criarConvitePendente(email: string): Promise<{ codigo: str
     throw new Error(
       `Não foi possível criar o convite familiar de ${mascararEmail(alvo)}: HTTP ` +
         `${resposta.status} (${resumoDoCorpo(resposta.corpo)}). A ponte é ` +
-        "public.create_family_invitation, concedida a service_role.",
+        "public.create_family_invitation, que deriva o titular da sessão.",
     )
   }
   const invitationId = Array.isArray(resposta.corpo) ? resposta.corpo[0] : resposta.corpo

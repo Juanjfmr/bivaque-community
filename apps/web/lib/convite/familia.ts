@@ -13,19 +13,24 @@ import {
 import { emailHint } from "./hint"
 
 /**
- * A família do titular (RUN-018): um módulo, duas portas.
+ * A família do titular (RUN-018): um módulo, uma porta.
  *
- * A tela de Configurações do `apps/web` (Server Actions em
- * `lib/convite/familia-acoes.ts`) e as rotas `/api/app/voce/familia` do app
- * leem e gravam por aqui. As regras são as do
- * banco, não uma cópia: titular verificado, teto de 5 convites ativos, 7 dias,
- * só o próprio titular revoga (ver `supabase/tests/family-invite-wrappers.sql`).
+ * A posse é do BANCO, não deste módulo: as três escritas (criar, revogar,
+ * reenviar) chamam funções públicas que derivam o titular de `auth.uid()`
+ * (migration 20261116221048) com o cliente da sessão. Este arquivo não passa id
+ * de titular para o banco em nenhum caminho — o `userId` que aparece aqui é só o
+ * da sessão já resolvida, usado para a chave do limitador e o payload do outbox.
  *
- * O `userId` NUNCA vem do corpo, da query ou do app — quem chama resolve a
- * sessão e passa o id dela. As funções públicas de família têm `execute` só
- * para `service_role` (migration 20260806160942), então o cliente de serviço é
- * a única porta ao banco aqui; ele só é usado depois que a sessão foi
- * resolvida, e só para estas quatro funções.
+ * As regras continuam sendo as do banco, não uma cópia: titular verificado, teto
+ * de 5 convites ativos, teto de 10 envios por hora, 7 dias, só o próprio titular
+ * revoga — tudo conferido dentro da função, sob trava por titular
+ * (`supabase/tests/family-invite-session-ownership.sql`).
+ *
+ * O cliente de serviço continua sendo necessário em dois pontos que não são
+ * posse: enfileirar o e-mail (`public.outbox` não tem privilégio para
+ * `authenticated`) e ler a lista de pendentes (`list_pending_invites_with_hint`
+ * e `is_verified_holder` só têm `execute` para `service_role`). Os dois rodam
+ * depois que a sessão foi resolvida e sempre para o id DELA.
  */
 
 type Cliente = SupabaseClient<Database>
@@ -47,6 +52,7 @@ export type MotivoDeRecusa =
   | "nao-titular"
   | "teto-de-convites"
   | "limite"
+  | "limite-indisponivel"
   | "convite-nao-encontrado"
   | "banco"
 
@@ -90,57 +96,37 @@ async function titularVerificado(client: Cliente, userId: string): Promise<boole
   return data === true
 }
 
-/**
- * Teto de ritmo por titular: 10 envios por hora. Conta as linhas de outbox do
- * tipo `family_invite` do próprio titular na última hora — cada envio deixa
- * uma, revogado ou não, porque revogar não apaga o que já foi enviado. O
- * `private.family_invitations` não é exposto na Data API; o outbox é, e é o
- * registro real da entrega.
- */
+/** O teto de envios por hora, aqui e no banco (`private.family_invite_send_gate`). */
 const LIMITE_DE_ENVIOS_POR_HORA = 10
 const JANELA_DE_LIMITE_MS = 60 * 60 * 1000
 
-async function enviosNaUltimaHora(client: Cliente, userId: string): Promise<number> {
-  const { count, error } = await client
-    .from("outbox")
-    .select("id", { count: "exact", head: true })
-    .eq("type", "family_invite")
-    .contains("payload", { user_id: userId })
-    .gte("created_at", new Date(Date.now() - JANELA_DE_LIMITE_MS).toISOString())
-  if (error)
-    throw new FalhaDeConvite("banco", "Não foi possível conferir o limite de envios agora.")
-  return count ?? 0
-}
-
 /**
- * Barreira atômica: a mesma janela deslizante das outras rotas
- * (`community-invite-actions`), com chave por titular. A contagem do outbox lê o
- * passado; dois POST simultâneos leem o mesmo passado e passam os dois. Sem
- * Upstash no ambiente a janela não existe — é o comportamento das outras rotas
- * que a usam — e sobra só a contagem.
+ * A janela deslizante do Upstash, primeira barreira do envio (a segunda é o teto
+ * atômico dentro da função do banco).
+ *
+ * Sem Upstash configurado ela NÃO pode deixar passar: agora que a criação é
+ * chamável direto pela Data API, um limitador ausente viraria "sem limite" no
+ * caminho que mais precisa dele. A rota responde 503, o mesmo desenho de
+ * `limitadorConfigurado()` na entrada.
  */
-export async function permitirEnvioDeConvite(userId: string): Promise<boolean> {
+export async function conferirJanelaDeEnvio(userId: string): Promise<void> {
   const url = process.env["UPSTASH_REDIS_REST_URL"]
   const token = process.env["UPSTASH_REDIS_REST_TOKEN"]
-  if (!url || !token) return true
+  if (!url || !token) {
+    throw new FalhaDeConvite("limite-indisponivel", "O limite de envio está fora agora.")
+  }
   const { Redis } = await import("@upstash/redis")
-  return allowSlidingWindow(
+  const liberado = await allowSlidingWindow(
     createLimiterStore(new Redis({ url, token })),
     `bivaque:limit:familyInvite:${userId}`,
     LIMITE_DE_ENVIOS_POR_HORA,
     JANELA_DE_LIMITE_MS,
   )
-}
-
-function recusaPorLimite(): FalhaDeConvite {
-  return new FalhaDeConvite("limite", "Muitos convites em pouco tempo. Tente novamente mais tarde.")
-}
-
-/** As duas barreiras do limite: a janela atômica primeiro, a contagem depois. */
-export async function conferirLimiteDeEnvio(client: Cliente, userId: string): Promise<void> {
-  if (!(await permitirEnvioDeConvite(userId))) throw recusaPorLimite()
-  if ((await enviosNaUltimaHora(client, userId)) >= LIMITE_DE_ENVIOS_POR_HORA) {
-    throw recusaPorLimite()
+  if (!liberado) {
+    throw new FalhaDeConvite(
+      "limite",
+      "Muitos convites em pouco tempo. Tente novamente mais tarde.",
+    )
   }
 }
 
@@ -165,12 +151,15 @@ export async function lerFamilia(client: Cliente, userId: string): Promise<Famil
 /**
  * Cria o convite e enfileira a entrega.
  *
- * O código e o token em claro existem só no retorno: o banco guarda o digest
- * (20261023120000) e o outbox é o único lugar por onde o e-mail sai. A rota do
- * app NÃO devolve nenhum dos dois — o familiar entra pelo e-mail.
+ * `sessao` é o cliente do usuário (JWT da sessão): é ele que chama a função do
+ * banco, e é o banco que decide de quem é o convite. `servico` só enfileira no
+ * outbox e relê a lista. O código e o token em claro existem só no retorno: o
+ * banco guarda o digest e o outbox é o único lugar por onde o e-mail sai. A rota
+ * do app NÃO devolve nenhum dos dois — o familiar entra pelo e-mail.
  */
 export async function enviarConvite(
-  client: Cliente,
+  sessao: Cliente,
+  servico: Cliente,
   userId: string,
   email: unknown,
 ): Promise<{ convite: ConvitePendente; codigo: string; token: string }> {
@@ -178,11 +167,7 @@ export async function enviarConvite(
   if (problema !== null) throw new FalhaDeConvite("email-invalido", problema)
   const normalizado = normalizeInviteEmail(email as string)
 
-  if (!(await titularVerificado(client, userId))) {
-    throw new FalhaDeConvite("nao-titular", "Apenas titulares verificados podem enviar convites.")
-  }
-
-  await conferirLimiteDeEnvio(client, userId)
+  await conferirJanelaDeEnvio(userId)
 
   const token = randomBytes(32)
   const tokenDigest = createHash("sha256").update(token).digest("hex")
@@ -190,9 +175,8 @@ export async function enviarConvite(
   // (ADR-20261022-entrada-do-prototipo, item 2). O banco recebe só o hash.
   const codigo = generateInviteCode()
 
-  const { data: invitationId, error } = await client.rpc("create_family_invitation", {
+  const { data: invitationId, error } = await sessao.rpc("create_family_invitation", {
     p_code_hash: byteaDigestParam(inviteCodeHash(codigo)),
-    p_inviter_user_id: userId,
     p_token_digest: byteaDigestParam(tokenDigest),
     // O digest precisa do MESMO formato do token: sem o prefixo \x o PostgREST
     // entrega 64 bytes e o CHECK octet_length = 32 derruba o insert — medido em
@@ -202,18 +186,29 @@ export async function enviarConvite(
   })
 
   if (error) {
+    // As frases são as do banco (fixed set, provado no pgTAP); nenhuma delas
+    // volta para o navegador — a rota traduz o motivo em status.
     if (error.message.includes("maximum 5")) {
       throw new FalhaDeConvite(
         "teto-de-convites",
         "Máximo de 5 convites ativos. Revogue um antes de enviar outro.",
       )
     }
+    if (error.message.includes("maximum 10")) {
+      throw new FalhaDeConvite(
+        "limite",
+        "Muitos convites em pouco tempo. Tente novamente mais tarde.",
+      )
+    }
+    if (error.message.includes("only verified holders")) {
+      throw new FalhaDeConvite("nao-titular", "Apenas titulares verificados podem enviar convites.")
+    }
     throw new FalhaDeConvite("banco", "Não foi possível criar o convite agora.")
   }
 
   // O link precisa chegar ao familiar: enfileirar é o contrato, o adaptador de
   // e-mail entrega. O endereço cru só vive na coluna `recipient` do outbox.
-  const { error: outboxError } = await client.from("outbox").insert({
+  const { error: outboxError } = await servico.from("outbox").insert({
     recipient: normalizado,
     channel: "email",
     type: "family_invite",
@@ -221,7 +216,7 @@ export async function enviarConvite(
   })
   if (outboxError) throw new FalhaDeConvite("banco", "Não foi possível enfileirar o convite.")
 
-  const { pendentes } = await lerFamilia(client, userId)
+  const { pendentes } = await lerFamilia(servico, userId)
   const convite = pendentes.find((linha) => linha.id === invitationId)
   if (convite === undefined) {
     throw new FalhaDeConvite("banco", "O convite foi criado, mas não voltou na lista.")
@@ -230,14 +225,9 @@ export async function enviarConvite(
 }
 
 /** Revoga um convite pendente do próprio titular; convite alheio não existe. */
-export async function revogarConvite(
-  client: Cliente,
-  userId: string,
-  invitationId: string,
-): Promise<void> {
-  const { error } = await client.rpc("revoke_family_invitation", {
+export async function revogarConvite(sessao: Cliente, invitationId: string): Promise<void> {
+  const { error } = await sessao.rpc("revoke_family_invitation", {
     p_invitation_id: invitationId,
-    p_inviter_user_id: userId,
   })
   if (error) {
     if (error.message.includes("not found or not revocable")) {

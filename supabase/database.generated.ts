@@ -2925,34 +2925,15 @@ export type Database = {
         }
         Returns: string
       }
-      create_family_invitation:
-        | {
-            Args: {
-              p_invitee_email_digest: string
-              p_inviter_user_id: string
-              p_token_digest: string
-            }
-            Returns: string
-          }
-        | {
-            Args: {
-              p_invitee_email_digest: string
-              p_invitee_email_hint: string
-              p_inviter_user_id: string
-              p_token_digest: string
-            }
-            Returns: string
-          }
-        | {
-            Args: {
-              p_code_hash: string
-              p_invitee_email_digest: string
-              p_invitee_email_hint: string
-              p_inviter_user_id: string
-              p_token_digest: string
-            }
-            Returns: string
-          }
+      create_family_invitation: {
+        Args: {
+          p_code_hash: string
+          p_invitee_email_digest: string
+          p_invitee_email_hint: string
+          p_token_digest: string
+        }
+        Returns: string
+      }
       create_group: {
         Args: {
           p_description?: string
@@ -3726,26 +3707,15 @@ export type Database = {
         Args: { p_community_id: string; p_reason?: string }
         Returns: undefined
       }
-      resend_family_invitation:
-        | {
-            Args: {
-              p_invitation_id: string
-              p_invitee_email_digest: string
-              p_inviter_user_id: string
-              p_token_digest: string
-            }
-            Returns: string
-          }
-        | {
-            Args: {
-              p_code_hash: string
-              p_invitation_id: string
-              p_invitee_email_digest: string
-              p_inviter_user_id: string
-              p_token_digest: string
-            }
-            Returns: string
-          }
+      resend_family_invitation: {
+        Args: {
+          p_code_hash: string
+          p_invitation_id: string
+          p_invitee_email_digest: string
+          p_token_digest: string
+        }
+        Returns: string
+      }
       resolve_report: {
         Args: {
           p_action: string
@@ -3764,7 +3734,7 @@ export type Database = {
         Returns: undefined
       }
       revoke_family_invitation: {
-        Args: { p_invitation_id: string; p_inviter_user_id: string }
+        Args: { p_invitation_id: string }
         Returns: undefined
       }
       revoke_provider_account: {
