@@ -9,11 +9,10 @@ import { Etiqueta } from "@/components/bivaque/etiqueta"
 import { Icone } from "@/components/bivaque/icone"
 import { Secao } from "@/components/bivaque/secao"
 import { buscarNegocio, type Negocio as FichaDoNegocio } from "@/lib/dados/negocios"
-import { useNavegacao, useRolagemEFoco, useSobreposicaoDaEntrada } from "@/lib/navegacao/react"
+import { useNavegacao, useRolagemEFoco } from "@/lib/navegacao/react"
 import { CARGA_CONCLUIDA } from "@/lib/navegacao/restauracao"
 import { validarParametros } from "@/lib/navegacao/rotas"
 import { FalhaDaLeitura } from "@/src/negocios/FalhaDaLeitura"
-import { FormularioDePedido } from "@/src/negocios/FormularioDePedido"
 import { TelaIndisponivel } from "@/src/telas/TelaIndisponivel"
 
 export function Negocio() {
@@ -24,8 +23,6 @@ export function Negocio() {
   const [erro, setErro] = useState<unknown>(null)
   const [rodada, setRodada] = useState(0)
   const [salvo, setSalvo] = useState(false)
-  const { aberto: pedindo, aoMudarAberto: setPedindo } =
-    useSobreposicaoDaEntrada("contato-interesse")
 
   useRolagemEFoco(CARGA_CONCLUIDA)
   // biome-ignore lint/correctness/useExhaustiveDependencies: rodada é o pedido de tentar de novo
@@ -109,14 +106,18 @@ export function Negocio() {
               Descreva o que precisa. Valores e pagamento são combinados entre vocês.
             </p>
             <div className="flex flex-wrap gap-2">
-              <Botao
-                icone="request_quote"
+              {/* A folha do pedido tem endereço próprio (`/app/pedidos/novo`) e o
+                  negócio vai no `?destino=`. O link carrega a busca nativa, como o
+                  "Vou me mudar para cá" do Você — sem cópia da folha nesta tela. */}
+              <a
+                href={`/app/pedidos/novo?destino=${encodeURIComponent(negocio.id)}`}
                 data-acao="pedir-orcamento"
-                disabled={!negocio.podePedir}
-                onClick={() => setPedindo(true)}
+                aria-disabled={!negocio.podePedir}
+                className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-(--primary) px-4 text-sm font-semibold text-(--on-primary) aria-disabled:pointer-events-none aria-disabled:opacity-50"
               >
+                <Icone nome="request_quote" className="size-5" />
                 Pedir orçamento
-              </Botao>
+              </a>
               <Botao
                 tom="contornado"
                 icone={salvo ? "bookmark" : "bookmark_border"}
@@ -135,17 +136,6 @@ export function Negocio() {
               </p>
             )}
           </Secao>
-          {pedindo && negocio.podePedir ? (
-            <FormularioDePedido
-              key={negocio.id}
-              negocioId={negocio.id}
-              nome={negocio.nome}
-              aoFechar={() => setPedindo(false)}
-              aoSalvar={(pedidoId) =>
-                void navegacao.irPara("pedido", { parametros: { id: pedidoId } })
-              }
-            />
-          ) : null}
         </>
       )}
     </section>

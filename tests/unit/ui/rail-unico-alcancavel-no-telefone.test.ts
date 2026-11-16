@@ -38,11 +38,11 @@ const read = (...segments: string[]) => readFileSync(join(root, ...segments), "u
 // trilho (preso a >=1024px) tem porta visível no telefone em OUTRO lugar.
 describe("/inicio: o que o trilho oferece continua alcançável no telefone", () => {
   const rail = read("apps", "web", "app", "(shell)", "inicio", "right-rail.tsx")
-  const explorar = read("apps", "web", "app", "(shell)", "explorar", "page.tsx")
-  // LT-002: a página explorar/busca saiu (307 para /app/busca). A porta /localidade
-  // fora do trilho sobrevive em explorar/servicos ("Trocar de cidade"); a prova
-  // reloca para lá em vez de ler um arquivo removido.
-  const servicos = read("apps", "web", "app", "(shell)", "explorar", "servicos", "page.tsx")
+  // RUN-177 (F07): `/explorar`, `/explorar/servicos` e `/guide` saíram da web
+  // (307 para o app) e as páginas que davam a porta no telefone foram apagadas
+  // com o lote. A prova viva passa a ser o CATÁLOGO do roteador do app: o
+  // destino do trilho tem tela lá, então o 307 entrega uma tela, não um vazio.
+  const catalogo = read("apps", "app", "lib", "navegacao", "rotas.ts")
   const shell = read("apps", "web", "app", "components", "bivaque", "app-shell.tsx")
   const page = read("apps", "web", "app", "(shell)", "inicio", "page.tsx")
 
@@ -50,17 +50,17 @@ describe("/inicio: o que o trilho oferece continua alcançável no telefone", ()
     expect(rail).toContain('<aside className="hidden w-80 shrink-0 lg:block"')
   })
 
-  it("o Guia do trilho tem porta no Explorar", () => {
+  it("todo destino do trilho que saiu da web existe no app", () => {
     expect(rail).toContain('action="/guide"')
-    expect(explorar).toContain('href: "/guide"')
-    expect(explorar).toContain('href: "/explorar/servicos"')
+    expect(catalogo).toContain('["guia", "/guia"')
+    expect(catalogo).toContain('["negocios", "/negocios"')
   })
 
-  it("'De mudança?' tem porta fora do trilho", () => {
-    // CIDADE-169: o trilho aponta para a consulta no app; o Explorar ainda usa o
-    // endereço antigo, que responde 307 para a mesma tela (provado em lan-troca).
+  it("'De mudança?' aponta para a consulta de cidade do app", () => {
+    // CIDADE-169: o trilho aponta direto para a tela do app; `/localidade` é só
+    // rede para link antigo e responde 307 para a mesma tela.
     expect(rail).toContain('href={"/app/cidade/atual" as Route}')
-    expect(servicos).toContain('href="/localidade"')
+    expect(catalogo).toContain('["cidade", "/cidade/$id"')
   })
 
   it("Indicações tem porta no cabeçalho, em toda largura", () => {

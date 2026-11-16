@@ -45,6 +45,8 @@ export type NomeDeRota =
   | "verbete"
   | "pedidos"
   | "pedido"
+  | "pedido-novo"
+  | "meu-negocio"
   | "dono"
   | "entrar"
   | "privacidade"
@@ -165,6 +167,14 @@ const LINHAS: readonly LinhaDoCatalogo[] = [
   ["verbete", "/guia/$id", "Referência", "origem", { parametro: "id", pai: "guia" }],
   ["pedidos", "/pedidos", "Pedidos de serviço", "voce", { pai: "voce" }],
   ["pedido", "/pedido/$id", "Pedido de serviço", "origem", { parametro: "id", pai: "pedidos" }],
+  // F07 (RUN-177): o pedido ganhou URL própria, com o negócio no `?destino=`.
+  // É a MESMA folha da ficha, agora endereçável — chega-se de dentro do app e
+  // de um link antigo do Criar.
+  ["pedido-novo", "/pedidos/novo", "Pedir orçamento", "origem", { pai: "negocios" }],
+  // Meu negócio: a gestão da ficha do próprio membro (ficha, catálogo e fotos).
+  // Não é detalhe de negócio nenhum (`/negocio/$id`), então tem endereço e
+  // nome próprios, e mora em Você como as outras telas da própria pessoa.
+  ["meu-negocio", "/meu-negocio", "Meu negócio", "voce", { pai: "voce" }],
   ["dono", "/dono", "Painel do Bivaque", "sem-aba", { casca: "painel", pai: "inicio" }],
   [
     "entrar",
@@ -211,7 +221,9 @@ export const NOMES_DAS_33: readonly NomeDeRota[] = ROTAS.filter(
     rota.nome !== "verbete" &&
     rota.nome !== "perfil" &&
     rota.nome !== "cidade" &&
-    rota.nome !== "alertas-de-imovel",
+    rota.nome !== "alertas-de-imovel" &&
+    rota.nome !== "pedido-novo" &&
+    rota.nome !== "meu-negocio",
 ).map((rota) => rota.nome)
 
 const POR_NOME: Readonly<Record<string, Rota | undefined>> = Object.fromEntries(

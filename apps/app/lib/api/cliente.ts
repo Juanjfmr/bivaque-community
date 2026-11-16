@@ -77,15 +77,36 @@ function falhaDe(status: number, corpo: Record<string, unknown>): FalhaDaApi {
   return new FalhaDaApi(codigo, status, textoOuNulo(corpo, "erro"), textoOuNulo(corpo, "mensagem"))
 }
 
+async function interpretar(resposta: Response): Promise<Record<string, unknown>> {
+  const lido = (await resposta.json().catch(() => ({}))) as unknown
+  const dados =
+    lido !== null && typeof lido === "object" && !Array.isArray(lido)
+      ? (lido as Record<string, unknown>)
+      : {}
+  if (!resposta.ok) throw falhaDe(resposta.status, dados)
+  return dados
+}
+
+async function comRede(fazer: () => Promise<Response>): Promise<Record<string, unknown>> {
+  let resposta: Response
+  try {
+    resposta = await fazer()
+  } catch (erro: unknown) {
+    // Abortar é decisão de quem chamou, não falha de rede: o erro sobe inteiro.
+    if (erro instanceof DOMException && erro.name === "AbortError") throw erro
+    throw new FalhaDaApi("rede", 0)
+  }
+  return interpretar(resposta)
+}
+
 async function chamar(
   metodo: "GET" | "POST" | "PUT" | "PATCH" | "DELETE",
   caminho: string,
   corpo: unknown,
   signal: AbortSignal | undefined,
 ): Promise<Record<string, unknown>> {
-  let resposta: Response
-  try {
-    resposta = await fetch(caminho, {
+  return comRede(() =>
+    fetch(caminho, {
       method: metodo,
       credentials: "include",
       headers:
@@ -94,21 +115,8 @@ async function chamar(
           : { ...CABECALHOS_DO_APP, "content-type": "application/json" },
       ...(corpo === undefined ? {} : { body: JSON.stringify(corpo) }),
       ...(signal === undefined ? {} : { signal }),
-    })
-  } catch (erro: unknown) {
-    // Abortar é decisão de quem chamou, não falha de rede: o erro sobe inteiro.
-    if (erro instanceof DOMException && erro.name === "AbortError") throw erro
-    throw new FalhaDaApi("rede", 0)
-  }
-
-  const lido = (await resposta.json().catch(() => ({}))) as unknown
-  const dados =
-    lido !== null && typeof lido === "object" && !Array.isArray(lido)
-      ? (lido as Record<string, unknown>)
-      : {}
-
-  if (!resposta.ok) throw falhaDe(resposta.status, dados)
-  return dados
+    }),
+  )
 }
 
 /** Leitura. Pode ser repetida por quem chama (o "Tentar de novo" da tela). */
@@ -127,4 +135,25 @@ export function enviar(
   opcoes: { signal?: AbortSignal } = {},
 ) {
   return chamar(metodo, caminho, corpo, opcoes.signal)
+}
+
+/**
+ * Escrita de arquivo (multipart). O `content-type` é do navegador — com
+ * `boundary` —, então não entra cabeçalho de JSON; o resto do tratamento de
+ * resposta é o mesmo de `enviar`.
+ */
+export function enviarFormulario(
+  caminho: string,
+  formulario: FormData,
+  opcoes: { signal?: AbortSignal } = {},
+) {
+  return comRede(() =>
+    fetch(caminho, {
+      method: "POST",
+      credentials: "include",
+      headers: CABECALHOS_DO_APP,
+      body: formulario,
+      ...(opcoes.signal === undefined ? {} : { signal: opcoes.signal }),
+    }),
+  )
 }

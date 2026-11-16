@@ -17,6 +17,42 @@ export function mensagemDoPedido(falha: unknown): string {
   return "Não foi possível confirmar o pedido agora. Seu texto continua aqui — tente novamente."
 }
 
+/** Cancelar/encerrar: o estado decidido no banco é a verdade, e a frase diz isso. */
+export function mensagemDaAcao(falha: unknown): string {
+  if (falha instanceof FalhaDaApi) {
+    if (falha.mensagem !== null) return falha.mensagem
+    if (falha.codigo === "sem-sessao") return "Entre de novo para continuar."
+    if (falha.codigo === "conflito") return "Este pedido já mudou de situação. Recarregue a tela."
+    if (falha.codigo === "recusado") return "Só quem participa do pedido pode fazer isso."
+  }
+  return "Não foi possível concluir agora. Tente novamente."
+}
+
+/** A ficha e o catálogo do Meu negócio (mesmos limites da validação do servidor). */
+export function validarFicha(nome: string, categoria: string, descricao: string): string | null {
+  if (nome.trim().length < 2 || nome.trim().length > 80)
+    return "O nome do negócio precisa ter entre 2 e 80 caracteres."
+  if (categoria === "") return "Escolha uma categoria."
+  if (descricao.trim().length > 800) return "A descrição passa de 800 caracteres."
+  return null
+}
+
+export function validarServico(titulo: string, descricao: string): string | null {
+  if (titulo.trim().length < 2 || titulo.trim().length > 120)
+    return "O título precisa ter entre 2 e 120 caracteres."
+  if (descricao.trim().length > 600) return "A descrição passa de 600 caracteres."
+  return null
+}
+
+export function mensagemDaFicha(falha: unknown): string {
+  if (falha instanceof FalhaDaApi) {
+    if (falha.mensagem !== null) return falha.mensagem
+    if (falha.codigo === "sem-sessao") return "Entre de novo para gerenciar seu negócio."
+    if (falha.codigo === "conflito") return "Sua página de negócio já existe."
+  }
+  return "Não foi possível salvar agora. Seus dados continuam preenchidos; tente novamente."
+}
+
 export const SITUACOES_DO_PEDIDO = {
   open: "Em aberto",
   in_conversation: "Em conversa",

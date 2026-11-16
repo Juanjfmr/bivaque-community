@@ -52,34 +52,36 @@ for (const tema of ["light"] as const) {
       await expect(page).toHaveURL(/\/app\/imoveis$/)
     })
 
-    test("vazio e 'Divulgar meu negócio' abrem o mesmo caminho de cadastro", async ({
+    test("vazio e 'Divulgar meu negócio' levam ao mesmo caminho de cadastro", async ({
       page,
     }, info) => {
       test.skip(!TAMANHOS.includes(info.project.name as (typeof TAMANHOS)[number]), "três larguras")
       await simularNegociosDaLista(page, {
         negocios: { negocios: [], categorias: [], cidade: "Manaus", proximo: null },
       })
+      // F07 (RUN-177): a página do negócio nasce em Meu negócio, e é para lá que
+      // os dois botões levam. Sem ficha, a tela é o formulário de criação.
+      await page.route(/\/api\/app\/negocio(?:\?|$)/, (rota) =>
+        rota.fulfill({
+          json: { negocio: null, categorias: [{ id: "pets", nome: "Pets" }] },
+        }),
+      )
       await page.goto("/app/negocios")
 
       const vazio = page.locator('[data-estado="vazio"]')
       await expect(vazio).toContainText("Ainda sem negócios cadastrados")
       await capturar(page, `${info.project.name}-${tema}-03-vazio`)
 
-      // O botão do vazio e o do topo abrem o menu Criar, o caminho real.
-      const menu = page.locator('[data-sobreposicao="menu-criar"]')
       await vazio.getByRole("button", { name: "Divulgar meu negócio", exact: true }).click()
-      await expect(menu).toHaveCount(1)
-      await expect(menu).toBeVisible()
-      await expect(menu.locator('[data-escolha="my-biz"]')).toHaveAttribute(
-        "aria-label",
-        "Divulgar meu negócio",
-      )
-      await capturar(page, `${info.project.name}-${tema}-04-menu-criar`)
-      await page.keyboard.press("Escape")
-      await expect(menu).toHaveCount(0)
+      await expect(page).toHaveURL(/\/app\/meu-negocio$/)
+      const tela = page.locator('[data-tela="meu-negocio"]')
+      await expect(tela.getByRole("heading", { name: "Meu negócio", level: 1 })).toBeVisible()
+      await expect(tela.getByLabel("Nome do negócio")).toBeVisible()
+      await capturar(page, `${info.project.name}-${tema}-04-meu-negocio`)
 
+      await page.goto("/app/negocios")
       await page.locator('button[data-acao="anunciar-negocio"]').click()
-      await expect(menu).toHaveCount(1)
+      await expect(page).toHaveURL(/\/app\/meu-negocio$/)
     })
 
     test("seção irmã fora do ar não vira contagem inventada", async ({ page }, info) => {

@@ -7,8 +7,10 @@ import { Casca } from "@/src/casca/Casca"
 import { TelaDeEntrada } from "@/src/entrada/TelaDeEntrada"
 import { MercadoLab } from "@/src/galeria/mercado/MercadoLab"
 import { TelaGaleria } from "@/src/galeria/TelaGaleria"
+import { MeuNegocio } from "@/src/meu-negocio/MeuNegocio"
 import { modoDeProvaAtivo } from "@/src/modo-de-prova"
 import { Negocios } from "@/src/negocios/Negocios"
+import { PedidoNovo } from "@/src/negocios/PedidoNovo"
 import { Agenda } from "@/src/telas/Agenda"
 import { Ajuda } from "@/src/telas/Ajuda"
 import { AlertasDeImovel } from "@/src/telas/AlertasDeImovel"
@@ -87,6 +89,9 @@ const ROTAS_COM_BUSCA = new Set([
   // RUN-170: `/app/voce?mudar=<id>` abre o formulário de mudança com o destino
   // escolhido; sem a busca declarada, o roteador descarta o parâmetro.
   "voce",
+  // F07 (RUN-177): `/app/pedidos/novo?destino=<negocio>` é a folha do pedido
+  // aberta por URL. Sem a busca declarada o destino se perderia na recarga.
+  "pedido-novo",
 ])
 
 /**
@@ -126,7 +131,9 @@ const TELAS_REAIS: Readonly<Partial<Record<string, ComponentType>>> = {
   inicio: Inicio,
   mercado: Mercado,
   "meus-anuncios": MeusAnuncios,
+  "meu-negocio": MeuNegocio,
   pedido: Pedido,
+  "pedido-novo": PedidoNovo,
   pedidos: Pedidos,
   minhas: Minhas,
   negocios: Negocios,

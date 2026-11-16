@@ -117,7 +117,7 @@ for (const tema of ["light"] as const) {
       await expect(page.getByRole("heading", { name: "Onde atende", exact: true })).toBeVisible()
       await capturar(page, `${testInfo.project.name}-${tema}-02-ficha`)
 
-      const pedir = page.getByRole("button", { name: "Pedir orçamento", exact: true })
+      const pedir = page.getByRole("link", { name: "Pedir orçamento", exact: true })
       await expect
         .poll(async () => {
           const cores = await pedir.evaluate((elemento) => ({
@@ -134,6 +134,9 @@ for (const tema of ["light"] as const) {
       expect(alvo?.width).toBeGreaterThanOrEqual(44)
       await pedir.focus()
       await page.keyboard.press("Enter")
+      // F07 (RUN-177): a folha do pedido tem endereço próprio e o negócio vai
+      // no `?destino=`. É a MESMA folha, agora endereçável.
+      await expect(page).toHaveURL(new RegExp(`/app/pedidos/novo\\?destino=${ID}$`))
       await expect(page.locator("[data-sobreposicao]")).toHaveCount(1)
       await expect(page.getByRole("dialog")).toBeVisible()
       await page.getByLabel("O que você precisa?").fill("Limpar o ar-condicionado da sala")
