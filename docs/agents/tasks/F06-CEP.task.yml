@@ -49,10 +49,12 @@ allowed_paths:
   - docs/agents/tasks/F06-CEP.task.yml
   - supabase/migrations
   - supabase/tests
+  - supabase/database.generated.ts
   - apps/web/lib/geo
   - apps/web/lib/listings
   - apps/web/app/api/app/mercado
   - apps/app/lib/dados/mercado.ts
+  - apps/app/lib/dados/criar.ts
   - apps/app/src/criar
   - apps/app/src/mercado
   - apps/app/src/telas/Anuncio.tsx
@@ -60,7 +62,10 @@ allowed_paths:
   - apps/app/components/bivaque/formulario-imovel.tsx
   - apps/app/tests
   - tests/unit/app-api/mercado
+  - tests/unit/app-api/voce
   - tests/unit/geo
+  - tests/unit/listings
+  - tests/scope/f03-criar.test.mjs
   - tests/e2e/f06-mercado-real.spec.ts
   - scripts/visual/capture.mjs
   - .visual/f06-cep
