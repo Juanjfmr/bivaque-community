@@ -1,0 +1,68 @@
+# Aceite por código de convite: falha do marcador deixa de ser silenciosa.
+#
+# Autoridade: auditoria independente do security-auditor de 16/11 (.work/orq/relatorios/
+# auditoria-r3-lote1.md, achados A1-1 e A1-3, MEDIUM e LOW): a rota de aceite por código do
+# app grava o marcador do rascunho numa segunda chamada e, se ela falha, só loga e devolve 200.
+# O rascunho pessoal sobrevive à entrada concluída e a retomada fica presa. As rotas irmãs
+# (interesses, combinado) devolvem 503 nesse caso. O aceite é idempotente: repetir o código
+# regrava o marcador, então 503 com nova tentativa é seguro.
+#
+# Decisão do coordenador (16/11): correção de caminho de falha, não ajuste de funcionalidade;
+# não fere o congelamento da entrada (ADR-20261105-entrada-enxuta). O texto do ADR-20261102
+# que diz apagado dentro do provisionamento, para todos os caminhos, ganha a emenda que
+# descreve o caminho do convite por código como ele é.
+
+task_id: SEC-012
+
+objective: >
+  Quem entra por código de convite familiar nunca termina a entrada com o rascunho pessoal
+  anterior vivo: se a gravação do marcador da etapa seguinte falha, a rota responde 503 (como
+  as rotas irmãs) e a nova tentativa, que é idempotente, conclui; e há prova automática disso.
+
+authority:
+  - .work/orq/relatorios/auditoria-r3-lote1.md (A1-1, A1-3), auditoria do security-auditor de 16/11
+  - docs/decisions/ADR-20261102-progresso-da-entrada.md (emendado neste lote)
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    apps/web/app/api/app/entry/invite/route.ts:140-153 faz upsert do marcador depois do aceite
+    e, no erro, só loga e devolve 200; o pgTAP entry-provision-atomic.sql:220-268 rotulado
+    "convite familiar" exercita provision_member_entry, não family_invite_code_accept.
+
+allowed_paths:
+  - apps/web/app/api/app/entry/invite/route.ts
+  - tests/unit/app-api/entrada-convite.test.ts
+  - tests/e2e/f01-entrada-real.spec.ts
+  - docs/decisions/ADR-20261102-progresso-da-entrada.md
+  - docs/agents/tasks/SEC-012.task.yml
+
+forbidden:
+  - mudar family_invite_code_accept, provision_member_entry ou qualquer migration
+  - mudar a tela do app, as outras rotas da entrada, limites, Turnstile ou o envio do código (entrada congelada)
+  - expor no corpo da resposta a mensagem do Postgres ou qualquer detalhe interno (a resposta 503 usa o mesmo formato das rotas irmãs)
+  - push, merge, abrir PR, force-push; ler, criar ou imprimir arquivos de ambiente
+
+acceptance:
+  - "Na rota de aceite por código, falha na gravação do marcador responde 503 no mesmo formato e com o mesmo código de erro das rotas irmãs de interesses e combinado, e loga sem dado pessoal."
+  - "Teste unitário negativo: com o upsert do marcador falhando, a resposta é 503 e não contém a mensagem do erro; com o upsert ok, continua 200 com localityMember."
+  - "Teste unitário de idempotência da rota: segunda chamada depois de um 503 conclui com 200 (aceite idempotente simulado)."
+  - "O E2E do convite em f01-entrada-real passa a afirmar que, ao fim da entrada por código, não existe rascunho pessoal (zero linhas de rascunho com estado de nome/cidade para o usuário) — leitura pelo caminho que o spec já usa para conferir o banco."
+  - "ADR-20261102 ganha a emenda de 16/11: o caminho do convite por código grava o marcador fora da transação do aceite e falha fechado (503 + nova tentativa idempotente); o texto 'todos os caminhos' é corrigido."
+
+proof:
+  - npx pnpm@11.18.0 test
+  - npx pnpm@11.18.0 lint
+  - "node scripts/agents/prova-fila.mjs -- node scripts/agents/prova-sequencia.mjs e2e tests/e2e/f01-entrada-real.spec.ts"
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/SEC-012.task.yml
+
+risk: caminho de falha da entrada por convite e retenção de rascunho pessoal
+risk_level: R3
+adr: docs/decisions/ADR-20261102-progresso-da-entrada.md
+
+reviewer_must_differ_from_executor: true
+retry_budget: 2
+on_budget_exhausted: HUMAN_DECISION
+
+closure:
+  requires_runtime_evidence: true
