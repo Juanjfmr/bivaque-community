@@ -71,6 +71,7 @@ allowed_paths:
   - tests/unit/app-api/pedidos
   - tests/unit/app-api/negocio
   - tests/unit/security/api-surface.test.ts
+  - tests/unit/ui/rail-unico-alcancavel-no-telefone.test.ts
   - tests/e2e/link-crawl.spec.ts
   - tests/e2e/provider-member-business.spec.ts
   - tests/e2e/f07-negocios-real.spec.ts
