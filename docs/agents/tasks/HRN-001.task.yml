@@ -61,7 +61,7 @@ acceptance:
   - "`--apply --dry-run` mostra o diff resumido (cartões criados, alterados, movidos) sem escrever nada."
   - "Aplicar o mesmo patch duas vezes não duplica nota nem cartão (idempotência por conteúdo de nota e por id)."
   - "As mensagens de erro e de ajuda do board.mjs estão em português com acentuação correta (sem mojibake)."
-  - "Um teste de escopo novo (`tests/scope/encoding.test.mjs`) percorre os arquivos de texto rastreados pelo git (md, yml, json, mjs, cjs, ts, tsx, sql) e falha se encontrar sequências típicas de mojibake (por exemplo `Ã§`, `Ã£`, `Ã©`, `Ã³`, `Ãª`, `Â `, o caractere de substituição U+FFFD) ou BOM. Arquivos com mojibake hoje entram numa lista de exceções explícita dentro do teste, cada um com o motivo; o SALVAR-GLYPH.task.yml é corrigido neste lote e sai da lista."
+  - "Um teste de escopo novo (`tests/scope/encoding.test.mjs`) percorre os arquivos de texto rastreados pelo git (md, yml, json, mjs, cjs, ts, tsx, sql) e falha se encontrar sequências típicas de mojibake (por exemplo o par U+00C3 + U+00A7, o par U+00C3 + U+00A3, o par U+00C3 + U+00A9, o par U+00C3 + U+00B3, o par U+00C3 + U+00AA, o espaço U+00C2 seguido de U+00A0, o caractere de substituição U+FFFD) ou BOM. Arquivos com mojibake hoje entram numa lista de exceções explícita dentro do teste, cada um com o motivo; o SALVAR-GLYPH.task.yml é corrigido neste lote e sai da lista."
   - "AGENTS.md (seção do quadro) e LICOES.md (lição do quadro/biome) passam a mandar usar `--apply` e proíbem script avulso para editar o board.json, em no máximo 6 linhas no total."
 
 proof:
