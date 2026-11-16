@@ -86,7 +86,7 @@ export type RotaClassificada = Readonly<{
 }>
 
 /** Quantas rotas o manifesto cobre. Um rota nova exige classificação explícita. */
-export const TOTAL_DE_ROTAS = 102
+export const TOTAL_DE_ROTAS = 107
 
 function teste(arquivo: string, caso: string): ProvaDaRota {
   return { tipo: "teste", arquivo, caso }
@@ -215,8 +215,62 @@ const SESSAO: readonly Linha[] = [
   ["/api/app/negocios", "exigirSessao(", PORTA],
   ["/api/app/negocios/[id]", "exigirSessao(", PORTA],
   ["/api/app/negocios/[id]/pedidos", "exigirSessao(", PORTA],
-  ["/api/app/pedidos", "exigirSessao(", PORTA],
-  ["/api/app/pedidos/[id]", "exigirSessao(", PORTA],
+  // F07 (RUN-177): a ficha do próprio negócio. A gravação de foto reconfere a
+  // autorização e usa `service_role` porque a SEC-006 tirou o INSERT de imagem
+  // do papel `authenticated` — a prova é a do lote (tests/unit/app-api/negocio).
+  [
+    "/api/app/negocio",
+    "exigirSessao(",
+    teste(
+      "tests/unit/app-api/negocio/rotas.test.ts",
+      "cria pelo RPC da sessão e devolve a ficha relida",
+    ),
+  ],
+  [
+    "/api/app/negocio/catalogo",
+    "exigirSessao(",
+    teste(
+      "tests/unit/app-api/negocio/rotas.test.ts",
+      "publica serviço na posição do fim e devolve a lista ordenada",
+    ),
+  ],
+  [
+    "/api/app/negocio/catalogo/[id]",
+    "exigirSessao(",
+    teste("tests/unit/app-api/negocio/rotas.test.ts", "mover item de outra ficha é 404"),
+  ],
+  [
+    "/api/app/negocio/fotos",
+    "exigirSessao(",
+    teste(
+      "tests/unit/app-api/negocio/rotas.test.ts",
+      "envia a foto por multipart, sanitizada e no bucket da ficha",
+    ),
+  ],
+  [
+    "/api/app/negocio/fotos/[id]",
+    "exigirSessao(",
+    teste(
+      "tests/unit/app-api/negocio/rotas.test.ts",
+      "remover foto de outra ficha é 404 sem tocar o Storage",
+    ),
+  ],
+  [
+    "/api/app/pedidos",
+    "exigirSessao(",
+    teste(
+      "tests/unit/app-api/negocios/rotas.test.ts",
+      "lista os pedidos dos dois lados, com o lado de quem lê",
+    ),
+  ],
+  [
+    "/api/app/pedidos/[id]",
+    "exigirSessao(",
+    teste(
+      "tests/unit/app-api/negocios/rotas.test.ts",
+      "encerrar já encerrado é idempotente e não reescreve",
+    ),
+  ],
   ["/api/app/perguntas", "exigirSessao(", PORTA],
   ["/api/app/perguntas/[id]", "exigirSessao(", PORTA],
   ["/api/app/perguntas/[id]/denuncia", "exigirSessao(", PORTA],
