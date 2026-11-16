@@ -413,18 +413,43 @@ describe("F07 — rotas sob a sessão", () => {
     expect(mock.alcances).toContainEqual(`requester_user_id.eq.${USER},provider_user_id.eq.${USER}`)
   })
 
+  // O teto de 5 pedidos abertos por par (ADR-20260923) e as recusas conhecidas
+  // têm de sair do servidor como frase COM SAÍDA — o texto genérico faz a pessoa
+  // reenviar o mesmo pedido recusado. A frase é a de lib/service-requests/
+  // request-form.ts, a mesma que a ação web usava antes do RUN-177: aqui ela é
+  // provada pela PORTA, que é o caminho vivo depois da troca.
   it.each([
-    ["42501", 403],
-    ["22023", 400],
-    ["P0002", 404],
-    ["54000", 429],
-    ["XX000", 503],
-  ])("traduz recusa %s sem eco do Postgres", async (codigo, status) => {
-    autenticar(cliente({ erroRpc: codigo }))
-    const resposta = await criar(req(`negocios/${ID}/pedidos`, "POST", corpo), contexto)
-    expect(resposta.status).toBe(status)
-    expect(await resposta.text()).not.toContain("segredo")
-  })
+    [
+      "42501",
+      403,
+      "recusado",
+      "Sua conta não pode enviar um pedido a este negócio. Seu texto continua aqui.",
+    ],
+    [
+      "54000",
+      429,
+      "limite",
+      "Você já tem cinco pedidos em aberto com este prestador. Feche ou cancele um para enviar outro.",
+    ],
+    ["22023", 400, "dados-invalidos", "Revise a descrição e o prazo do serviço."],
+    ["P0002", 404, "negocio-nao-encontrado", "Este negócio não está disponível."],
+    [
+      "XX000",
+      503,
+      "escrita-indisponivel",
+      "Não foi possível confirmar o pedido agora. Seu texto continua aqui — tente novamente.",
+    ],
+  ])(
+    "traduz a recusa %s na frase com saída, sem eco do Postgres",
+    async (codigo, status, erro, mensagem) => {
+      autenticar(cliente({ erroRpc: codigo }))
+      const resposta = await criar(req(`negocios/${ID}/pedidos`, "POST", corpo), contexto)
+      expect(resposta.status).toBe(status)
+      const dados = await resposta.json()
+      expect(dados).toEqual({ erro, mensagem })
+      expect(JSON.stringify(dados)).not.toContain("segredo")
+    },
+  )
 
   it.each([{ rpcSemId: true }, { pedido: null }])(
     "escrita sem confirmação não vira sucesso",

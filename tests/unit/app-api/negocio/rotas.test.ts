@@ -85,6 +85,10 @@ let servicoAtual: ReturnType<typeof servico>
 function cliente(opcoes: Opcoes = {}) {
   const gravacoes: { tabela: string; metodo: string; valores?: unknown }[] = []
   const filtros: { tabela: string; coluna: string; valor: unknown }[] = []
+  // Espiões do Storage da SESSÃO: a escrita de imagem é do `service_role`
+  // (SEC-006), então estes dois nunca podem ser chamados pela rota.
+  const uploadDaSessao = vi.fn(async () => ({ error: null }))
+  const removeDaSessao = vi.fn(async () => ({ error: null }))
   // A ficha passa a existir quando o RPC de criação responde: a rota relê a
   // ficha depois de criar, e o mock precisa acompanhar isso.
   let existe = opcoes.semFicha !== true
@@ -174,12 +178,24 @@ function cliente(opcoes: Opcoes = {}) {
     client: {
       from,
       rpc,
-      storage: { from: () => ({ createSignedUrl: servicoAtual.assinar }) },
+      // O cliente da SESSÃO também enxerga o bucket: se a rota usasse este
+      // cliente para gravar ou apagar, o espião acusaria. A garantia SEC-006 é
+      // que a escrita de imagem sai pelo `service_role` (depois de reconferir a
+      // autorização), nunca pela sessão.
+      storage: {
+        from: () => ({
+          createSignedUrl: servicoAtual.assinar,
+          upload: uploadDaSessao,
+          remove: removeDaSessao,
+        }),
+      },
     } as never,
     from,
     rpc,
     gravacoes,
     filtros,
+    uploadDaSessao,
+    removeDaSessao,
   }
 }
 
@@ -485,6 +501,10 @@ describe("F07 — catálogo e fotos da ficha", () => {
     expect(resposta.status).toBe(201)
     expect(sanitizar).toHaveBeenCalledOnce()
     expect(servicoAtual.upload).toHaveBeenCalledOnce()
+    // A gravação é do serviço e leva os BYTES sanitizados, não o original; a
+    // sessão não escreve no bucket (SEC-006, a garantia que a ação web deixou).
+    expect(servicoAtual.upload.mock.calls[0]?.[1]).toEqual(Buffer.from([1, 2, 3]))
+    expect(mock.uploadDaSessao).not.toHaveBeenCalled()
     expect(servicoAtual.upload.mock.calls[0]?.[0]).toMatch(
       new RegExp(`^${FICHA}/portfolio/[0-9a-f-]+\\.png$`),
     )
@@ -565,7 +585,10 @@ describe("F07 — catálogo e fotos da ficha", () => {
 
     const remocao = await removerFoto(req("negocio/fotos/x", "DELETE"), contexto(FOTO))
     expect(remocao.status).toBe(200)
+    // Remoção também é privilégio reconferido: objeto apagado pelo serviço,
+    // nunca pela sessão.
     expect(servicoAtual.remove).toHaveBeenCalledWith([fotoDaFicha.photo_path])
+    expect(mock.removeDaSessao).not.toHaveBeenCalled()
   })
 
   it("remover foto de outra ficha é 404 sem tocar o Storage", async () => {

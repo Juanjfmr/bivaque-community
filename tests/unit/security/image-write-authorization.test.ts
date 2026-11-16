@@ -3,7 +3,6 @@ import {
   addPortfolioPhotoAction,
   deletePortfolioPhotoAction,
 } from "web/app/(provider)/prestador/actions"
-import { uploadServiceRequestPhotoAction } from "web/app/(shell)/pedidos/novo/actions"
 import {
   deleteListingPhotoObjectAction,
   removeListingPhotoAction,
@@ -17,6 +16,14 @@ import { hasExifGps, imageMetadata, locationImage } from "../../fixtures/locatio
 //   1. a gravação acontece com o cliente service_role, nunca com o do usuário;
 //   2. a autorização que a policy do Storage exigia é reconferida antes do
 //      upload — uma conta sem posse é recusada sem gravar nada.
+//
+// RUN-177 (F07): o caminho do ANEXO DO PEDIDO morreu com a tela web
+// (`(shell)/pedidos/novo`) e não tem equivalente vivo — o app ainda não aceita
+// anexo no pedido. As garantias de autorização para o portfólio do negócio
+// seguem vivas aqui (ação do prestador) e na porta `/api/app/negocio/fotos`
+// (tests/unit/app-api/negocio/rotas.test.ts, que prova bytes sanitizados,
+// service_role e a sessão sem escrita). O contrato do anexo volta com o card de
+// anexos do pedido, e então nasce na porta, não numa Server Action.
 //
 // Revisão L3: o mock registra os filtros recebidos e só devolve o recurso quando
 // o id E o dono conferem. Antes ele decidia o resultado antes dos filtros, com
@@ -32,8 +39,6 @@ const mocks = vi.hoisted(() => {
     profileOwned: true,
     profileOwner: "fixture-user",
     canManageProfile: true,
-    requestOwned: true,
-    requestOwner: "fixture-user",
     portfolioRow: null as null | { photo_path: string; provider_id: string },
     ownershipError: null as null | { message: string },
     rpcError: null as null | { message: string },
@@ -70,17 +75,6 @@ const mocks = vi.hoisted(() => {
       const owner = filterValue(filters, "owner_user_id")
       const found = state.profileOwned && owner === state.profileOwner
       return { data: found ? { id: "fixture-provider" } : null, error: null, count: 0 }
-    }
-    if (name === "service_requests") {
-      const id = filterValue(filters, "id")
-      const requester = filterValue(filters, "requester_user_id")
-      const found =
-        state.requestOwned && id === "fixture-request" && requester === state.requestOwner
-      return {
-        data: found ? { id: "fixture-request" } : null,
-        error: state.ownershipError,
-        count: 0,
-      }
     }
     if (name === "provider_portfolio_photos") {
       const id = filterValue(filters, "id")
@@ -168,8 +162,6 @@ beforeEach(() => {
   mocks.state.profileOwned = true
   mocks.state.profileOwner = "fixture-user"
   mocks.state.canManageProfile = true
-  mocks.state.requestOwned = true
-  mocks.state.requestOwner = "fixture-user"
   mocks.state.portfolioRow = null
   mocks.state.ownershipError = null
   mocks.state.rpcError = null
@@ -286,67 +278,6 @@ describe("SEC-006 portfólio", () => {
     form.set("file", await locationImage("jpeg"))
 
     await expect(addPortfolioPhotoAction(form)).rejects.toThrow()
-    expect(mocks.serviceUpload).not.toHaveBeenCalled()
-  })
-})
-
-describe("SEC-006 pedido", () => {
-  function requestPhotoForm(file: File): FormData {
-    const form = new FormData()
-    form.set("requestId", "fixture-request")
-    form.set("position", "0")
-    form.set("photo", file)
-    return form
-  }
-
-  it("uploads with service_role after confirming the request belongs to the caller", async () => {
-    const file = await locationImage("webp")
-    const result = await uploadServiceRequestPhotoAction(requestPhotoForm(file))
-
-    expect(result).toEqual({ ok: true })
-    expect(mocks.userUpload).not.toHaveBeenCalled()
-    expect(mocks.serviceUpload).toHaveBeenCalledOnce()
-    expect(mocks.serviceStorageFrom).toHaveBeenCalledWith("service-request-photos")
-    const stored = await imageMetadata(mocks.serviceUpload.mock.calls[0]?.[1])
-    expect(stored.exif).toBeUndefined()
-    expect(stored.xmp).toBeUndefined()
-  })
-
-  it("checks the request id and the caller's requester_user_id before uploading", async () => {
-    await uploadServiceRequestPhotoAction(requestPhotoForm(await locationImage("jpeg")))
-
-    expect(mocks.state.filters).toContainEqual({
-      scope: "service",
-      table: "service_requests",
-      column: "id",
-      value: "fixture-request",
-    })
-    expect(mocks.state.filters).toContainEqual({
-      scope: "service",
-      table: "service_requests",
-      column: "requester_user_id",
-      value: "fixture-user",
-    })
-  })
-
-  it("refuses a request that belongs to another person without uploading", async () => {
-    mocks.state.requestOwner = "another-user"
-    const result = await uploadServiceRequestPhotoAction(
-      requestPhotoForm(await locationImage("jpeg")),
-    )
-
-    expect(result).toEqual({ error: "O pedido não existe ou não é seu." })
-    expect(mocks.userUpload).not.toHaveBeenCalled()
-    expect(mocks.serviceUpload).not.toHaveBeenCalled()
-  })
-
-  it("refuses a request that does not exist without uploading", async () => {
-    mocks.state.requestOwned = false
-    const result = await uploadServiceRequestPhotoAction(
-      requestPhotoForm(await locationImage("jpeg")),
-    )
-
-    expect(result).toEqual({ error: "O pedido não existe ou não é seu." })
     expect(mocks.serviceUpload).not.toHaveBeenCalled()
   })
 })
