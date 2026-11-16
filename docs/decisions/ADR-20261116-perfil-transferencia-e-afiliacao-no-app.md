@@ -47,3 +47,30 @@ linha F10 pede foto.
   Lote B e nenhum outro membro jamais consumiu esses campos (BLOCK-AFFILIATION).
 - A RATIFICAÇÃO ganha esta linha; a emenda ao contrato de privacidade (toggle aposentado) é o item
   que o dono ratifica ou reverte no marco.
+
+## Emenda de 16/11/2026 (SEC-014, auditoria independente de 16/11)
+
+A auditoria do `security-auditor` sobre `2bb231d8` (escopo 2 do lote 2b) achou duas lacunas
+pré-existentes que este ADR precisa cobrir, porque é ele que declara a afiliação privada e a
+transferência portada:
+
+1. **A1 (MEDIUM) — `public.profile_affiliations_for` segue chamável pela Data API.** A função é
+   SECURITY DEFINER com `execute` para `authenticated`: qualquer membro da mesma cidade lê, por alvo,
+   as linhas `is_visible = true` que o titular marcou no período do toggle web (09/09 a 16/11). A
+   decisão deste ADR é que exibir Força/OM a terceiros está fora do lançamento, então a porta fecha:
+   migration `20261116224929` revoga `execute` de `public`, `anon` e `authenticated`, sem tocar em
+   linha nenhuma nem em `is_visible`. **Reabrir é decisão do BLOCK-AFFILIATION** (governança LGPD de
+   terceiros), com `grant execute to authenticated` — não é decisão de tela, e a função fica de pé
+   com corpo e vetos intactos para esse dia.
+2. **A2 (LOW) — `declare_locality_transfer` não vetava estado de conta.** Suspensa (token válido por
+   até 1h) ou com exclusão pedida, a pessoa declarava a transferência e ganhava vínculo `current` na
+   cidade de destino. Migration `20261116224936` acrescenta os dois vetos em
+   `private.account_unavailable` — o mesmo predicado da RPC de afiliação, que também respeita
+   suspensão vencida — recusando com `42501` e a frase segura que a porta já usa (`sessao-expirada`
+   em `lib/locality/move-city.ts`, a mesma da porta de afiliação). A regra de quem pode se transferir
+   para qual cidade e a atomicidade da função não mudam.
+
+Prova: pgTAP `profile-affiliations.sql` (42501 para `authenticated` e `anon`; os vetos de conteúdo
+seguem asseridos como dono da função) e `locality-transfer.sql` (os dois negativos novos + os
+positivos de antes), com o unitário da rota para o mapeamento sem eco. A evidência de banco só roda
+em CI (`ci:full`).
