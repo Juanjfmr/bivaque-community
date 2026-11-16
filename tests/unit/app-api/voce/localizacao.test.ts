@@ -7,6 +7,7 @@ const mocks = vi.hoisted(() => ({
   lerCepDoCache: vi.fn(),
   gravarCepNoCache: vi.fn(),
   geocodificarCep: vi.fn(),
+  consumirConsulta: vi.fn(),
 }))
 
 vi.mock("web/lib/app-api/sessao-do-next", () => ({
@@ -29,6 +30,10 @@ vi.mock("web/lib/geo/cache", () => ({
 vi.mock("web/lib/geo/geocodificador", () => ({
   geocodificarCep: mocks.geocodificarCep,
 }))
+
+// SEC-013/F2: o limitador só existe para a ida ao provedor; aqui ele é mockado
+// para o teste poder recusar sem gastar 20 consultas.
+vi.mock("web/lib/geo/limite", () => ({ consumirConsulta: mocks.consumirConsulta }))
 
 import { PUT } from "web/app/api/app/voce/localizacao/route"
 
@@ -104,6 +109,7 @@ beforeEach(() => {
   mocks.lerCepDoCache.mockResolvedValue(null)
   mocks.gravarCepNoCache.mockResolvedValue(undefined)
   mocks.geocodificarCep.mockResolvedValue({ estado: "nao-encontrado" })
+  mocks.consumirConsulta.mockReturnValue({ liberado: true })
 })
 
 describe("PUT /api/app/voce/localizacao", () => {
@@ -201,6 +207,25 @@ describe("PUT /api/app/voce/localizacao", () => {
     expect(mocks.geocodificarCep).not.toHaveBeenCalled()
   })
 
+  it("responde 429 com retry-after quando a janela de consultas da pessoa acabou", async () => {
+    autenticar()
+    mocks.clienteDeServicoOuNulo.mockReturnValue(clienteDeServico().client)
+    mocks.consumirConsulta.mockReturnValue({ liberado: false, esperarMs: 120_000 })
+
+    const resposta = await PUT(pedido({ cep: "69000000" }))
+
+    expect(resposta.status).toBe(429)
+    expect(resposta.headers.get("retry-after")).toBe("120")
+    expect(await resposta.json()).toEqual({
+      erro: "limite-de-consultas",
+      mensagem: "Muitas consultas de CEP em pouco tempo. Tente de novo em 2 min.",
+    })
+    expect(mocks.consumirConsulta).toHaveBeenCalledWith(USER)
+    // A recusa acontece ANTES do provedor: nenhuma chamada paga.
+    expect(mocks.geocodificarCep).not.toHaveBeenCalled()
+    expect(mocks.gravarCepNoCache).not.toHaveBeenCalled()
+  })
+
   it("usa o cache e não chama o geocodificador quando o CEP já foi resolvido", async () => {
     const localizacaoFinal: Localizacao = { cep: "69000000", definida: true }
     autenticar({ localizacao: localizacaoFinal })
@@ -217,6 +242,8 @@ describe("PUT /api/app/voce/localizacao", () => {
 
     expect(resposta.status).toBe(200)
     expect(mocks.geocodificarCep).not.toHaveBeenCalled()
+    // Cache hit não consome cota: só a ida ao provedor conta (SEC-013/F2).
+    expect(mocks.consumirConsulta).not.toHaveBeenCalled()
     expect(servico.chamadas).toEqual([
       {
         funcao: "set_member_location",
@@ -244,6 +271,7 @@ describe("PUT /api/app/voce/localizacao", () => {
     const resposta = await PUT(pedido({ cep: "69000000" }))
 
     expect(resposta.status).toBe(200)
+    expect(mocks.consumirConsulta).toHaveBeenCalledWith(USER)
     expect(mocks.gravarCepNoCache).toHaveBeenCalledWith(servico.client, "69000000", coordenada)
     expect(servico.chamadas[0]?.args).toMatchObject({
       p_user_id: USER,
