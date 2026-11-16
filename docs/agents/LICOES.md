@@ -129,6 +129,11 @@ specs e2e dentro do gate (§ Gate) e a fila de provas `scripts/agents/prova-fila
     - Sintoma: quem recarrega no meio do fluxo volta ao começo, ou é movido para outro lugar.
     - Causa: a retomada não tem caminho próprio e reaproveita o início.
     - Jeito certo: um caminho real de retomada, que não move a pessoa de lugar.
+21. **Posse derivada da sessão não é parâmetro — e o teto viaja com ela.**
+    - Sintoma: a função privilegiada recebe `p_user_id` e cria em nome de quem chamou; a rota resolve a sessão e o banco não. Quando a função ganha `execute` para `authenticated`, o parâmetro vira escolha de qualquer chamador. E o limitador externo devolve "pode passar" quando falta configuração.
+    - Causa: a autoridade ficou no chamador (rota), não no banco; e a janela do Upstash era a única barreira de um caminho que passou a ser alcançável pela Data API.
+    - Jeito certo: `auth.uid()` com `28000` sem sessão na função pública; contagem e insert sob `pg_advisory_xact_lock` por titular; limitador ausente é 503, nunca livre; e as assinaturas antigas com id de titular saem com `drop function`, senão o buraco volta pelo grant esquecido.
+    - `código`: `supabase/migrations/20261116221048_family_invite_session_ownership.sql`, `supabase/tests/family-invite-session-ownership.sql`.
 ## Provas de banco pela fila
 
 O banco local e a porta 3000 são compartilhados entre as frentes. A fila (`scripts/agents/prova-fila.mjs`) trava
