@@ -48,28 +48,29 @@ baseline:
 
 allowed_paths:
   - supabase/migrations
-  - supabase/tests/family-invite-holder-only.sql
-  - supabase/tests/family-invite-session-derived.sql
-  - supabase/tests/family-invite-limits.sql
-  - supabase/tests/family-invite-wrappers.sql
-  - supabase/tests/family-invite-resend.sql
+  - supabase/tests
   - supabase/database.generated.ts
   - apps/web/app/api/app/voce/familia
-  - apps/web/lib/convite/familia.ts
-  - apps/web/lib/convite/familia-acoes.ts
-  - apps/web/lib/convite/hint.ts
+  - apps/web/lib/convite
+  - apps/web/lib/invites-bytea.ts
   - apps/web/app/(shell)/configuracoes/familia
   - apps/web/app/(shell)/configuracoes/configuracoes-nav.tsx
   - apps/web/app/(shell)/configuracoes/conta/page.tsx
+  - scripts/visual/capture.mjs
   - tests/unit/convite
+  - tests/unit/invites
+  - tests/unit/app-api/voce
   - tests/unit/ui/configuracoes-subtitles.test.ts
   - tests/unit/infra/lan-troca-redirect.test.ts
   - tests/scope/f10-voce-porta.test.mjs
+  - tests/scope/invite-digest-serialization.test.mjs
   - tests/e2e/f10-voce-real.spec.ts
   - tests/e2e/onboarding-holder-family.spec.ts
+  - tests/e2e/entrada-real-ajuda.ts
   - tests/e2e/link-crawl.spec.ts
   - docs/decisions/ADR-20261111-convite-familiar-pela-sessao.md
   - docs/decisions/RATIFICACAO.md
+  - docs/agents/LICOES.md
   - docs/agents/tasks/SEC-011.task.yml
 
 forbidden:
@@ -77,6 +78,7 @@ forbidden:
   - dar ao cliente do navegador acesso a tabela do schema private ou a qualquer função que receba o id do titular
   - expor e-mail, digest, hash, token ou código em recusa, log ou resposta (as dez frases fixas do pgTAP continuam valendo)
   - alterar apps/app (a tela do app já usa a porta /api/app/voce/familia e não muda)
+  - alterar convites de comunidade ou de evento (community-invite-*), mesmo que compartilhem helpers
   - mexer em outras rotas de /configuracoes além das referências à página de família que sai
   - push, merge, abrir PR, force-push; ler, criar ou imprimir arquivos de ambiente
 
