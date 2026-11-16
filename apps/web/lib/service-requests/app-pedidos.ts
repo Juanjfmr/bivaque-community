@@ -10,12 +10,17 @@ type Cliente = SupabaseClient<Database>
  * o filtro repete a mesma regra para a consulta não depender de o banco
  * "sobrar" linha. O lado da pessoa vai no payload (`lado`) para a tela saber
  * quais ações oferecer.
+ *
+ * A localização do pedido entra por duas colunas publicadas (RUN-179): `region`
+ * (o bairro que o prestador vê) e a distância calculada pela RPC. As colunas
+ * cruas — cep, latitude, longitude — não estão aqui de propósito: `authenticated`
+ * não tem SELECT nelas, e o payload nunca as carrega.
  */
 export function consultaPedidos(client: Cliente, userId: string) {
   return client
     .from("service_requests")
     .select(
-      "id,provider_id,requester_user_id,provider_user_id,category,description,when_text,status,created_at,updated_at,conversation_id,provider_profiles(display_name)",
+      "id,provider_id,requester_user_id,provider_user_id,category,description,when_text,status,region,created_at,updated_at,conversation_id,provider_profiles(display_name)",
     )
     .or(`requester_user_id.eq.${userId},provider_user_id.eq.${userId}`)
 }
@@ -30,6 +35,7 @@ type LinhaPedido = Pick<
   | "description"
   | "when_text"
   | "status"
+  | "region"
   | "created_at"
   | "updated_at"
   | "conversation_id"
@@ -39,7 +45,21 @@ type LinhaPedido = Pick<
 
 export type LadoDoPedido = "solicitante" | "dono"
 
-export function resumoDoPedido(linha: LinhaPedido, userId: string) {
+/**
+ * A distância do ponto de vista de QUEM LÊ, em metros (arredondada à centena no
+ * banco). A origem é a do perfil do chamador, tirada de `auth.uid()` dentro da
+ * RPC — não existe parâmetro de origem. `null` é a resposta honesta para quem
+ * não cadastrou origem, para o pedido sem coordenada e para quem não participa.
+ */
+export async function distanciaDoPedido(client: Cliente, id: string): Promise<number | null> {
+  const { data, error } = await client.rpc("service_request_distance", { p_request_id: id })
+  if (error) throw error
+  if (data === null) return null
+  if (typeof data !== "number") throw new Error("distância fora do contrato")
+  return data
+}
+
+export function resumoDoPedido(linha: LinhaPedido, userId: string, distanciaMetros: number | null) {
   return {
     id: linha.id,
     negocioId: linha.provider_id,
@@ -48,6 +68,9 @@ export function resumoDoPedido(linha: LinhaPedido, userId: string) {
     descricao: linha.description,
     quando: linha.when_text,
     situacao: linha.status,
+    /** O bairro que o prestador vê; `null` no pedido sem CEP. */
+    bairro: linha.region,
+    distanciaMetros,
     criadoEm: linha.created_at,
     atualizadoEm: linha.updated_at,
     conversaId: linha.conversation_id,
@@ -58,7 +81,8 @@ export function resumoDoPedido(linha: LinhaPedido, userId: string) {
 export async function pedidoDoMembro(client: Cliente, userId: string, id: string) {
   const { data, error } = await consultaPedidos(client, userId).eq("id", id).maybeSingle()
   if (error) throw error
-  return data === null ? null : resumoDoPedido(data, userId)
+  if (data === null) return null
+  return resumoDoPedido(data, userId, await distanciaDoPedido(client, id))
 }
 
 /**
