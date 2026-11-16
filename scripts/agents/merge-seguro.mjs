@@ -4,8 +4,10 @@
 // O ADR-20261114 trocou branch protection pelo rito de fechamento (label ci:full →
 // completo verde no SHA → merge). O rito é palavra; este script é a trava mecânica:
 // confere pela API que o SHA do head do PR tem o PR CI completo (job `ci-core`
-// presente e verde — é ele que sobe a stack e roda build, pgTAP e E2E) e o Visual
-// Smoke verde, ou ausente porque o PR não toca os paths do workflow. Só então
+// presente e verde — é ele que sobe a stack e roda build, pgTAP e E2E — e o
+// agregador "Install, test, and build" verde, que reprova quando um viewport do
+// e2e-stateful cai) e o Visual Smoke verde, ou ausente porque o PR não toca os
+// paths do workflow. Só então
 // mergeia por squash, amarrando o merge ao SHA completo conferido.
 //
 // Qualquer outro estado — completo ausente ou vermelho, Visual ausente num PR que
@@ -23,6 +25,7 @@ const API = "https://api.github.com"
 // Nomes de check (campo `name:` do job no workflow). Mudar o nome do job sem
 // mudar aqui faz o script recusar todo merge — falha alta, nunca merge cego.
 export const CHECK_COMPLETO = "CI core / build, db, e2e comuns"
+export const CHECK_AGREGADO = "Install, test, and build"
 export const CHECK_VISUAL = "App mobile-first / 320-360-375-430-768-1440"
 
 // Os `paths` de bivaque-app-visual-smoke.yml: se o PR não toca nenhum deles, o
@@ -75,6 +78,23 @@ export function avaliar({ headSha, estado, checkRuns = [], arquivos = [] }) {
   }
   if (completo.conclusion !== "success") {
     return { ok: false, motivo: `o PR CI completo está "${completo.conclusion}", não verde` }
+  }
+
+  const agregado = porNome.get(CHECK_AGREGADO)
+  if (!agregado) {
+    return {
+      ok: false,
+      motivo: `o agregador do completo ("${CHECK_AGREGADO}") não rodou neste SHA — o completo não está provado`,
+    }
+  }
+  if (agregado.status !== "completed") {
+    return { ok: false, motivo: `o PR CI completo ainda está "${agregado.status}"` }
+  }
+  if (agregado.conclusion !== "success") {
+    return {
+      ok: false,
+      motivo: `o PR CI completo está "${agregado.conclusion}": algum job dele (fast, ci-core ou e2e-stateful) falhou`,
+    }
   }
 
   const visual = porNome.get(CHECK_VISUAL)

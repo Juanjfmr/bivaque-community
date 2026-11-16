@@ -118,11 +118,13 @@ era rito. Nenhuma verificação é removida — muda quando roda e como o result
    ~6 a 8 runner-min por run completo e ~3 no Visual (diagnóstico §P4). Nada deixa de verificar:
    mesmos bytes, mesmas tags, `supabase start` e o drift de types seguem rodando.
 5. **Trava de merge mecânica.** `scripts/agents/merge-seguro.mjs` recebe o número do PR e
-   confere pela API, no SHA do head, o PR CI completo (job `ci-core` presente e verde) e o Visual
-   Smoke verde — ou ausente por paths, quando o PR não toca `apps/app`. Só então mergeia por
-   squash com o SHA completo; qualquer outro estado é recusa com mensagem. Isso substitui o rito
-   da decisão 5 sem adotar branch protection: a **alternativa 4 continua escolhida**, e o motivo
-   dela (o quadro envia `HEAD:main`) segue valendo.
+   confere pela API, no SHA do head, o PR CI completo (job `ci-core` presente e verde **e** o
+   agregador "Install, test, and build" verde — é ele que reprova quando um viewport do
+   `e2e-stateful` cai) e o Visual Smoke verde — ou ausente por paths, quando o PR não toca
+   `apps/app`. Só então mergeia por squash com o SHA completo; qualquer outro estado é recusa
+   com mensagem. Isso substitui o rito da decisão 5 sem adotar branch protection: a
+   **alternativa 4 continua escolhida**, e o motivo dela (o quadro envia `HEAD:main`) segue
+   valendo.
 6. **Flake absorvido fica visível.** Depois de cada passo de E2E no CI, um passo lê o relatório
    JSON do Playwright e emite `::warning::` por teste que só passou no retry, sem mexer no código
    de saída do job. `retries` continua 1 e `fail-on-flaky-tests` continua desligado (diagnóstico
