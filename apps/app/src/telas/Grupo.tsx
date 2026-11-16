@@ -315,30 +315,29 @@ export function Grupo() {
               Não foi possível carregar as perguntas do grupo. As publicações abaixo continuam
               disponíveis.
             </p>
-          ) : (
-            perguntas.map((p) => (
-              <CartaoDePublicacao
-                key={p.id}
-                publicacao={{
-                  id: p.id,
-                  tipo: "pergunta",
-                  autor: p.autor || "Membro do grupo",
-                  quando: quandoDe(p.criadaEm),
-                  texto: p.titulo,
-                  resolvida: p.resolvida,
-                  tambemNaCidade: p.grupo !== null,
-                  comentarios: p.respostas,
-                  uteis: 0,
-                }}
-                aoAbrirAutor={
-                  p.propria || p.autorId === ""
-                    ? undefined
-                    : () => void navegacao.irPara("perfil", { parametros: { id: p.autorId } })
-                }
-                aoComentar={() => void navegacao.irPara("pergunta", { parametros: { id: p.id } })}
-              />
-            ))
-          )}
+          ) : null}
+          {perguntas.map((p) => (
+            <CartaoDePublicacao
+              key={p.id}
+              publicacao={{
+                id: p.id,
+                tipo: "pergunta",
+                autor: p.autor || "Membro do grupo",
+                quando: quandoDe(p.criadaEm),
+                texto: p.titulo,
+                resolvida: p.resolvida,
+                tambemNaCidade: p.grupo !== null,
+                comentarios: p.respostas,
+                uteis: 0,
+              }}
+              aoAbrirAutor={
+                p.propria || p.autorId === ""
+                  ? undefined
+                  : () => void navegacao.irPara("perfil", { parametros: { id: p.autorId } })
+              }
+              aoComentar={() => void navegacao.irPara("pergunta", { parametros: { id: p.id } })}
+            />
+          ))}
         </section>
       )}
       {/* O foco já leva ao cartão; o anúncio garante que quem usa leitor de

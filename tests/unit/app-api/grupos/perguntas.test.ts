@@ -151,6 +151,13 @@ describe("perguntas do grupo", () => {
     const resposta = await GET(req("GET", URL_DAS_PERGUNTAS), context)
     expect(resposta.status).toBe(200)
     const corpo = await json(resposta)
+    // O contador de respostas usa a dica da FK: sem ela o embed é ambíguo
+    // (a pergunta aponta duas vezes para as respostas) e o PostgREST responde
+    // PGRST201 — o desktop do E2E pegou exatamente isso.
+    const campos = mock.chamadas.find(
+      (chamada) => chamada.tabela === "recommendation_requests" && chamada.metodo === "select",
+    )?.args[0]
+    expect(String(campos)).toContain("recommendation_replies!recommendation_replies_request_id_fkey")
     expect(corpo["perguntas"]).toEqual([
       {
         id: pergunta.id,

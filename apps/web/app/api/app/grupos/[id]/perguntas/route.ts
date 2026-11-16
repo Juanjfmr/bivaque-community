@@ -60,8 +60,12 @@ export async function GET(request: NextRequest, { params }: Context): Promise<Ne
     }
     const { data, error } = await client
       .from("recommendation_requests")
+      // O embed do contador precisa da dica da FK: `recommendation_requests`
+      // aponta duas vezes para `recommendation_replies` (respostas da pergunta e
+      // a resposta que resolveu), e `recommendation_replies(count)` sozinho é
+      // ambíguo — o PostgREST responde PGRST201 e a rota virava 503.
       .select(
-        "id,author_id,title,category,created_at,is_resolved,group_id,recommendation_replies(count)",
+        "id,author_id,title,category,created_at,is_resolved,group_id,recommendation_replies!recommendation_replies_request_id_fkey(count)",
       )
       .eq("group_id", id)
       .eq("is_deleted", false)
