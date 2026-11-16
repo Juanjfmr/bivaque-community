@@ -255,7 +255,7 @@ export function MeuNegocio() {
         <EsqueletoDeLista linhas={4} />
       ) : (
         <>
-          <Secao titulo={ficha === null ? "Criar a página" : "Sua página"}>
+          <Secao titulo={ficha === null ? "Criar a página" : "Sua página"} className="max-w-2xl">
             {mensagem === null ? null : (
               <p role="alert" className="text-sm text-(--destructive)">
                 {mensagem}
@@ -332,7 +332,7 @@ export function MeuNegocio() {
 
           {ficha === null ? null : (
             <>
-              <Secao titulo="Serviços">
+              <Secao titulo="Serviços" className="max-w-2xl">
                 {ficha.servicos.length === 0 ? (
                   <p className="text-sm text-(--on-surface-variant)">
                     Publique o que você faz. Os itens aparecem na sua página pública.
@@ -410,7 +410,7 @@ export function MeuNegocio() {
                 </form>
               </Secao>
 
-              <Secao titulo="Fotos">
+              <Secao titulo="Fotos" className="max-w-2xl">
                 <p className="text-sm text-(--on-surface-variant)">
                   A primeira foto é a capa da sua página. Use JPEG, PNG ou WebP de até 5 MB.
                 </p>
