@@ -31,6 +31,9 @@ const pedidoInicial = {
   criadoEm: "2026-11-05T12:00:00Z",
   atualizadoEm: "2026-11-05T12:00:00Z",
   conversaId: null,
+  // RUN-177: o payload do pedido ganhou `lado` (quem lê é solicitante ou dono) e
+  // o parser do app é estrito — o fixture acompanha o contrato.
+  lado: "solicitante",
 }
 const categorias = [
   { id: "assistencia_tecnica", nome: "Assistência técnica" },
@@ -164,7 +167,7 @@ for (const tema of ["light"] as const) {
       )
       await expect(page.getByText("Em aberto", { exact: true })).toBeVisible()
       await capturar(page, `${testInfo.project.name}-${tema}-05-pedido`)
-      await page.getByRole("button", { name: "Ver meus pedidos", exact: true }).click()
+      await page.getByRole("button", { name: "Ver pedidos", exact: true }).click()
       await expect(page.locator('[data-tela="pedidos"] [data-linha="lista"]')).toContainText(
         "Limpar o ar-condicionado da sala",
       )

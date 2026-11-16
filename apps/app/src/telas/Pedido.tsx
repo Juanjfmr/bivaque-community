@@ -62,7 +62,9 @@ export function Pedido() {
   }
 
   function executar() {
-    setConfirmando(false)
+    // NÃO fechar aqui: o AlertDialogAction fecha o diálogo sozinho e o
+    // `onOpenChange` da entrada chama UMA volta no histórico. Fechar aqui dava
+    // duas voltas (a tela saía para a lista antes de mostrar o aviso).
     if (ocupado) return
     setOcupado(true)
     setMensagem(null)

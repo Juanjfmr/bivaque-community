@@ -113,7 +113,7 @@ export function Negocio() {
                 href={`/app/pedidos/novo?destino=${encodeURIComponent(negocio.id)}`}
                 data-acao="pedir-orcamento"
                 aria-disabled={!negocio.podePedir}
-                className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-(--primary) px-4 text-sm font-semibold text-(--on-primary) aria-disabled:pointer-events-none aria-disabled:opacity-50"
+                className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-(--primary) px-4 text-sm font-semibold text-(--primary-foreground) aria-disabled:pointer-events-none aria-disabled:opacity-50"
               >
                 <Icone nome="request_quote" className="size-5" />
                 Pedir orçamento

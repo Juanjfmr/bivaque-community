@@ -493,7 +493,7 @@ test.describe("teclado nas superfícies novas", () => {
     await expect(page.locator('[data-chip="anuncios"]')).toHaveAttribute("data-estado", "on")
   })
 
-  test("no negócio o Tab chega ao orçamento, o Enter abre a folha e o Esc volta", async ({
+  test("no negócio o Tab chega ao orçamento, o Enter abre a folha endereçável e o Esc devolve ao Mercado", async ({
     page,
   }) => {
     await simularProgresso(page)
@@ -501,17 +501,24 @@ test.describe("teclado nas superfícies novas", () => {
     await page.goto(`/app/negocio/${NEGOCIO_DA_PROVA.id}`)
     await expect(page.locator('[data-tela="negocio"]')).toBeVisible()
 
-    const pedir = page.getByRole("button", { name: "Pedir orçamento" })
+    // RUN-177: o orçamento é a MESMA folha, agora com endereço próprio; o CTA da
+    // ficha é um link, então o Tab e o Enter continuam chegando nela.
+    const pedir = page.getByRole("link", { name: "Pedir orçamento", exact: true })
     await alcancarComTab(page, pedir)
     await page.keyboard.press("Enter")
 
+    await expect(page).toHaveURL(new RegExp(`/app/pedidos/novo\\?destino=${NEGOCIO_DA_PROVA.id}$`))
     const folha = page.locator('[data-sobreposicao="contato-interesse"]')
     await expect(folha).toBeVisible()
-    await expect(page.getByRole("heading", { name: "Pedir orçamento" })).toBeVisible()
+    await expect(
+      page.getByRole("dialog").getByRole("heading", { name: "Pedir orçamento" }),
+    ).toBeVisible()
 
     await page.keyboard.press("Escape")
     await expect(folha).toHaveCount(0)
-    await expect(pedir).toBeFocused()
+    // O link carrega a página (load novo): sem a entrada do app, fechar usa o pai
+    // declarado da rota — o Mercado da cidade, que é de onde o pedido sai.
+    await expect(page).toHaveURL(/\/app\/negocios$/)
   })
 
   test("no pedido o Tab chega à ação primária e o Enter leva ao negócio", async ({ page }) => {
@@ -691,9 +698,9 @@ test.describe("contraste nas telas reais", () => {
 
       await page.goto(`/app/pedido/${PEDIDO_DA_PROVA.id}`)
       await expect(page.locator("h1[data-titulo-da-tela]")).toBeVisible()
-      await expect(page.getByRole("button", { name: "Ver meus pedidos" })).toBeVisible()
+      await expect(page.getByRole("button", { name: "Ver pedidos", exact: true })).toBeVisible()
       await aguardarAnimacoes(page)
-      const pedido = await medirContrasteDaTela(page, "Ver meus pedidos")
+      const pedido = await medirContrasteDaTela(page, "Ver pedidos")
       expect(pedido.texto, `título do pedido no tema ${tema}`).toBeGreaterThanOrEqual(pedido.limiar)
       expect(pedido.contorno, `contorno do pedido no tema ${tema}`).toBeGreaterThanOrEqual(4.5)
       expect(pedido.usaTinta, `contorno do pedido usa a tinta no tema ${tema}`).toBe(true)

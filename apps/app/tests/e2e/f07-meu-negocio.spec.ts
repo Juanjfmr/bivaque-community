@@ -65,7 +65,13 @@ test.describe("F07 — Meu negócio", () => {
     await page.route(new RegExp(`/api/app/negocios/${FICHA}(?:\\?|$)`), (rota) =>
       rota.fulfill({
         json: {
-          negocio: { ...negocioAtual(), cidade: "Manaus", podePedir: true, foto: null },
+          negocio: {
+            ...negocioAtual(),
+            cidade: "Manaus",
+            podePedir: true,
+            foto: null,
+            fotoDescricao: null,
+          },
         },
       }),
     )

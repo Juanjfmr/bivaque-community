@@ -430,6 +430,13 @@ test.describe("rastreador de links", { tag: "@stateful" }, () => {
         "/configuracoes/familia",
         "/inicio",
         "/explorar",
+        // RUN-177: a gestão do negócio próprio e o catálogo dele saíram da web
+        // (307 para /app/meu-negocio). Continuam destino válido de <a href> — o
+        // "Ofereça seus serviços" da lista de serviços e o link do painel do
+        // prestador —, então precisam de padrão; sem ele, todo link para lá vira
+        // "rota inexistente" (medido no rastreador em 17/11).
+        "/negocio",
+        "/negocio/catalogo",
       ],
     )
     const reached = new Set<string>()

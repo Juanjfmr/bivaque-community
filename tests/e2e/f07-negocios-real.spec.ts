@@ -170,13 +170,19 @@ test.describe("F07 — negócios e pedidos reais", { tag: "@stateful" }, () => {
     await expect(page.getByRole("heading", { name: "Onde atende", exact: true })).toBeVisible()
     await capturar(page, testInfo.project.name, "02-ficha")
 
-    const pedir = page.getByRole("button", { name: "Pedir orçamento", exact: true })
+    // RUN-177: o orçamento é a MESMA folha com endereço próprio; o CTA da ficha é
+    // um link para /app/pedidos/novo?destino=<id>.
+    const pedir = page.getByRole("link", { name: "Pedir orçamento", exact: true })
     const alvo = await pedir.boundingBox()
     expect(alvo?.height).toBeGreaterThanOrEqual(44)
     expect(alvo?.width).toBeGreaterThanOrEqual(44)
     await pedir.click()
+    await expect(page).toHaveURL(new RegExp(`/app/pedidos/novo\\?destino=${NEGOCIO}$`))
     await expect(page.getByRole("dialog")).toBeVisible()
-    const descricao = `Limpar o ar-condicionado — ${testInfo.project.name}`
+    // F07 resíduo: o descritivo leva um selo único por execução — rodar de novo no
+    // MESMO banco (local) não pode casar com o pedido que a rodada anterior deixou
+    // encerrado. O CI começa do seed, mas repetir localmente é rotina.
+    const descricao = `Limpar o ar-condicionado — ${testInfo.project.name} ${Date.now().toString(36)}`
     await page.getByLabel("O que você precisa?").fill(descricao)
     await page.getByLabel("Quando precisa? (opcional)").fill("Nesta semana")
     await capturar(page, testInfo.project.name, "03-formulario")
@@ -226,7 +232,7 @@ test.describe("F07 — negócios e pedidos reais", { tag: "@stateful" }, () => {
     expect(reenviada.status()).toBe(201)
     expect((await reenviada.json()).pedido.id).toBe(gravado.pedido.id)
 
-    await page.getByRole("button", { name: "Ver meus pedidos", exact: true }).click()
+    await page.getByRole("button", { name: "Ver pedidos", exact: true }).click()
     const linha = page.locator('[data-tela="pedidos"] [data-linha="lista"]', { hasText: descricao })
     await expect(linha).toBeVisible()
     await page.reload()
@@ -246,7 +252,7 @@ test.describe("F07 — negócios e pedidos reais", { tag: "@stateful" }, () => {
     test.setTimeout(120_000)
     await semearSessaoDeMembro(context, MEMBRO)
     await abrirFicha(page)
-    await page.getByRole("button", { name: "Pedir orçamento", exact: true }).click()
+    await page.getByRole("link", { name: "Pedir orçamento", exact: true }).click()
     await page.getByLabel("O que você precisa?").fill("Conferir o ar sem perder este texto")
     await page.route("**/api/app/negocios/*/pedidos", (rota) => rota.abort())
     await page.getByRole("button", { name: "Enviar pedido", exact: true }).click()
@@ -257,7 +263,7 @@ test.describe("F07 — negócios e pedidos reais", { tag: "@stateful" }, () => {
       "Conferir o ar sem perder este texto",
     )
     await expect(page.getByRole("button", { name: "Enviar pedido", exact: true })).toBeEnabled()
-    await expect(page).toHaveURL(new RegExp(`/app/negocio/${NEGOCIO}$`))
+    await expect(page).toHaveURL(new RegExp(`/app/pedidos/novo\\?destino=${NEGOCIO}$`))
     await capturar(page, testInfo.project.name, "06-falha-de-escrita")
     await page.getByRole("button", { name: "Cancelar", exact: true }).click()
 

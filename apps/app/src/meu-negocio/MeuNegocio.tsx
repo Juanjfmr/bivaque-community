@@ -204,7 +204,8 @@ export function MeuNegocio() {
 
   function confirmarRemocao() {
     const alvo = pendente
-    setConfirmando(false)
+    // O AlertDialogAction fecha o diálogo (uma volta no histórico). Fechar aqui
+    // também daria duas voltas e a tela sairia antes do aviso.
     if (alvo === null) return
     setPendente(null)
     if (alvo.tipo === "servico") {
@@ -265,14 +266,16 @@ export function MeuNegocio() {
                 {aviso}
               </p>
             )}
-            <form onSubmit={gravarFicha} aria-busy={ocupado}>
+            {/* `noValidate`: a validação é a de lib/providers/showcase (a mesma do
+                servidor) e precisa dar a FRASE para a pessoa. Deixar o
+                `minlength` do navegador barrar o submit esconderia a mensagem. */}
+            <form onSubmit={gravarFicha} aria-busy={ocupado} noValidate>
               <Formulario>
                 <Campo
                   id="negocio-nome"
                   rotulo="Nome do negócio"
                   valor={nome}
                   aoMudar={setNome}
-                  minLength={2}
                   maxLength={80}
                 />
                 <div className="grid gap-1.5">
@@ -382,14 +385,13 @@ export function MeuNegocio() {
                     ))}
                   </ul>
                 )}
-                <form onSubmit={publicarItem} aria-busy={ocupado}>
+                <form onSubmit={publicarItem} aria-busy={ocupado} noValidate>
                   <Formulario>
                     <Campo
                       id="servico-titulo"
                       rotulo="Título do item"
                       valor={tituloDoServico}
                       aoMudar={setTituloDoServico}
-                      minLength={2}
                       maxLength={120}
                     />
                     <Campo
