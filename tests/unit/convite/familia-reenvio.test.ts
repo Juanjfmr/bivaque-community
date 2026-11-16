@@ -57,8 +57,8 @@ vi.mock("web/lib/supabase/server", () => {
   }
 })
 
-import { resendFamilyInviteAction } from "web/app/(shell)/profile/family-invite-section-actions"
 import { FalhaDeConvite } from "web/lib/convite/familia"
+import { resendFamilyInviteAction } from "web/lib/convite/familia-acoes"
 
 const CONVITE = "70000000-0000-4000-8000-000000000001"
 

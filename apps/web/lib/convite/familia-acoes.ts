@@ -3,19 +3,18 @@
 import { createServerClient } from "@supabase/ssr"
 import { revalidatePath } from "next/cache"
 import { cookies } from "next/headers"
-import { generateInviteCode, inviteCodeHash } from "../../../lib/convite/digest"
-import {
-  conferirLimiteDeEnvio,
-  enviarConvite,
-  lerFamilia,
-  revogarConvite,
-} from "../../../lib/convite/familia"
-import { byteaDigestParam } from "../../../lib/invites-bytea"
-import { createServerClient as createServiceClient } from "../../../lib/supabase/server"
+import { byteaDigestParam } from "../invites-bytea"
+import { createServerClient as createServiceClient } from "../supabase/server"
+import { generateInviteCode, inviteCodeHash } from "./digest"
+import { conferirLimiteDeEnvio, enviarConvite, lerFamilia, revogarConvite } from "./familia"
 
 // As regras de família vivem em `lib/convite/familia.ts`, chamadas daqui e de
 // `/api/app/voce/familia` (RUN-018): um módulo, duas portas. Este arquivo só
-// resolve a sessão do cookie e revalida as páginas antigas.
+// resolve a sessão do cookie e revalida a tela de Configurações.
+//
+// Mora em `lib/convite` desde o RUN-172: a tela dona destas actions é
+// `(shell)/configuracoes/familia`, e a pasta `(shell)/profile` morreu com a
+// troca do perfil próprio para o app (ADR-20261116).
 
 type PendingInviteRow = {
   id: string
@@ -79,8 +78,6 @@ export async function sendFamilyInviteAction(
     formData.get("email"),
   )
 
-  revalidatePath("/profile")
-
   // The token is shown exactly once, right here: it is not persisted, logged,
   // or sent in navigation. The digest is the only stored form (20260815130000).
   return { code: codigo, token }
@@ -97,7 +94,6 @@ export async function revokeFamilyInviteAction(formData: FormData) {
 
   await revogarConvite(createServiceClient(), userId, invitationId)
 
-  revalidatePath("/profile")
   revalidatePath("/configuracoes/familia")
 }
 // Reenviar (prancha 76): o token em claro existe uma vez só, então reenviar é
@@ -162,7 +158,6 @@ export async function resendFamilyInviteAction(
     throw new Error(`Falha ao enfileirar o reenvio: ${outboxError.message}`)
   }
 
-  revalidatePath("/profile")
   revalidatePath("/configuracoes/familia")
 
   // Mesma regra do envio: o token (e agora o código) aparece uma vez, aqui.

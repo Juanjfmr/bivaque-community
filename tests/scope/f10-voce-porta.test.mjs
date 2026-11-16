@@ -207,15 +207,17 @@ test("os interesses usam o privilégio só depois da sessão e só nos RPCs de i
   )
 })
 
-test("a extração do módulo de família mantém a tela antiga funcionando", () => {
-  const acao = read("apps", "web", "app", "(shell)", "profile", "family-invite-section-actions.ts")
+// RUN-172: as Server Actions de família saíram de `(shell)/profile` com a tela
+// do perfil próprio e moram em `lib/convite`, ao lado do módulo que chamam.
+test("a extração do módulo de família mantém a tela de Configurações funcionando", () => {
+  const acao = read("apps", "web", "lib", "convite", "familia-acoes.ts")
   assert.match(
     acao,
-    /from "\.\.\/\.\.\/\.\.\/lib\/convite\/familia"/,
-    "a Server Action antiga não importa o módulo compartilhado",
+    /from "\.\/familia"/,
+    "a Server Action de família não importa o módulo compartilhado",
   )
   for (const funcao of ["lerFamilia", "enviarConvite", "revogarConvite"]) {
-    assert.match(acao, new RegExp(funcao), `a Server Action antiga não usa ${funcao}`)
+    assert.match(acao, new RegExp(funcao), `a Server Action de família não usa ${funcao}`)
   }
 })
 

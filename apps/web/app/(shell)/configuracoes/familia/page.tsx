@@ -4,14 +4,14 @@ import { Button, Chip, Input } from "@heroui/react"
 import { ArrowLeft } from "lucide-react"
 import Link from "next/link"
 import { useEffect, useState } from "react"
-import { FeedbackAlert } from "../../../components/bivaque/feedback-alert"
-import { Skeleton } from "../../../components/bivaque/skeleton"
 import {
   getFamilyInviteDataAction,
   resendFamilyInviteAction,
   revokeFamilyInviteAction,
   sendFamilyInviteAction,
-} from "../../profile/family-invite-section-actions"
+} from "../../../../lib/convite/familia-acoes"
+import { FeedbackAlert } from "../../../components/bivaque/feedback-alert"
+import { Skeleton } from "../../../components/bivaque/skeleton"
 
 // Prancha 52 / C07: criar, copiar e revogar convite familiar. O token aparece
 // uma única vez e nunca é persistido — o banco guarda só o digest (migration

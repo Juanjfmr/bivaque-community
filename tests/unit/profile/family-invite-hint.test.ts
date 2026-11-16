@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { emailHint } from "web/app/(shell)/profile/family-invite-email-hint"
+import { emailHint } from "web/lib/convite/hint"
 
 describe("family invite email hint mask (D2 Task 4)", () => {
   it("masks a full email to the branded hint format", () => {
