@@ -81,14 +81,6 @@ export function lerFiltrosDaUrl(busca: Record<string, unknown>): FiltrosDaUrl {
   }
 }
 
-/** Normaliza para comparar `q` sem depender de acento ou caixa. */
-export function semAcento(valor: string): string {
-  return valor
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-}
-
 /**
  * O patch de busca para o roteador: `null` remove a chave (filtro voltando ao
  * padrão sai do endereço), número/string grava. O roteador faz o merge com o

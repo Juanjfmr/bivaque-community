@@ -6,7 +6,6 @@ import {
   lerFiltrosDaUrl,
   mesclarFiltrosNaUrl,
   mudarFiltroNaUrl,
-  semAcento,
 } from "@/src/mercado/filtros-url"
 
 /**
@@ -155,12 +154,5 @@ describe("mudarFiltroNaUrl", () => {
 
   it("voltar ao padrão remove a chave em vez de deixar null literal", () => {
     expect(mudarFiltroNaUrl({ q: "mesa", pagina: 2 }, { q: "" })).toEqual({})
-  })
-})
-
-describe("semAcento", () => {
-  it("casa busca sem depender de acento ou caixa", () => {
-    expect(semAcento("Notebook 14 Polgadas")).toContain("polgadas")
-    expect(semAcento("CASA")).toBe("casa")
   })
 })
