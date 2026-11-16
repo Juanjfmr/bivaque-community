@@ -34,8 +34,11 @@ export const dynamic = "force-dynamic"
  *
  * `23505` é o índice de uma saída por vez: é a mensagem vigente de mudança em
  * andamento (`moveErrorMessage`), status 409. `23514` é regra da função
- * (destino fora do catálogo, igual à atual), `28000`/`42501` são sessão. Nenhuma
- * mensagem do Postgres sai daqui: o código vira copy, e o resto é 503 sem eco.
+ * (destino fora do catálogo, igual à atual); `28000` é sessão sem identidade e
+ * `42501` é recusa de conta — conta suspensa ou com exclusão pedida, veto do
+ * SEC-014 (A2 da auditoria de 16/11), com a mesma frase segura da porta de
+ * afiliação. Nenhuma mensagem do Postgres sai daqui: o código vira copy, e o
+ * resto é 503 sem eco.
  */
 export async function POST(request: NextRequest): Promise<NextResponse> {
   const auth = await exigirSessao(request)
