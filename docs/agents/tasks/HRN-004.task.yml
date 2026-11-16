@@ -8,7 +8,7 @@
 # prefixos que a prática não usa mais; o validador de contrato recusa linha de comentário YAML
 # que começa com crase ou parêntese, visto duas vezes em 16/11.
 
-task_id: HRN-002
+task_id: HRN-004
 
 objective: >
   Um agente novo descobre em um lugar só, e de forma correta, quem executa, revisa, audita e
@@ -36,7 +36,7 @@ allowed_paths:
   - scripts/agents/task-contract.mjs
   - tests/scope/agent-architecture.test.mjs
   - tests/scope/task-contract.test.mjs
-  - docs/agents/tasks/HRN-002.task.yml
+  - docs/agents/tasks/HRN-004.task.yml
 
 forbidden:
   - mudar regra de risco, de revisão ou de merge; o lote descreve e unifica o que já vale, não decide nada novo
