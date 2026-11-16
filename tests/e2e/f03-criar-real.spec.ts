@@ -12,14 +12,18 @@ import {
 
 // RUN-015: Next + Supabase local com seed; execução serial no CI nas três larguras.
 // node scripts/agents/prova-fila.mjs -- node scripts/agents/prova-sequencia.mjs e2e tests/e2e/f03-criar-real.spec.ts
-async function conferirBanco(context: BrowserContext, tabela: string, id: string) {
+//
+// RUN-175: a leitura do banco é por COLUNAS EXPLÍCITAS. `select=*` em `listings`
+// passou a responder 42501 para `authenticated` (cep/latitude/longitude fora do
+// grant por coluna), e é isso que a prova negativa abaixo confere.
+async function conferirBanco(context: BrowserContext, tabela: string, id: string, colunas: string) {
   const cookie = (await context.cookies()).find((item) => /^sb-.*-auth-token$/.test(item.name))
   if (!cookie) throw new Error("Sessão semeada ausente")
   const sessao = JSON.parse(
     Buffer.from(cookie.value.replace(/^base64-/, ""), "base64url").toString("utf8"),
   ) as { access_token: string }
   const resposta = await context.request.get(
-    `${urlDoSupabase()}/rest/v1/${tabela}?id=eq.${encodeURIComponent(id)}&select=*`,
+    `${urlDoSupabase()}/rest/v1/${tabela}?id=eq.${encodeURIComponent(id)}&select=${colunas}`,
     {
       headers: { apikey: chaveAnonimaDoSupabase(), Authorization: `Bearer ${sessao.access_token}` },
     },
@@ -28,6 +32,16 @@ async function conferirBanco(context: BrowserContext, tabela: string, id: string
   const linhas = (await resposta.json()) as Record<string, unknown>[]
   expect(linhas).toHaveLength(1)
   return linhas[0]
+}
+
+/** O token da sessão semeada, para as provas negativas de PostgREST. */
+async function tokenDaLoja(context: BrowserContext): Promise<string> {
+  const cookie = (await context.cookies()).find((item) => /^sb-.*-auth-token$/.test(item.name))
+  if (!cookie) throw new Error("Sessão semeada ausente")
+  const sessao = JSON.parse(
+    Buffer.from(cookie.value.replace(/^base64-/, ""), "base64url").toString("utf8"),
+  ) as { access_token: string }
+  return sessao.access_token
 }
 
 async function capturar(page: Page, nome: string) {
@@ -81,7 +95,9 @@ test.describe("F03 — criação real", { tag: "@stateful" }, () => {
     await expect(page.getByText(titulo, { exact: true })).toBeVisible()
     await page.reload()
     await expect(page.getByText(titulo, { exact: true })).toBeVisible()
-    expect(await conferirBanco(context, "recommendation_requests", id)).toMatchObject({
+    expect(
+      await conferirBanco(context, "recommendation_requests", id, "id,title,category"),
+    ).toMatchObject({
       title: titulo,
       category: "educacao",
     })
@@ -131,11 +147,37 @@ test.describe("F03 — criação real", { tag: "@stateful" }, () => {
     const id = new URL(page.url()).pathname.split("/").at(-1) ?? ""
     await page.reload()
     await expect(page.getByRole("heading", { name: titulo })).toBeVisible()
-    expect(await conferirBanco(context, "listings", id)).toMatchObject({
+    expect(
+      await conferirBanco(
+        context,
+        "listings",
+        id,
+        "id,title,price_cents,status,neighborhood,localizacao_publica",
+      ),
+    ).toMatchObject({
       title: titulo,
       price_cents: 75050,
       status: "active",
+      // Desapego sem CEP não tem escolha de localização (RUN-175).
+      localizacao_publica: null,
     })
+
+    // A barreira do RUN-175 vale também para quem é dono: `select=*` em
+    // `listings` responde 42501 porque cep/latitude/longitude saíram do grant por
+    // coluna. A leitura legítima é por colunas explícitas (acima) e, para o CEP,
+    // pela função do dono.
+    const negativa = await context.request.get(
+      `${urlDoSupabase()}/rest/v1/listings?id=eq.${encodeURIComponent(id)}&select=*`,
+      {
+        headers: {
+          apikey: chaveAnonimaDoSupabase(),
+          Authorization: `Bearer ${await tokenDaLoja(context)}`,
+        },
+      },
+    )
+    expect(negativa.ok(), "select=* em listings deveria ser recusado para a sessão").toBe(false)
+    const corpoDaNegativa = (await negativa.json()) as { code?: string }
+    expect(corpoDaNegativa.code).toBe("42501")
     const detalhe = await page.request.get(`/api/app/mercado/${id}`)
     const corpo = (await detalhe.json()) as { anuncio: { fotos: string[] } }
     expect(corpo.anuncio.fotos).toHaveLength(1)
