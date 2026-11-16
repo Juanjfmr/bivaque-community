@@ -105,7 +105,9 @@ const SHORTCUTS: Shortcut[] = [
     live: ({ novelty }) => fresh(novelty.guide, "m"),
   },
   {
-    href: "/explorar/servicos",
+    // RUN-181: o atalho de Serviços vai à busca do app, que já aceita o termo
+    // pelo endereço. A tela web de serviços saiu com o lote.
+    href: "/app/busca",
     label: "Serviços",
     icon: Wrench,
     fallback: "Perto de você",

@@ -157,10 +157,12 @@ const nextConfig: NextConfig = {
           ["/configuracoes/notificacoes", "/app/voce"],
           ["/inicio", "/app/inicio"],
           ["/notifications", "/app/avisos"],
-          // RUN-177 (F07): `/explorar/servicos` NÃO é trocada. A busca global da
-          // web linka para lá (lib/search/groups.ts) e global-search-flow a
-          // exercita; a troca fica para o card da jornada da busca web. Só
-          // `/explorar/busca` e `/explorar` seguem no app (LT-002).
+          // RUN-181: a espera do RUN-177 acabou. A última tela de busca da web
+          // (`/explorar/servicos`) cai no `/app/busca`, que já lê `q` e o alias
+          // `search` (termo-url.ts) — a borda não reescreve o alias. A pasta
+          // saiu inteira; as perdas do painel estão declaradas no card.
+          // `/explorar/busca` e `/explorar` seguem no mesmo molde (LT-002).
+          ["/explorar/servicos", "/app/busca"],
           ["/explorar/busca", "/app/busca"],
           ["/explorar", "/app/busca"],
           // F05: a tela antiga de eventos sai inteira. `/events/novo` vem antes

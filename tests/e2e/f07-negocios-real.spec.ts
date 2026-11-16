@@ -530,10 +530,11 @@ test.describe("F07 — página de negócio do membro (dono)", { tag: "@stateful"
     })
     await capturar(page, testInfo.project.name, "11-meu-negocio")
 
-    // A ficha aparece na busca de serviços da cidade. RUN-177: `/explorar/servicos`
-    // NÃO foi trocada (a busca global da web linka para lá e o global-search-flow
-    // a exercita); a garantia do spec morto volta a ser provada na tela web viva.
-    await page.goto("/explorar/servicos?q=vizinhanca")
+    // A ficha aparece na busca da cidade. RUN-181: o painel web
+    // (`/explorar/servicos`) morreu — a garantia do spec morto passa a ser
+    // exercida na busca do app, que é o destino do redirect e lê o mesmo `q`
+    // pelo mesmo RPC (`search_providers`), com a contagem e os filtros do app.
+    await page.goto("/app/busca?q=vizinhanca")
     await expect(page.getByText(NOME_DO_NEGOCIO, { exact: true }).first()).toBeVisible({
       timeout: 30_000,
     })
