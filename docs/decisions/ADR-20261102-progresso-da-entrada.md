@@ -118,9 +118,9 @@ manter histórico.
 - **O rascunho sai dentro do provisionamento.** `provision_member_entry` apaga o rascunho
   atomicamente nos caminhos que o chamam (rota do app e
   `/api/onboarding` da web). O convite familiar por código chama `family_invite_code_accept` e
-  grava o marcador `interesses` em uma chamada posterior; essa gravação falha fechada com 503 e pode
-  ser repetida com segurança (emenda SEC-012, 16/11). Uma falha do provisionamento
-  desfaz também a remoção do rascunho (pgTAP em `entry-provision-atomic.sql`).
+  grava o marcador `interesses` em uma chamada posterior; essa gravação falha fechada com 503 e a
+  nova tentativa retoma o vínculo sem passar pelo preview (emenda SEC-012, 16/11). Uma falha do
+  provisionamento desfaz também a remoção do rascunho (pgTAP em `entry-provision-atomic.sql`).
 - **O destino vem do estado canônico.** O GET devolve a etapa final (`inicio`) a quem já tem vínculo com a cidade, lido
   pelo cliente do usuário sob RLS; um rascunho que sobrou não manda a pessoa de volta à porta.
 - **A versão é regra do validador**, não só da leitura: `validarProgresso` recusa versão diferente de `VERSAO_DO_FLUXO`, e
@@ -175,11 +175,23 @@ aceitar escrita do cliente:
 
 ## Consequences — emenda de 16/11/2026 (SEC-012: convite familiar)
 
-O aceite por código familiar chama `family_invite_code_accept` e grava o marcador `interesses`
-numa segunda chamada, fora da transação do aceite. Se essa gravação falhar, a rota responde
-503 `gravacao-indisponivel` sem expor o erro do banco e registra apenas uma mensagem estática.
-A nova tentativa é segura porque o aceite do mesmo código é idempotente e regrava o marcador.
-Assim, a pessoa não recebe sucesso enquanto um rascunho pessoal anterior pode continuar vivo.
+O aceite por código familiar chama `family_invite_code_accept` — que consome o convite e
+provisiona vínculo, perfil e membership numa transação — e grava o marcador `interesses` numa
+segunda chamada, fora dessa transação. Se essa gravação falhar, a rota responde 503
+`gravacao-indisponivel` sem expor o erro do banco e registra apenas uma mensagem estática: o
+sucesso não é respondido enquanto um rascunho pessoal anterior pode continuar vivo.
+
+A retomada não depende de o convite continuar `pending`. Ela funciona porque a rota **não
+pré-valida o código com `family_invite_code_preview`** (que só casa convite `pending` e, depois do
+aceite, responderia `unavailable` — gastando uma tentativa do limite e travando a segunda chamada
+em 400). Quem decide é o próprio aceite: `family_invite_code_accept` reconhece quem já aceitou
+aquele convite, devolve `ok` com o vínculo existente e **não** consulta o limite de tentativas
+nesse caminho (bloco "Retomada", 20261023120000). A segunda chamada chega então à gravação do
+marcador: 200 com `localityMember`, ou 503 de novo se ela falhar outra vez.
+
+Código de outra pessoa continua recebendo exatamente a resposta genérica de hoje (`400
+convite-invalido`, a mesma de código inexistente, vencido ou revogado): a verificação não virou
+oráculo de quem aceitou o quê.
 
 ## Reversal cost
 

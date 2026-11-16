@@ -4,8 +4,11 @@
 # auditoria-r3-lote1.md, achados A1-1 e A1-3, MEDIUM e LOW): a rota de aceite por código do
 # app grava o marcador do rascunho numa segunda chamada e, se ela falha, só loga e devolve 200.
 # O rascunho pessoal sobrevive à entrada concluída e a retomada fica presa. As rotas irmãs
-# (interesses, combinado) devolvem 503 nesse caso. O aceite é idempotente: repetir o código
-# regrava o marcador, então 503 com nova tentativa é seguro.
+# (interesses, combinado) devolvem 503 nesse caso. A retomada funciona porque a rota deixa de
+# pré-validar o código com `family_invite_code_preview` — que só casa convite `pending` e, depois
+# do aceite, responderia `unavailable`, gastaria uma tentativa do limite e travaria a segunda
+# chamada em 400. Quem reconhece a aceitante é o próprio `family_invite_code_accept`, que retoma
+# o vínculo existente sem consumir o limite.
 #
 # Decisão do coordenador (16/11): correção de caminho de falha, não ajuste de funcionalidade;
 # não fere o congelamento da entrada (ADR-20261105-entrada-enxuta). O texto do ADR-20261102
@@ -17,7 +20,9 @@ task_id: SEC-012
 objective: >
   Quem entra por código de convite familiar nunca termina a entrada com o rascunho pessoal
   anterior vivo: se a gravação do marcador da etapa seguinte falha, a rota responde 503 (como
-  as rotas irmãs) e a nova tentativa, que é idempotente, conclui; e há prova automática disso.
+  as rotas irmãs); a nova tentativa da mesma sessão retoma o vínculo existente sem passar pelo
+  preview e conclui; código já aceito por outra pessoa continua recebendo a resposta genérica de
+  hoje; e há prova automática disso.
 
 authority:
   - .work/orq/relatorios/auditoria-r3-lote1.md (A1-1, A1-3), auditoria do security-auditor de 16/11
@@ -46,9 +51,9 @@ forbidden:
 acceptance:
   - "Na rota de aceite por código, falha na gravação do marcador responde 503 no mesmo formato e com o mesmo código de erro das rotas irmãs de interesses e combinado, e loga sem dado pessoal."
   - "Teste unitário negativo: com o upsert do marcador falhando, a resposta é 503 e não contém a mensagem do erro; com o upsert ok, continua 200 com localityMember."
-  - "Teste unitário de idempotência da rota: segunda chamada depois de um 503 conclui com 200 (aceite idempotente simulado)."
+  - "Teste unitário da retomada pela sequência real: primeira chamada com a gravação do marcador falhando responde 503; a segunda chamada da mesma sessão, com o preview devolvendo unavailable e o aceite retomando o vínculo, responde 200 com localityMember sem chamar o preview; código já aceito por outra pessoa responde a mesma 400 genérica de hoje; retomada com o marcador falhando de novo responde 503."
   - "O E2E do convite em f01-entrada-real passa a afirmar que, ao fim da entrada por código, não existe rascunho pessoal (zero linhas de rascunho com estado de nome/cidade para o usuário) — leitura pelo caminho que o spec já usa para conferir o banco."
-  - "ADR-20261102 ganha a emenda de 16/11: o caminho do convite por código grava o marcador fora da transação do aceite e falha fechado (503 + nova tentativa idempotente); o texto 'todos os caminhos' é corrigido."
+  - "ADR-20261102 ganha a emenda de 16/11: o caminho do convite por código grava o marcador fora da transação do aceite e falha fechado (503); a retomada funciona porque a rota deixa de pré-validar com o preview e quem reconhece a aceitante é o aceite, sem consumir o limite; o texto 'todos os caminhos' é corrigido."
 
 proof:
   - npx pnpm@11.18.0 test
