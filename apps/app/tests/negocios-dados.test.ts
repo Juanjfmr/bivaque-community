@@ -137,6 +137,14 @@ describe("porta de negócios e pedidos", () => {
       { pedido: { ...pedido, situacao: undefined } },
     ],
     ["pedido sem lado", () => buscarPedido("p1"), { pedido: { ...pedido, lado: undefined } }],
+    // RUN-179: bairro e distância são parte do contrato; ausência é falha de
+    // contrato, não "sem localização" (foi o que derrubou dois specs no CI).
+    ["pedido sem bairro", () => buscarPedido("p1"), { pedido: { ...pedido, bairro: undefined } }],
+    [
+      "pedido sem distância",
+      () => buscarPedido("p1"),
+      { pedido: { ...pedido, distanciaMetros: undefined } },
+    ],
     [
       "situação desconhecida",
       () => buscarPedido("p1"),

@@ -157,6 +157,9 @@ test.describe("F07 — pedidos dos dois lados", () => {
       atualizadoEm: "2026-11-05T12:00:00Z",
       conversaId: CONVERSA,
       lado: "dono",
+      // RUN-179: campos aditivos do contrato do pedido (sem CEP, sem origem).
+      bairro: null,
+      distanciaMetros: null,
     }
     const enviado = {
       ...recebido,
