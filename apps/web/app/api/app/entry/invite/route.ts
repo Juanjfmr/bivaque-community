@@ -147,7 +147,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       { onConflict: "user_id" },
     )
     if (marcadorError) {
-      log.error("entry invite: draft marker write failed", { message: marcadorError.message })
+      log.error("entry invite: draft marker write failed")
+      return responder(request, { erro: "gravacao-indisponivel" }, 503, sessao.sessao.cabecalhos)
     }
 
     return responder(request, { localityMember: true }, 200, sessao.sessao.cabecalhos)

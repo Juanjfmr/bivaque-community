@@ -18,6 +18,7 @@ import { POST } from "web/app/api/app/entry/invite/route"
 import { resolverSessaoDaRequisicao } from "web/lib/app-api/sessao-do-next"
 import { acceptFamilyInviteCode, previewFamilyInviteCode } from "web/lib/convite/provision"
 import { createServerClient } from "web/lib/supabase/server"
+import { log } from "web/lib/logger"
 
 const resolver = vi.mocked(resolverSessaoDaRequisicao)
 const criarCliente = vi.mocked(createServerClient)
@@ -220,6 +221,34 @@ describe("POST /api/app/entry/invite", () => {
       { user_id: PESSOA.id, versao: 2, etapa: "interesses", estado: {} },
       { onConflict: "user_id" },
     )
+  })
+
+  it("fecha com 503 sem vazar o erro quando não grava o marcador", async () => {
+    const erro = new Error("falha para pessoa@example.invalid")
+    registrarMarcador.mockResolvedValue({ error: erro })
+    const logErro = vi.spyOn(log, "error")
+
+    const resposta = await POST(requisicao({ cabecalho: CABECALHO }))
+    const corpo = await resposta.json()
+
+    expect(resposta.status).toBe(503)
+    expect(corpo).toEqual({ erro: "gravacao-indisponivel" })
+    expect(JSON.stringify(corpo)).not.toContain(erro.message)
+    expect(logErro).toHaveBeenCalledWith("entry invite: draft marker write failed")
+  })
+
+  it("uma nova tentativa depois da falha conclui o aceite idempotente", async () => {
+    registrarMarcador
+      .mockResolvedValueOnce({ error: new Error("falha temporária") })
+      .mockResolvedValueOnce({ error: null })
+
+    const primeira = await POST(requisicao({ cabecalho: CABECALHO }))
+    const segunda = await POST(requisicao({ cabecalho: CABECALHO }))
+
+    expect(primeira.status).toBe(503)
+    expect(segunda.status).toBe(200)
+    expect(await segunda.json()).toEqual({ localityMember: true })
+    expect(aceitar).toHaveBeenCalledTimes(2)
   })
 
   it("traduz o erro de nome do banco sem vazar detalhe", async () => {
