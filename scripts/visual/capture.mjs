@@ -123,7 +123,8 @@ export const HEADINGS = {
   // INVALID em três viewports mesmo com a tela certa na frente.
   "/community": DYNAMIC_HEADING,
   "/events": "^Explorar eventos$",
-  "/messages": "^Mensagens$",
+  // RUN-166: a caixa e a conversa saíram da web para o app (/app/conversas,
+  // /app/conversa/[id]); capturá-las aqui mediria o redirect.
   // A vista Indicações da Comunidade: o h1 é o nome da comunidade do ator.
   "/community?vista=indicacoes": DYNAMIC_HEADING,
   "/indicacoes/80000000-0000-4000-8000-000000000f01":
@@ -227,7 +228,6 @@ export const HEADINGS = {
   "/denuncias": "^Confiança e privacidade$",
   "/denuncias/nova?tipo=post&id=80000000-0000-4000-8000-000000000f01": "^Denunciar publicação$",
   "/denuncias/<own-report>": "^Acompanhar denúncia$",
-  "/messages/<thread>": "^Mensagens$",
   // As subrotas de Configurações têm título próprio no H1 da área: a área
   // continua nomeada ("Configurações") e a subtela entra no mesmo H1. Assim uma
   // captura que aterrissasse na subtela errada deixa de passar como válida
@@ -492,7 +492,6 @@ export const ROUTES = [
     name: "indicacao-resolvida",
     auth: true,
   },
-  { path: "/messages", name: "messages", auth: true },
   { path: "/profile", name: "profile", auth: true },
   // RECON-032 (pranchas 54 e 56). Fixtures concretas, não templates:
   // - /denuncias/nova: alvo é um post do seed que o visual@ vê pela RLS e
@@ -502,10 +501,6 @@ export const ROUTES = [
   // - /denuncias/<own-report>: o id da denúncia do próprio ator é resolvido na
   //   hora por REST (fixture "own-report"). O seed gera ids aleatórios, então
   //   id fixo aqui virava fixture morta a cada reset do banco compartilhado.
-  // - /messages/<thread>: idem, por REST (fixture "own-thread"): a conversa
-  //   do ator é lida com o token dele. Antes o id vinha de um arquivo escrito
-  //   por tests/e2e/recon-032-messages.spec.ts, e a captura só passava depois
-  //   de rodar a suíte e2e inteira — quem capturava primeiro via defeito.
   //   As duas usam a conta do seed que TEM denúncia e conversa (visual@).
   { path: "/salvos", name: "salvos", auth: true },
   // Prancha 12/61: a aba Guia da tela de salvos, populada pela referência que o
@@ -527,13 +522,6 @@ export const ROUTES = [
     auth: true,
     account: "visual",
     fixture: "own-report",
-  },
-  {
-    path: "/messages/<thread>",
-    name: "message-thread",
-    auth: true,
-    account: "visual",
-    fixture: "own-thread",
   },
   // RECON-031 — configurações (prancha 52) e confiança (prancha 56). A fixture
   // é a conta do seed: membro verificado (default), com a coluna vertical de
@@ -698,18 +686,6 @@ async function actorRow(route, auth, path, params) {
   return Array.isArray(rows) ? rows[0] : undefined
 }
 
-// O `sub` do JWT é o id do ator: a conversa é filtrada por participante.
-function actorId(auth) {
-  const token = auth?.session?.access_token
-  if (typeof token !== "string") return null
-  try {
-    const payload = JSON.parse(Buffer.from(token.split(".")[1], "base64url").toString("utf8"))
-    return typeof payload?.sub === "string" ? payload.sub : null
-  } catch {
-    return null
-  }
-}
-
 async function resolveRoutePath(route, auth) {
   if (!route.fixture) return route.path
 
@@ -723,21 +699,6 @@ async function resolveRoutePath(route, auth) {
       throw new Error(`rota ${route.name}: o ator não tem denúncia própria para a fixture`)
     }
     return `/denuncias/${row.id}`
-  }
-
-  if (route.fixture === "own-thread") {
-    const me = actorId(auth)
-    if (!me) throw new Error(`rota ${route.name}: sessão sem id de ator para a conversa`)
-    const row = await actorRow(route, auth, "dm_conversations", {
-      select: "id",
-      or: `(participant_a.eq.${me},participant_b.eq.${me})`,
-      order: "created_at.desc",
-      limit: "1",
-    })
-    if (typeof row?.id !== "string") {
-      throw new Error(`rota ${route.name}: o ator não participa de nenhuma conversa`)
-    }
-    return `/messages/${row.id}`
   }
 
   const file = join(OUT_ROOT, "fixtures", `${route.fixture}.json`)

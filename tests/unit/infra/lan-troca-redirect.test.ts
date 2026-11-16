@@ -12,9 +12,6 @@ import { routeFromFile } from "../../e2e/helpers/crawl-model"
 const ID = "41000000-0000-4000-8000-000000000051"
 const ORIGEM = "https://bivaque.example.invalid"
 const TROCADAS = [
-  ["/messages", "/app/conversas"],
-  [`/messages?conversation=${ID}`, `/app/conversa/${ID}?conversation=${ID}`],
-  [`/messages/${ID}`, `/app/conversa/${ID}`],
   [`/mercado/${ID}`, `/app/anuncio/${ID}`],
   [`/mercado/${ID}/editar`, `/app/anuncio/${ID}`],
   ["/mercado/novo", "/app/mercado"],
@@ -104,6 +101,27 @@ describe("LAN-TROCA fase 1", () => {
     expect(
       ROTAS.some((rota) => `/app${rota.caminho.replace("$id", ID)}` === destino.pathname),
     ).toBe(true)
+  })
+
+  // RUN-166: a pasta de mensagens saiu da web (a prova de ausência está no fim
+  // do arquivo), mas a regra de redirect NÃO mudou — as três formas da URL
+  // antiga continuam trocadas, com id e query preservados.
+  it.each([
+    ["/messages", "/app/conversas"],
+    [`/messages?conversation=${ID}`, `/app/conversa/${ID}?conversation=${ID}`],
+    [`/messages/${ID}`, `/app/conversa/${ID}`],
+  ] as const)("%s (URL antiga de mensagens) segue em 307 para %s", async (de, para) => {
+    const resposta = await resolver(de)
+    expect(resposta.status).toBe(307)
+    const destino = new URL(resposta.headers.get("location") ?? "", ORIGEM)
+    const esperado = new URL(para, ORIGEM)
+    expect(destino.pathname).toBe(esperado.pathname)
+    for (const [chave, valor] of esperado.searchParams) {
+      expect(destino.searchParams.get(chave)).toBe(valor)
+    }
+    expect(
+      (await resolver(`${destino.pathname}${destino.search}`)).headers.get("location"),
+    ).toBeNull()
   })
 
   it.each(["", "nao-e-uuid", `${ID}/editar`, `https://fora.example.invalid/${ID}`])(
@@ -210,7 +228,7 @@ describe("LAN-TROCA fase 1", () => {
     expect(sobras).toEqual([])
   })
 
-  it.each(["notifications", "configuracoes/notificacoes"])(
+  it.each(["notifications", "configuracoes/notificacoes", "messages"])(
     "a pasta antiga %s não deixa tela nem action para trás",
     (relativa) => {
       const pasta = join(shell, relativa)

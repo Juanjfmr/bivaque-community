@@ -199,9 +199,10 @@ export function AppShell({ children }: AppShellProperties) {
               </span>
             </a>
 
-            {/* Caixa de conversas (MSG-SEM-ENTRADA, decisão de 22/09/2026). */}
+            {/* Caixa de conversas (MSG-SEM-ENTRADA, decisão de 22/09/2026).
+                RUN-166: a caixa mora no app; o link vai direto, sem 307. */}
             <a
-              href="/messages"
+              href="/app/conversas"
               aria-label={conversationsLabel(unreadConversations)}
               className={ICON_BUTTON}
             >
