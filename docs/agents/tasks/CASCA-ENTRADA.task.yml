@@ -34,6 +34,8 @@ baseline:
 allowed_paths:
   - docs/agents/tasks/CASCA-ENTRADA.task.yml
   - tests/e2e/link-crawl.spec.ts
+  - tests/e2e/helpers/crawl-model.ts
+  - tests/unit/visual/crawl-model.test.ts
   - .visual/casca-entrada
 
 forbidden:

@@ -74,15 +74,21 @@ export function buildPatterns(
   caminhosDoApp: readonly string[] = [],
   redirecionadas: readonly string[] = [],
 ): RoutePattern[] {
+  const paginas = pageFiles.map((file) => routeFromFile(file))
   const all = [
-    ...pageFiles.map((file) => {
-      const route = routeFromFile(file)
-      return patternFor(route, redirecionadas.includes(route) ? "redirect" : "page")
-    }),
+    ...paginas.map((route) =>
+      patternFor(route, redirecionadas.includes(route) ? "redirect" : "page"),
+    ),
     ...handlerFiles.map((file) => patternFor(routeFromFile(file), "handler")),
     ...caminhosDoApp.map((caminho) =>
       patternFor(`${PREFIXO_DO_APP}${moldeDoRoteador(caminho)}`, "app"),
     ),
+    // LAN-TROCA: o endereço antigo que o next.config manda para o app pode não ter mais
+    // page.tsx. Ele continua sendo destino válido de <a href> — sem o padrão, todo link para
+    // ele virava "rota inexistente".
+    ...redirecionadas
+      .filter((route) => !paginas.includes(route))
+      .map((route) => patternFor(route, "redirect")),
   ]
   return all.sort((a, b) => a.dynamicSegments - b.dynamicSegments)
 }
