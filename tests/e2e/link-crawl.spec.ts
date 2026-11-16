@@ -26,6 +26,10 @@ import { signInAs } from "./helpers/session"
 //
 // O que ele NÃO vê: navegação feita por botão com router.push. Por isso essas rotas entram na
 // lista de portas com o botão nomeado — a lista é a dívida visível, não um esconderijo.
+// Desde o RUN-176 a mesma lista é a entrada da casca: a persona dona de uma porta visita a rota
+// como semente e o crawl segue os links dali. Semente não é link — a invariante da porta
+// continua valendo para chegada por <a href>, e é o crawl, não a lista, que fecha o que a
+// casca alcança.
 //
 // @stateful: só faz GET, mas lê telas que outros specs mudam (feed, pedidos, fila); serial.
 
@@ -91,187 +95,219 @@ const PERSONAS: Array<{ nome: string; email: string | null; entradas: string[]; 
 // envio), EXTERNO (e-mail, link compartilhado), BOTÃO (router.push — navegação que deveria
 // ser link), CONDICIONAL (link que só aparece em certo estado ou atrás de uma aba que o
 // rastreador não abre), DÍVIDA (porta que falta e tem card).
-const PORTAS_FORA_DO_LINK: readonly AllowedUnreached[] = [
+//
+// RUN-176: a lista tem dois papéis. Uma porta que nenhum link abre é exatamente a que só se
+// abre digitando a URL — então o rastreador digita: a entrada com `dono` é visitada como
+// semente pela persona que a detém, com a mesma visita real das outras, e o crawl segue todo
+// link que sai dali. É assim que a casca web volta ao inventário sem que ninguém invente
+// caminho: o que essas telas alcançam sai do crawl, não desta lista. Chegar por semente NÃO
+// conta como "alcançada por link" — o invariante continua sendo link-ou-declaração, e a porta
+// que voltar a ter link envelhece em staleAllowances como qualquer outra.
+// Rota com parâmetro fica sem semente: a URL nua cai em notFound (/pedidos/novo) ou depende
+// de id/token externo, e inventar id seria medir dado que não existe. Quem as caminha é o
+// link da lista semeada ao lado — cada `porta` nomeia qual — e, enquanto não houver link, a
+// declaração continua sendo a porta.
+interface PortaDeclarada extends AllowedUnreached {
+  /** Persona que detém a porta. Sem parâmetro na rota, ela entra por ali como semente. */
+  readonly dono?: string
+}
+
+const PORTAS_FORA_DO_LINK: readonly PortaDeclarada[] = [
   {
     route: "/auth/callback-error",
     porta: "FLUXO: redirect do /auth/callback quando o OAuth falha",
+    dono: "visitante",
   },
   {
     route: "/auth/confirmar-email",
     porta: "FLUXO: router.push depois do cadastro e next= do link de confirmação",
+    dono: "visitante",
   },
   {
     route: "/conta-apagada",
     porta: "FLUXO: redirect depois de apagar a conta em Configurações > Conta (lote 4, PORT-006)",
+    dono: "visitante",
   },
   {
     route: "/convite",
     porta:
       "CONDICIONAL: link do e-mail do convite e 'É cônjuge ou dependente?' na elegibilidade, que a persona do rastreador não vê (lote 4, PORT-006)",
+    dono: "visitante",
   },
   {
     route: "/explorar/servicos",
     porta:
       "DÍVIDA LAN-TROCA: a porta era a lista /mercado e a página /explorar, ambas trocadas para o app (F02/F06); a lista de serviços segue na web até o lote próprio",
+    dono: "membro",
   },
   {
     route: "/groups",
     porta:
       "CONDICIONAL: 'Veja os grupos' no compositor, que só aparece para quem ainda não participa de nenhum; o 'Criar o primeiro grupo' de Interesses saiu com a tela web (RUN-163) e o app não oferece criar grupo",
     dependeDeDados: true,
-  },
-  {
-    route: "/groups/[id]",
-    porta:
-      "DÍVIDA LAN-TROCA: 'Grupos ativos' no rail da Início web saiu com a fase 1; grupos ficam na web até F04",
+    dono: "membro",
   },
   {
     route: "/communities/[id]/admin",
     porta:
       "CONDICIONAL: menu do console, cuja entrada é 'Analisar pedidos de entrada' na aba Sobre (moderador)",
     dependeDeDados: true,
+    dono: "dono de vila",
   },
   {
     route: "/communities/[id]/admin/media",
     porta: "CONDICIONAL: menu do console (moderador)",
     dependeDeDados: true,
+    dono: "dono de vila",
   },
   {
     route: "/communities/[id]/admin/moderators",
     porta: "CONDICIONAL: hub do console (moderador)",
     dependeDeDados: true,
+    dono: "dono de vila",
   },
   {
     route: "/communities/[id]/admin/pending",
     porta: "CONDICIONAL: 'Analisar pedidos de entrada' na aba Sobre da comunidade (moderador)",
     dependeDeDados: true,
+    dono: "dono de vila",
   },
   {
     route: "/communities/[id]/admin/providers",
     porta: "CONDICIONAL: 'Prestadores atestados' no hub do console (moderador)",
     dependeDeDados: true,
+    dono: "dono de vila",
   },
   {
     route: "/communities/[id]/indicar-prestador",
     porta: "BOTÃO: 'Mais opções' > 'Indicar prestador' em /communities (window.location.assign)",
+    dono: "dono de vila",
   },
   {
     route: "/communities/[id]/invite",
     porta:
       "CONDICIONAL: 'Convidar membros' na aba Sobre; 'Mais opções' > 'Convidar' em /communities",
     dependeDeDados: true,
+    dono: "dono de vila",
   },
   {
     route: "/community",
     porta:
       "FLUXO: fim do onboarding ('Ir para a comunidade'), notificação de publicação e redirects",
     dependeDeDados: true,
+    dono: "membro",
   },
   {
     route: "/consent",
     porta:
       "DÍVIDA ROTA-CONSENT-LEGADA: portão removido pelo ADR-20260907-consentimento-no-cadastro",
+    dono: "visitante",
   },
   {
     route: "/denuncias",
     porta:
       "CONDICIONAL: 'Minhas denúncias' na Ajuda e o retorno do fluxo de denúncia; a lista só é alcançada quando a persona já denunciou, o que o rastreador nem sempre exercita (portas intactas, LT-007 não as tocou)",
     dependeDeDados: true,
+    dono: "membro",
   },
   {
     route: "/denuncias/[id]",
     porta: "CONDICIONAL: lista de /denuncias, quando a pessoa já denunciou",
     dependeDeDados: true,
+    dono: "membro",
   },
   {
     route: "/denuncias/nova",
     porta: "FLUXO: versão endereçável (spec C10) do diálogo que as origens abrem por cima da tela",
+    dono: "membro",
   },
   {
     route: "/guide/sugerir",
     porta:
       "DÍVIDA LAN-TROCA: a porta era 'Sugerir um lugar' na lista /guide, trocada para o app (F08); o app ainda não tem a porta de sugestão de lugar novo (gap em F08-RESSALVAS)",
+    dono: "membro",
   },
   {
     route: "/indicacoes",
     porta:
       "FLUXO: redireciona para a vista Indicações da Comunidade; fica para links antigos e ?pedir=1",
+    dono: "membro",
   },
   { route: "/invite/[token]", porta: "EXTERNO: link de convite compartilhado" },
-  // RUN-172: as sete rotas abaixo perderam a porta no mesmo dia. O perfil web
-  // (`(shell)/profile`) era a única tela da casca a que uma persona chegava — o
-  // membro agora entra direto no app (`/inicio` é 307) — e dela saíam Salvos,
-  // Configurações, Comunidades e, duas telas adiante, Conta, senha e o detalhe
-  // da indicação. A coluna lateral da casca web ainda linka Salvos e
-  // Configurações (app-shell.tsx:113 e :161), mas o rastreador não entra na
-  // casca por persona nenhuma, então a porta existe sem ser medida. Cada linha
-  // nomeia o equivalente VIVO no app e o lote que fecha a tela web.
-  {
-    route: "/salvos",
-    porta:
-      "DÍVIDA F10: 'Salvos' morava no perfil web (RUN-172); a tela viva é /app/salvos e a web sai no lote F10 que traz salvos e conta para o app",
-  },
-  {
-    route: "/configuracoes",
-    porta:
-      "DÍVIDA F10: 'Configurações' morava no perfil web (RUN-172); os ajustes vivos estão no Você do app (/app/voce) e a tela web sai no lote F10 de conta e privacidade",
-  },
-  {
-    route: "/configuracoes/conta",
-    porta: "CONDICIONAL: coluna de /configuracoes, que perdeu a porta com o perfil web (RUN-172)",
-  },
-  {
-    route: "/recuperar-senha",
-    porta:
-      "CONDICIONAL: 'Alterar senha' em /configuracoes/conta; a recuperação viva é 'Esqueci minha senha' na entrada do app",
-  },
+  // RUN-172/176: o perfil web era a única tela da casca a que uma persona chegava, e com ele
+  // morreram as portas de Salvos, Configurações, Conta, senha, Comunidades e o detalhe da
+  // indicação. Entrar na casca por uma semente devolveu a medida, e estas sete voltaram a ter
+  // link — por isso saíram da lista: declaração que virou link é dívida paga, e staleAllowances
+  // acusaria a linha esquecida.
+  // - /salvos e /configuracoes: coluna lateral de toda tela da casca (app-shell.tsx:113 e :161)
+  // - /configuracoes/conta: coluna de Configurações (configuracoes-nav.tsx)
+  // - /recuperar-senha: 'Alterar' e 'Ajuda com acesso' em Conta (configuracoes/conta/page.tsx)
+  // - /communities/[id]: lista de comunidades (communities-screen.tsx:276) e a lateral (:328)
+  // - /groups/[id]: nome do grupo na lista de grupos (groups/page.tsx:448)
+  // - /negocio: 'Ofereça seus serviços' na lista de serviços (explorar/servicos/page.tsx:352)
   {
     route: "/communities",
     porta:
-      "DÍVIDA F04: 'Minhas comunidades' morava no perfil web (RUN-172); a lista viva é a Comunidade do app (/app/comunidade)",
-  },
-  {
-    route: "/communities/[id]",
-    porta: "CONDICIONAL: lista de /communities, que perdeu a porta com o perfil web (RUN-172)",
+      "DÍVIDA F04: 'Minhas comunidades' morava no perfil web (RUN-172); a lista viva é a Comunidade do app (/app/comunidade), e esta tela da web é a semente que abre a casca",
+    dono: "dono de vila",
   },
   {
     route: "/indicacoes/[id]",
     porta: "CONDICIONAL: lista de /salvos, que perdeu a porta com o perfil web (RUN-172)",
-  },
-  {
-    route: "/negocio",
-    porta:
-      "DÍVIDA LAN-TROCA: a porta era 'Meu negócio' na lista /mercado, trocada para o app (F06); a gestão do negócio próprio segue na web (F07)",
+    dono: "dono de vila",
   },
   {
     route: "/negocio/catalogo",
     porta: "CONDICIONAL: 'Catálogo' em /negocio, só depois que a página do negócio existe",
     dependeDeDados: true,
+    dono: "prestador",
   },
-  { route: "/nova-senha", porta: "EXTERNO: link do e-mail de recuperação de senha" },
-  { route: "/onboarding", porta: "FLUXO: proxy, cadastro e consentimento" },
+  {
+    route: "/nova-senha",
+    porta: "EXTERNO: link do e-mail de recuperação de senha",
+    dono: "visitante",
+  },
+  { route: "/onboarding", porta: "FLUXO: proxy, cadastro e consentimento", dono: "visitante" },
   {
     route: "/onboarding/documento",
     porta: "FLUXO: verificação recusada e 'Enviar identidade' no status",
+    dono: "visitante",
   },
   {
     route: "/onboarding/locality",
     porta: "FLUXO: proxy redireciona quem é verificado e ainda não escolheu cidade",
+    dono: "visitante",
   },
   {
     route: "/onboarding/perfil",
     porta:
       "FLUXO: redireciona para a tela de cidade — o passo de personalização saiu da entrada (PORT-005)",
+    dono: "visitante",
   },
-  { route: "/onboarding/status", porta: "FLUXO: proxy e notificação de entrada recusada" },
-  { route: "/onboarding/welcome", porta: "FLUXO: fim do onboarding" },
+  {
+    route: "/onboarding/status",
+    porta: "FLUXO: proxy e notificação de entrada recusada",
+    dono: "visitante",
+  },
+  { route: "/onboarding/welcome", porta: "FLUXO: fim do onboarding", dono: "visitante" },
+  // Sem semente de propósito: sem `?prestador=` a tela faz notFound(), e o id do destinatário
+  // vem do botão na ficha (que já mora no app). A declaração segue sendo a porta.
   { route: "/pedidos/novo", porta: "BOTÃO: 'Pedir serviço' na ficha do prestador" },
   { route: "/prestador-convite/[token]", porta: "EXTERNO: e-mail de convite do prestador" },
   {
     route: "/recommendations",
     porta: "FLUXO: aposentada em 25/09/2026; redireciona links antigos para a Comunidade",
+    dono: "membro",
   },
 ]
+
+// Sementes da persona: as portas que ela detém e cuja URL se digita. Rota com parâmetro fica
+// de fora — o crawl a alcança pelo link da lista que a `porta` nomeia.
+function sementesDa(dono: string): string[] {
+  return PORTAS_FORA_DO_LINK.filter(
+    (porta) => porta.dono === dono && !porta.route.includes("["),
+  ).map((porta) => porta.route)
+}
 
 function listFiles(dir: string, name: string, out: string[] = []): string[] {
   for (const entry of readdirSync(dir)) {
@@ -293,6 +329,7 @@ async function crawl(
   context: BrowserContext,
   persona: string,
   entradas: string[],
+  sementes: string[],
   chega: RegExp,
   patterns: RoutePattern[],
   reached: Set<string>,
@@ -301,6 +338,11 @@ async function crawl(
 ): Promise<number> {
   const frontier = new Frontier(patterns, CAP_PER_ROUTE)
   for (const entrada of entradas) frontier.enter({ target: entrada, from: "(entrada)", persona })
+  // A porta declarada entra como semente, não como chegada: `reached` só cresce no laço de
+  // hrefs abaixo, então visitar a tela não a torna "alcançável por link".
+  for (const semente of sementes) {
+    frontier.enter({ target: semente, from: "(porta declarada)", persona })
+  }
   const page = await context.newPage()
   page.setDefaultNavigationTimeout(NAV_TIMEOUT)
   let visits = 0
@@ -394,19 +436,32 @@ test.describe("rastreador de links", { tag: "@stateful" }, () => {
     const broken: Broken[] = []
     const redirects: Array<{ persona: string; target: string; landed: string }> = []
     const visitas: Record<string, number> = {}
+    const sementes: Record<string, string[]> = {}
     mkdirSync(OUT_DIR, { recursive: true })
     writeFileSync(PROGRESS, "")
+
+    // Uma persona com `dono` digitado errado perderia as sementes sem avisar: é a única lista
+    // deste spec que casa por nome.
+    for (const porta of PORTAS_FORA_DO_LINK) {
+      if (!porta.dono) continue
+      expect(
+        PERSONAS.map((p) => p.nome),
+        `${porta.route} sem persona dona`,
+      ).toContain(porta.dono)
+    }
 
     // Em série: com as personas em paralelo o Supabase local compartilhado deixou de responder
     // my_account_kind, o proxy falhou fechado e o operador foi medido como quem não tem conta.
     for (const persona of PERSONAS) {
       const context = await browser.newContext({ viewport: { width: 1440, height: 900 } })
       if (persona.email) await signInAs(context, persona.email)
+      sementes[persona.nome] = sementesDa(persona.nome)
       try {
         visitas[persona.nome] = await crawl(
           context,
           persona.nome,
           persona.entradas,
+          sementes[persona.nome] ?? [],
           persona.chega,
           patterns,
           reached,
@@ -427,6 +482,7 @@ test.describe("rastreador de links", { tag: "@stateful" }, () => {
         {
           geradoEm: new Date().toISOString(),
           visitas,
+          sementes,
           rotasDePagina: patterns.filter((p) => p.kind === "page").length,
           alcancadas: [...reached].sort(),
           quebrados: broken,
@@ -442,5 +498,24 @@ test.describe("rastreador de links", { tag: "@stateful" }, () => {
     expect(broken, "links que levam a lugar nenhum").toEqual([])
     expect(semPorta, "rotas que só se alcançam digitando a URL").toEqual([])
     expect(portasVelhas, "portas declaradas que ficaram velhas").toEqual([])
+  })
+
+  // A distinção que o RUN-176 introduziu, medida no modelo e não na intuição de quem edita a
+  // lista: entrar por semente visita a tela, mas não a torna "alcançável por link".
+  test("semente não satisfaz o invariante de porta", () => {
+    const patterns = buildPatterns(["page.tsx", "(shell)/salvos/page.tsx"], [])
+    const frontier = new Frontier(patterns, CAP_PER_ROUTE)
+    const porta = { route: "/salvos", porta: "semente da persona dona" }
+
+    frontier.enter({ target: "/salvos", from: "(porta declarada)", persona: "dono de vila" })
+    expect(frontier.next()?.target).toBe("/salvos")
+
+    // Sem link e sem declaração, a tela da semente continua sendo rota que só se alcança
+    // digitando a URL; declarada, passa; e no dia em que um link a alcançar, a declaração
+    // vira dívida paga e staleAllowances a acusa.
+    expect(unreachedRoutes(patterns, new Set(), [])).toEqual(["/salvos"])
+    expect(unreachedRoutes(patterns, new Set(), [porta])).toEqual([])
+    expect(staleAllowances(patterns, new Set(), [porta])).toEqual([])
+    expect(staleAllowances(patterns, new Set(["/salvos"]), [porta])).toEqual(["/salvos"])
   })
 })
