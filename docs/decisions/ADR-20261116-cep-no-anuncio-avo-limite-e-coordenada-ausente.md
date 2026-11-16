@@ -53,13 +53,14 @@ implementação desta decisão. O coordenador decidiu, por delegação, na mesma
    `LOC-LIMITE-GEOCODIFICACAO`. O §2 acima, que dizia fechar o card, está
    corrigido por esta emenda.
 3. **F4 (MEDIUM) — a localização do pedido vem do cache do CEP, nunca do
-   chamador.** `create_service_request` perdeu `p_latitude`, `p_longitude` e
-   `p_region`: a assinatura é `(provider, descrição, quando, chave, cep)` e a
-   chamada antiga de 8 argumentos responde 42883. Coordenada e bairro são
-   derivados de `public.cep_geocodes` pelo CEP. Sem CEP, ou com CEP fora do
-   cache, o pedido fica sem coordenada e sem bairro — o prestador nunca vê um
-   bairro que a solicitante digitou. Bairro com cara de CEP vira ausência de
-   bairro, não erro de criação.
+   chamador.** `create_service_request` mantém `p_latitude`, `p_longitude` e
+   `p_region` na assinatura de oito argumentos por compatibilidade com a rota
+   viva e os **ignora**: coordenada e bairro são derivados de
+   `public.cep_geocodes` pelo CEP, e uma chamada forjada grava o que o cache
+   diz, não o que ela mandou. Sem CEP, ou com CEP fora do cache, o pedido fica
+   sem coordenada e sem bairro — o prestador nunca vê um bairro que a
+   solicitante digitou. Bairro com cara de CEP vira ausência de bairro, não
+   erro de criação.
 4. **F3 (MEDIUM) — trilateração do pedido: residual aceito no lançamento.** O
    prestador muda a própria origem e recombina distâncias; com três origens o
    ponto do pedido volta a ~100 m, que é a ordem da precisão do próprio CEP.
