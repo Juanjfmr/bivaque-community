@@ -53,6 +53,7 @@ allowed_paths:
   - tests/unit/app-api/negocios
   - tests/unit/app-api/pedidos
   - tests/unit/geo
+  - tests/scope/f07-porta-de-dados.test.mjs
   - tests/e2e/f07-negocios-real.spec.ts
   - .visual/loc-l2
 

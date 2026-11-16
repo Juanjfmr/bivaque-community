@@ -46,6 +46,45 @@ const APRESENTACAO_EDITADA = "Atendimento acolhedor para famílias que acabaram 
 const SERVICO = "Orientação para mudança"
 const LEGENDA_DA_FOTO = "Acolhida de quem chega à cidade"
 
+// RUN-179 (LOC-IMPL L2): o CEP do pedido no E2E é SINTÉTICO e pré-gravado no
+// cache, no molde do F06 — nenhuma chamada ao provedor e nenhum CEP de rua real.
+// A coordenada fica a ~3,1 km da origem do prestador (o CEP 69000-000 do seed).
+const CEP_DO_PEDIDO = "69000001"
+const CEP_DO_PEDIDO_MASCARADO = "69000-001"
+const BAIRRO_DO_PEDIDO = "Flores"
+const DISTANCIA_DO_PEDIDO = "A cerca de 3,1 km de você."
+
+/**
+ * Grava o CEP sintético do pedido no cache de geocodificação do servidor.
+ * `cep_geocodes` é tabela de serviço: a fixture fala com ela pelo service_role,
+ * como a limpeza da ficha já faz. Coordenada sintética, perto de Manaus.
+ */
+async function semearCepDoPedido(): Promise<void> {
+  const chave =
+    process.env["SUPABASE_SERVICE_ROLE_KEY"] ?? readEnvLocal("SUPABASE_SERVICE_ROLE_KEY")
+  if (!chave) throw new Error("SUPABASE_SERVICE_ROLE_KEY é necessária para semear o CEP.")
+  const api = await apiRequest.newContext({
+    baseURL: urlDoSupabase(),
+    extraHTTPHeaders: { apikey: chave, Authorization: `Bearer ${chave}` },
+  })
+  try {
+    const resposta = await api.post("rest/v1/cep_geocodes", {
+      headers: { Prefer: "resolution=merge-duplicates" },
+      data: {
+        cep: CEP_DO_PEDIDO,
+        latitude: -3.12194,
+        longitude: -60.045,
+        source: "brasilapi",
+        neighborhood: BAIRRO_DO_PEDIDO,
+        fetched_at: new Date().toISOString(),
+      },
+    })
+    expect(resposta.ok(), "semear o CEP sintético do pedido").toBe(true)
+  } finally {
+    await api.dispose()
+  }
+}
+
 /**
  * Apaga a ficha de negócio da persona e o que pende dela (cascata nas linhas;
  * os objetos do Storage saem antes, porque o bucket não conhece a ficha).
@@ -391,6 +430,9 @@ test.describe("F07 — página de negócio do membro (dono)", { tag: "@stateful"
     const dono = DONOS_DO_NEGOCIO[testInfo.project.name]
     if (!dono) throw new Error(`Sem dono de negócio para ${testInfo.project.name}.`)
     await limparNegocioDoDono(dono.id)
+    // O CEP do pedido existe no cache antes de qualquer requisição: a rota não
+    // vai ao provedor (o E2E não pode depender de rede).
+    await semearCepDoPedido()
   })
 
   test("cria, edita, publica catálogo e foto, aparece na lista e acompanha o pedido", async ({
@@ -401,6 +443,14 @@ test.describe("F07 — página de negócio do membro (dono)", { tag: "@stateful"
     const dono = DONOS_DO_NEGOCIO[testInfo.project.name]
     if (!dono) throw new Error(`Sem dono de negócio para ${testInfo.project.name}.`)
     await semearSessaoDeMembro(context, dono.email)
+
+    // RUN-179: a origem privada do prestador (CEP do seed, cache hit) é o que dá
+    // distância ao pedido recebido. Vai pela MESMA rota do perfil.
+    const origem = await page.request.put("/api/app/voce/localizacao", {
+      headers: CABECALHOS,
+      data: { cep: "69000-000" },
+    })
+    expect(origem.status(), "origem do prestador").toBe(200)
 
     // Entrada de produto: o Mercado da cidade leva a Meu negócio.
     await page.goto("/app/negocios")
@@ -503,6 +553,8 @@ test.describe("F07 — página de negócio do membro (dono)", { tag: "@stateful"
     const descricaoDoPedido = `Orientação para a mudança — ${testInfo.project.name}`
     await page.getByLabel("O que você precisa?").fill(descricaoDoPedido)
     await page.getByLabel("Quando precisa? (opcional)").fill("Nesta semana")
+    // RUN-179: o CEP é opcional e vem do cache sintético semeado acima.
+    await page.getByLabel("CEP (opcional)").fill(CEP_DO_PEDIDO_MASCARADO)
     const criacao = page.waitForResponse(
       (resposta) =>
         resposta.url().endsWith(`/api/app/negocios/${providerId}/pedidos`) &&
@@ -511,9 +563,31 @@ test.describe("F07 — página de negócio do membro (dono)", { tag: "@stateful"
     await page.getByRole("button", { name: "Enviar pedido", exact: true }).click()
     const enviado = await criacao
     expect(enviado.status()).toBe(201)
-    const pedidoId = ((await enviado.json()) as { pedido: { id: string } }).pedido.id
+    const corpoDoPedido = (await enviado.json()) as {
+      pedido: { id: string; bairro: string | null; distanciaMetros: number | null }
+    }
+    const pedidoId = corpoDoPedido.pedido.id
+    // O bairro do CEP vai para o prestador; a coordenada, não (nem para o autor).
+    expect(corpoDoPedido.pedido.bairro).toBe(BAIRRO_DO_PEDIDO)
+    expect(corpoDoPedido.pedido).not.toHaveProperty("cep")
+    expect(corpoDoPedido.pedido).not.toHaveProperty("latitude")
     await expect(page).toHaveURL(new RegExp(`/app/pedido/${pedidoId}$`))
     await expect(page.getByText("Em aberto", { exact: true })).toBeVisible()
+    await expect(page.getByText(`Bairro informado ao prestador: ${BAIRRO_DO_PEDIDO}`)).toBeVisible()
+
+    // Onde a recusa aparece é na LEITURA: `select *` do participante não devolve
+    // as colunas cruas (42501) — nem para quem pediu.
+    const seletorEstrela = await page.request.get(
+      `${urlDoSupabase()}/rest/v1/service_requests?select=*&id=eq.${pedidoId}`,
+      {
+        headers: {
+          apikey: chaveAnonimaDoSupabase(),
+          authorization: `Bearer ${await tokenDaSessao(context)}`,
+        },
+      },
+    )
+    expect(seletorEstrela.ok()).toBe(false)
+    expect(await seletorEstrela.text()).toContain("42501")
 
     // O dono recebe, vê de que lado está, abre a conversa e encerra.
     await context.clearCookies()
@@ -524,6 +598,14 @@ test.describe("F07 — página de negócio do membro (dono)", { tag: "@stateful"
     await capturar(page, testInfo.project.name, "12-pedidos-recebidos")
     await page.locator('[data-linha="lista"]', { hasText: descricaoDoPedido }).click()
     await expect(page.getByText("Recebido", { exact: true })).toBeVisible()
+    // RUN-179: o prestador vê o bairro do pedido e a distância DA ORIGEM DELE.
+    await expect(page.getByText(`Bairro do pedido: ${BAIRRO_DO_PEDIDO}`)).toBeVisible()
+    await expect(page.getByText(DISTANCIA_DO_PEDIDO)).toBeVisible()
+    await page.reload()
+    await expect(page.getByText(`Bairro do pedido: ${BAIRRO_DO_PEDIDO}`)).toBeVisible({
+      timeout: 30_000,
+    })
+    await expect(page.getByText(DISTANCIA_DO_PEDIDO)).toBeVisible()
     await expect(page.getByRole("button", { name: "Abrir conversa" })).toBeVisible()
     await expect(page.getByRole("button", { name: "Cancelar pedido" })).toHaveCount(0)
     await page.getByRole("button", { name: "Encerrar pedido" }).click()

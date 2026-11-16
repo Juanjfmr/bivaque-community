@@ -22,6 +22,7 @@ import {
   DESLOCAMENTO_APROXIMADO,
   lerEscolha,
   localizarAnuncio,
+  localizarPedido,
   PASSO_DA_GRADE,
 } from "web/lib/geo/anuncio"
 
@@ -179,11 +180,17 @@ describe("localizarAnuncio", () => {
     const resultado = await localizarAnuncio(alvo)
 
     expect(limite.consumirConsulta).toHaveBeenCalledWith(PESSOA)
-    expect(cache.gravarCepNoCache).toHaveBeenCalledWith(alvo.cliente, "69000000", {
-      latitude: -3.10194,
-      longitude: -60.025,
-      fonte: "brasilapi",
-    })
+    expect(cache.gravarCepNoCache).toHaveBeenCalledWith(
+      alvo.cliente,
+      "69000000",
+      {
+        latitude: -3.10194,
+        longitude: -60.025,
+        fonte: "brasilapi",
+      },
+      // O bairro da fonte é gravado junto (RUN-179): o cache hit não perde o bairro.
+      "Flores",
+    )
     expect(resultado).toMatchObject({
       ok: true,
       localizacao: { bairroDerivado: "Flores", localizacaoPublica: "exata" },
@@ -308,5 +315,115 @@ describe("lerEscolha", () => {
   it("valor fora do vocabulário é recusa", () => {
     expect(lerEscolha("exato")).toBeNull()
     expect(lerEscolha(1)).toBeNull()
+  })
+})
+
+// RUN-179 — o MESMO módulo serve o pedido, com duas diferenças: a coordenada não
+// é arredondada (nunca é publicada) e o bairro fora do catálogo vale como texto
+// da fonte (a coluna `region` aceita texto livre).
+describe("localizarPedido", () => {
+  const pedidoDoCep = (extra: Partial<Parameters<typeof localizarPedido>[0]> = {}) => {
+    const { cliente, pessoa, cepBruto, cidadeId } = pedido()
+    return { cliente, pessoa, cepBruto, cidadeId, ...extra }
+  }
+
+  it("cache hit usa o bairro guardado e NÃO arredonda o ponto", async () => {
+    cache.lerCepDoCache.mockResolvedValue({
+      cep: "69000000",
+      latitude: -3.10194,
+      longitude: -60.025,
+      fonte: "brasilapi",
+      bairro: "Flores",
+    })
+
+    const resultado = await localizarPedido(pedidoDoCep())
+
+    expect(resultado).toEqual({
+      ok: true,
+      localizacao: {
+        cep: "69000000",
+        latitude: -3.10194,
+        longitude: -60.025,
+        bairro: "Flores",
+      },
+    })
+    expect(geocodificador.geocodificarCep).not.toHaveBeenCalled()
+  })
+
+  it("linha de cache antiga, sem bairro, ainda serve a coordenada", async () => {
+    cache.lerCepDoCache.mockResolvedValue({
+      cep: "69000000",
+      latitude: -3.10194,
+      longitude: -60.025,
+      fonte: "brasilapi",
+    })
+
+    const resultado = await localizarPedido(pedidoDoCep())
+
+    expect(resultado).toMatchObject({ ok: true, localizacao: { bairro: null } })
+    expect(geocodificador.geocodificarCep).not.toHaveBeenCalled()
+  })
+
+  it("cache miss geocodifica sob o limitador e grava o bairro no cache", async () => {
+    geocodificador.geocodificarCep.mockResolvedValue({
+      estado: "encontrado",
+      coordenada: { latitude: -3.1, longitude: -60, fonte: "brasilapi" },
+      endereco: { cidade: "Manaus", bairro: "SAO JORGE" },
+    })
+    const alvo = pedidoDoCep({ cliente: clienteComBairros(["São Jorge"]) })
+
+    const resultado = await localizarPedido(alvo)
+
+    expect(limite.consumirConsulta).toHaveBeenCalledWith(PESSOA)
+    expect(cache.gravarCepNoCache).toHaveBeenCalledWith(
+      alvo.cliente,
+      "69000000",
+      {
+        latitude: -3.1,
+        longitude: -60,
+        fonte: "brasilapi",
+      },
+      "SAO JORGE",
+    )
+    expect(resultado).toMatchObject({ ok: true, localizacao: { bairro: "São Jorge" } })
+  })
+
+  it("bairro fora do catálogo entra como texto da fonte", async () => {
+    geocodificador.geocodificarCep.mockResolvedValue({
+      estado: "encontrado",
+      coordenada: { latitude: -3.1, longitude: -60, fonte: "brasilapi" },
+      endereco: { cidade: "Manaus", bairro: "Bairro Que Não Existe" },
+    })
+
+    const resultado = await localizarPedido(pedidoDoCep({ cliente: clienteComBairros(["Flores"]) }))
+
+    expect(resultado).toMatchObject({
+      ok: true,
+      localizacao: { bairro: "Bairro Que Não Existe" },
+    })
+  })
+
+  it("CEP sem coordenada é sucesso parcial: cep e bairro, sem ponto", async () => {
+    geocodificador.geocodificarCep.mockResolvedValue({
+      estado: "sem-coordenada",
+      endereco: { cidade: "Manaus", bairro: "Flores" },
+    })
+
+    const resultado = await localizarPedido(pedidoDoCep({ cliente: clienteComBairros(["Flores"]) }))
+
+    expect(resultado).toEqual({
+      ok: true,
+      localizacao: { cep: "69000000", latitude: null, longitude: null, bairro: "Flores" },
+    })
+    // Sem posição não há o que guardar no cache de coordenadas.
+    expect(cache.gravarCepNoCache).not.toHaveBeenCalled()
+  })
+
+  it("CEP inválido não consulta cache nem provedor", async () => {
+    const resultado = await localizarPedido(pedidoDoCep({ cepBruto: "6900" }))
+
+    expect(resultado).toEqual({ ok: false, erro: "cep-invalido" })
+    expect(cache.lerCepDoCache).not.toHaveBeenCalled()
+    expect(geocodificador.geocodificarCep).not.toHaveBeenCalled()
   })
 })

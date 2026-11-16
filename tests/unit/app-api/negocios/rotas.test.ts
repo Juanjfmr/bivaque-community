@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 
+vi.mock("server-only", () => ({}))
 vi.mock("web/lib/app-api/sessao-do-next", () => ({ resolverSessaoDaRequisicao: vi.fn() }))
 
 import { POST as criar, OPTIONS as opcoesCriar } from "web/app/api/app/negocios/[id]/pedidos/route"
@@ -47,6 +48,7 @@ const linhaPedido = {
   when_text: "Nesta semana",
   status: "open",
   category: "assistencia_tecnica",
+  region: null,
   created_at: "2026-11-05T12:00:00Z",
   updated_at: "2026-11-05T12:00:00Z",
   conversation_id: "10000000-0000-4000-8000-000000000060",
@@ -75,6 +77,9 @@ function cliente(opcoes: Opcoes = {}) {
   // o pedido depois da ação, e o mock precisa devolver a situação nova.
   let situacaoAposAcao: string | null = null
   const rpc = vi.fn(async (nome: string) => {
+    // RUN-179: a distância é calculada por linha pelo banco, do ponto de vista
+    // de quem lê. Sem origem no perfil, o banco responde null.
+    if (nome === "service_request_distance") return { data: null, error: null }
     if (nome === "cancel_service_request" && !opcoes.erroRpc) situacaoAposAcao = "cancelled"
     if (nome === "close_service_request" && !opcoes.erroRpc) situacaoAposAcao = "closed"
     return {
@@ -163,6 +168,14 @@ function cliente(opcoes: Opcoes = {}) {
     rpc,
     assinar,
   }
+}
+
+/**
+ * As ESCRITAS do pedido (cancelar/encerrar). A distância por linha é leitura e
+ * passou a acontecer em toda resposta de pedido (RUN-179) — não é escrita.
+ */
+function escritas(mock: ReturnType<typeof cliente>) {
+  return mock.rpc.mock.calls.filter(([nome]) => nome !== "service_request_distance")
 }
 
 function autenticar(mock: ReturnType<typeof cliente>) {
@@ -537,7 +550,11 @@ describe("F07 — rotas sob a sessão", () => {
   it("a validação compartilhada normaliza só os campos do pedido", () => {
     expect(
       requestInputFromBody({ descricao: " Limpar ", quando: " ", chave: CHAVE, user_id: USER }),
-    ).toEqual({ descricao: "Limpar", quando: null, chave: CHAVE })
+    ).toEqual({ descricao: "Limpar", quando: null, chave: CHAVE, cep: null })
+    // O CEP entra normalizado e a coordenada do corpo NÃO sobrevive (RUN-179).
+    expect(requestInputFromBody({ descricao: "Limpar", cep: "69000-000", latitude: -3.1 })).toEqual(
+      { descricao: "Limpar", quando: null, chave: null, cep: "69000000" },
+    )
   })
 })
 
@@ -602,7 +619,7 @@ describe("F07 — cancelar e encerrar o pedido", () => {
     const mock = cliente({ pedido: { ...linhaPedido, status: "cancelled" } })
     autenticar(mock)
     expect((await acaoDoPedido(acao('{"acao":"cancelar"}'), contextoPedido)).status).toBe(200)
-    expect(mock.rpc).not.toHaveBeenCalled()
+    expect(escritas(mock)).toHaveLength(0)
   })
 
   it("cancelar pedido encerrado é 409, sem RPC", async () => {
@@ -610,7 +627,7 @@ describe("F07 — cancelar e encerrar o pedido", () => {
     autenticar(mock)
     const resposta = await acaoDoPedido(acao('{"acao":"cancelar"}'), contextoPedido)
     expect(resposta.status).toBe(409)
-    expect(mock.rpc).not.toHaveBeenCalled()
+    expect(escritas(mock)).toHaveLength(0)
   })
 
   it("o dono não cancela o pedido que recebeu", async () => {
@@ -620,7 +637,7 @@ describe("F07 — cancelar e encerrar o pedido", () => {
     autenticar(mock)
     const resposta = await acaoDoPedido(acao('{"acao":"cancelar"}'), contextoPedido)
     expect(resposta.status).toBe(403)
-    expect(mock.rpc).not.toHaveBeenCalled()
+    expect(escritas(mock)).toHaveLength(0)
   })
 
   it("encerrar é dos dois lados: o dono chama o RPC de encerramento", async () => {
@@ -638,14 +655,14 @@ describe("F07 — cancelar e encerrar o pedido", () => {
     const mock = cliente({ pedido: { ...linhaPedido, status: "closed" } })
     autenticar(mock)
     expect((await acaoDoPedido(acao('{"acao":"encerrar"}'), contextoPedido)).status).toBe(200)
-    expect(mock.rpc).not.toHaveBeenCalled()
+    expect(escritas(mock)).toHaveLength(0)
   })
 
   it("encerrar pedido cancelado é 409", async () => {
     const mock = cliente({ pedido: { ...linhaPedido, status: "cancelled" } })
     autenticar(mock)
     expect((await acaoDoPedido(acao('{"acao":"encerrar"}'), contextoPedido)).status).toBe(409)
-    expect(mock.rpc).not.toHaveBeenCalled()
+    expect(escritas(mock)).toHaveLength(0)
   })
 
   it.each([
