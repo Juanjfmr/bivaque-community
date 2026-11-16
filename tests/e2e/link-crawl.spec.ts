@@ -66,7 +66,11 @@ const PERSONAS: Array<{ nome: string; email: string | null; entradas: string[]; 
   {
     nome: "dono de vila",
     email: "dono-vila@bivaque.example.invalid",
-    entradas: ["/inicio"],
+    // RUN-176: a casca web não tem link saindo do app, então a porta dela é ENTRADA
+    // declarada, não dívida de link. `/inicio` é 307; `/communities` abre a casca e a
+    // lateral dela leva a Salvos e Configurações. A lista deixou de ser porta fora do link
+    // no run 43853510395: o card "Entrar na comunidade" de /community linka ela.
+    entradas: ["/inicio", "/communities"],
     chega: /^\/app\/inicio$/,
   },
   {
@@ -238,8 +242,8 @@ const PORTAS_FORA_DO_LINK: readonly PortaDeclarada[] = [
   { route: "/invite/[token]", porta: "EXTERNO: link de convite compartilhado" },
   // RUN-172/176: o perfil web era a única tela da casca a que uma persona chegava, e com ele
   // morreram as portas de Salvos, Configurações, Conta, senha, Comunidades e o detalhe da
-  // indicação. Entrar na casca por uma semente devolveu a medida, e estas sete voltaram a ter
-  // link — por isso saíram da lista: declaração que virou link é dívida paga, e staleAllowances
+  // indicação. Entrar na casca por uma semente devolveu a medida, e estas voltaram a ter link
+  // — por isso saíram da lista: declaração que virou link é dívida paga, e staleAllowances
   // acusaria a linha esquecida.
   // - /salvos e /configuracoes: coluna lateral de toda tela da casca (app-shell.tsx:113 e :161)
   // - /configuracoes/conta: coluna de Configurações (configuracoes-nav.tsx)
@@ -247,12 +251,9 @@ const PORTAS_FORA_DO_LINK: readonly PortaDeclarada[] = [
   // - /communities/[id]: lista de comunidades (communities-screen.tsx:276) e a lateral (:328)
   // - /groups/[id]: nome do grupo na lista de grupos (groups/page.tsx:448)
   // - /negocio: 'Ofereça seus serviços' na lista de serviços (explorar/servicos/page.tsx:352)
-  {
-    route: "/communities",
-    porta:
-      "DÍVIDA F04: 'Minhas comunidades' morava no perfil web (RUN-172); a lista viva é a Comunidade do app (/app/comunidade), e esta tela da web é a semente que abre a casca",
-    dono: "dono de vila",
-  },
+  // - /communities: card 'Entrar na comunidade' de /community (join-community.tsx:24). Como é
+  //   por ela que a casca se abre, a entrada do dono da vila foi para `entradas`, não para cá:
+  //   a casca não tem link saindo do app, e entrada declarada não é dívida.
   {
     route: "/indicacoes/[id]",
     porta:
