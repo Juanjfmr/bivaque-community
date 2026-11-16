@@ -1,0 +1,83 @@
+# Quadro com comando de escrita + guarda de codificação.
+#
+# Problema medido (auditoria de processo de 16/11, .work/orq/relatorios/diretrizes.md):
+# tools/backend-kanban/src/board.mjs só lê (--card, --search, --next, --write-summary,
+# --check). Todo fechamento de lote edita board.json por script descartável: 39 scripts
+# board-*.cjs/fix-json*.cjs em .work/, 8 tentativas de largura de formato, 58 de 161
+# commits desde 09/11 são só de quadro, e o lint do CI quebrou ao menos 4 vezes pelo
+# formato do board.json. Seis scripts de reparo de UTF-8/Latin-1 e mojibake já dentro do
+# repositório (cabeçalho do SALVAR-GLYPH.task.yml, mensagens do board.mjs).
+
+task_id: HRN-001
+
+objective: >
+  O quadro passa a ter um comando de escrita declarativo e seguro: `board.mjs --apply
+  <patch.json>` cria, atualiza ou move cartões e acrescenta notas, valida o resultado
+  com as mesmas regras do `--check`, grava o board.json já no formato que o lint
+  (biome) aceita e regenera o BOARD.md, sem que ninguém precise escrever script para
+  editar o JSON. E o `pnpm test` passa a recusar texto com mojibake em arquivo
+  rastreado, para que a quebra de codificação do Windows não entre mais na main.
+
+authority:
+  - Pedido do dono de 16/11 (melhorar CI, testes e diretrizes; eliminar retrabalho)
+  - .work/orq/relatorios/diretrizes.md, propostas 1 e 4 (auditoria de processo de 16/11)
+  - docs/agents/LICOES.md (lições do quadro/biome repetidas 3 vezes em 7 dias)
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    `node tools/backend-kanban/src/board.mjs --help` não oferece escrita; grep por
+    writeFileSync em tools/backend-kanban/src mostra só o BOARD.md e o publish; commits
+    14530956, 6017f67d, 17266612 e a685a837 corrigem formato/chave duplicada do board.json;
+    `.work/` tem 39 scripts board-*/fix-json*; mojibake em
+    docs/agents/tasks/SALVAR-GLYPH.task.yml e em mensagens de tools/backend-kanban/src/board.mjs.
+
+allowed_paths:
+  - tools/backend-kanban/src/board.mjs
+  - tools/backend-kanban/src/board-lib.mjs
+  - tools/backend-kanban/src/board-apply.mjs
+  - tools/backend-kanban/README.md
+  - tests/scope/backend-kanban.test.mjs
+  - tests/scope/board-apply.test.mjs
+  - tests/scope/encoding.test.mjs
+  - tests/fixtures/board-apply
+  - docs/agents/tasks/HRN-001.task.yml
+  - docs/agents/tasks/SALVAR-GLYPH.task.yml
+  - docs/agents/LICOES.md
+  - AGENTS.md
+
+forbidden:
+  - mudar o esquema do board.json, os ids, os estados ou o conteúdo de qualquer cartão existente
+  - editar tools/backend-kanban/public/board.json neste lote (o lote prova o comando com fixtures, não muda o quadro)
+  - alterar workflows (.github/**), scripts/gate.mjs, package.json ou dependências
+  - adicionar dependência nova (só node:* e o que o repositório já usa)
+  - reformatar arquivos fora de allowed_paths; corrigir mojibake fora de allowed_paths (a guarda lista os casos existentes numa lista de exceções com prazo, não os conserta)
+  - push, merge, abrir PR, force-push, ler ou imprimir arquivos de ambiente
+
+acceptance:
+  - "`board.mjs --apply <patch.json>` aceita um patch com operações declarativas: criar cartão, atualizar campos de um cartão, mover de estado, acrescentar nota/evidência e marcar item de checklist. Cada operação referencia o cartão pelo id; id inexistente em update/move é erro; id duplicado em create é erro."
+  - "O patch é aplicado de forma atômica: se qualquer operação ou a validação final falhar, o board.json no disco fica byte a byte igual ao de antes, e o comando sai com código diferente de zero e uma mensagem que diz qual operação falhou e por quê."
+  - "Depois de aplicar, o comando valida com as mesmas regras do `--check`, grava o board.json num formato determinístico que `biome check tools/backend-kanban/public/board.json` aceita sem alteração (provar com fixture), grava em UTF-8 sem BOM com fim de linha LF, e regenera o BOARD.md."
+  - "`--apply --dry-run` mostra o diff resumido (cartões criados, alterados, movidos) sem escrever nada."
+  - "Aplicar o mesmo patch duas vezes não duplica nota nem cartão (idempotência por conteúdo de nota e por id)."
+  - "As mensagens de erro e de ajuda do board.mjs estão em português com acentuação correta (sem mojibake)."
+  - "Um teste de escopo novo (`tests/scope/encoding.test.mjs`) percorre os arquivos de texto rastreados pelo git (md, yml, json, mjs, cjs, ts, tsx, sql) e falha se encontrar sequências típicas de mojibake (por exemplo `Ã§`, `Ã£`, `Ã©`, `Ã³`, `Ãª`, `Â `, o caractere de substituição U+FFFD) ou BOM. Arquivos com mojibake hoje entram numa lista de exceções explícita dentro do teste, cada um com o motivo; o SALVAR-GLYPH.task.yml é corrigido neste lote e sai da lista."
+  - "AGENTS.md (seção do quadro) e LICOES.md (lição do quadro/biome) passam a mandar usar `--apply` e proíbem script avulso para editar o board.json, em no máximo 6 linhas no total."
+
+proof:
+  - node --test tests/scope/board-apply.test.mjs tests/scope/backend-kanban.test.mjs tests/scope/encoding.test.mjs
+  - npx pnpm@11.18.0 test
+  - npx pnpm@11.18.0 lint
+  - node tools/backend-kanban/src/board.mjs --check
+  - "prova de execução: cópia do board.json real num diretório temporário; aplicar um patch que cria um cartão, move outro e acrescenta nota; `biome check` no arquivo resultante sai 0; aplicar de novo não muda nada; um patch inválido deixa o arquivo idêntico (comparar hash)"
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/HRN-001.task.yml
+
+risk: harness / ferramenta do quadro e teste de codificação
+risk_level: R1
+
+reviewer_must_differ_from_executor: true
+retry_budget: 2
+on_budget_exhausted: HUMAN_DECISION
+
+closure:
+  requires_runtime_evidence: true
