@@ -157,7 +157,9 @@ describe("perguntas do grupo", () => {
     const campos = mock.chamadas.find(
       (chamada) => chamada.tabela === "recommendation_requests" && chamada.metodo === "select",
     )?.args[0]
-    expect(String(campos)).toContain("recommendation_replies!recommendation_replies_request_id_fkey")
+    expect(String(campos)).toContain(
+      "recommendation_replies!recommendation_replies_request_id_fkey",
+    )
     expect(corpo["perguntas"]).toEqual([
       {
         id: pergunta.id,
