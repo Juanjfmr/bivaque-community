@@ -17,6 +17,7 @@ vi.mock("web/lib/convite/provision", () => ({
 import { POST } from "web/app/api/app/entry/invite/route"
 import { resolverSessaoDaRequisicao } from "web/lib/app-api/sessao-do-next"
 import { acceptFamilyInviteCode, previewFamilyInviteCode } from "web/lib/convite/provision"
+import { log } from "web/lib/logger"
 import { createServerClient } from "web/lib/supabase/server"
 
 const resolver = vi.mocked(resolverSessaoDaRequisicao)
@@ -73,12 +74,9 @@ beforeEach(() => {
   registrarMarcador.mockResolvedValue({ error: null })
   criarCliente.mockReturnValue(servico as never)
   resolver.mockResolvedValue(sessaoAutenticada() as never)
-  prever.mockResolvedValue({
-    status: "ok",
-    expiresAt: "2026-11-20T12:00:00.000Z",
-    inviteeEmailHint: "p***a@example.invalid",
-    inviterName: "Maria Souza",
-  })
+  // O estado real depois de um aceite: o preview — que só casa convite
+  // `pending` — responde `unavailable`. A rota não pode depender dele.
+  prever.mockResolvedValue({ status: "unavailable" })
   aceitar.mockResolvedValue({
     status: "ok",
     linkId: "50000000-0000-4000-8000-000000000001",
@@ -159,32 +157,27 @@ describe("POST /api/app/entry/invite", () => {
   })
 
   it("responde 429 quando o banco limita as tentativas", async () => {
-    prever.mockResolvedValue({ status: "rate_limited" })
-
-    const resposta = await POST(requisicao({ cabecalho: CABECALHO }))
-
-    expect(resposta.status).toBe(429)
-    expect(await resposta.json()).toEqual({ erro: "convite-limite" })
-    expect(aceitar).not.toHaveBeenCalled()
-  })
-
-  it("responde a mesma mensagem para código vencido, usado ou de outro e-mail", async () => {
-    prever.mockResolvedValue({ status: "unavailable" })
-
-    const resposta = await POST(requisicao({ cabecalho: CABECALHO }))
-
-    expect(resposta.status).toBe(400)
-    expect(await resposta.json()).toEqual({ erro: "convite-invalido" })
-    expect(aceitar).not.toHaveBeenCalled()
-  })
-
-  it("responde 429 quando o limite aparece no aceite", async () => {
     aceitar.mockResolvedValue({ status: "rate_limited" })
 
     const resposta = await POST(requisicao({ cabecalho: CABECALHO }))
 
     expect(resposta.status).toBe(429)
     expect(await resposta.json()).toEqual({ erro: "convite-limite" })
+    expect(registrarMarcador).not.toHaveBeenCalled()
+  })
+
+  it("responde a mesma mensagem para código vencido, usado ou de outro e-mail", async () => {
+    // Código já aceito por OUTRA pessoa: o banco responde `unavailable` e a
+    // rota devolve a resposta genérica de hoje — nada distingue este caso de
+    // código inexistente, vencido ou revogado.
+    aceitar.mockResolvedValue({ status: "unavailable" })
+
+    const resposta = await POST(requisicao({ cabecalho: CABECALHO }))
+
+    expect(resposta.status).toBe(400)
+    expect(await resposta.json()).toEqual({ erro: "convite-invalido" })
+    expect(prever).not.toHaveBeenCalled()
+    expect(registrarMarcador).not.toHaveBeenCalled()
   })
 
   it("aceita com o e-mail da sessão, o nome normalizado e os hashes do banco", async () => {
@@ -197,14 +190,7 @@ describe("POST /api/app/entry/invite", () => {
 
     expect(resposta.status).toBe(200)
     expect(await resposta.json()).toEqual({ localityMember: true })
-    expect(prever).toHaveBeenCalledWith(
-      servico,
-      expect.objectContaining({
-        codeHash: expect.stringMatching(/^[0-9a-f]{64}$/),
-        emailDigest: expect.stringMatching(/^[0-9a-f]{64}$/),
-        originDigest: expect.stringMatching(/^[0-9a-f]{64}$/),
-      }),
-    )
+    expect(prever).not.toHaveBeenCalled()
     expect(aceitar).toHaveBeenCalledWith(servico, {
       codeHash: expect.stringMatching(/^[0-9a-f]{64}$/),
       displayName: "Ana Souza",
@@ -220,6 +206,54 @@ describe("POST /api/app/entry/invite", () => {
       { user_id: PESSOA.id, versao: 2, etapa: "interesses", estado: {} },
       { onConflict: "user_id" },
     )
+  })
+
+  it("fecha com 503 sem vazar o erro quando não grava o marcador", async () => {
+    const erro = new Error("falha para pessoa@example.invalid")
+    registrarMarcador.mockResolvedValue({ error: erro })
+    const logErro = vi.spyOn(log, "error")
+
+    const resposta = await POST(requisicao({ cabecalho: CABECALHO }))
+    const corpo = await resposta.json()
+
+    expect(resposta.status).toBe(503)
+    expect(corpo).toEqual({ erro: "gravacao-indisponivel" })
+    expect(JSON.stringify(corpo)).not.toContain(erro.message)
+    expect(logErro).toHaveBeenCalledWith("entry invite: draft marker write failed")
+  })
+
+  it("a segunda chamada da mesma sessão conclui depois do 503, sem preview", async () => {
+    // A sequência real: o aceite consumiu o convite; a gravação do marcador
+    // falhou. Na nova tentativa o convite já está `accepted`, então o preview
+    // responderia `unavailable` — e, se fosse chamado, gravaria mais uma
+    // tentativa no limite e a rota devolveria 400. O aceite retoma o vínculo da
+    // mesma pessoa sem consumir o limite, e o marcador é regravado.
+    registrarMarcador
+      .mockResolvedValueOnce({ error: new Error("falha temporária") })
+      .mockResolvedValueOnce({ error: null })
+
+    const primeira = await POST(requisicao({ cabecalho: CABECALHO }))
+    const segunda = await POST(requisicao({ cabecalho: CABECALHO }))
+
+    expect(primeira.status).toBe(503)
+    expect(segunda.status).toBe(200)
+    expect(await segunda.json()).toEqual({ localityMember: true })
+    expect(prever).not.toHaveBeenCalled()
+    expect(registrarMarcador).toHaveBeenCalledTimes(2)
+  })
+
+  it("a retomada que falha de novo no marcador responde 503 outra vez", async () => {
+    registrarMarcador
+      .mockResolvedValueOnce({ error: new Error("falha temporária") })
+      .mockResolvedValueOnce({ error: new Error("falha temporária") })
+
+    const primeira = await POST(requisicao({ cabecalho: CABECALHO }))
+    const segunda = await POST(requisicao({ cabecalho: CABECALHO }))
+
+    expect(primeira.status).toBe(503)
+    expect(segunda.status).toBe(503)
+    expect(await segunda.json()).toEqual({ erro: "gravacao-indisponivel" })
+    expect(prever).not.toHaveBeenCalled()
   })
 
   it("traduz o erro de nome do banco sem vazar detalhe", async () => {
