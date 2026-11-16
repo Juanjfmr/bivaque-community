@@ -73,6 +73,20 @@ test("versions exactly the seven roles of the v1 agent architecture", () => {
   }
 })
 
+test("documents real execution routing while retaining role definitions", () => {
+  const architecture = readFileSync(join(root, "docs", "agents", "AGENT_ARCHITECTURE.md"), "utf8")
+  for (const model of [
+    "DeepSeek V4.1 Flash pelo OpenCode",
+    "GPT 6 Luna pelo Codex em sandbox sem gravar o git",
+    "GLM 5.3 Flash",
+    "Qwen4 Max preview",
+    "Qwen 3.8 Flash",
+    "Claude",
+  ])
+    assert.ok(architecture.includes(model), model)
+  assert.ok(architecture.includes("Os arquivos de `.claude/agents` abaixo continuam definindo"))
+})
+
 test("declares complete frontmatter on every agent", () => {
   for (const name of Object.keys(AGENTS)) {
     // Given an agent definition
