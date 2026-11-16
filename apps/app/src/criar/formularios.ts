@@ -42,7 +42,19 @@ export const LIMITES_DO_DESAPEGO = {
   precoMaximoCents: 100_000_000,
 } as const
 
-export type CampoDoDesapego = "titulo" | "bairro" | "preco" | "descricao"
+export type CampoDoDesapego = "titulo" | "bairro" | "preco" | "descricao" | "cep"
+
+/** Os oito dígitos de um CEP, ou `null` quando o texto não é um CEP. */
+export function cepEmDigitos(bruto: string): string | null {
+  const digitos = bruto.replace(/\D/g, "")
+  return digitos.length === 8 ? digitos : null
+}
+
+/** `69000000` → `69000-000`; o que não é CEP volta como veio. */
+export function cepComMascara(bruto: string): string {
+  const digitos = bruto.replace(/\D/g, "").slice(0, 8)
+  return digitos.length <= 5 ? digitos : `${digitos.slice(0, 5)}-${digitos.slice(5)}`
+}
 
 export type ErrosDoDesapego = Readonly<Partial<Record<CampoDoDesapego, string>>>
 
@@ -60,18 +72,30 @@ export function errosDoDesapego(entrada: {
   readonly bairro: string
   readonly preco: string
   readonly descricao: string
+  readonly cep?: string
 }): ErrosDoDesapego {
-  const erros: { titulo?: string; bairro?: string; preco?: string; descricao?: string } = {}
+  const erros: {
+    titulo?: string
+    bairro?: string
+    preco?: string
+    descricao?: string
+    cep?: string
+  } = {}
   const titulo = entrada.titulo.trim()
   if (titulo.length < LIMITES_DO_DESAPEGO.titulo) {
     erros.titulo = `O título precisa de pelo menos ${LIMITES_DO_DESAPEGO.titulo} caracteres.`
   } else if (titulo.length > LIMITES_DO_DESAPEGO.tituloMaximo) {
     erros.titulo = "O título passa de 120 caracteres."
   }
+  // O bairro é opcional (ADR-20261022 §2): com CEP ele vem do CEP; sem CEP o
+  // anúncio aparece na cidade. Vazio não é erro.
   const bairro = entrada.bairro.trim()
-  if (bairro === "") erros.bairro = "Informe o bairro."
-  else if (bairro.length > LIMITES_DO_DESAPEGO.bairro)
-    erros.bairro = "O bairro passa de 80 caracteres."
+  if (bairro.length > LIMITES_DO_DESAPEGO.bairro) erros.bairro = "O bairro passa de 80 caracteres."
+  // CEP opcional: preenchido, precisa ter oito dígitos.
+  const cep = (entrada.cep ?? "").trim()
+  if (cep !== "" && cepEmDigitos(cep) === null) {
+    erros.cep = "Informe um CEP com oito dígitos."
+  }
   const preco = entrada.preco.trim()
   if (preco === "") erros.preco = "Informe o preço do item."
   else {
@@ -110,6 +134,8 @@ export type CampoDoImovel =
   | "vagas"
   | "area"
   | "descricao"
+  | "cep"
+  | "localizacaoPublica"
 
 export type ErrosDoImovel = Readonly<Partial<Record<CampoDoImovel, string>>>
 
@@ -134,6 +160,10 @@ export function errosDoImovel(entrada: {
   readonly vagas: string
   readonly area: string
   readonly descricao: string
+  /** RUN-175: obrigatório — o imóvel é publicado a partir do CEP. */
+  readonly cep?: string
+  readonly endereco?: string
+  readonly localizacaoPublica?: "exata" | "aproximada"
 }): ErrosDoImovel {
   const erros: {
     titulo?: string
@@ -143,6 +173,8 @@ export function errosDoImovel(entrada: {
     vagas?: string
     area?: string
     descricao?: string
+    cep?: string
+    localizacaoPublica?: string
   } = {}
   const titulo = entrada.titulo.trim()
   if (titulo.length < LIMITES_DO_IMOVEL.titulo) erros.titulo = "Dê um título ao imóvel."
@@ -153,6 +185,14 @@ export function errosDoImovel(entrada: {
   if (bairro === "") erros.bairro = "Informe o bairro."
   else if (bairro.length > LIMITES_DO_IMOVEL.bairro) {
     erros.bairro = "O bairro passa de 80 caracteres."
+  }
+  // CEP obrigatório (ADR-20261022 §1) e o único campo que a geocodificação lê.
+  if (cepEmDigitos(entrada.cep ?? "") === null) {
+    erros.cep = "Informe o CEP do imóvel."
+  }
+  // Local exato é o endereço publicado; sem endereço a escolha não se sustenta.
+  if (entrada.localizacaoPublica === "exata" && (entrada.endereco ?? "").trim() === "") {
+    erros.localizacaoPublica = "Para o local exato, informe o endereço."
   }
   // Aluguel e venda são reais inteiros no servidor: centavos voltam 400.
   const valor = entrada.valor.trim()

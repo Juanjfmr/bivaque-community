@@ -52,6 +52,14 @@ const TITULOS_FORA_DA_GRADE = [
 const APARTAMENTO = "Apartamento 2 quartos no Centro"
 const CASA = "Casa 3 quartos com quintal"
 
+/**
+ * RUN-175: o CEP sintético da jornada de imóvel. É a chave do cache de
+ * geocodificação que o seed já grava (`supabase/seed.sql:238`: coordenada do
+ * centro de Manaus, nunca de uma pessoa), então publicar não chama provedor.
+ */
+const CEP_SINTETICO = "69000-000"
+const ENDERECO_PUBLICADO = "Rua das Flores, 100"
+
 /** Imóvel de outra pessoa no seed (`30000000-…-001b`): serve à negativa do PATCH. */
 const IMOVEL_DE_TERCEIRO = "b2000000-0000-4000-8000-000000000001"
 
@@ -148,7 +156,9 @@ test.describe("F06 — mercadoria real no app", { tag: "@stateful" }, () => {
       page.getByRole("heading", { level: 2, name: "Localização aproximada" }),
     ).toBeVisible()
     await expect(page.getByText("Flores, Manaus")).toBeVisible()
-    await expect(page.getByText("O endereço exato pode ser combinado na conversa.")).toBeVisible()
+    // RUN-175: a frase que prometia combinar o endereço na conversa saiu; o que
+    // a tela diz agora é o que o anunciante escolheu.
+    await expect(page.getByText("Local aproximado, sem o endereço exato.")).toBeVisible()
   })
 
   test("Tenho interesse grava a conversa no banco e a tela não é otimista", async ({
@@ -492,10 +502,17 @@ test.describe("F06 — mercadoria real no app", { tag: "@stateful" }, () => {
       const folha = page.locator('[data-fluxo="rascunho-imovel"]')
       await expect(folha).toBeVisible()
       await folha.locator("#imovel-titulo").fill(titulo)
+      // RUN-175: o imóvel nasce do CEP. O CEP sintético já está no cache de
+      // geocodificação do seed (`supabase/seed.sql:238`, a coordenada é o centro
+      // de Manaus — nunca de uma pessoa), então a jornada não fala com provedor.
+      await folha.locator("#imovel-cep").fill(CEP_SINTETICO)
       await folha.locator("#imovel-bairro").fill("Centro")
       await folha.locator("#imovel-preco").fill("2100")
       await folha.locator("#imovel-quartos").fill("2")
       await folha.locator("#imovel-area").fill("58")
+      await folha.locator("#imovel-endereco").fill(ENDERECO_PUBLICADO)
+      await folha.locator('[data-selecao="imovel-localizacao"]').click()
+      await page.getByRole("option", { name: "Endereço exato", exact: true }).click()
       await folha.locator("#imovel-descricao").fill("Anúncio sintético do teste de imóvel.")
 
       const criacao = page.waitForResponse(
@@ -515,6 +532,10 @@ test.describe("F06 — mercadoria real no app", { tag: "@stateful" }, () => {
         timeout: 30_000,
       })
       await expect(page.locator('[data-tela="anuncio"]')).toContainText(/R\$\s*2\.100/)
+      // O local exato é o endereço publicado; a frase que prometia combinar o
+      // endereço na conversa não existe mais (RUN-175).
+      await expect(page.locator('[data-tela="anuncio"]')).toContainText(ENDERECO_PUBLICADO)
+      await expect(page.locator('[data-tela="anuncio"]')).not.toContainText("combinado na conversa")
 
       // Gerenciar o próprio imóvel: o formulário vem preenchido e grava o novo título.
       await page.goto("/app/meus-anuncios")
@@ -546,6 +567,13 @@ test.describe("F06 — mercadoria real no app", { tag: "@stateful" }, () => {
         timeout: 30_000,
       })
       await expect(page.locator('[data-tela="anuncio"]')).toContainText(/R\$\s*2\.300/)
+      // O CEP e a escolha sobrevivem à recarga: é o gravado no banco.
+      await expect(page.locator('[data-tela="anuncio"]')).toContainText(ENDERECO_PUBLICADO)
+      await page.goto("/app/meus-anuncios")
+      await page.locator(`[data-acao="gerenciar-anuncio"][data-valor="${imovelId}"]`).click()
+      await expect(
+        page.locator(`[data-gerenciar-anuncio="${imovelId}"]`).getByLabel("CEP"),
+      ).toHaveValue(CEP_SINTETICO)
 
       // Negativo: o imóvel do seed é de outra pessoa, e o PATCH por ela é
       // recusado sem tocar a linha.

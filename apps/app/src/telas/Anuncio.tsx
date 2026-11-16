@@ -36,8 +36,9 @@ import { TelaIndisponivel } from "@/src/telas/TelaIndisponivel"
  * A tela é a mesma de sempre: capa, preço, bairro e cidade aproximados, "Sobre o
  * anúncio", quem anuncia, salvar, as duas ações e o rascunho local de contato.
  * Mudou a fonte: `lib/dados/mercado`, com carregando, vazio honesto por campo,
- * erro recuperável, sessão vencida, acesso negado e "sumiu". O endereço exato
- * nunca aparece: a localização mostrada é o bairro, por escolha de quem anuncia.
+ * erro recuperável, sessão vencida, acesso negado e "sumiu". A localização
+ * mostrada é a que o anunciante escolheu: endereço quando o local é exato,
+ * bairro · cidade quando é aproximado (RUN-175).
  *
  * Interesse sem otimismo: o botão só muda depois da resposta, e a falha deixa o
  * estado anterior com a mensagem do que aconteceu.
@@ -278,13 +279,21 @@ export function Anuncio() {
         )}
       </Secao>
 
-      <Secao titulo="Localização aproximada">
+      <Secao
+        titulo={anuncio.localizacaoPublica === "exata" ? "Localização" : "Localização aproximada"}
+      >
         <div className="flex items-center gap-3 rounded-2xl bg-(--surface-lowest) px-4 py-3 ring-1 ring-(--outline-variant)">
           <Icone nome="location_on" className="size-6 shrink-0 text-(--primary)" />
           <span className="grid gap-0.5">
-            <b className="text-[15px]">{localizacaoAproximada}</b>
+            <b className="text-[15px]">
+              {anuncio.localizacaoPublica === "exata" && anuncio.endereco !== null
+                ? anuncio.endereco
+                : localizacaoAproximada}
+            </b>
             <small className="text-(--on-surface-variant)">
-              O endereço exato pode ser combinado na conversa.
+              {anuncio.localizacaoPublica === "exata" && anuncio.endereco !== null
+                ? localizacaoAproximada
+                : "Local aproximado, sem o endereço exato."}
             </small>
           </span>
         </div>

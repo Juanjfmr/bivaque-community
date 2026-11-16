@@ -81,6 +81,27 @@ describe("lista do Mercado", () => {
     expect(lista.cidade).toBe("Manaus")
   })
 
+  // RUN-175: campo aditivo no shape — a tela mostra a escolha REAL. Resposta
+  // antiga (sem o campo) não é falha de contrato: vira "sem escolha".
+  it("lê a escolha publicada e trata ausência como anúncio antigo", async () => {
+    const comEscolha = responder({
+      anuncios: [
+        { ...ANUNCIO, localizacaoPublica: "exata" },
+        { ...ANUNCIO, localizacaoPublica: "aproximada" },
+        ANUNCIO,
+      ],
+      proximo: null,
+      cidade: null,
+    })
+    const lista = await lerMercado({ tipo: "property" })
+    expect(lista.anuncios.map((anuncio) => anuncio.localizacaoPublica)).toEqual([
+      "exata",
+      "aproximada",
+      null,
+    ])
+    expect(comEscolha).toHaveBeenCalledTimes(1)
+  })
+
   it("monta ordem e cursor na query string", async () => {
     const buscar = responder({ anuncios: [], proximo: null, cidade: null })
     await lerMercado({ tipo: "item", ordem: "price_asc", depois: "2026-11-01T12:00:00.000Z|a1" })

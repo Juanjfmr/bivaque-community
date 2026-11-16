@@ -13,7 +13,7 @@ import {
   editarImovel,
   mudarSituacao,
 } from "@/lib/dados/mercado"
-import { errosDoImovel } from "@/src/criar/formularios"
+import { cepComMascara, cepEmDigitos, errosDoImovel } from "@/src/criar/formularios"
 import {
   type EstadoDaGestao,
   type EventoDaGestao,
@@ -116,6 +116,10 @@ export function GerenciarAnuncio({
     tipoImovel: anuncio.tipoImovel === "house" ? "casa" : "apartamento",
     negocio: anuncio.deal === "sale" ? "venda" : "aluguel",
     bairro: anuncio.bairro ?? "",
+    // O CEP vem só para o dono (RUN-175); o imóvel publicado antes do CEP abre
+    // vazio e a rota pede o CEP na primeira edição. O banco guarda os oito
+    // dígitos; o campo mostra a máscara.
+    cep: cepComMascara(anuncio.cep ?? ""),
     valor: precoParaCampo(anuncio.precoCents),
     quartos: anuncio.quartos === null ? "" : String(anuncio.quartos),
     area: anuncio.areaM2 === null ? "" : String(anuncio.areaM2),
@@ -173,6 +177,9 @@ export function GerenciarAnuncio({
             areaM2: imovel.area,
             description: imovel.descricao,
             neighborhood: imovel.bairro,
+            // O CEP só vai quando existe: imóvel já geocodificado preserva o
+            // gravado, e o avô informa o dele aqui.
+            ...(cepEmDigitos(imovel.cep) === null ? {} : { cep: imovel.cep }),
           },
           { signal: envio.signal },
         )
@@ -462,6 +469,21 @@ export function GerenciarAnuncio({
                 maxLength={80}
                 required
               />
+              <Campo
+                id="editar-imovel-cep"
+                rotulo="CEP"
+                valor={imovel.cep}
+                aoMudar={(cep) => setImovel({ ...imovel, cep: cepComMascara(cep) })}
+                inputMode="numeric"
+                autoComplete="postal-code"
+                maxLength={9}
+                required
+                {...(anuncio.cep === null
+                  ? { nota: "Este imóvel foi publicado antes do CEP. Informe-o para salvar." }
+                  : {})}
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
               <Campo
                 id="editar-imovel-valor"
                 rotulo={

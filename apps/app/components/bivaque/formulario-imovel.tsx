@@ -6,7 +6,7 @@ import { Campo, Selecao } from "@/components/bivaque/campos"
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog"
 import { FalhaDaApi } from "@/lib/api/cliente"
 import { publicarImovel } from "@/lib/dados/mercado"
-import { errosDoImovel } from "@/src/criar/formularios"
+import { cepComMascara, cepEmDigitos, errosDoImovel } from "@/src/criar/formularios"
 
 /**
  * Anunciar imóvel (F06): a folha publica de verdade. O corpo fala a língua do
@@ -19,12 +19,14 @@ const VAZIO = {
   titulo: "",
   tipo: "apartamento",
   finalidade: "aluguel",
+  cep: "",
   bairro: "",
   valor: "",
   quartos: "2",
   vagas: "1",
   area: "",
   endereco: "",
+  localizacao: "aproximada",
   descricao: "",
 }
 
@@ -50,9 +52,18 @@ export function FormularioImovel({
     [],
   )
 
-  const erros = errosDoImovel(dados)
+  const erros = errosDoImovel({ ...dados, localizacaoPublica: localizacaoEscolhida() })
   const mudar = (pedaco: Partial<typeof dados>): void =>
     setDados((atual) => ({ ...atual, ...pedaco }))
+
+  /** Sem endereço só existe o aproximado (ADR-20261022 §1: exato é o endereço). */
+  function localizacaoEscolhida(): "exata" | "aproximada" {
+    return dados.endereco.trim() === ""
+      ? "aproximada"
+      : dados.localizacao === "exata"
+        ? "exata"
+        : "aproximada"
+  }
 
   async function publicar() {
     if (controle.current) return
@@ -78,6 +89,8 @@ export function FormularioImovel({
           description: dados.descricao,
           neighborhood: dados.bairro,
           address: dados.endereco,
+          cep: cepEmDigitos(dados.cep) ?? "",
+          localizacaoPublica: localizacaoEscolhida(),
         },
         { signal: envio.signal },
       )
@@ -161,6 +174,18 @@ export function FormularioImovel({
           </div>
           <div className="grid grid-cols-2 gap-3">
             <Campo
+              id="imovel-cep"
+              rotulo="CEP"
+              valor={dados.cep}
+              aoMudar={(cep) => mudar({ cep: cepComMascara(cep) })}
+              inputMode="numeric"
+              autoComplete="postal-code"
+              maxLength={9}
+              required
+              placeholder="69000-000"
+              {...(erros.cep === undefined ? {} : { nota: erros.cep })}
+            />
+            <Campo
               id="imovel-bairro"
               rotulo="Bairro"
               valor={dados.bairro}
@@ -169,6 +194,8 @@ export function FormularioImovel({
               required
               placeholder="Ex.: Flores"
             />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
             <Campo
               id="imovel-preco"
               rotulo={
@@ -225,7 +252,21 @@ export function FormularioImovel({
             aoMudar={(endereco) => mudar({ endereco })}
             maxLength={200}
             autoComplete="street-address"
-            nota="Opcional. Se preencher, o endereço aparece para quem vê o anúncio."
+            nota="Opcional. Preenchido, o endereço aparece no local exato; vazio, o anúncio mostra bairro e cidade."
+          />
+          <Selecao
+            id="imovel-localizacao"
+            rotulo="Como mostrar o local"
+            valor={localizacaoEscolhida()}
+            aoMudar={(localizacao) => mudar({ localizacao })}
+            opcoes={
+              dados.endereco.trim() === ""
+                ? [{ valor: "aproximada", titulo: "Local aproximado" }]
+                : [
+                    { valor: "aproximada", titulo: "Local aproximado" },
+                    { valor: "exata", titulo: "Endereço exato" },
+                  ]
+            }
           />
           <Campo
             id="imovel-descricao"
