@@ -49,7 +49,9 @@ const pedido = {
   created_at: DATA,
   is_resolved: false,
   resolved_reply_id: null,
+  group_id: null,
   localities: { city_name: "Manaus" },
+  groups: null,
 }
 
 const respostaDaConversa = {
@@ -98,6 +100,9 @@ function mockClient(options: Options = {}) {
     if (falha) return Promise.resolve({ data: null, error: falha })
     if (nome === "list_indications") {
       return Promise.resolve({ data: options.perguntas ?? [], error: null })
+    }
+    if (nome === "count_indications") {
+      return Promise.resolve({ data: options.resolvidas ?? 0, error: null })
     }
     return Promise.resolve({ data: options.respostas ?? [], error: null })
   })
@@ -227,6 +232,11 @@ async function json(response: Response) {
   return response.json() as Promise<Record<string, unknown>>
 }
 
+/** Os argumentos da lista; a contagem também é RPC, e a ordem não importa. */
+function indications(mock: ReturnType<typeof mockClient>) {
+  return mock.rpcCalls.find((chamada) => chamada.nome === "list_indications")?.args
+}
+
 describe("rotas de perguntas do app", () => {
   beforeEach(() => {
     vi.clearAllMocks()
@@ -320,17 +330,17 @@ describe("rotas de perguntas do app", () => {
       const mock = mockClient({ perguntas: [] })
       authenticate(mock)
       await listar(req("GET", `${BASE}?topico=moradia`))
-      expect(mock.rpcCalls[0]?.args).toMatchObject({ p_category: "moradia" })
+      expect(indications(mock)).toMatchObject({ p_category: "moradia" })
 
       const semTopico = mockClient({ perguntas: [] })
       authenticate(semTopico)
       await listar(req("GET", `${BASE}`))
-      expect(semTopico.rpcCalls[0]?.args).not.toHaveProperty("p_category")
+      expect(indications(semTopico)).not.toHaveProperty("p_category")
 
       const vazio = mockClient({ perguntas: [] })
       authenticate(vazio)
       await listar(req("GET", `${BASE}?topico=`))
-      expect(vazio.rpcCalls[0]?.args).not.toHaveProperty("p_category")
+      expect(indications(vazio)).not.toHaveProperty("p_category")
     })
 
     it("mapeia as linhas, a autoria e o nome de quem perguntou", async () => {
@@ -353,11 +363,54 @@ describe("rotas de perguntas do app", () => {
           propria: true,
           autor: "Ana Verificada",
           autorId: USER,
+          grupo: null,
         },
       ])
       expect(corpo["cidade"]).toBe("Manaus")
       expect(corpo["resolvidas"]).toBe(4)
       expect(corpo["proximo"]).toBeNull()
+    })
+
+    it("a linha de origem dupla chega na cidade com o nome do grupo", async () => {
+      // RUN-178: a mesma linha que o grupo lê aparece nas Indicações da cidade
+      // com o nome do grupo — o campo aditivo `grupo` é o que a tela nomeia.
+      const mock = mockClient({
+        perguntas: [
+          {
+            ...linha,
+            group_id: "40000000-0000-4000-8000-000000000001",
+            group_name: "Grupo de Corrida",
+          },
+        ],
+      })
+      authenticate(mock)
+      const corpo = await json(await listar(req("GET")))
+      expect((corpo["perguntas"] as Record<string, unknown>[])[0]).toMatchObject({
+        id: ID,
+        grupo: { id: "40000000-0000-4000-8000-000000000001", nome: "Grupo de Corrida" },
+      })
+    })
+
+    it("a contagem da cidade usa a régua da lista, não um atalho na tabela", async () => {
+      // A pergunta de grupo e o que a pessoa ocultou entram e saem pela mesma
+      // função que lista (RUN-178); a rota não conta linhas por conta própria.
+      const mock = mockClient({ perguntas: [], resolvidas: 7 })
+      authenticate(mock)
+      const corpo = await json(await listar(req("GET")))
+      expect(corpo["resolvidas"]).toBe(7)
+      expect(mock.rpcCalls.find((chamada) => chamada.nome === "count_indications")?.args).toEqual({
+        p_locality_id: CIDADE,
+      })
+      expect(
+        mock.from.mock.calls.filter(([tabela]) => tabela === "recommendation_requests"),
+      ).toHaveLength(0)
+    })
+
+    it("a contagem é pedida só na primeira página", async () => {
+      const mock = mockClient({ perguntas: [], resolvidas: 7 })
+      authenticate(mock)
+      await listar(req("GET", `${BASE}?depois=20`))
+      expect(mock.rpcCalls.some((chamada) => chamada.nome === "count_indications")).toBe(false)
     })
 
     it("só pagina quando a página veio cheia", async () => {
@@ -374,19 +427,19 @@ describe("rotas de perguntas do app", () => {
       const ajuda = mockClient({ perguntas: [] })
       authenticate(ajuda)
       await listar(req("GET", `${BASE}?filtro=ajuda`))
-      expect(ajuda.rpcCalls[0]?.args).toMatchObject({ p_resolved: false, p_mine: false })
+      expect(indications(ajuda)).toMatchObject({ p_resolved: false, p_mine: false })
 
       const resolvidas = mockClient({ perguntas: [] })
       authenticate(resolvidas)
       await listar(req("GET", `${BASE}?filtro=resolvidas`))
-      expect(resolvidas.rpcCalls[0]?.args).toMatchObject({ p_resolved: true })
-      expect(resolvidas.rpcCalls[0]?.args).not.toHaveProperty("p_mine")
+      expect(indications(resolvidas)).toMatchObject({ p_resolved: true })
+      expect(indications(resolvidas)).not.toHaveProperty("p_mine")
 
       const minhas = mockClient({ perguntas: [] })
       authenticate(minhas)
       await listar(req("GET", `${BASE}?filtro=minhas`))
-      expect(minhas.rpcCalls[0]?.args).toMatchObject({ p_mine: true })
-      expect(minhas.rpcCalls[0]?.args).not.toHaveProperty("p_resolved")
+      expect(indications(minhas)).toMatchObject({ p_mine: true })
+      expect(indications(minhas)).not.toHaveProperty("p_resolved")
     })
 
     it("a cidade é a da sessão, pelo vínculo current, ignorando cidade e autoria da query", async () => {
@@ -398,8 +451,8 @@ describe("rotas de perguntas do app", () => {
         column: "kind",
         value: "current",
       })
-      expect(mock.rpcCalls[0]?.args).toMatchObject({ p_locality_id: CIDADE })
-      expect(mock.rpcCalls[0]?.args).not.toMatchObject({ p_locality_id: OUTRA_CIDADE })
+      expect(indications(mock)).toMatchObject({ p_locality_id: CIDADE })
+      expect(indications(mock)).not.toMatchObject({ p_locality_id: OUTRA_CIDADE })
     })
 
     it("sem vínculo de cidade a lista é vazia, não erro", async () => {
@@ -448,6 +501,7 @@ describe("rotas de perguntas do app", () => {
         autor: "Ana Verificada",
         autorId: USER,
         cidade: "Manaus",
+        grupo: null,
       })
       expect(corpo["respostas"]).toEqual([
         {
@@ -534,6 +588,24 @@ describe("rotas de perguntas do app", () => {
       const corpo = await json(await detalhe(req("GET"), context))
       expect((corpo["pergunta"] as Record<string, unknown>)["salva"]).toBe(false)
     })
+
+    it("a origem dupla nomeia o grupo na ficha", async () => {
+      // RUN-178: a pergunta que nasceu num grupo Aberto abre na ficha normal e
+      // diz de onde veio, para a pessoa chegar ao grupo.
+      const mock = mockClient({
+        pedido: {
+          ...pedido,
+          group_id: "40000000-0000-4000-8000-000000000001",
+          groups: { name: "Grupo de Corrida" },
+        },
+      })
+      authenticate(mock)
+      const corpo = await json(await detalhe(req("GET"), context))
+      expect((corpo["pergunta"] as Record<string, unknown>)["grupo"]).toEqual({
+        id: "40000000-0000-4000-8000-000000000001",
+        nome: "Grupo de Corrida",
+      })
+    })
   })
 
   describe("seguir respostas", () => {
@@ -582,9 +654,22 @@ describe("rotas de perguntas do app", () => {
       })
     })
 
-    it("pedido de grupo é 403 com a frase honesta, sem eco do Postgres", async () => {
-      // A policy `recommendation_saves_insert_own` só aceita pedido da cidade;
-      // o pedido de grupo é visível e por isso o 404 não seria verdade.
+    it("seguir a linha de origem dupla é aceito pela policy nova", async () => {
+      // RUN-178: `recommendation_saves_insert_own` passou a aceitar o que é
+      // visível — a linha dupla da cidade. Nada de 403 por origem de grupo.
+      const mock = mockClient()
+      authenticate(mock)
+      const resposta = await seguir(req("PUT"), context)
+      expect(resposta.status).toBe(200)
+      expect(mock.inserts).toEqual([
+        { table: "recommendation_saves", value: { user_id: USER, request_id: ID } },
+      ])
+    })
+
+    it("a recusa que sobra é 403 sem eco da policy e sem a frase de grupo", async () => {
+      // O 403 que resta é o de pergunta fora do alcance de quem pediu — a frase
+      // antiga ("perguntas de grupo ainda não podem ser seguidas") saiu de
+      // circulação com a policy nova.
       const mock = mockClient({
         saveError: { code: "42501", message: 'new row violates row-level security policy "x"' },
       })
@@ -592,7 +677,7 @@ describe("rotas de perguntas do app", () => {
       const resposta = await seguir(req("PUT"), context)
       expect(resposta.status).toBe(403)
       const corpo = await json(resposta)
-      expect(corpo["mensagem"]).toContain("grupo")
+      expect(String(corpo["mensagem"])).not.toContain("grupo")
       expect(JSON.stringify(corpo)).not.toMatch(/row-level security/)
     })
 

@@ -543,4 +543,151 @@ test.describe("F04 — grupos reais", { tag: "@stateful" }, () => {
       })
     }
   })
+
+  test("pergunta do grupo Aberto aparece na cidade com o nome do grupo, e a resposta volta", async ({
+    page,
+    context,
+  }, info) => {
+    test.setTimeout(240_000)
+    page.setDefaultTimeout(ESPERA.timeout)
+    expect(
+      info.config.workers,
+      "use --workers=1 para devolver o banco antes da próxima largura",
+    ).toBe(1)
+    expect([375, 768, 1440], "a jornada roda nas três larguras do protótipo").toContain(
+      page.viewportSize()?.width,
+    )
+    const origem = new URL(info.project.use.baseURL ?? "http://127.0.0.1:3000")
+    if (!["127.0.0.1", "localhost"].includes(origem.hostname))
+      throw new Error("F04 só usa servidor local")
+    const servico = await servicoLocal()
+    const grupo = randomUUID()
+    const titulo = `Pergunta do grupo ${randomUUID().slice(0, 8)}: alguém indica fono?`
+    let perguntaCriada = ""
+    try {
+      await test.step("fixture: grupo aberto com a dona participando", async () => {
+        await conferir(
+          "criar o grupo da pergunta",
+          await servico.post("/rest/v1/groups", {
+            data: [
+              {
+                id: grupo,
+                name: "Grupo F04 pergunta",
+                description: "Fixture local F04 da pergunta de origem dupla",
+                visibility: "public",
+                locality_id: CIDADE,
+                created_by: DONO,
+                owner_user_id: DONO,
+              },
+            ],
+          }),
+        )
+        await conferir(
+          "inscrever a dona no grupo da pergunta",
+          await servico.post("/rest/v1/group_memberships", {
+            data: [{ group_id: grupo, user_id: DONO, role: "owner", status: "approved" }],
+          }),
+        )
+      })
+
+      await test.step("publicar: a dona pergunta à cidade de dentro do grupo", async () => {
+        await signInAs(context, "visual@bivaque.example.invalid")
+        await page.goto(`/app/grupo/${grupo}`, ESPERA)
+        await page.getByRole("button", { name: "Escrever", exact: true }).click(ESPERA)
+        const dialogo = page.locator('[data-dialogo="escrever-grupo"]')
+        await dialogo.getByRole("button", { name: "Pergunta", exact: true }).click(ESPERA)
+        await expect(
+          dialogo.locator('[data-aviso-cidade="sim"]'),
+          "o aviso da cidade aparece antes de publicar",
+        ).toContainText("Sua pergunta aparecerá na cidade com o nome do grupo.", ESPERA)
+        await dialogo.locator("#titulo-pergunta-grupo").fill(titulo, ESPERA)
+        await dialogo.getByRole("button", { name: "Perguntar à cidade" }).click(ESPERA)
+        await expect(dialogo, "a pergunta sai sem sair da tela do grupo").toHaveCount(0, ESPERA)
+        const bloco = page.locator('[data-perguntas-do-grupo="sim"]')
+        await expect(bloco, "a pergunta entra no bloco do feed").toContainText(titulo, ESPERA)
+        await expect(bloco).toContainText("Também perguntada à cidade", ESPERA)
+        // A linha gravada é de origem dupla: cidade do grupo + grupo.
+        const consulta = await servico.get(
+          `/rest/v1/recommendation_requests?select=id,locality_id,group_id&group_id=eq.${grupo}`,
+        )
+        expect(consulta.ok(), "a pergunta é legível pelo serviço local").toBe(true)
+        const linhas = (await consulta.json()) as {
+          id: string
+          locality_id: string | null
+          group_id: string | null
+        }[]
+        expect(linhas.length, "a pergunta de origem dupla é UMA linha").toBe(1)
+        expect(linhas[0]?.locality_id, "a cidade é a do grupo").toBe(CIDADE)
+        expect(linhas[0]?.group_id, "o grupo é o de origem").toBe(grupo)
+        perguntaCriada = linhas[0]?.id ?? ""
+        await capturar(page, `${info.project.name}-pergunta-do-grupo`)
+      })
+
+      await test.step("a cidade: outro membro vê a pergunta com o nome do grupo e responde", async () => {
+        await context.clearCookies()
+        await signInAs(context, "membro-1@bivaque.example.invalid")
+        await page.goto("/app/comunidade", ESPERA)
+        // A pergunta é aberta e sem resposta: ela abre a lista "Para ajudar".
+        const linha = page.locator("[data-linha='pergunta']", { hasText: titulo })
+        await expect(linha, "a pergunta do grupo aparece nas Indicações da cidade").toBeVisible(
+          ESPERA,
+        )
+        await expect(linha, "e diz de qual grupo ela veio").toContainText(
+          "Perguntada no grupo Grupo F04 pergunta",
+          ESPERA,
+        )
+        await linha.click(ESPERA)
+        await expect(page, "abre a ficha normal da pergunta").toHaveURL(
+          new RegExp(`/app/pergunta/${perguntaCriada}$`),
+          ESPERA,
+        )
+        await page.getByLabel("Sua resposta").fill("A Clínica do Ouvido atende até as 19h.", ESPERA)
+        await page.getByRole("button", { name: "Enviar indicação" }).click(ESPERA)
+        await expect(
+          page.getByText("A Clínica do Ouvido atende até as 19h."),
+          "a resposta gravada aparece na ficha",
+        ).toBeVisible(ESPERA)
+        // A pessoa da cidade também segue a pergunta: a policy nova aceita a
+        // linha de origem dupla (antes, a tela dizia que não podia).
+        await page.getByRole("button", { name: "Seguir respostas" }).click(ESPERA)
+        await expect(
+          page.getByRole("button", { name: "Seguindo respostas" }),
+          "seguir a pergunta do grupo grava",
+        ).toBeVisible(ESPERA)
+      })
+
+      await test.step("a autora: a resposta chega na ficha e a pergunta segue no feed do grupo", async () => {
+        await context.clearCookies()
+        await signInAs(context, "visual@bivaque.example.invalid")
+        await page.goto(`/app/pergunta/${perguntaCriada}`, ESPERA)
+        await expect(
+          page.getByText("A Clínica do Ouvido atende até as 19h."),
+          "a resposta de outra pessoa aparece para a autora",
+        ).toBeVisible(ESPERA)
+        await expect(
+          page.locator('[data-origem-da-pergunta="grupo"]'),
+          "a ficha nomeia o grupo de origem",
+        ).toContainText("Perguntada no grupo Grupo F04 pergunta", ESPERA)
+        await page.goto(`/app/grupo/${grupo}`, ESPERA)
+        await expect(
+          page.locator('[data-perguntas-do-grupo="sim"]'),
+          "a pergunta sobrevive ao recarregamento no feed do grupo",
+        ).toContainText(titulo, ESPERA)
+      })
+    } finally {
+      await test.step("limpeza: pergunta e grupo da fixture saem do banco", async () => {
+        try {
+          if (perguntaCriada !== "") {
+            await conferir(
+              "apagar a pergunta da fixture",
+              await servico.delete(`/rest/v1/recommendation_requests?id=eq.${perguntaCriada}`),
+            )
+          }
+          await limpar(servico, [grupo])
+        } finally {
+          await servico.dispose()
+        }
+      })
+    }
+  })
 })

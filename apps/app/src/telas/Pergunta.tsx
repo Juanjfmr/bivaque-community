@@ -8,6 +8,7 @@ import { Campo } from "@/components/bivaque/campos"
 import { EsqueletoDeLista } from "@/components/bivaque/esqueleto"
 import { EstadoDeErro, EstadoVazio } from "@/components/bivaque/estado-vazio"
 import { Etiqueta } from "@/components/bivaque/etiqueta"
+import { Icone } from "@/components/bivaque/icone"
 import { NomeDeMembro } from "@/components/bivaque/nome-de-membro"
 import { Secao } from "@/components/bivaque/secao"
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog"
@@ -154,6 +155,7 @@ export function Pergunta() {
           autor: "Você",
           autorId: "",
           cidade: casca.cidade,
+          grupo: null,
           salva: false,
         },
         respostas: [],
@@ -372,6 +374,19 @@ export function Pergunta() {
         <h1 id="titulo-da-tela" data-titulo-da-tela tabIndex={-1} className="text-[22px] leading-7">
           {pergunta.titulo}
         </h1>
+        {pergunta.grupo === null ? null : (
+          <button
+            type="button"
+            data-origem-da-pergunta="grupo"
+            className="flex min-h-11 w-fit items-center gap-2 rounded-xl bg-(--secondary-container) px-3 text-left text-sm"
+            onClick={() =>
+              void navegacao.irPara("grupo", { parametros: { id: pergunta.grupo?.id ?? "" } })
+            }
+          >
+            <Icone nome="groups" className="size-4 shrink-0" />
+            {`Perguntada no grupo ${pergunta.grupo.nome || "da cidade"} · ver o grupo`}
+          </button>
+        )}
         <div className="flex items-center justify-between gap-3">
           {pergunta.resolvida ? (
             <Etiqueta tom="ok" icone="check_circle">

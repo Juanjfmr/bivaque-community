@@ -12,6 +12,8 @@ import { enviar, FalhaDaApi, ler } from "../api/cliente"
 
 export type FiltroDePerguntas = "ajuda" | "resolvidas" | "minhas"
 
+export type GrupoDaPergunta = Readonly<{ id: string; nome: string }>
+
 export type PerguntaDaLista = Readonly<{
   id: string
   titulo: string
@@ -25,6 +27,8 @@ export type PerguntaDaLista = Readonly<{
   propria: boolean
   resolvida: boolean
   respostas: number
+  /** Origem dupla (RUN-178): o grupo em que a pergunta também foi feita. */
+  grupo: GrupoDaPergunta | null
 }>
 
 export type ListaDePerguntas = Readonly<{
@@ -63,6 +67,8 @@ export type PerguntaDaConversa = Readonly<{
     autor: string
     autorId: string
     cidade: string
+    /** Origem dupla (RUN-178): o grupo em que a pergunta também foi feita. */
+    grupo: GrupoDaPergunta | null
     /** Seguindo respostas: a pessoa salvou a pergunta (`recommendation_saves`). */
     salva: boolean
   }>
@@ -138,6 +144,13 @@ function assunto(valor: unknown): string {
   return typeof valor === "string" ? (ASSUNTOS[valor] ?? "") : ""
 }
 
+/** Origem dupla: `null` é pergunta só da cidade. Nome ausente não quebra a tela. */
+function grupoDaPergunta(valor: unknown): GrupoDaPergunta | null {
+  if (valor === null || valor === undefined) return null
+  const grupo = exigirRegistro(valor)
+  return { id: exigirTexto(grupo, "id"), nome: texto(grupo["nome"]) ?? "" }
+}
+
 function lerPergunta(linha: unknown): PerguntaDaLista {
   const pergunta = exigirRegistro(linha)
   return {
@@ -150,6 +163,7 @@ function lerPergunta(linha: unknown): PerguntaDaLista {
     propria: pergunta["propria"] === true,
     resolvida: pergunta["resolvida"] === true,
     respostas: exigirNumero(pergunta, "respostas"),
+    grupo: grupoDaPergunta(pergunta["grupo"]),
   }
 }
 
@@ -211,6 +225,7 @@ export async function buscarPergunta(
       autor: texto(pergunta["autor"]) ?? "",
       autorId: texto(pergunta["autorId"]) ?? "",
       cidade: texto(pergunta["cidade"]) ?? "",
+      grupo: grupoDaPergunta(pergunta["grupo"]),
       salva: pergunta["salva"] === true,
     },
     respostas: respostas.map(lerResposta),

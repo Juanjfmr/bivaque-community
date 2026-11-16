@@ -157,6 +157,8 @@ export function Comunidade() {
       cidade: cidadeDaLista,
       respostas: pergunta.respostas,
       resolvida: pergunta.resolvida,
+      // Origem dupla (RUN-178): a linha nasceu num grupo e a lista diz qual.
+      origem: pergunta.grupo === null ? undefined : `Perguntada no grupo ${pergunta.grupo.nome}`,
     }))
     return reais
   }, [lista, cidadeDaLista])

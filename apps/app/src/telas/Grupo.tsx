@@ -11,7 +11,9 @@ import { Etiqueta } from "@/components/bivaque/etiqueta"
 import {
   buscarGrupo,
   type DetalheDoGrupo,
+  lerPerguntasDoGrupo,
   type OrdemDoGrupo,
+  type PerguntaDoGrupo,
   type PublicacaoCriada,
 } from "@/lib/dados/grupos"
 import { useNavegacao, useRolagemEFoco } from "@/lib/navegacao/react"
@@ -68,6 +70,10 @@ export function Grupo() {
   const [ordem, setOrdem] = useState<OrdemDoGrupo>("recentes")
   const [mais, setMais] = useState(false)
   const [erroMais, setErroMais] = useState(false)
+  // As perguntas do grupo vivem na própria linha do banco e são lidas por rota
+  // separada: elas formam o bloco de cima do feed, sem mexer no cursor dos posts.
+  const [perguntas, setPerguntas] = useState<readonly PerguntaDoGrupo[]>([])
+  const [erroDasPerguntas, setErroDasPerguntas] = useState(false)
   const [controle] = useState(() => new AbortController())
   const paginaPendente = useRef<AbortController | null>(null)
   const geracaoDoGrupo = useRef(0)
@@ -117,6 +123,8 @@ export function Grupo() {
     const pedido = new AbortController()
     setDados(null)
     setErro(null)
+    setPerguntas([])
+    setErroDasPerguntas(false)
     void buscarGrupo(id, { ordem, signal: pedido.signal })
       .then((lidos) => {
         if (pedido.signal.aborted) return
@@ -125,6 +133,15 @@ export function Grupo() {
       })
       .catch((falha: unknown) => {
         if (!pedido.signal.aborted) setErro(falha)
+      })
+    void lerPerguntasDoGrupo(id, { signal: pedido.signal })
+      .then((lidas) => {
+        if (!pedido.signal.aborted) setPerguntas(lidas)
+      })
+      .catch(() => {
+        // A falha das perguntas não derruba o feed dos posts: o bloco diz que
+        // não leu, em vez de aparecer vazio como se o grupo não perguntasse.
+        if (!pedido.signal.aborted) setErroDasPerguntas(true)
       })
     return () => {
       pedido.abort()
@@ -203,6 +220,17 @@ export function Grupo() {
     }
     setAnuncio(semConfirmacao({ primeiros: retemOTopo(base?.ordem ?? ordem) }).frase)
   }
+  /**
+   * A pergunta saiu: ela entra no bloco de cima do feed. O anúncio diz o que de
+   * fato aconteceu — a mesma linha aparece nas Indicações da cidade com o nome
+   * do grupo.
+   */
+  function aoPerguntar(criada: PerguntaDoGrupo) {
+    setPerguntas((atuais) => [criada, ...atuais.filter((p) => p.id !== criada.id)])
+    setAnuncio(
+      "Pergunta publicada. Ela também aparece nas Indicações da cidade com o nome do grupo.",
+    )
+  }
   if (erro) return <EstadoDaLeitura erro={erro} aoTentar={() => setRodada((r) => r + 1)} />
   if (!dados)
     return (
@@ -273,8 +301,46 @@ export function Grupo() {
           grupo={grupo}
           cidade={casca.cidade}
           aoPublicar={aoPublicar}
+          aoPerguntar={aoPerguntar}
         />
       ) : null}
+      {perguntas.length === 0 && !erroDasPerguntas ? null : (
+        <section data-perguntas-do-grupo="sim" className="grid gap-2" aria-label="Perguntas">
+          <b className="text-sm">Perguntas do grupo</b>
+          <small className="text-xs text-(--on-surface-variant)">
+            As perguntas feitas aqui aparecem também nas Indicações da cidade.
+          </small>
+          {erroDasPerguntas ? (
+            <p role="alert" className="text-sm text-(--destructive)">
+              Não foi possível carregar as perguntas do grupo. As publicações abaixo continuam
+              disponíveis.
+            </p>
+          ) : (
+            perguntas.map((p) => (
+              <CartaoDePublicacao
+                key={p.id}
+                publicacao={{
+                  id: p.id,
+                  tipo: "pergunta",
+                  autor: p.autor || "Membro do grupo",
+                  quando: quandoDe(p.criadaEm),
+                  texto: p.titulo,
+                  resolvida: p.resolvida,
+                  tambemNaCidade: p.grupo !== null,
+                  comentarios: p.respostas,
+                  uteis: 0,
+                }}
+                aoAbrirAutor={
+                  p.propria || p.autorId === ""
+                    ? undefined
+                    : () => void navegacao.irPara("perfil", { parametros: { id: p.autorId } })
+                }
+                aoComentar={() => void navegacao.irPara("pergunta", { parametros: { id: p.id } })}
+              />
+            ))
+          )}
+        </section>
+      )}
       {/* O foco já leva ao cartão; o anúncio garante que quem usa leitor de
           tela saiba o que houve, inclusive quando a publicação não entrou. */}
       <p aria-live="polite" data-anuncio-da-publicacao="sim" className="sr-only">

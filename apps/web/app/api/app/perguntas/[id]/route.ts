@@ -32,7 +32,7 @@ export async function GET(request: NextRequest, { params }: Context): Promise<Ne
     const pedido = await client
       .from("recommendation_requests")
       .select(
-        "id,author_id,title,body,category,created_at,is_resolved,resolved_reply_id,localities(city_name)",
+        "id,author_id,title,body,category,created_at,is_resolved,resolved_reply_id,group_id,localities(city_name),groups(name)",
       )
       .eq("id", id)
       .maybeSingle()
@@ -79,6 +79,12 @@ export async function GET(request: NextRequest, { params }: Context): Promise<Ne
           autor: nomes.get(pedido.data.author_id) ?? "",
           autorId: pedido.data.author_id,
           cidade: pedido.data.localities?.city_name ?? "",
+          // Origem dupla (RUN-178): a ficha nomeia o grupo em que a pergunta
+          // também foi feita. A leitura do grupo é a RLS: sem ele, fica null.
+          grupo:
+            pedido.data.group_id === null
+              ? null
+              : { id: pedido.data.group_id, nome: pedido.data.groups?.name ?? "" },
           salva: salva.data !== null,
         },
         respostas: linhas.map((linha) => ({

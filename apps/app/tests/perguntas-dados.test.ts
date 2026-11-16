@@ -64,6 +64,7 @@ describe("lista de perguntas", () => {
       propria: false,
       autor: "Ana",
       autorId: "u-ana",
+      grupo: null,
     })
     expect(lista.proximo).toBe("20")
     expect(lista.cidade).toBe("Manaus")
@@ -115,6 +116,21 @@ describe("lista de perguntas", () => {
   it("recusa corpo fora do contrato em vez de fingir lista vazia", async () => {
     responder({ itens: [] })
     await expect(lerPerguntas()).rejects.toBeInstanceOf(FalhaDaApi)
+  })
+
+  it("a origem dupla chega com o grupo, e a pergunta só da cidade com null", async () => {
+    responder({
+      perguntas: [
+        { ...PERGUNTA, grupo: { id: "g1", nome: "Grupo de Corrida" } },
+        { ...PERGUNTA, id: "q2", grupo: null },
+      ],
+      proximo: null,
+      cidade: "Manaus",
+      resolvidas: 0,
+    })
+    const lista = await lerPerguntas()
+    expect(lista.perguntas[0]?.grupo).toEqual({ id: "g1", nome: "Grupo de Corrida" })
+    expect(lista.perguntas[1]?.grupo).toBeNull()
   })
 
   it("recusa linha sem contagem de respostas", async () => {

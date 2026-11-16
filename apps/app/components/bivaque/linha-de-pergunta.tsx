@@ -19,6 +19,8 @@ export type PerguntaDaLinha = {
   readonly respostas: number
   readonly resolvida?: boolean
   readonly trecho?: string
+  /** Origem da pergunta quando ela não é só da cidade (RUN-178). */
+  readonly origem?: string | undefined
 }
 
 export function LinhaDePergunta({
@@ -77,6 +79,12 @@ export function LinhaDePergunta({
             </small>
           )}
         </span>
+        {pergunta.origem === undefined ? null : (
+          <small className="flex items-center gap-1 text-[12px] text-(--on-surface-variant)">
+            <Icone nome="groups" className="size-3.5 shrink-0" />
+            <span className="min-w-0 truncate">{pergunta.origem}</span>
+          </small>
+        )}
       </span>
       <Icone nome="chevron_right" className="mt-6 size-5 shrink-0 text-(--on-surface-variant)" />
     </button>

@@ -236,6 +236,66 @@ export async function publicarNoGrupo(
   if (criada.grupoId !== id) falha()
   return { publicacao: criada, proximo: cursor(corpo["proximo"]) }
 }
+/** Uma pergunta de origem dupla: vive no grupo e aparece na cidade com o nome dele. */
+export type PerguntaDoGrupo = Readonly<{
+  id: string
+  titulo: string
+  criadaEm: string
+  autor: string
+  autorId: string
+  propria: boolean
+  respostas: number
+  resolvida: boolean
+  /** A origem da linha: o grupo em que ela foi perguntada. */
+  grupo: Readonly<{ id: string; nome: string }> | null
+}>
+
+function perguntaDoGrupo(valor: unknown): PerguntaDoGrupo {
+  const p = registro(valor)
+  const grupo = p["grupo"]
+  const g = grupo === null || grupo === undefined ? null : registro(grupo)
+  return {
+    id: texto(p["id"]),
+    titulo: texto(p["titulo"]),
+    criadaEm: texto(p["criadaEm"]),
+    autor: texto(p["autor"]),
+    autorId: texto(p["autorId"]),
+    propria: booleano(p["propria"]),
+    respostas: numero(p["respostas"]),
+    resolvida: booleano(p["resolvida"]),
+    grupo: g === null ? null : { id: texto(g["id"]), nome: texto(g["nome"]) },
+  }
+}
+
+/**
+ * Perguntar à cidade de dentro do grupo (RUN-178). O corpo leva SÓ o texto: a
+ * cidade e o grupo saem do grupo lido no servidor, nunca do navegador.
+ */
+export async function perguntarNoGrupo(
+  id: string,
+  dados: { titulo: string; assunto: string },
+  opcoes: Opcoes = {},
+): Promise<PerguntaDoGrupo> {
+  const corpo = await enviar(
+    "POST",
+    `/api/app/grupos/${encodeURIComponent(id)}/perguntas`,
+    dados,
+    opcoes,
+  )
+  const criada = perguntaDoGrupo(corpo["pergunta"])
+  if (criada.grupo?.id !== id) falha()
+  return criada
+}
+
+/** As perguntas do grupo, o bloco de cima do feed. Leitura separada dos posts. */
+export async function lerPerguntasDoGrupo(
+  id: string,
+  opcoes: Opcoes = {},
+): Promise<readonly PerguntaDoGrupo[]> {
+  const corpo = await ler(`/api/app/grupos/${encodeURIComponent(id)}/perguntas`, opcoes)
+  return lista(corpo["perguntas"], perguntaDoGrupo)
+}
+
 export async function anexarFotoAoGrupo(
   id: string,
   foto: string,
