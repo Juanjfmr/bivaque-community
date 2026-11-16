@@ -216,10 +216,12 @@ const PORTAS_FORA_DO_LINK: readonly PortaDeclarada[] = [
     dependeDeDados: true,
     dono: "membro",
   },
+  // Sem semente de propósito: sem `?tipo=` e `?id=` a tela desenha "Conteúdo não encontrado" —
+  // o servidor confere o alvo antes de qualquer campo, por design. Mesma regra de
+  // /pedidos/novo: nada de inventar id para a semente, a declaração segue sendo a porta.
   {
     route: "/denuncias/nova",
     porta: "FLUXO: versão endereçável (spec C10) do diálogo que as origens abrem por cima da tela",
-    dono: "membro",
   },
   {
     route: "/guide/sugerir",
@@ -253,7 +255,9 @@ const PORTAS_FORA_DO_LINK: readonly PortaDeclarada[] = [
   },
   {
     route: "/indicacoes/[id]",
-    porta: "CONDICIONAL: lista de /salvos, que perdeu a porta com o perfil web (RUN-172)",
+    porta:
+      "CONDICIONAL: lista de /salvos ou a vista Indicações da Comunidade, que só linka o pedido quando a cidade já tem pedidos (RUN-172/RUN-176)",
+    dependeDeDados: true,
     dono: "dono de vila",
   },
   {
@@ -426,6 +430,10 @@ test.describe("rastreador de links", { tag: "@stateful" }, () => {
         "/pedidos",
         "/pedidos/[id]",
         "/prestadores/[id]",
+        // /guide perdeu o page.tsx na troca da fase 8 e vive só do redirect do next.config:
+        // continua destino válido de <a href> (o "voltar" de /guide/sugerir), então precisa de
+        // padrão — sem ele, todo link para lá virava "rota inexistente".
+        "/guide",
         "/configuracoes/bloqueados",
         "/configuracoes/familia",
         "/inicio",
@@ -503,7 +511,9 @@ test.describe("rastreador de links", { tag: "@stateful" }, () => {
   // A distinção que o RUN-176 introduziu, medida no modelo e não na intuição de quem edita a
   // lista: entrar por semente visita a tela, mas não a torna "alcançável por link".
   test("semente não satisfaz o invariante de porta", () => {
-    const patterns = buildPatterns(["page.tsx", "(shell)/salvos/page.tsx"], [])
+    // Só a tela da semente no padrão: "/" é entrada, não semente, e no inventário do teste
+    // ela entraria como rota sem porta por não ter link nenhum — ruído que esconde a regra.
+    const patterns = buildPatterns(["(shell)/salvos/page.tsx"], [])
     const frontier = new Frontier(patterns, CAP_PER_ROUTE)
     const porta = { route: "/salvos", porta: "semente da persona dona" }
 
