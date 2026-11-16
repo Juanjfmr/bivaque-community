@@ -475,14 +475,17 @@ select is(
   false,
   'cancel nao devolve a longitude'
 );
-select results_eq(
+-- Cancelar é terminal: a segunda chamada é recusada pela guarda de estado
+-- (`20261116220115:214-216`, 22023), não devolve sucesso.
+select throws_ok(
   $$
     select public.cancel_service_request(
       (select id from public.service_requests where idempotency_key = 'k-2')
-    ) ->> 'status'
+    )
   $$,
-  array['cancelled'::text],
-  'cancelar continua levando ao estado terminal'
+  '22023',
+  null,
+  'cancelar de novo é recusado: o pedido já está no estado terminal'
 );
 
 -- ── negativo: terceiro nao le, nao escreve e nao encerra ─────────────────────

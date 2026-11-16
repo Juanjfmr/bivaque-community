@@ -436,6 +436,10 @@ select is(
 
 -- ---------------------------------------------------------------------------
 -- 6. CEP fora do cache: pedido sem coordenada e sem bairro
+--
+-- O CEP daqui ('69000-002' → '69000002') NÃO está no cache do fixture: se
+-- fosse '69000000', a derivação acharia a linha e este teste provaria o
+-- contrário do que afirma.
 -- ---------------------------------------------------------------------------
 
 set local role authenticated;
@@ -449,7 +453,7 @@ select lives_ok(
       'Pedido do interior, sem posição',
       null,
       'k-local-2',
-      '69000-000'
+      '69000-002'
     )
   $$,
   'CEP fora do cache não impede o pedido'
@@ -459,7 +463,7 @@ reset role;
 
 select is(
   (select cep from public.service_requests where idempotency_key = 'k-local-2'),
-  '69000000',
+  '69000002',
   'o CEP do pedido é normalizado para oito dígitos'
 );
 -- O cache é a única fonte do bairro: fora dele não há bairro a publicar — e o
