@@ -42,7 +42,7 @@ const ALERTA = {
   quartos: 2,
   ativo: true,
   criadoEm: "2026-11-10T12:00:00.000Z",
-  busca: { valor_max: "2500", quartos: "2" },
+  busca: { valor_max: 2500, quartos: 2 },
 }
 
 const CRITERIOS = {
@@ -61,6 +61,14 @@ describe("lista de alertas", () => {
     expect(chamada(buscar).caminho).toBe("/api/app/imoveis/alertas")
     expect(lista).toHaveLength(1)
     expect(lista[0]).toMatchObject({ nome: "Apartamento no Centro", ativo: true })
+    expect(lista[0]?.busca).toEqual({ valor_max: 2500, quartos: 2 })
+  })
+
+  it("o wire antigo, com tudo em string, continua aceito", async () => {
+    // Links/rows gravados antes do fix do número: o parser dos dois formatos
+    // evita que uma resposta antiga quebre a tela (a tela só repassa o search).
+    responder({ alertas: [{ ...ALERTA, busca: { valor_max: "2500", quartos: "2" } }] })
+    const lista = await lerAlertas()
     expect(lista[0]?.busca).toEqual({ valor_max: "2500", quartos: "2" })
   })
 

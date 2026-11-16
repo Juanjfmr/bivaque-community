@@ -21,8 +21,9 @@ export type AlertaDeImovel = Readonly<{
   quartos: number | null
   ativo: boolean
   criadoEm: string
-  /** As chaves de filtro que a busca do app entende, já no formato dela. */
-  busca: Readonly<Record<string, string>>
+  /** As chaves de filtro que a busca do app entende, já no formato dela.
+   *  Números ficam números: o roteador entre aspas strings que parecem número. */
+  busca: Readonly<Record<string, string | number>>
 }>
 
 /** O que o formulário manda: os critérios e a situação, sem dono nem id. */
@@ -78,11 +79,12 @@ function negocioOuNulo(corpo: Corpo, chave: string): TipoDeNegocio | null {
   return valor
 }
 
-function buscaDoCorpo(valor: unknown): Readonly<Record<string, string>> {
-  const busca: Record<string, string> = {}
+function buscaDoCorpo(valor: unknown): Readonly<Record<string, string | number>> {
+  const busca: Record<string, string | number> = {}
   for (const [chave, item] of Object.entries(registro(valor))) {
-    if (typeof item !== "string") throw foraDoContrato()
-    busca[chave] = item
+    if (typeof item === "number" && Number.isFinite(item)) busca[chave] = item
+    else if (typeof item !== "string") throw foraDoContrato()
+    else busca[chave] = item
   }
   return busca
 }

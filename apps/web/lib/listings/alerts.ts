@@ -208,22 +208,29 @@ export function alertStatusLabel(alert: ListingAlert): string {
  *
  * `sort` não entra porque o alerta não guarda ordem: quem gravava aquela chave
  * era o formulário de busca da web, não o alerta.
+ *
+ * Numeros saem NUMEROS: o serializador de search do app entre aspas em strings
+ * que parecem numero (o TanStack preserva o tipo no round-trip), e o endereco
+ * ficaria `quartos=%222%22` em vez da forma crua da web (`?quartos=2`).
  */
-export function alertSearchParams(alerta: ListingAlert): Record<string, string> {
-  const busca: Record<string, string> = {}
+export function alertSearchParams(alerta: ListingAlert): Record<string, string | number> {
+  const busca: Record<string, string | number> = {}
   if (alerta.neighborhood !== null) busca["bairro"] = alerta.neighborhood
   if (alerta.deal !== null) busca["tipo_negocio"] = alerta.deal
   // A busca do app conta reais inteiros; um teto quebrado (centavos) não vira
   // filtro arredondado — é omitido, e a tela mostra o critério no texto.
   if (alerta.maxValueCents !== null && alerta.maxValueCents % 100 === 0)
-    busca["valor_max"] = String(alerta.maxValueCents / 100)
-  if (alerta.minBedrooms !== null) busca["quartos"] = String(alerta.minBedrooms)
+    busca["valor_max"] = alerta.maxValueCents / 100
+  if (alerta.minBedrooms !== null) busca["quartos"] = alerta.minBedrooms
   return busca
 }
 
 // Abrir o alerta leva aos resultados do app com os critérios que ele filtra.
 export function alertSearchHref(alerta: ListingAlert): string {
-  const query = new URLSearchParams(alertSearchParams(alerta)).toString()
+  const busca = alertSearchParams(alerta)
+  const query = new URLSearchParams(
+    Object.entries(busca).map(([chave, valor]) => [chave, String(valor)]),
+  ).toString()
   return query === "" ? "/app/imoveis" : `/app/imoveis?${query}`
 }
 
