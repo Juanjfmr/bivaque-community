@@ -37,6 +37,8 @@ export function Botao({
   tom?: TomDoBotao
   icone?: React.ComponentProps<typeof Icone>["nome"]
 }) {
+  // Ícone cheio só quando o botão está ligado (Útil marcado, salvo).
+  const ligado = props["aria-pressed"] === true || props["aria-pressed"] === "true"
   return (
     <Button
       data-tom={tom}
@@ -45,7 +47,7 @@ export function Botao({
       className={cn("min-h-11 rounded-xl px-4 text-sm", className)}
       {...props}
     >
-      {icone === undefined ? null : <Icone nome={icone} />}
+      {icone === undefined ? null : <Icone nome={icone} preenchido={ligado} />}
       {children}
     </Button>
   )
@@ -65,6 +67,8 @@ export function BotaoDeIcone({
   /** Marca o botão que abre um menu, uma folha ou um diálogo. */
   aberto?: "menu" | "dialog" | "listbox" | "grid" | "tree"
 }) {
+  // Mesma regra do `Botao`: o ícone só é cheio quando o botão está ligado.
+  const ligado = props["aria-pressed"] === true || props["aria-pressed"] === "true"
   return (
     <Button
       type="button"
@@ -78,7 +82,7 @@ export function BotaoDeIcone({
       )}
       {...props}
     >
-      <Icone nome={nome} className="size-6" />
+      <Icone nome={nome} preenchido={ligado} className="size-6" />
       {children as ReactNode}
     </Button>
   )

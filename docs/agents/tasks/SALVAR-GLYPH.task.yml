@@ -71,3 +71,15 @@ on_budget_exhausted: HUMAN_DECISION
 
 closure:
   requires_runtime_evidence: true
+
+divergencia:
+  registrada_em: 16/11/2026
+  acceptance_2_impossivel: >
+    `bookmark` e `bookmark_border` sao o MESMO glifo nas Material Symbols: na fonte
+    oficial (MaterialSymbolsOutlined.ttf) a ligadura `bookmark_border` resolve para o
+    glifo `bookmark` e nao existe glifo `bookmark_border`; no subset do repo as duas
+    ligaduras caem em `uniE866`. O cheio e o eixo `FILL`, que o subset ja traz
+    (FILL 0..1, gvar em uniE866). Regenerar o subset nao muda desenho nenhum: o
+    defeito estava no consumidor (nome trocado, FILL 0 nos dois estados) e foi
+    corrigido la. Prova de pixels em .visual/salvar-glyph; a woff2 nao mudou
+    (52772 bytes).

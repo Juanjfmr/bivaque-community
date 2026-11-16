@@ -401,6 +401,7 @@ export function Pergunta() {
             <Botao
               tom="tonal"
               icone={pergunta.salva ? "bookmark" : "bookmark_border"}
+              aria-pressed={pergunta.salva}
               disabled={mudandoSeguir}
               onClick={() => void alternarSeguir()}
             >
