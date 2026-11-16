@@ -1,0 +1,75 @@
+# Afiliação de terceiro sem caminho vivo no lançamento; transferência de cidade com vetos de moderação.
+#
+# Autoridade: auditoria independente do security-auditor de 16/11 sobre a main 2bb231d8
+# (.work/orq/relatorios/auditoria-r3-lote2b.md, escopo 2). A1 MEDIUM: a RPC
+# public.profile_affiliations_for é security definer com execute para authenticated; qualquer
+# membro da mesma cidade lê Força e OM marcadas como visíveis no período do toggle web, que o
+# BLOCK-AFFILIATION tira do lançamento. A2 LOW: declare_locality_transfer não veta conta suspensa
+# nem exclusão pedida, ao contrário da RPC de afiliação.
+#
+# Decisão do coordenador, 16/11, por delegação: revogar o execute da RPC de afiliação para
+# authenticated e anon até o dono resolver a governança no BLOCK-AFFILIATION. A revogação é
+# reversível e não apaga dado. Os dois vetos entram na transferência.
+
+task_id: SEC-014
+
+objective: >
+  Nenhum membro consegue ler a afiliação militar de outra pessoa por qualquer caminho enquanto
+  a exibição a terceiros estiver fora do lançamento, e conta suspensa ou com exclusão pedida não
+  consegue declarar transferência de cidade.
+
+authority:
+  - .work/orq/relatorios/auditoria-r3-lote2b.md (A1 MEDIUM e A2 LOW), auditoria do security-auditor de 16/11
+  - docs/decisions/ADR-20261116-perfil-transferencia-e-afiliacao-no-app.md (emendado neste lote)
+  - cartão BLOCK-AFFILIATION do quadro
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    supabase/migrations/20260918011938_profile_affiliations_no_bulk_read.sql:36-74 com grant
+    execute to authenticated na linha 74; supabase/migrations/20260819021416_locality_transfer.sql:91-144
+    sem veto de suspensão nem de exclusão pedida.
+
+allowed_paths:
+  - supabase/migrations
+  - supabase/tests/profile-affiliations.sql
+  - supabase/tests/locality-transfer.sql
+  - supabase/tests/transfer-scope-denials.sql
+  - supabase/database.generated.ts
+  - tests/unit/app-api/voce/cidade.test.ts
+  - apps/web/app/api/app/voce/cidade/route.ts
+  - docs/decisions/ADR-20261116-perfil-transferencia-e-afiliacao-no-app.md
+  - docs/decisions/RATIFICACAO.md
+  - docs/agents/tasks/SEC-014.task.yml
+
+forbidden:
+  - apagar ou alterar linhas de profile_affiliations, inclusive is_visible
+  - mudar a porta do app de afiliação do próprio titular, que segue lendo e gravando só o próprio
+  - mudar a regra de quem pode se transferir para qual cidade além dos dois vetos
+  - mexer em apps/app
+  - push, merge, abrir PR, force-push; ler, criar ou imprimir arquivos de ambiente
+
+acceptance:
+  - "Migration nova revoga execute de public.profile_affiliations_for de authenticated, anon e public, mantendo a função para uso futuro; comentário na migration aponta o BLOCK-AFFILIATION como o lugar da decisão de reabrir."
+  - "pgTAP prova que authenticated e anon recebem 42501 ao chamar a RPC; os testes antigos do conteúdo da RPC passam a rodar como service_role ou são marcados como dependentes do BLOCK-AFFILIATION, sem perder as asserções de vetos."
+  - "Nenhum caminho do app ou da web chama profile_affiliations_for como authenticated (git grep comprovado no relatório e teste unitário existente de membros continua passando)."
+  - "declare_locality_transfer recusa conta suspensa e conta com exclusão pedida, com o mesmo código e a mesma frase segura que a RPC de afiliação usa; pgTAP negativo dos dois casos e o positivo continua passando."
+  - "Se a rota /api/app/voce/cidade precisa mapear o novo código para HTTP, o mapeamento entra com teste unitário e sem eco da mensagem do Postgres."
+  - "O ADR-20261116 de perfil, transferência e afiliação ganha a emenda de 16/11 com as duas decisões; a linha da RATIFICACAO.md cita a auditoria de 16/11 e este lote."
+
+proof:
+  - "node scripts/agents/prova-fila.mjs -- npx pnpm@11.18.0 test"
+  - npx pnpm@11.18.0 lint
+  - "pgTAP (profile-affiliations, locality-transfer, transfer-scope-denials) — só no CI, pelo job completo com a label ci:full"
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/SEC-014.task.yml
+
+risk: grant, security definer, dado de afiliação militar, moderação
+risk_level: R3
+adr: docs/decisions/ADR-20261116-perfil-transferencia-e-afiliacao-no-app.md
+
+reviewer_must_differ_from_executor: true
+retry_budget: 2
+on_budget_exhausted: HUMAN_DECISION
+
+closure:
+  requires_runtime_evidence: true
