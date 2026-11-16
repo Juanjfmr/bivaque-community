@@ -1,0 +1,69 @@
+# RUN-176 — CASCA-WEB-SEM-ENTRADA: as portas declaradas voltam a ser caminhadas.
+#
+# Ate o RUN-172 o /profile era a raiz pela qual o rastreador alcancava a casca
+# web de membro. Com a troca, o que ele perdeu nao foram só as 7 portas ja
+# declaradas em PORTAS_FORA_DO_LINK: foi a CAMINHADA em si — rotas como
+# mercado/[id], imoveis/[id], pedidos e salvos ficaram fora do inventario
+# porque nao ha mais link que as atinja. A regra do card: o rastreador tem que
+# continuar sendo honesto, nao virar lista decorativa.
+# Decisao do coordenador (registrada aqui, nao em ADR — e cobertura de teste):
+# cada porta legitimately declarada em PORTAS_FORA_DO_LINK passa a ser SEED da
+# fronteira da persona dona dela. A lista deixa de ser so a divida visivel e
+# vira o mecanismo de entrada — uma fonte, dois papeis, zero caminho novo.
+
+task_id: RUN-176
+
+objective: >
+  Restaurar a cobertura do link-crawl sobre as telas de membro sobreviventes:
+  seed sintA9tico da fronteira a partir das portas declaradas, distinguido da
+  chegada por link para nao invalidar o invariante, com prova de que remover
+  uma porta viva quebra o teste.
+
+authority:
+  - Card CASCA-WEB-SEM-ENTRADA (board.json) e a nota do RUN-172 que o abriu
+  - Regra do rastreador no proprio spec: a lista de portas e a divida visivel, nao um esconderijo
+  - docs/LANCAMENTO.md fase 6 (o rastreador e o radar de porta esquecida)
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    link-crawl.spec.ts caminha por entradas reais de persona; apos RUN-172 as 7
+    portas declaradas (e tudo que so elas alcanca-vam) nao entram no inventario;
+    a regressao passa batida se alguem so consertar o teste.
+
+allowed_paths:
+  - docs/agents/tasks/CASCA-ENTRADA.task.yml
+  - tests/e2e/link-crawl.spec.ts
+  - tests/e2e/helpers/crawl-model.ts
+  - tests/unit/visual/crawl-model.test.ts
+  - .visual/casca-entrada
+
+forbidden:
+  - transformar o rastreador em lista de goto sem crawl (perderia justamente o que ele prova: os links QUE SAEM das paginas)
+  - remover ou reescrever as 7 portas declaradas sem revalidar a justificativa de cada uma
+  - conta nova no banco, seed novo, qualquer mudanca fora do spec (e teste puro)
+  - usar skip/fixme novo ou afrouxar assercao (o invariante de porta obsoleta continua valendo para chegada por LINK)
+  - push, merge ou force-push; imprimir credenciais; rodar test:db/reset
+  - tocar em .work/main ou em outra worktree (lane w-glyph ativa em apps/app; nao pisar la)
+
+acceptance:
+  - "Cada entrada de PORTAS_FORA_DO_LINK vira seed da fronteira da persona que a detem (mesma visita real, com os mesmos waits/medidas das outras): o rastreador volta a CAMINHAR a partir delas, inclusive o que nao tem porta declarada mas era alcancado de link dentro da casca (o fecho transitivo e o crawl que faz, nao a lista)."
+  - "Contabilidade separada: chegada por seed nao satisfaz o invariante 'toda tela alcancavel tem porta' — a porta continua exigindo link de entrada OU declaracao; staleAllowances sA3 marca como obsoleta uma porta que passou a ser alcanCADA POR LINK. Um caso de teste interno ao proprio spec documenta a distincao (seed nA-o remove necessidade de porta)."
+  - "Prova de mutacao: com uma porta viva declarada removida do seed, o inventario quebra como esperado (saida no RELATORIO: qual rota passou a faltar)."
+  - "Passa local no stack do host (Next+Supabase seed, 1 persona x desktop-1440 para iterar; a matriz completa no CI): node ... exec playwright test tests/e2e/link-crawl.spec.ts --project=desktop-1440. NAO roda test:db, NAO reset; se a stack nao subir, declara no RELATORIO e deixa para o CI sem fingir execucao."
+  - "gate --fast, tsc -p tests/e2e, biome nos tocados, task-contract docs/agents/tasks/CASCA-ENTRADA.task.yml. Se precisar de arquivo fora dos allowed_paths, EMENDAR o contrato ANTES (cada '- ' em uma linha; sem aspas em comentarios)."
+
+proof:
+  - npx pnpm@11.18.0 gate --fast
+  - npx pnpm@11.18.0 exec tsc -p tests/e2e/tsconfig.json
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/CASCA-ENTRADA.task.yml
+
+risk: o seed pode revelar portas que estao quebradas de verdade (a pagina nao abre sem a antiga cadeia) — nesse caso o lote declara a falha real no RELATORIO em vez de engolir
+risk_level: R2
+
+reviewer_must_differ_from_executor: true
+retry_budget: 1
+on_budget_exhausted: HUMAN_DECISION
+
+closure:
+  requires_runtime_evidence: true
