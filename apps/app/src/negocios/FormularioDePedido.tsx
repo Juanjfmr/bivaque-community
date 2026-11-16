@@ -3,6 +3,7 @@ import { Botao } from "@/components/bivaque/botao"
 import { Campo, Formulario } from "@/components/bivaque/campos"
 import { Sobreposicao } from "@/components/bivaque/sobreposicao"
 import { criarPedido } from "@/lib/dados/negocios"
+import { cepComMascara, cepEmDigitos } from "@/src/criar/formularios"
 import { mensagemDoPedido, validarPedido } from "./formulario"
 
 export function FormularioDePedido({
@@ -18,6 +19,7 @@ export function FormularioDePedido({
 }) {
   const [descricao, setDescricao] = useState("")
   const [quando, setQuando] = useState("")
+  const [cep, setCep] = useState("")
   const [chave] = useState(() => crypto.randomUUID())
   const [erro, setErro] = useState<string | null>(null)
   const [salvando, setSalvando] = useState(false)
@@ -27,7 +29,7 @@ export function FormularioDePedido({
   async function gravar(evento: FormEvent<HTMLFormElement>) {
     evento.preventDefault()
     if (controle.current !== null) return
-    const problema = validarPedido(descricao, quando)
+    const problema = validarPedido(descricao, quando, cep)
     if (problema !== null) {
       setErro(problema)
       return
@@ -39,7 +41,7 @@ export function FormularioDePedido({
     try {
       const gravado = await criarPedido(
         negocioId,
-        { descricao, quando, chave },
+        { descricao, quando, chave, cep: cepEmDigitos(cep) ?? "" },
         { signal: envio.signal },
       )
       if (!envio.signal.aborted) aoSalvar(gravado.id)
@@ -66,7 +68,23 @@ export function FormularioDePedido({
             area
             valor={descricao}
             aoMudar={setDescricao}
-            nota={`${descricao.length}/500 caracteres. Inclua o bairro, sem informar seu endereço completo.`}
+            // Com CEP o bairro vem dele; sem CEP, o texto é onde o bairro cabe.
+            nota={
+              cep === ""
+                ? `${descricao.length}/500 caracteres. Inclua o bairro, sem informar seu endereço completo.`
+                : `${descricao.length}/500 caracteres.`
+            }
+          />
+          <Campo
+            id="pedido-cep"
+            rotulo="CEP (opcional)"
+            valor={cep}
+            aoMudar={(valor) => setCep(cepComMascara(valor))}
+            inputMode="numeric"
+            autoComplete="postal-code"
+            maxLength={9}
+            placeholder="69000-000"
+            nota="Opcional — mostramos seu bairro ao negócio, nunca seu CEP ou endereço."
           />
           <Campo
             id="pedido-quando"

@@ -31,6 +31,9 @@ const pedido = {
   descricao: "Limpar o ar",
   quando: null,
   situacao: "open",
+  // RUN-179: o payload do pedido ganhou bairro e distância (campos aditivos).
+  bairro: null,
+  distanciaMetros: null,
   criadoEm: "2026-11-05T12:00:00Z",
   atualizadoEm: "2026-11-05T12:00:00Z",
   conversaId: null,
@@ -90,7 +93,7 @@ describe("porta de negócios e pedidos", () => {
   it("escreve uma vez e retorna o pedido confirmado pelo servidor", async () => {
     const fetch = responder({ pedido }, 201)
     const controle = new AbortController()
-    const dados = { descricao: "Limpar o ar", quando: "", chave: "mesmo-envio" }
+    const dados = { descricao: "Limpar o ar", quando: "", chave: "mesmo-envio", cep: "" }
     await expect(criarPedido("n1", dados, { signal: controle.signal })).resolves.toEqual(pedido)
     expect(fetch).toHaveBeenCalledTimes(1)
     expect(fetch).toHaveBeenCalledWith(
@@ -142,7 +145,7 @@ describe("porta de negócios e pedidos", () => {
     ["lista de pedidos quebrada", () => lerPedidos(), { pedidos: "quebrado" }],
     [
       "criação sem confirmação",
-      () => criarPedido("n1", { descricao: "Limpar", quando: "", chave: "k" }),
+      () => criarPedido("n1", { descricao: "Limpar", quando: "", chave: "k", cep: "" }),
       {},
     ],
   ] as const)("%s falha alto em vez de virar vazio ou sucesso", async (_nome, chamar, corpo) => {
@@ -158,7 +161,7 @@ describe("porta de negócios e pedidos", () => {
   it("falha de escrita não vira pedido otimista nem repete envio", async () => {
     const fetch = responder({ erro: "escrita-indisponivel" }, 503)
     await expect(
-      criarPedido("n1", { descricao: "Limpar", quando: "", chave: "mesma-chave" }),
+      criarPedido("n1", { descricao: "Limpar", quando: "", chave: "mesma-chave", cep: "" }),
     ).rejects.toMatchObject({ codigo: "indisponivel" })
     expect(fetch).toHaveBeenCalledTimes(1)
   })

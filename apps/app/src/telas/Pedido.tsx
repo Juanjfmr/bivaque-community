@@ -12,7 +12,7 @@ import { buscarPedido, mudarPedido, type PedidoDeServico } from "@/lib/dados/neg
 import { useNavegacao, useRolagemEFoco, useSobreposicaoDaEntrada } from "@/lib/navegacao/react"
 import { CARGA_CONCLUIDA } from "@/lib/navegacao/restauracao"
 import { FalhaDaLeitura } from "@/src/negocios/FalhaDaLeitura"
-import { mensagemDaAcao, SITUACOES_DO_PEDIDO } from "@/src/negocios/formulario"
+import { mensagemDaAcao, SITUACOES_DO_PEDIDO, textoDaDistancia } from "@/src/negocios/formulario"
 
 /**
  * O pedido visto pelos DOIS lados (F07, RUN-177).
@@ -113,6 +113,18 @@ export function Pedido() {
               {pedido.categoriaNome}
               {pedido.quando === null ? "" : ` · ${pedido.quando}`}
             </p>
+            {pedido.bairro === null ? null : (
+              <p className="text-[13px] text-(--on-surface-variant)">
+                {doDono
+                  ? `Bairro do pedido: ${pedido.bairro}`
+                  : `Bairro informado ao prestador: ${pedido.bairro}`}
+              </p>
+            )}
+            {pedido.distanciaMetros === null ? null : (
+              <p className="text-[13px] text-(--on-surface-variant)">
+                A cerca de {textoDaDistancia(pedido.distanciaMetros)} de você.
+              </p>
+            )}
             <p className="text-[13px] text-(--on-surface-variant)">
               Atualizado em {new Date(pedido.atualizadoEm).toLocaleDateString("pt-BR")}
             </p>

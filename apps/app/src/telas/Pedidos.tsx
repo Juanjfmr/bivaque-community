@@ -43,7 +43,11 @@ function BlocoDePedidos({
               key={pedido.id}
               icone="request_quote"
               titulo={pedido.descricao.split(/\r?\n/)[0] ?? pedido.descricao}
-              subtitulo={pedido.negocioNome}
+              subtitulo={
+                pedido.bairro === null
+                  ? pedido.negocioNome
+                  : `${pedido.negocioNome} · ${pedido.bairro}`
+              }
               fim={<Etiqueta tom="neutro">{SITUACOES_DO_PEDIDO[pedido.situacao]}</Etiqueta>}
               onClick={() => aoAbrir(pedido.id)}
             />

@@ -32,6 +32,10 @@ export type PedidoDeServico = Readonly<{
   descricao: string
   quando: string | null
   situacao: SituacaoDoPedido
+  /** O bairro que o prestador vê (derivado do CEP); `null` no pedido sem CEP. */
+  bairro: string | null
+  /** Distância em metros do ponto de vista de quem lê; `null` sem origem. */
+  distanciaMetros: number | null
   criadoEm: string
   atualizadoEm: string
   conversaId: string | null
@@ -41,7 +45,13 @@ export type ListaDePedidos = Readonly<{
   pedidos: readonly PedidoDeServico[]
   proximo: string | null
 }>
-export type DadosDoPedido = Readonly<{ descricao: string; quando: string; chave: string }>
+export type DadosDoPedido = Readonly<{
+  descricao: string
+  quando: string
+  chave: string
+  /** CEP opcional, já em dígitos ou vazio — o servidor normaliza. */
+  cep: string
+}>
 
 /** Um serviço do catálogo da ficha, como o app o edita. */
 export type ServicoDaFicha = Readonly<{ id: string; titulo: string; descricao: string | null }>
@@ -83,6 +93,13 @@ function lista(corpo: Corpo, chave: string): unknown[] {
   if (!Array.isArray(valor)) foraDoContrato()
   return valor
 }
+/** Número opcional do contrato: `null` é ausência, nunca zero. */
+function numeroOpcional(corpo: Corpo, chave: string): number | null {
+  const valor = corpo[chave]
+  if (valor === null) return null
+  if (typeof valor !== "number") foraDoContrato()
+  return valor
+}
 function resumo(valor: unknown): ResumoDoNegocio {
   const corpo = registro(valor)
   return {
@@ -113,6 +130,8 @@ function pedidoDe(valor: unknown): PedidoDeServico {
     descricao: texto(corpo, "descricao"),
     quando: opcional(corpo, "quando"),
     situacao,
+    bairro: opcional(corpo, "bairro"),
+    distanciaMetros: numeroOpcional(corpo, "distanciaMetros"),
     criadoEm: texto(corpo, "criadoEm"),
     atualizadoEm: texto(corpo, "atualizadoEm"),
     conversaId: opcional(corpo, "conversaId"),
