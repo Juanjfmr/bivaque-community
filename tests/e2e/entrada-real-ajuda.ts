@@ -779,6 +779,56 @@ export async function limparLocalizacaoSemeada(email: string): Promise<void> {
 }
 
 /**
+ * Desfaz a transferência de cidade de uma persona do seed pelo `hatch` de
+ * suporte (`reverse_locality_transfer`, service_role). É o `finally` do teste
+ * de mudança de cidade: o produto NÃO tem desfazer (ADR-20261116), mas a
+ * persona compartilhada precisa voltar ao seed para as próximas larguras e para
+ * os outros specs. Não existir saída para desfazer é estado válido — a persona
+ * que o teste não chegou a mover não tem o que reverter.
+ */
+export async function desfazerTransferenciaDaPersona(email: string): Promise<void> {
+  const id = await idDoUsuarioPorEmail(email)
+  if (id === null) throw new Error("A persona do seed não existe no Auth local.")
+  const resposta = await pedirJson(
+    `${urlDoSupabase()}/rest/v1/rpc/reverse_locality_transfer`,
+    {
+      metodo: "POST",
+      cabecalhos: cabecalhosDeServico(exigirChaveDeServico()),
+      corpo: { p_user_id: id },
+    },
+    "Supabase (desfazer a transferência da persona)",
+  )
+  if (resposta.status === 200 || resposta.status === 204) return
+  // `23514` é o `raise` de "no leaving row to reverse": nada aconteceu na tela.
+  if (textoDe(resposta.corpo, "code") === "23514") return
+  throw new Error(
+    `A transferência da persona não foi desfeita: HTTP ${resposta.status} ` +
+      `(${resumoDoCorpo(resposta.corpo)}).`,
+  )
+}
+
+/**
+ * Apaga as linhas de `profile_affiliations` de uma persona (service role). O
+ * `finally` do teste de Força/OM: se a tela falhar antes do "apagar", a próxima
+ * largura não herda o que este teste gravou.
+ */
+export async function limparAfiliacaoDaPersona(email: string): Promise<void> {
+  const id = await idDoUsuarioPorEmail(email)
+  if (id === null) throw new Error("A persona do seed não existe no Auth local.")
+  const resposta = await pedirJson(
+    `${urlDoSupabase()}/rest/v1/profile_affiliations?user_id=eq.${id}`,
+    { metodo: "DELETE", cabecalhos: cabecalhosDeServico(exigirChaveDeServico()) },
+    "Supabase (limpar afiliação da persona)",
+  )
+  if (resposta.status !== 200 && resposta.status !== 204) {
+    throw new Error(
+      `A afiliação semeada não foi limpa: HTTP ${resposta.status} ` +
+        `(${resumoDoCorpo(resposta.corpo)}).`,
+    )
+  }
+}
+
+/**
  * Marca o vínculo como `verified` para uma conta que nasceu no próprio fluxo
  * (o OTP criou). Devolve o id, para a prova de rascunho no banco.
  */

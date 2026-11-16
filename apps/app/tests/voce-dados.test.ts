@@ -38,11 +38,14 @@ afterEach(() => {
   vi.unstubAllGlobals()
 })
 
+const CIDADE = "00000000-0000-4000-8000-000000000001"
+
 const CONTA = {
   perfil: {
     nome: "Ana Verificada",
     bio: null,
-    cidade: "Manaus",
+    cidade: { id: CIDADE, nome: "Manaus" },
+    outbound: null,
     localizacao: { cep: "69000-000", definida: true },
     distanciaDisponivel: true,
   },
@@ -97,7 +100,8 @@ describe("perfil da conta", () => {
       perfil: {
         nome: "Ana Editada",
         bio: "Nova apresentação",
-        cidade: "Manaus",
+        cidade: { id: CIDADE, nome: "Manaus" },
+        outbound: null,
         localizacao: { cep: "69000-000", definida: true },
         distanciaDisponivel: true,
       },
