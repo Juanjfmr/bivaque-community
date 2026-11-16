@@ -97,6 +97,9 @@ async function tentarBrasilApi(
       headers: { accept: "application/json" },
       signal: AbortSignal.timeout(tempoLimiteMs),
       cache: "no-store",
+      // A URL é montada por concatenação: um 3xx para outro host não pode ser
+      // seguido (SSRF defensivo). O CEP já vem validado por `geocodificarCep`.
+      redirect: "error",
     })
     if (resposta.status === 404) return { estado: "nao-encontrado" }
     if (!resposta.ok) return { estado: "falhou" }
@@ -136,6 +139,7 @@ async function tentarGoogle(
     const resposta = await buscar(url.toString(), {
       signal: AbortSignal.timeout(tempoLimiteMs),
       cache: "no-store",
+      redirect: "error",
     })
     if (!resposta.ok) return { estado: "falhou" }
     const corpo = registro((await resposta.json()) as unknown)
@@ -170,6 +174,10 @@ export async function geocodificarCep(
   cep: string,
   opcoes: Opcoes = {},
 ): Promise<ResultadoDaGeocodificacao> {
+  // A URL da BrasilAPI é montada por concatenação, então a entrada é validada
+  // aqui também: oito dígitos ou nada sai deste processo (os chamadores já
+  // normalizam e respondem 400 antes — isto é a segunda barreira, RUN-175 R3).
+  if (!/^\d{8}$/.test(cep)) return { estado: "nao-encontrado" }
   const buscar = opcoes.buscar ?? fetch
   const tempoLimiteMs = opcoes.tempoLimiteMs ?? TEMPO_LIMITE_PADRAO
   const chaveGoogle = opcoes.chaveGoogle ?? process.env["GOOGLE_MAPS_API_KEY"] ?? ""

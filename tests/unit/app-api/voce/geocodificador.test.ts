@@ -43,6 +43,32 @@ describe("geocodificarCep", () => {
     )
   })
 
+  it("CEP que não é de oito dígitos nunca chega a montar URL (guarda interna)", async () => {
+    const buscar = buscarCom(() => resposta({}, 200))
+
+    const resultado = await geocodificarCep("../../etc/passwd", { buscar, chaveGoogle: "x" })
+
+    expect(resultado).toEqual({ estado: "nao-encontrado" })
+    expect(buscar).not.toHaveBeenCalled()
+  })
+
+  it("as duas fontes são chamadas sem seguir redirecionamento (SSRF defensivo)", async () => {
+    const buscar = buscarCom((url) =>
+      ehBrasilApi(url)
+        ? resposta({}, 503)
+        : resposta({
+            status: "OK",
+            results: [{ geometry: { location: { lat: -3.1, lng: -60 } } }],
+          }),
+    )
+
+    await geocodificarCep(CEP, { buscar, chaveGoogle: "chave-de-teste" })
+
+    const chamadas = vi.mocked(buscar).mock.calls
+    expect(chamadas).toHaveLength(2)
+    for (const [, init] of chamadas) expect(init?.redirect).toBe("error")
+  })
+
   it("CEP desconhecido na BrasilAPI é nao-encontrado, sem gastar a reserva", async () => {
     const buscar = buscarCom(() => resposta({}, 404))
 
