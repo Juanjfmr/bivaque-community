@@ -5373,28 +5373,30 @@
       "phase": "Lote 7 — Desapegos e Imóveis",
       "priority": "P1",
       "category": "backend",
-      "status": "next",
+      "status": "done",
       "description": "CEP no imóvel/desapego/pedido/perfil; geocodificação no servidor (BrasilAPI, Google de reserva, cache); mapa exato ou aproximado no imóvel; coordenada do perfil fora de toda leitura de outro membro; desapego com bairro opcional no protótipo.",
       "checklist": [
-        "CEP e coordenada no anúncio, pedido e perfil",
-        "Geocodificação no servidor com cache",
-        "Mapa exato ou aproximado no imóvel",
-        "Coordenada do perfil fora de leitura de terceiros",
-        "Desapego com bairro opcional"
+        "[x] CEP e coordenada no anuncio, pedido e perfil - anuncio: PR #258 (39597c24, imovel obrigatorio com avo sem backfill forjado, desapego opcional, exato/aproximado por escolha, CHECK de grade fecha o achado R3 da revisao); pedido: PR #259 (8ab4b750, CEP opcional NUNCA legivel por PostgREST nem pelo dono, bairro derivado na coluna region, distancia em metros por RPC definer com origem auth.uid()); perfil: PR #183 (4c5e7451, 11/11)",
+        "[x] Geocodificacao no servidor com cache - modulo unico lib/geo (geocodificador BrasilAPI + Google-reserva sem-chave-nao-chama, cache public.cep_geocodes com bairro desde o L2, limitador 20/h por pessoa so em chamada real compartilhado entre anuncio e pedido); TTL/teto-global/rota-do-perfil-sem-limitador ficam no card LOC-LIMITE-GEOCODIFICACAO (aberto com proximo passo nomeado)",
+        "[x] Mapa exato ou aproximado no imovel - RESOLVIDO POR DECISAO REGISTRADA, nao por silencio: a escolha exata/aproximada foi entregue em texto (bairro·cidade + nota 'Local aproximado' / endereco publicado quando exata); a exigencia literal do LANCAMENTO F06 e de escolha, nao de mapa; infra de mapa (ADR-20261016 ainda proposed, zero biblioteca no repo) virou card proprio LOC-MAPA-POS-LANCAMENTO (ADR-20261116 decisao 4, linha na RATIFICACAO)",
+        "[x] Coordenada do perfil fora de leitura de terceiros - #183 (grants por coluna) e ESTENDIDO: coordenada/CEP crus de anuncio e de pedido tambem fora de toda leitura via PostgREST (pgTAP: select-* nao devolve, to_jsonb 42501, participante le bairro/distancia mas nunca a coordenada; purga cobre tudo)",
+        "[x] Desapego com bairro opcional - #258: CHECK listings_item_required_fields relaxado; com CEP o bairro pode vir da derivacao; sem CEP e sem bairro vale a cidade da sessao (ADR-20261022 secao 2)"
       ],
       "proof": [
         "11/11: perfil com CEP e coordenada cálculo-only provado (PR #183, head 4c5e7451): migration 20261110211702_profile_location.sql, grants por coluna (cep/latitude/longitude fora do SELECT de authenticated), RPCs get_my_profile_location/set_member_location/distance_to_neighborhood, API GET/PATCH /api/app/voce + PUT /localizacao, E2E f10-voce-localizacao com gravação verde no smoke. Restam anúncio, pedido, distância de mim e mapa.",
-        "16/11: RUN-175 (L1) mergeado em 39597c24 (PR #258; heads 36ece5ff→57de9e36). Reconciliação do checklist: ①'CEP e coordenada no anúncio' FEITO (imovel exige CEP no criar com avo sem backfill forjado — ADR-20261116 §1; desapego CEP opcional; o que falta do item é o PEDIDO — L2); ②'Geocodificação no servidor com cache' FEITO p/ anúncio (modulo único lib/geo/anuncio.ts reaproveitando cache+geocodificador do RUN-029; pedido herda no L2); ③'Mapa exato ou aproximado no imóvel' RESOLVIDO POR DECISÃO, não silêncio: escolha exata/aproximada entregue em texto, infra de mapa fora do lançamento (ADR-20261116 §4; card LOC-MAPA-POS-LANCAMENTO); ④'Coordenada do perfil fora de leitura' já feito 11/11 e ESTENDIDO ao anúncio (grants por coluna; CHECK de grade Listings_aproximada na migration fecha o achado R3 da revisão: coordenada crua alegando aproximada → 23514); ⑤'Desapego com bairro opcional' FEITO (CHECK listings_item_required_fields relaxado). pgTAP 33 asserções no arquivo próprio, suíte 2879/0 falhas; e2E real 45/45 local + CI verde (stateful×3, smoke). R3: revisão Qwen (lente de segurança) — finding médio-alto FECHADO antes do merge com a fórmula da grade documentada; limitador por-processo aceito e registrado (mitigação cache-first), TTL/global/perfil ficam no card próprio."
+        "16/11: RUN-175 (L1) mergeado em 39597c24 (PR #258; heads 36ece5ff→57de9e36). Reconciliação do checklist: ①'CEP e coordenada no anúncio' FEITO (imovel exige CEP no criar com avo sem backfill forjado — ADR-20261116 §1; desapego CEP opcional; o que falta do item é o PEDIDO — L2); ②'Geocodificação no servidor com cache' FEITO p/ anúncio (modulo único lib/geo/anuncio.ts reaproveitando cache+geocodificador do RUN-029; pedido herda no L2); ③'Mapa exato ou aproximado no imóvel' RESOLVIDO POR DECISÃO, não silêncio: escolha exata/aproximada entregue em texto, infra de mapa fora do lançamento (ADR-20261116 §4; card LOC-MAPA-POS-LANCAMENTO); ④'Coordenada do perfil fora de leitura' já feito 11/11 e ESTENDIDO ao anúncio (grants por coluna; CHECK de grade Listings_aproximada na migration fecha o achado R3 da revisão: coordenada crua alegando aproximada → 23514); ⑤'Desapego com bairro opcional' FEITO (CHECK listings_item_required_fields relaxado). pgTAP 33 asserções no arquivo próprio, suíte 2879/0 falhas; e2E real 45/45 local + CI verde (stateful×3, smoke). R3: revisão Qwen (lente de segurança) — finding médio-alto FECHADO antes do merge com a fórmula da grade documentada; limitador por-processo aceito e registrado (mitigação cache-first), TTL/global/perfil ficam no card próprio.",
+        "16/11 FECHAMENTO L2 (PR #259, merge 8ab4b750, head 686aa03c; revisoes do lote 35aef9ab→dd7472f0→686aa03c): gate completo verde, pgTAP 43/43 no arquivo novo + 2922 assercoes 0 falhas no estado sem-seed/grants do CI, db:lint 0, @stateful 15/15×3 (bairro 'Flores' + 'a cerca de 3,1 km' persistem em recarga; select-* do participante 42501), stub 12/12, round-2 de fixture com 2 negativos permanentes (pedido sem bairro/sem distancia = falha de contrato, licao do parser estrito). R3: parecer Qwen com lente de seguranca APROVO por delegacao, 0 bloqueantes; notas registradas para o dono na ratificacao: (a) o RPC de criacao aceita p_latitude/p_longitude/p_region - a rota nunca os envia do corpo, mas chamada direta pode gravar valor nao-derivado (dado do proprio titular, alimenta so a distancia; fecho futuro: recasar pelo cache dentro do RPC); (b) trilateracao residual: prestador pode refinar a posicao do CEP em passos de 100 m mudando a propria origem - inerente a regra aceita no ADR-20261022 secao 3, o arredondamento e a mitigacao registrada; (c) test:scope alargou a excecao de clienteDeServicoOuNulo para a rota de pedidos (so toca cep_geocodes, sem grants de membro). Smoke: 1 falha home-vitrine-21st:79 em mobile-430 no run 43948658828, rerun do mesmo tip verde - flake da classe GLYPH-SPEC-FLAKE/CI-E2E-UPSTREAM-INSTAVEL, nao daqui. CI cheio verde na revisao entregue (43948658502: fast/core/stateful×3/build)."
       ],
       "tests": [],
       "links": ["docs/decisions/ADR-20261022-localizacao-padrao-de-mercado.md"],
       "dependencies": ["ADR-LOCALIZACAO", "DATA-IBGE-BAIRROS"],
       "updatedAt": "2026-11-16",
-      "sourceRevision": "39597c24",
+      "sourceRevision": "8ab4b750",
       "blockers": [],
-      "completedChecklist": [false, false, false, true, false],
+      "completedChecklist": [true, true, true, true, true],
       "id": "LOC-IMPL",
-      "title": "Implementar localização no padrão de mercado"
+      "title": "Implementar localização no padrão de mercado",
+      "completedAt": "2026-11-16"
     },
     {
       "phase": "Lote 4 — Entrada",
@@ -8094,13 +8096,14 @@
       ],
       "proof": [
         "11/11: aberto a partir da ressalva MÉDIA do security-auditor 437d6aa3 (PR #183).",
-        "16/11: PARCIAL pelo RUN-175 (#258): limitador por pessoa nas chamadas REAIS do geocode do ANÚNCIO (janela 1 h/20, cache-hit não consome, 429 com retry-after — unit com relógio falso; ADR-20261116 §2 registra a decisão; por-processo é limitação aceita, upgrade = contador no banco molde SEC-007). O que falta para fechar (próximo passo concreto): TTL e limpeza em cep_geocodes; teto global; e o PUT /api/app/voce/localizacao (perfil, PR #183) geocodifica no cache-miss SEM consumirConsulta — achado médio da revisão do #258, pré-existente, não coberto pelo lote."
+        "16/11: PARCIAL pelo RUN-175 (#258): limitador por pessoa nas chamadas REAIS do geocode do ANÚNCIO (janela 1 h/20, cache-hit não consome, 429 com retry-after — unit com relógio falso; ADR-20261116 §2 registra a decisão; por-processo é limitação aceita, upgrade = contador no banco molde SEC-007). O que falta para fechar (próximo passo concreto): TTL e limpeza em cep_geocodes; teto global; e o PUT /api/app/voce/localizacao (perfil, PR #183) geocodifica no cache-miss SEM consumirConsulta — achado médio da revisão do #258, pré-existente, não coberto pelo lote.",
+        "16/11: o L2 (#259) ampliou o limitador existente para o PEDIDO (mesma janela 20/h por pessoa, mesma chave por usuario, cache-hit nao consome). O que continua aberto neste card: TTL/limpeza do cep_geocodes, teto global, e o PUT /api/app/voce/localizacao (perfil) que geocodifica no cache-miss sem consumirConsulta."
       ],
       "tests": [],
       "links": ["docs/decisions/ADR-20261022-localizacao-padrao-de-mercado.md"],
       "dependencies": ["LOC-IMPL", "ADR-LOCALIZACAO"],
       "updatedAt": "2026-11-16",
-      "sourceRevision": "39597c24",
+      "sourceRevision": "8ab4b750",
       "blockers": [],
       "completedChecklist": [false, false, false, false]
     },
