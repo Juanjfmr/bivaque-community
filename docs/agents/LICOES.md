@@ -345,6 +345,12 @@ Fechamento do lote: ~45 min -> ~11 min (4x), alvo 8-12 atingido.
   esse path — emenda ANTES de escrever (ressalva de revisão #256: divergência aceita, registrada no
   PR e no card; regra da casa: ícone cheio só quando ligado, vale para todo toggle com estado).
 
+## Quadro: escrita só pelo `board.mjs --apply` (16/11, HRN-001)
+
+`--apply <patch.json>` cria, atualiza, move, anota e marca checklist; valida com as regras do
+`--check`, grava no formato do biome e regenera o BOARD.md numa passada atômica. Script avulso para
+editar o board.json é proibido — foi de onde saíram 39 scripts descartáveis e 58 de 161 commits.
+
 ## "Deixa para o CI" tem fronteira (16/11, RUN-177 round 2)
 
 - Interface NOVA não se prova no CI. A lane F07 escreveu telas + stubs + bloco @stateful sem rodar
