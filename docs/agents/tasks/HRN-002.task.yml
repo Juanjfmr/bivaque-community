@@ -1,0 +1,70 @@
+# Diretrizes do repositório alinhadas com a execução real.
+#
+# Autoridade: auditoria de processo de 16/11 (.work/orq/relatorios/diretrizes.md, seção 3 e
+# propostas 7 e 8) e pedido do dono de 16/11 de melhorar as diretrizes e eliminar retrabalho.
+# Medido: AGENT_ARCHITECTURE seção 3 roteia papéis para haiku, sonnet e opus, mas a execução
+# real usa DeepSeek, GLM, Qwen e GPT pelo opencode e pelo Codex; a lista de ADRs regentes do
+# AGENTS.md parou em 01/11; o processo enxuto está escrito em três lugares; TASK_CONTRACT lista
+# prefixos que a prática não usa mais; o validador de contrato recusa linha de comentário YAML
+# que começa com crase ou parêntese, visto duas vezes em 16/11.
+
+task_id: HRN-002
+
+objective: >
+  Um agente novo descobre em um lugar só, e de forma correta, quem executa, revisa, audita e
+  verifica cada nível de risco, quais ADRs regem o trabalho hoje e qual é a regra do processo
+  enxuto; e o validador de contrato aceita qualquer linha de comentário YAML.
+
+authority:
+  - .work/orq/relatorios/diretrizes.md (auditoria de processo de 16/11, seção 3, propostas 7 e 8)
+  - Pedido do dono de 16/11 (diretrizes, eficiência, menos retrabalho)
+  - docs/decisions/ADR-20261105-entrada-enxuta-e-r3-sem-parada.md
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    docs/agents/AGENT_ARCHITECTURE.md seção 3 com a tabela haiku/sonnet/opus; AGENTS.md linhas
+    42-49 citam ADRs só até 01/11; o processo enxuto aparece em AGENTS.md, ADR-20261105 seção 4
+    e RISK_MATRIX; scripts/agents/task-contract.mjs recusou comentários iniciados por crase e por
+    parêntese nos contratos SEC-011 e SEC-012 em 16/11.
+
+allowed_paths:
+  - docs/agents/AGENT_ARCHITECTURE.md
+  - docs/agents/TASK_CONTRACT.md
+  - docs/decisions/RISK_MATRIX.md
+  - AGENTS.md
+  - scripts/agents/task-contract.mjs
+  - tests/scope/agent-architecture.test.mjs
+  - tests/scope/task-contract.test.mjs
+  - docs/agents/tasks/HRN-002.task.yml
+
+forbidden:
+  - mudar regra de risco, de revisão ou de merge; o lote descreve e unifica o que já vale, não decide nada novo
+  - mudar o ADR-20261105 ou qualquer outro ADR
+  - remover papel, recusa ou checagem do validador de contrato
+  - mudar arquivos de .claude/agents
+  - push, merge, abrir PR, force-push; ler, criar ou imprimir arquivos de ambiente
+
+acceptance:
+  - "AGENT_ARCHITECTURE seção 3 ganha a tabela do roteamento real em uso desde 16/11: implementador DeepSeek V4.1 Flash pelo opencode, ou GPT 6 Luna pelo Codex em sandbox sem gravar o git; revisor GLM 5.3 Flash; security-auditor Qwen4 Max preview; verificador e operador de CI Qwen 3.8 Flash; coordenador Claude. A tabela dos arquivos de .claude/agents continua, como definição dos papéis, com uma frase que diz que o modelo da execução real é o da tabela nova."
+  - "AGENTS.md passa a listar como regentes também ADR-20261105 porta de dados, ADR-20261105 entrada enxuta, ADR-20261110 superfície do proxy, ADR-20261114 CI em dois tempos e os ADRs de 16/11 aceitos que regem jornadas, com um link por ADR."
+  - "O processo enxuto fica com uma fonte canônica, a seção da RISK_MATRIX; AGENTS.md e TASK_CONTRACT citam essa seção em uma linha em vez de repetir as regras. O ADR-20261105 não muda."
+  - "TASK_CONTRACT.md documenta os prefixos em uso: DS, RUN, EXP, HRN, SEC e os semânticos de jornada já usados, como LT e F06, sem mudar o que o validador aceita."
+  - "scripts/agents/task-contract.mjs aceita qualquer linha que comece com # depois de espaços, inclusive com crase ou parêntese; teste de escopo novo prova os dois casos e prova que uma chave inválida continua recusada."
+  - "tests/scope/agent-architecture.test.mjs continua passando; se ele trava o texto da seção 3, o teste é ajustado para a tabela nova sem perder as checagens de papéis somente leitura."
+
+proof:
+  - node --test tests/scope/agent-architecture.test.mjs tests/scope/task-contract.test.mjs
+  - node scripts/agents/task-contract.mjs
+  - "node scripts/agents/prova-fila.mjs -- npx pnpm@11.18.0 test"
+  - npx pnpm@11.18.0 lint
+
+risk: documentação de processo e validador de contrato
+risk_level: R1
+
+reviewer_must_differ_from_executor: true
+retry_budget: 2
+on_budget_exhausted: HUMAN_DECISION
+
+closure:
+  requires_runtime_evidence: true
