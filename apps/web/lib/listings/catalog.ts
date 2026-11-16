@@ -311,9 +311,10 @@ export function validateNewListing(draft: NewListingDraft): NewListingValidation
   else if (description.length > 2000) errors.description = "A descrição passa de 2000 caracteres."
 
   const neighborhood = draft.neighborhood.trim()
-  if (neighborhood.length === 0) errors.neighborhood = "Informe o bairro."
-  else if (neighborhood.length > 80) errors.neighborhood = "O bairro passa de 80 caracteres."
-  else if (!isNeighborhoodLike(neighborhood)) {
+  // Opcional desde o RUN-175 (ADR-20261022 §2): com CEP a cidade e o bairro vêm
+  // dele; sem bairro o anúncio aparece na cidade. Vazio não é erro.
+  if (neighborhood.length > 80) errors.neighborhood = "O bairro passa de 80 caracteres."
+  else if (neighborhood.length > 0 && !isNeighborhoodLike(neighborhood)) {
     errors.neighborhood = "Use só o bairro aqui. O endereço tem campo próprio, logo abaixo."
   }
 

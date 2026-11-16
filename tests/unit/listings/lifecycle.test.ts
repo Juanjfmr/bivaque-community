@@ -168,10 +168,14 @@ describe("validateListingEdit", () => {
     if (!result.ok) expect(result.errors.price).toBeDefined()
   })
 
-  it("rejects an edit without a neighborhood", () => {
-    const result = validateListingEdit({ ...validDraft, neighborhood: "" })
-    expect(result.ok).toBe(false)
-    if (!result.ok) expect(result.errors.neighborhood).toBeDefined()
+  // RUN-175 / ADR-20261022 §2: o desapego pode aparecer só com a cidade.
+  it("accepts an edit without a neighborhood, and still refuses an address there", () => {
+    const semBairro = validateListingEdit({ ...validDraft, neighborhood: "" })
+    expect(semBairro.ok).toBe(true)
+
+    const comEndereco = validateListingEdit({ ...validDraft, neighborhood: "Rua das Flores, 100" })
+    expect(comEndereco.ok).toBe(false)
+    if (!comEndereco.ok) expect(comEndereco.errors.neighborhood).toBeDefined()
   })
 
   it("rejects a price above the canonical ceiling", () => {

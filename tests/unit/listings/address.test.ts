@@ -83,16 +83,19 @@ describe("o endereço nos três formulários de anúncio", () => {
 
   // Os formulários de imóvel saíram da web (RUN-164): a folha de Imóveis do app
   // é quem publica, a gestão edita, e a rota grava o endereço pelo módulo que
-  // fala com as duas. O aviso de que ele fica visível continua na folha.
+  // fala com as duas. O aviso de que ele fica visível continua na folha, agora
+  // preso à escolha do local (RUN-175).
   it("a folha de imóvel avisa que o endereço fica visível, e a rota o grava", () => {
     const folha = readFileSync(
       join(root, "apps", "app", "components", "bivaque", "formulario-imovel.tsx"),
       "utf8",
     )
-    expect(folha).toContain("aparece para quem vê o anúncio")
-    expect(web("app", "api", "app", "mercado", "_criar.ts")).toContain(
-      "p_listing: anuncioDoRascunho(rascunho",
-    )
+    expect(folha).toContain("o endereço aparece no local exato")
+    expect(folha).toContain('id="imovel-localizacao"')
+    // A rota grava o rascunho com a localização junto: CEP, coordenada e escolha.
+    const rota = web("app", "api", "app", "mercado", "_criar.ts")
+    expect(rota).toContain("...anuncioDoRascunho(rascunho")
+    expect(rota).toContain("localizacao_publica: localizacao.localizacaoPublica")
     expect(web("lib", "listings", "property.ts")).toContain(
       "address: enderecoDoRascunho(rascunho.address)",
     )

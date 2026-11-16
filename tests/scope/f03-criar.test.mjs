@@ -23,14 +23,31 @@ test("F03: criação e meus anúncios usam a porta real sem demonstração", () 
 test("F03: sessão sob RLS e CSRF nas novas escritas", () => {
   for (const path of [
     "apps/web/app/api/app/perguntas/route.ts",
-    "apps/web/app/api/app/mercado/_criar.ts",
     "apps/web/app/api/app/mercado/meus/route.ts",
   ]) {
     const fonte = ler(path)
     assert.match(fonte, /exigirSessao\(/)
     assert.doesNotMatch(fonte, /clienteDeServicoOuNulo|createServerClient|service_role/)
-    if (!path.includes("/meus/")) assert.match(fonte, /conferirEscrita\(/)
   }
+
+  // RUN-175: a criação do anúncio abre o privilégio SÓ para o cache de
+  // geocodificação (public.cep_geocodes, fechado a toda sessão). O anúncio em si
+  // continua escrito pelo cliente da sessão, sob RLS: o privilégio nunca toca
+  // `listings`. A ordem é a do perfil: sessão primeiro, privilégio depois.
+  const criacao = ler("apps/web/app/api/app/mercado/_criar.ts")
+  assert.match(criacao, /exigirSessao\(/)
+  assert.match(criacao, /conferirEscrita\(/)
+  const sessao = criacao.indexOf("exigirSessao(")
+  const privilegio = criacao.indexOf("clienteDeServicoOuNulo(")
+  assert.ok(privilegio > sessao, "a criação abre o privilégio antes da sessão")
+  assert.doesNotMatch(
+    criacao,
+    /servico\.from\(|servico\.rpc\(/,
+    "a criação usa o cliente de serviço fora do cache de CEP",
+  )
+  assert.match(criacao, /cliente: servico/, "o privilégio não é passado só à localização")
+  assert.match(ler("apps/web/lib/geo/anuncio.ts"), /lib\/geo\/cache|"\.\/cache"/)
+
   assert.match(ler("apps/web/app/api/app/mercado/meus/route.ts"), /opcoesDoApp\(/)
   assert.match(ler("apps/web/lib/storage/listing-photo.ts"), /sanitizeImage\(/)
   assert.match(ler("apps/web/lib/listings/actions.ts"), /enviarFotoDoAnuncio\(/)

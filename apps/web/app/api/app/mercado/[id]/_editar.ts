@@ -2,11 +2,13 @@ import type { SupabaseClient } from "@supabase/supabase-js"
 import type { NextRequest, NextResponse } from "next/server"
 import type { Database } from "supabase/database.generated"
 import {
+  clienteDeServicoOuNulo,
   conferirEscrita,
   exigirSessao,
   lerCorpoJson,
   responder,
 } from "../../../../../lib/app-api/rota-do-app"
+import { lerEscolha, localizarAnuncio } from "../../../../../lib/geo/anuncio"
 import { validateListingEdit } from "../../../../../lib/listings/lifecycle"
 import {
   detalhesDoRascunho,
@@ -20,7 +22,14 @@ import { validatePropertyDraft } from "../../../../../lib/listings/validation"
 import { enviarFotoDoAnuncio, FalhaDaFoto } from "../../../../../lib/storage/listing-photo"
 import { isDefiniteSqlRejection } from "../../../../../lib/storage/rpc-outcome"
 import { createServerClient as criarClienteServico } from "../../../../../lib/supabase/server"
-import { ehUuid, interpretarErroDoBanco, lerFotoDoCorpo } from "../_comum"
+import {
+  cepDoCorpo,
+  ehUuid,
+  interpretarErroDoBanco,
+  lerFotoDoCorpo,
+  MENSAGEM_DO_AVO,
+  respostaDaLocalizacao,
+} from "../_comum"
 
 type Context = { params: Promise<{ id: string }> }
 type Cliente = SupabaseClient<Database>
@@ -36,7 +45,7 @@ const CAMPOS_OBRIGATORIOS = ["titulo", "bairro", "preco", "descricao", "categori
 
 /** O que a edição relê: o endereço do desapego e o satélite inteiro do imóvel. */
 const SELECT_EDITAVEL =
-  "id, kind, owner_user_id, address, status, title, description, neighborhood, " +
+  "id, kind, owner_user_id, locality_id, address, status, title, description, neighborhood, " +
   "property_details(deal, property_type, rent_cents, condo_fee_cents, iptu_cents, " +
   "sale_price_cents, bedrooms, suites, parking_spots, area_m2, available_from)"
 
@@ -116,6 +125,32 @@ async function editarDesapego(
   }
 
   const valor = validacao.value
+
+  // Desapego com CEP (ADR-20261022 §2): opcional, coordenada SEMPRE aproximada.
+  // Sem CEP no corpo, o gravado continua — o item pode não ter localização.
+  const cepDoItem = cepDoCorpo(corpo["cep"])
+  let localizacao: Readonly<{
+    cep: string
+    latitude: number | null
+    longitude: number | null
+    localizacaoPublica: string
+    bairroDerivado: string | null
+  }> | null = null
+  if (cepDoItem !== null) {
+    const servico = clienteDeServicoOuNulo()
+    if (servico === null) return responder(request, { erro: "localizacao-indisponivel" }, 503)
+    const localizado = await localizarAnuncio({
+      cliente: servico,
+      pessoa: userId,
+      cepBruto: cepDoItem,
+      escolha: "aproximada",
+      forcarAproximada: true,
+      cidadeId: existente.locality_id,
+    })
+    if (!localizado.ok) return respostaDaLocalizacao(request, localizado)
+    localizacao = localizado.localizacao
+  }
+
   const escrita = await client
     .from("listings")
     .update({
@@ -124,8 +159,16 @@ async function editarDesapego(
       price_cents: valor.priceCents,
       category: valor.category,
       condition: valor.condition,
-      neighborhood: valor.neighborhood,
+      neighborhood: valor.neighborhood || localizacao?.bairroDerivado || null,
       address: valor.address,
+      ...(localizacao === null
+        ? {}
+        : {
+            cep: localizacao.cep,
+            latitude: localizacao.latitude,
+            longitude: localizacao.longitude,
+            localizacao_publica: localizacao.localizacaoPublica,
+          }),
     })
     .eq("id", id)
     .eq("owner_user_id", userId)
@@ -219,13 +262,74 @@ async function editarImovel(
       400,
     )
   }
+
+  // O CEP do imóvel não é legível pela sessão (grant por coluna): quem diz o
+  // gravado é a função do dono.
+  const atual = await client.rpc("get_listing_location", { p_listing_id: id })
+  if (atual.error) throw atual.error
+  const gravada = atual.data?.[0]
+  const cep = cepDoCorpo(corpo["cep"]) ?? gravada?.cep ?? null
+  // Imóvel publicado antes do CEP (o "avô"): a PRIMEIRA edição passa a exigir o
+  // CEP. Nada de backfill forjado — sem o CEP, a edição não passa.
+  if (cep === null) {
+    return responder(
+      request,
+      { erro: "dados-invalidos", campo: "cep", mensagem: MENSAGEM_DO_AVO },
+      400,
+    )
+  }
+  const escolha = lerEscolha(
+    corpo["localizacaoPublica"] ?? gravada?.localizacao_publica ?? undefined,
+  )
+  if (escolha === null) {
+    return responder(
+      request,
+      {
+        erro: "dados-invalidos",
+        campo: "localizacaoPublica",
+        mensagem: "Escolha o local exato ou aproximado.",
+      },
+      400,
+    )
+  }
+  if (escolha === "exata" && (rascunho.address ?? "").trim() === "") {
+    return responder(
+      request,
+      {
+        erro: "dados-invalidos",
+        campo: "address",
+        mensagem: "Para publicar o local exato, informe o endereço.",
+      },
+      400,
+    )
+  }
+
+  const servico = clienteDeServicoOuNulo()
+  if (servico === null) return responder(request, { erro: "localizacao-indisponivel" }, 503)
+  const localizado = await localizarAnuncio({
+    cliente: servico,
+    pessoa: userId,
+    cepBruto: cep,
+    escolha,
+    forcarAproximada: false,
+    cidadeId: existente.locality_id,
+  })
+  if (!localizado.ok) return respostaDaLocalizacao(request, localizado)
+  const localizacao = localizado.localizacao
+
   const escrita = await client
     .from("listings")
     .update({
       title: rascunho.title.trim(),
       description: rascunho.description.trim() || null,
-      neighborhood: rascunho.neighborhood.trim() || null,
-      address: enderecoDoRascunho(rascunho.address),
+      neighborhood: rascunho.neighborhood.trim() || localizacao.bairroDerivado,
+      // Local aproximado não guarda o endereço: o que não se publica não se vaza.
+      address:
+        localizacao.localizacaoPublica === "exata" ? enderecoDoRascunho(rascunho.address) : null,
+      cep: localizacao.cep,
+      latitude: localizacao.latitude,
+      longitude: localizacao.longitude,
+      localizacao_publica: localizacao.localizacaoPublica,
     })
     .eq("id", id)
     .eq("owner_user_id", userId)
