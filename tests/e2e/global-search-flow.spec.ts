@@ -8,6 +8,12 @@ import { CURRENT_CONSENT, encodeAuthCookieValue, readEnvLocal } from "./helpers/
 //   membro-25@ — membro aprovado da Vila Ajuricaba (ve "Climatiza Manaus")
 // A negacao tambem e provada sem interface, por chamada direta ao RPC com o
 // JWT da conta sem direito.
+//
+// RUN-181: o painel de servicos da web saiu. Os testes 3-8 deste spec
+// exercitavam aquela tela; cada garantia ganhou lar no app ou foi declarada
+// morta na tabela do RELATORIO (.visual/troca-explorar). O que sobra aqui e o
+// que continua sendo do servidor e da casca: o campo, as duas URLs antigas e a
+// negacao de RLS por chamada direta.
 
 const SUPABASE_URL = process.env["SUPABASE_URL"] ?? "http://127.0.0.1:55321"
 const ANON_KEY =
@@ -93,39 +99,24 @@ test.describe("busca global do cabecalho", () => {
     expect(destino.pathname).toBe("/app/busca")
     expect(destino.searchParams.get("q")).toBe("escola")
   })
+
+  // RUN-181: a última tela de busca da web (o painel de serviços) morreu no
+  // mesmo molde. A prova é de servidor: nenhuma interface, só o endereço.
+  test("a URL antiga do painel de serviços responde 307 e preserva q", async () => {
+    const baseUrl = process.env["APP_URL"] ?? "http://127.0.0.1:3000"
+    const resposta = await fetch(`${baseUrl}/explorar/servicos?q=climatiza`, { redirect: "manual" })
+    expect(resposta.status).toBe(307)
+    const destino = new URL(resposta.headers.get("location") ?? "", baseUrl)
+    expect(destino.pathname).toBe("/app/busca")
+    expect(destino.searchParams.get("q")).toBe("climatiza")
+  })
 })
 
-test.describe("busca de servicos (prancha 61, painel direito)", () => {
-  test("membro com direito ve contagem real, localizacao e abre a ficha", async ({ browser }) => {
-    const context = await browser.newContext()
-    await signIn(context, "membro-25@bivaque.example.invalid")
-    const page = await context.newPage()
-
-    await page.goto("/explorar/servicos?q=climatiza")
-    await expect(page.getByRole("heading", { level: 1 })).toHaveText(/Resultados para “climatiza”/)
-    await expect(page.getByText("1 resultado encontrado")).toBeVisible()
-    await expect(page.getByRole("heading", { name: "Climatiza Manaus" })).toBeVisible()
-    await expect(page.getByText("Vila Ajuricaba, Manaus")).toBeVisible()
-
-    await page.getByRole("button", { name: "Ver ficha" }).click()
-    await expect(page).toHaveURL(new RegExp(`/app/negocio/${PROVIDER_ID}$`))
-
-    await context.close()
-  })
-
-  test("membro sem direito ve vazio honesto, nao o item restrito", async ({ browser }) => {
-    const context = await browser.newContext()
-    await signIn(context, "visual@bivaque.example.invalid")
-    const page = await context.newPage()
-
-    await page.goto("/explorar/servicos?q=climatiza")
-    await expect(page.getByText("Nenhum prestador encontrado")).toBeVisible()
-    await expect(page.getByRole("heading", { name: "Climatiza Manaus" })).toHaveCount(0)
-    await expect(page.getByRole("link", { name: "Trocar de cidade" })).toBeVisible()
-
-    await context.close()
-  })
-
+test.describe("busca de servicos: a negacao que nao era da tela", () => {
+  // Teste 5 da tabela do RUN-181 (testes numerados no RELATORIO): a negacao
+  // mora na RLS, nao no painel. Nao ancora nenhuma tela da web — chamava o RPC
+  // direto e continua igual. O vazio honesto e o resultado com ficha vivem no
+  // app (apps/app/tests/e2e/busca-termo-url.spec.ts e busca-resultado-ficha).
   test("sem interface, a RLS nega o mesmo prestador para a conta sem direito", async () => {
     const withoutRight = await mintSession("visual@bivaque.example.invalid")
     const denied = await fetch(`${SUPABASE_URL}/rest/v1/rpc/search_providers`, {
@@ -152,65 +143,5 @@ test.describe("busca de servicos (prancha 61, painel direito)", () => {
     })
     const rows = (await allowed.json()) as { id: string }[]
     expect(rows.map((row) => row.id)).toContain(PROVIDER_ID)
-  })
-
-  test("termo, filtro e pagina sobrevivem a recarregar, voltar e nova aba", async ({ browser }) => {
-    test.info().annotations.push({
-      type: "limitation",
-      description:
-        "page=99 prova o clamp pela URL; o seed de Manaus tem 1 prestador visivel, entao uma pagina 2 real depende de volume e nao pode ser inventada aqui.",
-    })
-    const context = await browser.newContext()
-    await signIn(context, "membro-25@bivaque.example.invalid")
-    const page = await context.newPage()
-
-    await page.goto("/explorar/servicos?q=climatiza&page=99")
-    await expect(page.getByText("1 resultado encontrado")).toBeVisible()
-    await expect(page).toHaveURL(/page=99/)
-
-    await page.getByLabel("Tipo de serviço").selectOption("assistencia_tecnica")
-    await expect(page).toHaveURL(/tipo=assistencia_tecnica/)
-    await expect(page).not.toHaveURL(/page=/)
-
-    await page.getByLabel("Tipo de serviço").selectOption("")
-    // A entrada anterior so vira historia depois que o push assenta; sem
-    // esperar, os dois pushes consecutivos coalescem e o voltar pula um.
-    await expect(page).toHaveURL(/\/explorar\/servicos\?q=climatiza$/)
-    await page.goBack()
-    await expect(page).toHaveURL(/tipo=assistencia_tecnica/)
-
-    const tab2 = await context.newPage()
-    await tab2.goto("/explorar/servicos?q=climatiza&page=99")
-    await expect(tab2.getByRole("heading", { name: "Climatiza Manaus" })).toBeVisible()
-    await tab2.close()
-
-    await context.close()
-  })
-
-  test("alias antigo search e normalizado para q na borda", async ({ browser }) => {
-    const context = await browser.newContext()
-    await signIn(context, "membro-25@bivaque.example.invalid")
-    const page = await context.newPage()
-
-    await page.goto("/explorar/servicos?search=climatiza")
-    await expect(page).toHaveURL(/\/explorar\/servicos\?q=climatiza/)
-    await expect(page.getByRole("heading", { name: "Climatiza Manaus" })).toBeVisible()
-
-    await context.close()
-  })
-
-  test("limpar filtros remove bairro e tipo preservando o termo", async ({ browser }) => {
-    const context = await browser.newContext()
-    await signIn(context, "membro-25@bivaque.example.invalid")
-    const page = await context.newPage()
-
-    await page.goto("/explorar/servicos?q=climatiza&tipo=assistencia_tecnica")
-    await page.getByRole("button", { name: "Limpar filtros" }).click()
-
-    await expect(page).toHaveURL(/q=climatiza/)
-    await expect(page).not.toHaveURL(/tipo=/)
-    await expect(page.getByRole("heading", { name: "Climatiza Manaus" })).toBeVisible()
-
-    await context.close()
   })
 })

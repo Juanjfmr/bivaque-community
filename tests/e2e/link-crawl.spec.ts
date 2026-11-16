@@ -139,12 +139,6 @@ const PORTAS_FORA_DO_LINK: readonly PortaDeclarada[] = [
     dono: "visitante",
   },
   {
-    route: "/explorar/servicos",
-    porta:
-      "DÍVIDA LAN-TROCA: a porta era a lista /mercado e a página /explorar, ambas trocadas para o app (F02/F06); a lista de serviços segue na web até o lote próprio",
-    dono: "membro",
-  },
-  {
     route: "/groups",
     porta:
       "CONDICIONAL: 'Veja os grupos' no compositor, que só aparece para quem ainda não participa de nenhum; o 'Criar o primeiro grupo' de Interesses saiu com a tela web (RUN-163) e o app não oferece criar grupo",
@@ -250,7 +244,10 @@ const PORTAS_FORA_DO_LINK: readonly PortaDeclarada[] = [
   // - /recuperar-senha: 'Alterar' e 'Ajuda com acesso' em Conta (configuracoes/conta/page.tsx)
   // - /communities/[id]: lista de comunidades (communities-screen.tsx:276) e a lateral (:328)
   // - /groups/[id]: nome do grupo na lista de grupos (groups/page.tsx:448)
-  // - /negocio: 'Ofereça seus serviços' na lista de serviços (explorar/servicos/page.tsx:352)
+  // - /negocio: o painel do prestador (prestador/catalogo/page.tsx:82). Até o RUN-181 a
+  //   porta era também 'Ofereça seus serviços' no painel de serviços (explorar/servicos/page.tsx:352);
+  //   o painel morreu com a troca para /app/busca, e o link do prestador segue vivo — por isso
+  //   `/negocio` continua na lista de destino-válido do crawl, agora por uma porta só.
   // - /communities: card 'Entrar na comunidade' de /community (join-community.tsx:24). Como é
   //   por ela que a casca se abre, a entrada do dono da vila foi para `entradas`, não para cá:
   //   a casca não tem link saindo do app, e entrada declarada não é dívida.
