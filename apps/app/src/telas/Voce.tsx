@@ -35,6 +35,9 @@ import { Interesses } from "@/src/voce/Interesses"
 /** O que a confirmação da tela vai executar. Uma por vez: o diálogo é um só. */
 type Pedido = { readonly tipo: "sair" } | ({ readonly tipo: "mudar" } & PedidoDeMudanca)
 
+/** O contador sem leitura: traço visível e o nome que o leitor de tela anuncia. */
+const INDISPONIVEL = "Contagem indisponível agora"
+
 /**
  * Você (onda 8, F10): identidade, contadores e os atalhos principais, agora
  * lidos da conta de verdade (`/api/app/voce`) em vez da demonstração. O desenho
@@ -97,7 +100,6 @@ export function Voce() {
   const perfil = conta?.perfil ?? null
   const carregando = conta === null && !erro
   const nome = perfil?.nome ?? "Você"
-  const contagens = conta?.contagens ?? { salvos: 0, anuncios: 0, perguntas: 0, grupos: 0 }
 
   const gravar = (dados: { nome: string; bio: string; cep: string | null }) => {
     setSalvando(true)
@@ -262,14 +264,7 @@ export function Voce() {
         />
       ) : null}
 
-      {carregando ? null : (
-        <div className="grid grid-cols-4 gap-2">
-          <Contador valor={contagens.salvos} rotulo={["salvo", "salvos"]} />
-          <Contador valor={contagens.anuncios} rotulo={["anúncio", "anúncios"]} />
-          <Contador valor={contagens.perguntas} rotulo={["pergunta", "perguntas"]} />
-          <Contador valor={contagens.grupos} rotulo={["grupo", "grupos"]} />
-        </div>
-      )}
+      {carregando ? null : <Contadores conta={conta} />}
 
       <Secao titulo="Seu Bivaque">
         <div className="grid gap-2">
@@ -420,10 +415,37 @@ function mensagemDaLocalizacao(falha: unknown): string {
     : "Perfil salvo, mas a localização não foi atualizada. Tente de novo."
 }
 
-function Contador({ valor, rotulo }: { valor: number; rotulo: readonly [string, string] }) {
+/**
+ * Os quatro contadores. `conta` nula é leitura indisponível — o mesmo estado que
+ * abre o painel de erro do perfil. Falha de leitura nunca vira zero na tela; zero
+ * só aparece quando a leitura de verdade devolveu zero (regra do apps/app).
+ */
+export function Contadores({ conta }: { conta: PerfilDaConta | null }) {
+  const contagens = conta?.contagens ?? null
   return (
-    <div className="grid justify-items-center gap-0.5 rounded-2xl bg-(--surface-lowest) px-2 py-3 ring-1 ring-(--outline-variant)">
-      <b className="text-[18px]">{valor}</b>
+    <div className="grid grid-cols-4 gap-2">
+      <Contador valor={contagens?.salvos ?? null} rotulo={["salvo", "salvos"]} />
+      <Contador valor={contagens?.anuncios ?? null} rotulo={["anúncio", "anúncios"]} />
+      <Contador valor={contagens?.perguntas ?? null} rotulo={["pergunta", "perguntas"]} />
+      <Contador valor={contagens?.grupos ?? null} rotulo={["grupo", "grupos"]} />
+    </div>
+  )
+}
+
+function Contador({ valor, rotulo }: { valor: number | null; rotulo: readonly [string, string] }) {
+  return (
+    <div
+      className="grid justify-items-center gap-0.5 rounded-2xl bg-(--surface-lowest) px-2 py-3 ring-1 ring-(--outline-variant)"
+      title={valor === null ? INDISPONIVEL : undefined}
+    >
+      <b className="text-[18px]">
+        {valor ?? (
+          <>
+            <span aria-hidden="true">—</span>
+            <span className="sr-only">{INDISPONIVEL}</span>
+          </>
+        )}
+      </b>
       <small className="text-center text-[11.5px] text-(--on-surface-variant)">
         {valor === 1 ? rotulo[0] : rotulo[1]}
       </small>
