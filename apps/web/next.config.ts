@@ -129,8 +129,15 @@ const nextConfig: NextConfig = {
           ["/imoveis/novo", "/app/imoveis"],
           ["/imoveis/:id((?!novo/)[^/]+)/editar", "/app/anuncio/:id"],
           ["/imoveis/:id((?!(?:novo|alertas)/?$)[^/]+)", "/app/anuncio/:id"],
+          ["/pedidos/novo", "/app/pedidos/novo"],
           ["/pedidos", "/app/pedidos"],
           ["/pedidos/:id((?!novo/?$)[^/]+)", "/app/pedido/:id"],
+          // F07 (RUN-177): a gestão do negócio próprio e o catálogo dela são do
+          // app (Meu negócio). A ficha pública do negócio já tinha ido em
+          // `/prestadores/:id`; as duas telas web que escreviam direto no
+          // Supabase pelo navegador saem com o lote.
+          ["/negocio/catalogo", "/app/meu-negocio"],
+          ["/negocio", "/app/meu-negocio"],
           // F10: o perfil de OUTRA pessoa abre no app. RUN-172 (ADR-20261116): o
           // perfil próprio e a edição também saíram da web — transferência de
           // cidade e Força/OM privada já são do Você — e as regras EXATAS vêm
@@ -150,6 +157,10 @@ const nextConfig: NextConfig = {
           ["/configuracoes/notificacoes", "/app/voce"],
           ["/inicio", "/app/inicio"],
           ["/notifications", "/app/avisos"],
+          // F07 (RUN-177): a lista de serviços é o Mercado da cidade no app. A
+          // regra exata vem ANTES de `/explorar` porque o Next aplica a
+          // primeira que casa.
+          ["/explorar/servicos", "/app/negocios"],
           ["/explorar/busca", "/app/busca"],
           ["/explorar", "/app/busca"],
           // F05: a tela antiga de eventos sai inteira. `/events/novo` vem antes

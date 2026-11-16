@@ -139,12 +139,6 @@ const PORTAS_FORA_DO_LINK: readonly PortaDeclarada[] = [
     dono: "visitante",
   },
   {
-    route: "/explorar/servicos",
-    porta:
-      "DÍVIDA LAN-TROCA: a porta era a lista /mercado e a página /explorar, ambas trocadas para o app (F02/F06); a lista de serviços segue na web até o lote próprio",
-    dono: "membro",
-  },
-  {
     route: "/groups",
     porta:
       "CONDICIONAL: 'Veja os grupos' no compositor, que só aparece para quem ainda não participa de nenhum; o 'Criar o primeiro grupo' de Interesses saiu com a tela web (RUN-163) e o app não oferece criar grupo",
@@ -262,12 +256,6 @@ const PORTAS_FORA_DO_LINK: readonly PortaDeclarada[] = [
     dono: "dono de vila",
   },
   {
-    route: "/negocio/catalogo",
-    porta: "CONDICIONAL: 'Catálogo' em /negocio, só depois que a página do negócio existe",
-    dependeDeDados: true,
-    dono: "prestador",
-  },
-  {
     route: "/nova-senha",
     porta: "EXTERNO: link do e-mail de recuperação de senha",
     dono: "visitante",
@@ -295,9 +283,6 @@ const PORTAS_FORA_DO_LINK: readonly PortaDeclarada[] = [
     dono: "visitante",
   },
   { route: "/onboarding/welcome", porta: "FLUXO: fim do onboarding", dono: "visitante" },
-  // Sem semente de propósito: sem `?prestador=` a tela faz notFound(), e o id do destinatário
-  // vem do botão na ficha (que já mora no app). A declaração segue sendo a porta.
-  { route: "/pedidos/novo", porta: "BOTÃO: 'Pedir serviço' na ficha do prestador" },
   { route: "/prestador-convite/[token]", porta: "EXTERNO: e-mail de convite do prestador" },
   {
     route: "/recommendations",

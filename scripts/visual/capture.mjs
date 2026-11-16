@@ -107,11 +107,9 @@ export const HEADINGS = {
   "/arrivals": "^Chegadas declaradas$",
   "/guide-queue": "Guia|Referências",
   "/inicio": "Bom dia|Boa tarde|Boa noite|Olá",
-  "/explorar": "Explorar",
-  // h1 medido no arquivo que renderiza a rota (servicos/page.tsx:520): sem
-  // termo a tela é "Prestadores de serviço"; com termo, "Resultados para …" —
-  // e a variante com termo é chave própria logo abaixo.
-  "/explorar/servicos": "^Prestadores de serviço$",
+  // RUN-177 (F07): `/explorar`, `/explorar/servicos` e `/explorar/busca` são
+  // 307 para o app (`/app/negocios` e `/app/busca`) e as pastas saíram com o
+  // lote: capturá-las mediria o redirect.
   // /configuracoes/page.tsx redireciona para a única seção web que fica, e é
   // isso que a captura registra; a rota declara expectedPath para o destino.
   "/configuracoes": "^Configurações · Conta$",
@@ -149,7 +147,8 @@ export const HEADINGS = {
   // o id antigo capturava o não-encontrado e a rota declarava "sem h1".
   "/groups/60000000-0000-4000-8000-000000000001": DYNAMIC_HEADING,
   "/communities/71000000-0000-4000-8000-000000000001/indicar-prestador": DYNAMIC_HEADING,
-  "/prestadores/30000000-0000-4000-8000-000000000010": DYNAMIC_HEADING,
+  // RUN-177 (F07): a ficha pública, o catálogo e o painel do negócio próprio
+  // saíram da web (307 para `/app/negocio/:id` e `/app/meu-negocio`).
   // RUN-172: `/profile`, `/profile/editar` e o perfil alheio na web saíram —
   // os três são 307 para o app (`/app/voce` e `/app/perfil/:id`), então
   // capturá-los mediria o redirect.
@@ -172,9 +171,6 @@ export const HEADINGS = {
   // Mercado: criar e editar desapego saíram da web na F06 resíduo (RUN-156).
   // `/mercado/novo` e `/mercado/[id]/editar` agora redirecionam para o app
   // (/app/mercado e /app/anuncio/[id]); capturá-los mediria o redirect.
-  "/negocio": "^(Seu negócio|Crie a página do seu negócio)$",
-  "/negocio/catalogo": "^Catálogo e portfólio$",
-  "/prestadores/<member-business>": DYNAMIC_HEADING,
   // O h1 do detalhe é o título do próprio evento.
   "/events/70000000-0000-4000-8000-000000000005": DYNAMIC_HEADING,
   // Evento da conta de captura (RECON-051): a única rota de EDIÇÃO de evento
@@ -187,25 +183,13 @@ export const HEADINGS = {
   "/communities/71000000-0000-4000-8000-000000000001/admin/pending": "^Pedidos de entrada$",
   "/auth/callback-error": "^Não foi possível entrar$",
   "/guide/a0000000-0000-4000-8000-000000000001/correcao": "^Sugerir atualização$",
-  "/explorar/servicos?q=climatiza": "^Resultados para “climatiza”$",
-  "/explorar/busca?q=escola": "^Resultados para “escola”$",
-  // Prancha 84 painel 2: o estado vazio da busca agrupada. Termo que não casa
-  // com nada no seed — a captura prova o estado real, não um card inventado.
-  "/explorar/busca?q=translado": "^Resultados para “translado”$",
-  // RECON-049 (par 84): o termo que casa com um PRESTADOR e com o evento
-  // semeado prova as seções "Serviços" e "Eventos" do agrupamento — sem ele, a
-  // captura só mostrava o Guia e a ausência das outras seções parecia defeito.
-  "/explorar/busca?q=manaus": "^Resultados para “manaus”$",
-  "/explorar/busca?q=piquenique": "^Resultados para “piquenique”$",
+  // RUN-177 (F07): `/explorar/busca` e `/explorar/servicos` saíram (307 para o
+  // app) e as telas de pedido da web também — a captura delas é a do app.
   // A ficha do imóvel é nomeada pelo título do anúncio. Criar imóvel saiu da
   // web (RUN-164) e a gestão dos alertas também (RUN-169): as duas são do app.
   "/imoveis/b2000000-0000-4000-8000-000000000001": DYNAMIC_HEADING,
-  "/pedidos/novo?prestador=30000000-0000-4000-8000-000000000010": "^Do que você precisa\\?$",
   // Prancha 79, painel 2: o H1 da tela que o prestador convidado abre.
   [`/prestador-convite/${PROVIDER_INVITE_TOKEN}`]: "^Ofereça seus serviços no Bivaque$",
-  "/pedidos": "^Meus orçamentos$",
-  // O título do pedido vem da primeira linha da própria descrição do pedido.
-  "/pedidos/40000000-0000-4000-8000-000000000023": DYNAMIC_HEADING,
   // A conversa do pedido semeado: o h1 é o título do pedido.
   "/indicacoes/80000000-0000-4000-8000-000000000f00": "^Alguém conhece um bom encanador\\?$",
   "/salvos": "^Salvos$",
@@ -303,20 +287,9 @@ export const ROUTES = [
   // F06 resíduo (RUN-156): as telas web de criar e editar desapego saíram; o app
   // cria pela folha do Criar e edita dentro do anúncio. As rotas antigas agora
   // são redirect, não tela — não entram na captura.
-  { path: "/negocio", name: "member-business", auth: true, account: "visual" },
-  {
-    path: "/negocio/catalogo",
-    name: "member-business-catalog",
-    auth: true,
-    account: "visual",
-  },
-  {
-    path: "/prestadores/<member-business>",
-    name: "member-business-public",
-    auth: true,
-    account: "visual",
-    fixture: "member-business",
-  },
+  // RUN-177 (F07): a página do negócio, o catálogo, a ficha pública e todo o
+  // acompanhamento de pedido saíram da web (307 para o app); sem page.tsx não
+  // há o que capturar aqui.
   // RECON-029: o evento REAL do seed (organizador 30000000-...-001) — o id
   // acima é um post id, não um evento; esta fixture concreta sustenta a captura
   // do detalhe e do fio de pergunta.
@@ -399,19 +372,6 @@ export const ROUTES = [
   },
   // G0 (reconstrução visual 2026-09-06): containers novos da navegação.
   { path: "/inicio", name: "inicio", auth: true },
-  { path: "/explorar", name: "explorar", auth: true },
-  { path: "/explorar/servicos", name: "explorar-servicos", auth: true },
-  // RECON-021: painel direito da prancha 61 com o fixture real do seed —
-  // capturar com BIVAQUE_VISUAL_EMAIL=membro-25@ (unico ator que ve o
-  // prestador pela RLS).
-  { path: "/explorar/servicos?q=climatiza", name: "explorar-servicos-termo", auth: true },
-  // RECON-021: fixture concreta do seed de Manaus — "escola" casa com a
-  // entrada aprovada "Escola Modelo do Centro" e NÃO pode casar com a
-  // pendente "Escola de Acolhimento Militar" (status pending, RLS).
-  { path: "/explorar/busca?q=escola", name: "explorar-busca", auth: true },
-  { path: "/explorar/busca?q=translado", name: "explorar-busca-vazio", auth: true },
-  { path: "/explorar/busca?q=manaus", name: "explorar-busca-servico", auth: true },
-  { path: "/explorar/busca?q=piquenique", name: "explorar-busca-evento", auth: true },
   // CIDADE-169: a tela antiga de localidade saiu (307 para /app/cidade/atual);
   // a captura dela é a da consulta no app.
   // RECON-027: Moradia. `/imoveis` não depende de fixture. Criar imóvel saiu da
@@ -438,29 +398,6 @@ export const ROUTES = [
     account: "prestador",
   },
   { path: "/prestador/conta", name: "provider-conta", auth: true, account: "prestador" },
-  {
-    path: "/prestadores/30000000-0000-4000-8000-000000000010",
-    name: "provider-public-ficha",
-    auth: true,
-  },
-  // RECON-022: o formulário de pedido com destinatário fixo na URL. A fixture
-  // concreta é a ficha semeada da vitrine G (Climatiza Manaus).
-  {
-    path: "/pedidos/novo?prestador=30000000-0000-4000-8000-000000000010",
-    name: "pedido-novo",
-    auth: true,
-  },
-  // RECON-023: a lista e o detalhe da prancha 17. A fixture concreta e o
-  // pedido semeado de membro-1@ para a Climatiza Manaus (seed.sql) — e o
-  // detalhe só existe para quem participa: sem `account`, o ator global
-  // (dono-vila@) não é parte e a rota capturava o não-encontrado.
-  { path: "/pedidos", name: "pedidos", auth: true },
-  {
-    path: "/pedidos/40000000-0000-4000-8000-000000000023",
-    name: "pedido-detalhe",
-    auth: true,
-    account: "membro1",
-  },
   {
     path: "/communities/71000000-0000-4000-8000-000000000001/indicar-prestador",
     name: "provider-indicar",
