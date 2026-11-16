@@ -46,20 +46,38 @@ export type ResultadoDALocalizacao =
   | Readonly<{ ok: false; erro: FalhaDALocalizacao; esperarMs?: number }>
 
 /**
- * O piso do aproximado: 0,003° de latitude dá ~333 m. Deslocar para sul e oeste
- * (e cortar em 5 casas) põe o ponto publicado entre ~333 m e ~470 m do real —
- * nunca menos que o piso de 300 m e dentro da faixa 300-500 m do ADR.
+ * O aproximado é uma GRADE, não só um deslocamento — e a grade é o que o banco
+ * cobra (CHECK `listings_localizacao_aproximada_na_grade`, RUN-175 / revisão R3).
+ *
+ * Duas constantes, uma fórmula:
+ *
+ * - `PASSO_DA_GRADE = 0,001°` é a granularidade PUBLICADA: o ponto cai num nó da
+ *   grade de 0,001° (~111 m), então nenhum valor mais fino que isso chega ao
+ *   banco quando a escolha é aproximada.
+ * - `DESLOCAMENTO_APROXIMADO = 0,003°` (~333 m) empurra o ponto para sul e oeste:
+ *   o publicado fica entre ~278 m e ~389 m por eixo do real — ~393 m a ~550 m de
+ *   distância em linha reta, nunca menos que o piso de 300 m do ADR.
+ *
+ * O CHECK repete `(coordenada + DESLOCAMENTO) / PASSO` inteiro; um UPDATE bruto
+ * pelo PostgREST com a coordenada crua não fecha essa conta e é recusado (23514).
  */
-const PASSO_APROXIMADO = 0.003
+/** A grade publicada e o deslocamento — exportados para o teste e para o relatório. */
+export const PASSO_DA_GRADE = 0.001
+export const DESLOCAMENTO_APROXIMADO = 0.003
+
+/** `round(coordenada / PASSO)` na fórmula do banco, com o deslocamento somado. */
+function naGrade(coordenada: number): number {
+  const passo = Math.round(coordenada / PASSO_DA_GRADE) * PASSO_DA_GRADE
+  // `toFixed(5)` corta o ruído de ponto flutuante (ex.: -3.1019999999999998),
+  // e o resultado continua sendo múltiplo de 0,001 deslocado de 0,003.
+  return Number((passo - DESLOCAMENTO_APROXIMADO).toFixed(5))
+}
 
 export function aproximarCoordenada(
   latitude: number,
   longitude: number,
 ): Readonly<{ latitude: number; longitude: number }> {
-  return {
-    latitude: Number((latitude - PASSO_APROXIMADO).toFixed(5)),
-    longitude: Number((longitude - PASSO_APROXIMADO).toFixed(5)),
-  }
+  return { latitude: naGrade(latitude), longitude: naGrade(longitude) }
 }
 
 /** Sem acento, minúsculo, espaço colapsado — a mesma chave de `neighborhoods`. */

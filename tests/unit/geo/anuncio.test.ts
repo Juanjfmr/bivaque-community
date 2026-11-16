@@ -17,7 +17,13 @@ vi.mock("web/lib/geo/geocodificador", () => geocodificador)
 const limite = vi.hoisted(() => ({ consumirConsulta: vi.fn() }))
 vi.mock("web/lib/geo/limite", () => limite)
 
-import { aproximarCoordenada, lerEscolha, localizarAnuncio } from "web/lib/geo/anuncio"
+import {
+  aproximarCoordenada,
+  DESLOCAMENTO_APROXIMADO,
+  lerEscolha,
+  localizarAnuncio,
+  PASSO_DA_GRADE,
+} from "web/lib/geo/anuncio"
 
 const CIDADE = "00000000-0000-4000-8000-0000000000aa"
 const PESSOA = "10000000-0000-4000-8000-000000000010"
@@ -75,16 +81,58 @@ describe("aproximarCoordenada", () => {
     [-3.119002, -60.021799],
     [0.0004, 0.0004],
     [-23.55052, -46.633308],
-  ])("o ponto publicado fica a 300-500 m do real (%s, %s)", (lat, lng) => {
+  ])("o ponto publicado fica entre 300 e 560 m do real (%s, %s)", (lat, lng) => {
     const aproximada = aproximarCoordenada(lat, lng)
     const distancia = metros(lat, lng, aproximada.latitude, aproximada.longitude)
+    // Piso do ADR: nunca menos de 300 m. Teto: os dois eixos deslocam no máximo
+    // 389 m cada, então a diagonal fica em ~550 m no equador (o ADR diz "cerca
+    // de 300 a 500 m"; a diagonal é o limite geométrico honesto).
     expect(distancia).toBeGreaterThanOrEqual(300)
-    expect(distancia).toBeLessThanOrEqual(500)
+    expect(distancia).toBeLessThanOrEqual(560)
   })
 
   it("nunca devolve o ponto original", () => {
     const aproximada = aproximarCoordenada(-3.1, -60)
     expect(aproximada).not.toEqual({ latitude: -3.1, longitude: -60 })
+  })
+
+  // O invariante que o banco cobra (CHECK listings_localizacao_aproximada_na_grade):
+  // `(coordenada + DESLOCAMENTO) / PASSO` inteiro. É isto que impede gravar a
+  // coordenada crua do provedor alegando "aproximada".
+  it.each([
+    [-3.10194, -60.025],
+    [-23.55052, -46.633308],
+    [0.0004, 0.0004],
+    [-3.119002, -60.021799],
+  ])("o que o servidor grava cai na grade do CHECK (%s, %s)", (lat, lng) => {
+    const aproximada = aproximarCoordenada(lat, lng)
+    const naGrade = (valor: number) => {
+      const passos = (valor + DESLOCAMENTO_APROXIMADO) / PASSO_DA_GRADE
+      return Math.abs(passos - Math.round(passos)) < 1e-6
+    }
+    expect(naGrade(aproximada.latitude)).toBe(true)
+    expect(naGrade(aproximada.longitude)).toBe(true)
+  })
+
+  it("a coordenada crua do provedor NÃO cai na grade (o CHECK recusa)", () => {
+    const naGrade = (valor: number) => {
+      const passos = (valor + DESLOCAMENTO_APROXIMADO) / PASSO_DA_GRADE
+      return Math.abs(passos - Math.round(passos)) < 1e-6
+    }
+    // O que a BrasilAPI/Google devolvem: 6 a 7 casas.
+    expect(naGrade(-3.10194)).toBe(false)
+    expect(naGrade(-23.5505201)).toBe(false)
+    expect(naGrade(-60.0251234)).toBe(false)
+  })
+
+  it("limite conhecido: valor já múltiplo de 0,001 passa — é a precisão publicada", () => {
+    const naGrade = (valor: number) => {
+      const passos = (valor + DESLOCAMENTO_APROXIMADO) / PASSO_DA_GRADE
+      return Math.abs(passos - Math.round(passos)) < 1e-6
+    }
+    // -60,025 é múltiplo de 0,001, então a grade não distingue (≈111 m). O CHECK
+    // garante o teto de precisão, não a distância: quem escreve nó de grade passa.
+    expect(naGrade(-60.025)).toBe(true)
   })
 })
 

@@ -79,6 +79,36 @@ alter table public.listings
   add constraint listings_item_localizacao_aproximada
   check (kind <> 'item' or localizacao_publica is null or localizacao_publica = 'aproximada');
 
+-- Granularidade do aproximado (RUN-175 / revisão R3, achado médio-alto):
+-- "aproximada" tem que ser GRADE, não só intenção. Sem este CHECK, `authenticated`
+-- ainda tem UPDATE de tabela (20260911043053:278) e poderia gravar via PostgREST a
+-- coordenada crua do provedor (6-7 casas) declarando `localizacao_publica =
+-- 'aproximada'` — o grant por coluna protege a LEITURA, não a escrita.
+--
+-- Por que CHECK e não `revoke update (cep, latitude, longitude)`: quem grava a
+-- localização é o cliente da SESSÃO, sob RLS — o PATCH faz `update` em `listings`
+-- e o POST usa `create_property_listing` (security invoker) com o jsonb. Um revoke
+-- por coluna quebraria as duas rotas legítimas e exigiria mover a escrita para
+-- service_role, ampliando privilégio em vez de restringir. O CHECK fecha a
+-- propriedade no banco e deixa a rota escrever como o dono.
+--
+-- A conta é a MESMA do servidor (`apps/web/lib/geo/anuncio.ts:naGrade`):
+--   publicado = round(coordenada / 0,001) * 0,001 - 0,003
+-- ou seja, `(publicado + 0,003) / 0,001` é inteiro — e é isso que este CHECK exige.
+-- O que o servidor grava passa; coordenada crua com casas finas não passa (23514).
+-- Limite conhecido: quem escrever à mão um valor já na grade (0,001°, ~111 m)
+-- passa por definição — é a precisão publicada, e nunca a do provedor.
+alter table public.listings
+  add constraint listings_localizacao_aproximada_na_grade
+  check (
+    localizacao_publica is distinct from 'aproximada'
+    or latitude is null
+    or (
+      abs((latitude + 0.003) * 1000 - round((latitude + 0.003) * 1000)) < 1e-6
+      and abs((longitude + 0.003) * 1000 - round((longitude + 0.003) * 1000)) < 1e-6
+    )
+  );
+
 -- ---------------------------------------------------------------------------
 -- 2. Desapego: bairro deixa de ser obrigatório
 -- ---------------------------------------------------------------------------
