@@ -120,6 +120,7 @@ export type Database = {
           fetched_at: string
           latitude: number
           longitude: number
+          neighborhood: string | null
           source: string
         }
         Insert: {
@@ -127,6 +128,7 @@ export type Database = {
           fetched_at?: string
           latitude: number
           longitude: number
+          neighborhood?: string | null
           source: string
         }
         Update: {
@@ -134,6 +136,7 @@ export type Database = {
           fetched_at?: string
           latitude?: number
           longitude?: number
+          neighborhood?: string | null
           source?: string
         }
         Relationships: []
@@ -2601,6 +2604,7 @@ export type Database = {
           cancelled_at: string | null
           cancelled_by_user_id: string | null
           category: Database["public"]["Enums"]["provider_category"]
+          cep: string | null
           closed_at: string | null
           closed_by_user_id: string | null
           conversation_id: string | null
@@ -2609,6 +2613,8 @@ export type Database = {
           first_responded_at: string | null
           id: string
           idempotency_key: string | null
+          latitude: number | null
+          longitude: number | null
           provider_id: string
           provider_user_id: string
           region: string | null
@@ -2621,6 +2627,7 @@ export type Database = {
           cancelled_at?: string | null
           cancelled_by_user_id?: string | null
           category: Database["public"]["Enums"]["provider_category"]
+          cep?: string | null
           closed_at?: string | null
           closed_by_user_id?: string | null
           conversation_id?: string | null
@@ -2629,6 +2636,8 @@ export type Database = {
           first_responded_at?: string | null
           id?: string
           idempotency_key?: string | null
+          latitude?: number | null
+          longitude?: number | null
           provider_id: string
           provider_user_id: string
           region?: string | null
@@ -2641,6 +2650,7 @@ export type Database = {
           cancelled_at?: string | null
           cancelled_by_user_id?: string | null
           category?: Database["public"]["Enums"]["provider_category"]
+          cep?: string | null
           closed_at?: string | null
           closed_by_user_id?: string | null
           conversation_id?: string | null
@@ -2649,6 +2659,8 @@ export type Database = {
           first_responded_at?: string | null
           id?: string
           idempotency_key?: string | null
+          latitude?: number | null
+          longitude?: number | null
           provider_id?: string
           provider_user_id?: string
           region?: string | null
@@ -2982,9 +2994,13 @@ export type Database = {
       }
       create_service_request: {
         Args: {
+          p_cep?: string
           p_description: string
           p_idempotency_key?: string
+          p_latitude?: number
+          p_longitude?: number
           p_provider_id: string
+          p_region?: string
           p_when_text?: string
         }
         Returns: string
@@ -3790,6 +3806,10 @@ export type Database = {
           p_conversation_id: string
         }
         Returns: Json
+      }
+      service_request_distance: {
+        Args: { p_request_id: string }
+        Returns: number
       }
       set_community_image: {
         Args: {
