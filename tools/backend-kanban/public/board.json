@@ -5383,13 +5383,14 @@
         "Desapego com bairro opcional"
       ],
       "proof": [
-        "11/11: perfil com CEP e coordenada cálculo-only provado (PR #183, head 4c5e7451): migration 20261110211702_profile_location.sql, grants por coluna (cep/latitude/longitude fora do SELECT de authenticated), RPCs get_my_profile_location/set_member_location/distance_to_neighborhood, API GET/PATCH /api/app/voce + PUT /localizacao, E2E f10-voce-localizacao com gravação verde no smoke. Restam anúncio, pedido, distância de mim e mapa."
+        "11/11: perfil com CEP e coordenada cálculo-only provado (PR #183, head 4c5e7451): migration 20261110211702_profile_location.sql, grants por coluna (cep/latitude/longitude fora do SELECT de authenticated), RPCs get_my_profile_location/set_member_location/distance_to_neighborhood, API GET/PATCH /api/app/voce + PUT /localizacao, E2E f10-voce-localizacao com gravação verde no smoke. Restam anúncio, pedido, distância de mim e mapa.",
+        "16/11: RUN-175 (L1) mergeado em 39597c24 (PR #258; heads 36ece5ff→57de9e36). Reconciliação do checklist: ①'CEP e coordenada no anúncio' FEITO (imovel exige CEP no criar com avo sem backfill forjado — ADR-20261116 §1; desapego CEP opcional; o que falta do item é o PEDIDO — L2); ②'Geocodificação no servidor com cache' FEITO p/ anúncio (modulo único lib/geo/anuncio.ts reaproveitando cache+geocodificador do RUN-029; pedido herda no L2); ③'Mapa exato ou aproximado no imóvel' RESOLVIDO POR DECISÃO, não silêncio: escolha exata/aproximada entregue em texto, infra de mapa fora do lançamento (ADR-20261116 §4; card LOC-MAPA-POS-LANCAMENTO); ④'Coordenada do perfil fora de leitura' já feito 11/11 e ESTENDIDO ao anúncio (grants por coluna; CHECK de grade Listings_aproximada na migration fecha o achado R3 da revisão: coordenada crua alegando aproximada → 23514); ⑤'Desapego com bairro opcional' FEITO (CHECK listings_item_required_fields relaxado). pgTAP 33 asserções no arquivo próprio, suíte 2879/0 falhas; e2E real 45/45 local + CI verde (stateful×3, smoke). R3: revisão Qwen (lente de segurança) — finding médio-alto FECHADO antes do merge com a fórmula da grade documentada; limitador por-processo aceito e registrado (mitigação cache-first), TTL/global/perfil ficam no card próprio."
       ],
       "tests": [],
       "links": ["docs/decisions/ADR-20261022-localizacao-padrao-de-mercado.md"],
       "dependencies": ["ADR-LOCALIZACAO", "DATA-IBGE-BAIRROS"],
-      "updatedAt": "2026-11-11",
-      "sourceRevision": "4c5e7451",
+      "updatedAt": "2026-11-16",
+      "sourceRevision": "39597c24",
       "blockers": [],
       "completedChecklist": [false, false, false, true, false],
       "id": "LOC-IMPL",
@@ -6056,13 +6057,14 @@
       "phase": "Lançamento",
       "tests": [],
       "blockers": [],
-      "updatedAt": "2026-11-05",
-      "sourceRevision": "ca6498ee",
+      "updatedAt": "2026-11-16",
+      "sourceRevision": "e87b228e",
       "links": ["docs/LANCAMENTO.md"],
       "proof": [
         "02/11: aberto na definição do lançamento (docs/LANCAMENTO.md), por mandato do dono.",
         "05/11: RUN-010 (GPT Sol 6.1) — entram as cinco rotas da sessão (categorias e negócios da cidade atual, ficha com foto por URL assinada de 5 min, criação de pedido, lista e detalhe dos próprios pedidos) e a porta de dados do app, com cancelamento, paginação e falha que preserva o texto; 'Onde atende' usa a cidade real; Mercado segue intacto. Commits c68b9ea6, 16b4b4c7, f1fdb588, 55ea0cd8 e ca6498ee. Números: 126 testes de API passam (70 da F07 e 56 de pedidos antigos); gate final verde sem build Next (falta configuração local); 2.174 de unidade, 261 do app, 76 mobile, 19 web, 189 de privacidade e 192 de escopo passam; 'Onde atende' com 18 cenários em 375/768/1440, claro e escuro, em HTTP controlado; 42 capturas estáveis. Não rodou: E2E com banco local real (Docker negado), pgTAP e build Next. Revisões: Qwen PASS COM RESSALVAS (.visual/run-010/revisao-qwen.md); auditoria de segurança válida do coordenador (security-auditor, Sonnet 5.5): LIBERA COM RESSALVAS, sem crítico nem alto. O arquivo .visual/run-010/45-auditoria.log é autoavaliação do executor e não conta como revisão. Ressalvas abertas no cartão F07-RESSALVAS-REVISAO. E2E com banco real roda no check Install, test, and build do CI deste PR.",
-        "05/11: decisão do coordenador, a ratificar pelo dono — a ficha do negócio no app deixa de mostrar contagem de indicações e horário, selo Patrocinado, Benefício para a comunidade e aviso de ficha não assumida, porque não há coluna real para eles (provider_profiles); 'Onde atende' mostra só a cidade. Volta quando houver dado."
+        "05/11: decisão do coordenador, a ratificar pelo dono — a ficha do negócio no app deixa de mostrar contagem de indicações e horário, selo Patrocinado, Benefício para a comunidade e aviso de ficha não assumida, porque não há coluna real para eles (provider_profiles); 'Onde atende' mostra só a cidade. Volta quando houver dado.",
+        "16/11: RUN-177 mergeado em e87b228e (PR #257; heads 6563d602→a92c8c62) — gestão do negócio próprio (/app/meu-negocio: ficha, catálogo, fotos pela porta §5 com service_role só após reconfirmar can_manage_provider_profile), pedidos dos DOIS lados com cancelar/encerrar idempotentes e link da conversa, /app/pedidos/novo?destino= endereçável (menu Criar e Paleta apontam para portas reais), provider-member-business migrado para o E2E real do app com tabela garantia→lar. R3: revisão independente (Qwen) PASS com C1 fechada (server action órfã morta com as 5 garantias realocadas, 1 morte declarada — anexo do pedido volta pela porta, card em F07-RESSALVAS? não: RELATORIO round-2). CI cheio verde em todos os heads (stateful×3, core, smoke 7 shards, mobile-first). F07-AINDA-ABERTO: ① troca de /explorar/servicos adiada por importador vivo (card TROCA-EXPLORAR-SERVICOS), ② painel do prestador civil fica na web — EXCEÇÃO DECIDIDA (convite/aceite/fila funcionam; shell não é rota de membro; portar = card F07-PAINEL-CIVIL-APP), ③ revisão visual às cegas das três telas novas contra a régua (próxima tarefa, antes deste fechar), ④ F07-CONTAGEM-ORDENACAO segue (contagem/'perto de mim' só com API que trouxer), ⑤ F07-RESSALVAS-REVISAO não foi tocada pelo lote — fica aberta com os 5 itens originais."
       ],
       "id": "LAN-F07",
       "title": "F07 Negócios e serviços ligados ao banco",
@@ -8082,7 +8084,7 @@
       "phase": "Lote 7 — Desapegos e Imóveis",
       "priority": "P1",
       "category": "governance",
-      "status": "repo",
+      "status": "next",
       "description": "O PUT /api/app/voce/localizacao geocodifica qualquer CEP no cache miss sem limite por pessoa/instalação e o cep_geocodes não tem TTL. Decidir limitador/cota e TTL antes de abrir o CEP para toda a base; hoje o custo/quota do provedor fica sem teto (achado MÉDIO da auditoria R3 do #183).",
       "checklist": [
         "Limite por sessão/IP e teto global na rota de localização",
@@ -8090,12 +8092,15 @@
         "Prova de abuso negada e de cache hit sem chamar o provedor",
         "Registro no ADR de localização ou emenda"
       ],
-      "proof": ["11/11: aberto a partir da ressalva MÉDIA do security-auditor 437d6aa3 (PR #183)."],
+      "proof": [
+        "11/11: aberto a partir da ressalva MÉDIA do security-auditor 437d6aa3 (PR #183).",
+        "16/11: PARCIAL pelo RUN-175 (#258): limitador por pessoa nas chamadas REAIS do geocode do ANÚNCIO (janela 1 h/20, cache-hit não consome, 429 com retry-after — unit com relógio falso; ADR-20261116 §2 registra a decisão; por-processo é limitação aceita, upgrade = contador no banco molde SEC-007). O que falta para fechar (próximo passo concreto): TTL e limpeza em cep_geocodes; teto global; e o PUT /api/app/voce/localizacao (perfil, PR #183) geocodifica no cache-miss SEM consumirConsulta — achado médio da revisão do #258, pré-existente, não coberto pelo lote."
+      ],
       "tests": [],
       "links": ["docs/decisions/ADR-20261022-localizacao-padrao-de-mercado.md"],
       "dependencies": ["LOC-IMPL", "ADR-LOCALIZACAO"],
-      "updatedAt": "2026-11-11",
-      "sourceRevision": "4c5e7451",
+      "updatedAt": "2026-11-16",
+      "sourceRevision": "39597c24",
       "blockers": [],
       "completedChecklist": [false, false, false, false]
     },
@@ -9084,6 +9089,78 @@
       "links": ["docs/decisions/ADR-20261116-execucao-pergunta-origem-dupla.md"],
       "proof": [
         "16/11: aberto pelo parecer Qwen do RUN-178 (revisao-qwen.md, achado F2) — pre-existente, nao introduzido pela origem dupla; CI do #255 verde com o buraco intacto (fora do escopo do lote)."
+      ]
+    },
+    {
+      "id": "LOC-MAPA-POS-LANCAMENTO",
+      "title": "Infraestrutura de mapa: aprovar ADR-20261016 (proposed) + biblioteca + privacidade do tile",
+      "phase": "Pos-lançamento",
+      "priority": "P3",
+      "category": "frontend",
+      "status": "repo",
+      "description": "Saiu do lançamento por decisão registrada (ADR-20261116 §4, linha na RATIFICACAO): a exigência literal do LANCAMENTO (F06: 'endereço exato ou aproximado por escolha') foi entregue em texto; mapa exige aprovar o ADR-20261016-mapa-de-bairros (ainda proposed, critic pendente), escolher fonte de tiles com política de privacidade (sem biblioteca hoje no repo) e desenhar a tela contra a régua. Não confundir com a escolha aproximada, que JÁ vale no anúncio.",
+      "checklist": [
+        "Reabrir/aceitar o ADR-20261016 com parecer de privacidade do tile-server",
+        "Provedor e biblioteca decididos e auto-hospedáveis no Capacitor depois",
+        "Tela do imóvel com pino exato/aproximado contra referências Mobbin"
+      ],
+      "dependencies": [],
+      "tests": [],
+      "blockers": [],
+      "updatedAt": "2026-11-16",
+      "sourceRevision": "39597c24",
+      "links": [
+        "docs/decisions/ADR-20261116-cep-no-anuncio-avo-limite-e-coordenada-ausente.md",
+        "docs/decisions/ADR-20261016-mapa-de-bairros.md"
+      ],
+      "proof": [
+        "16/11: aberto no fechamento do RUN-175 (decisão 4 do ADR-20261116; regra do board: resolver por registro, não por silêncio)."
+      ]
+    },
+    {
+      "id": "TROCA-EXPLORAR-SERVICOS",
+      "title": "Trocar /explorar/servicos para o app quando a busca web morrer — importador vivo travou o RUN-177",
+      "phase": "Lançamento",
+      "priority": "P1",
+      "category": "frontend",
+      "status": "next",
+      "description": "O RUN-177 trocou /negocio, /negocio/catalogo e /pedidos/novo e matou as pastas; /explorar/servicos voltou no commit be50a0d4 porque TEM consumidor vivo: a busca global web (lib/search/groups.ts:166), o atalho Serviços do Início ((shell)/inicio/hub-shortcuts.tsx:108) e 24 e2E em global-search-flow.spec.ts. A cláusula do contrato: a rota morre quando o importador vivo morrer primeiro — a troca vai junto com a jornada da busca web (redirect preservando ?q=, portas do rastreador, capturas, e o bloco 'busca de serviços' do global-search-flow realocado).",
+      "checklist": [
+        "Buscar na web define o destino novo (app) com q/filtros preservados ou substitui o painel",
+        "lib/search/groups.ts e hub-shortcuts apontam para o novo; /explorar/servicos vira 307",
+        "global-search-flow realocado com tabela garantia→lar; link-crawl e capture sem a tela morta"
+      ],
+      "dependencies": [],
+      "tests": ["tests/e2e/global-search-flow.spec.ts"],
+      "blockers": [],
+      "updatedAt": "2026-11-16",
+      "sourceRevision": "e87b228e",
+      "links": ["docs/agents/tasks/F07-FICHA.task.yml"],
+      "proof": [
+        "16/11: aberto no round-2 do RUN-177 — CI 43907094015-style: 15 falhas em global-search-flow provaram o importador que o grep do lote não viu (lição LICOES)."
+      ]
+    },
+    {
+      "id": "F07-PAINEL-CIVIL-APP",
+      "title": "Portar o painel do prestador civil (shell /prestador) para o app — exceção documentada do lançamento",
+      "phase": "Pos-lançamento",
+      "priority": "P3",
+      "category": "frontend",
+      "status": "repo",
+      "description": "Decisão registrada no RUN-177 (mandato: o agente decide e nomeia o custo): no lançamento, o prestador CIVIL gerencia fila/resposta/ficha/atendimento/conta pelo shell web (provider)/prestador, que o proxy tranca para contas provider e a fase 6 NÃO varre (não é rota de membro). Convite e aceite já funcionam (preauth/indicar-prestador). Portar o shell inteiro (G-TASK-2/4/5 absorvidos) exige shell de papel no app + migração das Server Actions + régua visual — trabalho de pos-lançamento, não lacuna de lançamento.",
+      "checklist": [
+        "ADR de shell por papel no app (conta provider) antes de qualquer tela",
+        "Fila, resposta, ficha, atendimento e conta com as Server Actions virando porta §5",
+        "Régua Nextdoor às cegas + E2E 3 larguras; portal do proxy/portas/capturas no mesmo lote"
+      ],
+      "dependencies": [],
+      "tests": ["tests/e2e/provider-vitrine.spec.ts"],
+      "blockers": [],
+      "updatedAt": "2026-11-16",
+      "sourceRevision": "e87b228e",
+      "links": ["docs/agents/tasks/F07-FICHA.task.yml"],
+      "proof": [
+        "16/11: exceção decidida pelo coordenador no despacho do RUN-177 (opção (b) do mapa F07: 'convite e aceite já funcionam na web; portar shell = card pós-lançamento') e reafirmada no fechamento com o painel intacto (intocado pelo lote)."
       ]
     }
   ],

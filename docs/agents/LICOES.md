@@ -345,3 +345,26 @@ Fechamento do lote: ~45 min -> ~11 min (4x), alvo 8-12 atingido.
   esse path — emenda ANTES de escrever (ressalva de revisão #256: divergência aceita, registrada no
   PR e no card; regra da casa: ícone cheio só quando ligado, vale para todo toggle com estado).
 
+## "Deixa para o CI" tem fronteira (16/11, RUN-177 round 2)
+
+- Interface NOVA não se prova no CI. A lane F07 escreveu telas + stubs + bloco @stateful sem rodar
+  navegador (portas emprestadas), declarou "provado no CI, precedente #254" e o CI devolveu 8 specs
+  vermelhos × 3 projects: CTA que virou `<a>` (spec buscava button), `minLength` nativo barrando o
+  submit ANTES da validação que dá a frase, duplo fechamento de AlertDialog (duas voltas no
+  histórico, a tela saía antes do aviso) e token `--on-primary` INEXISTENTE com contraste 1:1
+  — três eram bug de tela que unit nenhum pega. O precedente #254 valia para mecanismo de teste,
+  não para UI nova. Jeito certo: sem stack/portas, a lane NÃO empurra UI nova para o CI como
+  primeira execução; espera a janela, prova nas 3 larguras, e só então push.
+- "Zero importador vivo" mede-se contra os SPECS E2E ATIVOS, não só contra imports de produto: o
+  /explorar/servicos do F07 tinha importador vivo (busca global web + atalho do Início + 24 e2E)
+  que o grep do lote não olhou; o CI achou. Antes de matar rota, roda o spec que a exerce (ou
+  declara por que ele morreria junto).
+- Reset com seed NÃO viaja entre branches: a lane que devolve "banco com seed" semeou o schema do
+  PRÓPRIO branch; a lane seguinte herdou um banco sem a migration dela e interpretou 503 como
+  defeito alheio. Estado = branch + seed + migrations daquele branch; cada lane de banco dá o seu
+  reset, sem exceção, mesmo quando "acabaram de devolver limpo".
+- O grant por coluna virou prova ele mesmo: `select=*` de authenticated em `listings` passa a
+  responder 42501, e helper de E2E que fazia `select=*` quebrou primeiro que qualquer asserção —
+  ao revogar leitura por coluna, varre os HELPERS de teste (e aproveita: a tentativa vira o
+  negativo do contrato, como em f03-criar-real).
+
