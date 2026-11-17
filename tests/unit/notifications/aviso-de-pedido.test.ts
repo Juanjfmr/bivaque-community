@@ -131,7 +131,8 @@ describe("o e-mail do resumo", () => {
     expect(email.text).toContain("• Pediatra")
     expect(email.text).toContain("• Eletricista")
     expect(email.text).toContain("/community?vista=indicacoes")
-    expect(email.text).toContain("Configurações > Notificações")
+    // RUN-184: a tela de conta saiu da web; as preferências de aviso vivem no Você.
+    expect(email.text).toContain("Você > Avisos")
   })
 
   it("um pedido só vai no singular", () => {
@@ -141,26 +142,8 @@ describe("o e-mail do resumo", () => {
   })
 })
 
-// Achado da prova de 25/09/2026: no celular a grade de Configurações crescia até
-// o conteúdo mais largo (a tabela de canais), empurrando os interruptores para
-// fora da tela. A coluna única precisa ter a largura da tela.
-describe("Configurações no celular", () => {
-  it("a coluna do conteúdo não cresce além da tela", () => {
-    const layout = readFileSync(
-      join(
-        import.meta.dirname,
-        "..",
-        "..",
-        "..",
-        "apps",
-        "web",
-        "app",
-        "(shell)",
-        "configuracoes",
-        "layout.tsx",
-      ),
-      "utf8",
-    )
-    expect(layout).toContain("grid-cols-[minmax(0,1fr)]")
-  })
-})
+// O achado da prova de 25/09/2026 (a grade de Configurações crescendo até a
+// tabela de canais e empurrando os interruptores para fora da tela) ficou sem
+// casa no RUN-184: o layout que ele media era o da tela de conta da web, que saiu
+// com a troca, e a coluna única do Você é do app (`apps/app/src/telas/Voce.tsx`),
+// medida nas capturas de 375/768/1440 — não por leitura de fonte daqui.

@@ -54,6 +54,13 @@ describe("Ajuda pública", () => {
     expect(page).toContain("Não foi possível carregar seus chamados")
     expect(page).toContain("Nenhum chamado ainda")
   })
+
+  it("o atalho de conta leva ao Você do app, não à tela antiga de configurações", () => {
+    // RUN-184: a árvore `(shell)/configuracoes` saiu; o atalho da ajuda pública não
+    // pode voltar a apontar para o endereço que agora é só redirect.
+    expect(page).toContain('{ href: "/app/voce", label: "Configurações" }')
+    expect(page).not.toContain("/configuracoes")
+  })
 })
 
 describe("Conta apagada", () => {
@@ -69,12 +76,6 @@ describe("Conta apagada", () => {
   it("não recebe parâmetro: não serve para descobrir se um e-mail existiu", () => {
     expect(page).not.toContain("searchParams")
     expect(page).not.toContain("params")
-  })
-
-  it("a exclusão na tela de conta termina nela, não no login", () => {
-    const conta = read("(shell)", "configuracoes", "conta", "page.tsx")
-    expect(conta).toContain('router.replace("/conta-apagada")')
-    expect(conta).not.toMatch(/handleLeaveAfterDeletion[\s\S]{0,900}router\.replace\("\/login"\)/)
   })
 })
 

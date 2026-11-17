@@ -27,7 +27,6 @@ describe("onde o botão de criação aparece", () => {
   ])("aparece em %s", (path) => {
     expect(showsCreateAction(path)).toBe(true)
   })
-
   it.each([
     "/messages/abc",
     "/pedidos/abc",
@@ -45,8 +44,6 @@ describe("onde o botão de criação aparece", () => {
     "/guide/abc/correcao",
     "/communities/abc/invite",
     "/communities/abc/indicar-prestador",
-    "/configuracoes",
-    "/configuracoes/conta",
     "/cidade/00000000-0000-4000-8000-000000000001",
   ])("some em %s", (path) => {
     expect(showsCreateAction(path)).toBe(false)
