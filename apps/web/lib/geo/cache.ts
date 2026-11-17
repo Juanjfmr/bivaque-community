@@ -67,7 +67,14 @@ export async function lerCepDoCache(
   }
 }
 
-/** Guarda a coordenada recém-geocodificada (e o bairro, quando veio). Erro sobe. */
+/**
+ * Guarda a coordenada recém-geocodificada (e o bairro, quando veio). Erro sobe.
+ *
+ * Sem bairro, a coluna fica fora do upsert: o `on conflict do update` só mexe nas
+ * colunas enviadas, então um bairro que já estava na linha (ou que outra
+ * requisição acabou de gravar) continua lá. Mandar `neighborhood: null` apagaria
+ * o bairro de anúncio e pedido numa renovação concorrente (SEC-016).
+ */
 export async function gravarCepNoCache(
   client: Cliente,
   cep: string,
@@ -79,7 +86,7 @@ export async function gravarCepNoCache(
     latitude: coordenada.latitude,
     longitude: coordenada.longitude,
     source: coordenada.fonte,
-    neighborhood: bairro,
+    ...(bairro === null ? {} : { neighborhood: bairro }),
     fetched_at: new Date().toISOString(),
   })
   if (error) throw error
