@@ -4,9 +4,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest"
 vi.mock("web/lib/app-api/sessao-do-next", () => ({ resolverSessaoDaRequisicao: vi.fn() }))
 vi.mock("web/lib/supabase/server", () => ({ createServerClient: vi.fn() }))
 
-// SEC-011: a janela do Upstash é a primeira barreira do envio e falha FECHADA —
-// sem ela a rota responde 503. Aqui ela é simulada; os testes de recusa provam
-// que a 429 vem antes de o banco ser tocado.
+// O limite do banco vale mesmo quando Upstash não está configurado.
 const janela = vi.hoisted(() => ({ recusando: false }))
 
 vi.mock("web/lib/limits", () => ({
@@ -283,18 +281,16 @@ describe("família do titular no app", () => {
     expect(mock.enfileirados).toHaveLength(0)
   })
 
-  it("sem o limitador configurado a rota responde 503 (fail-closed)", async () => {
+  it("sem Upstash a rota consulta o banco e repassa a recusa fixa do teto", async () => {
     vi.stubEnv("UPSTASH_REDIS_REST_URL", "")
     vi.stubEnv("UPSTASH_REDIS_REST_TOKEN", "")
-    const mock = autenticar()
+    const mock = autenticar({`n      erro: "create",`n      mensagem: "maximum 10 invitations per holder per hour",`n    })
     const resposta = await convidar(req("POST", "", '{"email":"familiar@example.invalid"}'))
-    expect(resposta.status).toBe(503)
-    expect(await resposta.json()).toEqual({ erro: "limite-indisponivel" })
-    // Nem o banco nem o outbox foram tocados.
-    expect(mock.daSessao).toHaveLength(0)
+    expect(resposta.status).toBe(429)
+    expect(await resposta.json()).toMatchObject({`n      erro: "limite",`n      mensagem: "Muitos convites em pouco tempo. Tente novamente mais tarde.",`n    })
+    expect(mock.daSessao.map((chamada) => chamada.nome)).toEqual(["create_family_invitation"])
     expect(mock.enfileirados).toHaveLength(0)
   })
-
   it("janela atômica cheia é 429 antes de criar", async () => {
     janela.recusando = true
     const mock = autenticar()

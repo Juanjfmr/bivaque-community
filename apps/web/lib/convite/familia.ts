@@ -100,21 +100,11 @@ async function titularVerificado(client: Cliente, userId: string): Promise<boole
 const LIMITE_DE_ENVIOS_POR_HORA = 10
 const JANELA_DE_LIMITE_MS = 60 * 60 * 1000
 
-/**
- * A janela deslizante do Upstash, primeira barreira do envio (a segunda é o teto
- * atômico dentro da função do banco).
- *
- * Sem Upstash configurado ela NÃO pode deixar passar: agora que a criação é
- * chamável direto pela Data API, um limitador ausente viraria "sem limite" no
- * caminho que mais precisa dele. A rota responde 503, o mesmo desenho de
- * `limitadorConfigurado()` na entrada.
- */
+/** A janela deslizante opcional do Upstash; o limite que vale fica no banco. */
 export async function conferirJanelaDeEnvio(userId: string): Promise<void> {
   const url = process.env["UPSTASH_REDIS_REST_URL"]
   const token = process.env["UPSTASH_REDIS_REST_TOKEN"]
-  if (!url || !token) {
-    throw new FalhaDeConvite("limite-indisponivel", "O limite de envio está fora agora.")
-  }
+  if (!url || !token) return
   const { Redis } = await import("@upstash/redis")
   const liberado = await allowSlidingWindow(
     createLimiterStore(new Redis({ url, token })),

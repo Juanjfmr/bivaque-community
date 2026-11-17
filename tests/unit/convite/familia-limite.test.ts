@@ -1,11 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest"
 import { enviarConvite, FalhaDeConvite } from "web/lib/convite/familia"
 
-// SEC-011 (auditoria de 16/11, A2-2): o teto de envio tem duas barreiras, e as
-// duas são provadas aqui. A primeira é a janela deslizante do Upstash — sem ela
-// configurada o envio NÃO passa (fail-closed, 503 na rota), porque um limitador
-// ausente deixaria de existir justo no caminho que ele protege. A segunda é o
-// teto atômico dentro da função do banco, que a rota só traduz em 429.
+// O limite que vale é o teto atômico conferido pelo banco.
 
 const janela = vi.hoisted(() => ({ recusando: false, chave: "" }))
 
@@ -75,16 +71,14 @@ describe("limite de ritmo do convite de família", () => {
     janela.recusando = false
   })
 
-  it("sem Upstash configurado o envio não passa (fail-closed)", async () => {
-    const mock = banco()
+  it("sem Upstash configurado o banco aplica o teto", async () => {
+    const mock = banco({ erroNaCriacao: "maximum 10 invitations per holder per hour" })
     const falha = await enviar(mock)
     expect(falha).toBeInstanceOf(FalhaDeConvite)
-    expect((falha as FalhaDeConvite).motivo).toBe("limite-indisponivel")
-    // Nada foi criado nem enfileirado: a barreira vem antes do banco.
-    expect(mock.chamadas).toHaveLength(0)
+    expect((falha as FalhaDeConvite).motivo).toBe("limite")
+    expect(mock.chamadas.map((chamada) => chamada.nome)).toEqual(["create_family_invitation"])
     expect(mock.enfileirados).toHaveLength(0)
   })
-
   it("janela atômica recusando barra antes de criar", async () => {
     vi.stubEnv("UPSTASH_REDIS_REST_URL", UPSTASH.UPSTASH_REDIS_REST_URL)
     vi.stubEnv("UPSTASH_REDIS_REST_TOKEN", UPSTASH.UPSTASH_REDIS_REST_TOKEN)
