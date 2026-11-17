@@ -35,9 +35,22 @@ forbidden:
   - push, merge, abrir PR, force-push; ler, criar ou imprimir arquivos de ambiente
 
 acceptance:
-  - "Com vários check runs do mesmo nome no SHA do head, o avaliar escolhe por nome o melhor: verde ganha de pulado, de neutro e de vermelho; se houver um verde e um vermelho do mesmo check no mesmo SHA, decide pelo mais recente (completed_at ou id maior) e diz no motivo qual usou. Testes novos: pulado + verde passa; vermelho mais recente + verde antigo recusa; só pulado recusa; ordem invertida da lista dá o mesmo veredito."
-  - "Sem GH_TOKEN e sem GITHUB_TOKEN, o script obtém o token por gh auth token (execFileSync, sem shell, sem imprimir); se o gh não estiver logado, recusa com mensagem clara. Teste com a função de obter token injetável."
+  - "Com vários check runs do mesmo nome no SHA do head, o avaliar agrupa por execução (`check_suite.id`): nunca combina o ci-core de uma execução com o agregador de outra. Entre as suítes em que o ci-core existe e não está `skipped`, qualquer uma com o ci-core ou o agregador ainda não `completed` recusa por execução em andamento; entre as concluídas vale a de maior id de suíte, comparado como BigInt (string ou número, nunca `Number`), e nela o ci-core E o agregador precisam estar `success`. Sem id utilizável para ordenar duas execuções, recusa. `completed_at` não decide nada. Testes: verde antigo + execução mais nova em andamento (ci-core, agregador e Visual) recusa; `cancelled`/`timed_out` mais novo sem `completed_at` recusa; ci-core verde com agregador vermelho na suíte A contra ci-core pulado com agregador verde na B recusa; id acima de 2^53 decide pelo maior; id ausente entre duas execuções recusa; pulado + verde e ordem invertida continuam passando."
+  - "Visual Smoke (outro workflow): qualquer run do check Visual não `completed` recusa; entre os concluídos e não pulados vale o de maior id; as regras de pulo por paths e de ausência quando o PR não toca apps/app ficam como estavam."
+  - "Todo veredito, verde ou recusa, nomeia os ids de suíte e de run que usou."
+  - "Sem GH_TOKEN e sem GITHUB_TOKEN, o script obtém o token por gh auth token (execFileSync, sem shell, sem imprimir); se o gh não estiver logado, recusa com mensagem clara. Variável vazia conta como ausente (`GH_TOKEN=\"\"` cede para `GITHUB_TOKEN`). Teste com a função de obter token injetável."
   - "Os testes que já existiam em tests/scope/merge-seguro.test.mjs continuam passando sem mudar o que provam."
+
+correcao:
+  origem: >
+    Revisão independente do HRN-006 (17/11, .work/orq/relatorios/HRN-006-revisao.md) achou três
+    falsos positivos: execução mais recente em andamento era ignorada por um verde antigo;
+    `cancelled`/`timed_out` sem `completed_at` perdiam para verde antigo; e checks de execuções
+    diferentes eram combinados. O desenho do coordenador substitui a escolha por nome solto pela
+    escolha por execução, descrita na acceptance.
+  drift: >
+    A acceptance anterior ("decide pelo mais recente (completed_at ou id maior)") está substituída
+    pela atual: `completed_at` não é mais usado e a comparação de ids é BigInt.
 
 proof:
   - "node --test tests/scope/merge-seguro.test.mjs"

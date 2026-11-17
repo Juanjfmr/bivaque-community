@@ -27,6 +27,18 @@ const run = (name, id, conclusion, completed_at) => ({
   completed_at,
 })
 
+// Um check de uma execução de workflow identificada: é o check_suite.id que agrupa.
+const emSuite = (
+  name,
+  idSuite,
+  { id, status = "completed", conclusion = "success", completedAt } = {},
+) => ({
+  ...check(name, { status, conclusion }),
+  id,
+  completed_at: completedAt,
+  check_suite: { id: idSuite },
+})
+
 function resposta(corpo, { ok = true, status = 200 } = {}) {
   return { ok, status, text: async () => JSON.stringify(corpo) }
 }
@@ -311,4 +323,183 @@ test("obter token usa ambiente antes do gh e injeta chamada sem shell", () => {
       }),
     /gh auth login/,
   )
+})
+
+// Uma execução mais nova que ainda não terminou não pode ser escondida por um verde antigo.
+test("execução mais recente com o ci-core em andamento recusa, mesmo com outra verde", () => {
+  const veredito = avaliar({
+    headSha: SHA,
+    estado: "open",
+    arquivos: ["apps/app/src/main.tsx"],
+    checkRuns: [
+      emSuite(CHECK_COMPLETO, "100", { id: 1010 }),
+      emSuite(CHECK_AGREGADO, "100", { id: 1011 }),
+      emSuite(CHECK_VISUAL, "900", { id: 9010 }),
+      emSuite(CHECK_COMPLETO, "200", { id: 2020, status: "in_progress", conclusion: null }),
+      emSuite(CHECK_AGREGADO, "200", { id: 2021, status: "queued", conclusion: null }),
+    ],
+  })
+  assert.equal(veredito.ok, false)
+  assert.match(veredito.motivo, /execução em andamento/)
+  assert.match(veredito.motivo, /suíte 200/)
+  assert.match(veredito.motivo, /run 2020/)
+})
+
+test("execução mais recente com o agregador em andamento recusa, mesmo com o ci-core verde", () => {
+  const veredito = avaliar({
+    headSha: SHA,
+    estado: "open",
+    arquivos: ["apps/app/src/main.tsx"],
+    checkRuns: [
+      emSuite(CHECK_COMPLETO, "100", { id: 1010 }),
+      emSuite(CHECK_AGREGADO, "100", { id: 1011 }),
+      emSuite(CHECK_VISUAL, "900", { id: 9010 }),
+      emSuite(CHECK_COMPLETO, "200", { id: 2020 }),
+      emSuite(CHECK_AGREGADO, "200", { id: 2021, status: "in_progress", conclusion: null }),
+    ],
+  })
+  assert.equal(veredito.ok, false)
+  assert.match(veredito.motivo, /execução em andamento/)
+  assert.match(veredito.motivo, /suíte 200/)
+  assert.match(veredito.motivo, /run 2021/)
+})
+
+test("Visual Smoke em andamento recusa, mesmo com outro Visual verde", () => {
+  const veredito = avaliar({
+    headSha: SHA,
+    estado: "open",
+    arquivos: ["apps/app/src/main.tsx"],
+    checkRuns: [
+      emSuite(CHECK_COMPLETO, "100", { id: 1010 }),
+      emSuite(CHECK_AGREGADO, "100", { id: 1011 }),
+      emSuite(CHECK_VISUAL, "900", { id: 9010 }),
+      emSuite(CHECK_VISUAL, "901", { id: 9011, status: "in_progress", conclusion: null }),
+    ],
+  })
+  assert.equal(veredito.ok, false)
+  assert.match(veredito.motivo, /Visual Smoke ainda está "in_progress"/)
+  assert.match(veredito.motivo, /run 9011/)
+})
+
+test("run cancelado ou expirado mais recente, sem completed_at, vence o verde antigo e recusa", () => {
+  for (const conclusao of ["cancelled", "timed_out"]) {
+    const veredito = avaliar({
+      headSha: SHA,
+      estado: "open",
+      arquivos: ["apps/app/src/main.tsx"],
+      checkRuns: [
+        // verde antigo, com data de conclusão
+        emSuite(CHECK_COMPLETO, "100", { id: 1010, completedAt: "2026-11-17T09:00:00Z" }),
+        emSuite(CHECK_AGREGADO, "100", { id: 1011, completedAt: "2026-11-17T09:05:00Z" }),
+        emSuite(CHECK_VISUAL, "900", { id: 9010, completedAt: "2026-11-17T09:06:00Z" }),
+        // execução mais nova, sem data: não pode perder para o verde velho
+        emSuite(CHECK_COMPLETO, "200", { id: 2020, conclusion: conclusao }),
+        emSuite(CHECK_AGREGADO, "200", { id: 2021 }),
+      ],
+    })
+    assert.equal(veredito.ok, false)
+    assert.match(veredito.motivo, new RegExp(`${conclusao}.*run 2020`))
+  }
+})
+
+test("ci-core de uma execução não se combina com o agregador de outra", () => {
+  const veredito = avaliar({
+    headSha: SHA,
+    estado: "open",
+    arquivos: ["apps/app/src/main.tsx"],
+    checkRuns: [
+      // execução A: ci-core verde, agregador vermelho
+      emSuite(CHECK_COMPLETO, "100", { id: 1010 }),
+      emSuite(CHECK_AGREGADO, "100", { id: 1011, conclusion: "failure" }),
+      // execução B: ci-core pulado, agregador verde — não roda o rito
+      emSuite(CHECK_COMPLETO, "50", { id: 510, conclusion: "skipped" }),
+      emSuite(CHECK_AGREGADO, "50", { id: 511 }),
+      emSuite(CHECK_VISUAL, "900", { id: 9010 }),
+    ],
+  })
+  assert.equal(veredito.ok, false)
+  assert.match(veredito.motivo, /"failure"/)
+  assert.match(veredito.motivo, /suíte 100/)
+  assert.match(veredito.motivo, /run 1011/)
+})
+
+test("id de suíte acima de 2^53 decide pelo mais recente, como BigInt", () => {
+  const base = (idSuite, { id, conclusion = "success" }) => [
+    emSuite(CHECK_COMPLETO, idSuite, { id, conclusion }),
+    emSuite(CHECK_AGREGADO, idSuite, { id: id + 1 }),
+  ]
+
+  // Os dois ids viram o mesmo Number: comparados por Number, o vermelho mais novo
+  // passaria como se fosse a execução verde antiga.
+  const recusa = avaliar({
+    headSha: SHA,
+    estado: "open",
+    arquivos: ["apps/app/src/main.tsx"],
+    checkRuns: [
+      ...base("9007199254740992", { id: 1 }),
+      ...base("9007199254740993", { id: 3, conclusion: "failure" }),
+      emSuite(CHECK_VISUAL, "9007199254740994", { id: 9 }),
+    ],
+  })
+  assert.equal(recusa.ok, false)
+  assert.match(recusa.motivo, /"failure"/)
+  assert.match(recusa.motivo, /suíte 9007199254740993/)
+  assert.match(recusa.motivo, /run 3/)
+
+  // E o mais novo continua ganhando quando é ele o verde.
+  const passa = avaliar({
+    headSha: SHA,
+    estado: "open",
+    arquivos: ["apps/app/src/main.tsx"],
+    checkRuns: [
+      ...base("9007199254740992", { id: 1, conclusion: "failure" }),
+      ...base("9007199254740993", { id: 3 }),
+      emSuite(CHECK_VISUAL, "9007199254740994", { id: 9 }),
+    ],
+  })
+  assert.equal(passa.ok, true)
+  assert.match(passa.motivo, /suíte 9007199254740993/)
+})
+
+test("duas execuções sem id de suíte: recusa por recência ambígua", () => {
+  const veredito = avaliar({
+    headSha: SHA,
+    estado: "open",
+    arquivos: ["docs/LANCAMENTO.md"],
+    checkRuns: [
+      emSuite(CHECK_COMPLETO, "100", { id: 1010 }),
+      emSuite(CHECK_AGREGADO, "100", { id: 1011 }),
+      emSuite(CHECK_COMPLETO, undefined, { id: 2010 }),
+      emSuite(CHECK_AGREGADO, undefined, { id: 2011 }),
+    ],
+  })
+  assert.equal(veredito.ok, false)
+  assert.match(veredito.motivo, /sem id de suíte/)
+  assert.match(veredito.motivo, /2010/)
+})
+
+test("GH_TOKEN vazio conta como ausente e cede para GITHUB_TOKEN", () => {
+  assert.equal(
+    obterToken({
+      env: { GH_TOKEN: "", GITHUB_TOKEN: "outro-token" },
+      execFileSyncImpl: () => assert.fail("não deveria chamar o gh"),
+    }),
+    "outro-token",
+  )
+  assert.equal(
+    obterToken({
+      env: { GH_TOKEN: "", GITHUB_TOKEN: "" },
+      execFileSyncImpl: () => "do-gh\n",
+    }),
+    "do-gh",
+  )
+})
+
+test("consulta todos os runs do SHA, não só o mais novo de cada nome", async () => {
+  const { api } = await rodar({
+    arquivos: ["docs/LANCAMENTO.md"],
+    checkRuns: [check(CHECK_COMPLETO), check(CHECK_AGREGADO)],
+  })
+  const chamada = api.chamadas.find((c) => c.url.includes("/check-runs"))
+  assert.match(chamada.url, /filter=all/)
 })
