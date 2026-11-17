@@ -328,3 +328,57 @@ test("remover com o DELETE adiado, trocar de segmento e voltar: o anúncio não 
   )
   await expect(vazio).toBeVisible()
 })
+
+test("leitura que começou antes do sucesso e chega depois dele não repõe o anúncio removido", async ({
+  page,
+}) => {
+  aplicarStubMercado(page)
+  await simularSalvos(page)
+  await salvarAnuncio(page, ANUNCIO)
+  await salvarAnuncio(page, IMOVEL)
+
+  // O corpo da primeira leitura de Desapegos, com o anúncio ainda salvo: é o que
+  // uma leitura feita antes do commit devolveria.
+  const primeira = page.waitForResponse((resposta) =>
+    /\/api\/app\/mercado\/salvos\?[^#]*tipo=item/.test(resposta.url()),
+  )
+  await page.goto("/app/salvos")
+  const corpoVelho = await (await primeira).text()
+
+  let concluiu = false
+  await page.route(/\/api\/app\/mercado\/a-1\/salvo(?:\?|$)/, async (rota) => {
+    if (rota.request().method() !== "DELETE") return rota.fallback()
+    await new Promise((espera) => setTimeout(espera, 3000))
+    await rota.fallback()
+    concluiu = true
+  })
+
+  const anuncios = page.locator('[data-salvos="anuncios"]')
+  const sofa = anuncios.locator('[data-cartao="anuncio"]', { hasText: TITULO_DO_ANUNCIO })
+  await expect(sofa).toBeVisible()
+  await sofa.getByRole("button", { name: "Remover dos salvos", exact: true }).click()
+  await expect(sofa).toHaveCount(0)
+
+  await anuncios.getByRole("button", { name: "Imóveis", exact: true }).click()
+  await expect(
+    anuncios.locator('[data-cartao="anuncio"]', { hasText: TITULO_DO_IMOVEL }),
+  ).toBeVisible()
+
+  // A volta a Desapegos começa com o DELETE no ar, mas a resposta dela só chega
+  // depois do sucesso — e traz o corpo velho, com o anúncio.
+  await page.route(/\/api\/app\/mercado\/salvos\?[^#]*tipo=item/, async (rota) => {
+    await expect.poll(() => concluiu, { timeout: 30_000 }).toBe(true)
+    await new Promise((espera) => setTimeout(espera, 300))
+    await rota.fulfill({ status: 200, contentType: "application/json", body: corpoVelho })
+  })
+  const volta = page.waitForResponse((resposta) =>
+    /\/api\/app\/mercado\/salvos\?[^#]*tipo=item/.test(resposta.url()),
+  )
+  await anuncios.getByRole("button", { name: "Desapegos", exact: true }).click()
+  await volta
+  expect(concluiu, "a resposta da volta só chega depois do sucesso do DELETE").toBe(true)
+
+  const vazio = anuncios.locator('[data-estado="vazio"]', { hasText: "Nenhum anúncio salvo" })
+  await expect(vazio, "a leitura velha não pode repor o anúncio removido").toBeVisible()
+  await expect(anuncios).not.toContainText(TITULO_DO_ANUNCIO)
+})

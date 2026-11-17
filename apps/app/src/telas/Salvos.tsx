@@ -92,13 +92,42 @@ export function Salvos() {
     saindo.current.get(secao)?.delete(id)
   }
 
-  /** A lista lida sem quem está saindo: a gravação ainda não tinha terminado. */
+  // Relógio lógico das leituras e das remoções confirmadas. Uma leitura que
+  // começou ANTES de uma remoção ser confirmada pode ter lido a linha antes do
+  // commit e chegar depois do sucesso: ela sai sem o item. Uma leitura que começa
+  // DEPOIS da confirmação mostra o que o servidor devolver — inclusive o item, se
+  // a pessoa o salvou de novo.
+  const relogio = useRef(0)
+  const confirmadas = useRef(new Map<SecaoDosSalvos, Map<string, number>>())
+
+  function marcarLeitura(): number {
+    relogio.current += 1
+    return relogio.current
+  }
+
+  function confirmar(secao: SecaoDosSalvos, id: string): void {
+    relogio.current += 1
+    const ids = confirmadas.current.get(secao) ?? new Map<string, number>()
+    ids.set(id, relogio.current)
+    confirmadas.current.set(secao, ids)
+  }
+
+  /**
+   * A lista lida sem quem está saindo (a gravação ainda não tinha terminado) e
+   * sem quem saiu depois que esta leitura começou.
+   */
   function semOsQueSaem<T extends { id: string }>(
     secao: SecaoDosSalvos,
     lista: readonly T[],
+    inicio: number,
   ): readonly T[] {
-    const ids = saindo.current.get(secao)
-    return ids === undefined || ids.size === 0 ? lista : lista.filter((item) => !ids.has(item.id))
+    const pendentes = saindo.current.get(secao)
+    const saidas = confirmadas.current.get(secao)
+    return lista.filter((item) => {
+      if (pendentes?.has(item.id)) return false
+      const quando = saidas?.get(item.id)
+      return quando === undefined || quando < inicio
+    })
   }
 
   // Uma página por aba basta para a tela; o cursor da rota cobre quem guardar
@@ -109,12 +138,13 @@ export function Salvos() {
     abaAtual.current = aba
     setAnuncios(null)
     setErroDosAnuncios(false)
+    const inicio = marcarLeitura()
     void listarAnunciosSalvos(
       { tipo: aba === "imoveis" ? "property" : "item", limite: 50 },
       { signal: controle.signal },
     )
       .then((lista) => {
-        if (!controle.signal.aborted) setAnuncios(semOsQueSaem("anuncios", lista.anuncios))
+        if (!controle.signal.aborted) setAnuncios(semOsQueSaem("anuncios", lista.anuncios, inicio))
       })
       .catch(() => {
         if (!controle.signal.aborted) setErroDosAnuncios(true)
@@ -127,9 +157,10 @@ export function Salvos() {
     const controle = new AbortController()
     setGuia(null)
     setErroDoGuia(false)
+    const inicio = marcarLeitura()
     void lerSalvosDoGuia({ signal: controle.signal })
       .then((lidas) => {
-        if (!controle.signal.aborted) setGuia(semOsQueSaem("guia", lidas))
+        if (!controle.signal.aborted) setGuia(semOsQueSaem("guia", lidas, inicio))
       })
       .catch(() => {
         if (!controle.signal.aborted) setErroDoGuia(true)
@@ -142,9 +173,10 @@ export function Salvos() {
     const controle = new AbortController()
     setPublicacoes(null)
     setErroDasPublicacoes(false)
+    const inicio = marcarLeitura()
     void lerPublicacoesSalvas({ signal: controle.signal })
       .then((lidas) => {
-        if (!controle.signal.aborted) setPublicacoes(semOsQueSaem("publicacoes", lidas))
+        if (!controle.signal.aborted) setPublicacoes(semOsQueSaem("publicacoes", lidas, inicio))
       })
       .catch(() => {
         if (!controle.signal.aborted) setErroDasPublicacoes(true)
@@ -157,9 +189,10 @@ export function Salvos() {
     const controle = new AbortController()
     setPerguntas(null)
     setErroDasPerguntas(false)
+    const inicio = marcarLeitura()
     void lerPerguntasSalvas({ signal: controle.signal })
       .then((lidas) => {
-        if (!controle.signal.aborted) setPerguntas(semOsQueSaem("perguntas", lidas))
+        if (!controle.signal.aborted) setPerguntas(semOsQueSaem("perguntas", lidas, inicio))
       })
       .catch(() => {
         if (!controle.signal.aborted) setErroDasPerguntas(true)
@@ -195,7 +228,9 @@ export function Salvos() {
     definir((atual) => atual?.filter((outro) => outro.id !== id) ?? atual)
     try {
       await gravar()
-      // Sucesso: o item sai também da lista que voltou durante a chamada.
+      // Sucesso: o item sai também da lista que voltou durante a chamada, e
+      // leituras já começadas que chegarem depois não o repõem.
+      confirmar(secao, id)
       definir((atual) => atual?.filter((outro) => outro.id !== id) ?? atual)
     } catch (falha: unknown) {
       // shortcut: repõe no índice original; se um vizinho anterior também saiu,
