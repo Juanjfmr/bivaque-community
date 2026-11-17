@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react"
 import { Botao } from "@/components/bivaque/botao"
+import { FalhaDaApi } from "@/lib/api/cliente"
 import { CATEGORIAS_DO_GUIA, type CategoriaDoGuia, sugerirLugar } from "@/lib/dados/guia"
 import { CampoDeEscolha, Folha } from "@/src/pecas/pecas"
 import { ROTULO_DA_CATEGORIA } from "./comum"
@@ -40,8 +41,12 @@ export function SugerirLugar() {
       setDescricao("")
       setSite("")
       setTelefone("")
-    } catch {
-      setErro("Não foi possível enviar. Confira os dados e tente novamente.")
+    } catch (error) {
+      setErro(
+        error instanceof FalhaDaApi && error.mensagem
+          ? error.mensagem
+          : "Não foi possível enviar. Tente novamente.",
+      )
     } finally {
       setEnviando(false)
     }

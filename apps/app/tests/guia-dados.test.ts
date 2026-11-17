@@ -51,6 +51,22 @@ describe("diretório do guia", () => {
       init: { method: "POST" },
     })
   })
+  it("preserva a mensagem fixa de limite enviada pela rota", async () => {
+    const buscar = vi.fn(
+      async () =>
+        new Response(
+          JSON.stringify({
+            erro: "limite",
+            mensagem: "Você já tem cinco sugestões aguardando revisão.",
+          }),
+          { status: 429 },
+        ),
+    )
+    vi.stubGlobal("fetch", buscar)
+    await expect(
+      sugerirLugar({ nome: "Escola Modelo", categoria: "school", descricao: "" }),
+    ).rejects.toMatchObject({ mensagem: "Você já tem cinco sugestões aguardando revisão." })
+  })
   it("traduz a lista, a cidade e o cursor", async () => {
     const buscar = responder({
       entradas: [ENTRADA],
