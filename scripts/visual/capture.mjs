@@ -204,7 +204,6 @@ export const HEADINGS = {
   "/salvos?aba=imoveis": "^Salvos$",
   // Prancha 12/61: a rota de sugestão de referência nova (a correção de artigo
   // existente já tem contrato em /guide/[id]/correcao).
-  "/guide/sugerir": "^Sugerir referência$",
   "/ajuda": "^Ajuda$",
   "/denuncias": "^Confiança e privacidade$",
   "/denuncias/nova?tipo=post&id=80000000-0000-4000-8000-000000000f01": "^Denunciar publicação$",
@@ -440,7 +439,6 @@ export const ROUTES = [
   { path: "/salvos?aba=guia", name: "salvos-guia", auth: true },
   { path: "/salvos?aba=mercado", name: "salvos-mercado", auth: true },
   { path: "/salvos?aba=imoveis", name: "salvos-imoveis", auth: true },
-  { path: "/guide/sugerir", name: "guide-sugerir", auth: true },
   { path: "/ajuda", name: "ajuda", auth: true },
   { path: "/denuncias", name: "denuncias", auth: true },
   {

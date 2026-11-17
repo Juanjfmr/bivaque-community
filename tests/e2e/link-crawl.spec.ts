@@ -222,12 +222,6 @@ const PORTAS_FORA_DO_LINK: readonly PortaDeclarada[] = [
     porta: "FLUXO: versão endereçável (spec C10) do diálogo que as origens abrem por cima da tela",
   },
   {
-    route: "/guide/sugerir",
-    porta:
-      "DÍVIDA LAN-TROCA: a porta era 'Sugerir um lugar' na lista /guide, trocada para o app (F08); o app ainda não tem a porta de sugestão de lugar novo (gap em F08-RESSALVAS)",
-    dono: "membro",
-  },
-  {
     route: "/indicacoes",
     porta:
       "FLUXO: redireciona para a vista Indicações da Comunidade; fica para links antigos e ?pedir=1",
@@ -420,7 +414,7 @@ test.describe("rastreador de links", { tag: "@stateful" }, () => {
         "/pedidos/[id]",
         "/prestadores/[id]",
         // /guide perdeu o page.tsx na troca da fase 8 e vive só do redirect do next.config:
-        // continua destino válido de <a href> (o "voltar" de /guide/sugerir), então precisa de
+        // continua destino válido de links de conteúdo antigo, então precisa de
         // padrão — sem ele, todo link para lá virava "rota inexistente".
         "/guide",
         "/configuracoes/bloqueados",

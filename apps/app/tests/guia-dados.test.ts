@@ -7,6 +7,7 @@ import {
   lerVerbete,
   marcarNoGuia,
   sugerirAtualizacao,
+  sugerirLugar,
 } from "@/lib/dados/guia"
 
 /**
@@ -42,6 +43,30 @@ const ENTRADA = {
 }
 
 describe("diretório do guia", () => {
+  it("envia sugestão de lugar novo pela rota do app", async () => {
+    const buscar = responder({ enviada: true }, 201)
+    await sugerirLugar({ nome: "Escola Modelo", categoria: "school", descricao: "Boa referência" })
+    expect(chamada(buscar)).toMatchObject({
+      caminho: "/api/app/guia/sugestao",
+      init: { method: "POST" },
+    })
+  })
+  it("preserva a mensagem fixa de limite enviada pela rota", async () => {
+    const buscar = vi.fn(
+      async () =>
+        new Response(
+          JSON.stringify({
+            erro: "limite",
+            mensagem: "Você já tem cinco sugestões aguardando revisão.",
+          }),
+          { status: 429 },
+        ),
+    )
+    vi.stubGlobal("fetch", buscar)
+    await expect(
+      sugerirLugar({ nome: "Escola Modelo", categoria: "school", descricao: "" }),
+    ).rejects.toMatchObject({ mensagem: "Você já tem cinco sugestões aguardando revisão." })
+  })
   it("traduz a lista, a cidade e o cursor", async () => {
     const buscar = responder({
       entradas: [ENTRADA],
