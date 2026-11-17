@@ -1,24 +1,24 @@
-import { useState } from "react"
-import { Pressable, View } from "react-native"
+import { Pressable, Share, View } from "react-native"
 import { Icone, type NomeIcone } from "@/components/icons"
 import { Pressionavel } from "@/components/motion"
 import { Card } from "@/components/ui/card"
 import { Text } from "@/components/ui/text"
 import { type Post, pessoaPorId } from "@/lib/dados"
+import { alternarUtil, useUtil } from "@/lib/dados/estado"
 import { AvatarPessoa } from "./avatar-pessoa"
 import { BotaoIcone } from "./botao-icone"
 import { useCores } from "./cores"
 
 interface CartaoPostProps {
   post: Post
-  /** Tocar no cartão abre a conversa da publicação. */
+  /** Tocar no cartão, em Comentar, abre o detalhe da publicação. */
   aoPressionar?: () => void
 }
 
 /** Cartão do feed: autor, bairro · tempo, texto e ações em pílulas. */
 export function CartaoPost({ post, aoPressionar }: CartaoPostProps) {
   const cores = useCores()
-  const [util, setUtil] = useState(false)
+  const util = useUtil(post.id)
   const autor = pessoaPorId(post.autorId)
 
   if (!autor) return null
@@ -50,7 +50,7 @@ export function CartaoPost({ post, aoPressionar }: CartaoPostProps) {
           rotulo={`Útil ${post.uteis + (util ? 1 : 0)}`}
           ativo={util}
           cor={util ? cores.foreground : cores.mutedForeground}
-          aoPressionar={() => setUtil((atual) => !atual)}
+          aoPressionar={() => alternarUtil(post.id)}
         />
         <Pilula
           nome="comentar"
@@ -62,9 +62,10 @@ export function CartaoPost({ post, aoPressionar }: CartaoPostProps) {
         <BotaoIcone
           nome="compartilhar"
           rotulo="Compartilhar publicação"
-          aoPressionar={() => undefined}
+          aoPressionar={() => {
+            void Share.share({ message: post.texto }).catch(() => undefined)
+          }}
         />
-        <BotaoIcone nome="mais" rotulo="Mais opções da publicação" aoPressionar={() => undefined} />
       </View>
     </Card>
   )
