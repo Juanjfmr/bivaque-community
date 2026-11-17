@@ -24,6 +24,9 @@ import { Segmentos } from "@/src/pecas/segmentos"
 
 type AbaDosSalvos = "desapegos" | "imoveis"
 
+/** As seções que sabem remover — o nome guarda, por seção, quem está saindo. */
+type SecaoDosSalvos = "anuncios" | "publicacoes" | "perguntas" | "guia"
+
 const ABAS: readonly ItemDeFiltro[] = [
   { id: "desapegos", rotulo: "Desapegos" },
   { id: "imoveis", rotulo: "Imóveis" },
@@ -74,6 +77,30 @@ export function Salvos() {
   // segmento seguinte depois de a pessoa trocar de seção.
   const abaAtual = useRef(aba)
 
+  // Quem está saindo agora, por seção. Uma leitura que chega enquanto o DELETE
+  // corre pode ter lido a linha antes da gravação: sem este guarda, o anúncio
+  // removido reaparece na volta ao segmento.
+  const saindo = useRef(new Map<SecaoDosSalvos, Set<string>>())
+
+  function segurar(secao: SecaoDosSalvos, id: string): void {
+    const ids = saindo.current.get(secao) ?? new Set<string>()
+    ids.add(id)
+    saindo.current.set(secao, ids)
+  }
+
+  function largar(secao: SecaoDosSalvos, id: string): void {
+    saindo.current.get(secao)?.delete(id)
+  }
+
+  /** A lista lida sem quem está saindo: a gravação ainda não tinha terminado. */
+  function semOsQueSaem<T extends { id: string }>(
+    secao: SecaoDosSalvos,
+    lista: readonly T[],
+  ): readonly T[] {
+    const ids = saindo.current.get(secao)
+    return ids === undefined || ids.size === 0 ? lista : lista.filter((item) => !ids.has(item.id))
+  }
+
   // Uma página por aba basta para a tela; o cursor da rota cobre quem guardar
   // mais que isso.
   // biome-ignore lint/correctness/useExhaustiveDependencies: rodada é o pedido de "tentar de novo"
@@ -87,7 +114,7 @@ export function Salvos() {
       { signal: controle.signal },
     )
       .then((lista) => {
-        if (!controle.signal.aborted) setAnuncios(lista.anuncios)
+        if (!controle.signal.aborted) setAnuncios(semOsQueSaem("anuncios", lista.anuncios))
       })
       .catch(() => {
         if (!controle.signal.aborted) setErroDosAnuncios(true)
@@ -102,7 +129,7 @@ export function Salvos() {
     setErroDoGuia(false)
     void lerSalvosDoGuia({ signal: controle.signal })
       .then((lidas) => {
-        if (!controle.signal.aborted) setGuia(lidas)
+        if (!controle.signal.aborted) setGuia(semOsQueSaem("guia", lidas))
       })
       .catch(() => {
         if (!controle.signal.aborted) setErroDoGuia(true)
@@ -117,7 +144,7 @@ export function Salvos() {
     setErroDasPublicacoes(false)
     void lerPublicacoesSalvas({ signal: controle.signal })
       .then((lidas) => {
-        if (!controle.signal.aborted) setPublicacoes(lidas)
+        if (!controle.signal.aborted) setPublicacoes(semOsQueSaem("publicacoes", lidas))
       })
       .catch(() => {
         if (!controle.signal.aborted) setErroDasPublicacoes(true)
@@ -132,7 +159,7 @@ export function Salvos() {
     setErroDasPerguntas(false)
     void lerPerguntasSalvas({ signal: controle.signal })
       .then((lidas) => {
-        if (!controle.signal.aborted) setPerguntas(lidas)
+        if (!controle.signal.aborted) setPerguntas(semOsQueSaem("perguntas", lidas))
       })
       .catch(() => {
         if (!controle.signal.aborted) setErroDasPerguntas(true)
@@ -147,8 +174,13 @@ export function Salvos() {
    * Remover e repor são atualizações funcionais sobre a lista do momento: duas
    * remoções na mesma seção não desfazem uma à outra. `mesmaSecao` impede que a
    * volta de um anúncio caia na lista do segmento seguinte.
+   *
+   * `secao` alimenta o guarda de quem está saindo: enquanto o DELETE corre, uma
+   * releitura da seção sai sem o item, e o sucesso também o tira da lista que
+   * chegou no meio da chamada.
    */
   async function remover<T extends { id: string }>(
+    secao: SecaoDosSalvos,
     id: string,
     lista: readonly T[] | null,
     definir: Dispatch<SetStateAction<readonly T[] | null>>,
@@ -159,9 +191,12 @@ export function Salvos() {
     const item = lista?.find((outro) => outro.id === id)
     setAviso(null)
     setRemovendo(id)
+    segurar(secao, id)
     definir((atual) => atual?.filter((outro) => outro.id !== id) ?? atual)
     try {
       await gravar()
+      // Sucesso: o item sai também da lista que voltou durante a chamada.
+      definir((atual) => atual?.filter((outro) => outro.id !== id) ?? atual)
     } catch (falha: unknown) {
       // shortcut: repõe no índice original; se um vizinho anterior também saiu,
       // ela entra depois dele.
@@ -175,6 +210,7 @@ export function Salvos() {
       }
       if (!foiAbortada(falha)) setAviso(falhaAoRemover(falha))
     } finally {
+      largar(secao, id)
       setRemovendo((atual) => (atual === id ? null : atual))
     }
   }
@@ -272,6 +308,7 @@ export function Salvos() {
                 }}
                 aoSalvar={() =>
                   void remover(
+                    "anuncios",
                     anuncio.id,
                     anuncios,
                     setAnuncios,
@@ -320,7 +357,7 @@ export function Salvos() {
                     nome="bookmark_remove"
                     disabled={removendo === publicacao.id}
                     onClick={() =>
-                      void remover(publicacao.id, publicacoes, setPublicacoes, () =>
+                      void remover("publicacoes", publicacao.id, publicacoes, setPublicacoes, () =>
                         agirNaPublicacao(publicacao.id, "salvar", false),
                       )
                     }
@@ -366,7 +403,7 @@ export function Salvos() {
                     nome="bookmark_remove"
                     disabled={removendo === pergunta.id}
                     onClick={() =>
-                      void remover(pergunta.id, perguntas, setPerguntas, () =>
+                      void remover("perguntas", pergunta.id, perguntas, setPerguntas, () =>
                         marcarSalvaPergunta(pergunta.id, false),
                       )
                     }
@@ -410,7 +447,9 @@ export function Salvos() {
                     nome="bookmark_remove"
                     disabled={removendo === entrada.id}
                     onClick={() =>
-                      void remover(entrada.id, guia, setGuia, () => marcarNoGuia(entrada.id, false))
+                      void remover("guia", entrada.id, guia, setGuia, () =>
+                        marcarNoGuia(entrada.id, false),
+                      )
                     }
                   />
                 </div>

@@ -49,7 +49,9 @@ mas não tinha busca e só sabia dessalvar anúncio. O levantamento de 17/11
    servidor se o dessalvar falhar — remoção otimista nunca some em silêncio. A volta é do item, não
    da lista: remoção e reposição são atualizações funcionais sobre a lista do momento, então duas
    remoções na mesma seção não desfazem uma à outra, e a volta de um anúncio não cai na lista do
-   segmento seguinte se a pessoa trocou de segmento enquanto a chamada corria.
+   segmento seguinte se a pessoa trocou de segmento enquanto a chamada corria. Enquanto a gravação
+   está pendente, o id sai de qualquer releitura daquela seção — o banco ainda pode devolvê-lo — e o
+   sucesso da gravação tira o item também da lista que chegou no meio da chamada.
 4. **Divergência registrada: abas por tipo e `?aba=` (item 2.3.6).** A tela web tinha cinco abas
    (Tudo/Indicações/Guia/Mercado/Imóveis) e lia `?aba=` da URL. O app organiza por **seções**, que
    é o desenho aprovado, e o lote não constrói abas nem `?aba=`: o redirect legado vai a
@@ -68,9 +70,13 @@ mas não tinha busca e só sabia dessalvar anúncio. O levantamento de 17/11
    persistência real de cada tipo já é medida no app por `tests/e2e/f06-mercado-real.spec.ts`
    (anúncio salvo aparece em Salvos e dessalvar apaga a linha no banco),
    `tests/e2e/f08-guia-real.spec.ts` (referência salva aparece em Salvos) e
-   `tests/e2e/f04-perguntas-real.spec.ts` (pergunta seguida aparece em Salvos; desseguida pela
-   tela Salvos, a linha some do banco e não volta ao recarregar). A busca e o gesto de remover das
-   quatro seções ganham `apps/app/tests/e2e/salvos.spec.ts`. Os E2E da web que usavam `/salvos`
+   `tests/e2e/f04-perguntas-real.spec.ts` (pergunta seguida aparece em Salvos; desseguida pela tela
+   Salvos, o caso espera o `DELETE` ser aceito com 2xx e, depois de recarregar, espera a seção de
+   perguntas **terminar de carregar vazia** — o vazio dela só existe com a lista lida, então o que
+   se prova é a linha fora do banco, não a saída otimista da tela). A busca e o gesto de remover
+   das quatro seções ganham `apps/app/tests/e2e/salvos.spec.ts`, e ali a remoção de anúncio com o
+   `DELETE` adiado, trocando de segmento e voltando antes de ele terminar, prova que a releitura
+   feita durante a gravação não repõe o item. Os E2E da web que usavam `/salvos`
    como página-base da casca passam a usar `/community`, que é rota viva do mesmo grupo. O
    inventário completo de `git grep` está no relatório do lote.
 

@@ -273,3 +273,58 @@ test("remover no meio da troca de segmento não põe o anúncio no segmento erra
   ).toBeVisible()
   await expect(anuncios).not.toContainText(TITULO_DO_ANUNCIO)
 })
+
+test("remover com o DELETE adiado, trocar de segmento e voltar: o anúncio não reaparece", async ({
+  page,
+}) => {
+  aplicarStubMercado(page)
+  await simularSalvos(page)
+  await salvarAnuncio(page, ANUNCIO)
+  await salvarAnuncio(page, IMOVEL)
+  // O DELETE demora e só grava no fim: a volta ao segmento lê o anúncio ainda
+  // salvo no banco — é essa leitura atrasada que não pode repô-lo na tela.
+  let concluiu = false
+  await page.route(/\/api\/app\/mercado\/a-1\/salvo(?:\?|$)/, async (rota) => {
+    if (rota.request().method() !== "DELETE") return rota.fallback()
+    await new Promise((espera) => setTimeout(espera, 6000))
+    await rota.fallback()
+    concluiu = true
+  })
+
+  await page.goto("/app/salvos")
+  const anuncios = page.locator('[data-salvos="anuncios"]')
+  const sofa = anuncios.locator('[data-cartao="anuncio"]', { hasText: TITULO_DO_ANUNCIO })
+  await expect(sofa).toBeVisible()
+  await sofa.getByRole("button", { name: "Remover dos salvos", exact: true }).click()
+  await expect(sofa).toHaveCount(0)
+
+  await anuncios.getByRole("button", { name: "Imóveis", exact: true }).click()
+  await expect(
+    anuncios.locator('[data-cartao="anuncio"]', { hasText: TITULO_DO_IMOVEL }),
+  ).toBeVisible()
+
+  // Volta ao segmento com o DELETE ainda no ar: o servidor devolve o anúncio, e
+  // a tela precisa terminar de carregar sem ele.
+  const releitura = page.waitForResponse((resposta) =>
+    /\/api\/app\/mercado\/salvos\?[^#]*tipo=item/.test(resposta.url()),
+  )
+  await anuncios.getByRole("button", { name: "Desapegos", exact: true }).click()
+  expect((await releitura).ok(), "a releitura do segmento precisa ser aceita").toBe(true)
+  // A seção só mostra o vazio dela com a lista carregada — e ela chegou sem o
+  // anúncio, que o servidor ainda devolvia. O prazo é curto de propósito: com o
+  // DELETE adiado, o anúncio só poderia estar de volta se a releitura o tivesse
+  // reposto, e passar disso é o defeito que este caso mede.
+  const vazio = anuncios.locator('[data-estado="vazio"]', { hasText: "Nenhum anúncio salvo" })
+  await expect(
+    vazio,
+    "a lista voltou vazia, mesmo com o anúncio ainda salvo no servidor",
+  ).toBeVisible({ timeout: 3000 })
+  expect(concluiu, "o DELETE precisa estar pendente na volta ao segmento").toBe(false)
+
+  // O DELETE termina com sucesso e o anúncio não volta.
+  await expect.poll(() => concluiu, { timeout: 30_000 }).toBe(true)
+  await expect(anuncios, "removido no servidor, o anúncio não pode reaparecer").not.toContainText(
+    TITULO_DO_ANUNCIO,
+  )
+  await expect(vazio).toBeVisible()
+})
