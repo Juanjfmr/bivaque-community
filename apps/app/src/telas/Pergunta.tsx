@@ -17,6 +17,10 @@ import {
   type AcaoDeResolucao,
   buscarPergunta,
   denunciarPergunta,
+  editarPergunta,
+  editarResposta,
+  excluirPergunta,
+  excluirResposta,
   marcarSalvaPergunta,
   mudarResolucao,
   type PerguntaDaConversa,
@@ -56,8 +60,16 @@ import { TelaIndisponivel } from "@/src/telas/TelaIndisponivel"
  */
 const CHAVE_DE_RESPOSTA = "resposta-da-pessoa"
 
-/** O alvo da denúncia: a pergunta inteira ou uma resposta dela. */
-type AlvoDaDenuncia = Readonly<{ tipo: "pergunta" } | { tipo: "resposta"; respostaId: string }>
+/** O alvo do menu: a pergunta inteira ou uma resposta dela. */
+type AlvoDoMenu = Readonly<{ tipo: "pergunta" } | { tipo: "resposta"; respostaId: string }>
+
+/** Em que passo do menu a pessoa está. Um diálogo só, sem sobreposição empilhada. */
+type PassoDoMenu = "opcoes" | "editar" | "excluir" | "denunciar"
+
+/** O endereço que se compartilha é a tela da pergunta no app. */
+function linkDaPergunta(id: string): string {
+  return `${window.location.origin}/app/pergunta/${encodeURIComponent(id)}`
+}
 
 /** A lista fechada de motivos, a mesma de `lib/reports` no servidor. */
 const MOTIVOS_DA_DENUNCIA: ReadonlyArray<readonly [valor: string, rotulo: string]> = [
@@ -99,23 +111,39 @@ export function Pergunta() {
   const [erroDaResolucao, setErroDaResolucao] = useState<string | null>(null)
   const [mudandoSeguir, setMudandoSeguir] = useState(false)
   const [erroDoSeguir, setErroDoSeguir] = useState<string | null>(null)
-  // Denúncia (F04): a sobreposição vive na entrada, como o menu da publicação de
-  // grupo; o alvo escolhido vive aqui.
-  const { aberto: denunciaAberta, aoMudarAberto: aoMudarDenuncia } =
+  // O menu ⋮ (F04/F09): a sobreposição vive na entrada, como o menu da publicação
+  // de grupo; o alvo escolhido e o passo vivem aqui. Um diálogo só — trocar de
+  // passo em vez de empilhar sobreposição é o que faz o Voltar fechar o menu, e
+  // não a folha de dentro dele (RUN-165).
+  const { aberto: menuAberto, aoMudarAberto: aoMudarMenu } =
     useSobreposicaoDaEntrada("menu-de-linha")
-  const [alvoDaDenuncia, setAlvoDaDenuncia] = useState<AlvoDaDenuncia | null>(null)
+  const [alvoDoMenu, setAlvoDoMenu] = useState<AlvoDoMenu | null>(null)
+  const [passo, setPasso] = useState<PassoDoMenu>("opcoes")
   const [denunciando, setDenunciando] = useState(false)
   const [motivo, setMotivo] = useState("")
   const [explicacao, setExplicacao] = useState("")
   const [enviandoDenuncia, setEnviandoDenuncia] = useState(false)
   const [erroDaDenuncia, setErroDaDenuncia] = useState<string | null>(null)
   const [avisoDaDenuncia, setAvisoDaDenuncia] = useState("")
+  // Edição e exclusão da autoria (F09 lote 2), no mesmo diálogo do menu.
+  const [tituloEmEdicao, setTituloEmEdicao] = useState("")
+  const [assuntoEmEdicao, setAssuntoEmEdicao] = useState("")
+  const [erroDaEdicao, setErroDaEdicao] = useState<string | null>(null)
+  const [salvandoEdicao, setSalvandoEdicao] = useState(false)
+  const [excluindo, setExcluindo] = useState(false)
+  const [erroDaExclusao, setErroDaExclusao] = useState<string | null>(null)
+  const [avisoDoLink, setAvisoDoLink] = useState("")
   const [autorParaBloquear, setAutorParaBloquear] = useState<string | null>(null)
   const [confirmandoBloqueio, setConfirmandoBloqueio] = useState(false)
   const [bloqueando, setBloqueando] = useState(false)
   const [avisoDoBloqueio, setAvisoDoBloqueio] = useState("")
   const focoAoFecharBloqueio = useRef(false)
   const tituloRef = useRef<HTMLHeadingElement>(null)
+  // O menu troca de passo dentro do MESMO diálogo: o botão que abriu o passo é
+  // desmontado e o foco cairia no corpo da página. O conteúdo guarda o destino
+  // de cada passo, e o abridor é o botão de origem a que o foco volta ao fechar.
+  const conteudoDoMenu = useRef<HTMLDivElement>(null)
+  const abridorDoMenu = useRef<HTMLElement | null>(null)
   // Uma sessão de rede por tela: sair cancela a escrita que ainda estava a caminho.
   const [controle] = useState(() => new AbortController())
 
@@ -134,14 +162,36 @@ export function Pergunta() {
   // existe. Fecha pela entrada anterior, que guarda rolagem e foco.
   const fechandoSemAlvo = useRef(false)
   useEffect(() => {
-    if (!denunciaAberta) {
+    if (!menuAberto) {
       fechandoSemAlvo.current = false
       return
     }
-    if (alvoDaDenuncia !== null || fechandoSemAlvo.current) return
+    if (alvoDoMenu !== null || fechandoSemAlvo.current) return
     fechandoSemAlvo.current = true
-    aoMudarDenuncia(false)
-  }, [denunciaAberta, alvoDaDenuncia, aoMudarDenuncia])
+    aoMudarMenu(false)
+  }, [menuAberto, alvoDoMenu, aoMudarMenu])
+
+  // Cada passo do menu tem um destino de foco: o primeiro campo da edição, o
+  // botão principal da confirmação, a primeira opção. Sem isto, o clique que
+  // troca de passo derruba o foco para o corpo da página.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: passo e denunciando são os gatilhos da troca
+  useEffect(() => {
+    if (!menuAberto) return
+    conteudoDoMenu.current?.querySelector<HTMLElement>("input, textarea, button")?.focus()
+  }, [menuAberto, passo, denunciando])
+
+  // Fechar devolve o foco ao botão que abriu o menu. Quando o passo apagou esse
+  // botão (a resposta excluída), o destino é o título da tela.
+  useEffect(() => {
+    if (menuAberto) return
+    const abridor = abridorDoMenu.current
+    if (abridor === null) return
+    abridorDoMenu.current = null
+    requestAnimationFrame(() => {
+      if (abridor.isConnected) abridor.focus()
+      else tituloRef.current?.focus()
+    })
+  }, [menuAberto])
 
   // Pergunta de demonstração: o id é local e o banco nunca a conheceu.
   const local = useMemo(
@@ -162,6 +212,7 @@ export function Pergunta() {
           corpo: local.body,
           assunto: "",
           criadaEm: "",
+          editada: false,
           resolvida: local.is_resolved === true,
           resolvidaPorResposta: null,
           propria: true,
@@ -240,6 +291,30 @@ export function Pergunta() {
   const atual = dados
   // A pergunta de demonstração não tem banco: resolver nela seria mentira.
   const podeResolver = pergunta.propria && local === null
+  // O menu trabalha sobre uma resposta só; guardar a linha inteira evita três
+  // buscas pelo mesmo id dentro do JSX.
+  const respostaDoMenu =
+    alvoDoMenu?.tipo === "resposta"
+      ? (respostas.find((item) => item.id === alvoDoMenu.respostaId) ?? null)
+      : null
+  const tituloDoMenu =
+    passo === "editar"
+      ? `Editar ${alvoDoMenu?.tipo ?? "pergunta"}`
+      : passo === "excluir"
+        ? `Excluir ${alvoDoMenu?.tipo ?? "pergunta"}?`
+        : denunciando
+          ? `Denunciar ${alvoDoMenu?.tipo ?? "pergunta"}`
+          : `Opções da ${alvoDoMenu?.tipo ?? "pergunta"}`
+  const descricaoDoMenu =
+    passo === "editar"
+      ? "O texto novo fica visível para a comunidade assim que você salvar."
+      : passo === "excluir"
+        ? alvoDoMenu?.tipo === "pergunta"
+          ? "A conversa inteira sai com a pergunta. Não dá para desfazer."
+          : "A resposta sai da conversa. Não dá para desfazer."
+        : denunciando
+          ? "O motivo será enviado à moderação. Não inclua dados pessoais."
+          : "A moderação analisa toda denúncia."
 
   async function mudar(acao: AcaoDeResolucao, respostaId?: string) {
     if (mudandoResolucao) return
@@ -283,8 +358,10 @@ export function Pergunta() {
     }
   }
 
-  function abrirDenuncia(alvo: AlvoDaDenuncia) {
-    setAlvoDaDenuncia(alvo)
+  function abrirMenu(alvo: AlvoDoMenu, abridor: HTMLElement) {
+    abridorDoMenu.current = abridor
+    setAlvoDoMenu(alvo)
+    setPasso("opcoes")
     setDenunciando(false)
     setMotivo("")
     setExplicacao("")
@@ -293,32 +370,147 @@ export function Pergunta() {
     setAutorParaBloquear(null)
     setConfirmandoBloqueio(false)
     setAvisoDoBloqueio("")
-    aoMudarDenuncia(true)
+    setErroDaEdicao(null)
+    setErroDaExclusao(null)
+    aoMudarMenu(true)
+  }
+
+  // Autoria (F09 lote 2): o formulário abre com o texto de hoje e a falha fica
+  // no próprio formulário, para o texto escrito não se perder.
+  function abrirEdicao() {
+    if (alvoDoMenu === null) return
+    if (alvoDoMenu.tipo === "pergunta") {
+      setTituloEmEdicao(pergunta.titulo)
+      setAssuntoEmEdicao(pergunta.corpo)
+    } else {
+      setTituloEmEdicao("")
+      setAssuntoEmEdicao(respostas.find((item) => item.id === alvoDoMenu.respostaId)?.corpo ?? "")
+    }
+    setErroDaEdicao(null)
+    setPasso("editar")
+  }
+
+  // Editar é GRAVADO antes de fechar: o que a tela mostra é o que o servidor
+  // devolveu, inclusive a marca "editada" do banco.
+  async function salvarEdicao() {
+    if (alvoDoMenu === null || salvandoEdicao) return
+    setSalvandoEdicao(true)
+    setErroDaEdicao(null)
+    try {
+      if (alvoDoMenu.tipo === "pergunta") {
+        const gravada = await editarPergunta(
+          id,
+          { titulo: tituloEmEdicao, corpo: assuntoEmEdicao },
+          { signal: controle.signal },
+        )
+        setDados({
+          ...atual,
+          pergunta: {
+            ...pergunta,
+            titulo: gravada.titulo,
+            corpo: gravada.corpo,
+            editada: gravada.editada,
+          },
+        })
+      } else {
+        const gravada = await editarResposta(id, alvoDoMenu.respostaId, assuntoEmEdicao, {
+          signal: controle.signal,
+        })
+        setDados({
+          ...atual,
+          respostas: respostas.map((item) =>
+            item.id === alvoDoMenu.respostaId
+              ? { ...item, corpo: gravada.corpo, editada: gravada.editada }
+              : item,
+          ),
+        })
+      }
+      aoMudarMenu(false)
+    } catch (falha: unknown) {
+      if (!foiAbortada(falha)) setErroDaEdicao("Não foi possível salvar a edição. Tente de novo.")
+    } finally {
+      setSalvandoEdicao(false)
+    }
+  }
+
+  // A exclusão da resposta que resolvia a pergunta reabre o pedido no banco: a
+  // tela relê a conversa em vez de adivinhar o novo estado.
+  async function confirmarExclusao() {
+    if (alvoDoMenu === null || excluindo) return
+    setExcluindo(true)
+    setErroDaExclusao(null)
+    try {
+      if (alvoDoMenu.tipo === "pergunta") {
+        await excluirPergunta(id, { signal: controle.signal })
+        // A pergunta não existe mais: a entrada é substituída pela Comunidade,
+        // para o Voltar não reabrir uma tela de pergunta apagada.
+        await navegacao.irPara("comunidade", { replace: true })
+        return
+      }
+      const alvo = alvoDoMenu.respostaId
+      await excluirResposta(id, alvo, { signal: controle.signal })
+      const resolvia = pergunta.resolvidaPorResposta === alvo
+      setDados({
+        ...atual,
+        pergunta: resolvia
+          ? { ...pergunta, resolvida: false, resolvidaPorResposta: null }
+          : pergunta,
+        respostas: respostas.filter((item) => item.id !== alvo),
+      })
+      aoMudarMenu(false)
+    } catch (falha: unknown) {
+      if (!foiAbortada(falha)) setErroDaExclusao("Não foi possível excluir. Tente de novo.")
+    } finally {
+      setExcluindo(false)
+    }
+  }
+
+  // Compartilhar (F09 lote 2): a folha do sistema quando existe; senão o link
+  // vai para a área de transferência, com aviso. Cancelar a folha não é falha.
+  async function compartilhar() {
+    const link = linkDaPergunta(id)
+    setAvisoDoLink("")
+    try {
+      if (typeof navigator.share === "function") {
+        await navigator.share({ title: pergunta.titulo, url: link })
+        return
+      }
+      await navigator.clipboard.writeText(link)
+      setAvisoDoLink("Link copiado.")
+    } catch (falha: unknown) {
+      if (falha instanceof DOMException && falha.name === "AbortError") return
+      setAvisoDoLink("Não foi possível copiar o link. Copie o endereço do navegador.")
+    }
+  }
+
+  function resolverSemResposta() {
+    aoMudarMenu(false)
+    void mudar("resolver")
   }
 
   // A denúncia é GRAVADA antes do aviso: quem denunciou lê a confirmação, e a
   // duplicata (409) chega com a frase do servidor, não com sucesso inventado.
   async function denunciar() {
-    if (alvoDaDenuncia === null || enviandoDenuncia || motivo === "") return
+    if (alvoDoMenu === null || enviandoDenuncia || motivo === "") return
     setEnviandoDenuncia(true)
     setErroDaDenuncia(null)
     setAvisoDaDenuncia("")
     try {
       await denunciarPergunta(
         id,
-        alvoDaDenuncia.tipo === "resposta"
-          ? { motivo, explicacao, respostaId: alvoDaDenuncia.respostaId }
+        alvoDoMenu.tipo === "resposta"
+          ? { motivo, explicacao, respostaId: alvoDoMenu.respostaId }
           : { motivo, explicacao },
         { signal: controle.signal },
       )
       if (controle.signal.aborted) return
       const autorId =
-        alvoDaDenuncia.tipo === "resposta"
-          ? respostas.find((item) => item.id === alvoDaDenuncia.respostaId)?.autorId
+        alvoDoMenu.tipo === "resposta"
+          ? respostas.find((item) => item.id === alvoDoMenu.respostaId)?.autorId
           : pergunta.autorId
       const autorProprio =
-        alvoDaDenuncia.tipo === "resposta"
-          ? respostas.find((item) => item.id === alvoDaDenuncia.respostaId)?.propria
+        alvoDoMenu.tipo === "resposta"
+          ? respostas.find((item) => item.id === alvoDoMenu.respostaId)?.propria
           : pergunta.propria
       if (autorId && !autorProprio) {
         try {
@@ -332,7 +524,7 @@ export function Pergunta() {
           setAutorParaBloquear(autorId)
         }
       }
-      aoMudarDenuncia(false)
+      aoMudarMenu(false)
       setAvisoDaDenuncia("Denúncia enviada. A moderação vai analisar.")
     } catch (falha: unknown) {
       if (!foiAbortada(falha))
@@ -384,6 +576,8 @@ export function Pergunta() {
               propria: true,
               criadaEm: new Date().toISOString(),
               removida: false,
+              editada: false,
+              verbete: null,
             }
           : await responderPergunta(id, corpo, { signal: controle.signal })
       setDados({ ...atual, respostas: [...respostas, gravada] })
@@ -414,16 +608,17 @@ export function Pergunta() {
             />
             <small className="text-[13px] text-(--on-surface-variant)">
               {pergunta.cidade || casca.cidade}
+              {pergunta.editada ? " · editada" : ""}
             </small>
           </span>
-          {!pergunta.propria && local === null ? (
+          {local === null ? (
             <BotaoDeIcone
               nome="more_vert"
-              rotulo="Opções da pergunta"
+              rotulo={pergunta.propria ? "Ações da minha pergunta" : "Opções da pergunta"}
               aberto="dialog"
-              disabled={enviandoDenuncia}
+              disabled={!pergunta.propria && enviandoDenuncia}
               className="ml-auto"
-              onClick={() => abrirDenuncia({ tipo: "pergunta" })}
+              onClick={(evento) => abrirMenu({ tipo: "pergunta" }, evento.currentTarget)}
             />
           ) : null}
         </div>
@@ -474,7 +669,7 @@ export function Pergunta() {
           </div>
         ) : null}
         {local === null ? (
-          <div className="flex justify-start">
+          <div className="flex flex-wrap items-center justify-start gap-2">
             <Botao
               tom="tonal"
               icone={pergunta.salva ? "bookmark" : "bookmark_border"}
@@ -484,9 +679,18 @@ export function Pergunta() {
             >
               {pergunta.salva ? "Seguindo respostas" : "Seguir respostas"}
             </Botao>
+            <Botao tom="texto" icone="share" onClick={() => void compartilhar()}>
+              Compartilhar
+            </Botao>
           </div>
         ) : null}
       </article>
+
+      {avisoDoLink === "" ? null : (
+        <p role="status" className="text-sm text-(--on-surface-variant)">
+          {avisoDoLink}
+        </p>
+      )}
 
       {erroDoSeguir === null ? null : (
         <p role="alert" className="text-sm text-(--destructive)">
@@ -542,21 +746,35 @@ export function Pergunta() {
                         }
                       />
                       <small className="text-[12px] text-(--on-surface-variant)">
-                        Membro da comunidade
+                        {item.editada ? "Membro da comunidade · editada" : "Membro da comunidade"}
                       </small>
                     </span>
-                    {item.propria ? null : (
-                      <BotaoDeIcone
-                        nome="more_vert"
-                        rotulo="Opções da resposta"
-                        aberto="dialog"
-                        disabled={enviandoDenuncia}
-                        className="ml-auto"
-                        onClick={() => abrirDenuncia({ tipo: "resposta", respostaId: item.id })}
-                      />
-                    )}
+                    <BotaoDeIcone
+                      nome="more_vert"
+                      rotulo={item.propria ? "Ações da minha resposta" : "Opções da resposta"}
+                      aberto="dialog"
+                      disabled={!item.propria && enviandoDenuncia}
+                      className="ml-auto"
+                      onClick={(evento) =>
+                        abrirMenu({ tipo: "resposta", respostaId: item.id }, evento.currentTarget)
+                      }
+                    />
                   </div>
                   <p className="text-[15px] leading-6">{item.corpo}</p>
+                  {item.verbete === null ? null : (
+                    <Botao
+                      tom="texto"
+                      icone="link"
+                      data-verbete={item.verbete.id}
+                      onClick={() =>
+                        void navegacao.irPara("verbete", {
+                          parametros: { id: item.verbete?.id ?? "" },
+                        })
+                      }
+                    >
+                      {`${item.verbete.nome || "Verbete"} no Guia`}
+                    </Botao>
+                  )}
                   {!podeResolver ? null : pergunta.resolvidaPorResposta === item.id ? (
                     <div className="flex items-center gap-2">
                       <Etiqueta tom="ok" icone="check_circle">
@@ -653,19 +871,60 @@ export function Pergunta() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={denunciaAberta && alvoDaDenuncia !== null} onOpenChange={aoMudarDenuncia}>
-        <DialogContent>
-          <DialogTitle>
-            {denunciando && alvoDaDenuncia !== null
-              ? `Denunciar ${alvoDaDenuncia.tipo}`
-              : `Opções da ${alvoDaDenuncia?.tipo ?? "pergunta"}`}
-          </DialogTitle>
-          <DialogDescription>
-            {denunciando
-              ? "O motivo será enviado à moderação. Não inclua dados pessoais."
-              : "A moderação analisa toda denúncia."}
-          </DialogDescription>
-          {denunciando ? (
+      <Dialog open={menuAberto && alvoDoMenu !== null} onOpenChange={aoMudarMenu}>
+        <DialogContent ref={conteudoDoMenu}>
+          <DialogTitle>{tituloDoMenu}</DialogTitle>
+          <DialogDescription>{descricaoDoMenu}</DialogDescription>
+          {passo === "editar" ? (
+            <form
+              className="grid gap-3"
+              onSubmit={(evento) => {
+                evento.preventDefault()
+                void salvarEdicao()
+              }}
+            >
+              {alvoDoMenu?.tipo === "pergunta" ? (
+                <Campo
+                  id="edicao-do-titulo"
+                  rotulo="Título da pergunta"
+                  valor={tituloEmEdicao}
+                  aoMudar={setTituloEmEdicao}
+                  maxLength={300}
+                  nota={`${tituloEmEdicao.trim().length} de 300 caracteres`}
+                />
+              ) : null}
+              <Campo
+                id="edicao-do-texto"
+                rotulo={alvoDoMenu?.tipo === "pergunta" ? "Assunto" : "Sua resposta"}
+                valor={assuntoEmEdicao}
+                aoMudar={setAssuntoEmEdicao}
+                area
+              />
+              {erroDaEdicao === null ? null : <p role="alert">{erroDaEdicao}</p>}
+              <Botao type="submit" disabled={salvandoEdicao}>
+                {salvandoEdicao ? "Salvando…" : "Salvar"}
+              </Botao>
+              <Botao type="button" tom="texto" onClick={() => setPasso("opcoes")}>
+                Voltar às opções
+              </Botao>
+            </form>
+          ) : passo === "excluir" ? (
+            <div className="grid gap-3">
+              {erroDaExclusao === null ? null : <p role="alert">{erroDaExclusao}</p>}
+              <Botao
+                tom="contornado"
+                icone="delete"
+                data-acao="confirmar-exclusao"
+                disabled={excluindo}
+                onClick={() => void confirmarExclusao()}
+              >
+                {excluindo ? "Excluindo…" : `Excluir ${alvoDoMenu?.tipo ?? "pergunta"}`}
+              </Botao>
+              <Botao type="button" tom="texto" onClick={() => setPasso("opcoes")}>
+                Cancelar
+              </Botao>
+            </div>
+          ) : denunciando ? (
             <form
               className="grid gap-3"
               onSubmit={(evento) => {
@@ -706,11 +965,43 @@ export function Pergunta() {
                 Voltar às opções
               </Botao>
             </form>
-          ) : alvoDaDenuncia !== null ? (
+          ) : alvoDoMenu !== null ? (
             <div className="grid gap-2">
-              <Botao tom="texto" disabled={enviandoDenuncia} onClick={() => setDenunciando(true)}>
-                Denunciar {alvoDaDenuncia.tipo}
-              </Botao>
+              {alvoDoMenu.tipo === "resposta" && !(respostaDoMenu?.propria === true) ? (
+                <Botao tom="texto" disabled={enviandoDenuncia} onClick={() => setDenunciando(true)}>
+                  Denunciar resposta
+                </Botao>
+              ) : alvoDoMenu.tipo === "pergunta" && !pergunta.propria ? (
+                <Botao tom="texto" disabled={enviandoDenuncia} onClick={() => setDenunciando(true)}>
+                  Denunciar pergunta
+                </Botao>
+              ) : (
+                <>
+                  <Botao
+                    tom="texto"
+                    icone="edit"
+                    onClick={() => abrirEdicao()}
+                  >{`Editar ${alvoDoMenu.tipo}`}</Botao>
+                  {alvoDoMenu.tipo === "pergunta" && !pergunta.resolvida ? (
+                    <Botao
+                      tom="texto"
+                      icone="check_circle"
+                      disabled={mudandoResolucao}
+                      onClick={resolverSemResposta}
+                    >
+                      Marcar como resolvida
+                    </Botao>
+                  ) : null}
+                  <Botao
+                    tom="texto"
+                    icone="delete"
+                    onClick={() => {
+                      setErroDaExclusao(null)
+                      setPasso("excluir")
+                    }}
+                  >{`Excluir ${alvoDoMenu.tipo}`}</Botao>
+                </>
+              )}
             </div>
           ) : null}
           {erroDaDenuncia === null ? null : <p role="alert">{erroDaDenuncia}</p>}
