@@ -14,11 +14,15 @@ import {
 const SHA = "0123456789abcdef0123456789abcdef01234567"
 const OUTRO_SHA = "fedcba9876543210fedcba9876543210fedcba98"
 
-const check = (name, { status = "completed", conclusion = "success", headSha = SHA } = {}) => ({
+const check = (
+  name,
+  { status = "completed", conclusion = "success", headSha = SHA, suite = "800" } = {},
+) => ({
   name,
   status,
   conclusion,
   head_sha: headSha,
+  check_suite: { id: suite },
 })
 
 const run = (name, id, conclusion, completed_at) => ({
@@ -39,19 +43,27 @@ const emSuite = (
   check_suite: { id: idSuite },
 })
 
-function resposta(corpo, { ok = true, status = 200 } = {}) {
-  return { ok, status, text: async () => JSON.stringify(corpo) }
+// A API real manda `link` no cabeçalho; a paginação depende dele.
+function resposta(corpo, { ok = true, status = 200, link = null } = {}) {
+  return {
+    ok,
+    status,
+    headers: { get: (nome) => (nome.toLowerCase() === "link" ? link : null) },
+    text: async () => JSON.stringify(corpo),
+  }
 }
 
 /**
  * API simulada: responde pull, arquivos, check-runs e o merge, e guarda as
  * chamadas para que o teste possa provar que não houve PUT quando a recusa vale.
+ * `paginas`, quando existe, substitui a resposta de check-runs página a página.
  */
 function apiFalsa({
   estado = "open",
   headSha = SHA,
   arquivos = [],
   checkRuns = [],
+  paginas = null,
   merge = { merged: true, sha: OUTRO_SHA },
 } = {}) {
   const chamadas = []
@@ -59,8 +71,21 @@ function apiFalsa({
     const metodo = opcoes.method ?? "GET"
     chamadas.push({ url, metodo, corpo: opcoes.body })
     if (url.includes("/files")) return resposta(arquivos.map((filename) => ({ filename })))
-    if (url.includes("/check-runs"))
+    if (url.includes("/check-runs")) {
+      if (paginas) {
+        const numero = Number(new URL(url).searchParams.get("page"))
+        const { itens, temProxima } = paginas(numero)
+        return resposta(
+          { total_count: itens.length, check_runs: itens },
+          {
+            link: temProxima
+              ? `<https://api.github.com/repos/bivaque/community/commits/${headSha}/check-runs?page=${numero + 1}>; rel="next"`
+              : null,
+          },
+        )
+      }
       return resposta({ total_count: checkRuns.length, check_runs: checkRuns })
+    }
     if (metodo === "PUT") return resposta(merge)
     return resposta({ number: 7, state: estado, head: { sha: headSha } })
   }
@@ -461,7 +486,7 @@ test("id de suíte acima de 2^53 decide pelo mais recente, como BigInt", () => {
   assert.match(passa.motivo, /suíte 9007199254740993/)
 })
 
-test("duas execuções sem id de suíte: recusa por recência ambígua", () => {
+test("duas execuções sem id de suíte: recusa por falta de id de execução", () => {
   const veredito = avaliar({
     headSha: SHA,
     estado: "open",
@@ -502,4 +527,128 @@ test("consulta todos os runs do SHA, não só o mais novo de cada nome", async (
   })
   const chamada = api.chamadas.find((c) => c.url.includes("/check-runs"))
   assert.match(chamada.url, /filter=all/)
+})
+
+// Sem id de execução não há agrupamento possível: o ci-core verde de uma execução
+// não pode emprestar aprovação ao agregador verde de outra.
+test("checks do rito sem id de suíte: recusa, mesmo com ci-core verde numa execução e agregador verde em outra", () => {
+  const veredito = avaliar({
+    headSha: SHA,
+    estado: "open",
+    arquivos: ["docs/LANCAMENTO.md"],
+    checkRuns: [
+      { ...check(CHECK_COMPLETO), id: 3010, check_suite: undefined },
+      { ...check(CHECK_AGREGADO), id: 3011, check_suite: undefined },
+    ],
+  })
+  assert.equal(veredito.ok, false)
+  assert.match(veredito.motivo, /check sem id de execução/)
+  assert.match(veredito.motivo, /run 3010/)
+})
+
+// A execução mais nova decide mesmo sem ci-core: pular para a antiga verde
+// esconderia o run novo, que é o que o rito pediu.
+test("execução mais nova com ci-core pulado e agregador verde recusa, ainda que a antiga esteja toda verde", () => {
+  const veredito = avaliar({
+    headSha: SHA,
+    estado: "open",
+    arquivos: ["apps/app/src/main.tsx"],
+    checkRuns: [
+      emSuite(CHECK_COMPLETO, "100", { id: 1010 }),
+      emSuite(CHECK_AGREGADO, "100", { id: 1011 }),
+      emSuite(CHECK_VISUAL, "900", { id: 9010 }),
+      emSuite(CHECK_COMPLETO, "200", { id: 2020, conclusion: "skipped" }),
+      emSuite(CHECK_AGREGADO, "200", { id: 2021 }),
+    ],
+  })
+  assert.equal(veredito.ok, false)
+  assert.match(veredito.motivo, /"skipped"/)
+  assert.match(veredito.motivo, /suíte 200/)
+  assert.match(veredito.motivo, /run 2020/)
+})
+
+// O caso real do PR #273: suíte antiga toda cancelada, agregador vermelho, suíte
+// mais nova toda verde — vale a mais nova.
+test("PR #273: suíte antiga cancelada com agregador vermelho perde para a suíte mais nova verde", () => {
+  const veredito = avaliar({
+    headSha: SHA,
+    estado: "open",
+    arquivos: ["docs/LANCAMENTO.md"],
+    checkRuns: [
+      emSuite(CHECK_COMPLETO, "100", { id: 1010, conclusion: "cancelled" }),
+      emSuite(CHECK_AGREGADO, "100", { id: 1011, conclusion: "failure" }),
+      emSuite(CHECK_COMPLETO, "200", { id: 2020 }),
+      emSuite(CHECK_AGREGADO, "200", { id: 2021 }),
+    ],
+  })
+  assert.equal(veredito.ok, true)
+  assert.match(veredito.motivo, /suíte 200/)
+  assert.match(veredito.motivo, /2020/)
+})
+
+test("paginação esgotada com a última página cheia recusa em vez de decidir com lista truncada", async () => {
+  const api = apiFalsa({
+    arquivos: ["docs/LANCAMENTO.md"],
+    paginas: () => ({
+      itens: Array.from({ length: 100 }, (_, indice) => ({
+        ...check("Outro check"),
+        id: 100000 + indice,
+      })),
+      temProxima: true,
+    }),
+  })
+  await assert.rejects(
+    mergeSeguro({ pr: 7, repo: "bivaque/community", token: "escopo", fetchImpl: api.fetchImpl }),
+    /páginas/,
+  )
+  assert.equal(api.merges().length, 0)
+})
+
+test("veredito do Visual nomeia a suíte e o run do Visual, na recusa e no sucesso", () => {
+  const recusa = avaliar({
+    headSha: SHA,
+    estado: "open",
+    arquivos: ["apps/app/src/main.tsx"],
+    checkRuns: [
+      emSuite(CHECK_COMPLETO, "100", { id: 1010 }),
+      emSuite(CHECK_AGREGADO, "100", { id: 1011 }),
+      emSuite(CHECK_VISUAL, "900", { id: 9010, conclusion: "failure" }),
+    ],
+  })
+  assert.equal(recusa.ok, false)
+  assert.match(recusa.motivo, /suíte 900, run 9010/)
+
+  const sucesso = avaliar({
+    headSha: SHA,
+    estado: "open",
+    arquivos: ["apps/app/src/main.tsx"],
+    checkRuns: [
+      emSuite(CHECK_COMPLETO, "100", { id: 1010 }),
+      emSuite(CHECK_AGREGADO, "100", { id: 1011 }),
+      emSuite(CHECK_VISUAL, "900", { id: 9010 }),
+    ],
+  })
+  assert.equal(sucesso.ok, true)
+  assert.match(sucesso.motivo, /suíte 100, runs 1010, 1011/)
+  assert.match(sucesso.motivo, /Visual suíte 900, run 9010/)
+})
+
+test("paginação cheia continua na página seguinte até achar o fim", async () => {
+  const { veredito, api } = await rodar({
+    arquivos: ["docs/LANCAMENTO.md"],
+    paginas: (pagina) =>
+      pagina === 1
+        ? {
+            itens: Array.from({ length: 100 }, (_, indice) => ({
+              ...check("Outro check"),
+              id: 200000 + indice,
+            })),
+            temProxima: true,
+          }
+        : { itens: [check(CHECK_COMPLETO), check(CHECK_AGREGADO)], temProxima: false },
+  })
+  assert.equal(veredito.ok, true)
+  const urls = api.chamadas.filter((c) => c.url.includes("/check-runs")).map((c) => c.url)
+  assert.equal(urls.length, 2)
+  assert.match(urls[1], /page=2/)
 })

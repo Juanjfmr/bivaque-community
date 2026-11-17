@@ -35,9 +35,10 @@ forbidden:
   - push, merge, abrir PR, force-push; ler, criar ou imprimir arquivos de ambiente
 
 acceptance:
-  - "Com vários check runs do mesmo nome no SHA do head, o avaliar agrupa por execução (`check_suite.id`): nunca combina o ci-core de uma execução com o agregador de outra. Entre as suítes em que o ci-core existe e não está `skipped`, qualquer uma com o ci-core ou o agregador ainda não `completed` recusa por execução em andamento; entre as concluídas vale a de maior id de suíte, comparado como BigInt (string ou número, nunca `Number`), e nela o ci-core E o agregador precisam estar `success`. Sem id utilizável para ordenar duas execuções, recusa. `completed_at` não decide nada. Testes: verde antigo + execução mais nova em andamento (ci-core, agregador e Visual) recusa; `cancelled`/`timed_out` mais novo sem `completed_at` recusa; ci-core verde com agregador vermelho na suíte A contra ci-core pulado com agregador verde na B recusa; id acima de 2^53 decide pelo maior; id ausente entre duas execuções recusa; pulado + verde e ordem invertida continuam passando."
+  - "Com vários check runs do mesmo nome no SHA do head, o avaliar agrupa por execução (`check_suite.id`) e nunca combina checks de execuções diferentes: qualquer check do rito (ci-core, agregador ou Visual) sem `check_suite.id` utilizável recusa com 'check sem id de execução'. As execuções do PR CI são as suítes que contêm o agregador `Install, test, and build` ou o ci-core; se qualquer uma delas tem o ci-core ou o agregador ainda não `completed`, recusa por execução em andamento. Entre as concluídas vale a de maior id de suíte, comparado como BigInt (string ou número, nunca `Number`), tenha ou não ci-core, e nela o ci-core E o agregador precisam existir, estar `completed` e `success` — ci-core pulado ou ausente recusa. `completed_at` não decide nada. Testes: verde antigo + execução mais nova em andamento (ci-core, agregador e Visual) recusa; `cancelled`/`timed_out` mais novo sem `completed_at` recusa; ci-core verde com agregador vermelho na suíte A contra ci-core pulado com agregador verde na B recusa; suíte mais nova com ci-core pulado e agregador verde, contra antiga toda verde, recusa; id acima de 2^53 decide pelo maior; ci-core verde numa execução sem id contra agregador verde em outra sem id recusa; o caso real do PR #273 (suíte antiga toda `cancelled` com agregador `failure`, suíte mais nova toda verde) passa; pulado + verde na mesma suíte e ordem invertida continuam passando."
   - "Visual Smoke (outro workflow): qualquer run do check Visual não `completed` recusa; entre os concluídos e não pulados vale o de maior id; as regras de pulo por paths e de ausência quando o PR não toca apps/app ficam como estavam."
-  - "Todo veredito, verde ou recusa, nomeia os ids de suíte e de run que usou."
+  - "Todo veredito, verde ou recusa, nomeia a suíte e o run que usou, inclusive o Visual; a CLI imprime o motivo também no sucesso."
+  - "A lista de check runs é lida até a última página (página com menos itens que o tamanho pedido, ou sem `next` no Link); se o teto de 20 páginas acabar cheio com `next`, o script lança erro e recusa em vez de decidir com lista truncada. Testes: teto atingido recusa; página cheia continua para a seguinte até o fim."
   - "Sem GH_TOKEN e sem GITHUB_TOKEN, o script obtém o token por gh auth token (execFileSync, sem shell, sem imprimir); se o gh não estiver logado, recusa com mensagem clara. Variável vazia conta como ausente (`GH_TOKEN=\"\"` cede para `GITHUB_TOKEN`). Teste com a função de obter token injetável."
   - "Os testes que já existiam em tests/scope/merge-seguro.test.mjs continuam passando sem mudar o que provam."
 
@@ -51,6 +52,17 @@ correcao:
   drift: >
     A acceptance anterior ("decide pelo mais recente (completed_at ou id maior)") está substituída
     pela atual: `completed_at` não é mais usado e a comparação de ids é BigInt.
+  revisao2: >
+    Revisão independente 2 (17/11, .work/orq/relatorios/HRN-006-revisao2.md) achou três falsos
+    positivos e uma lacuna de rastreabilidade: checks sem id de suíte eram agrupados juntos (um
+    ci-core verde de uma execução podia emprestar aprovação ao agregador verde de outra); uma
+    execução mais nova sem ci-core era descartada em favor de uma antiga verde; a paginação parava
+    na 20ª página mesmo cheia, decidindo sobre lista truncada; e as recusas/sucesso do Visual não
+    nomeavam sua suíte. Regras aplicadas: check do rito sem id de execução recusa; as execuções do
+    PR CI (as que contêm o ci-core ou o agregador) são todas conferidas como terminadas e vale a de
+    maior id, com ci-core e agregador presentes e verdes nela; a paginação lê até a última página e
+    o teto cheio lança erro (o script recusa); todo veredito nomeia suíte e run, e a CLI imprime o
+    motivo no sucesso.
 
 proof:
   - "node --test tests/scope/merge-seguro.test.mjs"

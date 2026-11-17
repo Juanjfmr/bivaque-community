@@ -13,12 +13,15 @@
 //
 // Cada execução de workflow é uma `check_suite`: o `ci-core` e o agregador valem
 // sempre da MESMA suíte (combinar suítes diferentes provaria um rito que não
-// aconteceu) e, entre as suítes que rodaram o completo, vale a mais recente pelo
-// id da suíte. Execução ainda não terminada — em qualquer suíte que rodou o
-// completo — recusa: um verde antigo não pode autorizar o merge enquanto o run
-// mais novo não acabou. Ids são comparados como BigInt, nunca por Number, e
-// `completed_at` não decide nada (run cancelado sem data continuaria perdendo
-// para um verde velho).
+// aconteceu) e um check do rito sem `check_suite.id` recusa, porque não há como
+// saber a que execução ele pertence. As execuções do PR CI são as que contêm o
+// ci-core ou o agregador; entre elas vale a mais recente pelo id da suíte, tenha
+// ou não ci-core — pular para uma suíte antiga verde esconderia o run novo — e
+// nela o ci-core e o agregador precisam existir, estar terminados e verdes.
+// Execução ainda não terminada em qualquer suíte do PR CI recusa: um verde antigo
+// não pode autorizar o merge enquanto o run mais novo não acabou. Ids são
+// comparados como BigInt, nunca por Number, e `completed_at` não decide nada (run
+// cancelado sem data continuaria perdendo para um verde velho).
 //
 // Qualquer outro estado — completo ausente ou vermelho, Visual ausente num PR que
 // toca apps/app, check de outro SHA, SHA curto, merge recusado — é recusa com
@@ -48,9 +51,9 @@ export const CAMINHOS_DO_VISUAL = [
   /^pnpm-lock\.yaml$/,
 ]
 
-// Chave do grupo de checks que a API devolveu sem `check_suite.id`: só é aceita
-// quando é a única execução em jogo, porque não há como ordená-la contra outra.
-const SEM_SUITE = "sem-suíte"
+// Chave dos checks que o rito lê: qualquer um deles sem `check_suite.id` recusa,
+// porque não há como saber a que execução pertence.
+const CHECKS_DO_RITO = [CHECK_COMPLETO, CHECK_AGREGADO, CHECK_VISUAL]
 
 function paraId(valor) {
   if (typeof valor === "bigint") return valor
@@ -63,7 +66,10 @@ const idDoRun = (run) => paraId(run?.id ?? run?.run_id)
 const idTexto = (run) => idDoRun(run)?.toString() ?? "sem id"
 const recencia = (run) => idDoRun(run) ?? -1n
 const doNome = (runs, nome) => runs.filter((run) => run?.name === nome)
+const idDaSuite = (run) => paraId(run?.check_suite?.id)
 const rotuloSuite = (suite) => (suite.id === null ? "sem id de suíte" : `suíte ${suite.id}`)
+// Todo veredito que usa um check nomeia a execução e o run: suíte e run em texto.
+const rotuloDoRun = (run) => `${rotuloSuite({ id: idDaSuite(run) })}, run ${idTexto(run)}`
 
 // Maior id vence; sem id conta como o mais antigo.
 function maisRecente(runs) {
@@ -129,46 +135,39 @@ export function avaliar({ headSha, estado, checkRuns = [], arquivos = [] }) {
         motivo: `o check "${run.name}" pertence a ${String(run.head_sha).slice(0, 12)}, não ao head ${headSha.slice(0, 12)}`,
       }
     }
-    const idSuite = paraId(run.check_suite?.id)
-    const chave = idSuite === null ? SEM_SUITE : idSuite.toString()
+    if (!CHECKS_DO_RITO.includes(run.name)) continue
+    const idSuite = idDaSuite(run)
+    if (idSuite === null) {
+      return {
+        ok: false,
+        motivo: `check sem id de execução: "${run.name}" (run ${idTexto(run)}) está sem id de suíte — não dá para dizer a qual execução do PR CI ele pertence`,
+      }
+    }
+    const chave = idSuite.toString()
     const suite = suites.get(chave) ?? { id: idSuite, runs: [] }
     suite.runs.push(run)
     suites.set(chave, suite)
   }
 
-  const execucoes = [...suites.values()].map((suite) => ({
-    id: suite.id,
-    ci: doNome(suite.runs, CHECK_COMPLETO),
-    agregado: doNome(suite.runs, CHECK_AGREGADO),
-  }))
+  // As execuções do PR CI são as suítes que contêm o ci-core ou o agregador.
+  const execucoes = [...suites.values()]
+    .map((suite) => ({
+      id: suite.id,
+      ci: doNome(suite.runs, CHECK_COMPLETO),
+      agregado: doNome(suite.runs, CHECK_AGREGADO),
+    }))
+    .filter((execucao) => execucao.ci.length > 0 || execucao.agregado.length > 0)
 
-  const comCi = execucoes.filter((execucao) => execucao.ci.length > 0)
-  if (!comCi.length) {
+  if (!execucoes.length) {
     return {
       ok: false,
       motivo: `o PR CI completo não rodou neste SHA (job ci-core ausente: check "${CHECK_COMPLETO}") — aplique a label ci:full e espere o run`,
     }
   }
 
-  // Só executam o rito as suítes em que o ci-core existe e não foi pulado.
-  const consideradas = comCi.filter((execucao) =>
-    execucao.ci.some((run) => run.conclusion !== "skipped"),
-  )
-  if (!consideradas.length) {
-    const pulado = melhorDoGrupo(comCi.flatMap((execucao) => execucao.ci))
-    return {
-      ok: false,
-      motivo: `o PR CI completo está "skipped", não verde (run ${idTexto(pulado)})`,
-    }
-  }
-
-  const ordenadas = [...consideradas].sort((a, b) => {
-    if (a.id === null || b.id === null) return a.id === b.id ? 0 : a.id === null ? 1 : -1
-    return a.id === b.id ? 0 : a.id > b.id ? -1 : 1
-  })
-
-  // Execução em andamento recusa mesmo que haja verde antigo em outra suíte.
-  for (const execucao of ordenadas) {
+  // Execução em andamento em qualquer suíte do PR CI recusa, mesmo que haja verde
+  // antigo em outra: o run mais novo ainda pode mudar o resultado.
+  for (const execucao of execucoes) {
     const run = [...execucao.ci, ...execucao.agregado].find((item) => item.status !== "completed")
     if (run) {
       return {
@@ -178,23 +177,19 @@ export function avaliar({ headSha, estado, checkRuns = [], arquivos = [] }) {
     }
   }
 
-  // Entre execuções diferentes, o id da suíte decide — e sem id a decisão é
-  // ambígua, então recusa em vez de combinar execuções.
-  if (ordenadas.length > 1) {
-    const semId = ordenadas.filter((execucao) => execucao.id === null)
-    if (semId.length) {
-      return {
-        ok: false,
-        motivo: `há ${ordenadas.length} execuções do PR CI e ${semId.length} sem id de suíte (runs ${ordenadas
-          .flatMap((execucao) => execucao.ci)
-          .map(idTexto)
-          .join(", ")}); não dá para dizer qual é a mais recente`,
-      }
+  // A execução mais nova do PR CI decide, tenha ou não ci-core.
+  const escolhida = execucoes.reduce((melhor, execucao) =>
+    execucao.id > melhor.id ? execucao : melhor,
+  )
+  const ciCore = escolhida.ci.length ? melhorDoGrupo(escolhida.ci) : null
+  const agregado = escolhida.agregado.length ? melhorDoGrupo(escolhida.agregado) : null
+
+  if (!ciCore) {
+    return {
+      ok: false,
+      motivo: `o ci-core não rodou na execução mais nova do PR CI (${rotuloSuite(escolhida)}, agregador run ${idTexto(agregado)}) — o completo não está provado`,
     }
   }
-
-  const escolhida = ordenadas[0]
-  const ciCore = melhorDoGrupo(escolhida.ci)
   if (ciCore.conclusion !== "success") {
     return {
       ok: false,
@@ -202,13 +197,12 @@ export function avaliar({ headSha, estado, checkRuns = [], arquivos = [] }) {
     }
   }
 
-  if (!escolhida.agregado.length) {
+  if (!agregado) {
     return {
       ok: false,
-      motivo: `o agregador do completo ("${CHECK_AGREGADO}") não rodou na execução mais recente (${rotuloSuite(escolhida)}, run ${idTexto(ciCore)}) — o completo não está provado`,
+      motivo: `o agregador do completo ("${CHECK_AGREGADO}") não rodou na execução mais nova (${rotuloSuite(escolhida)}, run ${idTexto(ciCore)}) — o completo não está provado`,
     }
   }
-  const agregado = melhorDoGrupo(escolhida.agregado)
   if (agregado.conclusion !== "success") {
     return {
       ok: false,
@@ -239,7 +233,7 @@ export function avaliar({ headSha, estado, checkRuns = [], arquivos = [] }) {
   if (visualPendente) {
     return {
       ok: false,
-      motivo: `o Visual Smoke ainda está "${visualPendente.status}" — execução em andamento (run ${idTexto(visualPendente)})`,
+      motivo: `o Visual Smoke ainda está "${visualPendente.status}" — execução em andamento (${rotuloDoRun(visualPendente)})`,
     }
   }
 
@@ -248,12 +242,12 @@ export function avaliar({ headSha, estado, checkRuns = [], arquivos = [] }) {
     if (tocaOApp) {
       return {
         ok: false,
-        motivo: "o Visual Smoke foi pulado, mas o PR toca apps/app — pulo por paths não se aplica",
+        motivo: `o Visual Smoke foi pulado, mas o PR toca apps/app — pulo por paths não se aplica (${rotuloDoRun(visuais[0])})`,
       }
     }
     return {
       ok: true,
-      motivo: `PR CI completo verde; Visual Smoke pulado por paths; ${doCompleto}`,
+      motivo: `PR CI completo verde; Visual Smoke pulado por paths (${rotuloDoRun(maisRecente(visuais))}); ${doCompleto}`,
     }
   }
 
@@ -262,7 +256,7 @@ export function avaliar({ headSha, estado, checkRuns = [], arquivos = [] }) {
     if (semId.length) {
       return {
         ok: false,
-        motivo: `há ${naoPulados.length} runs do Visual Smoke e ${semId.length} sem id; não dá para dizer qual é o mais recente`,
+        motivo: `há ${naoPulados.length} runs do Visual Smoke e ${semId.length} sem id (${naoPulados.map(rotuloDoRun).join("; ")}); não dá para dizer qual é o mais recente`,
       }
     }
   }
@@ -271,17 +265,17 @@ export function avaliar({ headSha, estado, checkRuns = [], arquivos = [] }) {
   if (visual.conclusion !== "success") {
     return {
       ok: false,
-      motivo: `o Visual Smoke está "${visual.conclusion}", não verde (run ${idTexto(visual)})`,
+      motivo: `o Visual Smoke está "${visual.conclusion}", não verde (${rotuloDoRun(visual)})`,
     }
   }
 
   return {
     ok: true,
-    motivo: `PR CI completo, agregador e Visual Smoke verdes no mesmo SHA; ${doCompleto}, run ${idTexto(visual)}`,
+    motivo: `PR CI completo, agregador e Visual Smoke verdes no mesmo SHA; ${doCompleto}; Visual ${rotuloDoRun(visual)}`,
   }
 }
 
-async function pedir(fetchImpl, { metodo = "GET", url, token, corpo }) {
+async function pedir(fetchImpl, { metodo = "GET", url, token, corpo, comCabecalhos = false }) {
   const resposta = await fetchImpl(url, {
     method: metodo,
     headers: {
@@ -296,7 +290,8 @@ async function pedir(fetchImpl, { metodo = "GET", url, token, corpo }) {
   if (!resposta.ok) {
     throw new Error(`${metodo} ${url} respondeu ${resposta.status}: ${texto.slice(0, 200)}`)
   }
-  return texto ? JSON.parse(texto) : {}
+  const dados = texto ? JSON.parse(texto) : {}
+  return comCabecalhos ? { dados, cabecalhos: resposta.headers } : dados
 }
 
 /** Todos os arquivos do PR (a API pagina em 100). */
@@ -313,6 +308,11 @@ async function arquivosDoPr(fetchImpl, { repo, pr, token }) {
   return arquivos
 }
 
+// A lista de checks é paginada; parar numa página cheia com `next` decidiria sobre
+// uma lista truncada. Lê até a última página e, se o teto acabar cheio, recusa.
+const TETO_PAGINAS_CHECKS = 20
+const TAMANHO_PAGINA_CHECKS = 100
+
 /**
  * Todos os check runs do SHA, sem o filtro `latest`: agrupar por execução exige ver
  * as suítes antigas, e `latest` devolveria só o run mais novo de cada nome — que pode
@@ -320,14 +320,22 @@ async function arquivosDoPr(fetchImpl, { repo, pr, token }) {
  */
 async function checkRunsDoSha(fetchImpl, { repo, headSha, token }) {
   const runs = []
-  for (let pagina = 1; pagina <= 20; pagina += 1) {
-    const lote = await pedir(fetchImpl, {
-      url: `${API}/repos/${repo}/commits/${headSha}/check-runs?filter=all&per_page=100&page=${pagina}`,
+  let ultima = false
+  for (let pagina = 1; pagina <= TETO_PAGINAS_CHECKS && !ultima; pagina += 1) {
+    const { dados, cabecalhos } = await pedir(fetchImpl, {
+      url: `${API}/repos/${repo}/commits/${headSha}/check-runs?filter=all&per_page=${TAMANHO_PAGINA_CHECKS}&page=${pagina}`,
       token,
+      comCabecalhos: true,
     })
-    const itens = lote?.check_runs ?? []
+    const itens = dados?.check_runs ?? []
     runs.push(...itens)
-    if (itens.length < 100) break
+    const temProxima = /rel="next"/.test(cabecalhos?.get?.("link") ?? "")
+    ultima = itens.length < TAMANHO_PAGINA_CHECKS || !temProxima
+  }
+  if (!ultima) {
+    throw new Error(
+      `a lista de check-runs do SHA encheu ${TETO_PAGINAS_CHECKS} páginas e ainda havia uma próxima: ${runs.length} runs lidos, lista truncada — recusando para não decidir com evidência parcial`,
+    )
   }
   return runs
 }
@@ -402,11 +410,15 @@ async function main(argv) {
       return 1
     }
     if (veredito.merged) {
-      process.stdout.write(`merge-seguro: PR #${pr} mergeado por squash em ${veredito.mergeSha}\n`)
+      process.stdout.write(
+        `merge-seguro: PR #${pr} mergeado por squash em ${veredito.mergeSha}\nmerge-seguro: ${veredito.motivo}\n`,
+      )
       return 0
     }
     // Sem merged e sem recusa: não acontece hoje, mas nunca devolve verde sem merge.
-    process.stderr.write("merge-seguro: veredito verde sem merge; nada foi feito\n")
+    process.stderr.write(
+      `merge-seguro: veredito verde sem merge; nada foi feito — ${veredito.motivo}\n`,
+    )
     return 1
   } catch (erro) {
     process.stderr.write(`merge-seguro: erro — ${erro?.message ?? erro}\n`)
