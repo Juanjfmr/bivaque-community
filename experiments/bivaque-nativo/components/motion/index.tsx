@@ -18,6 +18,7 @@ import Animated, {
 import { Path, Svg } from "react-native-svg"
 import { HEX, THEME } from "../../lib/theme"
 import { Ilustracao } from "../icons/ilustracoes"
+import { lottieDoTema } from "./lottie-tema"
 import { useReduzirMovimento } from "./reduzir-movimento"
 
 const carregando = require("../../assets/lottie/carregando.json")
@@ -275,10 +276,11 @@ export interface CarregandoProps {
 /** Carregamento de assinatura (Lottie "carregando"; respeita reduzir movimento). */
 export function Carregando({ rotulo = "Carregando" }: CarregandoProps) {
   const reduzir = useReduzirMovimento()
+  const { colorScheme } = useColorScheme()
   return (
-    <View accessibilityLabel={rotulo}>
+    <View accessibilityLabel={rotulo} accessibilityRole="progressbar">
       <LottieView
-        source={carregando}
+        source={lottieDoTema(carregando, colorScheme ?? "light")}
         autoPlay={!reduzir}
         loop={!reduzir}
         style={{ width: 48, height: 24 }}
@@ -405,12 +407,19 @@ export function Sucesso({ visivel, texto, aoTerminar }: SucessoProps) {
   useEffect(() => {
     if (visivel) void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
   }, [visivel])
+  // Com reduzir movimento o Lottie não toca e onAnimationFinish nunca dispara: termina por tempo.
+  useEffect(() => {
+    if (!visivel || !reduzir) return
+    const espera = setTimeout(aoTerminar, 900)
+    return () => clearTimeout(espera)
+  }, [visivel, reduzir, aoTerminar])
   if (!visivel) return null
   return (
     <View accessibilityLiveRegion="polite" style={{ alignItems: "center" }}>
       <LottieView
-        source={sucesso}
+        source={lottieDoTema(sucesso, esquema)}
         autoPlay={!reduzir}
+        progress={reduzir ? 1 : undefined}
         loop={false}
         onAnimationFinish={aoTerminar}
         style={{ width: 64, height: 64 }}
