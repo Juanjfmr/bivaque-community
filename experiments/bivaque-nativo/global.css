@@ -1,0 +1,53 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Paleta fria do Bivaque (ADR-20261102-paleta-fria). Ardósia conclui; Brasa só no ato de criar. */
+@layer base {
+  :root {
+    --background: 200 14% 96%;
+    --foreground: 200 21% 14%;
+    --card: 0 0% 100%;
+    --card-foreground: 200 21% 14%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 200 21% 14%;
+    --primary: 199 35% 23%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 200 17% 93%;
+    --secondary-foreground: 200 21% 14%;
+    --muted: 200 17% 93%;
+    --muted-foreground: 200 10% 36%;
+    --accent: 200 17% 93%;
+    --accent-foreground: 200 21% 14%;
+    --destructive: 6 63% 46%;
+    --border: 203 14% 89%;
+    --input: 203 14% 89%;
+    --ring: 199 35% 23%;
+    --brasa: 8 52% 47%;
+    --brasa-foreground: 0 0% 100%;
+    --radius: 1rem;
+  }
+
+  .dark:root {
+    --background: 206 18% 8%;
+    --foreground: 200 15% 92%;
+    --card: 204 16% 12%;
+    --card-foreground: 200 15% 92%;
+    --popover: 204 16% 12%;
+    --popover-foreground: 200 15% 92%;
+    --primary: 200 15% 92%;
+    --primary-foreground: 206 18% 8%;
+    --secondary: 203 16% 16%;
+    --secondary-foreground: 200 15% 92%;
+    --muted: 203 16% 16%;
+    --muted-foreground: 202 12% 65%;
+    --accent: 203 16% 16%;
+    --accent-foreground: 200 15% 92%;
+    --destructive: 3 75% 60%;
+    --border: 197 13% 22%;
+    --input: 197 13% 22%;
+    --ring: 200 15% 92%;
+    --brasa: 14 68% 62%;
+    --brasa-foreground: 193 16% 11%;
+  }
+}
