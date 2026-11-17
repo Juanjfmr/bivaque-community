@@ -151,9 +151,18 @@ const nextConfig: NextConfig = {
           ["/profile/interests", "/app/voce"],
           ["/profile/:id((?!(?:editar|interests)/?$)[^/]+)", "/app/perfil/:id"],
           ["/prestadores/:id", "/app/negocio/:id"],
+          // F10 (RUN-184): troca de e-mail fica fora do lançamento por decisão do
+          // dono em 17/11 — quem precisa troca pelo canal de Ajuda —, e senha e
+          // recuperação já tinham saído (ADR-20261101 §2). A tela de conta sai
+          // inteira e a seção continua no Você do app. A regra exata de `conta`
+          // vem antes da exata de `/configuracoes` para o destino ser
+          // determinístico, e as subrotas de bloqueados, família e notificações
+          // seguem com as regras delas.
+          ["/configuracoes/conta", "/app/voce"],
           ["/configuracoes/bloqueados", "/app/bloqueados"],
           ["/configuracoes/familia", "/app/voce"],
           ["/configuracoes/notificacoes", "/app/voce"],
+          ["/configuracoes", "/app/voce"],
           ["/inicio", "/app/inicio"],
           ["/notifications", "/app/avisos"],
           // RUN-181: a espera do RUN-177 acabou. A última tela de busca da web
