@@ -1,0 +1,80 @@
+# F08: sugerir lugar novo no Guia pelo app; /guide/sugerir sai da web.
+#
+# Autoridade: docs/LANCAMENTO.md fase 6 (nenhuma rota de membro no apps/web servindo tela) e
+# linha F08 (só exclui curadoria por IA). A exclusão de sugerir lugar novo existia só em
+# comentários de código (next.config.ts:106-108, Guia.tsx:54-55), e o LANCAMENTO vence comentário.
+# Levantamento de 17/11 (.work/orq/relatorios/escopo-trocas.md, seção 1, opção B).
+#
+# Decisão do coordenador, 17/11, por delegação: construir a porta no app reusando a função de
+# banco existente suggest_guide_entry (mesma fila de curadoria /guide-queue, mesmo limite de
+# sugestões pendentes), sem migration, grant ou policy nova; e retirar a tela antiga com 307.
+
+task_id: RUN-182
+
+objective: >
+  Membro sugere um lugar novo para o Guia de dentro do app, com o mesmo formulário, as mesmas
+  regras e a mesma fila de curadoria de hoje, e a rota /guide/sugerir da web deixa de servir
+  tela, redirecionando para o app, sem link apontando para tela morta.
+
+authority:
+  - docs/LANCAMENTO.md (fase 6 e linha F08)
+  - .work/orq/relatorios/escopo-trocas.md (seções 1.1 a 1.7, opção B)
+  - docs/decisions/ADR-20261024-front-react-spa.md (seção 8, ordem da troca; seção 5, contrato de rota)
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    apps/web/app/(shell)/guide/sugerir/page.tsx (219 linhas) serve a tela e é o único chamador da
+    RPC suggest_guide_entry; apps/app/src/telas/Guia.tsx:54-55 declara a ausência da sugestão de
+    lugar novo; tests/e2e/link-crawl.spec.ts:231-235 registra a porta como dívida do LAN-TROCA.
+
+allowed_paths:
+  - apps/app/src/telas/Guia.tsx
+  - apps/app/src/guia
+  - apps/app/lib/dados/guia.ts
+  - apps/app/lib/navegacao/rotas.ts
+  - apps/app/src/roteador.tsx
+  - apps/app/tests/e2e/guia-estrutura.spec.ts
+  - apps/app/tests/guia-dados.test.ts
+  - apps/web/app/api/app/guia/sugestao/route.ts
+  - apps/web/app/(shell)/guide/sugerir
+  - apps/web/next.config.ts
+  - apps/web/app/components/shell/active-nav.ts
+  - tests/e2e/guia-redirects.spec.ts
+  - tests/e2e/question-first-order.spec.ts
+  - tests/e2e/link-crawl.spec.ts
+  - tests/unit/infra/lan-troca-redirect.test.ts
+  - tests/unit/app-api/guia/rotas.test.ts
+  - scripts/visual/capture.mjs
+  - docs/agents/tasks/RUN-182.task.yml
+
+forbidden:
+  - criar ou mudar migration, função de banco, grant ou policy (suggest_guide_entry fica como está)
+  - mudar a fila do operador /guide-queue ou a curadoria
+  - mudar a sugestão de atualização de verbete que já existe no app
+  - editar docs/decisions/RATIFICACAO.md (a linha vai no relatório)
+  - push, merge, abrir PR, force-push; ler, criar ou imprimir arquivos de ambiente
+
+acceptance:
+  - "Rota nova POST /api/app/guia/sugestao segue a seção 5 do ADR da SPA: resolve a sessão, confere CSRF e origem como as rotas irmãs do guia, valida o corpo com os mesmos campos e limites da tela antiga (nome, categoria entre as permitidas, descrição, site e telefone opcionais), chama suggest_guide_entry com o cliente da sessão e mapeia os erros do banco para frases fixas, sem error.message. Testes unitários positivos e negativos: sem sessão 401, CSRF 403, corpo inválido 400, limite de pendentes do banco com frase fixa, sucesso 201."
+  - "O app ganha a folha de sugerir lugar novo, aberta por um botão no Guia, com nome antes da categoria (a ordem que o question-first-order provava), validação, envio pela rota nova, mensagem de sucesso e foco previsível; teste do módulo de dados e o guia-estrutura passam a provar a presença do botão em vez da ausência."
+  - "/guide/sugerir vira 307 para a folha nova no app (ou para /app/guia se a folha não tiver rota própria), a pasta (shell)/guide/sugerir sai, e guia-redirects, lan-troca-redirect, link-crawl e question-first-order são ajustados para a troca, sem porta declarada sobrando."
+  - "Inventário completo de links para /guide/sugerir (git grep de href, href:, action=, router.push, templates) migrado direto para o app, registrado no relatório."
+  - "O relatório final traz a linha pronta da RATIFICACAO.md para esta decisão (exclusão revogada, porta construída), em uma linha de tabela."
+
+proof:
+  - "npx vitest run tests/unit/app-api/guia/rotas.test.ts e os testes de app tocados (binários de node_modules)"
+  - "npx tsc --noEmit -p apps/app"
+  - npx pnpm@11.18.0 lint
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/RUN-182.task.yml
+  - "E2E (guia-redirects, link-crawl, question-first-order, guia-estrutura) — no CI completo com a label ci:full"
+
+risk: troca de tela e rota de escrita de conteúdo com curadoria
+risk_level: R2
+
+reviewer_must_differ_from_executor: true
+retry_budget: 2
+on_budget_exhausted: HUMAN_DECISION
+
+closure:
+  requires_runtime_evidence: true
