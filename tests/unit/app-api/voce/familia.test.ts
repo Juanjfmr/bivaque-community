@@ -284,10 +284,16 @@ describe("família do titular no app", () => {
   it("sem Upstash a rota consulta o banco e repassa a recusa fixa do teto", async () => {
     vi.stubEnv("UPSTASH_REDIS_REST_URL", "")
     vi.stubEnv("UPSTASH_REDIS_REST_TOKEN", "")
-    const mock = autenticar({`n      erro: "create",`n      mensagem: "maximum 10 invitations per holder per hour",`n    })
+    const mock = autenticar({
+      erro: "create",
+      mensagem: "maximum 10 invitations per holder per hour",
+    })
     const resposta = await convidar(req("POST", "", '{"email":"familiar@example.invalid"}'))
     expect(resposta.status).toBe(429)
-    expect(await resposta.json()).toMatchObject({`n      erro: "limite",`n      mensagem: "Muitos convites em pouco tempo. Tente novamente mais tarde.",`n    })
+    expect(await resposta.json()).toMatchObject({
+      erro: "limite",
+      mensagem: "Muitos convites em pouco tempo. Tente novamente mais tarde.",
+    })
     expect(mock.daSessao.map((chamada) => chamada.nome)).toEqual(["create_family_invitation"])
     expect(mock.enfileirados).toHaveLength(0)
   })
