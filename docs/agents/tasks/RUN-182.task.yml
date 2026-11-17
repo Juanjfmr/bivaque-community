@@ -37,6 +37,7 @@ allowed_paths:
   - apps/app/tests/e2e/guia-estrutura.spec.ts
   - apps/app/tests/guia-dados.test.ts
   - apps/web/app/api/app/guia/sugestao/route.ts
+  - apps/web/lib/security/api-surface.ts
   - apps/web/app/(shell)/guide/sugerir
   - apps/web/next.config.ts
   - apps/web/app/components/shell/active-nav.ts
