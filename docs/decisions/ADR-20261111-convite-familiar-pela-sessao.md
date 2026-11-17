@@ -89,6 +89,46 @@ outro membro e de anon, `28000` sem sessão, trava por titular, os dois tetos co
 teste unitário sem Upstash prova que a rota chama a função e repassa a recusa fixa do teto, sem `error.message`. As dez frases
 fixas de recusa continuam provadas, agora com a do teto de envios ao lado delas.
 
+## Emenda de 17/11/2026 — um caminho só: o convite de familiar sai da web
+
+O achado R3 do RUN-187 mostrou que `apps/web/app/(preauth)/convite` ainda servia tela de convite
+familiar, com campo de senha (`invite-form.tsx`) e Server Actions (`actions.ts`) que abriam
+`createServiceClient()` para pré-visualizar o código, gravar o consentimento
+(`record_consent_acceptance`) e aceitar o convite. Era um segundo caminho de criação de conta e de
+consentimento por cliente de serviço, fora do endurecimento do SEC-011/SEC-012, e a única interface
+de senha viva na web. O caminho oficial — `/app/entrar?convite=CODIGO` sobre
+`/api/app/entry/invite*` — já existe, é o que o e-mail de convite aponta
+(`apps/web/lib/outbox/adapters.ts`) e não pede senha nem CPF.
+
+Decidido pelo coordenador em 17/11, por delegação (lote SEC-017):
+
+1. **Um caminho só.** `/convite` é 307 para `/app/entrar`; com `?codigo=X` o destino leva
+   `?convite=X`, que é o parâmetro que a entrada do app lê. Sem ciclo: o destino não redireciona de
+   novo, e nenhum dado de quem foi convidado viaja além do próprio código, que já estava na URL.
+2. **A tela antiga sai inteira.** `page.tsx`, `invite-form.tsx`, `actions.ts` e `convite.css` saem
+   com os testes deles. Nenhuma rota de membro do `apps/web` fica servindo tela de convite
+   (LANCAMENTO.md, fase 6).
+3. **O que o app usa fica.** `apps/web/lib/convite/*` (`provision.ts`, `code.ts`, `digest.ts`,
+   `hint.ts`, `familia.ts`) não muda: `previewFamilyInviteCode` e `acceptFamilyInviteCode` passam a
+   ter como únicos consumidores as rotas `/api/app/entry/invite*`. O `service_role` do convite
+   continua existindo só atrás da sessão resolvida no servidor, como decidiu a emenda de 16/11.
+4. **O portão acompanha.** `/convite` sai de `PUBLIC_SURFACE` (`lib/security/route-surface.ts`):
+   o redirect de configuração roda antes do proxy, então não há nada para servir nesse caminho. O
+   endereço antigo continua sendo destino válido de link (`link-crawl`), e um `?legado=1` de convite
+   pré-código apenas cai na entrada do app: convite sem código não existe desde o
+   ADR-20261101-entrada-unica-por-codigo.
+
+Consequência registrada, fora deste lote: `apps/web/lib/convite/form-error.ts` fica sem consumidor
+(era usado só pelo formulário removido) e sai numa limpeza de `lib/convite`, que este lote não pode
+tocar.
+
+A prova é `tests/unit/infra/lan-troca-redirect.test.ts` (307 com e sem código, o mapeamento para
+`?convite=`, ausência de ciclo e a pasta `(preauth)/convite` vazia), o teste de superfície
+(`tests/unit/security/route-surface.test.ts`, `tests/scope/entrada-public-paths.test.mjs`) e o
+`link-crawl`, que deixa de declarar a porta e passa a tratar `/convite` como destino de redirect. O
+E2E de `entrada-convite-publica.spec.ts` prova o 307 ponta a ponta e o aceite em si segue provado no
+app (`f01-entrada-real.spec.ts`).
+
 ## Revisão
 
 Revisão independente e `security-auditor`: parecer do lote RUN-030/RUN-031 em
