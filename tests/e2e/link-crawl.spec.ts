@@ -239,8 +239,8 @@ const PORTAS_FORA_DO_LINK: readonly PortaDeclarada[] = [
   // - /salvos: coluna lateral de toda tela da casca (app-shell.tsx:113) — sai no lote de /salvos
   // - /configuracoes/bloqueados e /configuracoes/familia: saíram no RUN-184 junto com a árvore
   //   `(shell)/configuracoes`; o 307 é rede para URL antiga, e nenhuma tela web linka o endereço.
-  // - /recuperar-senha: 'Alterar' e 'Ajuda com acesso' morreram com a tela de conta (RUN-184;
-  //   a saída de senha é o ADR-20261101 §2)
+  // - /recuperar-senha: voltou a ser porta declarada no RUN-184 (ver a entrada logo abaixo de
+  //   /nova-senha); o último link morreu com a tela de conta
   // - /communities/[id]: lista de comunidades (communities-screen.tsx:276) e a lateral (:328)
   // - /groups/[id]: nome do grupo na lista de grupos (groups/page.tsx:448)
   // - /negocio: o painel do prestador (prestador/catalogo/page.tsx:82). Até o RUN-181 a
@@ -260,6 +260,14 @@ const PORTAS_FORA_DO_LINK: readonly PortaDeclarada[] = [
   {
     route: "/nova-senha",
     porta: "EXTERNO: link do e-mail de recuperação de senha",
+    dono: "visitante",
+  },
+  {
+    // RUN-184: o último link ('Alterar' e 'Ajuda com acesso') morreu com a tela de conta. O
+    // endereço fica como rede para link antigo e cai no 307 de ENTRADA_ANTIGA para /app/entrar
+    // (a saída de senha é o ADR-20261101 §2).
+    route: "/recuperar-senha",
+    porta: "FLUXO: endereço antigo; o next.config redireciona para a entrada do app",
     dono: "visitante",
   },
   { route: "/onboarding", porta: "FLUXO: proxy, cadastro e consentimento", dono: "visitante" },
