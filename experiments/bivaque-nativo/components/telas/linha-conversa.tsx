@@ -15,6 +15,8 @@ export function LinhaConversa({ conversa, aoPressionar }: LinhaConversaProps) {
 
   if (!pessoa || !ultima) return null
 
+  const estilo = conversa.naoLidas > 0 ? "font-medium text-foreground" : "text-muted-foreground"
+
   return (
     <Pressable
       accessibilityRole="button"
@@ -32,14 +34,16 @@ export function LinhaConversa({ conversa, aoPressionar }: LinhaConversaProps) {
         </View>
         <View className="flex-row items-center gap-2">
           <Text
-            className={`flex-1 text-sm ${conversa.naoLidas > 0 ? "font-medium text-foreground" : "text-muted-foreground"}`}
+            className={`flex-1 text-sm ${estilo}`}
             numberOfLines={1}
           >
             {ultima.deMim ? "Você: " : ""}
             {ultima.texto}
           </Text>
           {conversa.naoLidas > 0 ? (
-            <View className="h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1.5">
+            <View
+              className="h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1.5"
+            >
               <Text className="text-xs font-semibold text-primary-foreground">
                 {conversa.naoLidas}
               </Text>

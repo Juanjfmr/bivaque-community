@@ -109,7 +109,9 @@ export default function TelaCriar() {
               accessibilityState={{ selected: item.titulo === bloco.titulo }}
               onPress={() => setBloco(item)}
               className={`flex-row items-center gap-3 rounded-xl border p-4 ${
-                item.titulo === bloco.titulo ? "border-primary bg-secondary" : "border-border bg-card"
+                item.titulo === bloco.titulo
+                  ? "border-primary bg-secondary"
+                  : "border-border bg-card"
               }`}
             >
               <Icone nome={item.nome} tamanho={22} cor={cores.foreground} />

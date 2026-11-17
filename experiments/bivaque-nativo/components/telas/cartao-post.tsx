@@ -64,7 +64,11 @@ export function CartaoPost({ post, aoPressionar }: CartaoPostProps) {
           rotulo="Compartilhar publicação"
           aoPressionar={() => undefined}
         />
-        <BotaoIcone nome="mais" rotulo="Mais opções da publicação" aoPressionar={() => undefined} />
+        <BotaoIcone
+          nome="mais"
+          rotulo="Mais opções da publicação"
+          aoPressionar={() => undefined}
+        />
       </View>
     </Card>
   )
