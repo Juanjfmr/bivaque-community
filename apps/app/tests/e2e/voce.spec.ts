@@ -46,9 +46,7 @@ test("o perfil vem da rota, a edição sobrevive ao recarregar e o desfazer some
   await expect(page.getByText("Nada oculto por aqui")).toBeVisible()
 })
 
-test("falha de leitura mostra erro com tentar de novo, e a exclusão registra o pedido", async ({
-  page,
-}) => {
+test("falha de leitura mostra erro com tentar de novo", async ({ page }) => {
   await simularVoce(page)
   await page.route("**/api/app/voce", (rota) => rota.abort())
   await page.goto("/app/voce")
@@ -61,12 +59,54 @@ test("falha de leitura mostra erro com tentar de novo, e a exclusão registra o 
   await page.unroute("**/api/app/voce")
   await page.getByRole("button", { name: "Tentar de novo" }).click()
   await expect(page.getByText("Ana Verificada")).toBeVisible()
+})
 
+// RUN-184: o aviso da exclusão é o mesmo da tela antiga da web (o que sai agora, o
+// que sai no prazo, o que permanece e por quê), e o pedido registrado fica na própria
+// tela. Os seis tamanhos da config do app (320 a 1440, com 375/768/1440 entre eles)
+// rodam este caso.
+test("o aviso completo da exclusão, a palavra que libera e o pedido que fica na tela", async ({
+  page,
+}) => {
+  await simularVoce(page)
   await page.goto("/app/apagar-conta")
-  await page.getByLabel("Escreva APAGAR para confirmar").fill("APAGAR")
-  await page.getByRole("button", { name: "Apagar minha conta" }).click()
-  await expect(page.getByRole("status")).toContainText("Pedido registrado")
-  await expect(page.getByRole("status")).toContainText("06/12/2026")
+
+  const tela = page.locator('[data-tela="apagar-conta"]')
+  await expect(tela.getByRole("heading", { level: 1, name: "Apagar a conta" })).toBeVisible()
+  await expect(tela.getByText(/permanente e não pode ser desfeita/)).toBeVisible()
+
+  await expect(tela.getByText("Ao confirmar, agora:")).toBeVisible()
+  await expect(tela.getByText(/sua sessão é encerrada/)).toBeVisible()
+  await expect(tela.getByText("Em até 15 dias, contados do pedido:")).toBeVisible()
+  await expect(tela.getByText(/apagamos a conta, as credenciais/)).toBeVisible()
+  await expect(tela.getByText(/dados anonimizados/)).toBeVisible()
+  await expect(tela.getByText(/6 meses/)).toBeVisible()
+  await expect(tela.getByText(/MCI, art\. 15/)).toBeVisible()
+  await expect(tela.getByRole("button", { name: "Abrir a Ajuda" })).toBeVisible()
+
+  // A confirmação continua sendo a palavra digitada, e nada acontece sem ela.
+  const apagar = tela.getByRole("button", { name: "Apagar minha conta" })
+  await expect(apagar).toBeDisabled()
+  await tela.getByLabel("Escreva APAGAR para confirmar").fill("APAGAR")
+  await expect(apagar).toBeEnabled()
+  await apagar.click()
+
+  // O prazo vem do banco (a simulação devolve o mesmo `due_at` da rota real) e sai
+  // por extenso; a conta é a mesma do sistema de quem roda a prova, então o rótulo
+  // é calculado aqui em vez de escrito à mão.
+  const prazo = new Date("2026-12-06T12:00:00.000Z").toLocaleDateString("pt-BR", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  })
+  const estado = tela.locator('[role="status"]')
+  await expect(estado).toContainText("Pedido registrado")
+  await expect(estado).toContainText(prazo)
+  expect(prazo).toContain("de dezembro de 2026")
+  // "Pedido registrado" continua na tela, e a ação não é oferecida de novo.
+  await expect(page).toHaveURL(/\/app\/apagar-conta$/)
+  await expect(apagar).toBeDisabled()
+  await expect(tela.getByText(`Até ${prazo}, contados do pedido:`)).toBeVisible()
 })
 
 test("sair da conta volta para a entrada e o cache local do aparelho sai junto", async ({
