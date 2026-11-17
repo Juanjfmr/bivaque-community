@@ -1,0 +1,80 @@
+# merge-seguro: escolher o run certo quando há mais de um no mesmo SHA, e usar o login do gh.
+#
+# Cartão HRN-005-RESSALVAS. No primeiro uso real (17/11, PRs #264 e #269) o script recusou dois
+# PRs prontos: no mesmo SHA havia o run da abertura do PR (sem a label, completo pulado) e o run
+# com a label ci:full (completo verde), e ele decidiu pelo pulado. Também exigia GH_TOKEN mesmo
+# com o gh logado. As pendências P6, P7 e P8 do diagnóstico de CI ficam para outro lote.
+
+task_id: HRN-006
+
+objective: >
+  O merge-seguro decide pelo run que de fato executou o completo quando o mesmo SHA tem vários
+  runs com o mesmo nome de check, continua recusando quando nenhum deles está verde, e usa o
+  token do gh logado quando GH_TOKEN e GITHUB_TOKEN não existem.
+
+authority:
+  - tools/backend-kanban/public/board.json (cartão HRN-005-RESSALVAS)
+  - docs/decisions/ADR-20261114-ci-ciclo-rapido-e-completo-no-fechamento.md
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    scripts/agents/merge-seguro.mjs indexa os check runs por nome num Map; com dois runs de
+    mesmo nome no SHA, um pulado e um verde, o resultado depende da ordem da API e o script
+    recusou os PRs #264 e #269 em 17/11. O script só lê GH_TOKEN ou GITHUB_TOKEN.
+
+allowed_paths:
+  - scripts/agents/merge-seguro.mjs
+  - tests/scope/merge-seguro.test.mjs
+  - docs/agents/tasks/HRN-006.task.yml
+
+forbidden:
+  - afrouxar a regra do rito (completo e agregador verdes no SHA, Visual verde quando o PR toca os caminhos dele)
+  - mudar workflows do GitHub
+  - imprimir o token em qualquer saída ou log
+  - push, merge, abrir PR, force-push; ler, criar ou imprimir arquivos de ambiente
+
+acceptance:
+  - "Com vários check runs do mesmo nome no SHA do head, o avaliar agrupa por execução (`check_suite.id`) e nunca combina checks de execuções diferentes: qualquer check do rito (ci-core, agregador ou Visual) sem `check_suite.id` utilizável recusa com 'check sem id de execução'. As execuções do PR CI são as suítes que contêm o agregador `Install, test, and build` ou o ci-core; se qualquer uma delas tem o ci-core ou o agregador ainda não `completed`, recusa por execução em andamento. Entre as concluídas vale a de maior id de suíte, comparado como BigInt (string ou número, nunca `Number`), tenha ou não ci-core, e nela o ci-core E o agregador precisam existir, estar `completed` e `success` — ci-core pulado ou ausente recusa. `completed_at` não decide nada. Testes: verde antigo + execução mais nova em andamento (ci-core, agregador e Visual) recusa; `cancelled`/`timed_out` mais novo sem `completed_at` recusa; ci-core verde com agregador vermelho na suíte A contra ci-core pulado com agregador verde na B recusa; suíte mais nova com ci-core pulado e agregador verde, contra antiga toda verde, recusa; id acima de 2^53 decide pelo maior; ci-core verde numa execução sem id contra agregador verde em outra sem id recusa; o caso real do PR #273 (suíte antiga toda `cancelled` com agregador `failure`, suíte mais nova toda verde) passa; pulado + verde na mesma suíte e ordem invertida continuam passando."
+  - "Visual Smoke (outro workflow): qualquer run do check Visual não `completed` recusa; entre os concluídos e não pulados vale o de maior id; as regras de pulo por paths e de ausência quando o PR não toca apps/app ficam como estavam."
+  - "Todo veredito, verde ou recusa, nomeia a suíte e o run que usou, inclusive o Visual; a CLI imprime o motivo também no sucesso."
+  - "A lista de check runs é lida até a última página (página com menos itens que o tamanho pedido, ou sem `next` no Link); se o teto de 20 páginas acabar cheio com `next`, o script lança erro e recusa em vez de decidir com lista truncada. Testes: teto atingido recusa; página cheia continua para a seguinte até o fim."
+  - "Sem GH_TOKEN e sem GITHUB_TOKEN, o script obtém o token por gh auth token (execFileSync, sem shell, sem imprimir); se o gh não estiver logado, recusa com mensagem clara. Variável vazia conta como ausente (`GH_TOKEN=\"\"` cede para `GITHUB_TOKEN`). Teste com a função de obter token injetável."
+  - "Os testes que já existiam em tests/scope/merge-seguro.test.mjs continuam passando sem mudar o que provam."
+
+correcao:
+  origem: >
+    Revisão independente do HRN-006 (17/11, .work/orq/relatorios/HRN-006-revisao.md) achou três
+    falsos positivos: execução mais recente em andamento era ignorada por um verde antigo;
+    `cancelled`/`timed_out` sem `completed_at` perdiam para verde antigo; e checks de execuções
+    diferentes eram combinados. O desenho do coordenador substitui a escolha por nome solto pela
+    escolha por execução, descrita na acceptance.
+  drift: >
+    A acceptance anterior ("decide pelo mais recente (completed_at ou id maior)") está substituída
+    pela atual: `completed_at` não é mais usado e a comparação de ids é BigInt.
+  revisao2: >
+    Revisão independente 2 (17/11, .work/orq/relatorios/HRN-006-revisao2.md) achou três falsos
+    positivos e uma lacuna de rastreabilidade: checks sem id de suíte eram agrupados juntos (um
+    ci-core verde de uma execução podia emprestar aprovação ao agregador verde de outra); uma
+    execução mais nova sem ci-core era descartada em favor de uma antiga verde; a paginação parava
+    na 20ª página mesmo cheia, decidindo sobre lista truncada; e as recusas/sucesso do Visual não
+    nomeavam sua suíte. Regras aplicadas: check do rito sem id de execução recusa; as execuções do
+    PR CI (as que contêm o ci-core ou o agregador) são todas conferidas como terminadas e vale a de
+    maior id, com ci-core e agregador presentes e verdes nela; a paginação lê até a última página e
+    o teto cheio lança erro (o script recusa); todo veredito nomeia suíte e run, e a CLI imprime o
+    motivo no sucesso.
+
+proof:
+  - "node --test tests/scope/merge-seguro.test.mjs"
+  - npx pnpm@11.18.0 lint
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/HRN-006.task.yml
+
+risk: ferramenta de merge da orquestração (falso negativo hoje; falso positivo seria merge sem rito)
+risk_level: R2
+
+reviewer_must_differ_from_executor: true
+retry_budget: 2
+on_budget_exhausted: HUMAN_DECISION
+
+closure:
+  requires_runtime_evidence: true
