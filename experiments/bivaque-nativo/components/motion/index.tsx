@@ -166,6 +166,8 @@ export function BotaoAcao({ rotulo, estado, aoPressionar, variante = "acao" }: B
         disabled={estado === "enviando"}
         style={{
           height: 48,
+          minWidth: 104,
+          paddingHorizontal: 20,
           borderRadius: 999,
           backgroundColor: fundo,
           alignItems: "center",
