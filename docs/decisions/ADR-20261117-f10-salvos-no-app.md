@@ -26,7 +26,7 @@ mas não tinha busca e só sabia dessalvar anúncio. O levantamento de 17/11
 | Busca nos salvos | **não existia no app** |
 | Abas por tipo + `?aba=` na URL | **não existiam no app** (o app organiza por seções) |
 | Item indisponível ("conteúdo removido") | **não existe no app** |
-| Indicações salvas | **não aparecem no app** |
+| Indicações salvas | aparecem na seção de perguntas do Salvos (seguir respostas) |
 
 ## Decisão
 
@@ -37,14 +37,19 @@ mas não tinha busca e só sabia dessalvar anúncio. O levantamento de 17/11
    deixa de citar `/salvos`: a lista de destinos secundários fica vazia porque o 307 roda antes da
    casca — nenhuma rota desta casca acende a si mesma por declarar-se secundária.
 2. **Busca construída no app, filtrando o que a tela já carregou.** O campo filtra por título as
-   quatro seções já carregadas, sem chamada nova às rotas de salvos; seção com conteúdo e sem
-   casamento sai de cena e, quando nada casa, aparece o estado vazio da busca ("Nenhum item salvo
-   corresponde à busca."). Nenhuma rota de API nova e nenhum parâmetro de busca no servidor.
+   quatro seções já carregadas, sem chamada nova às rotas de salvos. A seção com conteúdo e sem
+   casamento sai de cena — menos a de anúncios, que mantém o controle Desapegos/Imóveis e mostra
+   ali o vazio da busca ("Nenhum anúncio salvo corresponde à busca.", ou "Nenhum imóvel…" no
+   segmento de imóveis). Esconder o controle obrigaria a apagar a busca para chegar ao imóvel
+   procurado. Nenhuma rota de API nova e nenhum parâmetro de busca no servidor.
 3. **Remover em todo tipo, pelas rotas que já existem.** Guia (`DELETE /api/app/guia/:id/salvo`),
    pergunta (`DELETE /api/app/perguntas/:id/salvo`) e publicação
    (`PUT /api/app/grupos/publicacoes/:id/acoes`, `acao=salvar`, `valor=false`) ganham o gesto na
    tela; o anúncio continua pelo marcador do cartão. A linha sai na hora e **volta** com o motivo do
-   servidor se o dessalvar falhar — remoção otimista nunca some em silêncio.
+   servidor se o dessalvar falhar — remoção otimista nunca some em silêncio. A volta é do item, não
+   da lista: remoção e reposição são atualizações funcionais sobre a lista do momento, então duas
+   remoções na mesma seção não desfazem uma à outra, e a volta de um anúncio não cai na lista do
+   segmento seguinte se a pessoa trocou de segmento enquanto a chamada corria.
 4. **Divergência registrada: abas por tipo e `?aba=` (item 2.3.6).** A tela web tinha cinco abas
    (Tudo/Indicações/Guia/Mercado/Imóveis) e lia `?aba=` da URL. O app organiza por **seções**, que
    é o desenho aprovado, e o lote não constrói abas nem `?aba=`: o redirect legado vai a
@@ -63,11 +68,11 @@ mas não tinha busca e só sabia dessalvar anúncio. O levantamento de 17/11
    persistência real de cada tipo já é medida no app por `tests/e2e/f06-mercado-real.spec.ts`
    (anúncio salvo aparece em Salvos e dessalvar apaga a linha no banco),
    `tests/e2e/f08-guia-real.spec.ts` (referência salva aparece em Salvos) e
-   `tests/e2e/f04-perguntas-real.spec.ts` (pergunta seguida aparece em Salvos, e a falha de
-   dessalvar não some com a linha). A busca e o gesto de remover das quatro seções ganham
-   `apps/app/tests/e2e/salvos.spec.ts`. Os E2E da web que usavam `/salvos` como página-base da
-   casca passam a usar `/community`, que é rota viva do mesmo grupo. O inventário completo de
-   `git grep` está no relatório do lote.
+   `tests/e2e/f04-perguntas-real.spec.ts` (pergunta seguida aparece em Salvos; desseguida pela
+   tela Salvos, a linha some do banco e não volta ao recarregar). A busca e o gesto de remover das
+   quatro seções ganham `apps/app/tests/e2e/salvos.spec.ts`. Os E2E da web que usavam `/salvos`
+   como página-base da casca passam a usar `/community`, que é rota viva do mesmo grupo. O
+   inventário completo de `git grep` está no relatório do lote.
 
 ## Consequências
 
