@@ -115,7 +115,7 @@ export function renderEmail(message: OutboxMessage): RenderedEmail {
           "",
           `Se você conhece alguém, responda em ${siteOrigin()}/community?vista=indicacoes`,
           "",
-          "Você recebe este resumo porque ligou os pedidos de indicação por e-mail. Para parar, desligue em Configurações > Notificações.",
+          "Você recebe este resumo porque ligou os pedidos de indicação por e-mail. Para parar, desligue em Você > Avisos.",
         ].join("\n"),
       }
     }

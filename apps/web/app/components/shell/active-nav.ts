@@ -65,9 +65,10 @@ export const AREA_CONTAINERS: ReadonlyArray<readonly [string, PrimaryContainer]>
   ["/groups", "comunidades"],
   // Sem `/profile`: o perfil próprio é do app desde o RUN-172, e a tela web não
   // existe mais. O perfil alheio (`/profile/:id`) também é redirect. O que ainda
-  // é da pessoa nesta casca: negócio, configurações e a conversa contextual.
+  // é da pessoa nesta casca: negócio e a conversa contextual. Sem
+  // `/configuracoes`: a árvore saiu inteira no RUN-184 e o endereço antigo é 307
+  // para o Você do app, que roda antes desta casca resolver o item ativo.
   ["/negocio", "perfil"],
-  ["/configuracoes", "perfil"],
   ["/messages", "perfil"],
   // A conversa contextual membro↔prestador vive em Perfil, e o pedido é o
   // workspace dessa conversa (DESIGN_SYSTEM §7.1).
