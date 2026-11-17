@@ -76,9 +76,8 @@ navegador. Decidido por delegação em 16/11, no lote SEC-011:
    e o teto de 10 envios por hora (`private.family_invite_send_gate`, contando as linhas criadas na
    janela) rodam sob `pg_advisory_xact_lock` por titular — a mesma trava de
    `lock_family_invite_code_attempts`. Valem para chamada direta pela Data API, não só para a rota.
-3. **O limitador externo falha fechado.** Sem `UPSTASH_REDIS_REST_*` a rota do convite responde
-   `503` (`limite-indisponivel`), o mesmo desenho de `limitadorConfigurado()` na entrada: um
-   limitador ausente não pode virar "sem limite" no caminho que ele existe para conter.
+3. **Upstash opcional; o limite do banco vale sempre.** Quando configurado, Upstash é a
+   primeira barreira; quando ausente, a rota segue para a função, que aplica o teto sob trava.
 4. **O código morto sai.** `/configuracoes/familia` já era 307 para `/app/voce`
    (`next.config.ts`); a página e as Server Actions de `lib/convite/familia-acoes.ts` saem com os
    seus testes, junto das referências em `configuracoes-nav.tsx` e no mapa de captura. Quem convida
@@ -87,7 +86,7 @@ navegador. Decidido por delegação em 16/11, no lote SEC-011:
 
 A prova é `supabase/tests/family-invite-session-ownership.sql` (positivo do titular, negativo de
 outro membro e de anon, `28000` sem sessão, trava por titular, os dois tetos com frase fixa) e o
-teste unitário da rota para o `503` e para a ausência de `error.message` na resposta. As dez frases
+teste unitário sem Upstash prova que a rota chama a função e repassa a recusa fixa do teto, sem `error.message`. As dez frases
 fixas de recusa continuam provadas, agora com a do teto de envios ao lado delas.
 
 ## Revisão

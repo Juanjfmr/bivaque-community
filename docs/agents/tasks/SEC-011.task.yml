@@ -3,7 +3,7 @@
 # Autoridade: auditoria independente do security-auditor de 16/11 sobre a main 3c4dc55f
 # (.work/orq/relatorios/auditoria-r3-lote1.md, a ser arquivada em docs/agents/reviews no lote
 # de ratificação): LIBERA COM RESSALVAS, com quatro itens antes do lançamento — A2-1 (item 1 do
-# ADR-20261111 não implementado), A2-2 (sem Upstash o limite de envio não existe: fail-open),
+# ADR-20261111 não implementado), A2-2 (sem Upstash o limite de envio dependia do limitador externo),
 # A2-3 (corrida do teto de 5 convites ativos no banco) e A2-4 (Server Actions antigas ecoam
 # error.message e devolvem { code, token } ao navegador).
 #
@@ -16,8 +16,7 @@
 # - A2-2/A2-3: como a função passa a ser chamável direto pela Data API, o limite NÃO pode
 #   depender da rota: teto de envio por titular e teto de ativos conferidos DENTRO da função,
 #   sob `pg_advisory_xact_lock` por titular (molde lock_family_invite_code_attempts). O limitador
-#   Upstash na rota continua como primeira barreira, mas a rota responde 503 quando ele não está
-#   configurado (fail-closed, mesmo desenho de limitadorConfigurado() em entry/invite/route.ts).
+#   Upstash na rota e opcional; o limite do banco vale sempre.
 # - A2-4: /configuracoes/familia já é 307 para /app/voce (next.config.ts:156); a página e as
 #   Server Actions de lib/convite/familia-acoes.ts são código morto e saem, com seus testes.
 #   Reenvio e revogação pela porta do app usam a mesma derivação de posse.
@@ -86,10 +85,10 @@ acceptance:
   - "Migration nova cria a função pública de criação de convite que deriva o titular de auth.uid() (28000 sem sessão), confere titular verificado, o teto de convites ativos e um teto de envios por titular numa janela, tudo sob pg_advisory_xact_lock por titular; execute só para authenticated; revoke explícito de public/anon na mesma migration. O caminho público não aceita id de titular."
   - "Reenvio e revogação seguem a mesma regra: o titular vem de auth.uid() no banco; convite alheio e inexistente respondem igual (sem oráculo)."
   - "pgTAP novo prova: titular cria (positivo); outro membro autenticado não cria em nome de ninguém nem revoga/reenvia convite alheio; anon recebe 42501/28000; duas criações concorrentes não ultrapassam o teto de ativos (prova de serialização pela trava, no molde dos testes de trava existentes); o teto de envios por janela recusa com frase fixa. As dez frases fixas das recusas continuam provadas."
-  - "A rota /api/app/voce/familia (POST, DELETE e reenvio) usa o cliente da sessão para chamar as funções públicas, mapeia código de erro para HTTP sem repassar error.message, e responde 503 quando o limitador externo não está configurado; teste unitário negativo para o 503 e para a ausência de error.message na resposta."
+  - "A rota /api/app/voce/familia (POST, DELETE e reenvio) usa o cliente da sessão para chamar as funções públicas, mapeia código de erro para HTTP sem repassar error.message, e trata Upstash como opcional, pois o limite do banco vale sempre; teste sem Upstash prova chamada da função e recusa fixa, sem error.message."
   - "apps/web/lib/convite/familia-acoes.ts e apps/web/app/(shell)/configuracoes/familia saem do repositório; referências (nav, conta, testes) ajustadas; o 307 de /configuracoes/familia para /app/voce continua provado (lan-troca-redirect e link-crawl)."
   - "supabase/database.generated.ts reflete as funções novas e removidas (edição à mão permitida pelo processo documentado; o check de drift do CI é a prova)."
-  - "O ADR-20261111 ganha a emenda de 16/11 com a decisão acima (função pública com auth.uid(), limites no banco, fail-closed na rota, saída das actions) e a linha da RATIFICACAO.md passa a citar a auditoria de 16/11 e este lote."
+  - "O ADR-20261111 ganha a emenda de 16/11 com a decisão acima (função pública com auth.uid(), limites no banco, Upstash opcional, saída das actions) e a linha da RATIFICACAO.md passa a citar a auditoria de 16/11 e este lote."
 
 proof:
   - npx pnpm@11.18.0 test
