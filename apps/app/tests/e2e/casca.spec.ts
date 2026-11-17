@@ -265,7 +265,7 @@ test.describe("menu Criar (§4 do inventário)", () => {
     const primeiro = focalizaveis.first()
     const ultimo = focalizaveis.last()
     await expect(primeiro).toHaveAttribute("aria-label", "Fechar")
-    await expect(ultimo).toHaveAttribute("data-escolha", "create-item")
+    await expect(ultimo).toHaveAttribute("data-escolha", "my-biz")
 
     const focoDentroDoMenu = async () =>
       expect(await menu.evaluate((element) => element.contains(document.activeElement))).toBe(true)
