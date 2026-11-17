@@ -152,6 +152,7 @@ describe("localizarAnuncio", () => {
       latitude: -3.10194,
       longitude: -60.025,
       fonte: "brasilapi",
+      vencida: false,
     })
 
     const resultado = await localizarAnuncio(pedido())
@@ -167,6 +168,70 @@ describe("localizarAnuncio", () => {
     })
     expect(geocodificador.geocodificarCep).not.toHaveBeenCalled()
     expect(limite.consumirConsulta).not.toHaveBeenCalled()
+  })
+
+  // SEC-016 — a linha do cache vence em 180 dias: conta como ausente (consulta
+  // o provedor e regrava) e a coordenada velha fica só como rede.
+  describe("cache vencido", () => {
+    const vencida = {
+      cep: "69000000",
+      latitude: -3.10194,
+      longitude: -60.025,
+      fonte: "brasilapi" as const,
+      bairro: "Flores",
+      vencida: true,
+    }
+
+    it("consulta o provedor e regrava a coordenada", async () => {
+      cache.lerCepDoCache.mockResolvedValue(vencida)
+      geocodificador.geocodificarCep.mockResolvedValue({
+        estado: "encontrado",
+        coordenada: { latitude: -3.12, longitude: -60.03, fonte: "google" },
+        endereco: { cidade: "Manaus", bairro: "Flores" },
+      })
+
+      const resultado = await localizarAnuncio(pedido())
+
+      expect(limite.consumirConsulta).toHaveBeenCalledWith(PESSOA)
+      expect(geocodificador.geocodificarCep).toHaveBeenCalledWith("69000000")
+      expect(cache.gravarCepNoCache).toHaveBeenCalledWith(
+        expect.anything(),
+        "69000000",
+        { latitude: -3.12, longitude: -60.03, fonte: "google" },
+        "Flores",
+      )
+      expect(resultado).toMatchObject({
+        ok: true,
+        localizacao: { latitude: -3.12, longitude: -60.03 },
+      })
+    })
+
+    it("provedor indisponível usa a coordenada vencida em vez de falhar", async () => {
+      cache.lerCepDoCache.mockResolvedValue(vencida)
+      geocodificador.geocodificarCep.mockResolvedValue({ estado: "indisponivel" })
+
+      const resultado = await localizarAnuncio(pedido({ cliente: clienteComBairros(["Flores"]) }))
+      expect(geocodificador.geocodificarCep).toHaveBeenCalled()
+      expect(resultado).toMatchObject({
+        ok: true,
+        localizacao: { latitude: -3.10194, longitude: -60.025, bairroDerivado: "Flores" },
+      })
+      // Sem resposta do provedor não há o que regravar.
+      expect(cache.gravarCepNoCache).not.toHaveBeenCalled()
+    })
+
+    it("limite negado usa a coordenada vencida sem chamar o provedor", async () => {
+      cache.lerCepDoCache.mockResolvedValue(vencida)
+      limite.consumirConsulta.mockReturnValue({ liberado: false, esperarMs: 60_000 })
+
+      const resultado = await localizarAnuncio(pedido())
+
+      expect(geocodificador.geocodificarCep).not.toHaveBeenCalled()
+      expect(resultado).toMatchObject({
+        ok: true,
+        localizacao: { latitude: -3.10194, longitude: -60.025 },
+      })
+    })
   })
 
   it("cache miss geocodifica, passa pelo limitador e grava o cache", async () => {

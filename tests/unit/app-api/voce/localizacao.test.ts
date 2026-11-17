@@ -261,6 +261,77 @@ describe("PUT /api/app/voce/localizacao", () => {
     })
   })
 
+  it("linha vencida consulta o provedor, regrava e grava a coordenada nova (SEC-016)", async () => {
+    autenticar({ localizacao: { cep: "69000000", definida: true } })
+    const servico = clienteDeServico()
+    mocks.clienteDeServicoOuNulo.mockReturnValue(servico.client)
+    mocks.lerCepDoCache.mockResolvedValue({
+      cep: "69000000",
+      latitude: -3.119,
+      longitude: -60.0217,
+      fonte: "brasilapi",
+      vencida: true,
+    })
+    const coordenada = { latitude: -3.12, longitude: -60.03, fonte: "google" }
+    mocks.geocodificarCep.mockResolvedValue({ estado: "encontrado", coordenada })
+
+    const resposta = await PUT(pedido({ cep: "69000000" }))
+
+    expect(resposta.status).toBe(200)
+    expect(mocks.geocodificarCep).toHaveBeenCalledWith("69000000")
+    expect(mocks.gravarCepNoCache).toHaveBeenCalledWith(servico.client, "69000000", coordenada)
+    expect(servico.chamadas[0]?.args).toMatchObject({
+      p_latitude: -3.12,
+      p_longitude: -60.03,
+    })
+  })
+
+  it("linha vencida com provedor fora usa a coordenada antiga em vez de falhar", async () => {
+    autenticar({ localizacao: { cep: "69000000", definida: true } })
+    const servico = clienteDeServico()
+    mocks.clienteDeServicoOuNulo.mockReturnValue(servico.client)
+    mocks.lerCepDoCache.mockResolvedValue({
+      cep: "69000000",
+      latitude: -3.119,
+      longitude: -60.0217,
+      fonte: "brasilapi",
+      vencida: true,
+    })
+    mocks.geocodificarCep.mockResolvedValue({ estado: "indisponivel" })
+
+    const resposta = await PUT(pedido({ cep: "69000000" }))
+
+    expect(resposta.status).toBe(200)
+    expect(mocks.gravarCepNoCache).not.toHaveBeenCalled()
+    expect(servico.chamadas[0]?.args).toMatchObject({
+      p_latitude: -3.119,
+      p_longitude: -60.0217,
+    })
+  })
+
+  it("linha vencida com o teto esgotado usa a coordenada antiga, sem 429", async () => {
+    autenticar({ localizacao: { cep: "69000000", definida: true } })
+    const servico = clienteDeServico()
+    mocks.clienteDeServicoOuNulo.mockReturnValue(servico.client)
+    mocks.lerCepDoCache.mockResolvedValue({
+      cep: "69000000",
+      latitude: -3.119,
+      longitude: -60.0217,
+      fonte: "brasilapi",
+      vencida: true,
+    })
+    mocks.consumirConsulta.mockReturnValue({ liberado: false, esperarMs: 120_000 })
+
+    const resposta = await PUT(pedido({ cep: "69000000" }))
+
+    expect(resposta.status).toBe(200)
+    expect(mocks.geocodificarCep).not.toHaveBeenCalled()
+    expect(servico.chamadas[0]?.args).toMatchObject({
+      p_latitude: -3.119,
+      p_longitude: -60.0217,
+    })
+  })
+
   it("geocodifica, grava o cache e devolve só o CEP e a marca de definida", async () => {
     autenticar({ localizacao: { cep: "69000000", definida: true } })
     const servico = clienteDeServico()

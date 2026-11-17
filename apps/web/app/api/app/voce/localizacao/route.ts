@@ -105,36 +105,53 @@ export async function PUT(request: NextRequest): Promise<NextResponse> {
       })
       if (error !== null) return respostaDaFalhaDeEscrita(request, error.code)
     } else {
-      let coordenada = await lerCepDoCache(servico, cep)
+      const emCache = await lerCepDoCache(servico, cep)
+      // Vencida (SEC-016) é ausente para consultar o provedor; a coordenada velha
+      // fica como rede quando o provedor falha ou o teto nega.
+      const vencida = emCache?.vencida
+        ? { latitude: emCache.latitude, longitude: emCache.longitude }
+        : null
+      let coordenada =
+        emCache !== null && !emCache.vencida
+          ? { latitude: emCache.latitude, longitude: emCache.longitude }
+          : null
       if (coordenada === null) {
         // SEC-013/F2: o provedor de CEP só é chamado sob a cota da pessoa — o
         // mesmo limitador (e o mesmo 429 com `retry-after`) do anúncio e do
-        // pedido. Cache hit não consome: só a chamada real conta.
+        // pedido. Cache hit não consome: só a chamada real conta. O teto global
+        // (SEC-016) recusa no mesmo formato e não gasta a cota de ninguém.
         const limite = consumirConsulta(userId)
         if (!limite.liberado) {
-          const segundos = Math.max(1, Math.ceil(limite.esperarMs / 1000))
-          return responder(
-            request,
-            {
-              erro: "limite-de-consultas",
-              mensagem: `Muitas consultas de CEP em pouco tempo. Tente de novo em ${Math.ceil(segundos / 60)} min.`,
-            },
-            429,
-            { "retry-after": String(segundos) },
-          )
-        }
-        const geocodificada = await geocodificarCep(cep)
-        if (geocodificada.estado === "nao-encontrado")
-          return responder(request, { erro: "cep-nao-encontrado" }, 422)
-        if (geocodificada.estado === "indisponivel")
-          return responder(request, { erro: "geocodificador-indisponivel" }, 503)
-        if (geocodificada.estado === "encontrado") {
-          coordenada = { cep, ...geocodificada.coordenada }
-          try {
-            await gravarCepNoCache(servico, cep, geocodificada.coordenada)
-          } catch {
-            // Sem cache o próximo pedido geocodifica de novo; isso não é motivo
-            // para falhar a gravação que a pessoa pediu.
+          if (vencida !== null) {
+            coordenada = vencida
+          } else {
+            const segundos = Math.max(1, Math.ceil(limite.esperarMs / 1000))
+            return responder(
+              request,
+              {
+                erro: "limite-de-consultas",
+                mensagem: `Muitas consultas de CEP em pouco tempo. Tente de novo em ${Math.ceil(segundos / 60)} min.`,
+              },
+              429,
+              { "retry-after": String(segundos) },
+            )
+          }
+        } else {
+          const geocodificada = await geocodificarCep(cep)
+          if (geocodificada.estado === "encontrado") {
+            coordenada = geocodificada.coordenada
+            try {
+              await gravarCepNoCache(servico, cep, geocodificada.coordenada)
+            } catch {
+              // Sem cache o próximo pedido geocodifica de novo; isso não é motivo
+              // para falhar a gravação que a pessoa pediu.
+            }
+          } else if (geocodificada.estado === "nao-encontrado") {
+            return responder(request, { erro: "cep-nao-encontrado" }, 422)
+          } else if (geocodificada.estado === "indisponivel") {
+            if (vencida === null)
+              return responder(request, { erro: "geocodificador-indisponivel" }, 503)
+            coordenada = vencida
           }
         }
       }
