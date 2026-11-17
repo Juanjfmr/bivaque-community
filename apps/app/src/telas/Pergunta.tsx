@@ -114,12 +114,20 @@ export function Pergunta() {
   const [confirmandoBloqueio, setConfirmandoBloqueio] = useState(false)
   const [bloqueando, setBloqueando] = useState(false)
   const [avisoDoBloqueio, setAvisoDoBloqueio] = useState("")
+  const focoAoFecharBloqueio = useRef(false)
+  const tituloRef = useRef<HTMLHeadingElement>(null)
   // Uma sessão de rede por tela: sair cancela a escrita que ainda estava a caminho.
   const [controle] = useState(() => new AbortController())
 
   useRolagemEFoco(CARGA_CONCLUIDA)
 
   useEffect(() => () => controle.abort(), [controle])
+
+  useEffect(() => {
+    if (confirmandoBloqueio || !focoAoFecharBloqueio.current) return
+    focoAoFecharBloqueio.current = false
+    tituloRef.current?.focus()
+  }, [confirmandoBloqueio])
 
   // A entrada guarda a sobreposição, não o alvo: uma recarga com o menu aberto
   // volta sem alvo, e a casca deixaria o corpo inerte com um diálogo que não
@@ -347,9 +355,15 @@ export function Pergunta() {
     } catch {
       setAvisoDoBloqueio("Não foi possível bloquear esta pessoa. Tente de novo.")
     } finally {
+      focoAoFecharBloqueio.current = true
       setConfirmandoBloqueio(false)
       setBloqueando(false)
     }
+  }
+
+  function fecharConfirmacaoBloqueio() {
+    focoAoFecharBloqueio.current = true
+    setConfirmandoBloqueio(false)
   }
 
   async function enviar() {
@@ -413,7 +427,13 @@ export function Pergunta() {
             />
           ) : null}
         </div>
-        <h1 id="titulo-da-tela" data-titulo-da-tela tabIndex={-1} className="text-[22px] leading-7">
+        <h1
+          ref={tituloRef}
+          id="titulo-da-tela"
+          data-titulo-da-tela
+          tabIndex={-1}
+          className="text-[22px] leading-7"
+        >
           {pergunta.titulo}
         </h1>
         {pergunta.grupo === null ? null : (
@@ -596,8 +616,14 @@ export function Pergunta() {
       {avisoDaDenuncia === "" ? null : (
         <div role="status" tabIndex={-1} className="grid justify-items-start gap-1">
           <p>{avisoDaDenuncia}</p>
-          {autorParaBloquear === null || avisoDoBloqueio !== "" ? null : (
-            <Botao tom="texto" onClick={() => setConfirmandoBloqueio(true)}>
+          {autorParaBloquear === null || avisoDoBloqueio === "Pessoa bloqueada." ? null : (
+            <Botao
+              tom="texto"
+              onClick={() => {
+                setAvisoDoBloqueio("")
+                setConfirmandoBloqueio(true)
+              }}
+            >
               Bloquear autor
             </Botao>
           )}
@@ -605,14 +631,19 @@ export function Pergunta() {
         </div>
       )}
 
-      <Dialog open={confirmandoBloqueio} onOpenChange={setConfirmandoBloqueio}>
+      <Dialog
+        open={confirmandoBloqueio}
+        onOpenChange={(aberto) => {
+          if (!aberto) fecharConfirmacaoBloqueio()
+        }}
+      >
         <DialogContent>
           <DialogTitle>Bloquear esta pessoa?</DialogTitle>
           <DialogDescription>
             A conversa ficará fechada nos dois sentidos. A pessoa não será avisada.
           </DialogDescription>
           <div className="flex flex-wrap justify-end gap-2">
-            <Botao tom="texto" disabled={bloqueando} onClick={() => setConfirmandoBloqueio(false)}>
+            <Botao tom="texto" disabled={bloqueando} onClick={fecharConfirmacaoBloqueio}>
               Cancelar
             </Botao>
             <Botao disabled={bloqueando} onClick={() => void confirmarBloqueio()}>
