@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+
 // merge-seguro.mjs — a única porta de merge da orquestração.
 //
 // O ADR-20261114 trocou branch protection pelo rito de fechamento (label ci:full →
@@ -18,6 +19,7 @@
 //   GH_TOKEN (ou GITHUB_TOKEN) — token com pull-requests: write e checks: read.
 //   GITHUB_REPOSITORY — owner/nome; sobreponível por --repo owner/nome.
 
+import { execFileSync } from "node:child_process"
 import { pathToFileURL } from "node:url"
 
 const API = "https://api.github.com"
@@ -35,6 +37,42 @@ export const CAMINHOS_DO_VISUAL = [
   /^\.github\/workflows\/bivaque-app-visual-smoke\.yml$/,
   /^pnpm-lock\.yaml$/,
 ]
+
+function compararRecencia(a, b) {
+  const dataA = Date.parse(a.completed_at ?? "") || 0
+  const dataB = Date.parse(b.completed_at ?? "") || 0
+  return dataA - dataB || Number(a.id ?? a.run_id ?? 0) - Number(b.id ?? b.run_id ?? 0)
+}
+
+function melhorRun(runs) {
+  const verdes = runs.filter((run) => run.status === "completed" && run.conclusion === "success")
+  const vermelhos = runs.filter(
+    (run) =>
+      run.status === "completed" && !["success", "skipped", "neutral"].includes(run.conclusion),
+  )
+  if (verdes.length && vermelhos.length)
+    return [...verdes, ...vermelhos].sort(compararRecencia).at(-1)
+  if (verdes.length) return verdes.sort(compararRecencia).at(-1)
+  return runs.sort(compararRecencia).at(-1)
+}
+
+const origemRun = (run) => ` (run ${run.id ?? run.run_id ?? "sem id"})`
+
+/** Usa o token do ambiente ou o login ativo do GitHub CLI, sem shell. */
+export function obterToken({ env = process.env, execFileSyncImpl = execFileSync } = {}) {
+  const token = env["GH_TOKEN"] ?? env["GITHUB_TOKEN"]
+  if (token) return token
+  try {
+    const tokenGh = execFileSyncImpl("gh", ["auth", "token"], {
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "pipe"],
+    }).trim()
+    if (tokenGh) return tokenGh
+  } catch {
+    // A mensagem não inclui stderr do gh, que pode conter informação sensível.
+  }
+  throw new Error("sem token: defina GH_TOKEN/GITHUB_TOKEN ou faça login com gh auth login")
+}
 
 const SHA_COMPLETO = /^[0-9a-f]{40}$/i
 
@@ -62,11 +100,12 @@ export function avaliar({ headSha, estado, checkRuns = [], arquivos = [] }) {
         motivo: `o check "${run.name}" pertence a ${String(run.head_sha).slice(0, 12)}, não ao head ${headSha.slice(0, 12)}`,
       }
     }
-    // O GitHub devolve o mais recente por nome; a última ocorrência vence aqui.
-    porNome.set(run.name, run)
+    porNome.set(run.name, [...(porNome.get(run.name) ?? []), run])
   }
 
-  const completo = porNome.get(CHECK_COMPLETO)
+  const selecionados = new Map([...porNome].map(([nome, runs]) => [nome, melhorRun(runs)]))
+
+  const completo = selecionados.get(CHECK_COMPLETO)
   if (!completo) {
     return {
       ok: false,
@@ -74,13 +113,19 @@ export function avaliar({ headSha, estado, checkRuns = [], arquivos = [] }) {
     }
   }
   if (completo.status !== "completed") {
-    return { ok: false, motivo: `o PR CI completo ainda está "${completo.status}"` }
+    return {
+      ok: false,
+      motivo: `o PR CI completo ainda está "${completo.status}"${origemRun(completo)}`,
+    }
   }
   if (completo.conclusion !== "success") {
-    return { ok: false, motivo: `o PR CI completo está "${completo.conclusion}", não verde` }
+    return {
+      ok: false,
+      motivo: `o PR CI completo está "${completo.conclusion}", não verde${origemRun(completo)}`,
+    }
   }
 
-  const agregado = porNome.get(CHECK_AGREGADO)
+  const agregado = selecionados.get(CHECK_AGREGADO)
   if (!agregado) {
     return {
       ok: false,
@@ -88,16 +133,19 @@ export function avaliar({ headSha, estado, checkRuns = [], arquivos = [] }) {
     }
   }
   if (agregado.status !== "completed") {
-    return { ok: false, motivo: `o PR CI completo ainda está "${agregado.status}"` }
+    return {
+      ok: false,
+      motivo: `o PR CI completo ainda está "${agregado.status}"${origemRun(agregado)}`,
+    }
   }
   if (agregado.conclusion !== "success") {
     return {
       ok: false,
-      motivo: `o PR CI completo está "${agregado.conclusion}": algum job dele (fast, ci-core ou e2e-stateful) falhou`,
+      motivo: `o PR CI completo está "${agregado.conclusion}": algum job dele (fast, ci-core ou e2e-stateful) falhou${origemRun(agregado)}`,
     }
   }
 
-  const visual = porNome.get(CHECK_VISUAL)
+  const visual = selecionados.get(CHECK_VISUAL)
   const tocaOApp = arquivos.some((caminho) =>
     CAMINHOS_DO_VISUAL.some((padrao) => padrao.test(caminho)),
   )
@@ -115,7 +163,7 @@ export function avaliar({ headSha, estado, checkRuns = [], arquivos = [] }) {
     }
   }
   if (visual.status !== "completed") {
-    return { ok: false, motivo: `o Visual Smoke ainda está "${visual.status}"` }
+    return { ok: false, motivo: `o Visual Smoke ainda está "${visual.status}"${origemRun(visual)}` }
   }
   if (visual.conclusion === "skipped") {
     if (tocaOApp) {
@@ -127,10 +175,16 @@ export function avaliar({ headSha, estado, checkRuns = [], arquivos = [] }) {
     return { ok: true, motivo: "PR CI completo verde; Visual Smoke pulado por paths" }
   }
   if (visual.conclusion !== "success") {
-    return { ok: false, motivo: `o Visual Smoke está "${visual.conclusion}", não verde` }
+    return {
+      ok: false,
+      motivo: `o Visual Smoke está "${visual.conclusion}", não verde${origemRun(visual)}`,
+    }
   }
 
-  return { ok: true, motivo: "PR CI completo e Visual Smoke verdes no mesmo SHA" }
+  return {
+    ok: true,
+    motivo: `PR CI completo, agregador e Visual Smoke verdes no mesmo SHA; runs ${completo.id ?? completo.run_id ?? "sem id"}, ${agregado.id ?? agregado.run_id ?? "sem id"} e ${visual.id ?? visual.run_id ?? "sem id"}`,
+  }
 }
 
 async function pedir(fetchImpl, { metodo = "GET", url, token, corpo }) {
@@ -225,11 +279,11 @@ async function main(argv) {
     process.stderr.write("merge-seguro: defina GITHUB_REPOSITORY ou passe --repo owner/nome\n")
     return 2
   }
-  const token = process.env["GH_TOKEN"] ?? process.env["GITHUB_TOKEN"]
-  if (!token) {
-    process.stderr.write(
-      "merge-seguro: defina GH_TOKEN (ou GITHUB_TOKEN) com pull-requests: write\n",
-    )
+  let token
+  try {
+    token = obterToken()
+  } catch (erro) {
+    process.stderr.write(`merge-seguro: ${erro.message}\n`)
     return 2
   }
 

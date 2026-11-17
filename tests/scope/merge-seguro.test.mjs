@@ -6,6 +6,7 @@ import {
   CHECK_COMPLETO,
   CHECK_VISUAL,
   mergeSeguro,
+  obterToken,
 } from "../../scripts/agents/merge-seguro.mjs"
 
 // SHA completo de 40 hex: o script recusa atalho justamente porque o merge precisa
@@ -18,6 +19,12 @@ const check = (name, { status = "completed", conclusion = "success", headSha = S
   status,
   conclusion,
   head_sha: headSha,
+})
+
+const run = (name, id, conclusion, completed_at) => ({
+  ...check(name, { conclusion }),
+  id,
+  completed_at,
 })
 
 function resposta(corpo, { ok = true, status = 200 } = {}) {
@@ -217,4 +224,91 @@ test("merge recusado pelo GitHub: devolve recusa com a mensagem", async () => {
   assert.equal(veredito.ok, false)
   assert.equal(veredito.merged, false)
   assert.match(veredito.motivo, /não mergeable|not mergeable/)
+})
+
+test("run verde vence run pulado independentemente da ordem da API", () => {
+  for (const duplicatas of [
+    [
+      run(CHECK_COMPLETO, 10, "skipped", "2026-11-17T10:00:00Z"),
+      run(CHECK_COMPLETO, 11, "success", "2026-11-17T09:00:00Z"),
+    ],
+    [
+      run(CHECK_COMPLETO, 11, "success", "2026-11-17T09:00:00Z"),
+      run(CHECK_COMPLETO, 10, "skipped", "2026-11-17T10:00:00Z"),
+    ],
+    [
+      run(CHECK_COMPLETO, 12, "neutral", "2026-11-17T10:00:00Z"),
+      run(CHECK_COMPLETO, 11, "success", "2026-11-17T09:00:00Z"),
+    ],
+  ]) {
+    const veredito = avaliar({
+      headSha: SHA,
+      estado: "open",
+      checkRuns: [...duplicatas, check(CHECK_AGREGADO), check(CHECK_VISUAL)],
+    })
+    assert.equal(veredito.ok, true)
+    assert.match(veredito.motivo, /runs 11/)
+  }
+})
+
+test("run vermelho mais recente vence run verde antigo e recusa", () => {
+  const veredito = avaliar({
+    headSha: SHA,
+    estado: "open",
+    checkRuns: [
+      run(CHECK_COMPLETO, 20, "success", "2026-11-17T09:00:00Z"),
+      run(CHECK_COMPLETO, 21, "failure", "2026-11-17T10:00:00Z"),
+      check(CHECK_AGREGADO),
+      check(CHECK_VISUAL),
+    ],
+  })
+  assert.equal(veredito.ok, false)
+  assert.match(veredito.motivo, /failure.*run 21/)
+})
+
+test("somente run pulado não prova o completo", () => {
+  const veredito = avaliar({
+    headSha: SHA,
+    estado: "open",
+    checkRuns: [
+      run(CHECK_COMPLETO, 30, "skipped", "2026-11-17T10:00:00Z"),
+      check(CHECK_AGREGADO),
+      check(CHECK_VISUAL),
+    ],
+  })
+  assert.equal(veredito.ok, false)
+  assert.match(veredito.motivo, /skipped.*run 30/)
+})
+
+test("obter token usa ambiente antes do gh e injeta chamada sem shell", () => {
+  let chamada
+  assert.equal(
+    obterToken({
+      env: {},
+      execFileSyncImpl: (...args) => {
+        chamada = args
+        return " gh-token\n"
+      },
+    }),
+    "gh-token",
+  )
+  assert.deepEqual(chamada, [
+    "gh",
+    ["auth", "token"],
+    { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] },
+  ])
+  assert.equal(
+    obterToken({ env: { GH_TOKEN: "env-token" }, execFileSyncImpl: () => assert.fail() }),
+    "env-token",
+  )
+  assert.throws(
+    () =>
+      obterToken({
+        env: {},
+        execFileSyncImpl: () => {
+          throw new Error("not logged in")
+        },
+      }),
+    /gh auth login/,
+  )
 })
