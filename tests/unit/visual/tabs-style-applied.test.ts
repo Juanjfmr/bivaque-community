@@ -8,9 +8,11 @@ import { describe, expect, it } from "vitest"
 // aplica a classe única do produto (`tabs--secondary`), nem declara por escrito por
 // que aquela fileira difere.
 //
-// A regra de estilo é uma só, escrita pelo RECON-045 em `apps/web/app/globals.css`;
-// a tela de referência é `apps/web/app/(shell)/salvos/page.tsx`. Sem este teste, as
-// sete telas deste lote foram corrigidas e a oitava nasceria sem o estilo.
+// A regra de estilo é uma só, escrita pelo RECON-045 em `apps/web/app/globals.css`.
+// A tela de referência original (`(shell)/salvos`) saiu com a troca do RUN-186; a
+// regra continua valendo para toda fileira de abas que nascer na web. Sem este
+// teste, as sete telas do lote original foram corrigidas e a oitava nasceria sem
+// o estilo.
 //
 // A lista de exceções é explícita e curta de propósito. A navegação inferior precisa
 // estar nela com o motivo: é navegação primária em largura pequena, não uma fileira

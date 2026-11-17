@@ -53,6 +53,10 @@ const TROCADAS = [
   // ADR-20261101 §2. As duas exatas vêm antes da subárvore no next.config.
   ["/configuracoes", "/app/voce"],
   ["/configuracoes/conta", "/app/voce"],
+  // RUN-186: a tela de Salvos saiu inteira — a página e o módulo que a alimentava.
+  // O destino é a tela do app, com a query preservada pelo Next.
+  ["/salvos", "/app/salvos"],
+  ["/salvos?aba=guia", "/app/salvos?aba=guia"],
   ["/inicio", "/app/inicio"],
   ["/notifications", "/app/avisos"],
   ["/explorar/busca", "/app/busca"],
@@ -250,9 +254,10 @@ describe("LAN-TROCA fase 1", () => {
   })
 
   // RUN-184: a árvore de configurações saiu inteira — a conta, o índice, os resíduos
-  // de bloqueados/família e as actions (trust-actions.ts) morreram com a troca. A
-  // prova é de ausência: o diretório não existe mais no checkout.
-  it.each(["notifications", "configuracoes", "messages"])(
+  // de bloqueados/família e as actions (trust-actions.ts) morreram com a troca.
+  // RUN-186: salvos saiu pelo mesmo molde. A prova é de ausência: o diretório não
+  // existe mais no checkout.
+  it.each(["notifications", "configuracoes", "messages", "salvos"])(
     "a pasta antiga %s não deixa tela nem action para trás",
     (relativa) => {
       const pasta = join(shell, relativa)

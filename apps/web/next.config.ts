@@ -163,6 +163,10 @@ const nextConfig: NextConfig = {
           ["/configuracoes/familia", "/app/voce"],
           ["/configuracoes/notificacoes", "/app/voce"],
           ["/configuracoes", "/app/voce"],
+          // F10 (RUN-186): Salvos é tela do app. A página web sai inteira e a
+          // lateral da casca e o atalho da Ajuda passam a apontar para o app;
+          // o `?aba=` da tela antiga não sobrevive à troca (ADR-20261117-salvos).
+          ["/salvos", "/app/salvos"],
           ["/inicio", "/app/inicio"],
           ["/notifications", "/app/avisos"],
           // RUN-181: a espera do RUN-177 acabou. A última tela de busca da web

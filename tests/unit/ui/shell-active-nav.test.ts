@@ -31,18 +31,11 @@ function isDeclaredContainer(pathname: string): boolean {
 }
 
 describe("resolveActiveNav deriva o item ativo da rota", () => {
-  it("/salvos acende Salvos, nunca Perfil — o defeito do RECON-038", () => {
-    expect(resolveActiveNav("/salvos", PRIMARY)).toEqual({
-      kind: "secondary",
-      href: "/salvos",
-    })
-  })
-
-  it("/salvos/... também acende Salvos", () => {
-    expect(resolveActiveNav("/salvos/abc", PRIMARY)).toEqual({
-      kind: "secondary",
-      href: "/salvos",
-    })
+  // RUN-186: a tela de Salvos saiu da web (307 para /app/salvos), então o
+  // endereço antigo não acende item nenhum nesta casca — nunca Perfil, que era
+  // o defeito do RECON-038.
+  it("o endereço antigo de Salvos não acende item na casca web", () => {
+    expect(resolveActiveNav("/salvos", PRIMARY)).toEqual({ kind: "none" })
   })
 
   it("cada container primário acende a si mesmo", () => {
@@ -85,8 +78,11 @@ describe("resolveActiveNav deriva o item ativo da rota", () => {
     expect(resolveActiveNav("/rota-nova-qualquer", PRIMARY)).toEqual({ kind: "none" })
   })
 
-  it("só /salvos é destino secundário que acende a si mesmo", () => {
-    expect([...SECONDARY_SELF_ROUTES]).toEqual(["/salvos"])
+  it("nenhum destino secundário acende a si mesmo na casca web", () => {
+    // RUN-186: o único era /salvos, que virou tela do app. A lista vazia é o
+    // estado correto; o teste continua aqui para que um destino novo não entre
+    // sem que a casca o sirva de fato.
+    expect([...SECONDARY_SELF_ROUTES]).toEqual([])
   })
 })
 
