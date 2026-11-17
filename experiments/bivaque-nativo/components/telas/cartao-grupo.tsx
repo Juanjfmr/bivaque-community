@@ -23,7 +23,7 @@ export function CartaoGrupo({ grupo, aoPressionar }: CartaoGrupoProps) {
     >
       <Card className="flex-row items-center gap-3 rounded-xl border-border p-3">
         <Image
-          source={{ uri: grupo.capa }}
+          source={grupo.capa}
           accessibilityIgnoresInvertColors
           className="h-16 w-16 rounded-lg bg-muted"
         />

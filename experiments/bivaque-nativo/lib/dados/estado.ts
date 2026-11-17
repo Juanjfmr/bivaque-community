@@ -1,7 +1,7 @@
 // Estado de demonstração da sessão: o que a pessoa publica e conversa fica em memória,
 // sobre os dados iniciais. Nada é enviado a servidor.
 import { useSyncExternalStore } from "react"
-import { ANUNCIOS, CONVERSAS, foto, PERFIL, POSTS } from "./index"
+import { ANUNCIOS, CONVERSAS, PERFIL, POSTS } from "./index"
 import type { Anuncio, CategoriaAnuncio, Conversa, Mensagem, Post, TipoPost } from "./tipos"
 
 interface Estado {
@@ -105,7 +105,6 @@ export function publicarAnuncio(entrada: {
     categoria: entrada.categoria,
     bairro: PERFIL.bairro,
     descricao: entrada.descricao,
-    foto: foto(id),
     vendedorId: PERFIL.id,
   }
   atualizar({ anuncios: [anuncio, ...estado.anuncios] })

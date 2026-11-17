@@ -29,7 +29,10 @@
       "!**/apps/mobile/.expo",
       "!**/apps/mobile/android",
       "!**/apps/mobile/ios",
-      "!**/.pnpm-store"
+      "!**/.pnpm-store",
+      "!**/experiments/bivaque-nativo/android",
+      "!**/experiments/bivaque-nativo/ios",
+      "!**/experiments/bivaque-nativo/.expo"
     ]
   },
   "formatter": {

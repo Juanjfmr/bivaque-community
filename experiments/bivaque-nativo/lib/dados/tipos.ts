@@ -1,3 +1,5 @@
+import type { ImageSourcePropType } from "react-native"
+
 // Dados de demonstração sintéticos do app nativo de teste. Nenhum dado real.
 
 export interface Pessoa {
@@ -35,7 +37,7 @@ export interface Grupo {
   descricao: string
   membros: number
   bairro: string
-  capa: string
+  capa: ImageSourcePropType
 }
 
 export type CategoriaAnuncio = "desapego" | "imovel"
@@ -48,7 +50,8 @@ export interface Anuncio {
   categoria: CategoriaAnuncio
   bairro: string
   descricao: string
-  foto: string
+  /** Ausente no anúncio publicado na sessão: a demonstração não envia foto. */
+  foto?: ImageSourcePropType
   vendedorId: string
 }
 
@@ -74,5 +77,5 @@ export interface Evento {
   quando: string
   local: string
   participantes: number
-  capa: string
+  capa: ImageSourcePropType
 }

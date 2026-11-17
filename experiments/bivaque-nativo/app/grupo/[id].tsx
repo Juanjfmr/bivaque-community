@@ -45,7 +45,7 @@ export default function TelaGrupo() {
               }
             />
             <Image
-              source={{ uri: grupo.capa }}
+              source={grupo.capa}
               accessibilityIgnoresInvertColors
               className="h-40 w-full bg-muted"
             />

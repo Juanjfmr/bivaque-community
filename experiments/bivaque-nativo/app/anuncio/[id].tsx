@@ -1,10 +1,11 @@
 import { router, useLocalSearchParams } from "expo-router"
-import { Image, ScrollView, View } from "react-native"
+import { ScrollView, View } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 import { BotaoAcao, EstadoVazio } from "@/components/motion"
 import { AvatarPessoa } from "@/components/telas/avatar-pessoa"
 import { BotaoIcone } from "@/components/telas/botao-icone"
 import { CabecalhoTela } from "@/components/telas/cabecalho-tela"
+import { FotoAnuncio } from "@/components/telas/foto-anuncio"
 import { Card } from "@/components/ui/card"
 import { Text } from "@/components/ui/text"
 import { PERFIL, pessoaPorId, precoEmReais } from "@/lib/dados"
@@ -36,10 +37,10 @@ export default function TelaAnuncio() {
       />
 
       <ScrollView contentContainerClassName="gap-4 pb-10">
-        <Image
-          source={{ uri: anuncio.foto }}
-          accessibilityIgnoresInvertColors
+        <FotoAnuncio
+          anuncio={anuncio}
           className="aspect-square w-full bg-muted"
+          tamanhoIcone={72}
         />
 
         <View className="gap-2 px-4">

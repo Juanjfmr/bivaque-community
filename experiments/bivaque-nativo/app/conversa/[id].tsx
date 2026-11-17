@@ -1,6 +1,6 @@
 import { router, useLocalSearchParams } from "expo-router"
 import { useState } from "react"
-import { FlatList, Image, KeyboardAvoidingView, Platform, Pressable, View } from "react-native"
+import { FlatList, KeyboardAvoidingView, Platform, Pressable, View } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 import { Icone } from "@/components/icons"
 import { Entrada, EstadoVazio } from "@/components/motion"
@@ -8,6 +8,7 @@ import { AvatarPessoa } from "@/components/telas/avatar-pessoa"
 import { BotaoIcone } from "@/components/telas/botao-icone"
 import { CabecalhoTela } from "@/components/telas/cabecalho-tela"
 import { useCores } from "@/components/telas/cores"
+import { FotoAnuncio } from "@/components/telas/foto-anuncio"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Text } from "@/components/ui/text"
@@ -67,10 +68,10 @@ export default function TelaConversa() {
                 className="mb-2"
               >
                 <Card className="flex-row items-center gap-3 rounded-xl border-border p-3">
-                  <Image
-                    source={{ uri: anuncio.foto }}
-                    accessibilityIgnoresInvertColors
+                  <FotoAnuncio
+                    anuncio={anuncio}
                     className="h-12 w-12 rounded-lg bg-muted"
+                    tamanhoIcone={22}
                   />
                   <View className="flex-1">
                     <Text className="text-sm font-semibold" numberOfLines={2}>

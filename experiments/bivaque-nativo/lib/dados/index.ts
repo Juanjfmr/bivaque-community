@@ -1,20 +1,8 @@
 // Dados de demonstração sintéticos do app nativo de teste. Nenhum dado real.
 import type { ImageSourcePropType } from "react-native"
-import type {
-  Anuncio as AnuncioOriginal,
-  Conversa,
-  Evento as EventoOriginal,
-  Grupo as GrupoOriginal,
-  Pessoa,
-  Post,
-  Resposta,
-} from "./tipos"
+import type { Anuncio, Conversa, Evento, Grupo, Pessoa, Post, Resposta } from "./tipos"
 
 export * from "./tipos"
-
-export type Anuncio = Omit<AnuncioOriginal, "foto"> & { foto: ImageSourcePropType }
-export type Grupo = Omit<GrupoOriginal, "capa"> & { capa: ImageSourcePropType }
-export type Evento = Omit<EventoOriginal, "capa"> & { capa: ImageSourcePropType }
 
 export const CIDADE = "Manaus"
 

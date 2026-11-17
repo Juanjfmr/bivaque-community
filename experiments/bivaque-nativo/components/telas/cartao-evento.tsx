@@ -23,7 +23,7 @@ export function CartaoEvento({ evento, aoPressionar }: CartaoEventoProps) {
     >
       <Card className="flex-row items-center gap-3 rounded-xl border-border p-3">
         <Image
-          source={{ uri: evento.capa }}
+          source={evento.capa}
           accessibilityIgnoresInvertColors
           className="h-16 w-16 rounded-lg bg-muted"
         />
