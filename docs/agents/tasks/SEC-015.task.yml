@@ -1,0 +1,75 @@
+# F09 lote 1: bloquear o autor depois de denunciar, pelo app.
+#
+# Autoridade: levantamento de escopo de 17/11 (.work/orq/relatorios/escopo-trocas.md, seções 3.3,
+# 3.6 e 3.8) e cartão F09-B3-INSERT-DIRETO-DM. Hoje o único produtor vivo de dm_blocks fora da
+# porta do app é o report-button da tela antiga /indicacoes/[id], que grava direto na tabela pelo
+# cliente do navegador. Enquanto ele existir, o grant de INSERT em dm_blocks não pode ser
+# revogado. O app já tem a porta de bloqueio com sessão (POST /api/app/voce/bloqueados) e a
+# denúncia de pergunta e resposta (Pergunta.tsx), mas não oferece bloquear o autor depois de
+# denunciar.
+#
+# Decisão do coordenador, 17/11, por delegação: o gesto de bloquear vai para o app reusando a
+# porta existente; nenhuma rota, grant ou migration nova neste lote. A revogação dos INSERT diretos
+# de dm_messages e dm_blocks fica para o lote 3, depois que a tela antiga sair.
+
+task_id: SEC-015
+
+objective: >
+  Quem denuncia uma pergunta ou resposta no app pode, no mesmo fluxo, bloquear o autor, pela
+  porta de bloqueio que já resolve a sessão no servidor, de modo que a tela antiga deixa de ser
+  o único lugar onde esse gesto existe.
+
+authority:
+  - .work/orq/relatorios/escopo-trocas.md (seções 3.3, 3.6 e 3.8, lote 1)
+  - cartão F09-B3-INSERT-DIRETO-DM
+  - docs/decisions/ADR-20261116-bloqueio-e-denuncia-pela-porta-do-app.md
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    apps/app/src/telas/Pergunta.tsx tem a denúncia (linhas 59-105) e nenhuma oferta de bloquear o
+    autor; o bloqueio pós-denúncia só existe em apps/web/app/components/bivaque/report-button.tsx,
+    que grava em dm_blocks pelo cliente do navegador.
+
+allowed_paths:
+  - apps/app/src/telas/Pergunta.tsx
+  - apps/app/lib/dados/perguntas.ts
+  - apps/app/lib/dados/voce.ts
+  - apps/app/tests/perguntas-dados.test.ts
+  - apps/app/tests/e2e
+  - tests/unit/app-api/perguntas/denuncia.test.ts
+  - tests/unit/app-api/voce/rotas.test.ts
+  - docs/decisions/ADR-20261116-bloqueio-e-denuncia-pela-porta-do-app.md
+  - docs/decisions/RATIFICACAO.md
+  - docs/agents/tasks/SEC-015.task.yml
+
+forbidden:
+  - criar rota, migration, grant ou policy; mudar a rota /api/app/voce/bloqueados além do que um teste precisar provar
+  - mexer na tela antiga /indicacoes/[id], no report-button da web ou em qualquer arquivo de apps/web fora dos testes listados
+  - bloquear a si mesmo, ou revelar ao autor que foi denunciado ou bloqueado
+  - push, merge, abrir PR, force-push; ler, criar ou imprimir arquivos de ambiente
+
+acceptance:
+  - "Depois de enviar a denúncia de uma pergunta ou resposta de outra pessoa, o app oferece bloquear o autor, com confirmação, chamando a função de bloqueio já existente em apps/app/lib/dados/voce.ts, que usa POST /api/app/voce/bloqueados."
+  - "A oferta não aparece quando o autor é a própria pessoa, nem quando o autor já está bloqueado; o resultado (bloqueado, já bloqueado, falha) aparece com frase fixa, sem detalhe técnico, e o foco volta para um ponto previsível."
+  - "Teste do módulo de dados ou da tela cobre: oferta depois da denúncia, confirmação chamando a porta, autor próprio sem oferta, falha da porta com frase fixa."
+  - "Teste unitário da rota /api/app/voce/bloqueados (tests/unit/app-api/voce/rotas.test.ts) prova que o bloqueador vem da sessão e que auto-bloqueio é recusado, se essas provas ainda não existirem."
+  - "E2E do app (apps/app/tests/e2e) percorre denunciar uma resposta e bloquear o autor, em 375 e 1440, se houver spec de pergunta com dados reais ou mockados em que caiba; senão, registra no relatório por que não coube."
+  - "A emenda de 17/11 do ADR-20261116 de bloqueio e denúncia registra que o gesto existe no app e que a revogação dos INSERT diretos vem no lote 3; a linha da RATIFICACAO.md acompanha."
+
+proof:
+  - "npx vitest run (arquivos de teste tocados, com os binários de node_modules)"
+  - npx pnpm@11.18.0 lint
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/SEC-015.task.yml
+  - "E2E e suíte completa — no CI completo com a label ci:full"
+
+risk: moderação, bloqueio entre membros
+risk_level: R3
+adr: docs/decisions/ADR-20261116-bloqueio-e-denuncia-pela-porta-do-app.md
+
+reviewer_must_differ_from_executor: true
+retry_budget: 2
+on_budget_exhausted: HUMAN_DECISION
+
+closure:
+  requires_runtime_evidence: true
