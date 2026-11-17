@@ -1,5 +1,7 @@
 import type { Page } from "@playwright/test"
 
+const ID_ANA = "00000000-0000-4000-8000-000000000001"
+
 /**
  * Simula `/api/app/perguntas` para os specs que medem a tela da Comunidade e da
  * pergunta. O `vite preview` serve só o build do app — não existe `/api` ali —,
@@ -18,7 +20,7 @@ const PERGUNTAS = [
     propria: false,
     resolvida: false,
     respostas: 0,
-    autorId: "u-ana",
+    autorId: ID_ANA,
   },
   {
     id: "q2",
@@ -49,12 +51,20 @@ export async function simularPerguntas(
   } = {},
 ) {
   const perguntas = [...PERGUNTAS]
+  let tentativasDeBloqueio = 0
   await page.route(/\/api\/app\/voce\/bloqueados$/, async (rota) => {
     if (rota.request().method() === "GET")
-      return rota.fulfill({ json: { bloqueados: jaBloqueada ? [{ id: "u-ana" }] : [] } })
-    if (falhaNoBloqueio)
+      return rota.fulfill({
+        json: {
+          bloqueados: jaBloqueada
+            ? [{ id: ID_ANA, nome: "Ana P.", bloqueadoEm: "2026-11-01T12:00:00.000Z" }]
+            : [],
+        },
+      })
+    tentativasDeBloqueio += 1
+    if (falhaNoBloqueio && tentativasDeBloqueio === 1)
       return rota.fulfill({ status: 503, json: { erro: "escrita-indisponivel" } })
-    return rota.fulfill({ status: 201, json: { bloqueado: { id: "u-ana" } } })
+    return rota.fulfill({ status: 201, json: { bloqueado: { id: ID_ANA } } })
   })
   await page.route(/\/api\/app\/perguntas(?:\/|\?|$)/, async (rota) => {
     const url = new URL(rota.request().url())
@@ -111,7 +121,7 @@ export async function simularPerguntas(
                 id: "r-ana",
                 corpo: "Resposta de Ana.",
                 autor: "Ana P.",
-                autorId: "u-ana",
+                autorId: ID_ANA,
                 propria: respostaPropria,
                 criadaEm: "2026-11-01T12:00:00.000Z",
                 removida: false,

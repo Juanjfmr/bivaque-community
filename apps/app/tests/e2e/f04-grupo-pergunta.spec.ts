@@ -64,8 +64,9 @@ test("denunciar resposta oferece bloquear a autora com confirmação", async ({ 
     (request) => request.method() === "POST" && request.url().endsWith("/api/app/voce/bloqueados"),
   )
   await page.getByRole("button", { name: "Bloquear", exact: true }).click()
-  expect((await pedido).postDataJSON()).toEqual({ id: "u-ana" })
+  expect((await pedido).postDataJSON()).toEqual({ id: "00000000-0000-4000-8000-000000000001" })
   await expect(page.getByRole("status")).toContainText("Pessoa bloqueada.")
+  await expect(page.locator("#titulo-da-tela")).toBeFocused()
 })
 
 test("autor já bloqueado não recebe uma segunda oferta após denúncia", async ({ page }) => {
@@ -103,4 +104,42 @@ test("falha da porta de bloqueio mostra frase fixa", async ({ page }) => {
   await expect(page.getByRole("status")).toContainText(
     "Não foi possível bloquear esta pessoa. Tente de novo.",
   )
+  await expect(page.getByRole("button", { name: "Bloquear autor" })).toBeVisible()
+  await expect(page.locator("#titulo-da-tela")).toBeFocused()
+  const pedido = page.waitForRequest(
+    (request) => request.method() === "POST" && request.url().endsWith("/api/app/voce/bloqueados"),
+  )
+  await page.getByRole("button", { name: "Bloquear autor" }).click()
+  await page.getByRole("button", { name: "Bloquear", exact: true }).click()
+  expect((await pedido).postDataJSON()).toEqual({ id: "00000000-0000-4000-8000-000000000001" })
+  await expect(page.getByRole("status")).toContainText("Pessoa bloqueada.")
+  await expect(page.locator("#titulo-da-tela")).toBeFocused()
+})
+
+test("cancelar bloqueio devolve foco ao título da pergunta", async ({ page }) => {
+  await simularPerguntas(page, { comResposta: true })
+  await page.setViewportSize({ width: 375, height: 812 })
+  await page.goto("/app/pergunta/a1")
+  await page.getByRole("button", { name: "Opções da resposta" }).click()
+  await page.getByRole("button", { name: "Denunciar resposta" }).click()
+  await page.getByLabel("Spam").check()
+  await page.getByRole("button", { name: "Enviar denúncia" }).click()
+  await page.getByRole("button", { name: "Bloquear autor" }).click()
+  await page.getByRole("button", { name: "Cancelar" }).click()
+  await expect(page.locator("#titulo-da-tela")).toBeFocused()
+})
+
+test("denunciar resposta e bloquear autora em 375 e 1440", async ({ page }) => {
+  for (const width of [375, 1440]) {
+    await page.setViewportSize({ width, height: 900 })
+    await simularPerguntas(page, { comResposta: true })
+    await page.goto("/app/pergunta/a1")
+    await page.getByRole("button", { name: "Opções da resposta" }).click()
+    await page.getByRole("button", { name: "Denunciar resposta" }).click()
+    await page.getByLabel("Spam").check()
+    await page.getByRole("button", { name: "Enviar denúncia" }).click()
+    await page.getByRole("button", { name: "Bloquear autor" }).click()
+    await page.getByRole("button", { name: "Bloquear", exact: true }).click()
+    await expect(page.getByRole("status")).toContainText("Pessoa bloqueada.")
+  }
 })
