@@ -139,6 +139,11 @@ export function Pergunta() {
   const [avisoDoBloqueio, setAvisoDoBloqueio] = useState("")
   const focoAoFecharBloqueio = useRef(false)
   const tituloRef = useRef<HTMLHeadingElement>(null)
+  // O menu troca de passo dentro do MESMO diálogo: o botão que abriu o passo é
+  // desmontado e o foco cairia no corpo da página. O conteúdo guarda o destino
+  // de cada passo, e o abridor é o botão de origem a que o foco volta ao fechar.
+  const conteudoDoMenu = useRef<HTMLDivElement>(null)
+  const abridorDoMenu = useRef<HTMLElement | null>(null)
   // Uma sessão de rede por tela: sair cancela a escrita que ainda estava a caminho.
   const [controle] = useState(() => new AbortController())
 
@@ -165,6 +170,28 @@ export function Pergunta() {
     fechandoSemAlvo.current = true
     aoMudarMenu(false)
   }, [menuAberto, alvoDoMenu, aoMudarMenu])
+
+  // Cada passo do menu tem um destino de foco: o primeiro campo da edição, o
+  // botão principal da confirmação, a primeira opção. Sem isto, o clique que
+  // troca de passo derruba o foco para o corpo da página.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: passo e denunciando são os gatilhos da troca
+  useEffect(() => {
+    if (!menuAberto) return
+    conteudoDoMenu.current?.querySelector<HTMLElement>("input, textarea, button")?.focus()
+  }, [menuAberto, passo, denunciando])
+
+  // Fechar devolve o foco ao botão que abriu o menu. Quando o passo apagou esse
+  // botão (a resposta excluída), o destino é o título da tela.
+  useEffect(() => {
+    if (menuAberto) return
+    const abridor = abridorDoMenu.current
+    if (abridor === null) return
+    abridorDoMenu.current = null
+    requestAnimationFrame(() => {
+      if (abridor.isConnected) abridor.focus()
+      else tituloRef.current?.focus()
+    })
+  }, [menuAberto])
 
   // Pergunta de demonstração: o id é local e o banco nunca a conheceu.
   const local = useMemo(
@@ -331,7 +358,8 @@ export function Pergunta() {
     }
   }
 
-  function abrirMenu(alvo: AlvoDoMenu) {
+  function abrirMenu(alvo: AlvoDoMenu, abridor: HTMLElement) {
+    abridorDoMenu.current = abridor
     setAlvoDoMenu(alvo)
     setPasso("opcoes")
     setDenunciando(false)
@@ -590,7 +618,7 @@ export function Pergunta() {
               aberto="dialog"
               disabled={!pergunta.propria && enviandoDenuncia}
               className="ml-auto"
-              onClick={() => abrirMenu({ tipo: "pergunta" })}
+              onClick={(evento) => abrirMenu({ tipo: "pergunta" }, evento.currentTarget)}
             />
           ) : null}
         </div>
@@ -727,7 +755,9 @@ export function Pergunta() {
                       aberto="dialog"
                       disabled={!item.propria && enviandoDenuncia}
                       className="ml-auto"
-                      onClick={() => abrirMenu({ tipo: "resposta", respostaId: item.id })}
+                      onClick={(evento) =>
+                        abrirMenu({ tipo: "resposta", respostaId: item.id }, evento.currentTarget)
+                      }
                     />
                   </div>
                   <p className="text-[15px] leading-6">{item.corpo}</p>
@@ -842,7 +872,7 @@ export function Pergunta() {
       </Dialog>
 
       <Dialog open={menuAberto && alvoDoMenu !== null} onOpenChange={aoMudarMenu}>
-        <DialogContent>
+        <DialogContent ref={conteudoDoMenu}>
           <DialogTitle>{tituloDoMenu}</DialogTitle>
           <DialogDescription>{descricaoDoMenu}</DialogDescription>
           {passo === "editar" ? (
