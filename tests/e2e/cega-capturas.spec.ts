@@ -25,7 +25,8 @@ const LARGURAS: Readonly<Record<string, number>> = {
   "desktop-1440": 1440,
 }
 
-const PRAZO_MS = 30_000
+const PRAZO_MS = 45_000
+const PRAZO_PASSO_MS = 15_000
 
 async function entrarComo(contexto: BrowserContext, persona: string): Promise<void> {
   await contexto.clearCookies()
@@ -34,16 +35,16 @@ async function entrarComo(contexto: BrowserContext, persona: string): Promise<vo
 
 /** Abre a tela e executa os passos que a revelam (menu, busca, formulário). */
 async function abrirTela(page: Page, tela: TelaDoRoteiro): Promise<void> {
-  await page.goto(tela.rota)
+  await page.goto(tela.rota, { timeout: PRAZO_MS })
   for (const passo of tela.passos ?? []) {
-    const alvo = page.locator(passo.alvo).first()
+    const alvo = page.locator(passo.alvo)
     await expect(alvo, `passo "${passo.tipo} ${passo.alvo}" não apareceu`).toBeVisible({
-      timeout: PRAZO_MS,
+      timeout: PRAZO_PASSO_MS,
     })
     if (passo.tipo === "clique") {
-      await alvo.click()
+      await alvo.click({ timeout: PRAZO_PASSO_MS })
     } else {
-      await alvo.fill(passo.valor ?? "")
+      await alvo.fill(passo.valor ?? "", { timeout: PRAZO_PASSO_MS })
     }
   }
 }
@@ -62,20 +63,16 @@ async function capturar(page: Page, jornada: string, tela: string, largura: numb
 
 for (const jornada of ROTEIRO) {
   test.describe(`${jornada.jornada} — capturas da régua`, () => {
-    test(`${jornada.jornada} · ${jornada.titulo}`, async ({ page, context }, info) => {
-      test.setTimeout(300_000)
-      const largura = LARGURAS[info.project.name]
-      if (largura === undefined) {
-        throw new Error(`Projeto sem largura declarada: ${info.project.name}`)
-      }
+    for (const tela of jornada.telas) {
+      test(`${jornada.jornada}/${tela.id} · ${jornada.titulo}`, async ({ page, context }, info) => {
+        test.setTimeout(PRAZO_MS)
+        const largura = LARGURAS[info.project.name]
+        if (largura === undefined) {
+          throw new Error(`Projeto sem largura declarada: ${info.project.name}`)
+        }
 
-      let personaAtual: string | null = null
-      for (const tela of jornada.telas) {
         try {
-          if (tela.persona !== personaAtual) {
-            await entrarComo(context, tela.persona)
-            personaAtual = tela.persona
-          }
+          await entrarComo(context, tela.persona)
           await abrirTela(page, tela)
           const prova =
             tela.texto === undefined
@@ -91,7 +88,7 @@ for (const jornada of ROTEIRO) {
           const motivo = erro instanceof Error ? erro.message : String(erro)
           throw new Error(`Captura "${jornada.jornada}/${tela.id}" falhou: ${motivo}`)
         }
-      }
-    })
+      })
+    }
   })
 }

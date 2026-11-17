@@ -100,7 +100,7 @@ export const ROTEIRO: readonly JornadaDoRoteiro[] = [
         texto: "Pedir uma indicação",
         passos: [
           { tipo: "clique", alvo: '[data-acao="criar"]' },
-          { tipo: "clique", alvo: '[data-escolha="ask"]' },
+          { tipo: "clique", alvo: '[data-sobreposicao="menu-criar"] [data-escolha="ask"]' },
         ],
       },
       {
@@ -111,7 +111,7 @@ export const ROTEIRO: readonly JornadaDoRoteiro[] = [
         texto: "Anunciar desapego",
         passos: [
           { tipo: "clique", alvo: '[data-acao="criar"]' },
-          { tipo: "clique", alvo: '[data-escolha="create-item"]' },
+          { tipo: "clique", alvo: '[data-sobreposicao="menu-criar"] [data-escolha="create-item"]' },
         ],
       },
       {
@@ -122,7 +122,10 @@ export const ROTEIRO: readonly JornadaDoRoteiro[] = [
         texto: "Novo encontro",
         passos: [
           { tipo: "clique", alvo: '[data-acao="criar"]' },
-          { tipo: "clique", alvo: '[data-escolha="create-event"]' },
+          {
+            tipo: "clique",
+            alvo: '[data-sobreposicao="menu-criar"] [data-escolha="create-event"]',
+          },
         ],
       },
     ],
