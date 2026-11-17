@@ -273,7 +273,7 @@ describe("rotas do guia do app", () => {
 
     it("limite do banco usa texto fixo sem devolver a mensagem original", async () => {
       const mock = mockClient({
-        erroNaRpc: { code: "P0001", message: "maximum 5 pending guide suggestions per member" },
+        erroNaRpc: { code: "54000", message: "private database detail" },
       })
       authenticate(mock)
       const resposta = await sugerirLugar(
@@ -288,6 +288,48 @@ describe("rotas do guia do app", () => {
         erro: "limite",
         mensagem:
           "Você já tem cinco sugestões aguardando revisão. Espere a fila andar para sugerir mais.",
+      })
+    })
+
+    it("alinha telefone aos limites e ao formato da função", async () => {
+      const mock = mockClient()
+      authenticate(mock)
+      const corpo = { nome: "Escola", categoria: "school", descricao: "" }
+      for (const telefone of ["1234567", "1".repeat(31), "1234+567"]) {
+        expect(
+          (
+            await sugerirLugar(
+              req("POST", `${BASE}/sugestao`, JSON.stringify({ ...corpo, telefone })),
+            )
+          ).status,
+        ).toBe(400)
+      }
+      for (const telefone of ["12345678", "1".repeat(30), "+12345678"]) {
+        expect(
+          (
+            await sugerirLugar(
+              req("POST", `${BASE}/sugestao`, JSON.stringify({ ...corpo, telefone })),
+            )
+          ).status,
+        ).toBe(201)
+      }
+      expect(mock.rpc).toHaveBeenCalledTimes(3)
+    })
+
+    it("classifica dados inválidos pelo código, sem ler a mensagem do banco", async () => {
+      const mock = mockClient({ erroNaRpc: { code: "22023", message: "secret detail" } })
+      authenticate(mock)
+      const resposta = await sugerirLugar(
+        req(
+          "POST",
+          `${BASE}/sugestao`,
+          JSON.stringify({ nome: "Escola", categoria: "school", descricao: "" }),
+        ),
+      )
+      expect(resposta.status).toBe(400)
+      expect(await json(resposta)).toEqual({
+        erro: "corpo-invalido",
+        mensagem: "Revise os dados da sugestão.",
       })
     })
   })

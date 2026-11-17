@@ -20,6 +20,7 @@ const mensagens: Readonly<Record<string, string>> = {
   descricao: "A descrição pode ter até 500 caracteres.",
   site: "O site precisa começar com http:// ou https://.",
   telefone: "Confira o telefone informado.",
+  dados: "Revise os dados da sugestão.",
 }
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
@@ -42,11 +43,12 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     typeof categoria !== "string" ||
     !(categorias as readonly string[]).includes(categoria) ||
     typeof descricao !== "string" ||
-    descricao.length > 500 ||
+    descricao.trim().length > 500 ||
     (site !== undefined &&
-      (typeof site !== "string" || (site !== "" && !/^https?:\/\//i.test(site)))) ||
+      (typeof site !== "string" || (site.trim() !== "" && !/^https?:\/\//.test(site.trim())))) ||
     (telefone !== undefined &&
-      (typeof telefone !== "string" || (telefone !== "" && !/^[+\d ()-]{7,20}$/.test(telefone))))
+      (typeof telefone !== "string" ||
+        (telefone.trim() !== "" && !/^\+?[0-9() -]{8,30}$/.test(telefone.trim()))))
   )
     return responder(request, { erro: "corpo-invalido" }, 400)
   const nomeValido = nome as string
@@ -63,19 +65,12 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
     const result = await auth.sessao.cliente.rpc("suggest_guide_entry", args)
     if (result.error) {
-      const texto = result.error.message
-      if (texto === "maximum 5 pending guide suggestions per member")
+      if (result.error.code === "54000")
         return responder(request, { erro: "limite", mensagem: mensagens["limite"] }, 429)
-      if (texto === "only locality members can suggest guide references")
+      if (result.error.code === "42501")
         return responder(request, { erro: "localidade", mensagem: mensagens["localidade"] }, 403)
-      const mensagem = new Map([
-        ["reference name must have between 2 and 120 characters", mensagens["nome"]],
-        ["reference description must have up to 500 characters", mensagens["descricao"]],
-        ["reference website must start with http:// or https://", mensagens["site"]],
-        ["invalid reference phone", mensagens["telefone"]],
-      ]).get(texto)
-      if (mensagem !== undefined)
-        return responder(request, { erro: "corpo-invalido", mensagem }, 400)
+      if (result.error.code === "22023")
+        return responder(request, { erro: "corpo-invalido", mensagem: mensagens["dados"] }, 400)
       const falha = interpretarErroDoBanco(result.error.code, {
         recusado: "Só membros desta cidade podem sugerir referências.",
         dados: "Revise os dados da sugestão.",
@@ -86,7 +81,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     return responder(request, { enviada: true }, 201)
   } catch (error) {
     log.error("app guia: new entry suggestion failed", {
-      error: error instanceof Error ? error.message : "unknown",
+      code: typeof error === "object" && error !== null && "code" in error ? error.code : "unknown",
       userId,
     })
     return responder(request, { erro: "escrita-indisponivel" }, 503)
