@@ -575,9 +575,9 @@ test("ids de suíte numéricos acima de 2^53 recusam em vez de misturar execuç�
     estado: "open",
     arquivos: ["docs/LANCAMENTO.md"],
     checkRuns: [
-      { ...check(CHECK_COMPLETO), id: 1, check_suite: { id: 9007199254740992 } },
-      { ...check(CHECK_AGREGADO), id: 2, check_suite: { id: 9007199254740992 } },
-      { ...check(CHECK_AGREGADO), id: 3, check_suite: { id: 9007199254740993 } },
+      { ...check(CHECK_COMPLETO), id: 1, check_suite: JSON.parse('{"id":9007199254740992}') },
+      { ...check(CHECK_AGREGADO), id: 2, check_suite: JSON.parse('{"id":9007199254740992}') },
+      { ...check(CHECK_AGREGADO), id: 3, check_suite: JSON.parse('{"id":9007199254740993}') },
     ],
   })
   assert.equal(veredito.ok, false)
