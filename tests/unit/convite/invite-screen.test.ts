@@ -103,25 +103,7 @@ describe("ações do servidor", () => {
   })
 })
 
-const familiaPage = readFileSync(
-  join(process.cwd(), "apps", "web", "app", "(shell)", "configuracoes", "familia", "page.tsx"),
-  "utf8",
-)
-
-describe("tela de quem convida", () => {
-  it("mostra o código ao lado do link e copia a tela do convite já preenchida", () => {
-    expect(familiaPage).toContain("setInviteCode(result.code")
-    // O "copiar" leva a tela do convite já com o código, e não o link antigo.
-    expect(familiaPage).toContain("new URL(`/app/entrar?convite=")
-    expect(familiaPage).not.toContain("/onboarding?invite=")
-  })
-
-  it("avisa que o código também foi para o e-mail e que não volta ao recarregar", () => {
-    // O banco guarda só o hash: o código em claro existe na resposta do envio e
-    // do reenvio, e em nenhum outro lugar. A tela diz isso sem falar do banco
-    // (tests/unit/ui/copy-fala-com-a-pessoa.test.ts).
-    expect(familiaPage).toContain("O código também foi enviado por e-mail")
-    expect(familiaPage).toContain("se sair desta")
-    expect(familiaPage).toContain("Se perder, use Reenviar.")
-  })
-})
+// A tela de quem convida no apps/web (`(shell)/configuracoes/familia`) saiu com
+// as Server Actions de `lib/convite/familia-acoes.ts` (SEC-011, 16/11): quem
+// convida é o app, em `/app/voce`, e o 307 da rota antiga é provado em
+// tests/unit/infra/lan-troca-redirect.test.ts.

@@ -21,16 +21,16 @@ export const dynamic = "force-dynamic"
  * A família do titular (F10 / LAN-F10, RUN-018): os convites pendentes e o
  * envio de um novo.
  *
- * Estas são as duas únicas rotas da jornada que usam o cliente de serviço, e
- * por um motivo medido: `public.create_family_invitation`,
- * `revoke_family_invitation`, `list_pending_invites_with_hint` e
- * `is_verified_holder` recebem `p_user_id` e têm `execute` SÓ para
- * `service_role` (migration 20260806160942). O privilégio só é aberto DEPOIS
- * de `exigirSessao` e só para essas quatro funções; o id passado é sempre
- * `auth.sessao.usuario.id`, nunca um campo do corpo.
+ * A escrita NÃO usa privilégio: `create_family_invitation` é pública, deriva o
+ * titular de `auth.uid()` e só tem `execute` para `authenticated`
+ * (migration 20261116221048), então o POST chama a função com o cliente da
+ * sessão. O cliente de serviço aparece em dois pontos que não são posse: a
+ * leitura (`list_pending_invites_with_hint` e `is_verified_holder` só existem
+ * para `service_role`) e o enfileiramento no outbox, sempre com o id da sessão
+ * e nunca com um id vindo do corpo.
  *
- * O corpo não devolve token, hash nem e-mail completo: só o rótulo mascarado
- * que a tela antiga já mostra. O link e o código chegam por e-mail.
+ * A resposta não devolve token, hash nem e-mail completo: só o rótulo mascarado.
+ * O link e o código chegam por e-mail.
  */
 export async function GET(request: NextRequest): Promise<NextResponse> {
   const auth = await exigirSessao(request)
@@ -62,7 +62,12 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   const client = clienteDeServicoOuNulo()
   if (client === null) return responder(request, { erro: "familia-indisponivel" }, 503)
   try {
-    const { convite } = await enviarConvite(client, auth.sessao.usuario.id, email)
+    const { convite } = await enviarConvite(
+      auth.sessao.cliente,
+      client,
+      auth.sessao.usuario.id,
+      email,
+    )
     return responder(request, { convite }, 201)
   } catch (falha) {
     return respostaDaFalhaDeConvite(request, falha)

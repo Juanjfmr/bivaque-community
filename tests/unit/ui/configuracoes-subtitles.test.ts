@@ -6,7 +6,7 @@ import { describe, expect, it } from "vitest"
 // válida. Com o H1 carregando "Configurações · <subtela>", o mapa passa a
 // distinguir cada uma. Título e mapa andam juntos: mudar um só deixa a captura
 // vermelha sem que nada esteja errado.
-const SUBTELAS = ["/configuracoes/conta", "/configuracoes/familia", "/configuracoes/bloqueados"]
+const SUBTELAS = ["/configuracoes/conta", "/configuracoes/bloqueados"]
 
 describe("RECON-042, defeito 3 — as quatro subtelas de Configurações se distinguem", () => {
   it("o mapa declara um título distinto para cada subtela", async () => {

@@ -55,6 +55,40 @@ derivada da sessão no caminho da rota, mas apontou dois vazamentos de contrato 
   rodada: o desenho do convite depende de geração de código e envio fora do controle do cliente, e
   as tabelas `private` não têm privilégio de tabela para `authenticated` por desenho.
 
+## Emenda de 16/11/2026 — a posse e os tetos passam a ser do banco
+
+A auditoria independente do `security-auditor` de 16/11 sobre a main `3c4dc55f` (A2-1 a A2-4)
+mostrou que o item 1 desta decisão continuava só no papel: `private.create_family_invitation`
+recebia `p_inviter_user_id` sem comparar `auth.uid()`, o teto de 5 convites ativos podia ser
+superado em corrida, o limite de envio não existia sem `UPSTASH_*` (fail-open) e as Server Actions
+antigas de `lib/convite/familia-acoes.ts` ecoavam `error.message` e devolviam `{ code, token }` ao
+navegador. Decidido por delegação em 16/11, no lote SEC-011:
+
+1. **A porta pública não recebe id de titular.** `public.create_family_invitation`,
+   `public.revoke_family_invitation` e `public.resend_family_invitation` derivam o titular de
+   `auth.uid()` e respondem `28000` sem sessão (molde de `public.declare_locality_transfer`). Têm
+   `execute` só para `authenticated`, com `revoke` explícito de `public`/`anon` na mesma migration.
+   As assinaturas que aceitavam `p_inviter_user_id` são removidas (`drop function`): `service_role`
+   não é identidade de ninguém (supabase/AGENTS.md), e um chamador privilegiado futuro não pode
+   voltar a escolher em nome de quem o convite nasce. A rota continua resolvendo a sessão antes de
+   abrir o cliente privilegiado, e usa o cliente da sessão nas três escritas.
+2. **Os tetos são conferidos dentro da função, sob trava por titular.** O teto de 5 convites ativos
+   e o teto de 10 envios por hora (`private.family_invite_send_gate`, contando as linhas criadas na
+   janela) rodam sob `pg_advisory_xact_lock` por titular — a mesma trava de
+   `lock_family_invite_code_attempts`. Valem para chamada direta pela Data API, não só para a rota.
+3. **Upstash opcional; o limite do banco vale sempre.** Quando configurado, Upstash é a
+   primeira barreira; quando ausente, a rota segue para a função, que aplica o teto sob trava.
+4. **O código morto sai.** `/configuracoes/familia` já era 307 para `/app/voce`
+   (`next.config.ts`); a página e as Server Actions de `lib/convite/familia-acoes.ts` saem com os
+   seus testes, junto das referências em `configuracoes-nav.tsx` e no mapa de captura. Quem convida
+   é o app, pela porta `/api/app/voce/familia`. O reenvio não ganha rota nem tela: a função do banco
+   fica, com a mesma derivação de posse.
+
+A prova é `supabase/tests/family-invite-session-ownership.sql` (positivo do titular, negativo de
+outro membro e de anon, `28000` sem sessão, trava por titular, os dois tetos com frase fixa) e o
+teste unitário sem Upstash prova que a rota chama a função e repassa a recusa fixa do teto, sem `error.message`. As dez frases
+fixas de recusa continuam provadas, agora com a do teto de envios ao lado delas.
+
 ## Revisão
 
 Revisão independente e `security-auditor`: parecer do lote RUN-030/RUN-031 em

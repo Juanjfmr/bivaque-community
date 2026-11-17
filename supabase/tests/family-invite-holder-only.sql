@@ -1,15 +1,15 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(20);
+select plan(19);
 
 \ir fixtures/foundation.inc
 
 -- Os dois papéis deste teste precisam ser distintos para a prova valer: a
 -- fixture foundation.inc NÃO declara member-two verificado, então a guarda
 -- "só titular verificado convida" o recusaria por outro motivo. Verificá-lo
--- aqui garante que a recusa dele venha só da falta de privilégio e nunca de
--- uma checagem diferente.
+-- aqui garante que a recusa dele venha só da posse e nunca de uma checagem
+-- diferente.
 insert into private.verification_outcomes (
   user_id,
   status,
@@ -37,9 +37,13 @@ select ok(
   'member-two também está verificado: a recusa dele abaixo não vem do CPF'
 );
 
+-- SEC-011: a porta pública não aceita id de titular — a criação aqui é a camada
+-- privada, que é o que a função pública chama depois de derivar `auth.uid()`
+-- (migration 20261116221048). O caminho público é provado em
+-- family-invite-session-ownership.sql.
 select lives_ok(
   $$
-    select public.create_family_invitation(
+    select private.create_family_invitation(
       '10000000-0000-4000-8000-000000000001'::uuid,
       decode(repeat('12', 32), 'hex'),
       decode(repeat('34', 32), 'hex'),
@@ -47,7 +51,7 @@ select lives_ok(
       decode(repeat('56', 32), 'hex')
     )
   $$,
-  'o titular verificado cria convite pelo caminho privilegiado (positivo)'
+  'o titular verificado cria convite pela camada privada (positivo)'
 );
 
 select is(
@@ -57,20 +61,20 @@ select is(
     where token_digest = decode(repeat('12', 32), 'hex')
   ),
   '10000000-0000-4000-8000-000000000001'::uuid,
-  'o convite gravado tem o titular como dono, e não um id vindo do chamador'
+  'o convite gravado tem o titular como dono'
 );
 
 -- 2. grants mínimos nas funções de convite
--- Privilégio provado pelo catálogo (has_function_privilege) e, a seguir, pela
--- recusa real (42501) chamando como o papel. O chamador sempre apresenta o
--- PRÓPRIO id: se a recusa viesse de outra checagem, a asserção falharia.
+-- Privilégio provado pelo catálogo (has_function_privilege) e pela ausência das
+-- assinaturas antigas (to_regprocedure devolve null). Quem chama a porta pública
+-- apresenta só o próprio JWT: o titular sai de `auth.uid()`.
 
 select ok(
-  not has_function_privilege(
-    'authenticated', 'public.create_family_invitation(uuid, bytea, bytea, text, bytea)', 'EXECUTE'
+  has_function_privilege(
+    'authenticated', 'public.create_family_invitation(bytea, bytea, text, bytea)', 'EXECUTE'
   )
   and not has_function_privilege(
-    'anon', 'public.create_family_invitation(uuid, bytea, bytea, text, bytea)', 'EXECUTE'
+    'anon', 'public.create_family_invitation(bytea, bytea, text, bytea)', 'EXECUTE'
   )
   and not has_function_privilege(
     'authenticated',
@@ -80,45 +84,29 @@ select ok(
   and not has_function_privilege(
     'anon', 'private.create_family_invitation(uuid, bytea, bytea, text, bytea)', 'EXECUTE'
   ),
-  'authenticated e anon não têm execute em create_family_invitation'
+  'só authenticated executa a criação pública; a camada privada não é de cliente'
 );
 
 select ok(
-  not has_function_privilege(
-    'authenticated', 'public.create_family_invitation(uuid, bytea, bytea, text)', 'EXECUTE'
-  )
-  and not has_function_privilege(
-    'anon', 'public.create_family_invitation(uuid, bytea, bytea, text)', 'EXECUTE'
-  )
-  and not has_function_privilege(
-    'authenticated', 'public.create_family_invitation(uuid, bytea, bytea)', 'EXECUTE'
-  )
-  and not has_function_privilege(
-    'anon', 'public.create_family_invitation(uuid, bytea, bytea)', 'EXECUTE'
-  ),
-  'authenticated e anon não têm execute nas assinaturas antigas de create'
+  to_regprocedure('public.create_family_invitation(uuid, bytea, bytea, text, bytea)') is null
+  and to_regprocedure('public.create_family_invitation(uuid, bytea, bytea, text)') is null
+  and to_regprocedure('public.create_family_invitation(uuid, bytea, bytea)') is null,
+  'as assinaturas de criação que aceitavam o id do titular saíram do repositório'
 );
 
 select ok(
-  not has_function_privilege(
-    'authenticated', 'public.revoke_family_invitation(uuid, uuid)', 'EXECUTE'
+  has_function_privilege('authenticated', 'public.revoke_family_invitation(uuid)', 'EXECUTE')
+  and has_function_privilege(
+    'authenticated', 'public.resend_family_invitation(uuid, bytea, bytea, bytea)', 'EXECUTE'
   )
+  and not has_function_privilege('anon', 'public.revoke_family_invitation(uuid)', 'EXECUTE')
   and not has_function_privilege(
-    'anon', 'public.revoke_family_invitation(uuid, uuid)', 'EXECUTE'
+    'anon', 'public.resend_family_invitation(uuid, bytea, bytea, bytea)', 'EXECUTE'
   )
-  and not has_function_privilege(
-    'authenticated', 'public.resend_family_invitation(uuid, uuid, bytea, bytea, bytea)', 'EXECUTE'
-  )
-  and not has_function_privilege(
-    'anon', 'public.resend_family_invitation(uuid, uuid, bytea, bytea, bytea)', 'EXECUTE'
-  )
-  and not has_function_privilege(
-    'authenticated', 'public.resend_family_invitation(uuid, uuid, bytea, bytea)', 'EXECUTE'
-  )
-  and not has_function_privilege(
-    'anon', 'public.resend_family_invitation(uuid, uuid, bytea, bytea)', 'EXECUTE'
-  ),
-  'authenticated e anon não revogam nem reenviam convite'
+  and to_regprocedure('public.revoke_family_invitation(uuid, uuid)') is null
+  and to_regprocedure('public.resend_family_invitation(uuid, uuid, bytea, bytea)') is null
+  and to_regprocedure('public.resend_family_invitation(uuid, uuid, bytea, bytea, bytea)') is null,
+  'o membro revoga e reenvia pela posse derivada, sem id de titular nos parâmetros'
 );
 
 select ok(
@@ -162,27 +150,12 @@ select ok(
 
 select ok(
   has_function_privilege(
-    'service_role', 'public.create_family_invitation(uuid, bytea, bytea, text, bytea)', 'EXECUTE'
-  )
-  and has_function_privilege(
     'service_role', 'private.create_family_invitation(uuid, bytea, bytea, text, bytea)', 'EXECUTE'
   )
   and has_function_privilege(
-    'service_role', 'public.create_family_invitation(uuid, bytea, bytea, text)', 'EXECUTE'
-  )
-  and has_function_privilege(
-    'service_role', 'public.create_family_invitation(uuid, bytea, bytea)', 'EXECUTE'
+    'service_role', 'private.create_family_invitation(uuid, bytea, bytea, text)', 'EXECUTE'
   )
   and has_function_privilege('service_role', 'public.list_pending_invites(uuid)', 'EXECUTE')
-  and has_function_privilege(
-    'service_role', 'public.revoke_family_invitation(uuid, uuid)', 'EXECUTE'
-  )
-  and has_function_privilege(
-    'service_role', 'public.resend_family_invitation(uuid, uuid, bytea, bytea)', 'EXECUTE'
-  )
-  and has_function_privilege(
-    'service_role', 'public.resend_family_invitation(uuid, uuid, bytea, bytea, bytea)', 'EXECUTE'
-  )
   and has_function_privilege(
     'service_role', 'public.list_pending_invites_with_hint(uuid)', 'EXECUTE'
   )
@@ -193,16 +166,16 @@ select ok(
     'service_role', 'public.family_invite_code_accept(bytea, uuid, bytea, text, integer)',
     'EXECUTE'
   ),
-  'service_role é o único papel que executa as funções de convite (positivo)'
+  'service_role executa as camadas privadas e as leituras do titular (positivo)'
 );
 
--- 3. member-two não lê a família do titular nem convida em nome dele
+-- 3. member-two não lê a família do titular nem revoga o convite dele
 
 set local role authenticated;
 select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000002', true);
 select set_config('request.jwt.claim.role', 'authenticated', true);
 
--- member-two está autenticado: o que lhe falta é o privilégio, não a sessão.
+-- member-two está autenticado: o que lhe falta é a posse, não a sessão.
 select is(
   (select auth.uid()),
   '10000000-0000-4000-8000-000000000002'::uuid,
@@ -237,30 +210,16 @@ select throws_ok(
   'member-two não lista os convites do titular'
 );
 
-select throws_ok(
-  $$
-    select public.create_family_invitation(
-      '10000000-0000-4000-8000-000000000001'::uuid,
-      decode(repeat('7f', 32), 'hex'),
-      decode(repeat('7e', 32), 'hex'),
-      'me***@ex***.invalid',
-      decode(repeat('7d', 32), 'hex')
-    )
-  $$,
-  '42501',
-  null,
-  'member-two não cria convite em nome do titular'
-);
-
+-- O dono vem de auth.uid(): o convite do titular não é revogável por outro,
+-- e a resposta é a mesma de um convite que nunca existiu.
 select throws_ok(
   $$
     select public.revoke_family_invitation(
-      '20000000-0000-4000-8000-000000000001'::uuid,
-      '10000000-0000-4000-8000-000000000001'::uuid
+      '20000000-0000-4000-8000-000000000001'::uuid
     )
   $$,
-  '42501',
-  null,
+  'P0001',
+  'invitation not found or not revocable',
   'member-two não revoga o convite do titular'
 );
 
@@ -279,7 +238,6 @@ set local role anon;
 select throws_ok(
   $$
     select public.create_family_invitation(
-      '10000000-0000-4000-8000-000000000001'::uuid,
       decode(repeat('8f', 32), 'hex'),
       decode(repeat('8e', 32), 'hex'),
       'me***@ex***.invalid',
@@ -294,8 +252,8 @@ select throws_ok(
 reset role;
 
 -- 5. nenhuma recusa da jornada devolve e-mail, hash ou token
--- A lista é fechada: as frases que o banco lança nos caminhos de recusa. Se
--- uma mensagem nova entrar na jornada, a asserção abaixo a acusa, e a segunda
+-- A lista é fechada: as dez frases de antes mais a do teto de envios (SEC-011).
+-- Se uma mensagem nova entrar na jornada, a asserção abaixo a acusa, e a segunda
 -- garante que ela também não carrega endereço, digest, hash nem token.
 
 select is(
@@ -304,6 +262,7 @@ select is(
     from (
       select 'only verified holders can create invitations'::text as mensagem
       union all select 'maximum 5 active invitations per holder'
+      union all select 'maximum 10 invitations per holder per hour'
       union all select 'invitation not found or not revocable'
       union all select 'invitation not found or not resendable'
       union all select 'accepting user not found'
@@ -322,11 +281,12 @@ select is(
     'family_invitation_revoked',
     'invitation not found or not resendable',
     'invitation not found or not revocable',
+    'maximum 10 invitations per holder per hour',
     'maximum 5 active invitations per holder',
     'only verified holders can create invitations',
     'the inviting holder has no current locality'
   ]::text[],
-  'as dez recusas da jornada de convite estão listadas, sem nenhuma extra'
+  'as dez recusas de antes continuam aqui, mais a do teto de envios'
 );
 
 select ok(
@@ -335,6 +295,7 @@ select ok(
     from unnest(array[
       'only verified holders can create invitations',
       'maximum 5 active invitations per holder',
+      'maximum 10 invitations per holder per hour',
       'invitation not found or not revocable',
       'invitation not found or not resendable',
       'accepting user not found',

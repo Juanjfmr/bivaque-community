@@ -214,7 +214,6 @@ export const HEADINGS = {
   // captura que aterrissasse na subtela errada deixa de passar como válida
   // (RECON-042, defeito 3). As duas pontas — título e mapa — andam juntas.
   "/configuracoes/conta": "^Configurações · Conta$",
-  "/configuracoes/familia": "^Configurações · Família$",
   "/configuracoes/bloqueados": "^Configurações · Privacidade$",
 }
 
@@ -468,7 +467,6 @@ export const ROUTES = [
     expectedPath: "/configuracoes/conta",
   },
   { path: "/configuracoes/conta", name: "configuracoes-conta", auth: true },
-  { path: "/configuracoes/familia", name: "configuracoes-familia", auth: true },
   { path: "/configuracoes/bloqueados", name: "configuracoes-bloqueados", auth: true },
 ]
 

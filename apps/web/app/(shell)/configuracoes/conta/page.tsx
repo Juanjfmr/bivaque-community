@@ -2,6 +2,7 @@
 
 import { Button, Checkbox, Input, Link, Modal, useOverlayState } from "@heroui/react"
 import { ChevronRight, LogOut, Trash2 } from "lucide-react"
+import type { Route } from "next"
 import { useRouter } from "next/navigation"
 import { useCallback, useEffect, useState } from "react"
 import { createBrowserClient } from "../../../../lib/supabase/client"
@@ -350,7 +351,7 @@ export default function ConfiguracoesContaPage() {
         </Link>
 
         <Link
-          href="/configuracoes/familia"
+          href={"/app/voce" as Route}
           className="flex min-h-11 items-center justify-between gap-4 border-b border-border px-4 py-3 hover:bg-[var(--surface-sunken)]"
         >
           <span className="min-w-0">

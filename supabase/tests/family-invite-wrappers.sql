@@ -30,7 +30,7 @@ select is(
 );
 
 select is(
-  public.create_family_invitation(
+  private.create_family_invitation(
     '10000000-0000-4000-8000-000000000001'::uuid,
     decode(repeat('12', 32), 'hex'),
     decode(repeat('34', 32), 'hex')
@@ -41,7 +41,7 @@ select is(
 
 select lives_ok(
   $$
-    select public.revoke_family_invitation(
+    select private.revoke_family_invitation(
       (
         select id
         from private.family_invitations
@@ -59,9 +59,10 @@ set local role anon;
 select throws_ok(
   $$
     select public.create_family_invitation(
-      '10000000-0000-4000-8000-000000000001'::uuid,
       decode(repeat('ef', 32), 'hex'),
-      decode(repeat('01', 32), 'hex')
+      decode(repeat('01', 32), 'hex'),
+      'an***@ex***.invalid',
+      decode(repeat('02', 32), 'hex')
     )
   $$,
   '42501',
@@ -74,9 +75,10 @@ select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000005
 select throws_ok(
   $$
     select public.create_family_invitation(
-      '10000000-0000-4000-8000-000000000005'::uuid,
       decode(repeat('34', 32), 'hex'),
-      decode(repeat('56', 32), 'hex')
+      decode(repeat('56', 32), 'hex'),
+      'un***@ex***.invalid',
+      decode(repeat('78', 32), 'hex')
     )
   $$,
   'P0001',

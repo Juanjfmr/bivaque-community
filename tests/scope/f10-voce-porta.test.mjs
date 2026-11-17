@@ -92,22 +92,44 @@ test("as rotas da jornada usam a sessão sob RLS, nunca o cliente de serviço", 
   }
 })
 
-test("a família usa o privilégio só depois da sessão e só nos wrappers de convite", () => {
-  const rotas = arquivos(join(ROTAS, "familia")).filter((caminho) => caminho.endsWith("route.ts"))
-  assert.ok(rotas.length >= 2, `esperava as rotas de família, achei ${rotas.length}`)
-  const doModulo = /lerFamilia|enviarConvite|revogarConvite/
-  for (const caminho of rotas) {
-    const fonte = ler(caminho)
-    const sessao = fonte.indexOf("exigirSessao(")
-    const privilegio = fonte.indexOf("clienteDeServicoOuNulo(")
-    assert.ok(sessao >= 0, `${relativo(caminho)} não resolve a sessão pelo encanamento`)
-    assert.ok(privilegio > sessao, `${relativo(caminho)} abre o privilégio antes da sessão`)
-    assert.match(fonte, doModulo, `${relativo(caminho)} usa o privilégio fora dos wrappers`)
-    assert.match(fonte, /opcoesDoApp/, `${relativo(caminho)} não responde ao preflight do contrato`)
+test("a família deriva a posse da sessão e só lê ou enfileira com privilégio", () => {
+  const envio = read(...ROTAS.split("/"), "familia", "route.ts")
+  const revogacao = read(...ROTAS.split("/"), "familia", "[id]", "route.ts")
+
+  // SEC-011 (auditoria de 16/11, A2-1 / A2-4): a criação e a revogação chamam
+  // as funções públicas que derivam o titular de auth.uid() (migration
+  // 20261116221048) com o cliente da SESSÃO. O id do titular não é parâmetro de
+  // nada e não existe mais assinatura pública que o aceite.
+  assert.match(
+    envio,
+    /enviarConvite\(\s*auth\.sessao\.cliente,/,
+    "o envio não chama a função de criação com o cliente da sessão",
+  )
+  assert.match(
+    revogacao,
+    /revogarConvite\(auth\.sessao\.cliente, id\)/,
+    "a revogação não chama a função de revogação com o cliente da sessão",
+  )
+  assert.doesNotMatch(
+    revogacao,
+    /clienteDeServicoOuNulo|service_role/,
+    "a revogação abre privilégio onde a posse derivada basta",
+  )
+
+  // O privilégio que resta na leitura e no outbox vem DEPOIS da sessão e não é
+  // escrita de posse.
+  const sessao = envio.indexOf("exigirSessao(")
+  const privilegio = envio.indexOf("clienteDeServicoOuNulo(")
+  assert.ok(sessao >= 0, "o envio não resolve a sessão pelo encanamento")
+  assert.ok(privilegio > sessao, "o envio abre o privilégio antes da sessão")
+
+  for (const fonte of [envio, revogacao]) {
+    assert.match(fonte, /lerFamilia|enviarConvite|revogarConvite/, "a rota foge do módulo")
+    assert.match(fonte, /opcoesDoApp/, "a rota não responde ao preflight do contrato")
     assert.doesNotMatch(
       fonte,
       /corpo\[(?:"|')((user_id|userId|usuario))(?:"|')\]|searchParams\.get\("(user_id|userId|usuario)"\)/,
-      `${relativo(caminho)} aceita o dono vindo do pedido`,
+      "a rota aceita o dono vindo do pedido",
     )
   }
 })
@@ -207,19 +229,12 @@ test("os interesses usam o privilégio só depois da sessão e só nos RPCs de i
   )
 })
 
-// RUN-172: as Server Actions de família saíram de `(shell)/profile` com a tela
-// do perfil próprio e moram em `lib/convite`, ao lado do módulo que chamam.
-test("a extração do módulo de família mantém a tela de Configurações funcionando", () => {
-  const acao = read("apps", "web", "lib", "convite", "familia-acoes.ts")
-  assert.match(
-    acao,
-    /from "\.\/familia"/,
-    "a Server Action de família não importa o módulo compartilhado",
-  )
-  for (const funcao of ["lerFamilia", "enviarConvite", "revogarConvite"]) {
-    assert.match(acao, new RegExp(funcao), `a Server Action de família não usa ${funcao}`)
-  }
-})
+// RUN-172 tirou as Server Actions de família de `(shell)/profile`; o SEC-011
+// (16/11) tirou as últimas, que já eram código morto: a tela
+// `(shell)/configuracoes/familia` é 307 para /app/voce (next.config.ts) e quem
+// convida é o app, pela porta `/api/app/voce/familia`. O teste acima prova que a
+// porta usa o cliente da sessão; aqui só resta o 307, provado em
+// tests/unit/infra/lan-troca-redirect.test.ts.
 
 test("toda escrita da jornada passa pela conferência de CSRF", () => {
   const escritas = arquivos(ROTAS).filter((caminho) =>
