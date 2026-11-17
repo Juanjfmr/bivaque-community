@@ -60,7 +60,7 @@ vi.mock("web/lib/geo/geocodificador", () => geocodificador)
 import { POST as criar } from "web/app/api/app/negocios/[id]/pedidos/route"
 import { GET as listar } from "web/app/api/app/pedidos/route"
 import { resolverSessaoDaRequisicao } from "web/lib/app-api/sessao-do-next"
-import { consumirConsulta, TETO_POR_PESSOA } from "web/lib/geo/limite"
+import { consumirConsulta, reiniciarJanelasParaTeste, TETO_POR_PESSOA } from "web/lib/geo/limite"
 
 const resolver = vi.mocked(resolverSessaoDaRequisicao)
 const BASE = "http://localhost:3000/api/app"
@@ -171,6 +171,8 @@ function novaPessoa(): string {
 
 beforeEach(() => {
   vi.clearAllMocks()
+  // A janela do limitador vive no processo: cada caso começa com ela zerada.
+  reiniciarJanelasParaTeste()
   servico.estado.cache = null
   servico.estado.gravados = []
   servico.estado.bairros = ["Flores"]
@@ -349,6 +351,49 @@ describe("POST do pedido com CEP", () => {
     expect(servico.estado.gravados[0]).toMatchObject({ latitude: -3.12, longitude: -60.03 })
     const criacao = mock.chamadas.find((item) => item.nome === "create_service_request")
     expect(criacao?.argumentos).toMatchObject({ p_latitude: -3.12, p_longitude: -60.03 })
+  })
+
+  it("linha vencida com provedor fora usa a coordenada antiga (SEC-016)", async () => {
+    servico.estado.cache = {
+      latitude: -3.10194,
+      longitude: -60.025,
+      neighborhood: "Flores",
+      fetched_at: new Date(Date.now() - 181 * 24 * 60 * 60 * 1000).toISOString(),
+    }
+    geocodificador.geocodificarCep.mockResolvedValue({ estado: "indisponivel" })
+    const mock = cliente()
+
+    const resposta = await criar(post({ descricao: "Instalar", cep: "69000-000" }), contexto)
+
+    expect(resposta.status).toBe(201)
+    expect(geocodificador.geocodificarCep).toHaveBeenCalledWith("69000000")
+    const criacao = mock.chamadas.find((item) => item.nome === "create_service_request")
+    // CEP raramente muda de lugar: a linha vencida vale como rede.
+    expect(criacao?.argumentos).toMatchObject({
+      p_cep: "69000000",
+      p_latitude: -3.10194,
+      p_longitude: -60.025,
+      p_region: "Flores",
+    })
+    // Sem resposta do provedor não há o que regravar.
+    expect(servico.estado.gravados).toHaveLength(0)
+  })
+
+  it("cache válido não consome cota: com a janela gasta o pedido ainda passa", async () => {
+    const usuario = novaPessoa()
+    cliente({ usuario })
+    servico.estado.cache = {
+      latitude: -3.10194,
+      longitude: -60.025,
+      neighborhood: "Flores",
+      fetched_at: new Date().toISOString(),
+    }
+    for (let indice = 0; indice < TETO_POR_PESSOA; indice++) consumirConsulta(usuario)
+
+    const resposta = await criar(post({ descricao: "Instalar", cep: "69000-000" }), contexto)
+
+    expect(resposta.status).toBe(201)
+    expect(geocodificador.geocodificarCep).not.toHaveBeenCalled()
   })
 
   it("a janela é a MESMA do anúncio: gasta, o pedido responde 429", async () => {

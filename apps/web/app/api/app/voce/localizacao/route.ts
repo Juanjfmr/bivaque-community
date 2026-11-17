@@ -141,7 +141,15 @@ export async function PUT(request: NextRequest): Promise<NextResponse> {
           if (geocodificada.estado === "encontrado") {
             coordenada = geocodificada.coordenada
             try {
-              await gravarCepNoCache(servico, cep, geocodificada.coordenada)
+              // O bairro vai junto (como no anúncio): sem ele o upsert apagaria o
+              // `neighborhood` que anúncio e pedido leem. Fonte sem bairro
+              // preserva o da linha vencida.
+              await gravarCepNoCache(
+                servico,
+                cep,
+                geocodificada.coordenada,
+                geocodificada.endereco.bairro ?? emCache?.bairro ?? null,
+              )
             } catch {
               // Sem cache o próximo pedido geocodifica de novo; isso não é motivo
               // para falhar a gravação que a pessoa pediu.

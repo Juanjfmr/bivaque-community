@@ -29,6 +29,15 @@ export type VereditoDoLimite =
   | Readonly<{ liberado: true }>
   | Readonly<{ liberado: false; esperarMs: number }>
 
+/**
+ * Zera as janelas. Só para teste: a janela vive no módulo, então um caso que
+ * enche o processo contaminaria os seguintes do mesmo arquivo.
+ */
+export function reiniciarJanelasParaTeste(): void {
+  usos.clear()
+  globais = []
+}
+
 function recentes(instantes: number[], agora: number): number[] {
   const inicio = agora - JANELA_MS
   return instantes.filter((instante) => instante > inicio)

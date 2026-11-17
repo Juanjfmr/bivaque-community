@@ -273,17 +273,58 @@ describe("PUT /api/app/voce/localizacao", () => {
       vencida: true,
     })
     const coordenada = { latitude: -3.12, longitude: -60.03, fonte: "google" }
-    mocks.geocodificarCep.mockResolvedValue({ estado: "encontrado", coordenada })
+    mocks.geocodificarCep.mockResolvedValue({
+      estado: "encontrado",
+      coordenada,
+      endereco: { cidade: "Manaus", bairro: "Compensa" },
+    })
 
     const resposta = await PUT(pedido({ cep: "69000000" }))
 
     expect(resposta.status).toBe(200)
     expect(mocks.geocodificarCep).toHaveBeenCalledWith("69000000")
-    expect(mocks.gravarCepNoCache).toHaveBeenCalledWith(servico.client, "69000000", coordenada)
+    // O bairro da fonte é gravado junto (SEC-016): o upsert não pode zerar o
+    // `neighborhood` que anúncio e pedido leem.
+    expect(mocks.gravarCepNoCache).toHaveBeenCalledWith(
+      servico.client,
+      "69000000",
+      coordenada,
+      "Compensa",
+    )
     expect(servico.chamadas[0]?.args).toMatchObject({
       p_latitude: -3.12,
       p_longitude: -60.03,
     })
+  })
+
+  it("linha vencida sem bairro na fonte preserva o bairro que a linha já tinha (SEC-016)", async () => {
+    autenticar({ localizacao: { cep: "69000000", definida: true } })
+    const servico = clienteDeServico()
+    mocks.clienteDeServicoOuNulo.mockReturnValue(servico.client)
+    mocks.lerCepDoCache.mockResolvedValue({
+      cep: "69000000",
+      latitude: -3.119,
+      longitude: -60.0217,
+      fonte: "brasilapi",
+      bairro: "Flores",
+      vencida: true,
+    })
+    const coordenada = { latitude: -3.121, longitude: -60.022, fonte: "brasilapi" }
+    mocks.geocodificarCep.mockResolvedValue({
+      estado: "encontrado",
+      coordenada,
+      endereco: { cidade: "Manaus", bairro: null },
+    })
+
+    const resposta = await PUT(pedido({ cep: "69000000" }))
+
+    expect(resposta.status).toBe(200)
+    expect(mocks.gravarCepNoCache).toHaveBeenCalledWith(
+      servico.client,
+      "69000000",
+      coordenada,
+      "Flores",
+    )
   })
 
   it("linha vencida com provedor fora usa a coordenada antiga em vez de falhar", async () => {
@@ -337,13 +378,22 @@ describe("PUT /api/app/voce/localizacao", () => {
     const servico = clienteDeServico()
     mocks.clienteDeServicoOuNulo.mockReturnValue(servico.client)
     const coordenada = { latitude: -3.119, longitude: -60.0217, fonte: "google" }
-    mocks.geocodificarCep.mockResolvedValue({ estado: "encontrado", coordenada })
+    mocks.geocodificarCep.mockResolvedValue({
+      estado: "encontrado",
+      coordenada,
+      endereco: { cidade: "Manaus", bairro: "Flores" },
+    })
 
     const resposta = await PUT(pedido({ cep: "69000000" }))
 
     expect(resposta.status).toBe(200)
     expect(mocks.consumirConsulta).toHaveBeenCalledWith(USER)
-    expect(mocks.gravarCepNoCache).toHaveBeenCalledWith(servico.client, "69000000", coordenada)
+    expect(mocks.gravarCepNoCache).toHaveBeenCalledWith(
+      servico.client,
+      "69000000",
+      coordenada,
+      "Flores",
+    )
     expect(servico.chamadas[0]?.args).toMatchObject({
       p_user_id: USER,
       p_cep: "69000000",
