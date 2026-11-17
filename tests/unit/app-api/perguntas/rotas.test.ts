@@ -105,7 +105,13 @@ type Options = {
   respostaRemovida?: { id: string }[]
   /** Erro do UPDATE/DELETE nas duas tabelas de conteúdo. */
   updateError?: { code: string; message: string }
-  verbetes?: { id: string; name: string; source_reply_id: string | null }[]
+  verbetes?: {
+    id: string
+    name: string
+    source_reply_id: string | null
+    /** Ausente é aprovado: o stub só devolve o que a consulta pede. */
+    status?: string
+  }[]
 }
 
 function mockClient(options: Options = {}) {
@@ -235,7 +241,14 @@ function mockClient(options: Options = {}) {
         }
       }
       if (table === "arrival_guide_entries") {
-        return { data: options.verbetes ?? [], count: null, error: null }
+        // O stub aplica o recorte da consulta (`status = 'approved'`), para que
+        // uma fila pendente não apareça como verbete publicado.
+        const entradas = options.verbetes ?? []
+        return {
+          data: entradas.filter((entrada) => (entrada.status ?? "approved") === "approved"),
+          count: null,
+          error: null,
+        }
       }
       return { data: null, count: null, error: null }
     }
@@ -629,6 +642,13 @@ describe("rotas de perguntas do app", () => {
           },
           // Verbete de outra resposta não entra no link desta.
           { id: "b0000000-0000-4000-8000-000000000002", name: "Outro", source_reply_id: null },
+          // Da MESMA resposta, mas ainda na fila: só o aprovado vira link.
+          {
+            id: "b0000000-0000-4000-8000-000000000003",
+            name: "Pendente da curadoria",
+            source_reply_id: respostaDaConversa.id,
+            status: "pending",
+          },
         ],
       })
       authenticate(mock)

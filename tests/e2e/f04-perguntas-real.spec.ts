@@ -748,6 +748,54 @@ test.describe("F04 — perguntas reais no app", { tag: "@stateful" }, () => {
     await api.dispose()
   })
 
+  test("o autor exclui a própria pergunta: ela sai da lista e o GET responde 404", async ({
+    page,
+    context,
+  }, testInfo) => {
+    test.setTimeout(240_000)
+    // RUN-185: a exclusão que o contrato pede, com a confirmação da tela. O
+    // conteúdo é DESTE teste; o seed que os outros specs leem não é tocado.
+    await semearSessaoDeMembro(context, MEMBRO_SEMEADO)
+    await page.goto("/app/comunidade")
+    const projeto = testInfo.project.name
+    const { api, cabecalhos } = await apiDaSessao(page, context)
+    const titulo = `Pergunta que sai da lista (${projeto})`
+    const id = await criarPerguntaDoTeste(api, cabecalhos, titulo)
+
+    // Antes de excluir, a pergunta é do servidor: ela está em Minhas.
+    await page.getByRole("radio", { name: "Filtrar por Minhas" }).click()
+    const linha = page.locator('[data-tela="comunidade"] [data-linha="pergunta"]', {
+      hasText: titulo,
+    })
+    await expect(linha).toBeVisible({ timeout: 30_000 })
+    await linha.click()
+    await expect(page.getByRole("heading", { level: 1, name: titulo })).toBeVisible({
+      timeout: 30_000,
+    })
+
+    await page.getByRole("button", { name: "Ações da minha pergunta", exact: true }).click()
+    await page.getByRole("button", { name: "Excluir pergunta", exact: true }).click()
+    // A confirmação é um passo separado: o mesmo rótulo, no diálogo aberto.
+    await page.getByRole("button", { name: "Excluir pergunta", exact: true }).click()
+    await expect(
+      page.getByRole("heading", { level: 1, name: "Comunidade" }),
+      "a pergunta excluída devolve a pessoa à Comunidade, não a uma tela morta",
+    ).toBeVisible({ timeout: 30_000 })
+    await capturar(page, projeto, "pergunta-excluida")
+
+    // O que continua fora da lista depois do recarregamento é o banco.
+    await page.reload()
+    await page.getByRole("radio", { name: "Filtrar por Minhas" }).click()
+    await expect(
+      page.locator('[data-tela="comunidade"] [data-linha="pergunta"]', { hasText: titulo }),
+      "a pergunta excluída não volta para a lista",
+    ).toHaveCount(0, { timeout: 30_000 })
+
+    const detalhe = await api.get(`/api/app/perguntas/${id}`, { headers: cabecalhos })
+    expect(detalhe.status(), "a pergunta excluída não existe mais para a API").toBe(404)
+    await api.dispose()
+  })
+
   test("o autor marca a pergunta como resolvida sem resposta e o estado sobrevive ao recarregar", async ({
     page,
     context,
