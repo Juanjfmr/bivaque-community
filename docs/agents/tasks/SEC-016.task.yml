@@ -1,0 +1,75 @@
+# Localização: teto global na geocodificação e validade do cache de CEP.
+#
+# Cartão LOC-LIMITE-GEOCODIFICACAO (P1). O limite por pessoa já cobre anúncio (RUN-175), pedido
+# (#259) e perfil (SEC-013). Falta: teto global (o custo do provedor não tem teto quando muitas
+# pessoas consultam ao mesmo tempo) e validade do cache (cep_geocodes nunca envelhece).
+#
+# Decisões do coordenador, 17/11, por delegação:
+# - Teto global no mesmo limitador em memória (por processo, como o por pessoa, limitação já
+#   aceita no ADR-20261116 §2): 300 consultas reais ao provedor por hora; acima disso, o mesmo
+#   429 com retry-after. Cache hit continua sem consumir nada.
+# - Validade de 180 dias na leitura: linha mais velha que isso conta como ausente e a nova
+#   consulta regrava a linha (upsert com fetched_at novo). Se o provedor falhar numa linha
+#   vencida, usa a linha vencida em vez de devolver erro (CEP raramente muda de lugar).
+# - Sem limpeza agendada: a tabela é por CEP, sem dono e sem dado de pessoa, e a regravação
+#   mantém cada linha atualizada; o ADR registra por que não há expurgo.
+# - Sem migration (o fetched_at já existe).
+
+task_id: SEC-016
+
+objective: >
+  A geocodificação de CEP ganha um teto global por hora, além do limite por pessoa, e o cache
+  de CEP passa a ter validade de 180 dias, com reaproveitamento da linha vencida quando o
+  provedor falha, tudo coberto por testes com relógio falso.
+
+authority:
+  - tools/backend-kanban/public/board.json (cartão LOC-LIMITE-GEOCODIFICACAO)
+  - docs/decisions/ADR-20261116-cep-no-anuncio-avo-limite-e-coordenada-ausente.md (seção 2)
+  - docs/decisions/ADR-20261022-localizacao-padrao-de-mercado.md
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    apps/web/lib/geo/limite.ts só conta por pessoa (TETO_POR_PESSOA = 20 por hora), sem teto
+    global; apps/web/lib/geo/cache.ts lê cep_geocodes sem olhar fetched_at, então uma linha
+    nunca vence.
+
+allowed_paths:
+  - apps/web/lib/geo/limite.ts
+  - apps/web/lib/geo/cache.ts
+  - apps/web/lib/geo/anuncio.ts
+  - apps/web/app/api/app/voce/localizacao/route.ts
+  - tests/unit/geo
+  - tests/unit/app-api/voce/localizacao.test.ts
+  - tests/unit/app-api/pedidos/pedido-localizacao.test.ts
+  - docs/decisions/ADR-20261116-cep-no-anuncio-avo-limite-e-coordenada-ausente.md
+  - docs/agents/tasks/SEC-016.task.yml
+
+forbidden:
+  - criar ou mudar migration, função de banco, grant, policy ou job agendado
+  - mudar o limite por pessoa (20 por hora) ou a forma do 429 com retry-after
+  - mudar o geocodificador (BrasilAPI primeiro, Google de reserva) ou o que vai para o cliente
+  - editar docs/decisions/RATIFICACAO.md (a linha vai no relatório)
+  - push, merge, abrir PR, force-push; ler, criar ou imprimir arquivos de ambiente
+
+acceptance:
+  - "limite.ts: além do teto por pessoa, um teto global de 300 consultas reais por hora no processo; a resposta negada tem o mesmo formato (esperarMs) e os chamadores devolvem o mesmo 429 com retry-after; a pessoa negada pelo teto global não consome a cota dela. Testes com relógio falso: global esgotado nega pessoa nova, janela anda e libera, por pessoa continua valendo."
+  - "cache.ts: leitura considera fetched_at; linha com mais de 180 dias volta como vencida (não como encontrada). Os três chamadores (perfil, anúncio, pedido) tratam vencida como ausente para consultar o provedor e regravar, e, se o provedor falhar ou o limite negar, usam a coordenada vencida em vez de falhar. Testes: dentro da validade não chama o provedor nem consome cota; vencida chama e regrava; vencida com provedor indisponível usa a antiga."
+  - "A emenda no ADR-20261116 (seção 2) registra o teto global, a validade de 180 dias, o reaproveitamento da linha vencida e por que não há expurgo agendado (tabela por CEP, sem pessoa). O relatório traz a linha pronta da RATIFICACAO.md."
+
+proof:
+  - "npx vitest run tests/unit/geo tests/unit/app-api/voce/localizacao.test.ts tests/unit/app-api/pedidos/pedido-localizacao.test.ts (binários de node_modules), mostrando cada arquivo rodando"
+  - npx pnpm@11.18.0 lint
+  - "node scripts/agents/prova-fila.mjs -- npx pnpm@11.18.0 test"
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/SEC-016.task.yml
+  - "E2E de localização (f10-voce-localizacao, f07-negocios-real) — no CI completo com a label ci:full"
+
+risk: custo do provedor externo de geocodificação e frescor do cache de CEP
+risk_level: R2
+
+reviewer_must_differ_from_executor: true
+retry_budget: 2
+on_budget_exhausted: HUMAN_DECISION
+
+closure:
+  requires_runtime_evidence: true
