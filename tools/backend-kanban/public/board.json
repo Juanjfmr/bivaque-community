@@ -6262,7 +6262,8 @@
       "proof": [
         "02/11: aberto na definição do lançamento (docs/LANCAMENTO.md), por mandato do dono.",
         "06/11: RUN-016 integrado pelo PR #143 (385d9850): perfil próprio (ler e editar nome e bio), minhas publicações, bloqueados e ocultados com desfazer, e pedido de exclusão pelo fluxo existente. Implementação DeepSeek V4.1 Flash; revisão Qwen 3.8 Flash PASS COM RESSALVAS; security-auditor (Sonnet 5.5) LIBERA COM RESSALVAS; CI verde com o E2E real. Família ficou fora (ver F10-FAMILIA).",
-        "17/11: DECISÃO DO DONO — a troca de e-mail fica fora do lançamento; quem precisar trocar pede pelo canal de Ajuda (suporte). A troca de /configuracoes* para o app segue sem ela no RUN-184 (em curso), com ADR registrando a exclusão; /salvos vai no lote seguinte."
+        "17/11: DECISÃO DO DONO — a troca de e-mail fica fora do lançamento; quem precisar trocar pede pelo canal de Ajuda (suporte). A troca de /configuracoes* para o app segue sem ela no RUN-184 (em curso), com ADR registrando a exclusão; /salvos vai no lote seguinte.",
+        "17/11: RUN-184 (#274) trocou /configuracoes para o app (sem troca de e-mail, decisão do dono). Em curso: RUN-186 (/salvos no app, PR #277)."
       ],
       "id": "LAN-F10",
       "title": "F10 Você, família e conta ligados ao banco",
@@ -6309,7 +6310,8 @@
         "16/11: RUN-168 (8c3224fa), RUN-169 (9100ab6b) e RUN-170 (74d58714) fundidos; F06 so fecha com RUN-171 + LOC-IMPL (dependencia registrada no card); F10 tem paridade completa no app e so espera a troca.",
         "16/11: RUN-166 mergeado. Do inventario de RUN-166, seguem servindo tela de membro na web: indicacoes/[id] (pre-condicao do F09-B3 migrar o report-button antes), /profile+/editar (RUN-172 em curso), negocio/pedidos/configuracoes-familia e o resto da casca — a fase 6 acompanha por jornada.",
         "16/11: RUN-172 mergeado — nenhuma tela de membro das linhas F02-F10 fora das trocadas; o que resta na web pertence a jornadas com card proprio. AVATAR-FOTO-APP e o item M-3 da familia estao registrados.",
-        "17/11: /guide/sugerir trocada (RUN-182, #271). Em curso: /configuracoes* (RUN-184) e paridade da Pergunta antes de trocar /indicacoes/[id] (RUN-185). Depois: /salvos e o lote 3 do F09 (troca de /indicacoes/[id] e revogação do INSERT direto). Troca de e-mail fora do lançamento por decisão do dono."
+        "17/11: /guide/sugerir trocada (RUN-182, #271). Em curso: /configuracoes* (RUN-184) e paridade da Pergunta antes de trocar /indicacoes/[id] (RUN-185). Depois: /salvos e o lote 3 do F09 (troca de /indicacoes/[id] e revogação do INSERT direto). Troca de e-mail fora do lançamento por decisão do dono.",
+        "17/11: /configuracoes trocada (RUN-184, #274); paridade da Pergunta pronta (RUN-185, #275) para a troca de /indicacoes/[id] no lote 3 do F09; /salvos em curso (RUN-186, #277)."
       ],
       "id": "LAN-TROCA",
       "title": "Fase 6: varredura da troca — nenhuma rota de membro no apps/web servindo tela",
@@ -8094,7 +8096,7 @@
       "phase": "Lote 7 — Desapegos e Imóveis",
       "priority": "P1",
       "category": "governance",
-      "status": "next",
+      "status": "done",
       "description": "O PUT /api/app/voce/localizacao geocodifica qualquer CEP no cache miss sem limite por pessoa/instalação e o cep_geocodes não tem TTL. Decidir limitador/cota e TTL antes de abrir o CEP para toda a base; hoje o custo/quota do provedor fica sem teto (achado MÉDIO da auditoria R3 do #183).",
       "checklist": [
         "Limite por sessão/IP e teto global na rota de localização",
@@ -8106,15 +8108,17 @@
         "11/11: aberto a partir da ressalva MÉDIA do security-auditor 437d6aa3 (PR #183).",
         "16/11: PARCIAL pelo RUN-175 (#258): limitador por pessoa nas chamadas REAIS do geocode do ANÚNCIO (janela 1 h/20, cache-hit não consome, 429 com retry-after — unit com relógio falso; ADR-20261116 §2 registra a decisão; por-processo é limitação aceita, upgrade = contador no banco molde SEC-007). O que falta para fechar (próximo passo concreto): TTL e limpeza em cep_geocodes; teto global; e o PUT /api/app/voce/localizacao (perfil, PR #183) geocodifica no cache-miss SEM consumirConsulta — achado médio da revisão do #258, pré-existente, não coberto pelo lote.",
         "16/11: o L2 (#259) ampliou o limitador existente para o PEDIDO (mesma janela 20/h por pessoa, mesma chave por usuario, cache-hit nao consome). O que continua aberto neste card: TTL/limpeza do cep_geocodes, teto global, e o PUT /api/app/voce/localizacao (perfil) que geocodifica no cache-miss sem consumirConsulta.",
-        "17/11: o PUT do perfil já consome a cota (SEC-013, #266). O que faltava virou o lote SEC-016 (contrato 48165e81): teto global de 300 consultas reais por hora no processo e validade de 180 dias no cache de CEP, com reaproveitamento da linha vencida quando o provedor falha; sem migration. Em curso com o DeepSeek V4.1 Flash."
+        "17/11: o PUT do perfil já consome a cota (SEC-013, #266). O que faltava virou o lote SEC-016 (contrato 48165e81): teto global de 300 consultas reais por hora no processo e validade de 180 dias no cache de CEP, com reaproveitamento da linha vencida quando o provedor falha; sem migration. Em curso com o DeepSeek V4.1 Flash.",
+        "17/11: fechado pelo SEC-016 (#273): teto global 300/h por processo, validade de 180 dias com linha vencida como rede, bairro preservado. Limpeza agendada não é necessária (tabela por CEP, sem pessoa; a regravação mantém a linha). Contador no banco continua como upgrade possível (limite por processo é limitação aceita no ADR-20261116 §2)."
       ],
       "tests": [],
       "links": ["docs/decisions/ADR-20261022-localizacao-padrao-de-mercado.md"],
       "dependencies": ["LOC-IMPL", "ADR-LOCALIZACAO"],
       "updatedAt": "2026-11-17",
-      "sourceRevision": "8ab4b750",
+      "sourceRevision": "a096f327",
       "blockers": [],
-      "completedChecklist": [false, false, false, false]
+      "completedChecklist": [false, false, false, false],
+      "completedAt": "2026-11-17"
     },
     {
       "id": "LOC-CEP-SEM-COORDENADA",
@@ -8191,7 +8195,8 @@
       "proof": [
         "11/11: aberto a partir da ressalva B3 do parecer de segurança e89e33e0 (PR #181).",
         "16/11: RUN-166 (#250) matou o INSERT do conversation-inbox mas o segundo produtor continua vivo e so foi visto na revisao independente — revogar o grant hoje quebraria a denuncia-com-bloqueio da indicacao. Ordem: report-button → rota do app (molde RUN-165) → revogacao.",
-        "17/11: PRÉ-CONDIÇÃO CUMPRIDA pelo SEC-015 (#270): denunciar e bloquear existe na tela Pergunta do app pela rota de bloqueio. Ordem restante: RUN-185 (paridade da Pergunta, em curso) → lote 3 (307 de /indicacoes/[id], remoção do ramo de bloqueio do report-button e revogação do INSERT direto de dm_messages, com pgTAP ±)."
+        "17/11: PRÉ-CONDIÇÃO CUMPRIDA pelo SEC-015 (#270): denunciar e bloquear existe na tela Pergunta do app pela rota de bloqueio. Ordem restante: RUN-185 (paridade da Pergunta, em curso) → lote 3 (307 de /indicacoes/[id], remoção do ramo de bloqueio do report-button e revogação do INSERT direto de dm_messages, com pgTAP ±).",
+        "17/11: lote 2 (paridade) fechado pelo RUN-185 (#275). Falta o lote 3: 307 de /indicacoes/[id] para /app/pergunta/[id], remoção da tela antiga e do ramo de bloqueio do report-button, links migrados (indicationHref, deep-links, reports, legacy-routes ?focus) e revogação do INSERT direto de dm_messages com pgTAP ± (R3)."
       ],
       "tests": [],
       "links": [],
@@ -9500,13 +9505,14 @@
       "description": "No primeiro uso real (17/11, PRs #264 e #269), o merge-seguro.mjs recusou os dois dizendo que o completo estava skipped: leu o run da abertura do PR (sem a label, completo pulado pelo gate) e não o run com ci:full no mesmo SHA, que estava verde. Falso negativo, recusa o que podia passar. Também exige GH_TOKEN no ambiente em vez de usar o login do gh.",
       "dependencies": ["HRN-005"],
       "checklist": [
-        "[ ] Escolher, entre os runs do PR CI no SHA, o que executou o completo (ci-core presente) e decidir por ele; teste com dois runs no mesmo SHA, um pulado e um verde",
-        "[ ] Ler o token de gh auth token quando GH_TOKEN e GITHUB_TOKEN não existirem",
+        "[x] Escolher, entre os runs do PR CI no SHA, o que executou o completo (ci-core presente) e decidir por ele; teste com dois runs no mesmo SHA, um pulado e um verde",
+        "[x] Ler o token de gh auth token quando GH_TOKEN e GITHUB_TOKEN não existirem",
         "[ ] Pendências do diagnóstico de CI: P6 painel semanal, P8 árvore idêntica, P7 quarentena condicional"
       ],
       "proof": [
         "Recusas observadas em 17/11 nos PRs #264 e #269; merges feitos pelo coordenador conferindo ci-core e agregador verdes no SHA.",
-        "17/11: os dois primeiros itens viraram o lote HRN-006 (contrato 009a22ca, branch gpt/hrn-merge-seguro), em curso com o GPT 6 Luna. P6, P7 e P8 continuam aqui."
+        "17/11: os dois primeiros itens viraram o lote HRN-006 (contrato 009a22ca, branch gpt/hrn-merge-seguro), em curso com o GPT 6 Luna. P6, P7 e P8 continuam aqui.",
+        "17/11: os dois primeiros itens fechados pelo HRN-006 (#276). Fica só P6/P7/P8."
       ],
       "tests": [],
       "notes": []
@@ -9660,6 +9666,176 @@
       "proof": [
         "17/11: lista consolidada pelo coordenador a partir do parecer às cegas do GPT 6 Luna."
       ],
+      "tests": [],
+      "notes": []
+    },
+    {
+      "id": "SEC-016",
+      "title": "SEC-016: teto global na geocodificação e validade de 180 dias no cache de CEP",
+      "phase": "Segurança pré-lançamento",
+      "priority": "P1",
+      "category": "backend",
+      "status": "done",
+      "updatedAt": "2026-11-17",
+      "completedAt": "2026-11-17",
+      "sourceRevision": "a096f327",
+      "description": "Fecha o LOC-LIMITE-GEOCODIFICACAO: teto global de 300 consultas reais ao provedor por hora no processo (além das 20 por pessoa; quem é barrado pelo global não gasta a própria cota) e validade de 180 dias no cep_geocodes, com a linha vencida servindo de rede quando o provedor falha ou o limite nega. Sem migration. Emenda do ADR-20261116 (cep no anúncio).",
+      "dependencies": [],
+      "checklist": [
+        "[x] Teto global no limitador",
+        "[x] Validade de 180 dias na leitura e regravação",
+        "[x] Linha vencida como rede",
+        "[x] Bairro preservado na renovação e em gravação concorrente (upsert sem a coluna quando não há bairro)",
+        "[x] Emenda do ADR"
+      ],
+      "proof": [
+        "PR #273 mergeado por squash (7e678618); CI completo verde no SHA 8069aae5.",
+        "Revisão do GPT 6.1 Terra: 1ª custo OK e FAIL pela regressão do bairro; 2ª só um MÉDIO (concorrência), corrigido pelo coordenador; delta PASS (.work/orq/relatorios/SEC-016-*.md)."
+      ],
+      "tests": [
+        "tests/unit/geo/limite-global.test.ts",
+        "tests/unit/geo/cache-gravar.test.ts",
+        "tests/unit/app-api/voce/localizacao.test.ts",
+        "tests/unit/app-api/pedidos/pedido-localizacao.test.ts"
+      ],
+      "notes": []
+    },
+    {
+      "id": "HRN-006",
+      "title": "HRN-006: merge-seguro decide pela execução certa no mesmo SHA e usa o token do gh",
+      "phase": "HRN — Harness do quadro (16/11)",
+      "priority": "P1",
+      "category": "infra",
+      "status": "done",
+      "updatedAt": "2026-11-17",
+      "completedAt": "2026-11-17",
+      "sourceRevision": "a096f327",
+      "description": "Corrige o falso negativo do primeiro uso real do merge-seguro (PRs #264 e #269) sem abrir falso positivo: decisão por execução (check_suite.id), a execução mais nova do PR CI decide, execução em andamento recusa, check sem id ou com id numérico inseguro recusa, paginação lida até o fim, token pelo gh auth token quando não há variável.",
+      "dependencies": [],
+      "checklist": [
+        "[x] Decisão por execução",
+        "[x] Recusa na dúvida (andamento, sem id, id > 2^53, paginação incompleta)",
+        "[x] Token pelo gh",
+        "[x] Motivos com suíte e run"
+      ],
+      "proof": [
+        "PR #276 mergeado por squash (a096f327) por decisão do dono em 17/11; CI verde no SHA 75245d15.",
+        "Implementação GPT 6 Luna; três revisões do GPT 6.1 Terra (FAIL por falsos positivos, todos fechados com teste negativo); correções 1 e 2 pelo DeepSeek V4.1 Flash; o último caso (id > 2^53) pelo coordenador, com contraprova (.work/orq/relatorios/HRN-006-*.md)."
+      ],
+      "tests": ["tests/scope/merge-seguro.test.mjs"],
+      "notes": []
+    },
+    {
+      "id": "RUN-184",
+      "title": "RUN-184: /configuracoes sai da web; a conta fica no app com o aviso completo da exclusão",
+      "phase": "Lançamento",
+      "priority": "P1",
+      "category": "frontend",
+      "status": "done",
+      "updatedAt": "2026-11-17",
+      "completedAt": "2026-11-17",
+      "sourceRevision": "a096f327",
+      "description": "F10: /configuracoes e /configuracoes/conta viram 307 para /app/voce e a árvore (shell)/configuracoes sai; links vivos apontam para o app; o aviso da exclusão no app passa a ter o texto completo da tela antiga com o prazo do banco. Troca de e-mail fora do lançamento por decisão do dono; senha fora pelo ADR-20261101 §2. ADR-20261117-f10-conta-no-app.",
+      "dependencies": [],
+      "checklist": [
+        "[x] 307 e remoção da árvore",
+        "[x] Links vivos para o app",
+        "[x] Aviso completo da exclusão",
+        "[x] E2E com conta descartável: exclusão de verdade, 401 depois e login recusado",
+        "[x] ADR"
+      ],
+      "proof": [
+        "PR #274 mergeado por squash (1f119c85); CI completo, stateful nas três larguras e Visual verdes no SHA 6796b425.",
+        "Revisão do GPT 6.1 Terra: 1ª FAIL (sessão encerrada não provada), 2ª PASS COM RESSALVAS (.work/orq/relatorios/RUN-184-*.md)."
+      ],
+      "tests": [
+        "tests/e2e/account-deletion-ui.spec.ts",
+        "apps/app/tests/e2e/voce.spec.ts",
+        "tests/unit/infra/lan-troca-redirect.test.ts"
+      ],
+      "notes": []
+    },
+    {
+      "id": "RUN-185",
+      "title": "RUN-185: paridade da tela Pergunta no app (editar, excluir, resolver sem resposta, compartilhar, Guia, editada)",
+      "phase": "Lançamento",
+      "priority": "P1",
+      "category": "frontend",
+      "status": "done",
+      "updatedAt": "2026-11-17",
+      "completedAt": "2026-11-17",
+      "sourceRevision": "a096f327",
+      "description": "F09 lote 2: a tela Pergunta do app faz o que /indicacoes/[id] fazia. PATCH/DELETE da pergunta e rota nova da resposta, sob a sessão e com filtro pelo autor; GET com a marca editada e o verbete aprovado; menu do autor 'Ações da minha pergunta/resposta' com foco previsível. Sem migration.",
+      "dependencies": [],
+      "checklist": [
+        "[x] API de edição e exclusão com negativos",
+        "[x] GET com editada e verbete",
+        "[x] Tela com editar, excluir, resolver sem resposta, compartilhar, Guia e editada",
+        "[x] E2E real (editar, excluir resposta e pergunta, resolver, negativa de outra pessoa) e simulado (foco, compartilhar)"
+      ],
+      "proof": [
+        "PR #275 mergeado por squash (b80e71c9) por decisão do dono em 17/11; CI completo verde no SHA 488be38e (15/15).",
+        "Revisão do GPT 6.1 Terra: autoria correta desde a 1ª rodada; três rodadas pediram provas (E2E real, foco, locators), entregues; a 3ª sem defeito (.work/orq/relatorios/RUN-185-*.md)."
+      ],
+      "tests": [
+        "tests/unit/app-api/perguntas/rotas.test.ts",
+        "tests/e2e/f04-perguntas-real.spec.ts",
+        "apps/app/tests/e2e/pergunta-ciclo.spec.ts"
+      ],
+      "notes": []
+    },
+    {
+      "id": "AJUDA-SEM-SENHA",
+      "title": "Ajuda do app ainda oferece 'Esqueci a senha'",
+      "phase": "Lançamento",
+      "priority": "P2",
+      "category": "frontend",
+      "status": "next",
+      "updatedAt": "2026-11-17",
+      "sourceRevision": "a096f327",
+      "description": "apps/app/src/telas/Ajuda.tsx ainda responde 'Esqueci a senha.' com o fluxo de recuperação, que o ADR-20261101 §2 tirou (a entrada é por código no e-mail, Google ou Apple). Texto que engana quem lê. Achado do RUN-184 (fora da cerca).",
+      "dependencies": [],
+      "checklist": [
+        "[ ] Trocar a resposta pela entrada por código, sem senha",
+        "[ ] Teste do texto da Ajuda"
+      ],
+      "proof": ["Fonte: .work/orq/relatorios/RUN-184-implementacao.md (riscos, item 4)."],
+      "tests": [],
+      "notes": []
+    },
+    {
+      "id": "RUN-185-RESSALVAS",
+      "title": "RUN-185-RESSALVAS: limite do assunto na edição e prova real do link do Guia",
+      "phase": "Lançamento",
+      "priority": "P3",
+      "category": "frontend",
+      "status": "next",
+      "updatedAt": "2026-11-17",
+      "sourceRevision": "a096f327",
+      "description": "Residuais do RUN-185: (1) a edição usa o limite de 60 caracteres do assunto da criação; perguntas antigas da web com texto maior precisam ser encurtadas para salvar; (2) o seed não tem verbete aprovado ligado a resposta (source_reply_id), então o link do Guia na resposta só tem prova de unidade; (3) o tipo gerado de edited_at diz string não nula.",
+      "dependencies": [],
+      "checklist": [
+        "[ ] Decidir o limite da edição para perguntas antigas",
+        "[ ] Seed com verbete aprovado ligado a resposta e E2E real do link",
+        "[ ] Tipo de edited_at nulo no database.generated.ts"
+      ],
+      "proof": ["Fonte: .work/orq/relatorios/RUN-185-implementacao.md e RUN-185-correcao2.md."],
+      "tests": [],
+      "notes": []
+    },
+    {
+      "id": "FLOWS-CONFIG-RESIDUO",
+      "title": "Catálogo de quadros do protótipo ainda cita telas de configurações",
+      "phase": "Lançamento",
+      "priority": "P3",
+      "category": "infra",
+      "status": "next",
+      "updatedAt": "2026-11-17",
+      "sourceRevision": "a096f327",
+      "description": "scripts/visual/flows/{frames,journeys,taxonomy}.json citam os quadros 52-web-configuracoes e 50-mobile-configuracoes. São catálogo histórico de imagens, não link vivo; limpar na faxina de resíduos da troca.",
+      "dependencies": [],
+      "checklist": ["[ ] Tirar ou marcar como históricos os quadros de configurações"],
+      "proof": ["Fonte: .work/orq/relatorios/RUN-184-implementacao.md (riscos, item 3)."],
       "tests": [],
       "notes": []
     }
