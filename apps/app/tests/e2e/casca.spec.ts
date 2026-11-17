@@ -243,6 +243,56 @@ test.describe("menu Criar (§4 do inventário)", () => {
     expect(new URL(page.url()).pathname).toBe("/app/inicio")
   })
 
+  test("no celular e tablet o menu tem scrim, prende foco e fecha pelo fundo", async ({ page }) => {
+    const largura = page.viewportSize()?.width ?? 0
+    test.skip(largura >= 1024, "o scrim desta pilha é para celular e tablet")
+
+    await abrir(page, "/app/inicio")
+    await page.locator(SELETOR_CRIAR).click()
+    const menu = page.locator(SELETOR_MENU_CRIAR)
+    const scrim = page.locator(".bv-scrim")
+    await expect(menu.locator('[data-escolha="ask"]')).toBeFocused()
+    await expect(scrim).toBeVisible()
+    await expect(scrim).not.toHaveAttribute("data-criar-fundo", "pilha")
+    const alfa = await scrim.evaluate((element) => {
+      const cor = getComputedStyle(element).backgroundColor
+      return Number(cor.match(/, ([\d.]+)\)$/)?.[1] ?? 0)
+    })
+    expect(alfa).toBeGreaterThan(0)
+
+    const focalizaveis = menu.locator('button[data-criar="fechar"], [data-escolha]')
+    await expect(focalizaveis).toHaveCount(8)
+    const primeiro = focalizaveis.first()
+    const ultimo = focalizaveis.last()
+    await expect(primeiro).toHaveAttribute("aria-label", "Fechar")
+    await expect(ultimo).toHaveAttribute("data-escolha", "my-biz")
+
+    const focoDentroDoMenu = async () =>
+      expect(await menu.evaluate((element) => element.contains(document.activeElement))).toBe(true)
+
+    await ultimo.focus()
+    await focoDentroDoMenu()
+    await page.keyboard.press("Tab")
+    await expect(primeiro).toBeFocused()
+    await focoDentroDoMenu()
+    await page.keyboard.press("Shift+Tab")
+    await expect(ultimo).toBeFocused()
+    await focoDentroDoMenu()
+
+    // O sino de avisos fica sempre no topo e navegaria para /app/avisos se o clique vazasse.
+    const acaoDeTras = page.locator('[data-acao="avisos"]')
+    const caixaDeTras = await acaoDeTras.boundingBox()
+    if (caixaDeTras === null) throw new Error("O sino de avisos não tem posição")
+    await page.mouse.click(
+      caixaDeTras.x + caixaDeTras.width / 2,
+      caixaDeTras.y + caixaDeTras.height / 2,
+    )
+    await expect(menu).toHaveCount(0)
+    await expect(page.locator(SELETOR_CRIAR)).toBeFocused()
+    expect(new URL(page.url()).pathname).toBe("/app/inicio")
+    await expect(page.locator('[data-sobreposicao="busca"]')).toHaveCount(0)
+  })
+
   test("o Voltar do sistema fecha o menu antes de trocar de rota", async ({ page }) => {
     await abrir(page, "/app/comunidade")
     await page.locator(SELETOR_CRIAR).click()

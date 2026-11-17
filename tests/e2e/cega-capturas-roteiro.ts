@@ -64,8 +64,7 @@ export const ROTEIRO: readonly JornadaDoRoteiro[] = [
         id: "inicio",
         rota: "/app/inicio",
         persona: PERSONAS.titular,
-        seletor: '[data-tela="inicio"]',
-        texto: "Sua rede em Manaus",
+        seletor: '[data-home="conteudo"] [data-cartao="publicacao"]',
       },
       {
         id: "busca",

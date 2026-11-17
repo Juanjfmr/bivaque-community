@@ -1,0 +1,71 @@
+# F03 e capturas: bloqueante da revisão às cegas e ajustes do roteiro de capturas.
+#
+# Autoridade: revisão às cegas das 66 capturas de 17/11 (.work/orq/relatorios/cega-revisao-jornadas.md),
+# critério 2 do LANCAMENTO. Triagem do coordenador sobre os quatro bloqueantes apontados:
+# - F03 real: no celular e no tablet, o menu Criar abre pílulas flutuantes sem fundo escurecido sobre o
+#   Início, e o formulário de desapego aparece misturado com a tela de trás (pode ser captura no meio
+#   da animação de abertura; precisa ser verificado).
+# - F09 não é defeito: o botão Enviar está desabilitado porque o campo está vazio; a captura deve
+#   mostrar o estado com texto digitado.
+# - F10 não é defeito do app: o campo de data nativo segue o idioma do navegador, e o navegador do CI
+#   está em inglês; as capturas passam a rodar em pt-BR.
+# - F02 não deu para julgar: a captura do Início saiu com o feed ainda em esqueleto.
+
+task_id: RUN-183
+
+objective: >
+  No celular e no tablet, o menu Criar e os formulários de criação ficam visualmente separados da tela
+  de trás, sem conteúdo do fundo competindo com as opções e os campos; e as capturas da revisão às
+  cegas passam a mostrar as telas como uma pessoa no Brasil as vê, depois de carregar e de animar.
+
+authority:
+  - .work/orq/relatorios/cega-revisao-jornadas.md (bloqueantes F03, F09 e F10; F02 sem julgamento)
+  - docs/LANCAMENTO.md (critério 2 de cada jornada)
+  - docs/agents/regua-nextdoor/PADRAO-DE-TELA.md
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    Capturas do run 43984703051: f03/criar-375 (pílulas sem fundo escurecido sobre o Início), f03/desapego-375
+    e desapego-768 (título da tela de trás aparecendo através dos campos), f10/familia-375 (data 12/17/2026),
+    f09/conversa-375 (Enviar desabilitado com campo vazio), f02 (feed em esqueleto).
+
+allowed_paths:
+  - apps/app/src/casca/MenuCriar.tsx
+  - apps/app/src/criar
+  - apps/app/src/pecas
+  - apps/app/tests/e2e
+  - tests/e2e/cega-capturas.spec.ts
+  - tests/e2e/cega-capturas-roteiro.ts
+  - tests/scope/cega-capturas.test.mjs
+  - docs/agents/tasks/RUN-183.task.yml
+
+forbidden:
+  - mudar a ordem, os nomes ou os destinos das opções do menu Criar
+  - mudar os campos, as validações ou o envio dos formulários
+  - mudar playwright.config.ts global ou o tema
+  - editar docs/decisions/RATIFICACAO.md
+  - push, merge, abrir PR, force-push; ler, criar ou imprimir arquivos de ambiente
+
+acceptance:
+  - "Primeiro, verifique no código se o formulário de desapego (e os irmãos de criação) é aberto com fundo próprio opaco ou com animação de entrada; registre no relatório o que encontrou. Se a superfície for transparente ou o fundo da tela de trás aparecer depois da animação, corrija para superfície opaca com rolagem própria."
+  - "No celular e no tablet, o menu Criar aberto tem um fundo escurecido (scrim) atrás das opções, que bloqueia o toque na tela de trás e fecha o menu ao ser tocado, mantendo foco preso no menu, Escape e o retorno de foco que o menu já tem; no desktop o comportamento atual continua."
+  - "As capturas de cega-capturas.spec.ts rodam com locale pt-BR e fuso America/Manaus (por test.use no próprio spec), esperam o fim das animações (reduced motion ou espera explícita) e, no Início, esperam o feed carregar com conteúdo real antes de capturar; a captura da conversa digita uma mensagem antes, para mostrar o Enviar habilitado."
+  - "Testes do app (componente ou E2E de apps/app/tests/e2e) provam o scrim no celular, o fechamento ao tocar no fundo e o foco; o teste de escopo das capturas continua passando."
+
+proof:
+  - "npx vitest run dos testes tocados e node --test tests/scope/cega-capturas.test.mjs"
+  - "npx tsc --noEmit -p apps/app"
+  - npx pnpm@11.18.0 lint
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/RUN-183.task.yml
+  - "E2E e novas capturas — no CI completo com a label ci:full; o coordenador baixa o visual-evidence e confere f02, f03, f09 e f10"
+
+risk: interface e evidência visual
+risk_level: R1
+
+reviewer_must_differ_from_executor: true
+retry_budget: 2
+on_budget_exhausted: HUMAN_DECISION
+
+closure:
+  requires_runtime_evidence: true

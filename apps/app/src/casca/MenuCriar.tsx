@@ -238,7 +238,7 @@ export function MenuCriar({ aoFechar }: { readonly aoFechar: () => void }) {
           showCloseButton={false}
           data-sobreposicao="menu-criar"
           data-modo={painel ? "painel" : "pilha"}
-          overlayProps={{ "data-criar-fundo": painel ? "painel" : "pilha" }}
+          overlayProps={{ "data-criar-fundo": painel ? "painel" : undefined }}
           onOpenAutoFocus={(evento) => {
             // O foco vai para a escolha que abriu o fluxo e, na primeira
             // abertura, para a primeira escolha (§5.4) — nunca para o botão de
@@ -263,7 +263,7 @@ export function MenuCriar({ aoFechar }: { readonly aoFechar: () => void }) {
             evento.preventDefault()
             document.querySelector<HTMLElement>('[data-acao="criar"]')?.focus()
           }}
-          className="bv-painel bv-criar-menu"
+          className="bv-painel bv-criar-menu rounded-2xl border border-(--outline-variant) bg-(--surface-lowest) p-3 shadow-[0_28px_64px_-16px_var(--shadow-strong)]"
         >
           <div className={cn("flex items-start justify-between gap-3", !painel && "sr-only")}>
             <div>
