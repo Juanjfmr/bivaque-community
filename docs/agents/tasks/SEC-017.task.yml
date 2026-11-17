@@ -1,0 +1,84 @@
+# A tela antiga de convite de familiar (/convite) sai da web.
+#
+# Achado do RUN-187 (17/11), confirmado pelo coordenador: apps/web/app/(preauth)/convite continua
+# servindo tela, com campo de senha (invite-form.tsx) e Server Actions (actions.ts) que usam
+# createServiceClient() para pré-visualizar e aceitar o convite e gravar o consentimento. O caminho
+# oficial do convite familiar é o app (/app/entrar?convite=CODIGO, rotas /api/app/entry/invite*),
+# endurecido pelo SEC-011 e pelo SEC-012; o e-mail de convite já aponta para o app
+# (apps/web/lib/outbox/adapters.ts:173). A tela antiga é um segundo caminho de escrita de conta e
+# consentimento por cliente de serviço, fora desse endurecimento, e a única interface de senha viva.
+#
+# Decisão do coordenador, 17/11, por delegação (emenda do ADR-20261111-convite-familiar-pela-sessao):
+# /convite vira 307 para /app/entrar, levando ?codigo=X como ?convite=X; a pasta sai com as actions;
+# as funções compartilhadas que o app usa (lib/convite/*) ficam.
+
+task_id: SEC-017
+
+objective: >
+  O convite de familiar passa a ter um caminho só, o do app: /convite redireciona para a entrada do
+  app levando o código, e a tela antiga, com senha e Server Actions por cliente de serviço, sai do
+  apps/web com os testes dela, sem tocar nas funções que o app usa.
+
+authority:
+  - docs/decisions/ADR-20261111-convite-familiar-pela-sessao.md
+  - docs/decisions/ADR-20261101-entrada-unica-por-codigo.md (seção 2, sem senha)
+  - docs/LANCAMENTO.md (fase 6, nenhuma rota de membro no apps/web servindo tela)
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    apps/web/app/(preauth)/convite/page.tsx serve a tela; actions.ts:200 cria o cliente de serviço e
+    chama previewFamilyInviteCode, record_consent_acceptance e acceptFamilyInviteCode; invite-form.tsx
+    tem campo de senha; o portão de rotas declara /convite pública.
+
+adr: docs/decisions/ADR-20261111-convite-familiar-pela-sessao.md
+
+allowed_paths:
+  - apps/web/next.config.ts
+  - apps/web/app/(preauth)/convite
+  - apps/web/lib/security/route-surface.ts
+  - apps/web/lib/security/api-surface.ts
+  - apps/web/proxy.ts
+  - tests/unit/convite/invite-actions.test.ts
+  - tests/unit/convite/invite-screen.test.ts
+  - tests/unit/infra/lan-troca-redirect.test.ts
+  - tests/unit/security
+  - tests/scope
+  - tests/e2e/link-crawl.spec.ts
+  - tests/e2e
+  - scripts/visual/capture.mjs
+  - docs/decisions/ADR-20261111-convite-familiar-pela-sessao.md
+  - docs/agents/tasks/SEC-017.task.yml
+
+forbidden:
+  - mexer em apps/web/lib/convite (provision.ts, familia.ts, hint.ts e o que o app usa) ou nas rotas /api/app/entry/invite*
+  - mudar migration, função de banco, grant ou policy
+  - mudar o caminho do convite no app (/app/entrar?convite=)
+  - editar docs/decisions/RATIFICACAO.md (a linha vai no relatório)
+  - push, merge, abrir PR, force-push; ler, criar ou imprimir arquivos de ambiente
+
+acceptance:
+  - "next.config.ts: /convite redireciona (307) para /app/entrar; com ?codigo=X, o destino leva ?convite=X (e nenhum outro parâmetro com dado de quem foi convidado); sem ciclo; lan-troca-redirect prova os dois casos e a ausência da pasta (preauth)/convite."
+  - "A pasta apps/web/app/(preauth)/convite sai inteira (page, form, actions, css); testes que importavam as actions saem ou passam a cobrir o caminho do app; o relatório traz o git grep provando que nenhum import sobrou e que previewFamilyInviteCode/acceptFamilyInviteCode só têm consumidores do app."
+  - "Portão de rotas e superfícies: a entrada pública de /convite em route-surface.ts deixa de declarar tela (ou passa a declarar o redirect), e os censos e testes de escopo/segurança que contavam a tela são ajustados com o motivo."
+  - "link-crawl: nenhuma porta declarada sobrando para /convite; se algum link antigo ainda apontar para lá, ele segue o 307 até o app."
+  - "Emenda do ADR-20261111 registra o caminho único do convite pelo app e a saída da tela antiga com cliente de serviço e senha; o relatório traz a linha pronta da RATIFICACAO.md."
+
+proof:
+  - "npx vitest run nos testes tocados, mostrando cada arquivo rodando"
+  - "npx tsc --noEmit -p apps/web (depois de next typegen, se o projeto exigir)"
+  - "npx tsc --noEmit -p tests/e2e/tsconfig.json"
+  - npx pnpm@11.18.0 lint
+  - "node scripts/agents/prova-fila.mjs -- npx pnpm@11.18.0 test"
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/SEC-017.task.yml
+  - "E2E (convite familiar no app f01-entrada-real, link-crawl) — no CI completo com a label ci:full"
+
+risk: segundo caminho de criação de conta e consentimento por cliente de serviço, fora do endurecimento do convite
+risk_level: R3
+
+reviewer_must_differ_from_executor: true
+retry_budget: 2
+on_budget_exhausted: HUMAN_DECISION
+
+closure:
+  requires_runtime_evidence: true
