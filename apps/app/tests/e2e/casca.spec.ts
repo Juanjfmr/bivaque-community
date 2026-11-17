@@ -243,6 +243,37 @@ test.describe("menu Criar (§4 do inventário)", () => {
     expect(new URL(page.url()).pathname).toBe("/app/inicio")
   })
 
+  test("no celular e tablet o menu tem scrim, prende foco e fecha pelo fundo", async ({ page }) => {
+    const largura = page.viewportSize()?.width ?? 0
+    test.skip(largura >= 1024, "o scrim desta pilha é para celular e tablet")
+
+    await abrir(page, "/app/inicio")
+    await page.locator(SELETOR_CRIAR).click()
+    const menu = page.locator(SELETOR_MENU_CRIAR)
+    const scrim = page.locator(".bv-scrim")
+    await expect(menu.locator('[data-escolha="ask"]')).toBeFocused()
+    await expect(scrim).toBeVisible()
+    await expect(scrim).not.toHaveAttribute("data-criar-fundo", "pilha")
+    const alfa = await scrim.evaluate((element) => {
+      const cor = getComputedStyle(element).backgroundColor
+      return Number(cor.match(/, ([\d.]+)\)$/)?.[1] ?? 0)
+    })
+    expect(alfa).toBeGreaterThan(0)
+
+    await page.keyboard.press("Tab")
+    await expect(menu.locator(":focus")).toHaveCount(1)
+    const acaoDeTras = page.locator('[data-acao="busca"]')
+    const caixaDeTras = await acaoDeTras.boundingBox()
+    if (caixaDeTras === null) throw new Error("A ação de busca não tem posição")
+    await page.mouse.click(
+      caixaDeTras.x + caixaDeTras.width / 2,
+      caixaDeTras.y + caixaDeTras.height / 2,
+    )
+    await expect(menu).toHaveCount(0)
+    await expect(page.locator(SELETOR_CRIAR)).toBeFocused()
+    expect(new URL(page.url()).pathname).toBe("/app/inicio")
+  })
+
   test("o Voltar do sistema fecha o menu antes de trocar de rota", async ({ page }) => {
     await abrir(page, "/app/comunidade")
     await page.locator(SELETOR_CRIAR).click()
