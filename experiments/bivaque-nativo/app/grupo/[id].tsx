@@ -9,11 +9,13 @@ import { CabecalhoTela } from "@/components/telas/cabecalho-tela"
 import { CartaoPost } from "@/components/telas/cartao-post"
 import { useCores } from "@/components/telas/cores"
 import { Text } from "@/components/ui/text"
-import { grupoPorId, POSTS } from "@/lib/dados"
+import { grupoPorId } from "@/lib/dados"
+import { usePosts } from "@/lib/dados/estado"
 
 export default function TelaGrupo() {
   const { id } = useLocalSearchParams<{ id: string }>()
   const grupo = grupoPorId(id)
+  const publicacoes = usePosts().filter((post) => post.grupoId === id)
 
   if (!grupo) {
     return (
@@ -27,8 +29,6 @@ export default function TelaGrupo() {
       </SafeAreaView>
     )
   }
-
-  const publicacoes = POSTS.filter((post) => post.grupoId === grupo.id)
 
   return (
     <SafeAreaView className="flex-1 bg-background" edges={["top", "left", "right"]}>
@@ -71,7 +71,10 @@ export default function TelaGrupo() {
         renderItem={({ item, index }) => (
           <View className="px-4">
             <Entrada indice={index}>
-              <CartaoPost post={item} />
+              <CartaoPost
+                post={item}
+                aoPressionar={() => router.push(`/pergunta/${item.id}`)}
+              />
             </Entrada>
           </View>
         )}

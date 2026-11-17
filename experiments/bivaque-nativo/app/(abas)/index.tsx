@@ -1,6 +1,6 @@
 import { router } from "expo-router"
 import { useEffect, useState } from "react"
-import { FlatList, View } from "react-native"
+import { FlatList, Pressable, View } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 import { Icone, type NomeIcone } from "@/components/icons"
 import { Entrada, Esqueleto } from "@/components/motion"
@@ -9,16 +9,18 @@ import { CabecalhoTela } from "@/components/telas/cabecalho-tela"
 import { CartaoPost } from "@/components/telas/cartao-post"
 import { useCores } from "@/components/telas/cores"
 import { Text } from "@/components/ui/text"
-import { CIDADE, POSTS } from "@/lib/dados"
+import { CIDADE } from "@/lib/dados"
+import { usePosts } from "@/lib/dados/estado"
 
-const ATALHOS: { nome: NomeIcone; rotulo: string }[] = [
-  { nome: "evento", rotulo: "Eventos" },
-  { nome: "guia", rotulo: "Guia" },
-  { nome: "negocio", rotulo: "Negócios" },
+const ATALHOS: { nome: NomeIcone; rotulo: string; tema: string }[] = [
+  { nome: "evento", rotulo: "Eventos", tema: "eventos" },
+  { nome: "guia", rotulo: "Guia", tema: "guia" },
+  { nome: "negocio", rotulo: "Negócios", tema: "negocios" },
 ]
 
 export default function TelaInicio() {
   const cores = useCores()
+  const posts = usePosts()
   const [carregando, setCarregando] = useState(true)
 
   useEffect(() => {
@@ -32,7 +34,11 @@ export default function TelaInicio() {
         titulo={CIDADE}
         direita={
           <>
-            <BotaoIcone nome="busca" rotulo="Buscar na cidade" aoPressionar={() => undefined} />
+            <BotaoIcone
+              nome="busca"
+              rotulo="Buscar na cidade"
+              aoPressionar={() => router.push("/busca")}
+            />
             <BotaoIcone
               nome="conversas"
               rotulo="Abrir conversas"
@@ -55,25 +61,31 @@ export default function TelaInicio() {
         </View>
       ) : (
         <FlatList
-          data={POSTS}
+          data={posts}
           keyExtractor={(post) => post.id}
           contentContainerClassName="gap-3 px-4 pb-8 pt-2"
           ListHeaderComponent={
             <View className="flex-row gap-3">
               {ATALHOS.map((atalho) => (
-                <View
+                <Pressable
                   key={atalho.rotulo}
+                  accessibilityRole="button"
+                  accessibilityLabel={atalho.rotulo}
+                  onPress={() => router.push(`/em-breve?tema=${atalho.tema}`)}
                   className="flex-1 items-center gap-2 rounded-xl bg-card p-3"
                 >
                   <Icone nome={atalho.nome} tamanho={24} cor={cores.foreground} />
                   <Text className="text-xs font-medium">{atalho.rotulo}</Text>
-                </View>
+                </Pressable>
               ))}
             </View>
           }
           renderItem={({ item, index }) => (
             <Entrada indice={index}>
-              <CartaoPost post={item} />
+              <CartaoPost
+                post={item}
+                aoPressionar={() => router.push(`/pergunta/${item.id}`)}
+              />
             </Entrada>
           )}
         />

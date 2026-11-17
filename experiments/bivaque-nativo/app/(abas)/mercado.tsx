@@ -6,27 +6,31 @@ import { Chip, Entrada, EstadoVazio } from "@/components/motion"
 import { CabecalhoTela } from "@/components/telas/cabecalho-tela"
 import { CartaoAnuncio } from "@/components/telas/cartao-anuncio"
 import { Input } from "@/components/ui/input"
-import { ANUNCIOS, type Anuncio } from "@/lib/dados"
+import type { Anuncio } from "@/lib/dados"
+import { useAnuncios } from "@/lib/dados/estado"
 
 const FILTROS = ["Tudo", "Desapegos", "Imóveis", "Grátis"] as const
 
 type Filtro = (typeof FILTROS)[number]
 
-function filtra(filtro: Filtro, busca: string): Anuncio[] {
+function filtra(anuncios: Anuncio[], filtro: Filtro, busca: string): Anuncio[] {
   const termo = busca.trim().toLowerCase()
 
-  return ANUNCIOS.filter((anuncio) => {
-    if (filtro === "Desapegos") return anuncio.categoria === "desapego"
-    if (filtro === "Imóveis") return anuncio.categoria === "imovel"
-    if (filtro === "Grátis") return anuncio.preco === 0
-    return true
-  }).filter((anuncio) => anuncio.titulo.toLowerCase().includes(termo))
+  return anuncios
+    .filter((anuncio) => {
+      if (filtro === "Desapegos") return anuncio.categoria === "desapego"
+      if (filtro === "Imóveis") return anuncio.categoria === "imovel"
+      if (filtro === "Grátis") return anuncio.preco === 0
+      return true
+    })
+    .filter((anuncio) => anuncio.titulo.toLowerCase().includes(termo))
 }
 
 export default function TelaMercado() {
   const [filtro, setFiltro] = useState<Filtro>("Tudo")
   const [busca, setBusca] = useState("")
-  const anuncios = filtra(filtro, busca)
+  const todos = useAnuncios()
+  const anuncios = filtra(todos, filtro, busca)
 
   return (
     <SafeAreaView className="flex-1 bg-background" edges={["top", "left", "right"]}>

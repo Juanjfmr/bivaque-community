@@ -12,12 +12,13 @@ import { useCores } from "@/components/telas/cores"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Text } from "@/components/ui/text"
-import { pessoaPorId, postPorId, type Resposta, respostasDoPost } from "@/lib/dados"
+import { pessoaPorId, type Resposta, respostasDoPost } from "@/lib/dados"
+import { usePost } from "@/lib/dados/estado"
 
 export default function TelaPergunta() {
   const cores = useCores()
   const { id } = useLocalSearchParams<{ id: string }>()
-  const post = postPorId(id)
+  const post = usePost(id)
 
   const [enviadas, setEnviadas] = useState<Resposta[]>([])
   const [texto, setTexto] = useState("")
@@ -55,7 +56,7 @@ export default function TelaPergunta() {
   return (
     <SafeAreaView className="flex-1 bg-background" edges={["top", "left", "right"]}>
       <CabecalhoTela
-        titulo="Pergunta"
+        titulo={post.tipo === "pergunta" ? "Pergunta" : "Publicação"}
         esquerda={<BotaoIcone nome="voltar" rotulo="Voltar" aoPressionar={() => router.back()} />}
       />
 

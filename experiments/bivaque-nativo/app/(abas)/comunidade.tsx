@@ -8,12 +8,12 @@ import { CartaoGrupo } from "@/components/telas/cartao-grupo"
 import { CartaoPost } from "@/components/telas/cartao-post"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Text } from "@/components/ui/text"
-import { GRUPOS, POSTS } from "@/lib/dados"
-
-const PERGUNTAS = POSTS.filter((post) => post.tipo === "pergunta")
+import { GRUPOS } from "@/lib/dados"
+import { usePosts } from "@/lib/dados/estado"
 
 export default function TelaComunidade() {
   const [aba, setAba] = useState("perguntas")
+  const perguntas = usePosts().filter((post) => post.tipo === "pergunta")
 
   return (
     <SafeAreaView className="flex-1 bg-background" edges={["top", "left", "right"]}>
@@ -31,7 +31,7 @@ export default function TelaComunidade() {
 
         <TabsContent value="perguntas" className="flex-1">
           <FlatList
-            data={PERGUNTAS}
+            data={perguntas}
             keyExtractor={(post) => post.id}
             contentContainerClassName="gap-3 pb-8 pt-2"
             renderItem={({ item, index }) => (
