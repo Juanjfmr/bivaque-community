@@ -1,5 +1,6 @@
+import { mkdirSync } from "node:fs"
 import { join } from "node:path"
-import { expect, test } from "@playwright/test"
+import { expect, type Page, type TestInfo, test } from "@playwright/test"
 
 /**
  * F07 (RUN-177) — Meu negócio com HTTP controlado.
@@ -7,6 +8,10 @@ import { expect, test } from "@playwright/test"
  * Prova de interface do lote: a ficha nasce, é editada, publica um serviço e uma
  * foto, e a página pública abre. Não substitui o E2E do banco local (o
  * `f07-negocios-real.spec.ts` da raiz é quem prova a persistência).
+ *
+ * RUN-180: os dois estados (vazio e POPULADO) deixam print de evidência nas três
+ * larguras da revisão visual; o RELATORIO de `.visual/f07-regua/` diz o que cada
+ * um prova.
  */
 const FICHA = "30000000-0000-4000-8000-000000000010"
 const FOTO = "30000000-0000-4000-8000-0000000000f1"
@@ -15,6 +20,32 @@ const CATEGORIAS = [
   { id: "assistencia_tecnica", nome: "Assistência técnica" },
   { id: "pets", nome: "Pets" },
 ]
+const CAPTURAS = join(process.cwd(), "..", "..", ".visual", "f07-regua", "capturas")
+const LARGURAS_DA_EVIDENCIA = new Set(["mobile-375", "tablet-768", "desktop-1440"])
+
+async function capturar(page: Page, testInfo: TestInfo, nome: string) {
+  if (!LARGURAS_DA_EVIDENCIA.has(testInfo.project.name)) return
+  mkdirSync(CAPTURAS, { recursive: true })
+  await page.evaluate(async () => {
+    await document.fonts.ready
+    await Promise.all(
+      Array.from(document.images).map((imagem) =>
+        imagem.complete ? Promise.resolve() : imagem.decode().catch(() => {}),
+      ),
+    )
+  })
+  await page.screenshot({
+    path: join(CAPTURAS, `${testInfo.project.name}-${nome}.png`),
+    animations: "disabled",
+  })
+}
+
+/** O app rola dentro de #conteudo: a gestão fica abaixo da primeira dobra. */
+async function rolarAte(page: Page, ponto: "topo" | "fim") {
+  await page.locator("#conteudo").evaluate((elemento, destino) => {
+    elemento.scrollTop = destino === "fim" ? elemento.scrollHeight : 0
+  }, ponto)
+}
 
 const servico = {
   id: "30000000-0000-4000-8000-0000000000a1",
@@ -23,7 +54,9 @@ const servico = {
 }
 
 test.describe("F07 — Meu negócio", () => {
-  test("cria a ficha, edita, publica serviço e foto, e abre a página pública", async ({ page }) => {
+  test("cria a ficha, edita, publica serviço e foto, e abre a página pública", async ({
+    page,
+  }, testInfo) => {
     let ficha: Record<string, unknown> | null = null
     const servicos: (typeof servico)[] = []
     const fotos: { id: string; url: string; legenda: string | null }[] = []
@@ -62,6 +95,14 @@ test.describe("F07 — Meu negócio", () => {
       fotos.push({ id: FOTO, url: "https://midia.example.invalid/assinada", legenda: "Acolhida" })
       return rota.fulfill({ status: 201, json: { fotos } })
     })
+    // A foto publicada é servida de verdade: o print da gestão mostra o cartão da
+    // foto montado, não o ícone de imagem quebrada.
+    await page.route("https://midia.example.invalid/**", (rota) =>
+      rota.fulfill({
+        path: join(process.cwd(), "..", "web", "public", "landing", "hero-bivaque-arrival.webp"),
+        contentType: "image/webp",
+      }),
+    )
     await page.route(new RegExp(`/api/app/negocios/${FICHA}(?:\\?|$)`), (rota) =>
       rota.fulfill({
         json: {
@@ -113,18 +154,28 @@ test.describe("F07 — Meu negócio", () => {
     await expect(page.getByText("Foto publicada.")).toBeVisible()
     await expect(page.getByRole("img", { name: "Acolhida" })).toBeVisible()
 
+    // Evidência do estado POPULADO (o buraco de prova do RUN-177): a página com o
+    // formulário limitado e, abaixo, o catálogo e o portfólio reais.
+    await rolarAte(page, "topo")
+    await capturar(page, testInfo, "populado-01-pagina")
+    await rolarAte(page, "fim")
+    await capturar(page, testInfo, "populado-02-gestao")
+
     await page.getByRole("button", { name: "Ver página pública" }).click()
     await expect(page).toHaveURL(new RegExp(`/app/negocio/${FICHA}$`))
     await expect(page.getByRole("heading", { level: 1, name: NEGOCIO })).toBeVisible()
   })
 
-  test("sem ficha, a leitura vazia não vira erro nem página inventada", async ({ page }) => {
+  test("sem ficha, a leitura vazia não vira erro nem página inventada", async ({
+    page,
+  }, testInfo) => {
     await page.route(/\/api\/app\/negocio(?:\?|$)/, (rota) =>
       rota.fulfill({ json: { negocio: null, categorias: CATEGORIAS } }),
     )
     await page.goto("/app/meu-negocio")
     await expect(page.getByRole("button", { name: "Criar minha página" })).toBeVisible()
     await expect(page.getByRole("button", { name: "Ver página pública" })).toHaveCount(0)
+    await capturar(page, testInfo, "vazio-01-pagina")
   })
 
   test("falha de leitura tem saída própria, nunca um formulário em branco", async ({ page }) => {
@@ -144,7 +195,7 @@ const CONVERSA = "40000000-0000-4000-8000-0000000000b3"
 test.describe("F07 — pedidos dos dois lados", () => {
   test("recebido e enviado aparecem separados, e o dono encerra com confirmação", async ({
     page,
-  }) => {
+  }, testInfo) => {
     const recebido = {
       id: RECEBIDO,
       negocioId: FICHA,
@@ -211,6 +262,9 @@ test.describe("F07 — pedidos dos dois lados", () => {
     await expect(page.getByText("Recebido", { exact: true })).toBeVisible()
     await expect(page.getByRole("button", { name: "Cancelar pedido" })).toHaveCount(0)
     await expect(page.getByRole("button", { name: "Abrir conversa" })).toBeVisible()
+    // RUN-180: o header nomeia o lado em 1s, e o print guarda o peso das ações.
+    await expect(page.getByText("Pedido recebido — você é quem atende.")).toBeVisible()
+    await capturar(page, testInfo, "pedido-recebido-aberto")
 
     await page.getByRole("button", { name: "Encerrar pedido" }).click()
     const confirmacao = page.locator('[data-sobreposicao="confirmacao"]')

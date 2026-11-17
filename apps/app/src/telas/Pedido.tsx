@@ -90,7 +90,11 @@ export function Pedido() {
     <section data-tela="pedido" className="grid gap-2">
       <CabecaDePagina
         titulo="Pedido de serviço"
-        subtitulo={doDono ? "Você recebeu este pedido." : "Acompanhe o que ficou combinado."}
+        subtitulo={
+          doDono
+            ? "Pedido recebido — você é quem atende."
+            : "Você pediu — acompanhe o que foi combinado."
+        }
       />
       {erro !== null ? (
         <FalhaDaLeitura falha={erro} aoTentar={() => setRodada((atual) => atual + 1)} />
@@ -166,8 +170,9 @@ export function Pedido() {
               </Botao>
             ) : null}
             {aberto ? (
+              // Encerrar conclui com trabalho feito: peso de conclusão secundária (tonal), não de retirada.
               <Botao
-                tom="contornado"
+                tom="tonal"
                 icone="check_circle"
                 disabled={ocupado}
                 onClick={() => pedirConfirmacao("encerrar")}
