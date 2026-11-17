@@ -44,6 +44,7 @@ allowed_paths:
   - apps/app/lib/dados/contrato.ts
   - apps/app/tests/perguntas-dados.test.ts
   - apps/app/tests/e2e/pergunta-ciclo.spec.ts
+  - tests/e2e/f04-perguntas-real.spec.ts
   - apps/app/tests/e2e/jornadas-reais.spec.ts
   - apps/app/tests/fixtures
   - tests/scope/perguntas-porta.test.mjs
@@ -61,7 +62,7 @@ forbidden:
 
 acceptance:
   - "API de edição e exclusão seguindo a seção 5 do ADR da SPA (sessão, CSRF e origem como as rotas irmãs, corpo validado, frases fixas sem error.message): PATCH e DELETE da pergunta em /api/app/perguntas/[id] e da resposta em uma rota nova /api/app/perguntas/[id]/respostas/[respostaId]; cliente da sessão, filtro pelo autor como a tela antiga faz, mesmos limites de texto da criação; quem não é autor recebe 404 ou 403 sem dizer se o item existe. Rota nova registrada em apps/web/lib/security/api-surface.ts (TOTAL_DE_ROTAS ajustado). Testes unitários positivos e negativos: sem sessão 401, CSRF 403, corpo inválido 400, alheio negado, inexistente 404, sucesso."
-  - "O GET da pergunta passa a devolver edited_at da pergunta e das respostas e, para cada resposta, o verbete aprovado do Guia que nasceu dela (arrival_guide_entries por source_reply_id, só aprovados, só id e título), sem devolver nenhum outro campo; contrato.ts e perguntas.ts tipados."
+  - "O GET da pergunta passa a devolver a marca de edição da pergunta e das respostas (o booleano editada, derivado de edited_at, basta: decisão do coordenador em 17/11, expõe menos que a data) e, para cada resposta, o verbete aprovado do Guia que nasceu dela (arrival_guide_entries por source_reply_id, só aprovados, só id e título), sem devolver nenhum outro campo; contrato.ts e perguntas.ts tipados."
   - "Pergunta.tsx: menu do autor ganha Editar e Excluir (pergunta e resposta), com folha de edição, confirmação de exclusão, foco previsível e mensagem de falha fixa; ganha 'Marcar como resolvida' sem resposta (a API resolucao já aceita); todos ganham Compartilhar (navigator.share quando houver, senão copiar o link /app/pergunta/<id> com aviso de copiado); resposta com verbete mostra o link para /app/guia/<id>; item editado mostra 'editada'. O menu de quem não é autor continua só com denunciar (e o bloquear do SEC-015)."
   - "E2E novo pergunta-ciclo.spec.ts no app, em 375/768/1440, com dados do seed: editar e excluir a própria pergunta e resposta, resolver sem resposta, compartilhar (cópia do link), link do verbete e marca de editada; e prova negativa de que o menu de outra pessoa não oferece editar nem excluir."
   - "O relatório traz o mapa de paridade item a item (3.3.1 a 3.3.7) com FEITO ou fora com motivo, e a linha pronta da RATIFICACAO.md."
