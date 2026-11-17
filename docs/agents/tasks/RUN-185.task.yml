@@ -1,0 +1,84 @@
+# F09 lote 2: a tela Pergunta do app faz tudo o que a tela antiga /indicacoes/[id] faz.
+#
+# Autoridade: docs/LANCAMENTO.md fase 6 e linha F09 (critério 6: tela antiga só sai com paridade).
+# Levantamento de 17/11 (.work/orq/relatorios/escopo-trocas.md, seção 3, itens 3.2 e 3.3).
+# O lote 1 (bloquear depois de denunciar) já entrou pelo SEC-015 (#270). A troca da tela e a
+# revogação do INSERT direto em dm_messages são o lote 3, depois deste.
+#
+# Decisões, 17/11, por delegação: construir a paridade (itens 3.3.1, 3.3.3, 3.3.4, 3.3.5 e 3.3.6)
+# com as mesmas regras de hoje — a pessoa só edita e exclui o que é dela, sob a RLS que já vale
+# para a tela antiga — sem migration, grant ou policy nova. Avatar por foto continua fora
+# (AVATAR-FOTO-APP). A memória da última resolução (3.3.7) só entra se a tela do app já precisar.
+
+task_id: RUN-185
+
+objective: >
+  Na tela Pergunta do app, quem escreveu pode editar e excluir a própria pergunta e as próprias
+  respostas, marcar a pergunta como resolvida sem resposta, e qualquer membro pode compartilhar o
+  link; respostas que viraram verbete no Guia mostram o link para o verbete no app, e pergunta ou
+  resposta editada mostra a marca "editada".
+
+authority:
+  - docs/LANCAMENTO.md (fase 6 e linha F09)
+  - .work/orq/relatorios/escopo-trocas.md (seção 3, itens 3.2 e 3.3)
+  - docs/decisions/ADR-20261024-front-react-spa.md (seção 5, contrato de rota)
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    apps/web/app/components/indications/indication-detail.tsx:292-371 edita e exclui pergunta e
+    resposta, :489 resolve sem resposta, :599-607 liga a resposta ao verbete do Guia;
+    apps/web/app/api/app/perguntas/[id]/route.ts só tem GET e respostas/route.ts só POST;
+    apps/app/src/telas/Pergunta.tsx não oferece editar, excluir, compartilhar, resolver sem resposta,
+    link do Guia nem marca de editada.
+
+allowed_paths:
+  - apps/web/app/api/app/perguntas/[id]/route.ts
+  - apps/web/app/api/app/perguntas/[id]/respostas
+  - apps/web/app/api/app/perguntas/[id]/resolucao/route.ts
+  - apps/web/lib/app-api
+  - apps/web/lib/security/api-surface.ts
+  - apps/app/src/telas/Pergunta.tsx
+  - apps/app/src/pergunta
+  - apps/app/lib/dados/perguntas.ts
+  - apps/app/lib/dados/contrato.ts
+  - apps/app/tests/perguntas-dados.test.ts
+  - apps/app/tests/e2e/pergunta-ciclo.spec.ts
+  - apps/app/tests/e2e/jornadas-reais.spec.ts
+  - apps/app/tests/fixtures
+  - tests/unit/app-api/perguntas
+  - docs/agents/tasks/RUN-185.task.yml
+
+forbidden:
+  - criar ou mudar migration, função de banco, grant ou policy
+  - remover ou mudar a tela antiga /indicacoes/[id], seus links, next.config.ts ou o grant de dm_messages (lote 3)
+  - mexer em apps/web/lib/saves/saved-items.ts ou em /salvos (lote do F10)
+  - mudar o bloqueio depois da denúncia (SEC-015) além do necessário para conviver com o menu novo
+  - escrita direta em tabela pelo app: toda escrita passa por rota de /api/app com a sessão
+  - editar docs/decisions/RATIFICACAO.md (a linha vai no relatório)
+  - push, merge, abrir PR, force-push; ler, criar ou imprimir arquivos de ambiente
+
+acceptance:
+  - "API de edição e exclusão seguindo a seção 5 do ADR da SPA (sessão, CSRF e origem como as rotas irmãs, corpo validado, frases fixas sem error.message): PATCH e DELETE da pergunta em /api/app/perguntas/[id] e da resposta em uma rota nova /api/app/perguntas/[id]/respostas/[respostaId]; cliente da sessão, filtro pelo autor como a tela antiga faz, mesmos limites de texto da criação; quem não é autor recebe 404 ou 403 sem dizer se o item existe. Rota nova registrada em apps/web/lib/security/api-surface.ts (TOTAL_DE_ROTAS ajustado). Testes unitários positivos e negativos: sem sessão 401, CSRF 403, corpo inválido 400, alheio negado, inexistente 404, sucesso."
+  - "O GET da pergunta passa a devolver edited_at da pergunta e das respostas e, para cada resposta, o verbete aprovado do Guia que nasceu dela (arrival_guide_entries por source_reply_id, só aprovados, só id e título), sem devolver nenhum outro campo; contrato.ts e perguntas.ts tipados."
+  - "Pergunta.tsx: menu do autor ganha Editar e Excluir (pergunta e resposta), com folha de edição, confirmação de exclusão, foco previsível e mensagem de falha fixa; ganha 'Marcar como resolvida' sem resposta (a API resolucao já aceita); todos ganham Compartilhar (navigator.share quando houver, senão copiar o link /app/pergunta/<id> com aviso de copiado); resposta com verbete mostra o link para /app/guia/<id>; item editado mostra 'editada'. O menu de quem não é autor continua só com denunciar (e o bloquear do SEC-015)."
+  - "E2E novo pergunta-ciclo.spec.ts no app, em 375/768/1440, com dados do seed: editar e excluir a própria pergunta e resposta, resolver sem resposta, compartilhar (cópia do link), link do verbete e marca de editada; e prova negativa de que o menu de outra pessoa não oferece editar nem excluir."
+  - "O relatório traz o mapa de paridade item a item (3.3.1 a 3.3.7) com FEITO ou fora com motivo, e a linha pronta da RATIFICACAO.md."
+
+proof:
+  - "npx vitest run tests/unit/app-api/perguntas e apps/app/tests/perguntas-dados.test.ts (binários de node_modules), mostrando cada arquivo rodando"
+  - "npx tsc --noEmit -p apps/app"
+  - npx pnpm@11.18.0 lint
+  - "node scripts/agents/prova-fila.mjs -- npx pnpm@11.18.0 test"
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/RUN-185.task.yml
+  - "E2E (pergunta-ciclo, jornadas-reais) — no CI completo com a label ci:full"
+
+risk: escrita de conteúdo de membro (editar e excluir) por rotas novas da API do app, com as regras de autoria de hoje
+risk_level: R2
+
+reviewer_must_differ_from_executor: true
+retry_budget: 2
+on_budget_exhausted: HUMAN_DECISION
+
+closure:
+  requires_runtime_evidence: true
