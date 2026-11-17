@@ -1,4 +1,4 @@
-import { Image, Pressable, View } from "react-native"
+import { Pressable, View } from "react-native"
 import { Text } from "@/components/ui/text"
 import { type Anuncio, precoEmReais } from "@/lib/dados"
 import { FotoAnuncio } from "./foto-anuncio"
