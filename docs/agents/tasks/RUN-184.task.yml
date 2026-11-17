@@ -50,6 +50,8 @@ allowed_paths:
   - tests/unit/infra/lan-troca-redirect.test.ts
   - tests/e2e/link-crawl.spec.ts
   - tests/e2e/account-deletion-ui.spec.ts
+  - tests/e2e/helpers/session.ts
+  - tests/e2e/entrada-real-ajuda.ts
   - tests/unit/ui/configuracoes-subtitles.test.ts
   - tests/unit/ui/ajuda-publica.test.ts
   - tests/unit/ui/nome-acessivel-de-fechar.test.ts
