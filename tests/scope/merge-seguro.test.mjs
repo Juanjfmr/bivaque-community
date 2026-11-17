@@ -567,6 +567,39 @@ test("execução mais nova com ci-core pulado e agregador verde recusa, ainda qu
   assert.match(veredito.motivo, /run 2020/)
 })
 
+// Revisão 3: id numérico acima de 2^53 chega arredondado do JSON; dois ids
+// diferentes viram o mesmo e misturariam execuções. Tem de recusar.
+test("ids de suíte numéricos acima de 2^53 recusam em vez de misturar execuções", () => {
+  const veredito = avaliar({
+    headSha: SHA,
+    estado: "open",
+    arquivos: ["docs/LANCAMENTO.md"],
+    checkRuns: [
+      { ...check(CHECK_COMPLETO), id: 1, check_suite: { id: 9007199254740992 } },
+      { ...check(CHECK_AGREGADO), id: 2, check_suite: { id: 9007199254740992 } },
+      { ...check(CHECK_AGREGADO), id: 3, check_suite: { id: 9007199254740993 } },
+    ],
+  })
+  assert.equal(veredito.ok, false)
+  assert.match(veredito.motivo, /check sem id de execução/)
+})
+
+// Revisão 3: a execução mais nova sem ci-core nenhum (não só pulado) também decide.
+test("execução mais nova sem ci-core e com agregador verde recusa, ainda que a antiga esteja toda verde", () => {
+  const veredito = avaliar({
+    headSha: SHA,
+    estado: "open",
+    arquivos: ["docs/LANCAMENTO.md"],
+    checkRuns: [
+      emSuite(CHECK_COMPLETO, "100", { id: 1010 }),
+      emSuite(CHECK_AGREGADO, "100", { id: 1011 }),
+      emSuite(CHECK_AGREGADO, "200", { id: 2021 }),
+    ],
+  })
+  assert.equal(veredito.ok, false)
+  assert.match(veredito.motivo, /suíte 200/)
+})
+
 // O caso real do PR #273: suíte antiga toda cancelada, agregador vermelho, suíte
 // mais nova toda verde — vale a mais nova.
 test("PR #273: suíte antiga cancelada com agregador vermelho perde para a suíte mais nova verde", () => {

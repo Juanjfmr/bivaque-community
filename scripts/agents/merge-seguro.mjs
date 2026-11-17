@@ -57,7 +57,9 @@ const CHECKS_DO_RITO = [CHECK_COMPLETO, CHECK_AGREGADO, CHECK_VISUAL]
 
 function paraId(valor) {
   if (typeof valor === "bigint") return valor
-  if (typeof valor === "number") return Number.isInteger(valor) ? BigInt(valor) : null
+  // Acima de 2^53 o JSON.parse já arredondou o número: dois ids diferentes podem virar
+  // o mesmo e misturar execuções. Id inseguro é id inutilizável (recusa).
+  if (typeof valor === "number") return Number.isSafeInteger(valor) ? BigInt(valor) : null
   if (typeof valor === "string" && /^\d+$/.test(valor.trim())) return BigInt(valor.trim())
   return null
 }
