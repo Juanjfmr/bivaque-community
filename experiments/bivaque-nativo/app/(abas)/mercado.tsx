@@ -1,6 +1,6 @@
 import { router } from "expo-router"
 import { useState } from "react"
-import { FlatList, View } from "react-native"
+import { FlatList, ScrollView, View } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 import { Chip, Entrada, EstadoVazio } from "@/components/motion"
 import { CabecalhoTela } from "@/components/telas/cabecalho-tela"
@@ -44,7 +44,11 @@ export default function TelaMercado() {
           accessibilityLabel="Buscar no Mercado"
           returnKeyType="search"
         />
-        <View className="flex-row flex-wrap items-center gap-2">
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerClassName="items-center gap-2"
+        >
           {FILTROS.map((rotulo) => (
             <Chip
               key={rotulo}
@@ -53,7 +57,7 @@ export default function TelaMercado() {
               aoAlternar={() => setFiltro(rotulo)}
             />
           ))}
-        </View>
+        </ScrollView>
       </View>
 
       <FlatList

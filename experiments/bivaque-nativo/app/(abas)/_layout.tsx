@@ -1,6 +1,7 @@
 import { router, Tabs } from "expo-router"
 import { useColorScheme } from "nativewind"
 import { type ColorValue, View } from "react-native"
+import { useSafeAreaInsets } from "react-native-safe-area-context"
 import { Icone, type NomeIcone } from "@/components/icons"
 import { BotaoCriar } from "@/components/motion"
 import { HEX } from "@/lib/theme"
@@ -15,6 +16,7 @@ const ABAS: { rota: string; titulo: string; icone: NomeIcone }[] = [
 
 export default function LayoutAbas() {
   const { colorScheme } = useColorScheme()
+  const recuo = useSafeAreaInsets()
   const cores = HEX[colorScheme ?? "light"]
 
   return (
@@ -23,7 +25,12 @@ export default function LayoutAbas() {
         headerShown: false,
         tabBarActiveTintColor: cores.foreground,
         tabBarInactiveTintColor: cores.mutedForeground,
-        tabBarStyle: { backgroundColor: cores.card, borderTopColor: cores.border, height: 64 },
+        tabBarStyle: {
+          backgroundColor: cores.card,
+          borderTopColor: cores.border,
+          height: 64 + recuo.bottom,
+          paddingBottom: recuo.bottom,
+        },
         tabBarLabelStyle: { fontSize: 11, fontWeight: "600" },
       }}
     >

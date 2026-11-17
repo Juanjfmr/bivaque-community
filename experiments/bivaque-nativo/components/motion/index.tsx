@@ -85,7 +85,7 @@ export function Chip({ rotulo, ativo, aoAlternar }: ChipProps) {
       accessibilityRole="button"
       accessibilityState={{ selected: ativo }}
       onPress={() => aoAlternar(!ativo)}
-      style={{ minHeight: 44, paddingHorizontal: 16, justifyContent: "center" }}
+      style={{ minHeight: 44, justifyContent: "center" }}
     >
       <AnimacaoRive
         nome="chip"
