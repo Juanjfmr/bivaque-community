@@ -166,7 +166,7 @@ test("edita a própria pergunta e a tela mostra 'editada'", async ({ page }) => 
     "Alguém indica um pediatra que atenda pelo convênio?",
   )
 
-  await page.getByRole("button", { name: "Opções da sua pergunta" }).click()
+  await page.getByRole("button", { name: "Ações da minha pergunta" }).click()
   await menu(page).getByRole("button", { name: "Editar pergunta", exact: true }).click()
   await page
     .getByLabel("Título da pergunta")
@@ -185,7 +185,7 @@ test("edita a própria resposta e a marca acompanha a resposta", async ({ page }
   await simularCiclo(page, { comResposta: true, respostaPropria: true })
   await page.goto(`/app/pergunta/${ID_PERGUNTA}`)
 
-  await page.getByRole("button", { name: "Opções da sua resposta" }).click()
+  await page.getByRole("button", { name: "Ações da minha resposta" }).click()
   await menu(page).getByRole("button", { name: "Editar resposta", exact: true }).click()
   // O compositor do fim da tela também se chama "Sua resposta": o campo da
   // edição é o de dentro do diálogo.
@@ -204,7 +204,7 @@ test("exclui a própria resposta depois de confirmar", async ({ page }) => {
   await page.goto(`/app/pergunta/${ID_PERGUNTA}`)
   await expect(page.getByText("A Dra. Helena atende pelo convênio no centro.")).toBeVisible()
 
-  await page.getByRole("button", { name: "Opções da sua resposta" }).click()
+  await page.getByRole("button", { name: "Ações da minha resposta" }).click()
   await menu(page).getByRole("button", { name: "Excluir resposta", exact: true }).click()
   await page.getByRole("button", { name: "Excluir resposta", exact: true }).click()
 
@@ -219,7 +219,7 @@ test("exclui a própria pergunta e volta para a Comunidade", async ({ page }) =>
   await simularCiclo(page, { perguntaPropria: true })
   await page.goto(`/app/pergunta/${ID_PERGUNTA}`)
 
-  await page.getByRole("button", { name: "Opções da sua pergunta" }).click()
+  await page.getByRole("button", { name: "Ações da minha pergunta" }).click()
   await menu(page).getByRole("button", { name: "Excluir pergunta", exact: true }).click()
   await page.getByRole("button", { name: "Excluir pergunta", exact: true }).click()
 
@@ -232,13 +232,13 @@ test("marca como resolvida sem escolher resposta", async ({ page }) => {
   await page.goto(`/app/pergunta/${ID_PERGUNTA}`)
   await expect(page.getByText("Sem resposta", { exact: true })).toBeVisible()
 
-  await page.getByRole("button", { name: "Opções da sua pergunta" }).click()
+  await page.getByRole("button", { name: "Ações da minha pergunta" }).click()
   await menu(page).getByRole("button", { name: "Marcar como resolvida", exact: true }).click()
 
   // Resolvida sem resposta: a pergunta fecha e o caminho de volta aparece; a
   // etiqueta não entra na asserção porque o ícone vira ligadura no texto.
   await expect(page.getByRole("button", { name: "Reabrir pergunta", exact: true })).toBeVisible()
-  await page.getByRole("button", { name: "Opções da sua pergunta" }).click()
+  await page.getByRole("button", { name: "Ações da minha pergunta" }).click()
   await expect(menu(page).getByRole("button", { name: "Marcar como resolvida" })).toHaveCount(0)
 })
 

@@ -586,7 +586,7 @@ export function Pergunta() {
           {local === null ? (
             <BotaoDeIcone
               nome="more_vert"
-              rotulo={pergunta.propria ? "Opções da sua pergunta" : "Opções da pergunta"}
+              rotulo={pergunta.propria ? "Ações da minha pergunta" : "Opções da pergunta"}
               aberto="dialog"
               disabled={!pergunta.propria && enviandoDenuncia}
               className="ml-auto"
@@ -723,7 +723,7 @@ export function Pergunta() {
                     </span>
                     <BotaoDeIcone
                       nome="more_vert"
-                      rotulo={item.propria ? "Opções da sua resposta" : "Opções da resposta"}
+                      rotulo={item.propria ? "Ações da minha resposta" : "Opções da resposta"}
                       aberto="dialog"
                       disabled={!item.propria && enviandoDenuncia}
                       className="ml-auto"
