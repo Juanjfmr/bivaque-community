@@ -1,0 +1,46 @@
+task_id: EXP-008
+
+objective: >
+  As 19 imagens de demonstração do app nativo de teste (10 anúncios, 6 capas de grupo, 3 capas de
+  evento) mostram exatamente o que o título descreve, geradas por IA, guardadas no app e sem
+  depender de rede.
+
+authority:
+  - instrução do dono em 17/11/2026 (app de teste com imagens geradas por IA)
+  - achado do coordenador na captura do emulador em 17/11/2026 (picsum mostra imagem aleatória sob título de produto)
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: .visual/exp-nativo/escuro-03-mercado.png mostra escada rolante sob "Sofá retrô de 3 lugares"; lib/dados/index.ts usa https://picsum.photos/seed em 19 lugares no commit 3219b273b
+
+allowed_paths:
+  - experiments/bivaque-nativo/assets/fotos/
+  - experiments/bivaque-nativo/lib/dados/index.ts
+
+forbidden:
+  - mudar qualquer campo de lib/dados/index.ts além de foto, capa e o helper que as monta
+  - gerar pessoa com rosto identificável, farda, insígnia, arma ou logotipo de marca
+  - texto legível dentro da imagem
+  - tocar fora de allowed_paths
+
+acceptance:
+  - existe uma imagem por item em assets/fotos (webp ou jpg, no máximo 120 KB cada, quadrada 600x600 para anúncios e 1200x600 para capas)
+  - cada imagem mostra o que o título descreve, em foto realista de celular, luz natural, ambiente brasileiro
+  - lib/dados/index.ts usa require local para cada imagem e não contém mais picsum
+  - o tipo de foto/capa nos dados aceita a fonte local e o app compila
+
+proof:
+  - cd experiments/bivaque-nativo && npx tsc --noEmit
+  - grep -c picsum experiments/bivaque-nativo/lib/dados/index.ts retorna 0
+  - captura de uma prancha com as 19 imagens e seus títulos em .visual/exp-nativo/
+
+risk: interface
+risk_level: R1
+
+reviewer_must_differ_from_executor: true
+
+retry_budget: 2
+on_budget_exhausted: HUMAN_DECISION
+
+closure:
+  requires_runtime_evidence: true
