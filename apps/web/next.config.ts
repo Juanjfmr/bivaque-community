@@ -3,11 +3,13 @@ import type { NextConfig } from "next"
 
 // Telas antigas de entrada da web (ENTRADA-WEB-ANTIGA). Os caminhos são exatos,
 // salvo a subárvore de onboarding. A lista não inclui `/conta-apagada`,
-// `/convite`, `/prestador-convite`, `/privacidade`, `/ajuda` nem `/consent`:
+// `/prestador-convite`, `/privacidade`, `/ajuda` nem `/consent`:
 // esses seguem públicos ou têm fluxo próprio (ADR-20261022-entrada-do-prototipo).
 // Também ficam de fora `/auth/confirmar-email` e `/auth/callback-error`: são o
 // caminho de falha dos links de e-mail e do OAuth (redirect-plan.ts) e têm tela
 // própria, com o painel de reenvio e a mensagem de falha.
+// `/convite` saiu da web no SEC-017 (17/11) e por isso também não está na lista:
+// ela tem regra própria, que leva o código da query para a entrada do app.
 const ENTRADA_ANTIGA: readonly string[] = [
   "/login",
   "/signup",
@@ -69,6 +71,20 @@ const nextConfig: NextConfig = {
         destination: `${ENTRADA_DO_APP}?redirect=:destino`,
         permanent: false,
       },
+      // SEC-017 (ADR-20261111, emenda de 17/11): a tela antiga de convite saiu da
+      // web e sobra um caminho só, o do app. `/convite?codigo=X` vira
+      // `/app/entrar?convite=X`, que é o parâmetro que a entrada do app lê
+      // (apps/app/src/entrada/TelaDeEntrada.tsx). A regra com query vem antes da
+      // genérica pelo mesmo motivo da de /login. O Next reanexa a query original,
+      // então `codigo` viaja junto: é a mesma credencial que já estava na URL, e
+      // a tela antiga não recebia nenhum outro dado de quem foi convidado.
+      {
+        source: "/convite",
+        has: [{ type: "query", key: "codigo", value: "(?<convite>.+)" }],
+        destination: `${ENTRADA_DO_APP}?convite=:convite`,
+        permanent: false,
+      },
+      { source: "/convite", destination: ENTRADA_DO_APP, permanent: false },
       // /landing exato nunca foi página: o caminho existe só como espaço de
       // assets (`apps/web/public/landing/`), protegido pelo modo `ativos` do
       // proxy. Quem digita o endereço cai na landing de verdade em `/`; um

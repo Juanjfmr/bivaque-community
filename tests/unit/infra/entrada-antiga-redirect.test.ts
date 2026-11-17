@@ -103,7 +103,10 @@ describe("as rotas que continuam fora do redirect", () => {
 
   it("rotas públicas que não são entrada antiga seguem sem redirect", async () => {
     const lista = await regras()
-    for (const caminho of ["/conta-apagada", "/convite", "/ajuda", "/privacidade"]) {
+    // SEC-017 (17/11): `/convite` saiu desta lista — a tela antiga do convite de
+    // familiar saiu da web e o endereço passou a ter redirect próprio, com o
+    // código mapeado para `?convite=` (provado em lan-troca-redirect.test.ts).
+    for (const caminho of ["/conta-apagada", "/ajuda", "/privacidade"]) {
       expect(regraPara(lista, caminho), caminho).toEqual([])
     }
   })

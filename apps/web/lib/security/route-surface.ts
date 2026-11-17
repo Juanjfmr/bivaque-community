@@ -3,9 +3,9 @@
  *
  * Antes desta lista, `apps/web/proxy.ts` comparava prefixo solto
  * (`pathname.startsWith(caminho)`), e por isso `/apiario` entrava como `/api`,
- * `/convite/ABCD1234` entrava como `/convite` e `/loginx` entrava como `/login`.
- * A comparação por fronteira (`casaFronteira`) exige que o que vem depois do
- * prefixo seja `/` ou o fim do caminho.
+ * `/prestador-convitex` entrava como `/prestador-convite` e `/loginx` entrava
+ * como `/login`. A comparação por fronteira (`casaFronteira`) exige que o que
+ * vem depois do prefixo seja `/` ou o fim do caminho.
  *
  * Modos:
  * - `exata`: o caminho e a variante com barra final (`/login` e `/login/`).
@@ -18,6 +18,11 @@
  * landing anônima (`apps/web/app/landing/landing.tsx` e o onboarding). O
  * caminho exato `/landing` é redirecionado para `/` em `apps/web/next.config.ts`;
  * os assets continuam públicos e em 200.
+ *
+ * `/convite` saiu da lista no SEC-017 (17/11): a tela antiga do convite de
+ * familiar não existe mais e o endereço é 307 para `/app/entrar` no
+ * `next.config.ts`, que roda antes deste portão. Não é caminho público porque
+ * não há mais nada para servir nele.
  *
  * Decisão: `docs/decisions/ADR-20261110-superficie-publica-do-proxy.md`.
  * A entrada pública em si segue `docs/decisions/ADR-20261022-entrada-do-prototipo.md`.
@@ -105,11 +110,6 @@ export const PUBLIC_SURFACE: readonly EntradaDaSuperficie[] = [
     motivo: "destino pós-exclusão, quando a sessão já não existe",
   },
   {
-    caminho: "/convite",
-    modo: "exata",
-    motivo: "convite de familiar por query `?codigo=`; não há subrota",
-  },
-  {
     caminho: "/ajuda",
     modo: "exata",
     motivo: "Ajuda e páginas legais abrem para quem está fora",
@@ -137,8 +137,8 @@ function semBarraFinal(caminho: string): string {
 
 /**
  * Casa fronteira: o caminho é igual ao prefixo ou continua a partir de `/`.
- * `/api` casa `/api` e `/api/x`; não casa `/apiario`. `/convite` casa
- * `/convite/`; não casa `/convite/ABCD1234` porque essa entrada é `exata`.
+ * `/api` casa `/api` e `/api/x`; não casa `/apiario`. `/login` casa `/login/`;
+ * não casa `/login/entrar` porque essa entrada é `exata`.
  */
 export function casaFronteira(caminho: string, prefixo: string): boolean {
   const alvo = semBarraFinal(caminho)

@@ -69,7 +69,9 @@ test("as três fronteiras e os dois allowlists internos são os exportados", () 
 
 test("toda entrada declara um modo dos três e um motivo", () => {
   const entradas = entradasPublicas()
-  assert.ok(entradas.length >= 19, `esperava ao menos 19 entradas, achei ${entradas.length}`)
+  // 19 era o piso com a tela antiga do convite; o SEC-017 tirou `/convite` da
+  // lista (o endereço é 307 do next.config), então o piso desce para 18.
+  assert.ok(entradas.length >= 18, `esperava ao menos 18 entradas, achei ${entradas.length}`)
   for (const entrada of entradas) {
     assert.ok(["exata", "pasta", "ativos"].includes(entrada.modo), entrada.caminho)
   }
@@ -81,10 +83,19 @@ test("a conta apagada é pública sem sessão", () => {
   assert.equal(isPublic("/conta-apagada"), true)
 })
 
-test("o convite de familiar é exato: a subrota não é pública", () => {
-  assert.equal(isPublic("/convite"), true)
-  assert.equal(isPublic("/convite/"), true)
+test("o convite de familiar saiu do público: o 307 do next.config leva ao app", () => {
+  // SEC-017 (17/11): a tela antiga não existe mais. O endereço não é público
+  // porque não há o que servir nele — o redirect de configuração roda antes
+  // deste portão e leva o código para /app/entrar.
+  assert.equal(isPublic("/convite"), false)
+  assert.equal(isPublic("/convite/"), false)
   assert.equal(isPublic("/convite/ABCD1234"), false)
+  assert.match(nextConfig, /source: "\/convite",\s*has: \[\{ type: "query", key: "codigo"/)
+  assert.match(nextConfig, /destination: `\$\{ENTRADA_DO_APP\}\?convite=:convite`/)
+  assert.match(
+    nextConfig,
+    /\{ source: "\/convite", destination: ENTRADA_DO_APP, permanent: false \}/,
+  )
 })
 
 test("a Ajuda é pública: quem não consegue entrar precisa das respostas", () => {

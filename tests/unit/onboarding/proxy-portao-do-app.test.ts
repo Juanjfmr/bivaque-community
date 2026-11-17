@@ -78,9 +78,14 @@ describe("portão do proxy para /app", () => {
   )
 
   it("os outros caminhos públicos continuam abertos (a mudança é só do /app)", async () => {
-    for (const caminho of ["/login", "/api/app/entry/otp", "/auth/callback-error", "/convite"]) {
+    // SEC-017: `/convite` saiu desta lista — a tela saiu da web e o 307 do
+    // next.config (antes do proxy) leva o código à entrada do app. Quem
+    // chegasse ao portão por esse caminho é barrado, como qualquer rota que não
+    // é pública.
+    for (const caminho of ["/login", "/api/app/entry/otp", "/auth/callback-error", "/ajuda"]) {
       expect(passou(await pedir(proxy, caminho)), caminho).toBe(true)
     }
+    expect(passou(await pedir(proxy, "/convite")), "/convite").toBe(false)
   })
 })
 

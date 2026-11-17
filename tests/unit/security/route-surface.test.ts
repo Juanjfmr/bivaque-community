@@ -21,8 +21,6 @@ const PUBLICOS = [
   "/privacidade",
   "/codigo-de-conduta",
   "/conta-apagada",
-  "/convite",
-  "/convite/",
   "/ajuda",
   "/favicon.ico",
   "/icon.svg",
@@ -43,6 +41,10 @@ const NAO_PUBLICOS = [
   "/",
   "/loginx",
   "/login/entrar",
+  // SEC-017: a tela antiga do convite saiu; o endereço é 307 do next.config
+  // para /app/entrar, então não há tela pública nele — nem na subrota.
+  "/convite",
+  "/convite/",
   "/convite/ABCD1234",
   "/auth/callback-falso",
   "/apiario",

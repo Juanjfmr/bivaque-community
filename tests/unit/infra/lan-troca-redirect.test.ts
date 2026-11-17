@@ -326,3 +326,50 @@ describe("LAN-TROCA fase 1", () => {
     expect(existsSync(join(shell, "profile", "interests-actions.ts"))).toBe(false)
   })
 })
+
+// SEC-017 (ADR-20261111, emenda de 17/11): o convite de familiar tem um caminho
+// só, o do app. A tela antiga da web — com senha e Server Actions por cliente de
+// serviço — saiu, e o endereço antigo leva o código para a entrada do app.
+describe("convite antigo da web segue para a entrada do app", () => {
+  const preauth = join(process.cwd(), "apps/web/app/(preauth)")
+
+  it("/convite responde 307 para /app/entrar sem query nenhuma de convite", async () => {
+    const resposta = await resolver("/convite")
+    expect(resposta.status).toBe(307)
+    const destino = new URL(resposta.headers.get("location") ?? "", ORIGEM)
+    expect(destino.pathname).toBe("/app/entrar")
+    expect(destino.searchParams.get("convite")).toBeNull()
+  })
+
+  it("/convite?codigo=X leva o código como ?convite=X, sem dado de quem foi convidado", async () => {
+    const resposta = await resolver("/convite?codigo=7k4m-9qrt")
+    expect(resposta.status).toBe(307)
+    const destino = new URL(resposta.headers.get("location") ?? "", ORIGEM)
+    expect(destino.pathname).toBe("/app/entrar")
+    // O app lê `convite` (apps/app/src/entrada/TelaDeEntrada.tsx). O Next reanexa
+    // a query original, então `codigo` viaja junto — é a mesma credencial que já
+    // estava na URL, não um dado novo de quem foi convidado.
+    expect(destino.searchParams.get("convite")).toBe("7k4m-9qrt")
+    for (const proibido of ["email", "hint", "invitee", "token"]) {
+      expect(destino.searchParams.get(proibido), proibido).toBeNull()
+    }
+  })
+
+  it("o destino não redireciona de novo: não há ciclo", async () => {
+    const resposta = await resolver("/convite?codigo=7k4m-9qrt")
+    const destino = new URL(resposta.headers.get("location") ?? "", ORIGEM)
+    expect(
+      (await resolver(`${destino.pathname}${destino.search}`)).headers.get("location"),
+    ).toBeNull()
+  })
+
+  // A prova é de ausência: nenhuma tela, formulário ou action sobra para alguém
+  // "voltar" editando a pasta — e o teste de porta já não declara /convite.
+  it("a pasta (preauth)/convite não deixa tela, form nem action para trás", () => {
+    const pasta = join(preauth, "convite")
+    const sobras = existsSync(pasta)
+      ? readdirSync(pasta, { recursive: true, encoding: "utf8" })
+      : []
+    expect(sobras).toEqual([])
+  })
+})
