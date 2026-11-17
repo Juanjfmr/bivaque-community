@@ -260,8 +260,17 @@ test.describe("menu Criar (§4 do inventário)", () => {
     })
     expect(alfa).toBeGreaterThan(0)
 
+    const escolhas = menu.locator("[data-escolha]")
+    const primeira = escolhas.first()
+    const ultima = escolhas.last()
+    await ultima.focus()
     await page.keyboard.press("Tab")
-    await expect(menu.locator(":focus")).toHaveCount(1)
+    await expect(primeira).toBeFocused()
+    await page.keyboard.press("Shift+Tab")
+    await expect(ultima).toBeFocused()
+    await page.keyboard.press("Tab")
+    await expect(primeira).toBeFocused()
+
     const acaoDeTras = page.locator('[data-acao="busca"]')
     const caixaDeTras = await acaoDeTras.boundingBox()
     if (caixaDeTras === null) throw new Error("A ação de busca não tem posição")
@@ -272,6 +281,7 @@ test.describe("menu Criar (§4 do inventário)", () => {
     await expect(menu).toHaveCount(0)
     await expect(page.locator(SELETOR_CRIAR)).toBeFocused()
     expect(new URL(page.url()).pathname).toBe("/app/inicio")
+    await expect(page.locator('[data-sobreposicao="busca"]')).toHaveCount(0)
   })
 
   test("o Voltar do sistema fecha o menu antes de trocar de rota", async ({ page }) => {
