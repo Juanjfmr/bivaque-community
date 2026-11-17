@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test"
 import { simularGrupos } from "./grupos-ajuda"
-import { simularPerguntas } from "./perguntas-ajuda"
+import { ID_PERGUNTA, ID_RESPOSTA, simularPerguntas } from "./perguntas-ajuda"
 
 // RUN-178 — Também perguntar à cidade. No grupo Aberto o compositor tem o modo
 // Pergunta, com o aviso de que a pergunta aparece na cidade com o nome do grupo;
@@ -52,11 +52,17 @@ test("grupo fechado: o compositor existe, mas não oferece perguntar à cidade",
 
 test("denunciar resposta oferece bloquear a autora com confirmação", async ({ page }) => {
   await simularPerguntas(page, { comResposta: true })
-  await page.goto("/app/pergunta/a1")
+  await page.goto(`/app/pergunta/${ID_PERGUNTA}`)
   await page.getByRole("button", { name: "Opções da resposta" }).click()
   await page.getByRole("button", { name: "Denunciar resposta" }).click()
   await page.getByLabel("Spam").check()
+  const denuncia = page.waitForRequest(
+    (request) =>
+      request.method() === "POST" &&
+      request.url().endsWith(`/api/app/perguntas/${ID_PERGUNTA}/denuncia`),
+  )
   await page.getByRole("button", { name: "Enviar denúncia" }).click()
+  expect((await denuncia).postDataJSON()).toMatchObject({ respostaId: ID_RESPOSTA })
   await expect(page.getByRole("status")).toContainText("Denúncia enviada")
   await page.getByRole("button", { name: "Bloquear autor" }).click()
   await expect(page.getByRole("dialog")).toContainText("Bloquear esta pessoa?")
@@ -71,7 +77,7 @@ test("denunciar resposta oferece bloquear a autora com confirmação", async ({ 
 
 test("autor já bloqueado não recebe uma segunda oferta após denúncia", async ({ page }) => {
   await simularPerguntas(page, { comResposta: true, jaBloqueada: true })
-  await page.goto("/app/pergunta/a1")
+  await page.goto(`/app/pergunta/${ID_PERGUNTA}`)
   await page.getByRole("button", { name: "Opções da resposta" }).click()
   await page.getByRole("button", { name: "Denunciar resposta" }).click()
   await page.getByLabel("Spam").check()
@@ -80,13 +86,24 @@ test("autor já bloqueado não recebe uma segunda oferta após denúncia", async
   await expect(page.getByRole("button", { name: "Bloquear autor" })).toHaveCount(0)
 })
 
+test("falha ao consultar bloqueados ainda oferece bloquear a autora", async ({ page }) => {
+  await simularPerguntas(page, { comResposta: true, falhaNaLeituraDeBloqueados: true })
+  await page.goto(`/app/pergunta/${ID_PERGUNTA}`)
+  await page.getByRole("button", { name: "Opções da resposta" }).click()
+  await page.getByRole("button", { name: "Denunciar resposta" }).click()
+  await page.getByLabel("Spam").check()
+  await page.getByRole("button", { name: "Enviar denúncia" }).click()
+  await expect(page.getByRole("status")).toContainText("Denúncia enviada")
+  await expect(page.getByRole("button", { name: "Bloquear autor" })).toBeVisible()
+})
+
 test("autoria própria não oferece denúncia nem bloqueio", async ({ page }) => {
   await simularPerguntas(page, {
     comResposta: true,
     perguntaPropria: true,
     respostaPropria: true,
   })
-  await page.goto("/app/pergunta/a1")
+  await page.goto(`/app/pergunta/${ID_PERGUNTA}`)
   await expect(page.getByRole("button", { name: "Opções da pergunta" })).toHaveCount(0)
   await expect(page.getByRole("button", { name: "Opções da resposta" })).toHaveCount(0)
   await expect(page.getByRole("button", { name: "Bloquear autor" })).toHaveCount(0)
@@ -94,7 +111,7 @@ test("autoria própria não oferece denúncia nem bloqueio", async ({ page }) =>
 
 test("falha da porta de bloqueio mostra frase fixa", async ({ page }) => {
   await simularPerguntas(page, { comResposta: true, falhaNoBloqueio: true })
-  await page.goto("/app/pergunta/a1")
+  await page.goto(`/app/pergunta/${ID_PERGUNTA}`)
   await page.getByRole("button", { name: "Opções da resposta" }).click()
   await page.getByRole("button", { name: "Denunciar resposta" }).click()
   await page.getByLabel("Spam").check()
@@ -119,7 +136,7 @@ test("falha da porta de bloqueio mostra frase fixa", async ({ page }) => {
 test("cancelar bloqueio devolve foco ao título da pergunta", async ({ page }) => {
   await simularPerguntas(page, { comResposta: true })
   await page.setViewportSize({ width: 375, height: 812 })
-  await page.goto("/app/pergunta/a1")
+  await page.goto(`/app/pergunta/${ID_PERGUNTA}`)
   await page.getByRole("button", { name: "Opções da resposta" }).click()
   await page.getByRole("button", { name: "Denunciar resposta" }).click()
   await page.getByLabel("Spam").check()
@@ -133,7 +150,7 @@ test("denunciar resposta e bloquear autora em 375 e 1440", async ({ page }) => {
   for (const width of [375, 1440]) {
     await page.setViewportSize({ width, height: 900 })
     await simularPerguntas(page, { comResposta: true })
-    await page.goto("/app/pergunta/a1")
+    await page.goto(`/app/pergunta/${ID_PERGUNTA}`)
     await page.getByRole("button", { name: "Opções da resposta" }).click()
     await page.getByRole("button", { name: "Denunciar resposta" }).click()
     await page.getByLabel("Spam").check()

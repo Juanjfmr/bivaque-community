@@ -329,7 +329,7 @@ export function Pergunta() {
             setAutorParaBloquear(autorId)
           }
         } catch {
-          // Sem leitura confiável do estado, não oferecemos uma ação duplicada.
+          setAutorParaBloquear(autorId)
         }
       }
       aoMudarDenuncia(false)

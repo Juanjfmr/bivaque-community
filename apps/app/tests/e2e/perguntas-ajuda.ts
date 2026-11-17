@@ -1,6 +1,8 @@
 import type { Page } from "@playwright/test"
 
-const ID_ANA = "00000000-0000-4000-8000-000000000001"
+export const ID_ANA = "00000000-0000-4000-8000-000000000001"
+export const ID_PERGUNTA = "00000000-0000-4000-8000-000000000002"
+export const ID_RESPOSTA = "00000000-0000-4000-8000-000000000003"
 
 /**
  * Simula `/api/app/perguntas` para os specs que medem a tela da Comunidade e da
@@ -12,7 +14,7 @@ const ID_ANA = "00000000-0000-4000-8000-000000000001"
  */
 const PERGUNTAS = [
   {
-    id: "a1",
+    id: ID_PERGUNTA,
     titulo: "Alguém indica um pediatra que atenda por convênio perto do centro?",
     categoria: "saude_bem_estar",
     criadaEm: "2026-11-01T12:00:00.000Z",
@@ -23,7 +25,7 @@ const PERGUNTAS = [
     autorId: ID_ANA,
   },
   {
-    id: "q2",
+    id: "00000000-0000-4000-8000-000000000004",
     titulo: "Qual escola aceita matrícula de criança de quatro anos no contraturno?",
     categoria: "educacao",
     criadaEm: "2026-10-30T09:00:00.000Z",
@@ -31,6 +33,7 @@ const PERGUNTAS = [
     propria: false,
     resolvida: true,
     respostas: 2,
+    autorId: "00000000-0000-4000-8000-000000000005",
   },
 ]
 
@@ -42,17 +45,21 @@ export async function simularPerguntas(
     perguntaPropria = false,
     jaBloqueada = false,
     falhaNoBloqueio = false,
+    falhaNaLeituraDeBloqueados = false,
   }: {
     comResposta?: boolean
     respostaPropria?: boolean
     perguntaPropria?: boolean
     jaBloqueada?: boolean
     falhaNoBloqueio?: boolean
+    falhaNaLeituraDeBloqueados?: boolean
   } = {},
 ) {
   const perguntas = [...PERGUNTAS]
   let tentativasDeBloqueio = 0
   await page.route(/\/api\/app\/voce\/bloqueados$/, async (rota) => {
+    if (rota.request().method() === "GET" && falhaNaLeituraDeBloqueados)
+      return rota.fulfill({ status: 503, json: { erro: "leitura-indisponivel" } })
     if (rota.request().method() === "GET")
       return rota.fulfill({
         json: {
@@ -82,6 +89,7 @@ export async function simularPerguntas(
           propria: true,
           resolvida: false,
           respostas: 0,
+          autorId: "00000000-0000-4000-8000-000000000001",
         }
         perguntas.unshift(criada)
         return rota.fulfill({ status: 201, json: { pergunta: { id: criada.id } } })
@@ -97,14 +105,23 @@ export async function simularPerguntas(
       })
     }
     if (acao === "denuncia") {
-      return rota.fulfill({ status: 201, json: { denuncia: { id: "denuncia-1" } } })
+      const corpo = rota.request().postDataJSON() as { respostaId?: string }
+      if (
+        id !== ID_PERGUNTA ||
+        (corpo.respostaId !== undefined && corpo.respostaId !== ID_RESPOSTA)
+      )
+        return rota.fulfill({ status: 404, json: { erro: "conteudo-nao-encontrado" } })
+      return rota.fulfill({
+        status: 201,
+        json: { denuncia: { id: "00000000-0000-4000-8000-000000000006" } },
+      })
     }
     if (acao === "respostas") {
       const corpo = (rota.request().postDataJSON() as { texto: string }).texto
       return rota.fulfill({
         status: 201,
         json: {
-          resposta: { id: `resposta-${Date.now()}`, corpo, criadaEm: new Date().toISOString() },
+          resposta: { id: ID_RESPOSTA, corpo, criadaEm: new Date().toISOString() },
         },
       })
     }
@@ -118,7 +135,7 @@ export async function simularPerguntas(
         respostas: comResposta
           ? [
               {
-                id: "r-ana",
+                id: ID_RESPOSTA,
                 corpo: "Resposta de Ana.",
                 autor: "Ana P.",
                 autorId: ID_ANA,
