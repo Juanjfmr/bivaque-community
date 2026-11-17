@@ -22,6 +22,7 @@ import {
   type PerguntaDaConversa,
   responderPergunta,
 } from "@/lib/dados/perguntas"
+import { bloquear, lerBloqueados } from "@/lib/dados/voce"
 import { idLocal } from "@/lib/id"
 import { useNavegacao, useRolagemEFoco, useSobreposicaoDaEntrada } from "@/lib/navegacao/react"
 import { CARGA_CONCLUIDA } from "@/lib/navegacao/restauracao"
@@ -109,6 +110,10 @@ export function Pergunta() {
   const [enviandoDenuncia, setEnviandoDenuncia] = useState(false)
   const [erroDaDenuncia, setErroDaDenuncia] = useState<string | null>(null)
   const [avisoDaDenuncia, setAvisoDaDenuncia] = useState("")
+  const [autorParaBloquear, setAutorParaBloquear] = useState<string | null>(null)
+  const [confirmandoBloqueio, setConfirmandoBloqueio] = useState(false)
+  const [bloqueando, setBloqueando] = useState(false)
+  const [avisoDoBloqueio, setAvisoDoBloqueio] = useState("")
   // Uma sessão de rede por tela: sair cancela a escrita que ainda estava a caminho.
   const [controle] = useState(() => new AbortController())
 
@@ -277,6 +282,9 @@ export function Pergunta() {
     setExplicacao("")
     setErroDaDenuncia(null)
     setAvisoDaDenuncia("")
+    setAutorParaBloquear(null)
+    setConfirmandoBloqueio(false)
+    setAvisoDoBloqueio("")
     aoMudarDenuncia(true)
   }
 
@@ -296,6 +304,26 @@ export function Pergunta() {
         { signal: controle.signal },
       )
       if (controle.signal.aborted) return
+      const autorId =
+        alvoDaDenuncia.tipo === "resposta"
+          ? respostas.find((item) => item.id === alvoDaDenuncia.respostaId)?.autorId
+          : pergunta.autorId
+      const autorProprio =
+        alvoDaDenuncia.tipo === "resposta"
+          ? respostas.find((item) => item.id === alvoDaDenuncia.respostaId)?.propria
+          : pergunta.propria
+      if (autorId && !autorProprio) {
+        try {
+          const bloqueados = await lerBloqueados({ signal: controle.signal })
+          if (bloqueados.some((item) => item.id === autorId)) {
+            setAvisoDoBloqueio("Esta pessoa já está bloqueada.")
+          } else {
+            setAutorParaBloquear(autorId)
+          }
+        } catch {
+          // Sem leitura confiável do estado, não oferecemos uma ação duplicada.
+        }
+      }
       aoMudarDenuncia(false)
       setAvisoDaDenuncia("Denúncia enviada. A moderação vai analisar.")
     } catch (falha: unknown) {
@@ -307,6 +335,20 @@ export function Pergunta() {
         )
     } finally {
       if (!controle.signal.aborted) setEnviandoDenuncia(false)
+    }
+  }
+
+  async function confirmarBloqueio() {
+    if (autorParaBloquear === null || bloqueando) return
+    setBloqueando(true)
+    try {
+      await bloquear(autorParaBloquear, { signal: controle.signal })
+      setAvisoDoBloqueio("Pessoa bloqueada.")
+    } catch {
+      setAvisoDoBloqueio("Não foi possível bloquear esta pessoa. Tente de novo.")
+    } finally {
+      setConfirmandoBloqueio(false)
+      setBloqueando(false)
     }
   }
 
@@ -551,7 +593,34 @@ export function Pergunta() {
         </Secao>
       )}
 
-      {avisoDaDenuncia === "" ? null : <p role="status">{avisoDaDenuncia}</p>}
+      {avisoDaDenuncia === "" ? null : (
+        <div role="status" tabIndex={-1} className="grid justify-items-start gap-1">
+          <p>{avisoDaDenuncia}</p>
+          {autorParaBloquear === null || avisoDoBloqueio !== "" ? null : (
+            <Botao tom="texto" onClick={() => setConfirmandoBloqueio(true)}>
+              Bloquear autor
+            </Botao>
+          )}
+          {avisoDoBloqueio === "" ? null : <p>{avisoDoBloqueio}</p>}
+        </div>
+      )}
+
+      <Dialog open={confirmandoBloqueio} onOpenChange={setConfirmandoBloqueio}>
+        <DialogContent>
+          <DialogTitle>Bloquear esta pessoa?</DialogTitle>
+          <DialogDescription>
+            A conversa ficará fechada nos dois sentidos. A pessoa não será avisada.
+          </DialogDescription>
+          <div className="flex flex-wrap justify-end gap-2">
+            <Botao tom="texto" disabled={bloqueando} onClick={() => setConfirmandoBloqueio(false)}>
+              Cancelar
+            </Botao>
+            <Botao disabled={bloqueando} onClick={() => void confirmarBloqueio()}>
+              {bloqueando ? "Bloqueando…" : "Bloquear"}
+            </Botao>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={denunciaAberta && alvoDaDenuncia !== null} onOpenChange={aoMudarDenuncia}>
         <DialogContent>
