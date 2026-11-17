@@ -1,0 +1,112 @@
+# F10: /salvos sai da web; Salvos fica no app, com busca e remover para todo tipo.
+#
+# Autoridade: docs/LANCAMENTO.md fase 6 e linha F10. Levantamento de 17/11
+# (.work/orq/relatorios/escopo-trocas.md, seção 2, a parte de /salvos: itens 2.3.6 a 2.3.9,
+# 2.4, 2.5 e 2.6). Vem depois do RUN-184 (#274), que tirou /configuracoes da mesma casca.
+#
+# Decisões do coordenador, 17/11, por delegação:
+# - Buscar nos salvos (2.3.7): construir no app, filtrando o que a tela já carregou.
+# - Remover de todo tipo (2.3.8): construir o gesto de dessalvar guia, pergunta e publicação na
+#   tela Salvos do app, pelas rotas de API que já existem; nada de rota nova.
+# - Abas por tipo e ?aba= (2.3.6): divergência registrada. O app organiza por seções (desenho
+#   aprovado); o redirect antigo /recommendations?aba=saved passa a levar a /app/salvos puro.
+# - Item indisponível (2.3.9): divergência registrada. As seções do app só listam o que a API
+#   devolve; quem perdeu acesso a um conteúdo simplesmente não o vê mais.
+# - O módulo saved-items.ts morre com a tela; o href de indicação que ele gerava não tem mais
+#   consumidor. O teste de portas das indicações deixa de citá-lo.
+
+task_id: RUN-186
+
+objective: >
+  A rota /salvos deixa de servir tela e redireciona para /app/salvos, a página e o módulo que a
+  alimentava saem com os testes deles, todo link vivo aponta direto para o app, e a tela Salvos
+  do app ganha busca e o gesto de remover para guia, pergunta e publicação, com as divergências
+  restantes registradas em ADR.
+
+authority:
+  - docs/LANCAMENTO.md (fase 6 e linha F10)
+  - .work/orq/relatorios/escopo-trocas.md (seção 2, parte de /salvos)
+  - docs/decisions/ADR-20261024-front-react-spa.md (seção 8, ordem da troca)
+  - docs/decisions/ADR-20261117-f10-conta-no-app.md
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    apps/web/app/(shell)/salvos/page.tsx serve tela e é linkada pela lateral da casca
+    (apps/web/app/components/bivaque/app-shell.tsx) e pela ajuda pública; apps/app/src/telas/Salvos.tsx
+    não tem campo de busca e só dessalva anúncios.
+
+allowed_paths:
+  - apps/web/next.config.ts
+  - apps/web/app/(shell)/salvos
+  - apps/web/lib/saves/saved-items.ts
+  - apps/web/app/components/bivaque/app-shell.tsx
+  - apps/web/app/components/shell/active-nav.ts
+  - apps/web/app/(public)/ajuda/page.tsx
+  - apps/web/lib/indications/legacy-routes.ts
+  - apps/app/src/telas/Salvos.tsx
+  - apps/app/src/salvos
+  - apps/app/lib/dados/guia.ts
+  - apps/app/lib/dados/perguntas.ts
+  - apps/app/lib/dados/inicio.ts
+  - apps/app/tests/e2e/mercado-salvos.spec.ts
+  - apps/app/tests/e2e/salvos.spec.ts
+  - apps/app/tests
+  - tests/unit/infra/lan-troca-redirect.test.ts
+  - tests/unit/saves/saved-items.test.ts
+  - tests/unit/indications/portas.test.ts
+  - tests/unit/indications/indications.test.ts
+  - tests/unit/ui/shell-active-nav.test.ts
+  - tests/unit/ui/shell-create-action.test.ts
+  - tests/unit/ui/shell-sidebar-labels.test.ts
+  - tests/unit/ui/ajuda-publica.test.ts
+  - tests/unit/visual/crawl-model.test.ts
+  - tests/unit/visual/tabs-style-applied.test.ts
+  - tests/e2e/link-crawl.spec.ts
+  - tests/e2e/recon-032-salvos.spec.ts
+  - tests/e2e/shell-navigation.spec.ts
+  - tests/e2e/global-search-flow.spec.ts
+  - tests/e2e/journey-pedir-servico.spec.ts
+  - tests/e2e/recon-032-messages.spec.ts
+  - tests/e2e/helpers/crawl-model.ts
+  - scripts/visual/capture.mjs
+  - scripts/visual/probe-tab-style.mjs
+  - scripts/bivaque-html/round46-proof.mjs
+  - docs/decisions/ADR-20261117-f10-salvos-no-app.md
+  - docs/agents/tasks/RUN-186.task.yml
+
+forbidden:
+  - criar rota de API nova, migration, função de banco, grant ou policy
+  - mexer nas rotas de API de salvos que já existem (só usá-las)
+  - mexer em /indicacoes/[id], deep-links.ts ou reports.ts (lote 3 do F09)
+  - mexer na tela Pergunta do app (lote RUN-185, em revisão)
+  - editar docs/decisions/RATIFICACAO.md (a linha vai no relatório)
+  - push, merge, abrir PR, force-push; ler, criar ou imprimir arquivos de ambiente
+
+acceptance:
+  - "next.config.ts: /salvos redireciona (307) para /app/salvos, query preservada, sem ciclo; lan-troca-redirect acrescenta a rota em TROCADAS e prova a ausência da pasta (shell)/salvos. O redirect antigo /recommendations?aba=saved (legacy-routes.ts) passa a levar a /app/salvos, com o teste de indicações ajustado."
+  - "A pasta apps/web/app/(shell)/salvos e apps/web/lib/saves/saved-items.ts saem com tests/unit/saves/saved-items.test.ts; portas.test.ts deixa de citar o módulo; o relatório traz o git grep provando que nenhum import sobrou."
+  - "Links vivos migrados direto para o app: lateral da casca (app-shell.tsx) e ajuda pública levam a /app/salvos; active-nav deixa de citar /salvos. Os E2E da web que usavam /salvos como página-base da casca (shell-navigation, global-search-flow, journey-pedir-servico, recon-032-messages) passam a usar outra rota viva da casca web (ex.: /community), sem perder o que provavam. recon-032-salvos migra para o app ou é removido com a cobertura equivalente apontada no app. Inventário completo (git grep da página /salvos, excluindo as rotas de API /api/app/.../salvos) no relatório, com o destino de cada ocorrência."
+  - "Salvos.tsx: campo de busca que filtra por título o que as seções já carregaram (sem nova chamada), com estado vazio de busca; gesto de remover em guia, pergunta e publicação pelas rotas de dessalvar existentes, com atualização otimista que volta e avisa em caso de falha. E2E do app (salvos.spec.ts novo ou mercado-salvos.spec.ts) prova busca e remoção nas três larguras."
+  - "link-crawl e capture.mjs sem sobras de /salvos; probe-tab-style e round46-proof deixam de apontar para a tela morta."
+  - "ADR-20261117-f10-salvos-no-app.md registra a troca e as duas divergências (abas por tipo com ?aba=, e item indisponível) com o motivo. O relatório traz a linha pronta da RATIFICACAO.md."
+
+proof:
+  - "npx vitest run nos arquivos de tests/unit tocados (binários de node_modules), mostrando cada um rodando"
+  - "npx tsc --noEmit -p apps/app"
+  - "npx tsc --noEmit -p tests/e2e/tsconfig.json"
+  - "npx tsc --noEmit -p apps/web (depois de next typegen, se o projeto exigir)"
+  - npx pnpm@11.18.0 lint
+  - "node scripts/agents/prova-fila.mjs -- npx pnpm@11.18.0 test"
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/RUN-186.task.yml
+  - "E2E (salvos do app, shell-navigation, link-crawl, recon-032-*) — no CI completo com a label ci:full"
+
+risk: troca de tela de conteúdo salvo e gesto de remover por rotas existentes
+risk_level: R2
+
+reviewer_must_differ_from_executor: true
+retry_budget: 2
+on_budget_exhausted: HUMAN_DECISION
+
+closure:
+  requires_runtime_evidence: true
