@@ -158,7 +158,8 @@ test.describe("a pergunta vem antes do resto", () => {
     // Given — a sessão autenticada na tela de sugestão
     await seedSession(page.context())
     await page.setViewportSize({ width: 375, height: 812 })
-    await page.goto("/guide/sugerir")
+    await page.goto("/app/guia")
+    await page.getByRole("button", { name: "Sugerir um lugar" }).click()
     await expect(page.getByRole("heading", { name: "Sugerir referência" })).toBeVisible({
       timeout: 20000,
     })

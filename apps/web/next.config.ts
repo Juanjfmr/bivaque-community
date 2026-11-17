@@ -103,9 +103,8 @@ const nextConfig: NextConfig = {
           ["/imoveis", "/app/imoveis"],
           ["/meus-anuncios", "/app/meus-anuncios"],
           // F08: a lista, o verbete e o acompanhamento de correção são do app.
-          // As regras de dois segmentos vêm antes da exata, e `/guide/sugerir`
-          // fica na web (sugerir lugar novo está fora do escopo do lançamento):
-          // o id não captura "sugerir".
+          // As regras de dois segmentos vêm antes da exata.
+          ["/guide/sugerir", "/app/guia"],
           ["/guide/:id/correcao", "/app/guia/:id"],
           ["/guide/:id((?!sugerir/?$)[^/]+)", "/app/guia/:id"],
           ["/guide", "/app/guia"],

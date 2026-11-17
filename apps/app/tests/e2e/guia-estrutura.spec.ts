@@ -188,9 +188,7 @@ test.describe("estrutura do Guia", () => {
     )
   })
 
-  test("a seção de contribuição leva ao caminho real, sem porta de sugestão de lugar", async ({
-    page,
-  }) => {
+  test("a seção permite sugerir um lugar pela folha", async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 812 })
     await abrirGuia(page)
 
@@ -198,10 +196,10 @@ test.describe("estrutura do Guia", () => {
     await expect(
       contribuir.getByRole("heading", { name: "5. Compartilhe o que funcionou" }),
     ).toBeVisible()
-    // Sugerir um lugar novo está fora do escopo do lançamento: o botão que
-    // abria o Criar sem porta de guia saiu, e nada promete esse caminho.
-    await expect(page.locator('[data-acao="sugerir-lugar"]')).toHaveCount(0)
-    await expect(page.getByRole("button", { name: /Sugerir um lugar/ })).toHaveCount(0)
+    await page.getByRole("button", { name: "Sugerir um lugar" }).click()
+    await expect(page.locator("#sugestao-nome")).toBeVisible()
+    await expect(page.locator("#sugestao-categoria")).toBeVisible()
+    await page.getByRole("button", { name: "Fechar" }).click()
 
     // A porta que resta é real: a conversa da comunidade, onde a indicação mora.
     await contribuir.getByRole("button", { name: "Abrir a comunidade" }).click()
@@ -223,10 +221,9 @@ test.describe("estrutura do Guia", () => {
     const vazio = page.locator('[data-estado="vazio"]')
     await expect(vazio).toBeVisible()
     await expect(vazio).toContainText("O guia ainda está sendo montado")
-    // Negativo: sem caminho de sugestão de lugar novo, o vazio não oferece ação
-    // que não leva a lugar nenhum.
+    // A sugestão é uma ação válida mesmo quando a curadoria ainda não publicou entradas.
     await expect(vazio.locator('[data-acao="acao-do-vazio"]')).toHaveCount(0)
-    await expect(vazio).not.toContainText("Sugerir um lugar")
+    await expect(page.locator('[data-acao="sugerir-lugar"]')).toBeVisible()
   })
 
   test("corpo com token secundário, contraste AA, entrelinha e captura", async ({ page }) => {

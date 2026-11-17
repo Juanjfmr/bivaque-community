@@ -30,6 +30,7 @@ const TROCADAS = [
   ["/imoveis?q=centro&quartos=2&valor_max=4000", "/app/imoveis?q=centro&quartos=2&valor_max=4000"],
   ["/meus-anuncios", "/app/meus-anuncios"],
   ["/guide", "/app/guia"],
+  ["/guide/sugerir", "/app/guia"],
   ["/guide?q=escola&categoria=school", "/app/guia?q=escola&categoria=school"],
   ["/pedidos", "/app/pedidos"],
   [`/pedidos/${ID}`, `/app/pedido/${ID}`],

@@ -51,6 +51,13 @@ export type CorrecaoDoGuia = Readonly<{
 }>
 
 export type DadosDaSugestao = Readonly<{ descricao: string; referencia: string }>
+export type NovaSugestaoDoGuia = Readonly<{
+  nome: string
+  categoria: CategoriaDoGuia
+  descricao: string
+  site?: string
+  telefone?: string
+}>
 
 type Corpo = Record<string, unknown>
 
@@ -192,4 +199,8 @@ export async function sugerirAtualizacao(
     opcoes,
   )
   return exigirTexto(exigirRegistro(corpo["sugestao"]), "id")
+}
+
+export async function sugerirLugar(dados: NovaSugestaoDoGuia): Promise<void> {
+  await enviar("POST", "/api/app/guia/sugestao", dados)
 }

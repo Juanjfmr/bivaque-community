@@ -9,6 +9,7 @@ import { DELETE as desmarcar, PUT as marcar } from "web/app/api/app/guia/[id]/sa
 import { POST as sugerir } from "web/app/api/app/guia/[id]/sugestao/route"
 import { GET as listar } from "web/app/api/app/guia/route"
 import { GET as listarSalvos } from "web/app/api/app/guia/salvos/route"
+import { POST as sugerirLugar } from "web/app/api/app/guia/sugestao/route"
 import { resolverSessaoDaRequisicao } from "web/lib/app-api/sessao-do-next"
 
 const resolver = vi.mocked(resolverSessaoDaRequisicao)
@@ -50,6 +51,7 @@ type Opcoes = {
   erroNaEscrita?: { code: string; message: string } | null
   erroNaSugestao?: { code: string; message: string } | null
   erroNaCorrecao?: { code: string; message: string } | null
+  erroNaRpc?: { code: string; message: string } | null
 }
 
 function mockClient(opcoes: Opcoes = {}) {
@@ -141,7 +143,8 @@ function mockClient(opcoes: Opcoes = {}) {
     return query
   })
 
-  return { client: { from } as never, from, eqCalls, inserts, deletes, orCalls, inCalls }
+  const rpc = vi.fn(async () => ({ data: null, error: opcoes.erroNaRpc ?? null }))
+  return { client: { from, rpc } as never, from, rpc, eqCalls, inserts, deletes, orCalls, inCalls }
 }
 
 function req(method: string, url = BASE, body?: string, requestHeaders = headers) {
@@ -183,6 +186,7 @@ describe("rotas do guia do app", () => {
     ["PUT salvo", () => marcar(req("PUT"), context)],
     ["DELETE salvo", () => desmarcar(req("DELETE"), context)],
     ["POST sugestão", () => sugerir(req("POST", `${BASE}/${ID}/sugestao`, "{}"), context)],
+    ["POST lugar novo", () => sugerirLugar(req("POST", `${BASE}/sugestao`, "{}"))],
   ])("%s recusa ausência de sessão", async (_label, invoke) => {
     expect((await invoke()).status).toBe(401)
   })
@@ -216,6 +220,13 @@ describe("rotas do guia do app", () => {
             context,
           ),
       ],
+      [
+        "POST lugar novo",
+        () =>
+          sugerirLugar(
+            req("POST", `${BASE}/sugestao`, "{}", { ...headers, origin: "https://fora.example" }),
+          ),
+      ],
     ])("%s recusa origem fora da lista", async (_label, invoke) => {
       const mock = mockClient({ artigo: { id: "artigo-1" } })
       authenticate(mock)
@@ -233,6 +244,51 @@ describe("rotas do guia do app", () => {
       expect(
         (await sugerir(req("POST", `${BASE}/${ID}/sugestao`, "{}", semCabecalho), context)).status,
       ).toBe(403)
+      expect((await sugerirLugar(req("POST", `${BASE}/sugestao`, "{}", semCabecalho))).status).toBe(
+        403,
+      )
+    })
+  })
+
+  describe("sugestão de lugar novo", () => {
+    it("valida o corpo e cria pela RPC com a sessão", async () => {
+      const mock = mockClient()
+      authenticate(mock)
+      const body = { nome: " Escola Modelo ", categoria: "school", descricao: " Boa referência " }
+      const resposta = await sugerirLugar(req("POST", `${BASE}/sugestao`, JSON.stringify(body)))
+      expect(resposta.status).toBe(201)
+      expect(mock.rpc).toHaveBeenCalledWith("suggest_guide_entry", {
+        p_name: "Escola Modelo",
+        p_category: "school",
+        p_description: "Boa referência",
+      })
+      expect(
+        (
+          await sugerirLugar(
+            req("POST", `${BASE}/sugestao`, JSON.stringify({ ...body, categoria: "x" })),
+          )
+        ).status,
+      ).toBe(400)
+    })
+
+    it("limite do banco usa texto fixo sem devolver a mensagem original", async () => {
+      const mock = mockClient({
+        erroNaRpc: { code: "P0001", message: "maximum 5 pending guide suggestions per member" },
+      })
+      authenticate(mock)
+      const resposta = await sugerirLugar(
+        req(
+          "POST",
+          `${BASE}/sugestao`,
+          JSON.stringify({ nome: "Escola", categoria: "school", descricao: "" }),
+        ),
+      )
+      expect(resposta.status).toBe(429)
+      expect(await json(resposta)).toEqual({
+        erro: "limite",
+        mensagem:
+          "Você já tem cinco sugestões aguardando revisão. Espere a fila andar para sugerir mais.",
+      })
     })
   })
 

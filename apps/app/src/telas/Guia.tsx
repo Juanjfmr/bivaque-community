@@ -34,6 +34,7 @@ import {
   SecaoDoGuia,
 } from "@/src/guia/EstruturaDoGuia"
 import { filtrosDaUrl } from "@/src/guia/filtros-da-url"
+import { SugerirLugar } from "@/src/guia/SugerirLugar"
 import { type Passo, SECOES } from "@/src/guia/secoes"
 
 /**
@@ -51,8 +52,7 @@ import { type Passo, SECOES } from "@/src/guia/secoes"
  *
  * A leitura do verbete é uma tela própria (`/app/guia/<id>`): a linha leva pela
  * rota, então a recarga mantém a referência aberta e o Voltar do sistema volta
- * para a lista. O Guia não tem folha nem botão de sugestão de lugar novo —
- * sugerir um lugar está fora do escopo do lançamento.
+ * para a lista. A folha de sugestão mantém a curadoria no fluxo do Guia.
  *
  * O termo e a categoria também chegam pelo endereço (LAN-TROCA):
  * `/app/guia?q=<termo>&categoria=<cat>` abre a tela já filtrada, e o endereço
@@ -205,6 +205,7 @@ export function Guia() {
                 O que a curadoria e a comunidade já indicaram na cidade. Busque pelo nome ou filtre
                 por categoria.
               </CorpoDoGuia>
+              <SugerirLugar />
               <Campo
                 id="busca-no-guia"
                 rotulo="Buscar no guia"
