@@ -7,7 +7,7 @@ export const CIDADE = "Manaus"
 
 export const BAIRROS = ["Adrianópolis", "Ponta Negra", "Flores", "Parque 10"] as const
 
-const foto = (semente: string) => `https://picsum.photos/seed/${semente}/600/600`
+export const foto = (semente: string) => `https://picsum.photos/seed/${semente}/600/600`
 
 /** A pessoa que está usando o app. */
 export const PERFIL: Pessoa = { id: "eu", nome: "Helena Braga", bairro: "Adrianópolis" }
@@ -300,7 +300,6 @@ export const ANUNCIOS: Anuncio[] = [
     descricao: "Sofá em bom estado, tecido cinza. Retirada no local, preciso liberar a sala.",
     foto: foto("bivaque-an1"),
     vendedorId: "p2",
-    conversaId: "co1",
   },
   {
     id: "an2",
@@ -311,7 +310,6 @@ export const ANUNCIOS: Anuncio[] = [
     descricao: "Mesa com quatro cadeiras, madeira maciça. Pequenas marcas de uso no tampo.",
     foto: foto("bivaque-an2"),
     vendedorId: "p4",
-    conversaId: "co2",
   },
   {
     id: "an3",
@@ -323,7 +321,6 @@ export const ANUNCIOS: Anuncio[] = [
       "Quadro de alumínio, freios revisados no mês passado. Aceito conversa sobre o preço.",
     foto: foto("bivaque-an3"),
     vendedorId: "p3",
-    conversaId: "co3",
   },
   {
     id: "an4",
@@ -334,7 +331,6 @@ export const ANUNCIOS: Anuncio[] = [
     descricao: "58 m², dois quartos, uma vaga. Condomínio com portaria 24 horas.",
     foto: foto("bivaque-an4"),
     vendedorId: "p5",
-    conversaId: "co4",
   },
   {
     id: "an5",
@@ -345,7 +341,6 @@ export const ANUNCIOS: Anuncio[] = [
     descricao: "Casa térrea, quintal com árvore, aceita animais de pequeno porte.",
     foto: foto("bivaque-an5"),
     vendedorId: "p7",
-    conversaId: "co2",
   },
   {
     id: "an6",
@@ -356,7 +351,6 @@ export const ANUNCIOS: Anuncio[] = [
     descricao: "Doação. Está higienizada, só não serve mais em casa.",
     foto: foto("bivaque-an6"),
     vendedorId: "p9",
-    conversaId: "co1",
   },
   {
     id: "an7",
@@ -367,7 +361,6 @@ export const ANUNCIOS: Anuncio[] = [
     descricao: "Cinco peças, pouco uso. Vendo porque troquei o fogão.",
     foto: foto("bivaque-an7"),
     vendedorId: "p6",
-    conversaId: "co3",
   },
   {
     id: "an8",
@@ -378,7 +371,6 @@ export const ANUNCIOS: Anuncio[] = [
     descricao: "Quarto individual em casa compartilhada, com cama, escrivaninha e banheiro.",
     foto: foto("bivaque-an8"),
     vendedorId: "p2",
-    conversaId: "co4",
   },
   {
     id: "an9",
@@ -389,7 +381,6 @@ export const ANUNCIOS: Anuncio[] = [
     descricao: "Doação. Cinco prateleiras, desmonta para transportar.",
     foto: foto("bivaque-an9"),
     vendedorId: "p4",
-    conversaId: "co1",
   },
   {
     id: "an10",
@@ -400,7 +391,6 @@ export const ANUNCIOS: Anuncio[] = [
     descricao: "Rua asfaltada, água e energia na frente do lote. Documentação em ordem.",
     foto: foto("bivaque-an10"),
     vendedorId: "p7",
-    conversaId: "co2",
   },
 ]
 
@@ -408,6 +398,7 @@ export const CONVERSAS: Conversa[] = [
   {
     id: "co1",
     pessoaId: "p2",
+    anuncioId: "an1",
     naoLidas: 2,
     mensagens: [
       { id: "m1", deMim: true, texto: "Oi! O sofá ainda está disponível?", hora: "09:12" },
@@ -418,6 +409,7 @@ export const CONVERSAS: Conversa[] = [
   {
     id: "co2",
     pessoaId: "p4",
+    anuncioId: "an2",
     naoLidas: 0,
     mensagens: [
       { id: "m4", deMim: true, texto: "A mesa de jantar tem as quatro cadeiras?", hora: "ontem" },
@@ -433,6 +425,7 @@ export const CONVERSAS: Conversa[] = [
   {
     id: "co3",
     pessoaId: "p3",
+    anuncioId: "an3",
     naoLidas: 1,
     mensagens: [
       { id: "m7", deMim: true, texto: "A bike aceita R$ 850?", hora: "há 2 dias" },
@@ -442,6 +435,7 @@ export const CONVERSAS: Conversa[] = [
   {
     id: "co4",
     pessoaId: "p5",
+    anuncioId: "an4",
     naoLidas: 0,
     mensagens: [
       {

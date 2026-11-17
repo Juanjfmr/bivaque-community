@@ -6,9 +6,11 @@ import { BotaoIcone } from "@/components/telas/botao-icone"
 import { CabecalhoTela } from "@/components/telas/cabecalho-tela"
 import { LinhaConversa } from "@/components/telas/linha-conversa"
 import { Separator } from "@/components/ui/separator"
-import { CONVERSAS } from "@/lib/dados"
+import { useConversas } from "@/lib/dados/estado"
 
 export default function TelaConversas() {
+  const conversas = useConversas()
+
   return (
     <SafeAreaView className="flex-1 bg-background" edges={["top", "left", "right"]}>
       <CabecalhoTela
@@ -16,7 +18,7 @@ export default function TelaConversas() {
         esquerda={<BotaoIcone nome="voltar" rotulo="Voltar" aoPressionar={() => router.back()} />}
       />
       <FlatList
-        data={CONVERSAS}
+        data={conversas}
         keyExtractor={(conversa) => conversa.id}
         ItemSeparatorComponent={Separator}
         contentContainerClassName="pb-8"

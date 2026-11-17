@@ -50,7 +50,6 @@ export interface Anuncio {
   descricao: string
   foto: string
   vendedorId: string
-  conversaId: string
 }
 
 export interface Mensagem {
@@ -65,6 +64,8 @@ export interface Conversa {
   pessoaId: string
   naoLidas: number
   mensagens: Mensagem[]
+  /** Anúncio que originou a conversa; aparece no topo dela. */
+  anuncioId?: string
 }
 
 export interface Evento {

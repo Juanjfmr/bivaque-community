@@ -7,11 +7,12 @@ import { BotaoIcone } from "@/components/telas/botao-icone"
 import { CabecalhoTela } from "@/components/telas/cabecalho-tela"
 import { Card } from "@/components/ui/card"
 import { Text } from "@/components/ui/text"
-import { anuncioPorId, pessoaPorId, precoEmReais } from "@/lib/dados"
+import { PERFIL, pessoaPorId, precoEmReais } from "@/lib/dados"
+import { abrirOuCriarConversa, useAnuncio } from "@/lib/dados/estado"
 
 export default function TelaAnuncio() {
   const { id } = useLocalSearchParams<{ id: string }>()
-  const anuncio = anuncioPorId(id)
+  const anuncio = useAnuncio(id)
   const vendedor = anuncio ? pessoaPorId(anuncio.vendedorId) : undefined
 
   if (!anuncio || !vendedor) {
@@ -62,13 +63,15 @@ export default function TelaAnuncio() {
           </Card>
         </View>
 
-        <View className="px-4">
-          <BotaoAcao
-            rotulo="Tenho interesse"
-            estado="parado"
-            aoPressionar={() => router.push(`/conversa/${anuncio.conversaId}`)}
-          />
-        </View>
+        {anuncio.vendedorId === PERFIL.id ? null : (
+          <View className="px-4">
+            <BotaoAcao
+              rotulo="Tenho interesse"
+              estado="parado"
+              aoPressionar={() => router.push(`/conversa/${abrirOuCriarConversa(anuncio)}`)}
+            />
+          </View>
+        )}
       </ScrollView>
     </SafeAreaView>
   )

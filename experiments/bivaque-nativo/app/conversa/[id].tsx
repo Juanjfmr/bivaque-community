@@ -1,6 +1,6 @@
 import { router, useLocalSearchParams } from "expo-router"
 import { useState } from "react"
-import { FlatList, KeyboardAvoidingView, Platform, Pressable, View } from "react-native"
+import { FlatList, Image, KeyboardAvoidingView, Platform, Pressable, View } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 import { Icone } from "@/components/icons"
 import { Entrada, EstadoVazio } from "@/components/motion"
@@ -8,17 +8,18 @@ import { AvatarPessoa } from "@/components/telas/avatar-pessoa"
 import { BotaoIcone } from "@/components/telas/botao-icone"
 import { CabecalhoTela } from "@/components/telas/cabecalho-tela"
 import { useCores } from "@/components/telas/cores"
+import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Text } from "@/components/ui/text"
-import { conversaPorId, type Mensagem, pessoaPorId } from "@/lib/dados"
+import { pessoaPorId, precoEmReais } from "@/lib/dados"
+import { enviarMensagem, useAnuncio, useConversa } from "@/lib/dados/estado"
 
 export default function TelaConversa() {
   const cores = useCores()
   const { id } = useLocalSearchParams<{ id: string }>()
-  const conversa = conversaPorId(id)
+  const conversa = useConversa(id)
+  const anuncio = useAnuncio(conversa?.anuncioId ?? "")
   const pessoa = conversa ? pessoaPorId(conversa.pessoaId) : undefined
-
-  const [enviadas, setEnviadas] = useState<Mensagem[]>([])
   const [texto, setTexto] = useState("")
 
   if (!conversa || !pessoa) {
@@ -34,14 +35,9 @@ export default function TelaConversa() {
     )
   }
 
-  const mensagens = [...conversa.mensagens, ...enviadas]
-
   function enviar() {
-    if (texto.trim().length === 0) return
-    setEnviadas((atuais) => [
-      ...atuais,
-      { id: `local-${atuais.length}`, deMim: true, texto: texto.trim(), hora: "agora" },
-    ])
+    if (!conversa) return
+    enviarMensagem(conversa.id, texto)
     setTexto("")
   }
 
@@ -59,9 +55,36 @@ export default function TelaConversa() {
         behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
         <FlatList
-          data={mensagens}
+          data={conversa.mensagens}
           keyExtractor={(mensagem) => mensagem.id}
           contentContainerClassName="gap-2 px-4 pb-4 pt-2"
+          ListHeaderComponent={
+            anuncio ? (
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={`Anúncio: ${anuncio.titulo}`}
+                onPress={() => router.push(`/anuncio/${anuncio.id}`)}
+                className="mb-2"
+              >
+                <Card className="flex-row items-center gap-3 rounded-xl border-border p-3">
+                  <Image
+                    source={{ uri: anuncio.foto }}
+                    accessibilityIgnoresInvertColors
+                    className="h-12 w-12 rounded-lg bg-muted"
+                  />
+                  <View className="flex-1">
+                    <Text className="text-sm font-semibold" numberOfLines={2}>
+                      {anuncio.titulo}
+                    </Text>
+                    <Text className="text-sm font-semibold text-muted-foreground">
+                      {precoEmReais(anuncio.preco)}
+                    </Text>
+                  </View>
+                  <Icone nome="avancar" tamanho={18} cor={cores.mutedForeground} />
+                </Card>
+              </Pressable>
+            ) : null
+          }
           renderItem={({ item, index }) => (
             <Entrada indice={index}>
               <View
