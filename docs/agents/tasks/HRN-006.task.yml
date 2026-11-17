@@ -1,0 +1,55 @@
+# merge-seguro: escolher o run certo quando há mais de um no mesmo SHA, e usar o login do gh.
+#
+# Cartão HRN-005-RESSALVAS. No primeiro uso real (17/11, PRs #264 e #269) o script recusou dois
+# PRs prontos: no mesmo SHA havia o run da abertura do PR (sem a label, completo pulado) e o run
+# com a label ci:full (completo verde), e ele decidiu pelo pulado. Também exigia GH_TOKEN mesmo
+# com o gh logado. As pendências P6, P7 e P8 do diagnóstico de CI ficam para outro lote.
+
+task_id: HRN-006
+
+objective: >
+  O merge-seguro decide pelo run que de fato executou o completo quando o mesmo SHA tem vários
+  runs com o mesmo nome de check, continua recusando quando nenhum deles está verde, e usa o
+  token do gh logado quando GH_TOKEN e GITHUB_TOKEN não existem.
+
+authority:
+  - tools/backend-kanban/public/board.json (cartão HRN-005-RESSALVAS)
+  - docs/decisions/ADR-20261114-ci-ciclo-rapido-e-completo-no-fechamento.md
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    scripts/agents/merge-seguro.mjs indexa os check runs por nome num Map; com dois runs de
+    mesmo nome no SHA, um pulado e um verde, o resultado depende da ordem da API e o script
+    recusou os PRs #264 e #269 em 17/11. O script só lê GH_TOKEN ou GITHUB_TOKEN.
+
+allowed_paths:
+  - scripts/agents/merge-seguro.mjs
+  - tests/scope/merge-seguro.test.mjs
+  - docs/agents/tasks/HRN-006.task.yml
+
+forbidden:
+  - afrouxar a regra do rito (completo e agregador verdes no SHA, Visual verde quando o PR toca os caminhos dele)
+  - mudar workflows do GitHub
+  - imprimir o token em qualquer saída ou log
+  - push, merge, abrir PR, force-push; ler, criar ou imprimir arquivos de ambiente
+
+acceptance:
+  - "Com vários check runs do mesmo nome no SHA do head, o avaliar escolhe por nome o melhor: verde ganha de pulado, de neutro e de vermelho; se houver um verde e um vermelho do mesmo check no mesmo SHA, decide pelo mais recente (completed_at ou id maior) e diz no motivo qual usou. Testes novos: pulado + verde passa; vermelho mais recente + verde antigo recusa; só pulado recusa; ordem invertida da lista dá o mesmo veredito."
+  - "Sem GH_TOKEN e sem GITHUB_TOKEN, o script obtém o token por gh auth token (execFileSync, sem shell, sem imprimir); se o gh não estiver logado, recusa com mensagem clara. Teste com a função de obter token injetável."
+  - "Os testes que já existiam em tests/scope/merge-seguro.test.mjs continuam passando sem mudar o que provam."
+
+proof:
+  - "node --test tests/scope/merge-seguro.test.mjs"
+  - npx pnpm@11.18.0 lint
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/HRN-006.task.yml
+
+risk: ferramenta de merge da orquestração (falso negativo hoje; falso positivo seria merge sem rito)
+risk_level: R2
+
+reviewer_must_differ_from_executor: true
+retry_budget: 2
+on_budget_exhausted: HUMAN_DECISION
+
+closure:
+  requires_runtime_evidence: true
