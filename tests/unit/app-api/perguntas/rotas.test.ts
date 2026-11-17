@@ -4,8 +4,16 @@ import { beforeEach, describe, expect, it, vi } from "vitest"
 vi.mock("web/lib/app-api/sessao-do-next", () => ({ resolverSessaoDaRequisicao: vi.fn() }))
 
 import { POST as mudarResolucao } from "web/app/api/app/perguntas/[id]/resolucao/route"
+import {
+  PATCH as editarResposta,
+  DELETE as excluirResposta,
+} from "web/app/api/app/perguntas/[id]/respostas/[respostaId]/route"
 import { POST as responder } from "web/app/api/app/perguntas/[id]/respostas/route"
-import { GET as detalhe } from "web/app/api/app/perguntas/[id]/route"
+import {
+  GET as detalhe,
+  PATCH as editarPergunta,
+  DELETE as excluirPergunta,
+} from "web/app/api/app/perguntas/[id]/route"
 import { DELETE as deixarDeSeguir, PUT as seguir } from "web/app/api/app/perguntas/[id]/salvo/route"
 import { GET as listar } from "web/app/api/app/perguntas/route"
 import { GET as listarSalvas } from "web/app/api/app/perguntas/salvas/route"
@@ -47,6 +55,7 @@ const pedido = {
   body: linha.body,
   category: "saude_bem_estar",
   created_at: DATA,
+  edited_at: null as string | null,
   is_resolved: false,
   resolved_reply_id: null,
   group_id: null,
@@ -59,8 +68,12 @@ const respostaDaConversa = {
   author_id: OUTRA_PESSOA,
   body: "A Dra. Helena atende FuSEx.",
   created_at: DATA,
-  edited_at: null,
+  edited_at: null as string | null,
   is_removed: false,
+}
+
+const contextoDaResposta = {
+  params: Promise.resolve({ id: ID, respostaId: respostaDaConversa.id }),
 }
 
 type Options = {
@@ -85,6 +98,14 @@ type Options = {
     is_resolved: boolean
   }>
   saveError?: { code: string; message: string }
+  /** Linhas devolvidas pelo UPDATE/DELETE; `null` é "não alcançou a linha". */
+  perguntaEditada?: { id: string; title: string; body: string; edited_at: string | null } | null
+  perguntaRemovida?: { id: string }[]
+  respostaEditada?: { id: string; body: string; edited_at: string | null } | null
+  respostaRemovida?: { id: string }[]
+  /** Erro do UPDATE/DELETE nas duas tabelas de conteúdo. */
+  updateError?: { code: string; message: string }
+  verbetes?: { id: string; name: string; source_reply_id: string | null }[]
 }
 
 function mockClient(options: Options = {}) {
@@ -92,6 +113,7 @@ function mockClient(options: Options = {}) {
   const inCalls: Array<{ table: string; column: string; values: unknown }> = []
   const inserts: Array<{ table: string; value: unknown }> = []
   const deletes: string[] = []
+  const updates: Array<{ table: string; value: unknown }> = []
   const rpcCalls: Array<{ nome: string; args: Record<string, unknown> }> = []
 
   const rpc = vi.fn((nome: string, args: Record<string, unknown>) => {
@@ -127,6 +149,24 @@ function mockClient(options: Options = {}) {
         }
       }
       if (table === "recommendation_requests") {
+        if (operation === "update") {
+          if (options.updateError) return { data: null, count: null, error: options.updateError }
+          const enviado = (updates.at(-1)?.value ?? {}) as Record<string, unknown>
+          const linha =
+            options.perguntaEditada === undefined
+              ? {
+                  id: ID,
+                  title: (enviado["title"] as string | undefined) ?? pedido.title,
+                  body: (enviado["body"] as string | undefined) ?? pedido.body,
+                  edited_at: DATA,
+                }
+              : options.perguntaEditada
+          return { data: linha === null ? [] : [linha], count: null, error: null }
+        }
+        if (operation === "delete") {
+          if (options.updateError) return { data: null, count: null, error: options.updateError }
+          return { data: options.perguntaRemovida ?? [{ id: ID }], count: null, error: null }
+        }
         if (isCount) return { data: null, count: options.resolvidas ?? 0, error: null }
         if (single) {
           return {
@@ -163,13 +203,39 @@ function mockClient(options: Options = {}) {
           error: null,
         }
       }
-      if (table === "recommendation_replies" && operation === "insert") {
-        if (options.insertError) return { data: null, count: null, error: options.insertError }
-        return {
-          data: options.gravada ?? { id: "novo-1", body: "Texto", created_at: DATA },
-          count: null,
-          error: null,
+      if (table === "recommendation_replies") {
+        if (operation === "update") {
+          if (options.updateError) return { data: null, count: null, error: options.updateError }
+          const enviado = (updates.at(-1)?.value ?? {}) as Record<string, unknown>
+          const linha =
+            options.respostaEditada === undefined
+              ? {
+                  id: respostaDaConversa.id,
+                  body: (enviado["body"] as string | undefined) ?? respostaDaConversa.body,
+                  edited_at: DATA,
+                }
+              : options.respostaEditada
+          return { data: linha === null ? [] : [linha], count: null, error: null }
         }
+        if (operation === "delete") {
+          if (options.updateError) return { data: null, count: null, error: options.updateError }
+          return {
+            data: options.respostaRemovida ?? [{ id: respostaDaConversa.id }],
+            count: null,
+            error: null,
+          }
+        }
+        if (operation === "insert") {
+          if (options.insertError) return { data: null, count: null, error: options.insertError }
+          return {
+            data: options.gravada ?? { id: "novo-1", body: "Texto", created_at: DATA },
+            count: null,
+            error: null,
+          }
+        }
+      }
+      if (table === "arrival_guide_entries") {
+        return { data: options.verbetes ?? [], count: null, error: null }
       }
       return { data: null, count: null, error: null }
     }
@@ -194,6 +260,11 @@ function mockClient(options: Options = {}) {
       inserts.push({ table, value })
       return query
     }
+    query["update"] = (value: unknown) => {
+      operation = "update"
+      updates.push({ table, value })
+      return query
+    }
     query["delete"] = () => {
       operation = "delete"
       deletes.push(table)
@@ -207,7 +278,17 @@ function mockClient(options: Options = {}) {
     return query
   })
 
-  return { client: { from, rpc } as never, from, rpc, eqCalls, inCalls, inserts, deletes, rpcCalls }
+  return {
+    client: { from, rpc } as never,
+    from,
+    rpc,
+    eqCalls,
+    inCalls,
+    inserts,
+    updates,
+    deletes,
+    rpcCalls,
+  }
 }
 
 function req(method: string, url = BASE, body?: string, requestHeaders = headers) {
@@ -249,7 +330,25 @@ describe("rotas de perguntas do app", () => {
   it.each([
     ["GET lista", () => listar(req("GET"))],
     ["GET detalhe", () => detalhe(req("GET"), context)],
+    ["PATCH pergunta", () => editarPergunta(req("PATCH", `${BASE}/${ID}`, "{}"), context)],
+    ["DELETE pergunta", () => excluirPergunta(req("DELETE", `${BASE}/${ID}`), context)],
     ["POST resposta", () => responder(req("POST", `${BASE}/${ID}/respostas`, "{}"), context)],
+    [
+      "PATCH resposta",
+      () =>
+        editarResposta(
+          req("PATCH", `${BASE}/${ID}/respostas/${respostaDaConversa.id}`, "{}"),
+          contextoDaResposta,
+        ),
+    ],
+    [
+      "DELETE resposta",
+      () =>
+        excluirResposta(
+          req("DELETE", `${BASE}/${ID}/respostas/${respostaDaConversa.id}`),
+          contextoDaResposta,
+        ),
+    ],
     ["POST resolução", () => mudarResolucao(req("POST", `${BASE}/${ID}/resolucao`, "{}"), context)],
     ["PUT salvo", () => seguir(req("PUT"), context)],
     ["DELETE salvo", () => deixarDeSeguir(req("DELETE"), context)],
@@ -511,9 +610,82 @@ describe("rotas de perguntas do app", () => {
           autorId: OUTRA_PESSOA,
           propria: false,
           criadaEm: DATA,
+          editada: false,
+          verbete: null,
           removida: false,
         },
       ])
+    })
+
+    it("a resposta editada chega com a marca e o verbete aprovado do Guia", async () => {
+      const mock = mockClient({
+        respostas: [{ ...respostaDaConversa, edited_at: DATA }],
+        nomes: [{ user_id: OUTRA_PESSOA, display_name: "Helena Castro" }],
+        verbetes: [
+          {
+            id: "b0000000-0000-4000-8000-000000000001",
+            name: "Dra. Helena",
+            source_reply_id: respostaDaConversa.id,
+          },
+          // Verbete de outra resposta não entra no link desta.
+          { id: "b0000000-0000-4000-8000-000000000002", name: "Outro", source_reply_id: null },
+        ],
+      })
+      authenticate(mock)
+      const corpo = await json(await detalhe(req("GET"), context))
+      expect(
+        (corpo["respostas"] as Record<string, unknown>[])[0],
+        "só id e título do verbete, e a marca vem de edited_at",
+      ).toEqual({
+        id: respostaDaConversa.id,
+        corpo: respostaDaConversa.body,
+        autor: "Helena Castro",
+        autorId: OUTRA_PESSOA,
+        propria: false,
+        criadaEm: DATA,
+        editada: true,
+        verbete: { id: "b0000000-0000-4000-8000-000000000001", nome: "Dra. Helena" },
+        removida: false,
+      })
+      expect(mock.inCalls).toContainEqual({
+        table: "arrival_guide_entries",
+        column: "source_reply_id",
+        values: [respostaDaConversa.id],
+      })
+      expect(mock.eqCalls).toContainEqual({
+        table: "arrival_guide_entries",
+        column: "status",
+        value: "approved",
+      })
+    })
+
+    it("a pergunta editada chega com a marca", async () => {
+      const mock = mockClient({ pedido: { ...pedido, edited_at: DATA } })
+      authenticate(mock)
+      const corpo = await json(await detalhe(req("GET"), context))
+      expect((corpo["pergunta"] as Record<string, unknown>)["editada"]).toBe(true)
+    })
+
+    it("resposta removida não leva verbete nem marca de edição", async () => {
+      const mock = mockClient({
+        respostas: [
+          { ...respostaDaConversa, author_id: null, body: null, is_removed: true, edited_at: DATA },
+        ],
+        verbetes: [
+          {
+            id: "b0000000-0000-4000-8000-000000000001",
+            name: "Dra. Helena",
+            source_reply_id: respostaDaConversa.id,
+          },
+        ],
+      })
+      authenticate(mock)
+      const corpo = await json(await detalhe(req("GET"), context))
+      expect((corpo["respostas"] as Record<string, unknown>[])[0]).toMatchObject({
+        removida: true,
+        editada: false,
+        verbete: null,
+      })
     })
 
     it("a resposta removida volta sem texto e sem autor", async () => {
@@ -530,6 +702,8 @@ describe("rotas de perguntas do app", () => {
           autorId: "",
           propria: false,
           criadaEm: DATA,
+          editada: false,
+          verbete: null,
           removida: true,
         },
       ])
@@ -1007,6 +1181,279 @@ describe("rotas de perguntas do app", () => {
       const mock = mockClient({ rpcError: { reopen_recommendation: { message: "boom" } } })
       authenticate(mock)
       const resposta = await pedirResolucao({ acao: "reabrir" })
+      expect(resposta.status).toBe(503)
+      expect(await json(resposta)).toEqual({ erro: "escrita-indisponivel" })
+    })
+  })
+
+  describe("edição e exclusão da pergunta (F09)", () => {
+    function editar(corpo: unknown, requestHeaders = headers) {
+      return editarPergunta(
+        req("PATCH", `${BASE}/${ID}`, JSON.stringify(corpo), requestHeaders),
+        context,
+      )
+    }
+
+    it("grava só título e assunto, com o autor da sessão no filtro", async () => {
+      const mock = mockClient({})
+      authenticate(mock)
+      const resposta = await editar({
+        titulo: "  Alguém indica pediatra que atenda pelo FuSEx?  ",
+        assunto: "  Minha filha tem 3 anos.  ",
+        categoria: "moradia",
+        author_id: OUTRA_PESSOA,
+      })
+      expect(resposta.status).toBe(200)
+      expect(await json(resposta)).toEqual({
+        pergunta: {
+          id: ID,
+          titulo: "Alguém indica pediatra que atenda pelo FuSEx?",
+          corpo: "Minha filha tem 3 anos.",
+          editada: true,
+        },
+      })
+      // A categoria não entra: editar não troca o tópico (F09 lote 2).
+      expect(mock.updates).toEqual([
+        {
+          table: "recommendation_requests",
+          value: {
+            title: "Alguém indica pediatra que atenda pelo FuSEx?",
+            body: "Minha filha tem 3 anos.",
+          },
+        },
+      ])
+      expect(mock.eqCalls).toContainEqual({
+        table: "recommendation_requests",
+        column: "author_id",
+        value: USER,
+      })
+    })
+
+    it.each([
+      ["título curto", { titulo: "curto", assunto: "" }],
+      [
+        "assunto acima do teto da criação",
+        { titulo: "Um título válido aqui", assunto: "a".repeat(61) },
+      ],
+      ["título que não é texto", { titulo: 7, assunto: "" }],
+      ["assunto que não é texto", { titulo: "Um título válido aqui", assunto: 7 }],
+    ])("corpo inválido (%s) é 400, sem tocar o banco", async (_label, corpo) => {
+      const mock = mockClient({})
+      authenticate(mock)
+      expect((await editar(corpo)).status).toBe(400)
+      expect(mock.updates).toHaveLength(0)
+    })
+
+    it("a pergunta de outra pessoa é 404, sem dizer que existe", async () => {
+      const mock = mockClient({ perguntaEditada: null })
+      authenticate(mock)
+      const resposta = await editar({ titulo: "Um título válido aqui", assunto: "" })
+      expect(resposta.status).toBe(404)
+      expect(await json(resposta)).toEqual({ erro: "pergunta-nao-encontrada" })
+    })
+
+    it("recusa da policy é 403 com frase fixa, sem a mensagem do Postgres", async () => {
+      const mock = mockClient({
+        updateError: { code: "42501", message: 'permission denied for table "x"' },
+      })
+      authenticate(mock)
+      const resposta = await editar({ titulo: "Um título válido aqui", assunto: "" })
+      expect(resposta.status).toBe(403)
+      const corpo = await json(resposta)
+      expect(corpo).toEqual({
+        erro: "recusado",
+        mensagem: "Sua conta não pode editar esta pergunta.",
+      })
+      expect(JSON.stringify(corpo)).not.toContain("permission denied")
+    })
+
+    it("erro inesperado do banco na edição é 503", async () => {
+      const mock = mockClient({ errorTable: "recommendation_requests" })
+      authenticate(mock)
+      expect((await editar({ titulo: "Um título válido aqui", assunto: "" })).status).toBe(503)
+    })
+
+    it("escrita por cookie exige a porta do app", async () => {
+      const mock = mockClient({})
+      authenticate(mock)
+      const semApp = { origin: "http://localhost:3000", "content-type": "application/json" }
+      expect((await editar({ titulo: "Um título válido aqui", assunto: "" }, semApp)).status).toBe(
+        403,
+      )
+      expect(
+        (
+          await editar(
+            { titulo: "Um título válido aqui", assunto: "" },
+            { ...headers, origin: "https://fora.example" },
+          )
+        ).status,
+      ).toBe(403)
+      expect(mock.updates).toHaveLength(0)
+    })
+
+    it("excluir a própria pergunta devolve o removido", async () => {
+      const mock = mockClient({})
+      authenticate(mock)
+      const resposta = await excluirPergunta(req("DELETE", `${BASE}/${ID}`), context)
+      expect(resposta.status).toBe(200)
+      expect(await json(resposta)).toEqual({ removido: true })
+      expect(mock.deletes).toContain("recommendation_requests")
+      expect(mock.eqCalls).toContainEqual({
+        table: "recommendation_requests",
+        column: "author_id",
+        value: USER,
+      })
+    })
+
+    it("a pergunta alheia ou inexistente é 404 ao excluir", async () => {
+      const mock = mockClient({ perguntaRemovida: [] })
+      authenticate(mock)
+      const resposta = await excluirPergunta(req("DELETE", `${BASE}/${ID}`), context)
+      expect(resposta.status).toBe(404)
+      expect(await json(resposta)).toEqual({ erro: "pergunta-nao-encontrada" })
+    })
+
+    it("id fora do formato é 404, sem consultar o banco", async () => {
+      const mock = mockClient({})
+      authenticate(mock)
+      const invalido = { params: Promise.resolve({ id: "nao-e-uuid" }) }
+      expect(
+        (await editarPergunta(req("PATCH", `${BASE}/nao-e-uuid`, "{}"), invalido)).status,
+      ).toBe(404)
+      expect((await excluirPergunta(req("DELETE", `${BASE}/nao-e-uuid`), invalido)).status).toBe(
+        404,
+      )
+      expect(mock.from).not.toHaveBeenCalled()
+    })
+  })
+
+  describe("edição e exclusão da resposta (F09)", () => {
+    const caminho = `${BASE}/${ID}/respostas/${respostaDaConversa.id}`
+
+    function editar(corpo: unknown, requestHeaders = headers) {
+      return editarResposta(
+        req("PATCH", caminho, JSON.stringify(corpo), requestHeaders),
+        contextoDaResposta,
+      )
+    }
+
+    it("grava o texto aparado, com pergunta e autor da sessão no filtro", async () => {
+      const mock = mockClient({})
+      authenticate(mock)
+      const resposta = await editar({ texto: "  A Dra. Helena atende FuSEx.  " })
+      expect(resposta.status).toBe(200)
+      expect(await json(resposta)).toEqual({
+        resposta: {
+          id: respostaDaConversa.id,
+          corpo: "A Dra. Helena atende FuSEx.",
+          editada: true,
+        },
+      })
+      expect(mock.updates).toEqual([
+        { table: "recommendation_replies", value: { body: "A Dra. Helena atende FuSEx." } },
+      ])
+      expect(mock.eqCalls).toEqual(
+        expect.arrayContaining([
+          { table: "recommendation_replies", column: "id", value: respostaDaConversa.id },
+          { table: "recommendation_replies", column: "request_id", value: ID },
+          { table: "recommendation_replies", column: "author_id", value: USER },
+        ]),
+      )
+    })
+
+    it.each([
+      ["texto vazio", { texto: "   " }],
+      ["texto curto", { texto: "ok" }],
+      ["texto acima do teto", { texto: "a".repeat(2001) }],
+      ["texto que não é string", { texto: 7 }],
+    ])("corpo inválido (%s) é 400, sem tocar o banco", async (_label, corpo) => {
+      const mock = mockClient({})
+      authenticate(mock)
+      expect((await editar(corpo)).status).toBe(400)
+      expect(mock.updates).toHaveLength(0)
+    })
+
+    it("PATCH e DELETE da resposta alheia respondem 404 sem confirmar existência", async () => {
+      const alheia = mockClient({ respostaEditada: null, respostaRemovida: [] })
+      authenticate(alheia)
+      const edicao = await editar({ texto: "A mesma equipe atendeu aqui." })
+      expect(edicao.status).toBe(404)
+      expect(await json(edicao)).toEqual({ erro: "resposta-nao-encontrada" })
+
+      const remocao = await excluirResposta(req("DELETE", caminho), contextoDaResposta)
+      expect(remocao.status).toBe(404)
+      expect(await json(remocao)).toEqual({ erro: "resposta-nao-encontrada" })
+    })
+
+    it("resposta em outra pergunta também é 404", async () => {
+      const mock = mockClient({ respostaEditada: null })
+      authenticate(mock)
+      const outra = {
+        params: Promise.resolve({ id: OUTRA_CIDADE, respostaId: respostaDaConversa.id }),
+      }
+      expect(
+        (
+          await editarResposta(
+            req(
+              "PATCH",
+              `${BASE}/${OUTRA_CIDADE}/respostas/${respostaDaConversa.id}`,
+              JSON.stringify({ texto: "A mesma equipe atendeu aqui." }),
+            ),
+            outra,
+          )
+        ).status,
+      ).toBe(404)
+    })
+
+    it("excluir a própria resposta devolve o removido", async () => {
+      const mock = mockClient({})
+      authenticate(mock)
+      const resposta = await excluirResposta(req("DELETE", caminho), contextoDaResposta)
+      expect(resposta.status).toBe(200)
+      expect(await json(resposta)).toEqual({ removido: true })
+      expect(mock.deletes).toContain("recommendation_replies")
+    })
+
+    it("id fora do formato é 404, sem consultar o banco", async () => {
+      const mock = mockClient({})
+      authenticate(mock)
+      const invalido = { params: Promise.resolve({ id: ID, respostaId: "nao-e-uuid" }) }
+      expect(
+        (
+          await editarResposta(
+            req(
+              "PATCH",
+              `${BASE}/${ID}/respostas/nao-e-uuid`,
+              JSON.stringify({ texto: "Uma resposta" }),
+            ),
+            invalido,
+          )
+        ).status,
+      ).toBe(404)
+      expect(
+        (await excluirResposta(req("DELETE", `${BASE}/${ID}/respostas/nao-e-uuid`), invalido))
+          .status,
+      ).toBe(404)
+      expect(mock.from).not.toHaveBeenCalled()
+    })
+
+    it("escrita por cookie exige a porta do app", async () => {
+      const mock = mockClient({})
+      authenticate(mock)
+      const semApp = { origin: "http://localhost:3000", "content-type": "application/json" }
+      expect((await editar({ texto: "A mesma equipe atendeu aqui." }, semApp)).status).toBe(403)
+      expect(
+        (await excluirResposta(req("DELETE", caminho, undefined, semApp), contextoDaResposta))
+          .status,
+      ).toBe(403)
+      expect(mock.updates).toHaveLength(0)
+      expect(mock.deletes).toHaveLength(0)
+    })
+
+    it("falha do banco na escrita é 503", async () => {
+      const mock = mockClient({ errorTable: "recommendation_replies" })
+      authenticate(mock)
+      const resposta = await editar({ texto: "A mesma equipe atendeu aqui." })
       expect(resposta.status).toBe(503)
       expect(await json(resposta)).toEqual({ erro: "escrita-indisponivel" })
     })

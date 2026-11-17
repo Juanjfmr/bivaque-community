@@ -86,7 +86,7 @@ export type RotaClassificada = Readonly<{
 }>
 
 /** Quantas rotas o manifesto cobre. Um rota nova exige classificação explícita. */
-export const TOTAL_DE_ROTAS = 108
+export const TOTAL_DE_ROTAS = 109
 
 function teste(arquivo: string, caso: string): ProvaDaRota {
   return { tipo: "teste", arquivo, caso }
@@ -277,6 +277,16 @@ const SESSAO: readonly Linha[] = [
   ["/api/app/perguntas/[id]/denuncia", "exigirSessao(", PORTA],
   ["/api/app/perguntas/[id]/resolucao", "exigirSessao(", PORTA],
   ["/api/app/perguntas/[id]/respostas", "exigirSessao(", PORTA],
+  // F09 lote 2 (RUN-185): editar e excluir a própria resposta. Autoria no
+  // filtro e na policy; alheia e inexistente caem no mesmo 404.
+  [
+    "/api/app/perguntas/[id]/respostas/[respostaId]",
+    "exigirSessao(",
+    teste(
+      "tests/unit/app-api/perguntas/rotas.test.ts",
+      "PATCH e DELETE da resposta alheia respondem 404 sem confirmar existência",
+    ),
+  ],
   ["/api/app/perguntas/[id]/salvo", "exigirSessao(", PORTA],
   ["/api/app/perguntas/salvas", "exigirSessao(", PORTA],
   ["/api/app/voce", "exigirSessao(", PORTA],
