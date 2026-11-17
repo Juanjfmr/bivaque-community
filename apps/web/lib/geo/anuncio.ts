@@ -135,35 +135,51 @@ async function localizarCep(
   if (cep === null) return { ok: false, erro: "cep-invalido" }
 
   const emCache = await lerCepDoCache(pedido.cliente, cep)
+  // Vencida (SEC-016) conta como ausente: consulta o provedor e regrava. A
+  // coordenada velha fica como rede — provedor fora ou limite negado ainda
+  // resolvem o CEP em vez de falhar.
+  const vencida = emCache?.vencida
+    ? { latitude: emCache.latitude, longitude: emCache.longitude }
+    : null
   let coordenada: Readonly<{ latitude: number; longitude: number }> | null =
-    emCache === null ? null : { latitude: emCache.latitude, longitude: emCache.longitude }
+    emCache !== null && !emCache.vencida
+      ? { latitude: emCache.latitude, longitude: emCache.longitude }
+      : null
   let bairroDoCep = emCache?.bairro ?? null
 
   if (coordenada === null) {
     // Cache hit não consome cota: só a chamada real ao provedor é limitada.
     const limite = consumirConsulta(pedido.pessoa)
     if (!limite.liberado) {
-      return { ok: false, erro: "limite-de-consultas", esperarMs: limite.esperarMs }
-    }
-    const geocodificada = await geocodificarCep(cep)
-    if (geocodificada.estado === "nao-encontrado") return { ok: false, erro: "cep-nao-encontrado" }
-    if (geocodificada.estado === "indisponivel") {
-      return { ok: false, erro: "geocodificador-indisponivel" }
-    }
-    bairroDoCep = geocodificada.endereco.bairro ?? bairroDoCep
-    if (geocodificada.estado === "encontrado") {
-      coordenada = geocodificada.coordenada
-      try {
-        // O bairro é gravado junto: sem ele o cache hit perderia o bairro e só a
-        // PRIMEIRA geocodificação de cada CEP no país teria esse dado (RUN-179).
-        await gravarCepNoCache(pedido.cliente, cep, geocodificada.coordenada, bairroDoCep)
-      } catch {
-        // Sem cache o próximo pedido geocodifica de novo; não é motivo para
-        // recusar o anúncio ou o pedido que a pessoa está enviando.
+      if (vencida === null) {
+        return { ok: false, erro: "limite-de-consultas", esperarMs: limite.esperarMs }
       }
+      coordenada = vencida
+    } else {
+      const geocodificada = await geocodificarCep(cep)
+      if (geocodificada.estado === "indisponivel") {
+        if (vencida === null) return { ok: false, erro: "geocodificador-indisponivel" }
+        coordenada = vencida
+      } else {
+        if (geocodificada.estado === "nao-encontrado") {
+          return { ok: false, erro: "cep-nao-encontrado" }
+        }
+        bairroDoCep = geocodificada.endereco.bairro ?? bairroDoCep
+        if (geocodificada.estado === "encontrado") {
+          coordenada = geocodificada.coordenada
+          try {
+            // O bairro é gravado junto: sem ele o cache hit perderia o bairro e só a
+            // PRIMEIRA geocodificação de cada CEP no país teria esse dado (RUN-179).
+            await gravarCepNoCache(pedido.cliente, cep, geocodificada.coordenada, bairroDoCep)
+          } catch {
+            // Sem cache o próximo pedido geocodifica de novo; não é motivo para
+            // recusar o anúncio ou o pedido que a pessoa está enviando.
+          }
+        }
+      }
+      // `sem-coordenada`: a coordenada fica nula e o ponto publicado é decidido
+      // pelo chamador (anúncio força aproximada; pedido fica sem distância).
     }
-    // `sem-coordenada`: a coordenada fica nula e o ponto publicado é decidido
-    // pelo chamador (anúncio força aproximada; pedido fica sem distância).
   }
 
   const bairroDerivado =

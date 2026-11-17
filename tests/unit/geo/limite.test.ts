@@ -1,10 +1,20 @@
-import { describe, expect, it } from "vitest"
+import { beforeEach, describe, expect, it } from "vitest"
 
 // RUN-175 — o limitador deslizante da geocodificação (ADR-20261116 §2): 20
-// consultas reais por pessoa por hora; cache hit não chega aqui.
-import { consumirConsulta, JANELA_MS, TETO_POR_PESSOA } from "web/lib/geo/limite"
+// consultas reais por pessoa por hora; cache hit não chega aqui. A janela vive
+// no módulo, então cada caso começa com as janelas zeradas.
+import {
+  consumirConsulta,
+  JANELA_MS,
+  reiniciarJanelasParaTeste,
+  TETO_POR_PESSOA,
+} from "web/lib/geo/limite"
 
 const AGORA = 1_800_000_000_000
+
+beforeEach(() => {
+  reiniciarJanelasParaTeste()
+})
 
 describe("consumirConsulta", () => {
   it("libera até o teto e recusa a próxima com o tempo de espera", () => {

@@ -2,6 +2,7 @@
 
 - Status: Aceito por delegação — aguarda ratificação do dono (16/11/2026, lote RUN-175/LOC-IMPL L1)
 - Emenda: 16/11/2026, SEC-013 (auditoria R3 do lote 2a) — F1, F2, F3, F4 e F5. Ver a emenda no fim do documento.
+- Emenda: 17/11/2026, SEC-016 — teto global de 300 consultas/hora e validade de 180 dias do cache de CEP. Ver a segunda emenda no fim do documento.
 - Decide sobre: ADR-20261022-localizacao-padrao-de-mercado (aceito pelo dono 22/10) — complementa três lacunas de implementação que ele não respondeu; nenhuma muda as regras §§1-3 que o dono já aceitou
 - Revisão independente e parecer de segurança registrados no card no fechamento
 
@@ -18,7 +19,7 @@ E um quarto, de escopo: o card LOC-IMPL fala em "mapa", mas o LANCAMENTO não us
 ## Decisão
 
 1. **Avô sem backfill forjado**: imóveis ativos já publicados sem CEP continuam válidos e funcionam; o CEP passa a ser exigido na PRIMEIRA EDIÇÃO de cada um (POST novo sempre exige). Nada de coordenada inventada em lote — o ADR-20261022 diz "nunca inventar coordenada"; registrar a coluna `cep null` como "não geocodificado" e seguir o texto atual (bairro · cidade).
-2. **Limite por pessoa antes de abrir a torneira**: um limitador deslizante por usuário (mesma família do limitador de entrada, SEC-007) sobre chamadas reais à BrasilAPI/Google (cache hit não conta), com 429 honesto e mensagem própria. **Fecha parcialmente** o card LOC-LIMITE-GEOCODIFICACAO: o anúncio, o pedido e, desde a emenda SEC-013 de 16/11, o PUT do perfil passam pelo limitador; contador no banco, TTL do cache e teto global seguem abertos no card.
+2. **Limite por pessoa antes de abrir a torneira**: um limitador deslizante por usuário (mesma família do limitador de entrada, SEC-007) sobre chamadas reais à BrasilAPI/Google (cache hit não conta), com 429 honesto e mensagem própria. **Fecha parcialmente** o card LOC-LIMITE-GEOCODIFICACAO: o anúncio, o pedido e, desde a emenda SEC-013 de 16/11, o PUT do perfil passam pelo limitador; contador no banco, TTL do cache e teto global seguem abertos no card (teto global e validade do cache fechados na emenda SEC-016 de 17/11).
 3. **CEP sem coordenada não bloqueia anúncio**: sucesso parcial — a cidade/bairro derivados do CEP valem, coordenada fica nula, `localizacao_publica` é FORÇADA a aproximada e o texto mostra bairro · cidade. Fecha o card LOC-CEP-SEM-COORDENADA. Google-reserva continua opcional (sem chave = só BrasilAPI; o código já trata).
 4. **Mapa NÃO entra**: a escolha exato/aproximado é satisfeita em texto (endereço publicado quando exato; bairro/raio arredondado quando aproximado). Infra de mapa (aprovar o ADR-20261016 + biblioteca + privacidade de tile) vira card pós-lançamento nomeado. O item do checklist do LOC-IMPL é resolvido por esta decisão registrada, não por silêncio.
 
@@ -73,3 +74,37 @@ implementação desta decisão. O coordenador decidiu, por delegação, na mesma
 5. **F5 e F7 (LOW).** O mesmo payload explícito cobre o solicitante lendo de
    volta o próprio CEP e a própria coordenada (F5), e o drift "fecha o
    LOC-LIMITE" está corrigido no §2 e na linha da `RATIFICACAO.md` (F7).
+
+## Emenda de 17/11/2026 — SEC-016 (teto global e validade do cache de CEP)
+
+O §2 acima deixou dois buracos abertos no card LOC-LIMITE-GEOCODIFICACAO: o
+limite por pessoa não tem teto de custo quando muita gente consulta ao mesmo
+tempo, e `public.cep_geocodes` nunca envelhece. O coordenador decidiu, por
+delegação, na mesma linha do que já está aceito aqui:
+
+1. **Teto global de 300 consultas reais por hora, por processo.** Vive no mesmo
+   limitador em memória do teto por pessoa (`apps/web/lib/geo/limite.ts`), com a
+   mesma janela deslizante e o mesmo formato de recusa (`esperarMs`). Acima disso
+   o anúncio, o pedido e o PUT do perfil respondem o mesmo **429 com
+   `retry-after`** do limite por pessoa. Quem é barrado pelo teto global **não
+   consome a cota pessoal** — não houve consulta, não há consumo. Cache hit
+   continua não passando pelo limitador. O limite por pessoa (20 por hora)
+   permanece como está.
+2. **Validade de 180 dias na leitura do cache.** Linha com `fetched_at` mais
+   velho que isso conta como **ausente**: o provedor é consultado e a linha é
+   regravada pelo mesmo upsert (com `fetched_at` novo). Dentro da validade nada
+   muda: não há ida ao provedor nem consumo de cota.
+3. **Linha vencida é rede, não erro.** Se o provedor estiver indisponível ou o
+   limitador negar a consulta, o CEP continua resolvendo com a coordenada
+   vencida, em vez de devolver 503 ou 429 — CEP raramente muda de lugar, e a
+   pessoa não fica sem publicar por causa do frescor do cache.
+4. **Sem expurgo agendado.** `cep_geocodes` é por CEP: não tem dono, não guarda
+   dado de pessoa e a regravação mantém cada linha viva à medida que volta a ser
+   consultada. Uma rotina de expurgo só apagaria linha boa que ninguém pediu de
+   novo, sem reduzir risco nenhum. Nada de job novo.
+5. **Sem migration.** `fetched_at` já existe na tabela; nenhuma coluna, grant ou
+   policy muda.
+
+O contador no banco (em vez da janela em memória) **segue aberto** no card: com
+mais de uma instância do servidor o teto efetivo se multiplica pelo número de
+instâncias, e é aceito para o lançamento pelo mesmo motivo do §2.
