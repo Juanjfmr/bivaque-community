@@ -1,4 +1,4 @@
-// CONTRATO DO SET DE ÍCONES — EXP-NATIVO-001 (gpt-6.1-terra) substitui a implementação.
+// CONTRATO DO SET DE ÍCONES — EXP-005 (gpt-6.1-terra) substitui a implementação.
 // A API (NomeIcone, IconeProps, Icone) é fixa: as telas importam só daqui.
 // Implementação provisória: lucide, até o set próprio em SVG chegar.
 import {

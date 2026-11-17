@@ -1,0 +1,54 @@
+task_id: EXP-006
+
+objective: >
+  O app nativo de teste tem movimento de assinatura: toque com mola e háptico, chip e botão com
+  estados animados, botão Criar em Skia, esqueleto com brilho em Skia, carregamento, sucesso e
+  vazios em Lottie, e um ponto de encaixe para arquivos Rive, tudo desligável por reduzir movimento.
+
+authority:
+  - instrução do dono em 17/11/2026 (Rive para estados interativos, Lottie, Reanimated, Skia, Moti)
+  - docs/decisions/ADR-20261102-paleta-fria.md
+  - docs/LANCAMENTO.md (critério 5, movimento reduzido)
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: experiments/bivaque-nativo/components/motion/index.tsx é provisório sem animação no commit 974ed972c; assets/lottie e assets/rive vazios
+
+allowed_paths:
+  - experiments/bivaque-nativo/components/motion/
+  - experiments/bivaque-nativo/assets/lottie/
+  - experiments/bivaque-nativo/assets/rive/
+  - experiments/bivaque-nativo/docs/MOVIMENTO.md
+
+forbidden:
+  - mudar nome, props ou tipos exportados por components/motion/index.tsx
+  - inventar arquivo .riv binário ou baixar .riv de terceiros
+  - instalar dependência nova
+  - tocar fora de allowed_paths
+
+acceptance:
+  - Pressionavel escala com mola no UI thread (Reanimated) e dispara háptico leve quando haptico=true
+  - Chip e BotaoAcao animam a troca de estado; BotaoAcao mostra enviando, feito e erro de forma distinta, com rótulo acessível em cada estado
+  - BotaoCriar é desenhado em Skia na cor Brasa do tema, com alvo de toque de pelo menos 48 dp e rótulo Criar
+  - Esqueleto tem brilho desenhado em Skia
+  - Carregando, Sucesso e EstadoVazio usam Lottie JSON escritos à mão em assets/lottie (carregando, sucesso, vazio), válidos no esquema Lottie 5.x e nas cores da paleta
+  - Entrada escalona itens com Moti
+  - com AccessibilityInfo.isReduceMotionEnabled verdadeiro, nenhuma animação contínua roda e as transições viram troca direta
+  - components/motion/rive.tsx carrega assets/rive/<nome>.riv pelo mapa de assets/rive/index.ts quando o arquivo existir e cai no fallback Reanimated quando não existir
+  - docs/MOVIMENTO.md especifica as state machines Rive (botao, chip, carregando, vazio) com nomes de inputs e estados, para serem desenhadas no editor do Rive
+
+proof:
+  - cd experiments/bivaque-nativo && npx tsc --noEmit
+  - node -e validando que cada assets/lottie/*.json tem v, fr, ip, op, w, h e layers
+  - captura das animações rodando no web (expo export web) em .visual/exp-nativo/
+
+risk: interface
+risk_level: R1
+
+reviewer_must_differ_from_executor: true
+
+retry_budget: 2
+on_budget_exhausted: HUMAN_DECISION
+
+closure:
+  requires_runtime_evidence: true

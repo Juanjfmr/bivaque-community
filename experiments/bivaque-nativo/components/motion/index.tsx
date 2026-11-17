@@ -1,4 +1,4 @@
-// CONTRATO DO MOVIMENTO DE ASSINATURA — EXP-NATIVO-002 (gpt-6-luna) substitui a implementação.
+// CONTRATO DO MOVIMENTO DE ASSINATURA — EXP-006 (gpt-6-luna) substitui a implementação.
 // As assinaturas exportadas são fixas: as telas importam só daqui.
 // Implementação provisória: sem animação, só para as telas compilarem.
 import type { ReactNode } from "react"

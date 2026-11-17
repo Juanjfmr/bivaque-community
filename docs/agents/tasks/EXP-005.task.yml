@@ -1,0 +1,49 @@
+task_id: EXP-005
+
+objective: >
+  O app nativo de teste tem um set próprio e consistente de 33 ícones e 6 ilustrações em SVG,
+  desenhados por IA (GPT), servidos pela API fixa de components/icons sem depender do lucide.
+
+authority:
+  - instrução do dono em 17/11/2026 (app de teste em React Native com ícones e ilustrações próprios)
+  - docs/decisions/ADR-20261102-paleta-fria.md
+  - experiments/bivaque-nativo/REFERENCIAS.md
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: experiments/bivaque-nativo/components/icons/index.tsx importa lucide-react-native (provisório); assets/icons e assets/ilustracoes vazios no commit 974ed972c
+
+allowed_paths:
+  - experiments/bivaque-nativo/assets/icons/
+  - experiments/bivaque-nativo/assets/ilustracoes/
+  - experiments/bivaque-nativo/components/icons/
+
+forbidden:
+  - mudar a API exportada (NOMES_ICONES, NomeIcone, IconeProps, Icone)
+  - copiar desenho de set de terceiros (lucide, phosphor, material, heroicons)
+  - instalar dependência nova
+  - tocar fora de allowed_paths
+
+acceptance:
+  - existe um SVG por nome de NOMES_ICONES em assets/icons, grade 24x24, traço 1.75, pontas e junções arredondadas, sem preenchimento no estado normal
+  - o estado ativo de inicio, comunidade, mercado, voce, util e salvar é uma variante preenchida
+  - components/icons/index.tsx renderiza os ícones com react-native-svg sem importar lucide-react-native
+  - assets/ilustracoes tem vazio-conversas, vazio-mercado, vazio-comunidade, boas-vindas, sem-conexao e publicado, com no máximo 4 cores tiradas da paleta (ardósia, brasa, cinzas frios) e legíveis no claro e no escuro
+  - existe components/icons/ilustracoes.tsx exportando Ilustracao({ nome, largura }) para os 6 nomes de NomeIlustracao
+  - assets/icons/PRANCHA.html mostra todos os ícones e ilustrações lado a lado, claro e escuro
+
+proof:
+  - cd experiments/bivaque-nativo && npx tsc --noEmit
+  - grep -r "lucide" experiments/bivaque-nativo/components/icons retorna vazio
+  - captura da PRANCHA.html em claro e escuro em .visual/exp-nativo/
+
+risk: interface
+risk_level: R1
+
+reviewer_must_differ_from_executor: true
+
+retry_budget: 2
+on_budget_exhausted: HUMAN_DECISION
+
+closure:
+  requires_runtime_evidence: true

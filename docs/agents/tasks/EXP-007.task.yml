@@ -1,0 +1,53 @@
+task_id: EXP-007
+
+objective: >
+  O app nativo de teste tem as telas principais navegáveis com dados de demonstração: Início,
+  Comunidade (perguntas e grupos), Criar, Mercado (desapegos e imóveis) com detalhe, Conversas com
+  uma conversa aberta, e Você, todas com componentes do React Native Reusables, no claro e no escuro.
+
+authority:
+  - instrução do dono em 17/11/2026 (versão de teste do app em React Native)
+  - experiments/bivaque-nativo/REFERENCIAS.md (régua Nextdoor no Mobbin)
+  - docs/decisions/ADR-20261102-paleta-fria.md
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: experiments/bivaque-nativo/app/ só tem telas provisórias com um título no commit 974ed972c
+
+allowed_paths:
+  - experiments/bivaque-nativo/app/
+  - experiments/bivaque-nativo/components/telas/
+  - experiments/bivaque-nativo/lib/dados/
+
+forbidden:
+  - editar components/icons, components/motion, components/ui, lib/theme.ts, global.css ou app/_layout.tsx e app/(abas)/_layout.tsx
+  - exibir Força, OM, posto, graduação ou selo de verificação de outro membro
+  - usar dado real de pessoa, CPF, telefone ou endereço exato real
+  - instalar dependência nova
+  - usar cor fixa fora das classes do tema (bg-background, bg-card, text-foreground, text-muted-foreground, border-border, bg-primary, bg-brasa)
+
+acceptance:
+  - as 4 abas e o modal Criar abrem sem erro; Conversas abre pelo ícone no topo do Início
+  - Início mostra a cidade, atalhos e um feed de cartões no padrão da referência do Nextdoor
+  - Comunidade alterna Perguntas e Grupos (Tabs do RN Reusables) e abre o detalhe de uma pergunta com respostas
+  - Mercado tem busca, chips de filtro (Chip de components/motion) e grade de 2 colunas; abre o detalhe do anúncio com o botão Tenho interesse que abre uma conversa
+  - Criar tem os tipos Pergunta, Publicação em grupo, Evento e Anúncio, um campo de texto e Publicar com BotaoAcao (parado, enviando, feito)
+  - Você mostra perfil, Salvos, Família, Ajustes com troca de tema claro e escuro, e Apagar conta com confirmação em AlertDialog
+  - toda lista usa FlatList; todo botão só de ícone tem accessibilityLabel; alvos de toque de pelo menos 44
+  - os estados vazios usam EstadoVazio e os carregamentos usam Carregando ou Esqueleto
+
+proof:
+  - cd experiments/bivaque-nativo && npx tsc --noEmit
+  - cd experiments/bivaque-nativo && npx expo export --platform web
+  - captura das telas em 375 de largura, claro e escuro, em .visual/exp-nativo/
+
+risk: interface
+risk_level: R1
+
+reviewer_must_differ_from_executor: true
+
+retry_budget: 2
+on_budget_exhausted: HUMAN_DECISION
+
+closure:
+  requires_runtime_evidence: true
