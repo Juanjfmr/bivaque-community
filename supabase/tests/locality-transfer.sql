@@ -1,7 +1,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(9);
+select plan(11);
 
 -- Onda T Task 1: the transfer declaration.
 --
@@ -151,6 +151,52 @@ select throws_ok(
   '23514',
   'no current locality to leave',
   'a user with no current membership cannot declare a transfer'
+);
+
+-- ── Case 5 (SEC-014/A2): conta suspensa não declara ─────────────────────────
+-- member-two tem vínculo `current` (foundation.inc) e não é quem transferiu
+-- nos casos acima. A suspensão entra como postgres: authenticated não escreve
+-- public.profile_suspensions (é o veto anti-auto-reabilitação).
+reset role;
+insert into public.profile_suspensions (user_id)
+  values ('10000000-0000-4000-8000-000000000002');
+
+set local role authenticated;
+select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000002', true);
+select set_config('request.jwt.claim.role', 'authenticated', true);
+
+select throws_ok(
+  $$
+    select * from public.declare_locality_transfer(
+      '00000000-0000-4000-8000-000000000003'::uuid,
+      '2027-01-15'::date
+    )
+  $$,
+  '42501',
+  'account unavailable',
+  'conta suspensa com sessao valida nao declara transferencia'
+);
+
+-- ── Case 6 (SEC-014/A2): conta com exclusão pedida não declara ──────────────
+reset role;
+delete from public.profile_suspensions where user_id = '10000000-0000-4000-8000-000000000002';
+insert into public.account_deletion_requests (user_id, due_at)
+  values ('10000000-0000-4000-8000-000000000002', now() + interval '30 days');
+
+set local role authenticated;
+select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000002', true);
+select set_config('request.jwt.claim.role', 'authenticated', true);
+
+select throws_ok(
+  $$
+    select * from public.declare_locality_transfer(
+      '00000000-0000-4000-8000-000000000003'::uuid,
+      '2027-01-15'::date
+    )
+  $$,
+  '42501',
+  'account unavailable',
+  'conta com exclusao pedida nao declara transferencia'
 );
 
 select * from finish();

@@ -13,7 +13,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(20);
+select plan(21);
 
 \ir fixtures/foundation.inc
 
@@ -79,6 +79,15 @@ select is(
   'uma unica query nao revela declaracoes de mais de um titular'
 );
 
+-- SEC-014 (A1 de 16/11): authenticated perdeu o execute desta RPC, e ela fica
+-- sem porta ate o BLOCK-AFFILIATION decidir a exibicao. As assercoes de
+-- CONTEUDO abaixo continuam vivas, rodando como o DONO da funcao (postgres):
+-- o corpo e os vetos sao os mesmos, e para authenticated e anon o que mudou e
+-- so a porta — provada como 42501 logo adiante.
+reset role;
+select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000002', true);
+select set_config('request.jwt.claim.role', 'authenticated', true);
+
 -- A leitura de terceiro acontece por alvo, e so devolve o visivel.
 select is(
   (select count(*)::int from public.profile_affiliations_for('10000000-0000-4000-8000-000000000001')),
@@ -114,9 +123,8 @@ select is(
   'campo nunca declarado responde igual ao oculto: nao ha oraculo'
 );
 
--- Outra cidade nao le nem o campo visivel.
+-- Outra cidade nao le nem o campo visivel (conteudo: como dono da funcao).
 reset role;
-set local role authenticated;
 select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000003', true);
 select set_config('request.jwt.claim.role', 'authenticated', true);
 
@@ -140,15 +148,27 @@ select throws_ok(
 
 select throws_ok(
   $$ select * from public.profile_affiliations_for('10000000-0000-4000-8000-000000000001') $$,
-  null, null,
+  '42501', null,
   'anon nao executa a leitura por alvo'
+);
+
+-- SEC-014 (prova positiva da revogacao): authenticated tambem recebe 42501.
+-- Sem esta assercao, a revogacao ficaria provada so pelo teste da porta.
+reset role;
+set local role authenticated;
+select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000002', true);
+select set_config('request.jwt.claim.role', 'authenticated', true);
+
+select throws_ok(
+  $$ select * from public.profile_affiliations_for('10000000-0000-4000-8000-000000000001') $$,
+  '42501', null,
+  'authenticated nao executa mais a leitura por alvo (SEC-014)'
 );
 
 -- T4 (achado A3): suspenso com token valido nao le.
 reset role;
 insert into public.profile_suspensions (user_id)
   values ('10000000-0000-4000-8000-000000000002');
-set local role authenticated;
 select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000002', true);
 select set_config('request.jwt.claim.role', 'authenticated', true);
 
@@ -163,7 +183,6 @@ reset role;
 delete from public.profile_suspensions where user_id = '10000000-0000-4000-8000-000000000002';
 insert into public.account_deletion_requests (user_id, due_at)
   values ('10000000-0000-4000-8000-000000000001', now() + interval '30 days');
-set local role authenticated;
 select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000002', true);
 select set_config('request.jwt.claim.role', 'authenticated', true);
 
@@ -193,7 +212,6 @@ select is(
 );
 
 reset role;
-set local role authenticated;
 select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000002', true);
 select set_config('request.jwt.claim.role', 'authenticated', true);
 
@@ -203,7 +221,9 @@ select is(
   'e o terceiro tambem le 0: o valor virou inalcancavel'
 );
 
--- Ninguem declara pelo outro.
+-- Ninguem declara pelo outro (de volta ao papel que avalia a policy).
+set local role authenticated;
+
 select throws_ok(
   $$ insert into public.profile_affiliations (user_id, field, value, is_visible)
      values ('10000000-0000-4000-8000-000000000001', 'om', 'invadido', true) $$,
