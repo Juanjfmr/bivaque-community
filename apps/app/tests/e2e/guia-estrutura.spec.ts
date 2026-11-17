@@ -199,7 +199,7 @@ test.describe("estrutura do Guia", () => {
     await page.getByRole("button", { name: "Sugerir um lugar" }).click()
     await expect(page.locator("#sugestao-nome")).toBeVisible()
     await expect(page.locator("#sugestao-categoria")).toBeVisible()
-    await page.getByRole("dialog").getByRole("button", { name: "Fechar" }).click()
+    await page.getByRole("dialog").getByRole("button", { name: "Fechar", exact: true }).click()
 
     // A porta que resta é real: a conversa da comunidade, onde a indicação mora.
     await contribuir.getByRole("button", { name: "Abrir a comunidade" }).click()
