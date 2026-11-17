@@ -41,6 +41,13 @@ allowed_paths:
   - apps/web/proxy.ts
   - tests/unit/convite/invite-actions.test.ts
   - tests/unit/convite/invite-screen.test.ts
+  # Emenda do executor (17/11): os dois arquivos abaixo importam a pasta que sai.
+  # invite-form.test.ts importa invite-form.tsx; entrada-antiga-redirect.test.ts
+  # afirmava que /convite fica fora do redirect. Sem eles, o gate fica vermelho
+  # por arquivo removido — o coordenador pode recusar a inclusão.
+  - tests/unit/convite/invite-form.test.ts
+  - tests/unit/infra/entrada-antiga-redirect.test.ts
+  - tests/unit/onboarding/proxy-portao-do-app.test.ts
   - tests/unit/infra/lan-troca-redirect.test.ts
   - tests/unit/security
   - tests/scope
@@ -59,7 +66,7 @@ forbidden:
 
 acceptance:
   - "next.config.ts: /convite redireciona (307) para /app/entrar; com ?codigo=X, o destino leva ?convite=X (e nenhum outro parâmetro com dado de quem foi convidado); sem ciclo; lan-troca-redirect prova os dois casos e a ausência da pasta (preauth)/convite."
-  - "A pasta apps/web/app/(preauth)/convite sai inteira (page, form, actions, css); testes que importavam as actions saem ou passam a cobrir o caminho do app; o relatório traz o git grep provando que nenhum import sobrou e que previewFamilyInviteCode/acceptFamilyInviteCode só têm consumidores do app."
+  - "A pasta apps/web/app/(preauth)/convite sai inteira (page, form, actions, css); testes que importavam as actions saem ou passam a cobrir o caminho do app; o relatório traz o git grep provando que nenhum import sobrou e que previewFamilyInviteCode e acceptFamilyInviteCode só têm consumidores do app."
   - "Portão de rotas e superfícies: a entrada pública de /convite em route-surface.ts deixa de declarar tela (ou passa a declarar o redirect), e os censos e testes de escopo/segurança que contavam a tela são ajustados com o motivo."
   - "link-crawl: nenhuma porta declarada sobrando para /convite; se algum link antigo ainda apontar para lá, ele segue o 307 até o app."
   - "Emenda do ADR-20261111 registra o caminho único do convite pelo app e a saída da tela antiga com cliente de serviço e senha; o relatório traz a linha pronta da RATIFICACAO.md."
