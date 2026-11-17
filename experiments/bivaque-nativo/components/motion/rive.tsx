@@ -2,6 +2,7 @@ import type { ReactNode } from "react"
 import { useEffect } from "react"
 import Rive, { useRive } from "rive-react-native"
 import { ARQUIVOS_RIVE, type NomeRive } from "../../assets/rive"
+import { useReduzirMovimento } from "./reduzir-movimento"
 
 export interface AnimacaoRiveProps {
   nome: NomeRive
@@ -12,6 +13,7 @@ export interface AnimacaoRiveProps {
 
 export function AnimacaoRive({ nome, stateMachine, entradas, fallback }: AnimacaoRiveProps) {
   const source = ARQUIVOS_RIVE[nome]
+  const reduzir = useReduzirMovimento()
   const [ref, rive] = useRive()
   useEffect(() => {
     if (!rive || !stateMachine || !entradas) return
@@ -20,7 +22,7 @@ export function AnimacaoRive({ nome, stateMachine, entradas, fallback }: Animaca
       else rive.setInputState(stateMachine, nomeEntrada, valor)
     }
   }, [entradas, rive, stateMachine])
-  return source === undefined ? (
+  return source === undefined || reduzir ? (
     fallback
   ) : (
     <Rive ref={ref} source={source} stateMachineName={stateMachine} />
