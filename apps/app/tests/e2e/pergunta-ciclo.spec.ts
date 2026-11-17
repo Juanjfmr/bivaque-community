@@ -189,9 +189,10 @@ test("edita a própria resposta e a marca acompanha a resposta", async ({ page }
   await menu(page).getByRole("button", { name: "Editar resposta", exact: true }).click()
   // O compositor do fim da tela também se chama "Sua resposta": o campo da
   // edição é o de dentro do diálogo.
-  await page.getByRole("dialog").getByLabel("Sua resposta").fill(
-    "A Dra. Helena atende pelo convênio, no centro.",
-  )
+  await page
+    .getByRole("dialog")
+    .getByLabel("Sua resposta")
+    .fill("A Dra. Helena atende pelo convênio, no centro.")
   await page.getByRole("button", { name: "Salvar", exact: true }).click()
 
   await expect(page.getByText("A Dra. Helena atende pelo convênio, no centro.")).toBeVisible()
