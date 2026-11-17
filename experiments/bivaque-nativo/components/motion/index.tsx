@@ -19,10 +19,14 @@ import { Path, Svg } from "react-native-svg"
 import { HEX, THEME } from "../../lib/theme"
 import { Ilustracao } from "../icons/ilustracoes"
 import { lottieDoTema } from "./lottie-tema"
+import { AnimacaoRive } from "./rive"
 import { useReduzirMovimento } from "./reduzir-movimento"
 
 const carregando = require("../../assets/lottie/carregando.json")
 const sucesso = require("../../assets/lottie/sucesso.json")
+const vazio = require("../../assets/lottie/vazio.json")
+
+export { AnimacaoRive } from "./rive"
 
 export interface PressionavelProps extends Omit<PressableProps, "children"> {
   children: ReactNode
@@ -76,26 +80,31 @@ export function Chip({ rotulo, ativo, aoAlternar }: ChipProps) {
   const { colorScheme } = useColorScheme()
   const esquema = colorScheme ?? "light"
   return (
-    <MotiView
-      animate={{
-        backgroundColor: ativo ? THEME[esquema].primary : THEME[esquema].muted,
-        scale: ativo ? 1 : 0.98,
-      }}
-      transition={{ type: "timing", duration: reduzir ? 0 : 220 }}
-      style={{ borderRadius: 999 }}
-    >
-      <Pressable
+    <Pressable
         hitSlop={4}
         accessibilityRole="button"
         accessibilityState={{ selected: ativo }}
         onPress={() => aoAlternar(!ativo)}
         style={{ minHeight: 44, paddingHorizontal: 16, justifyContent: "center" }}
       >
-        <Text style={{ color: ativo ? HEX[esquema].primaryForeground : THEME[esquema].foreground }}>
-          {rotulo}
-        </Text>
+        <AnimacaoRive
+          nome="chip"
+          stateMachine="chip"
+          entradas={{ ativo, pressionado: false }}
+          fallback={(
+            <MotiView
+              animate={{
+                backgroundColor: ativo ? THEME[esquema].primary : THEME[esquema].muted,
+                scale: ativo ? 1 : 0.98,
+              }}
+              transition={{ type: "timing", duration: reduzir ? 0 : 220 }}
+              style={{ borderRadius: 999, minHeight: 44, paddingHorizontal: 16, justifyContent: "center" }}
+            >
+              <Text style={{ color: ativo ? HEX[esquema].primaryForeground : THEME[esquema].foreground }}>{rotulo}</Text>
+            </MotiView>
+          )}
+        />
       </Pressable>
-    </MotiView>
   )
 }
 
@@ -156,12 +165,18 @@ export function BotaoAcao({ rotulo, estado, aoPressionar, variante = "acao" }: B
           gap: 8,
         }}
       >
-        {estado === "enviando" ? (
-          <ActivityDots cor={cor} reduzir={reduzir} />
-        ) : estado === "feito" ? (
-          <Check cor={cor} />
-        ) : null}
-        <Text style={{ color: cor, fontWeight: "600" }}>{rotuloAtual}</Text>
+        <AnimacaoRive
+          nome="botao"
+          stateMachine="botao"
+          entradas={{ pressionado: false, enviando: estado === "enviando", feito: estado === "feito", erro: estado === "erro" }}
+          fallback={(
+            <>
+              {estado === "enviando" ? <ActivityDots cor={cor} reduzir={reduzir} /> : null}
+              {estado === "feito" ? <Check cor={cor} reduzir={reduzir} /> : null}
+              <Text style={{ color: cor, fontWeight: "600" }}>{rotuloAtual}</Text>
+            </>
+          )}
+        />
       </Pressable>
     </Animated.View>
   )
@@ -198,11 +213,11 @@ function ActivityDot({ cor, atraso, reduzir }: { cor: string; atraso: number; re
     />
   )
 }
-function Check({ cor }: { cor: string }) {
+function Check({ cor, reduzir }: { cor: string; reduzir: boolean }) {
   const progresso = useSharedValue(24)
   useEffect(() => {
-    progresso.value = withTiming(0, { duration: 220 })
-  }, [progresso])
+    progresso.value = reduzir ? 0 : withTiming(0, { duration: 220 })
+  }, [progresso, reduzir])
   return (
     <Svg width={18} height={18} viewBox="0 0 18 18">
       <Path
@@ -363,7 +378,15 @@ export function EstadoVazio({ ilustracao, titulo, texto, acao }: EstadoVazioProp
         animate={{ opacity: 1, scale: 1 }}
         transition={{ type: "timing", duration: reduzir ? 0 : 320 }}
       >
-        <Ilustracao nome={ilustracao} largura={240} />
+        {ilustracao === "boas-vindas" ? (
+          <LottieView
+            source={lottieDoTema(vazio, esquema)}
+            autoPlay={!reduzir}
+            loop={!reduzir}
+            progress={reduzir ? 1 : undefined}
+            style={{ width: 240, height: 180 }}
+          />
+        ) : <Ilustracao nome={ilustracao} largura={240} />}
       </MotiView>
       <Text
         style={{
