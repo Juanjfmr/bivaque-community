@@ -412,6 +412,54 @@ test.describe("F04 — perguntas reais no app", { tag: "@stateful" }, () => {
     })
   })
 
+  test("desseguir pela tela Salvos apaga a linha e ela não volta ao recarregar", async ({
+    page,
+    context,
+  }) => {
+    test.setTimeout(180_000)
+    // O seed não tem seguimentos: seguir e desseguir aqui devolvem o banco ao
+    // estado semeado, sem criar pergunta nova.
+    await semearSessaoDeMembro(context, MEMBRO_SEMEADO)
+
+    await page.goto("/app/comunidade")
+    await page
+      .locator('[data-tela="comunidade"] [data-linha="pergunta"]', { hasText: TEXTO_SEMEADO })
+      .click()
+    await expect(page.getByRole("heading", { level: 1, name: TEXTO_SEMEADO })).toBeVisible({
+      timeout: 30_000,
+    })
+
+    const seguindo = page.getByRole("button", { name: "Seguindo respostas" })
+    if ((await seguindo.count()) > 0) {
+      await seguindo.click()
+      await expect(page.getByRole("button", { name: "Seguir respostas" })).toBeVisible({
+        timeout: 30_000,
+      })
+    }
+    await page.getByRole("button", { name: "Seguir respostas" }).click()
+    await expect(page.getByRole("button", { name: "Seguindo respostas" })).toBeVisible({
+      timeout: 30_000,
+    })
+
+    // A remoção é feita na tela Salvos, não no detalhe da pergunta.
+    await page.goto("/app/salvos")
+    const linha = page.locator('[data-salvos="perguntas"] [data-linha="lista"]', {
+      hasText: TEXTO_SEMEADO,
+    })
+    await expect(linha, "a pergunta seguida precisa aparecer em Salvos").toBeVisible({
+      timeout: 30_000,
+    })
+
+    await page.getByRole("button", { name: `Remover dos salvos: ${TEXTO_SEMEADO}` }).click()
+    await expect(linha, "a linha sai da tela na hora").toHaveCount(0, { timeout: 30_000 })
+
+    await page.reload()
+    await expect(
+      page.locator('[data-salvos="perguntas"] [data-linha="lista"]', { hasText: TEXTO_SEMEADO }),
+      "desseguir em Salvos precisa apagar a linha no banco",
+    ).toHaveCount(0, { timeout: 30_000 })
+  })
+
   test("seguir que falha desfaz o estado otimista e diz o motivo", async ({ page, context }) => {
     test.setTimeout(180_000)
     await semearSessaoDeMembro(context, MEMBRO_SEMEADO)
