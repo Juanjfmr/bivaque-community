@@ -1,12 +1,12 @@
+import { router } from "expo-router"
+import { useState } from "react"
+import { FlatList, View } from "react-native"
+import { SafeAreaView } from "react-native-safe-area-context"
 import { Chip, Entrada, EstadoVazio } from "@/components/motion"
 import { CabecalhoTela } from "@/components/telas/cabecalho-tela"
 import { CartaoAnuncio } from "@/components/telas/cartao-anuncio"
 import { Input } from "@/components/ui/input"
 import { ANUNCIOS, type Anuncio } from "@/lib/dados"
-import { router } from "expo-router"
-import { useState } from "react"
-import { FlatList, View } from "react-native"
-import { SafeAreaView } from "react-native-safe-area-context"
 
 const FILTROS = ["Tudo", "Desapegos", "Imóveis", "Grátis"] as const
 

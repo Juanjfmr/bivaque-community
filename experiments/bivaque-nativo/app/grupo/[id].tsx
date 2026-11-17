@@ -1,15 +1,15 @@
+import { router, useLocalSearchParams } from "expo-router"
+import { useEffect, useState } from "react"
+import { FlatList, Image, View } from "react-native"
+import { SafeAreaView } from "react-native-safe-area-context"
 import { Icone } from "@/components/icons"
-import { BotaoAcao, type EstadoBotao, Entrada, EstadoVazio } from "@/components/motion"
+import { BotaoAcao, Entrada, type EstadoBotao, EstadoVazio } from "@/components/motion"
 import { BotaoIcone } from "@/components/telas/botao-icone"
 import { CabecalhoTela } from "@/components/telas/cabecalho-tela"
 import { CartaoPost } from "@/components/telas/cartao-post"
 import { useCores } from "@/components/telas/cores"
 import { Text } from "@/components/ui/text"
-import { POSTS, grupoPorId } from "@/lib/dados"
-import { router, useLocalSearchParams } from "expo-router"
-import { useEffect, useState } from "react"
-import { FlatList, Image, View } from "react-native"
-import { SafeAreaView } from "react-native-safe-area-context"
+import { grupoPorId, POSTS } from "@/lib/dados"
 
 export default function TelaGrupo() {
   const { id } = useLocalSearchParams<{ id: string }>()

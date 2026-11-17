@@ -1,3 +1,7 @@
+import { router, useLocalSearchParams } from "expo-router"
+import { useState } from "react"
+import { FlatList, KeyboardAvoidingView, Platform, Pressable, View } from "react-native"
+import { SafeAreaView } from "react-native-safe-area-context"
 import { Icone } from "@/components/icons"
 import { Entrada, EstadoVazio } from "@/components/motion"
 import { AvatarPessoa } from "@/components/telas/avatar-pessoa"
@@ -8,16 +12,7 @@ import { useCores } from "@/components/telas/cores"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Text } from "@/components/ui/text"
-import {
-  type Resposta,
-  postPorId,
-  pessoaPorId,
-  respostasDoPost,
-} from "@/lib/dados"
-import { router, useLocalSearchParams } from "expo-router"
-import { useState } from "react"
-import { FlatList, KeyboardAvoidingView, Platform, Pressable, View } from "react-native"
-import { SafeAreaView } from "react-native-safe-area-context"
+import { pessoaPorId, postPorId, type Resposta, respostasDoPost } from "@/lib/dados"
 
 export default function TelaPergunta() {
   const cores = useCores()

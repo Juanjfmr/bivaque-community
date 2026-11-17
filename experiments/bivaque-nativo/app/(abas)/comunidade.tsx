@@ -1,14 +1,14 @@
-import { Entrada } from "@/components/motion"
-import { CabecalhoTela } from "@/components/telas/cabecalho-tela"
-import { CartaoGrupo } from "@/components/telas/cartao-grupo"
-import { CartaoPost } from "@/components/telas/cartao-post"
-import { Text } from "@/components/ui/text"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { GRUPOS, POSTS } from "@/lib/dados"
 import { router } from "expo-router"
 import { useState } from "react"
 import { FlatList } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
+import { Entrada } from "@/components/motion"
+import { CabecalhoTela } from "@/components/telas/cabecalho-tela"
+import { CartaoGrupo } from "@/components/telas/cartao-grupo"
+import { CartaoPost } from "@/components/telas/cartao-post"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Text } from "@/components/ui/text"
+import { GRUPOS, POSTS } from "@/lib/dados"
 
 const PERGUNTAS = POSTS.filter((post) => post.tipo === "pergunta")
 

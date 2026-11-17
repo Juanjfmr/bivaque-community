@@ -1,6 +1,6 @@
+import { Image, Pressable, View } from "react-native"
 import { Text } from "@/components/ui/text"
 import { type Anuncio, precoEmReais } from "@/lib/dados"
-import { Image, Pressable, View } from "react-native"
 
 interface CartaoAnuncioProps {
   anuncio: Anuncio

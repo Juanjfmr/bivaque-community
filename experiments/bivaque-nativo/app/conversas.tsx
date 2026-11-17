@@ -1,12 +1,12 @@
+import { router } from "expo-router"
+import { FlatList } from "react-native"
+import { SafeAreaView } from "react-native-safe-area-context"
 import { Entrada } from "@/components/motion"
 import { BotaoIcone } from "@/components/telas/botao-icone"
 import { CabecalhoTela } from "@/components/telas/cabecalho-tela"
 import { LinhaConversa } from "@/components/telas/linha-conversa"
 import { Separator } from "@/components/ui/separator"
 import { CONVERSAS } from "@/lib/dados"
-import { router } from "expo-router"
-import { FlatList } from "react-native"
-import { SafeAreaView } from "react-native-safe-area-context"
 
 export default function TelaConversas() {
   return (

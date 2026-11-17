@@ -11,11 +11,7 @@ interface AvatarPessoaProps {
 /** Avatar com as iniciais: a demonstração não usa foto de pessoa. */
 export function AvatarPessoa({ pessoa, tamanho = 40 }: AvatarPessoaProps) {
   return (
-    <Avatar
-      alt={pessoa.nome}
-      className="bg-secondary"
-      style={{ width: tamanho, height: tamanho }}
-    >
+    <Avatar alt={pessoa.nome} className="bg-secondary" style={{ width: tamanho, height: tamanho }}>
       <AvatarFallback>
         <Text className="text-xs font-semibold text-muted-foreground">{iniciais(pessoa.nome)}</Text>
       </AvatarFallback>

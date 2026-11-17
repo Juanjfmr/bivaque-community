@@ -1,3 +1,7 @@
+import { useColorScheme } from "nativewind"
+import { type ReactNode, useState } from "react"
+import { ScrollView, View } from "react-native"
+import { SafeAreaView } from "react-native-safe-area-context"
 import { Icone, type NomeIcone } from "@/components/icons"
 import { AvatarPessoa } from "@/components/telas/avatar-pessoa"
 import { useCores } from "@/components/telas/cores"
@@ -19,10 +23,6 @@ import { Separator } from "@/components/ui/separator"
 import { Switch } from "@/components/ui/switch"
 import { Text } from "@/components/ui/text"
 import { CIDADE, PERFIL } from "@/lib/dados"
-import { useColorScheme } from "nativewind"
-import { type ReactNode, useState } from "react"
-import { ScrollView, View } from "react-native"
-import { SafeAreaView } from "react-native-safe-area-context"
 
 export default function TelaVoce() {
   const cores = useCores()

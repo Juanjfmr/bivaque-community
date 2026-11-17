@@ -1,10 +1,10 @@
+import { useState } from "react"
+import { Pressable, View } from "react-native"
 import { Icone, type NomeIcone } from "@/components/icons"
 import { Pressionavel } from "@/components/motion"
 import { Card } from "@/components/ui/card"
 import { Text } from "@/components/ui/text"
 import { type Post, pessoaPorId } from "@/lib/dados"
-import { useState } from "react"
-import { Pressable, View } from "react-native"
 import { AvatarPessoa } from "./avatar-pessoa"
 import { BotaoIcone } from "./botao-icone"
 import { useCores } from "./cores"
@@ -64,11 +64,7 @@ export function CartaoPost({ post, aoPressionar }: CartaoPostProps) {
           rotulo="Compartilhar publicação"
           aoPressionar={() => undefined}
         />
-        <BotaoIcone
-          nome="mais"
-          rotulo="Mais opções da publicação"
-          aoPressionar={() => undefined}
-        />
+        <BotaoIcone nome="mais" rotulo="Mais opções da publicação" aoPressionar={() => undefined} />
       </View>
     </Card>
   )

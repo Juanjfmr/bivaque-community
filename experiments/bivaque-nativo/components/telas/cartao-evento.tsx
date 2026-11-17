@@ -1,8 +1,8 @@
+import { Image, Pressable, View } from "react-native"
 import { Icone } from "@/components/icons"
 import { Card } from "@/components/ui/card"
 import { Text } from "@/components/ui/text"
 import type { Evento } from "@/lib/dados"
-import { Image, Pressable, View } from "react-native"
 import { useCores } from "./cores"
 
 interface CartaoEventoProps {

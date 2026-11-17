@@ -1,3 +1,7 @@
+import { router } from "expo-router"
+import { useEffect, useState } from "react"
+import { FlatList, View } from "react-native"
+import { SafeAreaView } from "react-native-safe-area-context"
 import { Icone, type NomeIcone } from "@/components/icons"
 import { Entrada, Esqueleto } from "@/components/motion"
 import { BotaoIcone } from "@/components/telas/botao-icone"
@@ -6,10 +10,6 @@ import { CartaoPost } from "@/components/telas/cartao-post"
 import { useCores } from "@/components/telas/cores"
 import { Text } from "@/components/ui/text"
 import { CIDADE, POSTS } from "@/lib/dados"
-import { router } from "expo-router"
-import { useEffect, useState } from "react"
-import { FlatList, View } from "react-native"
-import { SafeAreaView } from "react-native-safe-area-context"
 
 const ATALHOS: { nome: NomeIcone; rotulo: string }[] = [
   { nome: "evento", rotulo: "Eventos" },

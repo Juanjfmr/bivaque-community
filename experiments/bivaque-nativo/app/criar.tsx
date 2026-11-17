@@ -1,3 +1,7 @@
+import { router } from "expo-router"
+import { useEffect, useState } from "react"
+import { Pressable, ScrollView, View } from "react-native"
+import { SafeAreaView } from "react-native-safe-area-context"
 import { Icone, type NomeIcone } from "@/components/icons"
 import { BotaoAcao, type EstadoBotao } from "@/components/motion"
 import { AvatarPessoa } from "@/components/telas/avatar-pessoa"
@@ -7,10 +11,6 @@ import { Separator } from "@/components/ui/separator"
 import { Text } from "@/components/ui/text"
 import { Textarea } from "@/components/ui/textarea"
 import { CIDADE, PERFIL } from "@/lib/dados"
-import { router } from "expo-router"
-import { useEffect, useState } from "react"
-import { Pressable, ScrollView, View } from "react-native"
-import { SafeAreaView } from "react-native-safe-area-context"
 
 const BLOCOS: { nome: NomeIcone; titulo: string; detalhe: string; exemplo: string }[] = [
   {

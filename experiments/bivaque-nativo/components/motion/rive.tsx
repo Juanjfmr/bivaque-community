@@ -20,5 +20,9 @@ export function AnimacaoRive({ nome, stateMachine, entradas, fallback }: Animaca
       else rive.setInputState(stateMachine, nomeEntrada, valor)
     }
   }, [entradas, rive, stateMachine])
-  return source === undefined ? fallback : <Rive ref={ref} source={source} stateMachineName={stateMachine} />
+  return source === undefined ? (
+    fallback
+  ) : (
+    <Rive ref={ref} source={source} stateMachineName={stateMachine} />
+  )
 }

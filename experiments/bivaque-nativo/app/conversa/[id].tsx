@@ -1,16 +1,16 @@
+import { router, useLocalSearchParams } from "expo-router"
+import { useState } from "react"
+import { FlatList, KeyboardAvoidingView, Platform, Pressable, View } from "react-native"
+import { SafeAreaView } from "react-native-safe-area-context"
+import { Icone } from "@/components/icons"
 import { Entrada, EstadoVazio } from "@/components/motion"
 import { AvatarPessoa } from "@/components/telas/avatar-pessoa"
 import { BotaoIcone } from "@/components/telas/botao-icone"
 import { CabecalhoTela } from "@/components/telas/cabecalho-tela"
 import { useCores } from "@/components/telas/cores"
-import { Icone } from "@/components/icons"
 import { Input } from "@/components/ui/input"
 import { Text } from "@/components/ui/text"
 import { conversaPorId, type Mensagem, pessoaPorId } from "@/lib/dados"
-import { router, useLocalSearchParams } from "expo-router"
-import { useState } from "react"
-import { FlatList, KeyboardAvoidingView, Platform, Pressable, View } from "react-native"
-import { SafeAreaView } from "react-native-safe-area-context"
 
 export default function TelaConversa() {
   const cores = useCores()

@@ -1,3 +1,6 @@
+import { router, useLocalSearchParams } from "expo-router"
+import { Image, ScrollView, View } from "react-native"
+import { SafeAreaView } from "react-native-safe-area-context"
 import { BotaoAcao, EstadoVazio } from "@/components/motion"
 import { AvatarPessoa } from "@/components/telas/avatar-pessoa"
 import { BotaoIcone } from "@/components/telas/botao-icone"
@@ -5,9 +8,6 @@ import { CabecalhoTela } from "@/components/telas/cabecalho-tela"
 import { Card } from "@/components/ui/card"
 import { Text } from "@/components/ui/text"
 import { anuncioPorId, pessoaPorId, precoEmReais } from "@/lib/dados"
-import { router, useLocalSearchParams } from "expo-router"
-import { Image, ScrollView, View } from "react-native"
-import { SafeAreaView } from "react-native-safe-area-context"
 
 export default function TelaAnuncio() {
   const { id } = useLocalSearchParams<{ id: string }>()
@@ -57,9 +57,7 @@ export default function TelaAnuncio() {
             <AvatarPessoa pessoa={vendedor} />
             <View className="flex-1">
               <Text className="text-base font-semibold">{vendedor.nome}</Text>
-              <Text className="text-xs text-muted-foreground">
-                Vendedor em {vendedor.bairro}
-              </Text>
+              <Text className="text-xs text-muted-foreground">Vendedor em {vendedor.bairro}</Text>
             </View>
           </Card>
         </View>

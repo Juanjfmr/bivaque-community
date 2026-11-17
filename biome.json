@@ -63,7 +63,11 @@
   },
   "overrides": [
     {
-      "includes": ["apps/web/app/ui-theme.css", "apps/app/**/*.css"],
+      "includes": [
+        "apps/web/app/ui-theme.css",
+        "apps/app/**/*.css",
+        "experiments/bivaque-nativo/**/*.css"
+      ],
       "css": {
         "parser": {
           "tailwindDirectives": true
@@ -76,6 +80,16 @@
         "parser": {
           "allowComments": true,
           "allowTrailingCommas": true
+        }
+      }
+    },
+    {
+      "includes": ["experiments/bivaque-nativo/global.css"],
+      "linter": {
+        "rules": {
+          "suspicious": {
+            "noUnknownAtRules": "off"
+          }
         }
       }
     }

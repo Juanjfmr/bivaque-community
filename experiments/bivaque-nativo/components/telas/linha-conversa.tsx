@@ -1,6 +1,6 @@
+import { Pressable, View } from "react-native"
 import { Text } from "@/components/ui/text"
 import { type Conversa, pessoaPorId } from "@/lib/dados"
-import { Pressable, View } from "react-native"
 import { AvatarPessoa } from "./avatar-pessoa"
 
 interface LinhaConversaProps {
@@ -33,17 +33,12 @@ export function LinhaConversa({ conversa, aoPressionar }: LinhaConversaProps) {
           <Text className="text-xs text-muted-foreground">{ultima.hora}</Text>
         </View>
         <View className="flex-row items-center gap-2">
-          <Text
-            className={`flex-1 text-sm ${estilo}`}
-            numberOfLines={1}
-          >
+          <Text className={`flex-1 text-sm ${estilo}`} numberOfLines={1}>
             {ultima.deMim ? "Você: " : ""}
             {ultima.texto}
           </Text>
           {conversa.naoLidas > 0 ? (
-            <View
-              className="h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1.5"
-            >
+            <View className="h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1.5">
               <Text className="text-xs font-semibold text-primary-foreground">
                 {conversa.naoLidas}
               </Text>

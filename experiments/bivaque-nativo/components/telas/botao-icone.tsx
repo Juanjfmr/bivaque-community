@@ -1,5 +1,5 @@
-import { Icone, type NomeIcone } from "@/components/icons"
 import { Pressable } from "react-native"
+import { Icone, type NomeIcone } from "@/components/icons"
 import { useCores } from "./cores"
 
 interface BotaoIconeProps {

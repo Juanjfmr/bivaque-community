@@ -1,13 +1,5 @@
 // Dados de demonstração sintéticos do app nativo de teste. Nenhum dado real.
-import type {
-  Anuncio,
-  Conversa,
-  Evento,
-  Grupo,
-  Pessoa,
-  Post,
-  Resposta,
-} from "./tipos"
+import type { Anuncio, Conversa, Evento, Grupo, Pessoa, Post, Resposta } from "./tipos"
 
 export * from "./tipos"
 
@@ -193,7 +185,8 @@ export const RESPOSTAS: Resposta[] = [
     postId: "po1",
     autorId: "p6",
     tempo: "há 40 min",
-    texto: "Se precisar de escola, tem um tópico aqui no grupo da comunidade com várias indicações.",
+    texto:
+      "Se precisar de escola, tem um tópico aqui no grupo da comunidade com várias indicações.",
   },
   {
     id: "re4",
@@ -326,7 +319,8 @@ export const ANUNCIOS: Anuncio[] = [
     preco: 900,
     categoria: "desapego",
     bairro: "Ponta Negra",
-    descricao: "Quadro de alumínio, freios revisados no mês passado. Aceito conversa sobre o preço.",
+    descricao:
+      "Quadro de alumínio, freios revisados no mês passado. Aceito conversa sobre o preço.",
     foto: foto("bivaque-an3"),
     vendedorId: "p3",
     conversaId: "co3",
