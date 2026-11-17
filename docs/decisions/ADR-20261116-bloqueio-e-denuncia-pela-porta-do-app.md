@@ -38,3 +38,15 @@ antiga saia de vez (fase 6).
   `/app/conversa/{id}` por NOTIF-DEEPLINKS; este lote só comprova em runtime).
 - A cópia de `Bloqueados.tsx:80` (promete esconder conteúdo) fica marcada para reconciliar no
   mesmo card — ou o texto é ajustado, ou D1/D2 vira cartão próprio com o dono decidindo no marco.
+
+## Emenda de 17/11/2026 — bloqueio depois de denunciar no app (SEC-015)
+
+Depois de denunciar uma pergunta ou resposta de outra pessoa, o app oferece bloquear sua autoria
+com confirmação e usa `bloquear()` pela porta existente `/api/app/voce/bloqueados`. A oferta é
+omitida para autoria própria e, quando a lista de bloqueados foi lida, para quem já está bloqueado. Se a
+leitura da lista falha, a oferta aparece mesmo assim (decisão do coordenador de 17/11): esconder o gesto
+em silêncio é pior, e a porta trata bloqueio repetido de forma idempotente, respondendo "já bloqueado" com
+frase fixa. Nenhum erro expõe detalhe técnico. O bloqueio continua sem avisar a pessoa bloqueada.
+
+A revogação dos INSERT diretos em `dm_messages` e `dm_blocks` fica para o lote 3, depois da saída
+da tela antiga de indicações, que ainda grava diretamente em `dm_blocks`.

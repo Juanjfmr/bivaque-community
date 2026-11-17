@@ -5,7 +5,7 @@ vi.mock("web/lib/app-api/sessao-do-next", () => ({ resolverSessaoDaRequisicao: v
 
 import { POST as apagar } from "web/app/api/app/voce/apagar-conta/route"
 import { DELETE as desbloquear } from "web/app/api/app/voce/bloqueados/[id]/route"
-import { GET as bloqueados } from "web/app/api/app/voce/bloqueados/route"
+import { GET as bloqueados, POST as bloquear } from "web/app/api/app/voce/bloqueados/route"
 import { DELETE as desocultar } from "web/app/api/app/voce/ocultados/[id]/route"
 import { GET as ocultados } from "web/app/api/app/voce/ocultados/route"
 import { GET as publicacoes } from "web/app/api/app/voce/publicacoes/route"
@@ -176,6 +176,10 @@ function cliente(
       apagando = true
       escritas.push({ tabela, metodo: "delete", valor: null })
       return q
+    }
+    q["insert"] = (valor: Record<string, unknown>) => {
+      escritas.push({ tabela, metodo: "insert", valor })
+      return Promise.resolve({ error: null })
     }
     q["maybeSingle"] = async () => resolver()
     q["single"] = async () => resolver()
@@ -423,6 +427,24 @@ describe("área Você do app", () => {
     expect(await resposta.json()).toEqual({
       bloqueados: [{ id: OUTRO, nome: null, bloqueadoEm: "2026-11-03T12:00:00Z" }],
     })
+  })
+
+  it("deriva quem bloqueia da sessão e recusa auto-bloqueio", async () => {
+    const mock = autenticar()
+    const resposta = await bloquear(req("POST", "/bloqueados", JSON.stringify({ id: OUTRO })))
+    expect(resposta.status).toBe(201)
+    expect(await resposta.json()).toEqual({ bloqueado: { id: OUTRO } })
+    expect(mock.escritas).toEqual([
+      {
+        tabela: "dm_blocks",
+        metodo: "insert",
+        valor: { blocker_user_id: USER, blocked_user_id: OUTRO },
+      },
+    ])
+    mock.escritas.length = 0
+    const proprio = await bloquear(req("POST", "/bloqueados", JSON.stringify({ id: USER })))
+    expect(proprio.status).toBe(400)
+    expect(mock.escritas).toEqual([])
   })
 
   it("desfaz o bloqueio da própria lista", async () => {
