@@ -28,6 +28,8 @@ const LARGURAS: Readonly<Record<string, number>> = {
 const PRAZO_MS = 45_000
 const PRAZO_PASSO_MS = 15_000
 
+test.use({ locale: "pt-BR", timezoneId: "America/Manaus", reducedMotion: "reduce" })
+
 async function entrarComo(contexto: BrowserContext, persona: string): Promise<void> {
   await contexto.clearCookies()
   await semearSessaoDeMembro(contexto, persona)
@@ -56,6 +58,13 @@ async function capturar(page: Page, jornada: string, tela: string, largura: numb
   // o revisor julga, e texto em fonte de fallback julga a máquina, não a tela.
   await page.evaluate(async () => {
     await document.fonts.ready
+    const animacoes = document
+      .getAnimations()
+      .map((animacao) => animacao.finished.catch(() => undefined))
+    await Promise.race([
+      Promise.all(animacoes),
+      new Promise((resolver) => setTimeout(resolver, 2000)),
+    ])
   })
   await page.emulateMedia({ reducedMotion: "reduce" })
   await page.screenshot({ path: arquivo, fullPage: true, animations: "disabled" })
@@ -83,6 +92,15 @@ for (const jornada of ROTEIRO) {
             `a tela "${tela.id}" não carregou dado real em ${tela.rota} ` +
               `(esperava ${tela.seletor}${tela.texto === undefined ? "" : ` com "${tela.texto}"`})`,
           ).toBeVisible({ timeout: PRAZO_MS })
+          if (jornada.jornada === "f02" && tela.id === "inicio") {
+            await expect(
+              page.locator('[data-home="conteudo"] [data-cartao="publicacao"]').first(),
+            ).toBeVisible({ timeout: PRAZO_MS })
+          }
+          if (jornada.jornada === "f09" && tela.id === "conversa") {
+            await page.locator("#mensagem-da-conversa").fill("Podemos combinar a retirada?")
+            await expect(page.locator('[data-acao="enviar-mensagem"]')).toBeEnabled()
+          }
           await capturar(page, jornada.jornada, tela.id, largura)
         } catch (erro) {
           const motivo = erro instanceof Error ? erro.message : String(erro)

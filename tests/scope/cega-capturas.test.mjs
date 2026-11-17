@@ -1,4 +1,5 @@
 import assert from "node:assert/strict"
+import { readFileSync } from "node:fs"
 import test from "node:test"
 import { arquivoDaCaptura, ROTEIRO } from "../e2e/cega-capturas-roteiro.ts"
 
@@ -50,4 +51,19 @@ test("cada tela tem seletor de prova, rota e persona do seed", () => {
 
 test("a captura vai para .visual/cega/<jornada>/<tela>-<largura>-claro.png", () => {
   assert.equal(arquivoDaCaptura("f02", "inicio", 375), ".visual/cega/f02/inicio-375-claro.png")
+})
+
+test("as capturas fixam a localidade e mostram os estados preenchidos", () => {
+  const inicio = ROTEIRO.find((jornada) => jornada.jornada === "f02")?.telas.find(
+    (tela) => tela.id === "inicio",
+  )
+  const conversa = ROTEIRO.find((jornada) => jornada.jornada === "f09")?.telas.find(
+    (tela) => tela.id === "conversa",
+  )
+  const spec = readFileSync(new URL("../e2e/cega-capturas.spec.ts", import.meta.url), "utf8")
+  assert.ok((inicio?.seletor ?? "").includes('data-cartao="publicacao"'))
+  assert.match(spec, /locale: "pt-BR", timezoneId: "America\/Manaus"/)
+  assert.match(spec, /reducedMotion: "reduce"/)
+  assert.match(spec, /#mensagem-da-conversa.*fill/)
+  assert.equal(conversa?.id, "conversa")
 })
