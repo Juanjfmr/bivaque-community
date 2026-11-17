@@ -1,13 +1,46 @@
 // Dados de demonstração sintéticos do app nativo de teste. Nenhum dado real.
-import type { Anuncio, Conversa, Evento, Grupo, Pessoa, Post, Resposta } from "./tipos"
+import type { ImageSourcePropType } from "react-native"
+import type {
+  Anuncio as AnuncioOriginal,
+  Conversa,
+  Evento as EventoOriginal,
+  Grupo as GrupoOriginal,
+  Pessoa,
+  Post,
+  Resposta,
+} from "./tipos"
 
 export * from "./tipos"
+
+export type Anuncio = Omit<AnuncioOriginal, "foto"> & { foto: ImageSourcePropType }
+export type Grupo = Omit<GrupoOriginal, "capa"> & { capa: ImageSourcePropType }
+export type Evento = Omit<EventoOriginal, "capa"> & { capa: ImageSourcePropType }
 
 export const CIDADE = "Manaus"
 
 export const BAIRROS = ["Adrianópolis", "Ponta Negra", "Flores", "Parque 10"] as const
 
-export const foto = (semente: string) => `https://picsum.photos/seed/${semente}/600/600`
+export const FOTOS = {
+  an1: require("../../assets/fotos/an1.webp"),
+  an2: require("../../assets/fotos/an2.webp"),
+  an3: require("../../assets/fotos/an3.webp"),
+  an4: require("../../assets/fotos/an4.webp"),
+  an5: require("../../assets/fotos/an5.webp"),
+  an6: require("../../assets/fotos/an6.webp"),
+  an7: require("../../assets/fotos/an7.webp"),
+  an8: require("../../assets/fotos/an8.webp"),
+  an9: require("../../assets/fotos/an9.webp"),
+  an10: require("../../assets/fotos/an10.webp"),
+  g1: require("../../assets/fotos/g1.webp"),
+  g2: require("../../assets/fotos/g2.webp"),
+  g3: require("../../assets/fotos/g3.webp"),
+  g4: require("../../assets/fotos/g4.webp"),
+  g5: require("../../assets/fotos/g5.webp"),
+  g6: require("../../assets/fotos/g6.webp"),
+  ev1: require("../../assets/fotos/ev1.webp"),
+  ev2: require("../../assets/fotos/ev2.webp"),
+  ev3: require("../../assets/fotos/ev3.webp"),
+} satisfies Record<string, ImageSourcePropType>
 
 /** A pessoa que está usando o app. */
 export const PERFIL: Pessoa = { id: "eu", nome: "Helena Braga", bairro: "Adrianópolis" }
@@ -246,7 +279,7 @@ export const GRUPOS: Grupo[] = [
     descricao: "Combinados do bairro, indicações de serviço e avisos da rua.",
     membros: 428,
     bairro: "Adrianópolis",
-    capa: foto("bivaque-g1"),
+    capa: FOTOS.g1,
   },
   {
     id: "g2",
@@ -254,7 +287,7 @@ export const GRUPOS: Grupo[] = [
     descricao: "Encontros de corrida no começo da manhã, todos os níveis.",
     membros: 315,
     bairro: "Ponta Negra",
-    capa: foto("bivaque-g2"),
+    capa: FOTOS.g2,
   },
   {
     id: "g3",
@@ -262,7 +295,7 @@ export const GRUPOS: Grupo[] = [
     descricao: "Desapegos, trocas e doações entre vizinhos das Flores.",
     membros: 692,
     bairro: "Flores",
-    capa: foto("bivaque-g3"),
+    capa: FOTOS.g3,
   },
   {
     id: "g4",
@@ -270,7 +303,7 @@ export const GRUPOS: Grupo[] = [
     descricao: "Segurança, obras da rua e o que acontece na praça.",
     membros: 851,
     bairro: "Parque 10",
-    capa: foto("bivaque-g4"),
+    capa: FOTOS.g4,
   },
   {
     id: "g5",
@@ -278,7 +311,7 @@ export const GRUPOS: Grupo[] = [
     descricao: "Professores e famílias trocando aulas, reforço e material escolar.",
     membros: 204,
     bairro: "Flores",
-    capa: foto("bivaque-g5"),
+    capa: FOTOS.g5,
   },
   {
     id: "g6",
@@ -286,7 +319,7 @@ export const GRUPOS: Grupo[] = [
     descricao: "Adoção, cuidados e veterinários indicados por quem já levou.",
     membros: 1103,
     bairro: "Ponta Negra",
-    capa: foto("bivaque-g6"),
+    capa: FOTOS.g6,
   },
 ]
 
@@ -298,7 +331,7 @@ export const ANUNCIOS: Anuncio[] = [
     categoria: "desapego",
     bairro: "Adrianópolis",
     descricao: "Sofá em bom estado, tecido cinza. Retirada no local, preciso liberar a sala.",
-    foto: foto("bivaque-an1"),
+    foto: FOTOS.an1,
     vendedorId: "p2",
   },
   {
@@ -308,7 +341,7 @@ export const ANUNCIOS: Anuncio[] = [
     categoria: "desapego",
     bairro: "Flores",
     descricao: "Mesa com quatro cadeiras, madeira maciça. Pequenas marcas de uso no tampo.",
-    foto: foto("bivaque-an2"),
+    foto: FOTOS.an2,
     vendedorId: "p4",
   },
   {
@@ -319,7 +352,7 @@ export const ANUNCIOS: Anuncio[] = [
     bairro: "Ponta Negra",
     descricao:
       "Quadro de alumínio, freios revisados no mês passado. Aceito conversa sobre o preço.",
-    foto: foto("bivaque-an3"),
+    foto: FOTOS.an3,
     vendedorId: "p3",
   },
   {
@@ -329,7 +362,7 @@ export const ANUNCIOS: Anuncio[] = [
     categoria: "imovel",
     bairro: "Parque 10",
     descricao: "58 m², dois quartos, uma vaga. Condomínio com portaria 24 horas.",
-    foto: foto("bivaque-an4"),
+    foto: FOTOS.an4,
     vendedorId: "p5",
   },
   {
@@ -339,7 +372,7 @@ export const ANUNCIOS: Anuncio[] = [
     categoria: "imovel",
     bairro: "Flores",
     descricao: "Casa térrea, quintal com árvore, aceita animais de pequeno porte.",
-    foto: foto("bivaque-an5"),
+    foto: FOTOS.an5,
     vendedorId: "p7",
   },
   {
@@ -349,7 +382,7 @@ export const ANUNCIOS: Anuncio[] = [
     categoria: "desapego",
     bairro: "Parque 10",
     descricao: "Doação. Está higienizada, só não serve mais em casa.",
-    foto: foto("bivaque-an6"),
+    foto: FOTOS.an6,
     vendedorId: "p9",
   },
   {
@@ -359,7 +392,7 @@ export const ANUNCIOS: Anuncio[] = [
     categoria: "desapego",
     bairro: "Adrianópolis",
     descricao: "Cinco peças, pouco uso. Vendo porque troquei o fogão.",
-    foto: foto("bivaque-an7"),
+    foto: FOTOS.an7,
     vendedorId: "p6",
   },
   {
@@ -369,7 +402,7 @@ export const ANUNCIOS: Anuncio[] = [
     categoria: "imovel",
     bairro: "Adrianópolis",
     descricao: "Quarto individual em casa compartilhada, com cama, escrivaninha e banheiro.",
-    foto: foto("bivaque-an8"),
+    foto: FOTOS.an8,
     vendedorId: "p2",
   },
   {
@@ -379,7 +412,7 @@ export const ANUNCIOS: Anuncio[] = [
     categoria: "desapego",
     bairro: "Flores",
     descricao: "Doação. Cinco prateleiras, desmonta para transportar.",
-    foto: foto("bivaque-an9"),
+    foto: FOTOS.an9,
     vendedorId: "p4",
   },
   {
@@ -389,7 +422,7 @@ export const ANUNCIOS: Anuncio[] = [
     categoria: "imovel",
     bairro: "Flores",
     descricao: "Rua asfaltada, água e energia na frente do lote. Documentação em ordem.",
-    foto: foto("bivaque-an10"),
+    foto: FOTOS.an10,
     vendedorId: "p7",
   },
 ]
@@ -457,7 +490,7 @@ export const EVENTOS: Evento[] = [
     quando: "Sáb, 9h às 14h",
     local: "Praça do Parque 10",
     participantes: 86,
-    capa: foto("bivaque-ev1"),
+    capa: FOTOS.ev1,
   },
   {
     id: "ev2",
@@ -465,7 +498,7 @@ export const EVENTOS: Evento[] = [
     quando: "Dom, 6h",
     local: "Orla da Ponta Negra",
     participantes: 134,
-    capa: foto("bivaque-ev2"),
+    capa: FOTOS.ev2,
   },
   {
     id: "ev3",
@@ -473,7 +506,7 @@ export const EVENTOS: Evento[] = [
     quando: "Sáb, 8h às 12h",
     local: "Rua das Flores, 220",
     participantes: 57,
-    capa: foto("bivaque-ev3"),
+    capa: FOTOS.ev3,
   },
 ]
 
