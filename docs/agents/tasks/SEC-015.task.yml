@@ -51,7 +51,7 @@ forbidden:
 
 acceptance:
   - "Depois de enviar a denúncia de uma pergunta ou resposta de outra pessoa, o app oferece bloquear o autor, com confirmação, chamando a função de bloqueio já existente em apps/app/lib/dados/voce.ts, que usa POST /api/app/voce/bloqueados."
-  - "A oferta não aparece quando o autor é a própria pessoa, nem quando o autor já está bloqueado; o resultado (bloqueado, já bloqueado, falha) aparece com frase fixa, sem detalhe técnico, e o foco volta para um ponto previsível."
+  - "A oferta não aparece quando o autor é a própria pessoa, nem quando a lista de bloqueados foi lida e o autor já está nela; se a leitura falha, a oferta aparece e a porta responde de forma idempotente (decisão do coordenador de 17/11); o resultado (bloqueado, já bloqueado, falha) aparece com frase fixa, sem detalhe técnico, e o foco volta para um ponto previsível."
   - "Teste do módulo de dados ou da tela cobre: oferta depois da denúncia, confirmação chamando a porta, autor próprio sem oferta, falha da porta com frase fixa."
   - "Teste unitário da rota /api/app/voce/bloqueados (tests/unit/app-api/voce/rotas.test.ts) prova que o bloqueador vem da sessão e que auto-bloqueio é recusado, se essas provas ainda não existirem."
   - "E2E do app (apps/app/tests/e2e) percorre denunciar uma resposta e bloquear o autor, em 375 e 1440, se houver spec de pergunta com dados reais ou mockados em que caiba; senão, registra no relatório por que não coube."
