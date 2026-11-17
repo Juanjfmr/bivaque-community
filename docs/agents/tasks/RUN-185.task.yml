@@ -46,6 +46,7 @@ allowed_paths:
   - apps/app/tests/e2e/pergunta-ciclo.spec.ts
   - apps/app/tests/e2e/jornadas-reais.spec.ts
   - apps/app/tests/fixtures
+  - tests/scope/perguntas-porta.test.mjs
   - tests/unit/app-api/perguntas
   - docs/agents/tasks/RUN-185.task.yml
 
