@@ -17,11 +17,15 @@ export type Pergunta = Pick<
   Tables<"recommendation_requests">,
   "id" | "title" | "body" | "is_resolved" | "locality_id"
 > &
+  // `edited_at` é do banco (gatilho): a marca "editada" da ficha vem daqui, e
+  // não de um `updated_at` que carrega o INSERT.
+  Partial<Pick<Tables<"recommendation_requests">, "edited_at">> &
   Apresentacao
 export type Resposta = Pick<
   Tables<"recommendation_replies">,
   "id" | "request_id" | "author_id" | "body"
 > &
+  Partial<Pick<Tables<"recommendation_replies">, "edited_at">> &
   Apresentacao
 export type Anuncio = Pick<
   Tables<"listings">,

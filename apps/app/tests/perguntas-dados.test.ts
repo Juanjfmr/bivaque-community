@@ -4,6 +4,10 @@ import { FalhaDaApi } from "@/lib/api/cliente"
 import {
   buscarPergunta,
   denunciarPergunta,
+  editarPergunta,
+  editarResposta,
+  excluirPergunta,
+  excluirResposta,
   lerPerguntas,
   lerPerguntasSalvas,
   marcarSalvaPergunta,
@@ -175,6 +179,52 @@ describe("pergunta e respostas", () => {
     expect(lida.respostas[0]).toMatchObject({ removida: true, corpo: "", autor: "" })
   })
 
+  it("a marca de editada e o verbete chegam como o servidor mandou", async () => {
+    responder({
+      pergunta: { ...PERGUNTA, corpo: "Detalhe", cidade: "Manaus", editada: true },
+      respostas: [
+        {
+          id: "r1",
+          corpo: "A Dra. Helena atende.",
+          autor: "Helena",
+          autorId: "u-helena",
+          propria: false,
+          criadaEm: "2026-11-01T12:00:00.000Z",
+          removida: false,
+          editada: true,
+          verbete: { id: "b1", nome: "Dra. Helena" },
+        },
+      ],
+    })
+    const lida = await buscarPergunta("q1")
+    expect(lida.pergunta.editada).toBe(true)
+    expect(lida.respostas[0]).toMatchObject({
+      editada: true,
+      verbete: { id: "b1", nome: "Dra. Helena" },
+    })
+  })
+
+  it("sem marca e sem verbete, a tela não inventa: falso e nulo", async () => {
+    responder({
+      pergunta: { ...PERGUNTA, corpo: "Detalhe", cidade: "Manaus" },
+      respostas: [
+        {
+          id: "r1",
+          corpo: "A Dra. Helena atende.",
+          autor: "Helena",
+          autorId: "u-helena",
+          propria: false,
+          criadaEm: "2026-11-01T12:00:00.000Z",
+          removida: false,
+        },
+      ],
+    })
+    const lida = await buscarPergunta("q1")
+    expect(lida.pergunta.editada).toBe(false)
+    expect(lida.respostas[0]?.editada).toBe(false)
+    expect(lida.respostas[0]?.verbete).toBeNull()
+  })
+
   it("pergunta que sumiu chega com o status do servidor", async () => {
     responder({ erro: "pergunta-nao-encontrada" }, 404)
     await expect(buscarPergunta("q1")).rejects.toMatchObject({
@@ -283,6 +333,8 @@ describe("responder", () => {
       propria: true,
       criadaEm: "2026-11-01T12:00:00Z",
       removida: false,
+      editada: false,
+      verbete: null,
     })
   })
 
@@ -302,6 +354,72 @@ describe("responder", () => {
       codigo: "invalido",
       mensagem: "Escreva uma resposta com pelo menos 5 caracteres.",
     })
+  })
+})
+
+describe("autoria: editar e excluir", () => {
+  it("edita a pergunta pelo PATCH, mandando título e assunto aparados", async () => {
+    const buscar = responder({
+      pergunta: {
+        id: "q1",
+        titulo: "Alguém indica pediatra?",
+        corpo: "Minha filha tem 3 anos.",
+        editada: true,
+      },
+    })
+    const gravada = await editarPergunta("q1", {
+      titulo: "  Alguém indica pediatra?  ",
+      corpo: "Minha filha tem 3 anos.",
+    })
+    const { caminho, init } = chamada(buscar)
+    expect(caminho).toBe("/api/app/perguntas/q1")
+    expect(init.method).toBe("PATCH")
+    expect(JSON.parse(String(init.body))).toEqual({
+      titulo: "  Alguém indica pediatra?  ",
+      assunto: "Minha filha tem 3 anos.",
+    })
+    expect(gravada).toEqual({
+      titulo: "Alguém indica pediatra?",
+      corpo: "Minha filha tem 3 anos.",
+      editada: true,
+    })
+  })
+
+  it("edita a resposta na rota da própria resposta", async () => {
+    const buscar = responder({
+      resposta: { id: "r1", corpo: "A Dra. Helena atende.", editada: true },
+    })
+    const gravada = await editarResposta("q1", "r1", "A Dra. Helena atende.")
+    const { caminho, init } = chamada(buscar)
+    expect(caminho).toBe("/api/app/perguntas/q1/respostas/r1")
+    expect(init.method).toBe("PATCH")
+    expect(JSON.parse(String(init.body))).toEqual({ texto: "A Dra. Helena atende." })
+    expect(gravada).toEqual({ corpo: "A Dra. Helena atende.", editada: true })
+  })
+
+  it("exclui a pergunta e a resposta pelo DELETE, sem corpo", async () => {
+    const pergunta = responder({ removido: true })
+    await excluirPergunta("q1")
+    expect(chamada(pergunta).caminho).toBe("/api/app/perguntas/q1")
+    expect(chamada(pergunta).init.method).toBe("DELETE")
+    expect(chamada(pergunta).init.body).toBeUndefined()
+
+    const resposta = responder({ removido: true })
+    await excluirResposta("q1", "r1")
+    expect(chamada(resposta).caminho).toBe("/api/app/perguntas/q1/respostas/r1")
+    expect(chamada(resposta).init.method).toBe("DELETE")
+  })
+
+  it("edição recusada não vira texto novo na tela", async () => {
+    responder({ erro: "recusado", mensagem: "Sua conta não pode editar esta pergunta." }, 403)
+    await expect(
+      editarPergunta("q1", { titulo: "Um título válido", corpo: "" }),
+    ).rejects.toMatchObject({ codigo: "recusado", status: 403 })
+  })
+
+  it("exclusão recusada não vira sucesso silencioso", async () => {
+    responder({ erro: "escrita-indisponivel" }, 503)
+    await expect(excluirPergunta("q1")).rejects.toMatchObject({ codigo: "indisponivel" })
   })
 })
 
