@@ -69,6 +69,7 @@ allowed_paths:
   - tests/e2e/journey-pedir-servico.spec.ts
   - tests/e2e/recon-032-messages.spec.ts
   - tests/e2e/helpers/crawl-model.ts
+  - tests/scope/encoding.test.mjs
   - scripts/visual/capture.mjs
   - scripts/visual/probe-tab-style.mjs
   - scripts/bivaque-html/round46-proof.mjs

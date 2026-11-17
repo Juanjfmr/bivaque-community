@@ -48,10 +48,11 @@ mas não tinha busca e só sabia dessalvar anúncio. O levantamento de 17/11
 4. **Divergência registrada: abas por tipo e `?aba=` (item 2.3.6).** A tela web tinha cinco abas
    (Tudo/Indicações/Guia/Mercado/Imóveis) e lia `?aba=` da URL. O app organiza por **seções**, que
    é o desenho aprovado, e o lote não constrói abas nem `?aba=`: o redirect legado vai a
-   `/app/salvos` puro, sem escolher aba, e a perda está declarada aqui. Consequência que o produto
-   precisa saber: **indicação salva não aparece na tela Salvos do app** — a seção de indicações não
-   existe ali e o app não lê `recommendation_saves`. O salvamento continua no banco, sem tela.
-   Reabrir isso é trabalho de produto novo (seção ou aba de indicações no app), não paridade devida.
+   `/app/salvos` puro, sem escolher aba, e a perda está declarada aqui. A indicação salva (o
+   "seguir respostas" de uma pergunta) aparece na seção de perguntas do Salvos do app, que lê
+   `recommendation_saves` por `/api/app/perguntas/salvas`; o que se perde é só o atalho de abrir a
+   tela já filtrada num tipo. (Correção do coordenador em 17/11: a primeira redação deste item dizia
+   que a indicação salva ficava sem tela, o que não é verdade.)
 5. **Divergência registrada: item indisponível (item 2.3.9).** A web mostrava "Conteúdo
    indisponível" para o salvamento que a RLS já não devolvia, sem título nem destino. As seções do
    app listam o que a API devolve: quem perdeu acesso ao conteúdo — anúncio pausado, referência fora
@@ -74,6 +75,6 @@ mas não tinha busca e só sabia dessalvar anúncio. O levantamento de 17/11
   três de dessalvar ficam como estão.
 - A tela do app passa a ter busca e remoção em quatro seções, e o estado de falha do dessalvar é
   visível (`role="alert"`), com a linha de volta.
-- Perda declarada: indicação salva não tem tela (item 4) e item retirado não deixa rastro (item 5).
+- Perda declarada: o atalho para abrir o Salvos já filtrado num tipo (item 4) e o rastro do item retirado (item 5).
 - As capturas visuais de `/salvos` (e as variantes `?aba=`) saem de `scripts/visual/capture.mjs`; a
   sonda de estilo das abas passa a medir só `/events`, a outra fileira `tabs--secondary` viva.
