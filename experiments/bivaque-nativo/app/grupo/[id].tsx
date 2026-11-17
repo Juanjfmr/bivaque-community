@@ -71,10 +71,7 @@ export default function TelaGrupo() {
         renderItem={({ item, index }) => (
           <View className="px-4">
             <Entrada indice={index}>
-              <CartaoPost
-                post={item}
-                aoPressionar={() => router.push(`/pergunta/${item.id}`)}
-              />
+              <CartaoPost post={item} aoPressionar={() => router.push(`/pergunta/${item.id}`)} />
             </Entrada>
           </View>
         )}

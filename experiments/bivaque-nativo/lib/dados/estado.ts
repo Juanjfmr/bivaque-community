@@ -75,11 +75,7 @@ export function useUtil(postId: string): boolean {
   return useEstado((atual) => atual.uteis[postId] === true)
 }
 
-export function publicarPost(entrada: {
-  texto: string
-  tipo: TipoPost
-  grupoId?: string
-}): Post {
+export function publicarPost(entrada: { texto: string; tipo: TipoPost; grupoId?: string }): Post {
   const post: Post = {
     id: proximoId("po"),
     autorId: PERFIL.id,

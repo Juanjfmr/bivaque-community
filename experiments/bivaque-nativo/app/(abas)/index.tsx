@@ -82,10 +82,7 @@ export default function TelaInicio() {
           }
           renderItem={({ item, index }) => (
             <Entrada indice={index}>
-              <CartaoPost
-                post={item}
-                aoPressionar={() => router.push(`/pergunta/${item.id}`)}
-              />
+              <CartaoPost post={item} aoPressionar={() => router.push(`/pergunta/${item.id}`)} />
             </Entrada>
           )}
         />
