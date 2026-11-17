@@ -5886,7 +5886,8 @@
       "links": ["docs/LANCAMENTO.md"],
       "proof": [
         "02/11: aberto na definição do lançamento (docs/LANCAMENTO.md), por mandato do dono.",
-        "06/11: RUN-015 integrado pelo PR #145 (f9492a1d): perguntar à cidade, anunciar desapego com foto (publicação pela RPC transition_listing) e Meus anúncios, com rascunho, revisão e erro preservado; migration nova veta pergunta de conta suspensa. Implementação GPT Sol 6.1 (parcial) e Qwen 3.8 Flash; revisão DeepSeek V4.1 Flash FAIL (publicação por UPDATE direto recusada pela guarda) e security-auditor (Sonnet 5.5) LIBERA COM RESSALVAS; rodada única de correção fechou; CI verde com o E2E real. Publicação em grupo fica para o F04 Grupos."
+        "06/11: RUN-015 integrado pelo PR #145 (f9492a1d): perguntar à cidade, anunciar desapego com foto (publicação pela RPC transition_listing) e Meus anúncios, com rascunho, revisão e erro preservado; migration nova veta pergunta de conta suspensa. Implementação GPT Sol 6.1 (parcial) e Qwen 3.8 Flash; revisão DeepSeek V4.1 Flash FAIL (publicação por UPDATE direto recusada pela guarda) e security-auditor (Sonnet 5.5) LIBERA COM RESSALVAS; rodada única de correção fechou; CI verde com o E2E real. Publicação em grupo fica para o F04 Grupos.",
+        "17/11: revisão às cegas (DS-022) achou o único bloqueante real no F03 (menu Criar sem scrim e formulário transparente no celular); corrigido pelo RUN-183 (#272). Falta nova rodada às cegas com as capturas corrigidas."
       ],
       "id": "LAN-F03",
       "title": "F03 Criar: pergunta, publicação com foto, evento e anúncio",
@@ -6120,7 +6121,8 @@
       "links": ["docs/LANCAMENTO.md"],
       "proof": [
         "02/11: aberto na definição do lançamento (docs/LANCAMENTO.md), por mandato do dono.",
-        "05/11–06/11: RUN-009 integrado pelo PR #139 (e59e6008). Implementação DeepSeek V4.1 Flash; revisão de contrato Haiku 5.5 FAIL (roteiro e atalhos retirados, salvo preso, Salvos sem verbetes, sugestão sem E2E); auditoria security-auditor (Sonnet 5.5) LIBERA COM RESSALVAS (cursor sem escape); rodada única de correção no DeepSeek V4.1 Flash gratuito fechou tudo; CI verde com o E2E real. Observação: arrival_guide_entries tem leitura nacional por policy; salvar/sugerir só da cidade."
+        "05/11–06/11: RUN-009 integrado pelo PR #139 (e59e6008). Implementação DeepSeek V4.1 Flash; revisão de contrato Haiku 5.5 FAIL (roteiro e atalhos retirados, salvo preso, Salvos sem verbetes, sugestão sem E2E); auditoria security-auditor (Sonnet 5.5) LIBERA COM RESSALVAS (cursor sem escape); rodada única de correção no DeepSeek V4.1 Flash gratuito fechou tudo; CI verde com o E2E real. Observação: arrival_guide_entries tem leitura nacional por policy; salvar/sugerir só da cidade.",
+        "17/11: RUN-182 (#271) fechou a última tela de membro do Guia na web (/guide/sugerir → app). Revisão às cegas de 17/11 (66 capturas, DS-022): F08 no nível da régua; melhoria registrada em CEGA-MELHORIAS-17-11 (cartões iguais no Guia)."
       ],
       "id": "LAN-F08",
       "title": "F08 Guia ligado ao banco",
@@ -6259,7 +6261,8 @@
       "links": ["docs/LANCAMENTO.md"],
       "proof": [
         "02/11: aberto na definição do lançamento (docs/LANCAMENTO.md), por mandato do dono.",
-        "06/11: RUN-016 integrado pelo PR #143 (385d9850): perfil próprio (ler e editar nome e bio), minhas publicações, bloqueados e ocultados com desfazer, e pedido de exclusão pelo fluxo existente. Implementação DeepSeek V4.1 Flash; revisão Qwen 3.8 Flash PASS COM RESSALVAS; security-auditor (Sonnet 5.5) LIBERA COM RESSALVAS; CI verde com o E2E real. Família ficou fora (ver F10-FAMILIA)."
+        "06/11: RUN-016 integrado pelo PR #143 (385d9850): perfil próprio (ler e editar nome e bio), minhas publicações, bloqueados e ocultados com desfazer, e pedido de exclusão pelo fluxo existente. Implementação DeepSeek V4.1 Flash; revisão Qwen 3.8 Flash PASS COM RESSALVAS; security-auditor (Sonnet 5.5) LIBERA COM RESSALVAS; CI verde com o E2E real. Família ficou fora (ver F10-FAMILIA).",
+        "17/11: DECISÃO DO DONO — a troca de e-mail fica fora do lançamento; quem precisar trocar pede pelo canal de Ajuda (suporte). A troca de /configuracoes* para o app segue sem ela no RUN-184 (em curso), com ADR registrando a exclusão; /salvos vai no lote seguinte."
       ],
       "id": "LAN-F10",
       "title": "F10 Você, família e conta ligados ao banco",
@@ -6305,7 +6308,8 @@
         "16/11: CIDADE-169 mergeado (1c488b1f) — /cidade e /localidade deixaram de servir tela de membro; o painel de cidade do app navega por id real.",
         "16/11: RUN-168 (8c3224fa), RUN-169 (9100ab6b) e RUN-170 (74d58714) fundidos; F06 so fecha com RUN-171 + LOC-IMPL (dependencia registrada no card); F10 tem paridade completa no app e so espera a troca.",
         "16/11: RUN-166 mergeado. Do inventario de RUN-166, seguem servindo tela de membro na web: indicacoes/[id] (pre-condicao do F09-B3 migrar o report-button antes), /profile+/editar (RUN-172 em curso), negocio/pedidos/configuracoes-familia e o resto da casca — a fase 6 acompanha por jornada.",
-        "16/11: RUN-172 mergeado — nenhuma tela de membro das linhas F02-F10 fora das trocadas; o que resta na web pertence a jornadas com card proprio. AVATAR-FOTO-APP e o item M-3 da familia estao registrados."
+        "16/11: RUN-172 mergeado — nenhuma tela de membro das linhas F02-F10 fora das trocadas; o que resta na web pertence a jornadas com card proprio. AVATAR-FOTO-APP e o item M-3 da familia estao registrados.",
+        "17/11: /guide/sugerir trocada (RUN-182, #271). Em curso: /configuracoes* (RUN-184) e paridade da Pergunta antes de trocar /indicacoes/[id] (RUN-185). Depois: /salvos e o lote 3 do F09 (troca de /indicacoes/[id] e revogação do INSERT direto). Troca de e-mail fora do lançamento por decisão do dono."
       ],
       "id": "LAN-TROCA",
       "title": "Fase 6: varredura da troca — nenhuma rota de membro no apps/web servindo tela",
@@ -7600,7 +7604,8 @@
         "Execução com falha | https://github.com/Juanjfmr/bivaque-community/actions/runs/42052189953"
       ],
       "proof": [
-        "42052189953: completed/failure, is_error:true, num_turns:1, modelUsage vazio; log local em .visual/run-130/ci-review-failed.log."
+        "42052189953: completed/failure, is_error:true, num_turns:1, modelUsage vazio; log local em .visual/run-130/ci-review-failed.log.",
+        "16/11: a pedido do dono, o workflow 'Claude Code Review' foi desativado no GitHub (DeepSeek sem saldo); religar com gh workflow enable. O HRN-005 deixou o review sob demanda (variável ou label review:claude) para quando for religado. 17/11: GitHub Pages desligado a pedido do dono (servia prévia de uma branch de experimento)."
       ],
       "checklist": [
         "Reproduzir a falha do serviço de revisão fora do diff do painel.",
@@ -8100,12 +8105,13 @@
       "proof": [
         "11/11: aberto a partir da ressalva MÉDIA do security-auditor 437d6aa3 (PR #183).",
         "16/11: PARCIAL pelo RUN-175 (#258): limitador por pessoa nas chamadas REAIS do geocode do ANÚNCIO (janela 1 h/20, cache-hit não consome, 429 com retry-after — unit com relógio falso; ADR-20261116 §2 registra a decisão; por-processo é limitação aceita, upgrade = contador no banco molde SEC-007). O que falta para fechar (próximo passo concreto): TTL e limpeza em cep_geocodes; teto global; e o PUT /api/app/voce/localizacao (perfil, PR #183) geocodifica no cache-miss SEM consumirConsulta — achado médio da revisão do #258, pré-existente, não coberto pelo lote.",
-        "16/11: o L2 (#259) ampliou o limitador existente para o PEDIDO (mesma janela 20/h por pessoa, mesma chave por usuario, cache-hit nao consome). O que continua aberto neste card: TTL/limpeza do cep_geocodes, teto global, e o PUT /api/app/voce/localizacao (perfil) que geocodifica no cache-miss sem consumirConsulta."
+        "16/11: o L2 (#259) ampliou o limitador existente para o PEDIDO (mesma janela 20/h por pessoa, mesma chave por usuario, cache-hit nao consome). O que continua aberto neste card: TTL/limpeza do cep_geocodes, teto global, e o PUT /api/app/voce/localizacao (perfil) que geocodifica no cache-miss sem consumirConsulta.",
+        "17/11: o PUT do perfil já consome a cota (SEC-013, #266). O que faltava virou o lote SEC-016 (contrato 48165e81): teto global de 300 consultas reais por hora no processo e validade de 180 dias no cache de CEP, com reaproveitamento da linha vencida quando o provedor falha; sem migration. Em curso com o DeepSeek V4.1 Flash."
       ],
       "tests": [],
       "links": ["docs/decisions/ADR-20261022-localizacao-padrao-de-mercado.md"],
       "dependencies": ["LOC-IMPL", "ADR-LOCALIZACAO"],
-      "updatedAt": "2026-11-16",
+      "updatedAt": "2026-11-17",
       "sourceRevision": "8ab4b750",
       "blockers": [],
       "completedChecklist": [false, false, false, false]
@@ -8184,13 +8190,14 @@
       ],
       "proof": [
         "11/11: aberto a partir da ressalva B3 do parecer de segurança e89e33e0 (PR #181).",
-        "16/11: RUN-166 (#250) matou o INSERT do conversation-inbox mas o segundo produtor continua vivo e so foi visto na revisao independente — revogar o grant hoje quebraria a denuncia-com-bloqueio da indicacao. Ordem: report-button → rota do app (molde RUN-165) → revogacao."
+        "16/11: RUN-166 (#250) matou o INSERT do conversation-inbox mas o segundo produtor continua vivo e so foi visto na revisao independente — revogar o grant hoje quebraria a denuncia-com-bloqueio da indicacao. Ordem: report-button → rota do app (molde RUN-165) → revogacao.",
+        "17/11: PRÉ-CONDIÇÃO CUMPRIDA pelo SEC-015 (#270): denunciar e bloquear existe na tela Pergunta do app pela rota de bloqueio. Ordem restante: RUN-185 (paridade da Pergunta, em curso) → lote 3 (307 de /indicacoes/[id], remoção do ramo de bloqueio do report-button e revogação do INSERT direto de dm_messages, com pgTAP ±)."
       ],
       "tests": [],
       "links": [],
       "dependencies": ["F09-ENVIO-PELA-RPC"],
-      "updatedAt": "2026-11-16",
-      "sourceRevision": "9b0dbf2b",
+      "updatedAt": "2026-11-17",
+      "sourceRevision": "2f642eb2",
       "blockers": [],
       "completedChecklist": [false, false, false]
     },
@@ -8356,7 +8363,7 @@
       "phase": "Lançamento",
       "priority": "P1",
       "category": "backend",
-      "status": "repo",
+      "status": "done",
       "description": "A create_family_invitation recebe p_inviter_user_id como parâmetro e não deriva nem compara auth.uid(): a posse hoje depende do TypeScript. Decidir e implementar a derivação no banco (molde: supabase/migrations/20260819021416_locality_transfer.sql:105-110, v_user_id uuid := auth.uid() e raise 'unauthenticated' 28000), com migration nova, pgTAP positivo/negativo e R3 registrado. Decidido por delegação no ADR-20261111-convite-familiar-pela-sessao; o cartão F10-FAMILIA não fecha como 'posse derivada da sessão' antes disso.",
       "checklist": [
         "Migration nova com a posse derivada de auth.uid() no banco",
@@ -8364,14 +8371,18 @@
         "Auditoria security-auditor e revisão independente antes do merge",
         "Registro no RATIFICACAO.md"
       ],
-      "proof": ["11/11: aberto a partir do achado MÉDIO A4 do parecer R3 do PR #194."],
+      "proof": [
+        "11/11: aberto a partir do achado MÉDIO A4 do parecer R3 do PR #194.",
+        "17/11: fechado pelo SEC-011 (PR #267, squash 3e00a4c5): as três funções públicas de escrita do convite derivam auth.uid() e as assinaturas com id de titular saem; tetos de 5 ativos e 10 envios/hora conferidos no banco sob trava por titular; Upstash opcional, limite do banco sempre; tela e Server Actions antigas de família removidas. CI completo verde. Revisão GLM PASS COM RESSALVAS; auditoria Qwen4 Max LIBERA COM RESSALVAS; delta do Upstash revisado e auditado pelo GPT 6.1 Terra (PASS e LIBERA, com ressalvas)."
+      ],
       "tests": [],
       "links": ["docs/decisions/ADR-20261111-convite-familiar-pela-sessao.md"],
       "dependencies": ["BLOCK-RESEND"],
-      "updatedAt": "2026-11-11",
-      "sourceRevision": "ef72c839",
+      "updatedAt": "2026-11-17",
+      "sourceRevision": "2f642eb2",
       "blockers": [],
-      "completedChecklist": [false, false, false, false]
+      "completedChecklist": [false, false, false, false],
+      "completedAt": "2026-11-17"
     },
     {
       "id": "F10-R3-FIXTURE-ESCOPO",
@@ -9494,7 +9505,160 @@
         "[ ] Pendências do diagnóstico de CI: P6 painel semanal, P8 árvore idêntica, P7 quarentena condicional"
       ],
       "proof": [
-        "Recusas observadas em 17/11 nos PRs #264 e #269; merges feitos pelo coordenador conferindo ci-core e agregador verdes no SHA."
+        "Recusas observadas em 17/11 nos PRs #264 e #269; merges feitos pelo coordenador conferindo ci-core e agregador verdes no SHA.",
+        "17/11: os dois primeiros itens viraram o lote HRN-006 (contrato 009a22ca, branch gpt/hrn-merge-seguro), em curso com o GPT 6 Luna. P6, P7 e P8 continuam aqui."
+      ],
+      "tests": [],
+      "notes": []
+    },
+    {
+      "id": "SEC-011-RESSALVAS",
+      "title": "SEC-011-RESSALVAS: provar que a resposta do convite não carrega a mensagem do banco",
+      "phase": "Segurança pré-lançamento",
+      "priority": "P3",
+      "category": "backend",
+      "status": "next",
+      "updatedAt": "2026-11-17",
+      "sourceRevision": "2f642eb2",
+      "description": "Ressalva da revisão e da auditoria do delta do SEC-011 (17/11): o teste da rota de convite familiar confere o status e a frase, mas não prova sozinho que a resposta está livre de campos extras com a mensagem do banco. O código não vaza (conferido na leitura); falta a asserção.",
+      "dependencies": ["F10-R3-SESSION-DERIVED"],
+      "checklist": [
+        "[ ] Asserção de corpo exato (sem campo extra) nas respostas de erro da rota de convite familiar"
+      ],
+      "proof": ["Fonte: .work/orq/relatorios/SEC-011-delta.md."],
+      "tests": [],
+      "notes": []
+    },
+    {
+      "id": "SEC-015",
+      "title": "SEC-015: bloquear a autoria de pergunta ou resposta depois de denunciar, no app",
+      "phase": "Segurança pré-lançamento",
+      "priority": "P1",
+      "category": "frontend",
+      "status": "done",
+      "updatedAt": "2026-11-17",
+      "completedAt": "2026-11-17",
+      "sourceRevision": "2f642eb2",
+      "description": "Pré-condição do F09-B3: a denúncia com bloqueio da tela antiga /indicacoes/[id] passa a existir na tela Pergunta do app, pela rota POST /api/app/voce/bloqueados (sem escrita direta). Emenda do ADR-20261116-bloqueio-e-denuncia-pela-porta-do-app.",
+      "dependencies": [],
+      "checklist": [
+        "[x] Oferta de bloquear depois da denúncia de pergunta ou resposta de outra pessoa",
+        "[x] Oferta também quando a leitura dos bloqueados falha",
+        "[x] E2E e testes de dados",
+        "[x] Emenda do ADR"
+      ],
+      "proof": [
+        "PR #270 mergeado por squash (4512cb22) por decisão do dono em 17/11; CI completo, stateful nas três larguras, Visual 7 shards e app mobile-first verdes no SHA 1defac00.",
+        "Pareceres: auditoria do GPT 6.1 Terra LIBERA COM RESSALVAS nas três rodadas; revisão FAIL na 3ª rodada por defeito de teste, orçamento de correção esgotado (.work/orq/relatorios/SEC-015-revisao-auditoria-r1.md a r3)."
+      ],
+      "tests": [
+        "apps/app/tests/e2e/jornadas-reais.spec.ts",
+        "apps/app/tests/perguntas-dados.test.ts"
+      ],
+      "notes": []
+    },
+    {
+      "id": "RUN-182",
+      "title": "RUN-182: sugerir lugar novo no Guia pelo app; /guide/sugerir sai da web",
+      "phase": "Lançamento",
+      "priority": "P1",
+      "category": "frontend",
+      "status": "done",
+      "updatedAt": "2026-11-17",
+      "completedAt": "2026-11-17",
+      "sourceRevision": "2f642eb2",
+      "description": "F08: a sugestão de lugar novo ganha porta no app (POST /api/app/guia/sugestao reusando suggest_guide_entry, mesma fila de curadoria) e /guide/sugerir vira 307. A exclusão que só existia em comentário de código foi revogada pelo LANCAMENTO.",
+      "dependencies": [],
+      "checklist": [
+        "[x] Rota nova com sessão, CSRF e frases fixas",
+        "[x] Folha no Guia do app",
+        "[x] 307 e testes de troca",
+        "[x] Rota registrada no manifesto de superfície da API (108 rotas)"
+      ],
+      "proof": [
+        "PR #271 mergeado por squash (fed37c1a); CI completo e Visual verdes.",
+        "Revisão do GPT 6.1 Terra: 1ª FAIL (telefone, error.message, mensagem do limite), 2ª PASS COM RESSALVAS (.work/orq/relatorios/RUN-182-revisao2.md)."
+      ],
+      "tests": [
+        "tests/unit/app-api/guia/rotas.test.ts",
+        "apps/app/tests/e2e/guia-estrutura.spec.ts",
+        "tests/e2e/guia-redirects.spec.ts"
+      ],
+      "notes": []
+    },
+    {
+      "id": "DS-022",
+      "title": "DS-022: capturas das sete jornadas para a revisão às cegas",
+      "phase": "Lançamento",
+      "priority": "P1",
+      "category": "infra",
+      "status": "done",
+      "updatedAt": "2026-11-17",
+      "completedAt": "2026-11-17",
+      "sourceRevision": "2f642eb2",
+      "description": "Spec que captura F02, F03, F06, F07, F08, F09 e F10 com o seed real em 375, 768 e 1440 (tema claro) e publica o artefato visual-evidence no CI, para o critério 2 do LANCAMENTO (revisão às cegas contra a régua).",
+      "dependencies": [],
+      "checklist": [
+        "[x] Roteiro por jornada com seletor de prova de dado real",
+        "[x] Captura no CI e artefato publicado",
+        "[x] Teste de escopo do roteiro",
+        "[x] Locale pt-BR, fuso de Manaus e movimento reduzido (RUN-183)"
+      ],
+      "proof": [
+        "PR #268 mergeado por squash (6df116fa); run 43984703051 gerou 66 imagens; revisão GLM PASS COM RESSALVAS (.work/orq/relatorios/DS-022-revisao.md).",
+        "Revisão às cegas de 17/11 (GPT 6 Luna, .work/orq/relatorios/cega-revisao-jornadas.md): F08 no nível; F02 sem julgamento (feed capturado cedo); F03, F06, F07, F09 e F10 abaixo do nível. Triagem do coordenador: bloqueante real só em F03 (RUN-183); F09 e F10 eram leitura errada da captura."
+      ],
+      "tests": ["tests/e2e/cega-capturas.spec.ts", "tests/scope/cega-capturas.test.mjs"],
+      "notes": []
+    },
+    {
+      "id": "RUN-183",
+      "title": "RUN-183: menu Criar com fundo escurecido e formulários opacos no celular; capturas em pt-BR",
+      "phase": "Lançamento",
+      "priority": "P1",
+      "category": "frontend",
+      "status": "done",
+      "updatedAt": "2026-11-17",
+      "completedAt": "2026-11-17",
+      "sourceRevision": "2f642eb2",
+      "description": "Bloqueante da revisão às cegas de 17/11 (F03): no celular e no tablet o menu Criar abria sem fundo escurecido e o formulário de desapego deixava a tela de trás aparecer pelos campos. Superfície opaca e scrim no modo pilha; foco preso pelos oito focáveis; capturas em pt-BR, fuso de Manaus, após animação e com feed carregado.",
+      "dependencies": ["DS-022"],
+      "checklist": [
+        "[x] Scrim e superfície opaca no modo pilha",
+        "[x] E2E de foco preso e clique no fundo sem efeito",
+        "[x] Capturas em pt-BR e fuso de Manaus"
+      ],
+      "proof": [
+        "PR #272 mergeado por squash (2f642eb2) por decisão do dono em 17/11; check runs todos verdes no SHA 8a52dd17 (16 de 16).",
+        "Revisão do GPT 6.1 Terra: a correção visual aprovada no código desde a 1ª rodada; três rodadas FAIL só no teste de foco, o último id corrigido pelo coordenador depois do orçamento (.work/orq/relatorios/RUN-183-revisao3.md)."
+      ],
+      "tests": ["apps/app/tests/e2e/casca.spec.ts", "tests/e2e/cega-capturas.spec.ts"],
+      "notes": []
+    },
+    {
+      "id": "CEGA-MELHORIAS-17-11",
+      "title": "Revisão às cegas de 17/11: melhorias não bloqueantes por jornada",
+      "phase": "Lançamento",
+      "priority": "P2",
+      "category": "frontend",
+      "status": "next",
+      "updatedAt": "2026-11-17",
+      "sourceRevision": "2f642eb2",
+      "description": "Achados classificados como MELHORIA (D6 da orquestração: antes do lançamento só bloqueantes e correções baratas; redesenho vira cartão) na revisão às cegas das 66 capturas de 17/11. Fonte: .work/orq/relatorios/cega-revisao-jornadas.md.",
+      "dependencies": ["DS-022"],
+      "checklist": [
+        "[ ] F02: chips de filtro cortados na borda em 375",
+        "[ ] F02: texto de apoio longo demais no Início",
+        "[ ] F06: imagem vazia grande no anúncio sem foto",
+        "[ ] F06: ação Gerenciar separada do resto das ações do anúncio",
+        "[ ] F07: coluna estreita e estados vazios no Meu negócio",
+        "[ ] F08: cartões iguais demais no Guia (hierarquia)",
+        "[ ] F09: densidade da lista de conversas",
+        "[ ] F10: estado 'Carregando' da afiliação aparece na captura",
+        "[ ] F03: painel do Criar alinhado à esquerda no desktop"
+      ],
+      "proof": [
+        "17/11: lista consolidada pelo coordenador a partir do parecer às cegas do GPT 6 Luna."
       ],
       "tests": [],
       "notes": []
