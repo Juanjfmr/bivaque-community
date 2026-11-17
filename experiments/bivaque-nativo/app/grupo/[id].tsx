@@ -31,7 +31,7 @@ export default function TelaGrupo() {
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-background" edges={["top", "left", "right"]}>
+    <SafeAreaView className="flex-1 bg-background">
       <FlatList
         data={publicacoes}
         keyExtractor={(post) => post.id}

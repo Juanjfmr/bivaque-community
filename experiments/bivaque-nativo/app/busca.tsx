@@ -47,7 +47,7 @@ export default function TelaBusca() {
   const resultados = buscar(termo, posts, anuncios)
 
   return (
-    <SafeAreaView className="flex-1 bg-background" edges={["top", "left", "right"]}>
+    <SafeAreaView className="flex-1 bg-background">
       <CabecalhoTela
         titulo="Buscar"
         subtitulo="Perguntas, grupos e anúncios da cidade"

@@ -54,7 +54,7 @@ export default function TelaPergunta() {
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-background" edges={["top", "left", "right"]}>
+    <SafeAreaView className="flex-1 bg-background">
       <CabecalhoTela
         titulo={post.tipo === "pergunta" ? "Pergunta" : "Publicação"}
         esquerda={<BotaoIcone nome="voltar" rotulo="Voltar" aoPressionar={() => router.back()} />}

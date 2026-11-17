@@ -18,7 +18,7 @@ export default function TelaEmBreve() {
     "Esta parte da cidade ainda está sendo preparada, com calma e com a ajuda dos vizinhos."
 
   return (
-    <SafeAreaView className="flex-1 bg-background" edges={["top", "left", "right"]}>
+    <SafeAreaView className="flex-1 bg-background">
       <CabecalhoTela
         titulo="Em breve"
         esquerda={<BotaoIcone nome="voltar" rotulo="Voltar" aoPressionar={() => router.back()} />}

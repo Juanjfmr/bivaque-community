@@ -42,7 +42,7 @@ export default function TelaConversa() {
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-background" edges={["top", "left", "right"]}>
+    <SafeAreaView className="flex-1 bg-background">
       <CabecalhoTela
         titulo={pessoa.nome}
         subtitulo={pessoa.bairro}

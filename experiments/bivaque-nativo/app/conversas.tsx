@@ -12,7 +12,7 @@ export default function TelaConversas() {
   const conversas = useConversas()
 
   return (
-    <SafeAreaView className="flex-1 bg-background" edges={["top", "left", "right"]}>
+    <SafeAreaView className="flex-1 bg-background">
       <CabecalhoTela
         titulo="Conversas"
         esquerda={<BotaoIcone nome="voltar" rotulo="Voltar" aoPressionar={() => router.back()} />}

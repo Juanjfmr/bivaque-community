@@ -29,7 +29,7 @@ export default function TelaAnuncio() {
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-background" edges={["top", "left", "right"]}>
+    <SafeAreaView className="flex-1 bg-background">
       <CabecalhoTela
         titulo="Anúncio"
         esquerda={<BotaoIcone nome="voltar" rotulo="Voltar" aoPressionar={() => router.back()} />}
@@ -62,17 +62,17 @@ export default function TelaAnuncio() {
             </View>
           </Card>
         </View>
-
-        {anuncio.vendedorId === PERFIL.id ? null : (
-          <View className="px-4">
-            <BotaoAcao
-              rotulo="Tenho interesse"
-              estado="parado"
-              aoPressionar={() => router.push(`/conversa/${abrirOuCriarConversa(anuncio)}`)}
-            />
-          </View>
-        )}
       </ScrollView>
+
+      {anuncio.vendedorId === PERFIL.id ? null : (
+        <View className="border-t border-border bg-card px-4 pt-3 pb-2">
+          <BotaoAcao
+            rotulo="Tenho interesse"
+            estado="parado"
+            aoPressionar={() => router.push(`/conversa/${abrirOuCriarConversa(anuncio)}`)}
+          />
+        </View>
+      )}
     </SafeAreaView>
   )
 }
