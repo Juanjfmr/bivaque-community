@@ -140,7 +140,10 @@ test.describe("a conta descartável que pede a exclusão", { tag: "@stateful" },
     // leitura, sem o perfil que existia antes do pedido.
     await page.goto("/app/voce")
     await expect(page.locator('[data-tela="voce"]')).toBeVisible({ timeout: 30_000 })
-    await expect(page.locator('[data-estado="erro"]')).toBeVisible({ timeout: 30_000 })
+    // No celular a tela mostra o estado de erro em mais de uma seção; basta a primeira.
+    await expect(page.locator('[data-tela="voce"] [data-estado="erro"]').first()).toBeVisible({
+      timeout: 30_000,
+    })
     await expect(page.getByText("Pessoa Que Sai")).toHaveCount(0)
 
     // O login também não volta: a conta banida recusa um password grant novo
@@ -150,5 +153,6 @@ test.describe("a conta descartável que pede a exclusão", { tag: "@stateful" },
       400,
     )
     expect(grant, "recusa de credencial, não indisponibilidade do GoTrue").toBeLessThan(500)
+    expect(grant, "429 é limite de taxa, não prova o banimento").not.toBe(429)
   })
 })
