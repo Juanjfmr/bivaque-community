@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test"
 import { simularInicio } from "./inicio-ajuda"
-import { simularPerguntas, ID_PERGUNTA } from "./perguntas-ajuda"
+import { ID_PERGUNTA, simularPerguntas } from "./perguntas-ajuda"
 
 test.beforeEach(async ({ page }) => {
   await simularInicio(page)
