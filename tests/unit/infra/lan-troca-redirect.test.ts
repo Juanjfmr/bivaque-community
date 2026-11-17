@@ -47,6 +47,12 @@ const TROCADAS = [
   ["/configuracoes/bloqueados", "/app/bloqueados"],
   ["/configuracoes/familia", "/app/voce"],
   ["/configuracoes/notificacoes", "/app/voce"],
+  // RUN-184: a tela de conta saiu inteira (a seção vive no Você) e o índice junto —
+  // ele só redirecionava para conta. A troca de e-mail ficou fora do lançamento por
+  // decisão do dono em 17/11 (Ajuda); senha e recuperação já tinham saído pelo
+  // ADR-20261101 §2. As duas exatas vêm antes da subárvore no next.config.
+  ["/configuracoes", "/app/voce"],
+  ["/configuracoes/conta", "/app/voce"],
   ["/inicio", "/app/inicio"],
   ["/notifications", "/app/avisos"],
   ["/explorar/busca", "/app/busca"],
@@ -243,7 +249,10 @@ describe("LAN-TROCA fase 1", () => {
     expect(sobras).toEqual([])
   })
 
-  it.each(["notifications", "configuracoes/notificacoes", "messages"])(
+  // RUN-184: a árvore de configurações saiu inteira — a conta, o índice, os resíduos
+  // de bloqueados/família e as actions (trust-actions.ts) morreram com a troca. A
+  // prova é de ausência: o diretório não existe mais no checkout.
+  it.each(["notifications", "configuracoes", "messages"])(
     "a pasta antiga %s não deixa tela nem action para trás",
     (relativa) => {
       const pasta = join(shell, relativa)

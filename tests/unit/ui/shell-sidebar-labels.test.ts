@@ -17,7 +17,8 @@ const DESTINO_POR_ROTULO: Record<string, string> = {
   Perfil: "/app/voce",
   Salvos: "/salvos",
   Notificações: "/app/avisos",
-  Configurações: "/configuracoes",
+  // RUN-184: a tela de conta saiu da web e a seção vive no Você do app.
+  Configurações: "/app/voce",
 }
 
 function extractLabeledAnchors(source: string): Array<{ href: string; label: string }> {
@@ -52,10 +53,10 @@ describe("RECON-042, defeito 1 — o rótulo do item da lateral corresponde ao d
     }
   })
 
-  it("Configurações leva a /configuracoes", () => {
+  it("Configurações leva ao Você do app", () => {
     const source = readFileSync(appShell, "utf8")
     expect(extractLabeledAnchors(source)).toContainEqual({
-      href: "/configuracoes",
+      href: "/app/voce",
       label: "Configurações",
     })
   })

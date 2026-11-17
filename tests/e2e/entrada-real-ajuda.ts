@@ -982,6 +982,58 @@ export async function semearSessaoDeMembro(
   ])
 }
 
+// ── conta descartável até o estado de membro ────────────────────────────────
+
+/**
+ * Deixa a conta da sessão instalada no estado de membro sem percorrer as cinco
+ * etapas da entrada: chama as duas rotas que a tela chama — o aceite
+ * (`/api/app/entry/consent`) e o provisionamento (`/api/app/entry/provision`) —
+ * com o cookie do contexto. Serve à spec que precisa de um membro descartável e
+ * NÃO está provando a entrada; essa é a `f01-entrada-real.spec.ts`, pela tela.
+ *
+ * A conta precisa já estar verificada (criarContaVerificada) e assinada no
+ * contexto (signInAsWithPassword), senão a rota recusa com 403 — e a recusa
+ * aparece aqui, nunca como tela vazia no teste.
+ *
+ * `baseURL` é a origem do servidor E2E: escrita por cookie confere `Origin`
+ * contra a lista do servidor (SPA ADR §5), e o request context do Playwright
+ * não manda esse cabeçalho sozinho.
+ */
+export async function provisionarMembroDescartavel(
+  page: Page,
+  baseURL: string | undefined,
+  opcoes: Readonly<{ nome?: string; ibge?: string }> = {},
+): Promise<void> {
+  const origem = (baseURL ?? "http://127.0.0.1:3000").replace(/\/+$/, "")
+  const cabecalhos = { origin: origem, "x-bivaque-app": "bivaque-spa" }
+
+  const aceite = await page.request.post(`${origem}/api/app/entry/consent`, {
+    headers: cabecalhos,
+  })
+  if (aceite.status() !== 200) {
+    throw new Error(
+      `O aceite da entrada recusou a conta descartável: HTTP ${aceite.status()} ` +
+        `(${(await aceite.text()).slice(0, 200)}). A sessão foi instalada antes?`,
+    )
+  }
+
+  const provisionamento = await page.request.post(`${origem}/api/app/entry/provision`, {
+    headers: cabecalhos,
+    data: {
+      // Manaus é referência durável do primeiro passo de migração.
+      ibge_code: opcoes.ibge ?? "1302603",
+      display_name: opcoes.nome ?? "Pessoa Sintética",
+      moment: "resident",
+    },
+  })
+  if (provisionamento.status() !== 200) {
+    throw new Error(
+      `O provisionamento recusou a conta descartável: HTTP ${provisionamento.status()} ` +
+        `(${(await provisionamento.text()).slice(0, 200)}). O vínculo está verificado?`,
+    )
+  }
+}
+
 // ── passos da tela ──────────────────────────────────────────────────────────
 
 /** Abre `/app/entrar`, escolhe a entrada por e-mail, envia o código e para na etapa do código. */

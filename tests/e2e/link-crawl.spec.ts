@@ -129,7 +129,10 @@ const PORTAS_FORA_DO_LINK: readonly PortaDeclarada[] = [
   },
   {
     route: "/conta-apagada",
-    porta: "FLUXO: redirect depois de apagar a conta em Configurações > Conta (lote 4, PORT-006)",
+    // RUN-184: a tela de conta saiu da web e o pedido do app registra "Pedido
+    // registrado" na própria tela — não navega mais para cá. A rota fica pública
+    // para link antigo e e-mail já enviado, e por isso continua declarada.
+    porta: "EXTERNO: link antigo de confirmação de exclusão (a tela ficou pública, lote 4)",
     dono: "visitante",
   },
   {
@@ -233,9 +236,11 @@ const PORTAS_FORA_DO_LINK: readonly PortaDeclarada[] = [
   // indicação. Entrar na casca por uma semente devolveu a medida, e estas voltaram a ter link
   // — por isso saíram da lista: declaração que virou link é dívida paga, e staleAllowances
   // acusaria a linha esquecida.
-  // - /salvos e /configuracoes: coluna lateral de toda tela da casca (app-shell.tsx:113 e :161)
-  // - /configuracoes/conta: coluna de Configurações (configuracoes-nav.tsx)
-  // - /recuperar-senha: 'Alterar' e 'Ajuda com acesso' em Conta (configuracoes/conta/page.tsx)
+  // - /salvos: coluna lateral de toda tela da casca (app-shell.tsx:113) — sai no lote de /salvos
+  // - /configuracoes/bloqueados e /configuracoes/familia: saíram no RUN-184 junto com a árvore
+  //   `(shell)/configuracoes`; o 307 é rede para URL antiga, e nenhuma tela web linka o endereço.
+  // - /recuperar-senha: voltou a ser porta declarada no RUN-184 (ver a entrada logo abaixo de
+  //   /nova-senha); o último link morreu com a tela de conta
   // - /communities/[id]: lista de comunidades (communities-screen.tsx:276) e a lateral (:328)
   // - /groups/[id]: nome do grupo na lista de grupos (groups/page.tsx:448)
   // - /negocio: o painel do prestador (prestador/catalogo/page.tsx:82). Até o RUN-181 a
@@ -255,6 +260,14 @@ const PORTAS_FORA_DO_LINK: readonly PortaDeclarada[] = [
   {
     route: "/nova-senha",
     porta: "EXTERNO: link do e-mail de recuperação de senha",
+    dono: "visitante",
+  },
+  {
+    // RUN-184: o último link ('Alterar' e 'Ajuda com acesso') morreu com a tela de conta. O
+    // endereço fica como rede para link antigo e cai no 307 de ENTRADA_ANTIGA para /app/entrar
+    // (a saída de senha é o ADR-20261101 §2).
+    route: "/recuperar-senha",
+    porta: "FLUXO: endereço antigo; o next.config redireciona para a entrada do app",
     dono: "visitante",
   },
   { route: "/onboarding", porta: "FLUXO: proxy, cadastro e consentimento", dono: "visitante" },
@@ -417,8 +430,6 @@ test.describe("rastreador de links", { tag: "@stateful" }, () => {
         // continua destino válido de links de conteúdo antigo, então precisa de
         // padrão — sem ele, todo link para lá virava "rota inexistente".
         "/guide",
-        "/configuracoes/bloqueados",
-        "/configuracoes/familia",
         "/inicio",
         "/explorar",
         // RUN-177: a gestão do negócio próprio e o catálogo dele saíram da web

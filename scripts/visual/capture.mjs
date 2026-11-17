@@ -113,9 +113,9 @@ export const HEADINGS = {
   // entradas de /explorar/busca que ainda estavam aqui já tinham morrido no
   // LT-002 — saem junto por serem do mesmo arquivo, não por serem reclamadas
   // pelo EVENTOS-RESIDUOS.
-  // /configuracoes/page.tsx redireciona para a única seção web que fica, e é
-  // isso que a captura registra; a rota declara expectedPath para o destino.
-  "/configuracoes": "^Configurações · Conta$",
+  // RUN-184: as capturas de /configuracoes (índice, conta e bloqueados) saíram
+  // com a árvore — a tela de conta é do app agora (/app/voce e /app/apagar-conta,
+  // medidas em apps/app/tests/e2e). Capturá-las aqui mediria o 307.
   "/groups": "Grupos",
   "/communities": "Comunidades",
   // O h1 desta rota é o NOME da comunidade principal de quem lê ("Vila
@@ -208,12 +208,6 @@ export const HEADINGS = {
   "/denuncias": "^Confiança e privacidade$",
   "/denuncias/nova?tipo=post&id=80000000-0000-4000-8000-000000000f01": "^Denunciar publicação$",
   "/denuncias/<own-report>": "^Acompanhar denúncia$",
-  // As subrotas de Configurações têm título próprio no H1 da área: a área
-  // continua nomeada ("Configurações") e a subtela entra no mesmo H1. Assim uma
-  // captura que aterrissasse na subtela errada deixa de passar como válida
-  // (RECON-042, defeito 3). As duas pontas — título e mapa — andam juntas.
-  "/configuracoes/conta": "^Configurações · Conta$",
-  "/configuracoes/bloqueados": "^Configurações · Privacidade$",
 }
 
 export const ROUTES = [
@@ -453,19 +447,9 @@ export const ROUTES = [
     account: "visual",
     fixture: "own-report",
   },
-  // RECON-031 — configurações (prancha 52) e confiança (prancha 56). A fixture
-  // é a conta do seed: membro verificado (default), com a coluna vertical de
-  // seções e as subrotas reais.
-  // /configuracoes redireciona para Conta: o destino é
-  // contrato declarado, não surpresa (a tela é a mesma, o caminho muda).
-  {
-    path: "/configuracoes",
-    name: "configuracoes",
-    auth: true,
-    expectedPath: "/configuracoes/conta",
-  },
-  { path: "/configuracoes/conta", name: "configuracoes-conta", auth: true },
-  { path: "/configuracoes/bloqueados", name: "configuracoes-bloqueados", auth: true },
+  // RECON-031 — confiança (prancha 56). A fixture é a conta do seed: membro
+  // verificado (default). As capturas de configurações (prancha 52) saíram no
+  // RUN-184 com a árvore: a conta é tela do app.
 ]
 
 // --------------------------------------------------------------------------

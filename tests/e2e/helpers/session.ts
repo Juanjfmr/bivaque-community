@@ -50,22 +50,27 @@ const SUPABASE_URL = process.env["SUPABASE_URL"] ?? "http://127.0.0.1:55321"
 
 // Resolved lazily so specs that never call seedSession() do not fail to load
 // when the local env is not configured.
-function requireEnv(): { anonKey: string; email: string; password: string } {
+function requireAnonKey(): string {
   const anonKey =
     process.env["SUPABASE_ANON_KEY"] ??
     readEnvLocal("NEXT_PUBLIC_SUPABASE_ANON_KEY") ??
     readEnvLocal("SUPABASE_ANON_KEY")
+  if (!anonKey) {
+    throw new Error(
+      "SUPABASE_ANON_KEY is required. Set it in the environment or as NEXT_PUBLIC_SUPABASE_ANON_KEY in apps/web/.env.local.",
+    )
+  }
+  return anonKey
+}
+
+function requireEnv(): { anonKey: string; email: string; password: string } {
+  const anonKey = requireAnonKey()
   const email =
     process.env["USER_EMAIL"] ??
     readEnvLocal("BIVAQUE_VISUAL_EMAIL") ??
     "visual@bivaque.example.invalid"
   const password = process.env["USER_PASSWORD"] ?? readEnvLocal("BIVAQUE_VISUAL_PASSWORD")
 
-  if (!anonKey) {
-    throw new Error(
-      "SUPABASE_ANON_KEY is required. Set it in the environment or as NEXT_PUBLIC_SUPABASE_ANON_KEY in apps/web/.env.local.",
-    )
-  }
   if (!password) {
     throw new Error(
       "USER_PASSWORD is required. Set it in the environment or as BIVAQUE_VISUAL_PASSWORD in apps/web/.env.local.",
@@ -131,27 +136,69 @@ export async function seedSession(context: BrowserContext): Promise<void> {
   await signInAs(context, requireEnv().email)
 }
 
+/** Password grant cru: o corpo só existe quando o GoTrue aceitou (status 200). */
+async function passwordGrant(
+  email: string,
+  password: string,
+): Promise<{ status: number; body: PasswordGrantBody | null }> {
+  const anonKey = requireAnonKey()
+  const api = await request.newContext()
+  try {
+    const response = await api.post(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
+      headers: { apikey: anonKey, "Content-Type": "application/json" },
+      data: { email, password },
+    })
+    const status = response.status()
+    return {
+      status,
+      body: status === 200 ? ((await response.json()) as PasswordGrantBody) : null,
+    }
+  } finally {
+    await api.dispose()
+  }
+}
+
 /**
  * Same as seedSession, for any seeded persona. Every seed account shares the one
  * disposable password (supabase/seed.sql), so only the e-mail changes.
  */
 export async function signInAs(context: BrowserContext, email: string): Promise<void> {
-  const { anonKey, password } = requireEnv()
+  await signInAsWithPassword(context, email, requireEnv().password)
+}
 
-  const api = await request.newContext()
-  const response = await api.post(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
-    headers: { apikey: anonKey, "Content-Type": "application/json" },
-    data: { email, password },
-  })
-  if (response.status() !== 200) {
-    await api.dispose()
+/**
+ * Same as signInAs, for a disposable account with its own password: the ones
+ * tests/e2e/entrada-real-ajuda.ts creates (criarContaVerificada) do not share
+ * the seed password. The caller owns the account and may destroy it.
+ */
+export async function signInAsWithPassword(
+  context: BrowserContext,
+  email: string,
+  password: string,
+): Promise<void> {
+  const { status, body } = await passwordGrant(email, password)
+  if (status !== 200 || body === null) {
     throw new Error(
-      `Password grant for ${email} failed with ${response.status()}. Is the local Supabase stack running and seeded?`,
+      `Password grant for ${email} failed with ${status}. Is the local Supabase stack running and seeded?`,
     )
   }
-  const body = (await response.json()) as PasswordGrantBody
-  await api.dispose()
+  await installSession(context, email, body)
+}
 
+/**
+ * Status do password grant para `email`/`password`. O spec da exclusão de conta
+ * usa para provar que o login não volta depois do pedido (o GoTrue bane a conta
+ * e responde 400 `user_banned`).
+ */
+export async function passwordGrantStatus(email: string, password: string): Promise<number> {
+  return (await passwordGrant(email, password)).status
+}
+
+async function installSession(
+  context: BrowserContext,
+  email: string,
+  body: PasswordGrantBody,
+): Promise<void> {
   const cookieValue = encodeAuthCookieValue(body, email)
   const projectRef = new URL(SUPABASE_URL).hostname.split(".")[0]
   const expires = Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 400

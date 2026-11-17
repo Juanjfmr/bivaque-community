@@ -1,0 +1,105 @@
+# F10: /configuracoes sai da web; a conta fica toda no app (Você e Apagar conta).
+#
+# Autoridade: docs/LANCAMENTO.md fase 6 e linha F10. Levantamento de 17/11
+# (.work/orq/relatorios/escopo-trocas.md, seção 2, itens 2.1 a 2.7, só a parte de configurações).
+#
+# Decisões, 17/11:
+# - Troca de e-mail: DECISÃO DO DONO em 17/11. Fica fora do lançamento; quem precisar trocar o
+#   e-mail pede pelo canal de Ajuda (suporte). Não construir nada no app; registrar no ADR do lote.
+# - Senha e "Esqueci minha senha": já saíram pelo ADR-20261101-entrada-unica-por-codigo §2;
+#   os links morrem com a página, citando o ADR (sem ADR novo para isso).
+# - Texto da exclusão de conta: o app passa a dizer o mesmo que a tela antiga diz (o que sai agora,
+#   o que sai no prazo, o que permanece e por quê, canal de Ajuda), com o prazo vindo do banco como
+#   hoje. A confirmação continua a palavra APAGAR (desenho aprovado do app).
+# - Depois de pedir a exclusão, o app continua mostrando "Pedido registrado" na própria tela.
+# - /salvos NÃO entra neste lote (vai no lote seguinte, na mesma casca).
+
+task_id: RUN-184
+
+objective: >
+  As rotas /configuracoes e /configuracoes/* deixam de servir tela e redirecionam para o app
+  (/app/voce, com bloqueados indo para /app/bloqueados), a árvore antiga sai com o código e os
+  testes dela, todo link vivo aponta direto para o app, e o aviso de exclusão de conta do app
+  passa a ter o texto completo da tela antiga.
+
+authority:
+  - docs/LANCAMENTO.md (fase 6 e linha F10)
+  - .work/orq/relatorios/escopo-trocas.md (seção 2; a parte de /salvos fica para o próximo lote)
+  - docs/decisions/ADR-20261101-entrada-unica-por-codigo.md (seção 2, saída de senha e recuperação)
+  - docs/decisions/ADR-20261024-front-react-spa.md (seção 8, ordem da troca)
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    apps/web/app/(shell)/configuracoes/conta/page.tsx (523 linhas) serve tela; o rodapé da casca
+    (apps/web/app/components/bivaque/app-shell.tsx:161) e a ajuda pública
+    (apps/web/app/(public)/ajuda/page.tsx:36) linkam /configuracoes; apps/app/src/telas/ApagarConta.tsx
+    tem três frases curtas no lugar do aviso completo da exclusão.
+
+allowed_paths:
+  - apps/web/next.config.ts
+  - apps/web/app/(shell)/configuracoes
+  - apps/web/lib/convite/familia-acoes.ts
+  - apps/web/app/components/bivaque/app-shell.tsx
+  - apps/web/app/components/shell/active-nav.ts
+  - apps/web/app/components/shell/create-visibility.ts
+  - apps/web/app/(public)/ajuda/page.tsx
+  - apps/web/lib/outbox/adapters.ts
+  - apps/app/src/telas/ApagarConta.tsx
+  - apps/app/tests/e2e/voce.spec.ts
+  - tests/unit/infra/lan-troca-redirect.test.ts
+  - tests/e2e/link-crawl.spec.ts
+  - tests/e2e/account-deletion-ui.spec.ts
+  - tests/e2e/helpers/session.ts
+  - tests/e2e/entrada-real-ajuda.ts
+  - tests/unit/ui/configuracoes-subtitles.test.ts
+  - tests/unit/ui/ajuda-publica.test.ts
+  - tests/unit/ui/nome-acessivel-de-fechar.test.ts
+  - tests/unit/ui/shell-active-nav.test.ts
+  - tests/unit/ui/shell-create-action.test.ts
+  - tests/unit/ui/shell-sidebar-labels.test.ts
+  - tests/unit/convite/invite-screen.test.ts
+  - tests/unit/notifications/aviso-de-pedido.test.ts
+  - tests/unit/outbox
+  - scripts/visual/capture.mjs
+  - docs/decisions/ADR-20261117-f10-conta-no-app.md
+  - docs/agents/tasks/RUN-184.task.yml
+
+forbidden:
+  - construir troca de e-mail, troca de senha ou recuperação de senha (fora do lançamento)
+  - mexer em /salvos, apps/web/lib/saves/saved-items.ts, apps/app/src/telas/Salvos.tsx ou testes de salvos (próximo lote)
+  - mudar migration, função de banco, grant ou policy (request_account_deletion e is_account_deletion_pending ficam como estão)
+  - remover /conta-apagada, /recuperar-senha, /nova-senha ou /ajuda
+  - mudar a purga /api/internal/account-deletion ou o teste dela
+  - remover apps/web/lib/convite/familia.ts ou hint.ts (a API do app usa)
+  - editar docs/decisions/RATIFICACAO.md (a linha vai no relatório)
+  - push, merge, abrir PR, force-push; ler, criar ou imprimir arquivos de ambiente
+
+acceptance:
+  - "next.config.ts: /configuracoes e /configuracoes/conta redirecionam (307) para /app/voce; as regras já existentes de /configuracoes/bloqueados (para /app/bloqueados), /configuracoes/familia e /configuracoes/notificacoes continuam valendo; query preservada, sem ciclo; lan-troca-redirect acrescenta as duas rotas em TROCADAS e prova a ausência da pasta (shell)/configuracoes."
+  - "A pasta apps/web/app/(shell)/configuracoes sai inteira (page, conta, layout, header, nav, error, loading, bloqueados, familia, trust-actions.ts) e apps/web/lib/convite/familia-acoes.ts sai junto; o relatório traz o git grep provando que nenhum import sobrou."
+  - "Links vivos migrados direto para o app: rodapé 'Configurações' da casca e a ajuda pública levam a /app/voce; active-nav e create-visibility deixam de citar /configuracoes (ou passam a tratar só o que ainda existe); a frase do e-mail de resumo diz o caminho novo (Você > Avisos) com o teste do adaptador ajustado. Inventário completo (git grep de /configuracoes em apps, tests, scripts) no relatório, com o destino de cada ocorrência."
+  - "ApagarConta.tsx mostra o aviso completo: o que sai agora, o que sai no prazo (prazo do banco, por extenso), o que permanece e por quê (moderação anonimizada e registros de acesso por 6 meses, Marco Civil art. 15), e como pedir ajuda; a confirmação continua APAGAR e o 'Pedido registrado' continua na tela. voce.spec.ts prova o texto e o fluxo em 375/768/1440."
+  - "account-deletion-ui.spec.ts deixa de abrir /configuracoes/conta: a cobertura migra para /app/apagar-conta (pedido registrado e sessão encerrada), sem perder asserção que hoje prova comportamento; testes unitários que liam arquivos da árvore removida (configuracoes-subtitles, ajuda-publica, invite-screen, nome-acessivel-de-fechar, shell-*) são removidos ou ajustados com o motivo no relatório."
+  - "link-crawl: bloqueados e familia saem de redirecionadas se não sobrar link apontando para eles; nenhuma porta declarada sobrando para /configuracoes*; capture.mjs perde as capturas e HEADINGS das telas removidas."
+  - "ADR-20261117-f10-conta-no-app.md registra: a troca, a exclusão da troca de e-mail por decisão do dono em 17/11 (suporte pelo canal de Ajuda), a saída de senha citando o ADR-20261101 §2, a escolha de manter 'Pedido registrado' na tela, e a divergência de confirmação (APAGAR × caixa de seleção). O relatório traz a linha pronta da RATIFICACAO.md."
+
+proof:
+  - "npx vitest run nos arquivos de tests/unit tocados (binários de node_modules), mostrando cada um rodando"
+  - "node --test tests/unit/infra/lan-troca-redirect.test.ts ou o runner que o arquivo usa"
+  - "npx tsc --noEmit -p apps/app"
+  - "npx tsc --noEmit -p apps/web (depois de next typegen, se o projeto exigir)"
+  - npx pnpm@11.18.0 lint
+  - "node scripts/agents/prova-fila.mjs -- npx pnpm@11.18.0 test"
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/RUN-184.task.yml
+  - "E2E (voce, account-deletion-ui, link-crawl, f10-voce-real) — no CI completo com a label ci:full"
+
+risk: troca de tela de conta com exclusão e texto jurídico; sem mudança de banco
+risk_level: R2
+
+reviewer_must_differ_from_executor: true
+retry_budget: 2
+on_budget_exhausted: HUMAN_DECISION
+
+closure:
+  requires_runtime_evidence: true

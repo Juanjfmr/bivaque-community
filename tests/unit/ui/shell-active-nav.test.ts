@@ -75,13 +75,9 @@ describe("resolveActiveNav deriva o item ativo da rota", () => {
       kind: "primary",
       id: "explorar",
     })
-    expect(resolveActiveNav("/configuracoes", PRIMARY)).toEqual({ kind: "primary", id: "perfil" })
-    for (const section of ["conta", "notificacoes", "familia", "bloqueados"]) {
-      expect(resolveActiveNav(`/configuracoes/${section}`, PRIMARY)).toEqual({
-        kind: "primary",
-        id: "perfil",
-      })
-    }
+    // RUN-184: `/configuracoes` saiu do mapa com a árvore — o endereço antigo é 307
+    // para /app/voce e nunca chega a resolver item ativo nesta casca.
+    expect(resolveActiveNav("/configuracoes", PRIMARY)).toEqual({ kind: "none" })
   })
 
   it("não elege Início por omissão: rota sem container não acende nada", () => {

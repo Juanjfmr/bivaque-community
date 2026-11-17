@@ -7,7 +7,7 @@ import { CabecaDePagina } from "@/components/bivaque/cabeca-de-pagina"
 import { Campo } from "@/components/bivaque/campos"
 import { Secao } from "@/components/bivaque/secao"
 import { lerPerfil, type PedidoDeExclusao, pedirExclusao } from "@/lib/dados/voce"
-import { useRolagemEFoco } from "@/lib/navegacao/react"
+import { useNavegacao, useRolagemEFoco } from "@/lib/navegacao/react"
 import { CARGA_CONCLUIDA } from "@/lib/navegacao/restauracao"
 
 /**
@@ -15,20 +15,27 @@ import { CARGA_CONCLUIDA } from "@/lib/navegacao/restauracao"
  * (APAGAR). O pedido agora é o de verdade — `request_account_deletion()` pela
  * rota do app —, e o prazo que aparece é o que o banco devolveu, nunca um
  * número inventado aqui.
+ *
+ * RUN-184: o aviso é o mesmo da tela antiga da web (`(shell)/configuracoes/
+ * conta`), que saiu com a troca: o que sai agora, o que sai no prazo, o que
+ * permanece e por quê (a tabela jurídica aprovada) e por onde pedir ajuda. Os
+ * "15 dias" da janela são o texto aprovado, e não um cálculo da tela; a data
+ * concreta continua vindo do banco, depois do pedido.
  */
 
 const PALAVRA = "APAGAR"
 
-function dataCurta(iso: string | null): string | null {
+function dataPorExtenso(iso: string | null): string | null {
   if (iso === null) return null
   return new Date(iso).toLocaleDateString("pt-BR", {
-    day: "2-digit",
-    month: "2-digit",
+    day: "numeric",
+    month: "long",
     year: "numeric",
   })
 }
 
 export function ApagarConta() {
+  const navegacao = useNavegacao()
   const [confirmacao, setConfirmacao] = useState("")
   const [pendente, setPendente] = useState(false)
   const [enviando, setEnviando] = useState(false)
@@ -68,21 +75,53 @@ export function ApagarConta() {
       .finally(() => setEnviando(false))
   }
 
-  const prazo = dataCurta(pedido?.pedido.prazoEm ?? null)
+  const prazo = dataPorExtenso(pedido?.pedido.prazoEm ?? null)
 
   return (
     <section data-tela="apagar-conta" className="grid gap-2">
       <CabecaDePagina
         titulo="Apagar a conta"
-        subtitulo="Isto remove seus dados do Bivaque. Não pode ser desfeito."
+        subtitulo="A exclusão é permanente e não pode ser desfeita."
       />
 
       <Secao titulo="O que acontece">
+        <p className="text-sm font-medium">Ao confirmar, agora:</p>
         <ul className="grid list-disc gap-1 pl-5 text-sm text-(--on-surface-variant)">
-          <li>Seu perfil, anúncios e conversas saem do ar.</li>
-          <li>Pedidos abertos são encerrados e propostas são retiradas.</li>
-          <li>Denúncias e registros de segurança ficam pelo prazo legal.</li>
+          <li>sua sessão é encerrada e você não consegue mais entrar nesta conta;</li>
+          <li>seu perfil deixa de aparecer para outras pessoas;</li>
+          <li>o que você publicou continua visível, atribuído ao seu nome de exibição.</li>
         </ul>
+
+        <p className="mt-3 text-sm font-medium">
+          {prazo === null
+            ? "Em até 15 dias, contados do pedido:"
+            : `Até ${prazo}, contados do pedido:`}
+        </p>
+        <ul className="grid list-disc gap-1 pl-5 text-sm text-(--on-surface-variant)">
+          <li>apagamos a conta, as credenciais, o perfil e suas fotos de perfil;</li>
+          <li>apagamos suas preferências e seus vínculos de participação;</li>
+          <li>os convites familiares pendentes são encerrados; a outra conta fica intacta.</li>
+        </ul>
+      </Secao>
+
+      <Secao titulo="O que permanece, e por quê">
+        <ul className="grid list-disc gap-1 pl-5 text-sm text-(--on-surface-variant)">
+          <li>
+            registros de moderação (denúncias e decisões), com seus dados anonimizados — sustentam a
+            segurança de outras pessoas;
+          </li>
+          <li>logs de acesso, guardados por 6 meses por obrigação legal (MCI, art. 15).</li>
+        </ul>
+      </Secao>
+
+      <Secao titulo="Como pedir ajuda">
+        <p className="text-sm text-(--on-surface-variant)">
+          Para exercer seus direitos depois disso, fale com a gente pela Ajuda. A resposta sai em
+          até 15 dias.
+        </p>
+        <Botao tom="texto" icone="support" onClick={() => void navegacao.irPara("ajuda")}>
+          Abrir a Ajuda
+        </Botao>
       </Secao>
 
       <Secao titulo="Confirme">
@@ -93,7 +132,7 @@ export function ApagarConta() {
           aoMudar={setConfirmacao}
           disabled={pendente || enviando}
         />
-        <div className="flex items-center justify-end gap-3">
+        <div className="flex flex-wrap items-center justify-end gap-3">
           {erro === null ? null : (
             <p role="alert" className="text-sm text-(--destructive)">
               {erro}
@@ -106,7 +145,12 @@ export function ApagarConta() {
                 : `Pedido registrado. Sua conta será removida até ${prazo}.`}
             </p>
           ) : null}
-          <Botao tom="perigo" icone="delete" disabled={!podeEnviar || enviando} onClick={apagar}>
+          <Botao
+            tom="perigo"
+            icone="delete"
+            disabled={!podeEnviar || enviando || pendente}
+            onClick={apagar}
+          >
             {enviando ? "Registrando…" : "Apagar minha conta"}
           </Botao>
         </div>

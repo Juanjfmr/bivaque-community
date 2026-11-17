@@ -29,11 +29,12 @@ export const metadata: Metadata = {
   title: "Ajuda · Bivaque",
 }
 
-type DestinationLink = Readonly<{ href: Route | "/app/avisos"; label: string }>
+type DestinationLink = Readonly<{ href: Route | "/app/avisos" | "/app/voce"; label: string }>
 
 const ACCOUNT_LINKS: DestinationLink[] = [
   { href: "/login", label: "Entrar" },
-  { href: "/configuracoes", label: "Configurações" },
+  // F10 (RUN-184): a tela de conta saiu da web; a seção vive no Você do app.
+  { href: "/app/voce", label: "Configurações" },
 ]
 
 const USAGE_LINKS: DestinationLink[] = [

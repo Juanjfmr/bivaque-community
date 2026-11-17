@@ -158,7 +158,7 @@ export function AppShell({ children }: AppShellProperties) {
               </p>
             </div>
           </div>
-          <a href="/configuracoes" className={`${NAV_LINK} ${NAV_IDLE}`}>
+          <a href="/app/voce" className={`${NAV_LINK} ${NAV_IDLE}`}>
             <Settings size={20} className="shrink-0" aria-hidden="true" />
             <span className={RAIL_LABEL}>Configurações</span>
           </a>
