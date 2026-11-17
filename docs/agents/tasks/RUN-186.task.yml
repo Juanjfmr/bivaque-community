@@ -68,6 +68,7 @@ allowed_paths:
   - tests/e2e/global-search-flow.spec.ts
   - tests/e2e/journey-pedir-servico.spec.ts
   - tests/e2e/recon-032-messages.spec.ts
+  - tests/e2e/f04-perguntas-real.spec.ts
   - tests/e2e/helpers/crawl-model.ts
   - tests/scope/encoding.test.mjs
   - scripts/visual/capture.mjs
