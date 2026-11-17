@@ -260,16 +260,24 @@ test.describe("menu Criar (§4 do inventário)", () => {
     })
     expect(alfa).toBeGreaterThan(0)
 
-    const escolhas = menu.locator("[data-escolha]")
-    const primeira = escolhas.first()
-    const ultima = escolhas.last()
-    await ultima.focus()
+    const focalizaveis = menu.locator('button[data-criar="fechar"], [data-escolha]')
+    await expect(focalizaveis).toHaveCount(8)
+    const primeiro = focalizaveis.first()
+    const ultimo = focalizaveis.last()
+    await expect(primeiro).toHaveAttribute("aria-label", "Fechar")
+    await expect(ultimo).toHaveAttribute("data-escolha", "create-item")
+
+    const focoDentroDoMenu = async () =>
+      expect(await menu.evaluate((element) => element.contains(document.activeElement))).toBe(true)
+
+    await ultimo.focus()
+    await focoDentroDoMenu()
     await page.keyboard.press("Tab")
-    await expect(primeira).toBeFocused()
+    await expect(primeiro).toBeFocused()
+    await focoDentroDoMenu()
     await page.keyboard.press("Shift+Tab")
-    await expect(ultima).toBeFocused()
-    await page.keyboard.press("Tab")
-    await expect(primeira).toBeFocused()
+    await expect(ultimo).toBeFocused()
+    await focoDentroDoMenu()
 
     const acaoDeTras = page.locator('[data-acao="busca"]')
     const caixaDeTras = await acaoDeTras.boundingBox()
