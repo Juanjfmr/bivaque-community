@@ -498,14 +498,31 @@ test.describe("F04 — perguntas reais no app", { tag: "@stateful" }, () => {
       timeout: 30_000,
     })
 
+    const remocao = page.waitForResponse(
+      (resposta) =>
+        resposta.request().method() === "DELETE" &&
+        /\/api\/app\/perguntas\/[^/]+\/salvo(?:\?|$)/.test(resposta.url()),
+      { timeout: 30_000 },
+    )
     await page.getByRole("button", { name: `Remover dos salvos: ${TEXTO_SEMEADO}` }).click()
     await expect(linha, "a linha sai da tela na hora").toHaveCount(0, { timeout: 30_000 })
+    expect((await remocao).ok(), "o servidor precisa aceitar o desseguir antes de recarregar").toBe(
+      true,
+    )
 
+    // A seção só mostra o vazio dela depois de a lista ser lida: com o seed sem
+    // outros seguimentos, esse vazio prova que a linha saiu do banco — o
+    // `toHaveCount(0)` antes da leitura terminaria passando com o esqueleto.
     await page.reload()
+    const secao = page.locator('[data-salvos="perguntas"]')
+    await expect(secao, "a seção de perguntas precisa terminar de carregar").toContainText(
+      "Nenhuma pergunta seguida ainda",
+      { timeout: 30_000 },
+    )
     await expect(
-      page.locator('[data-salvos="perguntas"] [data-linha="lista"]', { hasText: TEXTO_SEMEADO }),
+      secao.locator('[data-linha="lista"]', { hasText: TEXTO_SEMEADO }),
       "desseguir em Salvos precisa apagar a linha no banco",
-    ).toHaveCount(0, { timeout: 30_000 })
+    ).toHaveCount(0)
   })
 
   test("seguir que falha desfaz o estado otimista e diz o motivo", async ({ page, context }) => {
