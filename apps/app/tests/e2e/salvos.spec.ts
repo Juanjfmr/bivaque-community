@@ -7,8 +7,9 @@ import { aplicarStubMercado } from "./stub-mercado"
  *
  * API simulada e app servido pelo `vite dev`: prova de interação do que a tela
  * faz. A persistência real de cada tipo é dos specs `*-real` (f06, f08, f04);
- * aqui o que se mede é a busca (nenhuma chamada nova) e o dessalvar de cada
- * seção — com a linha saindo na hora e a rota certa sendo chamada.
+ * aqui o que se mede é a busca (nenhuma chamada nova), o dessalvar de cada
+ * seção — com a linha saindo na hora e a rota certa sendo chamada — e a volta
+ * de uma remoção que falhou sem desfazer as outras.
  */
 
 const PUBLICACAO = {
@@ -29,8 +30,13 @@ const PUBLICACAO = {
 
 const TITULO_DA_PUBLICACAO = PUBLICACAO.texto
 const TITULO_DA_PERGUNTA = "Onde comprar gás de cozinha?"
+const TITULO_DA_SEGUNDA_PERGUNTA = "Farmácia aberta no domingo?"
+const TITULO_DA_TERCEIRA_PERGUNTA = "Ônibus para o centro de madrugada?"
 const NOME_DO_GUIA = "Escola Modelo do Centro"
 const TITULO_DO_ANUNCIO = "Sofá retrátil seminovo"
+const TITULO_DO_IMOVEL = "Apartamento 3 quartos Ponta Negra"
+const ANUNCIO = "a-1"
+const IMOVEL = "p-1"
 
 /** As três seções de lista da tela e o dessalvar de cada uma. */
 async function simularSalvos(page: Page): Promise<void> {
@@ -50,6 +56,20 @@ async function simularSalvos(page: Page): Promise<void> {
             categoria: "servicos_locais",
             criadaEm: "2026-11-09T12:00:00Z",
             resolvida: false,
+          },
+          {
+            id: "q-2",
+            titulo: TITULO_DA_SEGUNDA_PERGUNTA,
+            categoria: "servicos_locais",
+            criadaEm: "2026-11-08T12:00:00Z",
+            resolvida: false,
+          },
+          {
+            id: "q-3",
+            titulo: TITULO_DA_TERCEIRA_PERGUNTA,
+            categoria: "transporte",
+            criadaEm: "2026-11-07T12:00:00Z",
+            resolvida: true,
           },
         ],
       },
@@ -81,19 +101,20 @@ async function simularSalvos(page: Page): Promise<void> {
 }
 
 /** Salva o anúncio pelo detalhe, como a pessoa faria — o stub guarda a linha. */
-async function salvarAnuncio(page: Page): Promise<void> {
-  await page.goto("/app/anuncio/a-1")
+async function salvarAnuncio(page: Page, id: string): Promise<void> {
+  await page.goto(`/app/anuncio/${id}`)
   await page.getByRole("button", { name: "Salvar anúncio", exact: true }).click()
   await expect(
     page.getByRole("button", { name: "Remover dos salvos", exact: true }),
   ).toHaveAttribute("aria-pressed", "true")
 }
 
-test("busca filtra o que as seções já carregaram, sem chamada nova", async ({ page }) => {
+test("busca filtra o que as seções já carregaram e não esconde os segmentos", async ({ page }) => {
   const leituras: string[] = []
   aplicarStubMercado(page)
   await simularSalvos(page)
-  await salvarAnuncio(page)
+  await salvarAnuncio(page, ANUNCIO)
+  await salvarAnuncio(page, IMOVEL)
   page.on("request", (pedido) => {
     if (
       /\/api\/app\/(mercado\/salvos|grupos\/salvas|perguntas\/salvas|guia\/salvos)/.test(
@@ -119,13 +140,16 @@ test("busca filtra o que as seções já carregaram, sem chamada nova", async ({
   await expect(page.locator('[data-salvos="guia"]')).toContainText(NOME_DO_GUIA)
   // As seções que têm conteúdo e não casaram saem de cena; o vazio delas
   // ("Nenhuma publicação salva ainda") seria mentira para quem busca.
-  await expect(page.locator('[data-salvos="anuncios"]')).toHaveCount(0)
   await expect(page.locator('[data-salvos="perguntas"]')).toHaveCount(0)
   await expect(page.locator('[data-salvos="publicacoes"]')).toHaveCount(0)
+  // A seção de anúncios fica: é dela o controle Desapegos/Imóveis, e a busca
+  // não pode trancar a pessoa no segmento em que ela estava.
+  await expect(anuncios.getByRole("navigation", { name: "Seções dos salvos" })).toBeVisible()
+  await expect(anuncios).toContainText("Nenhum anúncio salvo corresponde à busca.")
 
   await busca.fill("zzz-inexistente")
-  await expect(page.getByText("Nenhum item salvo corresponde à busca.")).toBeVisible()
   await expect(page.locator('[data-salvos="guia"]')).toHaveCount(0)
+  await expect(anuncios).toContainText("Nenhum anúncio salvo corresponde à busca.")
 
   await busca.fill("")
   await expect(page.locator('[data-salvos="guia"]')).toContainText(NOME_DO_GUIA)
@@ -133,13 +157,25 @@ test("busca filtra o que as seções já carregaram, sem chamada nova", async ({
 
   // Filtrar é trabalho de tela: nenhuma das quatro rotas de salvos é chamada de novo.
   expect(leituras.length, "a busca não pode pedir a lista de novo").toBe(carregadas)
+
+  // Quem procura um imóvel estando em Desapegos troca de segmento sem apagar a
+  // busca, e o imóvel aparece.
+  await busca.fill("apartamento")
+  await expect(anuncios).toContainText("Nenhum anúncio salvo corresponde à busca.")
+  const imoveis = anuncios.getByRole("button", { name: "Imóveis", exact: true })
+  await imoveis.click()
+  await expect(imoveis).toHaveAttribute("aria-current", "page")
+  await expect(
+    anuncios.locator('[data-cartao="anuncio"]', { hasText: TITULO_DO_IMOVEL }),
+  ).toBeVisible()
+  await expect(busca).toHaveValue("apartamento")
 })
 
 test("remover tira a linha de cada seção pela rota daquele tipo", async ({ page }) => {
   const escritas: string[] = []
   aplicarStubMercado(page)
   await simularSalvos(page)
-  await salvarAnuncio(page)
+  await salvarAnuncio(page, ANUNCIO)
   page.on("request", (pedido) => {
     const caminho = new URL(pedido.url()).pathname.replace("/api/app", "")
     if (/\/salvo$/.test(caminho) || /\/acoes$/.test(caminho)) {
@@ -182,4 +218,58 @@ test("remover tira a linha de cada seção pela rota daquele tipo", async ({ pag
       "PUT /grupos/publicacoes/p-1/acoes",
       "DELETE /mercado/a-1/salvo",
     ])
+})
+
+test("duas remoções na mesma seção: só a que falhou volta", async ({ page }) => {
+  aplicarStubMercado(page)
+  await simularSalvos(page)
+  // A PRIMEIRA remoção falha no servidor, depois de a segunda já ter saído: a
+  // volta é só da linha que falhou, não da lista que existia antes do clique.
+  await page.route(/\/api\/app\/perguntas\/q-1\/salvo(?:\?|$)/, async (rota) => {
+    await new Promise((espera) => setTimeout(espera, 300))
+    await rota.fulfill({ status: 503, json: { erro: "indisponivel" } })
+  })
+
+  await page.goto("/app/salvos")
+  const perguntas = page.locator('[data-salvos="perguntas"]')
+  await expect(perguntas).toContainText(TITULO_DA_TERCEIRA_PERGUNTA)
+
+  await perguntas.getByRole("button", { name: `Remover dos salvos: ${TITULO_DA_PERGUNTA}` }).click()
+  await perguntas
+    .getByRole("button", { name: `Remover dos salvos: ${TITULO_DA_SEGUNDA_PERGUNTA}` })
+    .click()
+
+  await expect(page.getByRole("alert")).toContainText(
+    "Não foi possível remover dos salvos. Tente de novo.",
+  )
+  await expect(perguntas).toContainText(TITULO_DA_PERGUNTA)
+  await expect(perguntas).not.toContainText(TITULO_DA_SEGUNDA_PERGUNTA)
+  await expect(perguntas).toContainText(TITULO_DA_TERCEIRA_PERGUNTA)
+})
+
+test("remover no meio da troca de segmento não põe o anúncio no segmento errado", async ({
+  page,
+}) => {
+  aplicarStubMercado(page)
+  await simularSalvos(page)
+  await salvarAnuncio(page, ANUNCIO)
+  await salvarAnuncio(page, IMOVEL)
+  // A remoção falha só depois de a pessoa trocar de segmento.
+  await page.route(/\/api\/app\/mercado\/a-1\/salvo(?:\?|$)/, async (rota) => {
+    await new Promise((espera) => setTimeout(espera, 1500))
+    await rota.fulfill({ status: 503, json: { erro: "indisponivel" } })
+  })
+
+  await page.goto("/app/salvos")
+  const anuncios = page.locator('[data-salvos="anuncios"]')
+  const sofa = anuncios.locator('[data-cartao="anuncio"]', { hasText: TITULO_DO_ANUNCIO })
+  await expect(sofa).toBeVisible()
+  await sofa.getByRole("button", { name: "Remover dos salvos", exact: true }).click()
+  await anuncios.getByRole("button", { name: "Imóveis", exact: true }).click()
+
+  await expect(page.getByRole("alert")).toContainText("Não foi possível remover dos salvos")
+  await expect(
+    anuncios.locator('[data-cartao="anuncio"]', { hasText: TITULO_DO_IMOVEL }),
+  ).toBeVisible()
+  await expect(anuncios).not.toContainText(TITULO_DO_ANUNCIO)
 })

@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { type Dispatch, type SetStateAction, useEffect, useRef, useState } from "react"
 import { BotaoDeIcone } from "@/components/bivaque/botao"
 import { CabecaDePagina } from "@/components/bivaque/cabeca-de-pagina"
 import { CartaoDeFoto } from "@/components/bivaque/cartao-de-anuncio"
@@ -70,11 +70,16 @@ export function Salvos() {
 
   useRolagemEFoco(CARGA_CONCLUIDA)
 
+  // A aba em vigor agora, para a volta de um anúncio não cair na lista do
+  // segmento seguinte depois de a pessoa trocar de seção.
+  const abaAtual = useRef(aba)
+
   // Uma página por aba basta para a tela; o cursor da rota cobre quem guardar
   // mais que isso.
   // biome-ignore lint/correctness/useExhaustiveDependencies: rodada é o pedido de "tentar de novo"
   useEffect(() => {
     const controle = new AbortController()
+    abaAtual.current = aba
     setAnuncios(null)
     setErroDosAnuncios(false)
     void listarAnunciosSalvos(
@@ -138,20 +143,36 @@ export function Salvos() {
   /**
    * Dessalvar apaga a linha no banco; a linha da tela sai na hora e VOLTA se o
    * servidor recusar, com o motivo no aviso — nunca some em silêncio.
+   *
+   * Remover e repor são atualizações funcionais sobre a lista do momento: duas
+   * remoções na mesma seção não desfazem uma à outra. `mesmaSecao` impede que a
+   * volta de um anúncio caia na lista do segmento seguinte.
    */
   async function remover<T extends { id: string }>(
     id: string,
     lista: readonly T[] | null,
-    definir: (valor: readonly T[] | null) => void,
+    definir: Dispatch<SetStateAction<readonly T[] | null>>,
     gravar: () => Promise<unknown>,
+    mesmaSecao: () => boolean = () => true,
   ) {
+    const onde = lista?.findIndex((item) => item.id === id) ?? -1
+    const item = lista?.find((outro) => outro.id === id)
     setAviso(null)
     setRemovendo(id)
-    definir(lista === null ? null : lista.filter((item) => item.id !== id))
+    definir((atual) => atual?.filter((outro) => outro.id !== id) ?? atual)
     try {
       await gravar()
     } catch (falha: unknown) {
-      definir(lista)
+      // shortcut: repõe no índice original; se um vizinho anterior também saiu,
+      // ela entra depois dele.
+      if (item !== undefined && mesmaSecao()) {
+        definir((atual) => {
+          if (atual === null || atual.some((outro) => outro.id === id)) return atual
+          const comOItem = [...atual]
+          comOItem.splice(onde < 0 ? comOItem.length : Math.min(onde, comOItem.length), 0, item)
+          return comOItem
+        })
+      }
       if (!foiAbortada(falha)) setAviso(falhaAoRemover(falha))
     } finally {
       setRemovendo((atual) => (atual === id ? null : atual))
@@ -169,17 +190,10 @@ export function Salvos() {
   const guiaVisivel = guia?.filter((entrada) => combina(entrada.nome)) ?? null
 
   // Enquanto busca, a seção que tem conteúdo e não casou sai de cena: o vazio
-  // dela ("Nenhuma publicação salva ainda") seria mentira para quem busca.
+  // dela ("Nenhuma publicação salva ainda") seria mentira para quem busca. A
+  // seção de anúncios fica: é dela o controle Desapegos/Imóveis.
   const mostra = (lista: readonly unknown[] | null, visivel: readonly unknown[] | null) =>
     !filtrando || lista === null || lista.length === 0 || (visivel?.length ?? 0) > 0
-
-  const carregadas = [anuncios, publicacoes, perguntas, guia]
-  const buscaSemResultado =
-    filtrando &&
-    carregadas.some((lista) => lista !== null && lista.length > 0) &&
-    [anunciosVisiveis, publicacoesVisiveis, perguntasVisiveis, guiaVisivel].every(
-      (visivel) => visivel === null || visivel.length === 0,
-    )
 
   const imoveis = aba === "imoveis"
 
@@ -203,73 +217,74 @@ export function Salvos() {
         </p>
       )}
 
-      {buscaSemResultado ? (
-        <p role="status" className="text-sm text-(--on-surface-variant)">
-          Nenhum item salvo corresponde à busca.
-        </p>
-      ) : null}
+      <section data-salvos="anuncios" className="grid gap-2">
+        <Segmentos
+          itens={ABAS}
+          valor={aba}
+          aoEscolher={(escolhida) => setAba(escolhida === "imoveis" ? "imoveis" : "desapegos")}
+          rotulo="Seções dos salvos"
+          grupo="salvos"
+        />
 
-      {mostra(anuncios, anunciosVisiveis) ? (
-        <section data-salvos="anuncios" className="grid gap-2">
-          <Segmentos
-            itens={ABAS}
-            valor={aba}
-            aoEscolher={(escolhida) => setAba(escolhida === "imoveis" ? "imoveis" : "desapegos")}
-            rotulo="Seções dos salvos"
-            grupo="salvos"
+        {erroDosAnuncios ? (
+          <EstadoDeErro
+            titulo="Não foi possível carregar seus anúncios salvos"
+            aoTentar={() => setRodadaDosAnuncios((atual) => atual + 1)}
           />
-
-          {erroDosAnuncios ? (
-            <EstadoDeErro
-              titulo="Não foi possível carregar seus anúncios salvos"
-              aoTentar={() => setRodadaDosAnuncios((atual) => atual + 1)}
-            />
-          ) : anuncios === null || anunciosVisiveis === null ? (
-            <EsqueletoDeLista linhas={3} />
-          ) : anuncios.length === 0 ? (
-            <EstadoVazio
-              titulo={imoveis ? "Nenhum imóvel salvo" : "Nenhum anúncio salvo"}
-              texto={
-                imoveis
-                  ? "Toque no marcador de um imóvel para guardá-lo nesta lista."
-                  : "Toque no marcador de um anúncio para guardá-lo nesta lista."
-              }
-              icone="bookmark_border"
-              acao={{
-                rotulo: imoveis ? "Ver imóveis" : "Ver anúncios",
-                aoAcionar: () => void navegacao.irPara(imoveis ? "imoveis" : "desapegos"),
-              }}
-            />
-          ) : (
-            <Grade formato="cartoes">
-              {anunciosVisiveis.map((anuncio) => (
-                <CartaoDeFoto
-                  key={anuncio.id}
-                  anuncio={{
-                    id: anuncio.id,
-                    fonte: anuncio.foto,
-                    titulo: anuncio.titulo,
-                    preco: anuncio.precoCents === null ? null : anuncio.precoCents / 100,
-                    porMes: anuncio.deal === "rent",
-                    icone:
-                      anuncio.tipo === "property" ? "apartment" : iconeDeDado(anuncio.categoria),
-                    meta: anuncio.bairro ?? anuncio.cidade ?? "",
-                    salvo: true,
-                  }}
-                  aoSalvar={() =>
-                    void remover(anuncio.id, anuncios, setAnuncios, () =>
-                      marcarSalvoAnuncio(anuncio.id, false),
-                    )
-                  }
-                  aoAbrir={() =>
-                    void navegacao.irPara("anuncio", { parametros: { id: anuncio.id } })
-                  }
-                />
-              ))}
-            </Grade>
-          )}
-        </section>
-      ) : null}
+        ) : anuncios === null || anunciosVisiveis === null ? (
+          <EsqueletoDeLista linhas={3} />
+        ) : anuncios.length === 0 ? (
+          <EstadoVazio
+            titulo={imoveis ? "Nenhum imóvel salvo" : "Nenhum anúncio salvo"}
+            texto={
+              imoveis
+                ? "Toque no marcador de um imóvel para guardá-lo nesta lista."
+                : "Toque no marcador de um anúncio para guardá-lo nesta lista."
+            }
+            icone="bookmark_border"
+            acao={{
+              rotulo: imoveis ? "Ver imóveis" : "Ver anúncios",
+              aoAcionar: () => void navegacao.irPara(imoveis ? "imoveis" : "desapegos"),
+            }}
+          />
+        ) : anunciosVisiveis.length === 0 ? (
+          // A busca não casou nesta seção, mas os segmentos continuam à mão:
+          // é por eles que se chega ao imóvel procurado.
+          <p role="status" className="text-sm text-(--on-surface-variant)">
+            {imoveis
+              ? "Nenhum imóvel salvo corresponde à busca."
+              : "Nenhum anúncio salvo corresponde à busca."}
+          </p>
+        ) : (
+          <Grade formato="cartoes">
+            {anunciosVisiveis.map((anuncio) => (
+              <CartaoDeFoto
+                key={anuncio.id}
+                anuncio={{
+                  id: anuncio.id,
+                  fonte: anuncio.foto,
+                  titulo: anuncio.titulo,
+                  preco: anuncio.precoCents === null ? null : anuncio.precoCents / 100,
+                  porMes: anuncio.deal === "rent",
+                  icone: anuncio.tipo === "property" ? "apartment" : iconeDeDado(anuncio.categoria),
+                  meta: anuncio.bairro ?? anuncio.cidade ?? "",
+                  salvo: true,
+                }}
+                aoSalvar={() =>
+                  void remover(
+                    anuncio.id,
+                    anuncios,
+                    setAnuncios,
+                    () => marcarSalvoAnuncio(anuncio.id, false),
+                    () => abaAtual.current === aba,
+                  )
+                }
+                aoAbrir={() => void navegacao.irPara("anuncio", { parametros: { id: anuncio.id } })}
+              />
+            ))}
+          </Grade>
+        )}
+      </section>
 
       {mostra(publicacoes, publicacoesVisiveis) ? (
         <section data-salvos="publicacoes" className="grid gap-2">
