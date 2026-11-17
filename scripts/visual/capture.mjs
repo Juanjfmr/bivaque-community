@@ -107,11 +107,12 @@ export const HEADINGS = {
   "/arrivals": "^Chegadas declaradas$",
   "/guide-queue": "Guia|Referências",
   "/inicio": "Bom dia|Boa tarde|Boa noite|Olá",
-  "/explorar": "Explorar",
-  // h1 medido no arquivo que renderiza a rota (servicos/page.tsx:520): sem
-  // termo a tela é "Prestadores de serviço"; com termo, "Resultados para …" —
-  // e a variante com termo é chave própria logo abaixo.
-  "/explorar/servicos": "^Prestadores de serviço$",
+  // RUN-181: a pasta `(shell)/explorar` saiu inteira — o hub e o painel de
+  // serviços são 307 para /app/busca (LT-002 desde o RUN-181; a busca já era
+  // desde o LT-002). Capturar qualquer um deles mediria o redirect, e as 4
+  // entradas de /explorar/busca que ainda estavam aqui já tinham morrido no
+  // LT-002 — saem junto por serem do mesmo arquivo, não por serem reclamadas
+  // pelo EVENTOS-RESIDUOS.
   // /configuracoes/page.tsx redireciona para a única seção web que fica, e é
   // isso que a captura registra; a rota declara expectedPath para o destino.
   "/configuracoes": "^Configurações · Conta$",
@@ -160,7 +161,7 @@ export const HEADINGS = {
   // branch lateral. Cada valor abaixo veio do h1 que o arquivo que renderiza a
   // rota realmente escreve; a rota cujo título é o próprio dado usa
   // DYNAMIC_HEADING. Query string é chave própria: a variante com termo é
-  // entrada distinta da rota sem query, como /explorar/servicos e a sua.
+  // entrada distinta da rota sem query.
   "/recuperar-senha": "^Esqueceu sua senha\\?$",
   "/nova-senha": "^Este link não vale mais$",
   // O mesmo caminho serve dois painéis legítimos: o pendente (sessionStorage)
@@ -185,16 +186,6 @@ export const HEADINGS = {
   "/communities/71000000-0000-4000-8000-000000000001/admin/pending": "^Pedidos de entrada$",
   "/auth/callback-error": "^Não foi possível entrar$",
   "/guide/a0000000-0000-4000-8000-000000000001/correcao": "^Sugerir atualização$",
-  "/explorar/servicos?q=climatiza": "^Resultados para “climatiza”$",
-  "/explorar/busca?q=escola": "^Resultados para “escola”$",
-  // Prancha 84 painel 2: o estado vazio da busca agrupada. Termo que não casa
-  // com nada no seed — a captura prova o estado real, não um card inventado.
-  "/explorar/busca?q=translado": "^Resultados para “translado”$",
-  // RECON-049 (par 84): o termo que casa com um PRESTADOR e com o evento
-  // semeado prova as seções "Serviços" e "Eventos" do agrupamento — sem ele, a
-  // captura só mostrava o Guia e a ausência das outras seções parecia defeito.
-  "/explorar/busca?q=manaus": "^Resultados para “manaus”$",
-  "/explorar/busca?q=piquenique": "^Resultados para “piquenique”$",
   // A ficha do imóvel é nomeada pelo título do anúncio. Criar imóvel saiu da
   // web (RUN-164) e a gestão dos alertas também (RUN-169): as duas são do app.
   "/imoveis/b2000000-0000-4000-8000-000000000001": DYNAMIC_HEADING,
@@ -380,20 +371,11 @@ export const ROUTES = [
     auth: true,
   },
   // G0 (reconstrução visual 2026-09-06): containers novos da navegação.
+  // RUN-181: as telas do explorar saíram da web (307 para /app/busca) e com
+  // elas as capturas — do hub e do painel de serviços. As 4 de /explorar/busca
+  // abaixo já mediam redirect desde o LT-002; saem agora por serem do mesmo
+  // arquivo, e não porque outra frente as reivindique.
   { path: "/inicio", name: "inicio", auth: true },
-  { path: "/explorar", name: "explorar", auth: true },
-  { path: "/explorar/servicos", name: "explorar-servicos", auth: true },
-  // RECON-021: painel direito da prancha 61 com o fixture real do seed —
-  // capturar com BIVAQUE_VISUAL_EMAIL=membro-25@ (unico ator que ve o
-  // prestador pela RLS).
-  { path: "/explorar/servicos?q=climatiza", name: "explorar-servicos-termo", auth: true },
-  // RECON-021: fixture concreta do seed de Manaus — "escola" casa com a
-  // entrada aprovada "Escola Modelo do Centro" e NÃO pode casar com a
-  // pendente "Escola de Acolhimento Militar" (status pending, RLS).
-  { path: "/explorar/busca?q=escola", name: "explorar-busca", auth: true },
-  { path: "/explorar/busca?q=translado", name: "explorar-busca-vazio", auth: true },
-  { path: "/explorar/busca?q=manaus", name: "explorar-busca-servico", auth: true },
-  { path: "/explorar/busca?q=piquenique", name: "explorar-busca-evento", auth: true },
   // CIDADE-169: a tela antiga de localidade saiu (307 para /app/cidade/atual);
   // a captura dela é a da consulta no app.
   // RECON-027: Moradia. `/imoveis` não depende de fixture. Criar imóvel saiu da

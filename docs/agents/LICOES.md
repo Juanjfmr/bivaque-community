@@ -379,3 +379,12 @@ editar o board.json é proibido — foi de onde saíram 39 scripts descartáveis
   ao revogar leitura por coluna, varre os HELPERS de teste (e aproveita: a tentativa vira o
   negativo do contrato, como em f03-criar-real).
 
+## Merge só pelo `merge-seguro.mjs` (16/11, HRN-005)
+
+- **Faça o merge sempre por `node scripts/agents/merge-seguro.mjs <numero-do-PR>`**, nunca à mão
+  com `gh pr merge`: o script confere pela API que o SHA do head tem o PR CI completo (job
+  `ci-core`) e o Visual Smoke verdes — ou o Visual pulado por paths, quando o PR não toca
+  `apps/app` — e só então mergeia por squash amarrado ao SHA completo. O rito do ADR-20261114
+  segue valendo (aplicar `ci:full`), mas a conferência deixou de ser memória: os 4 merges com
+  Visual vermelho da janela de 16/11 (#240, #241, #244, #245) passaram justamente onde havia só
+  rito.

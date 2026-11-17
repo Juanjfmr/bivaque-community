@@ -1,0 +1,69 @@
+# RUN-180 - F07-REGUA: os retoques da aceitacao visual às cegas (16/11) + a prova faltante.
+#
+# O designer (modelo distinto, às cegas) vereditou as telas novas do RUN-177 contra a régua:
+# lista/ficha/form/acompanhamento ACEITAS-COM-RETOQUES; Meu negocio REPROVADO no print de 1440
+# (formulario esticado sem medida de coluna) - e o proprio revisor nomeou que a captura so
+# exercia o estado VAZIO, nao a gestao populada (brecha de evidencia, nao de tela). O print do
+# coordenador confirmou os dois fatos. O retoque de texto do bairro ja esta sendo entregue pelo
+# RUN-179 em voo (FormularioDePedido e paths dele) - NAO duplicar aqui.
+
+task_id: RUN-180
+
+objective: >
+  Fechar a aceitação visual da jornada F07: coluna limitada no Meu negocio, evidencia
+  da gestao populada capturada de verdade, hierarquia das acoes do pedido, lado explicito
+  no acompanhamento, e o token fantasma on-primary que sobrou em CidadeConsulta.
+
+authority:
+  - docs/LANCAMENTO.md criterio 2 (régua Nextdoor às cegas) + docs/agents/regua-nextdoor/IDENTIDADE-DAS-PECAS.md
+  - Parecer do designer em .visual/f07-regua/aceitacao-visual.md (vereditos por tela, itens 1-6)
+  - Card LAN-F07 (item aberto ③: revisão visual às cegas das telas novas)
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    desktop-1440-light-04-meu-negocio.png (artefato visual-shard-7 do run 43926841048): campos
+    de nome/categoria/descricao na largura total do conteudo, sem medida; nenhum print da
+    gestao apos criar (catalogo + fotos); Pedido.tsx mostra Cancelar e Encerrar com o mesmo
+    peso; CidadeConsulta.tsx:218 usa text-(--on-primary) - token INDEFINIDO (so existe
+    --on-primary-container e --primary-foreground; o irmao deste bug custou contraste 1:1 em
+    Negocio.tsx no round-2 do RUN-177).
+
+allowed_paths:
+  - docs/agents/tasks/F07-REGUA.task.yml
+  - apps/app/src/meu-negocio/MeuNegocio.tsx
+  - apps/app/src/telas/Pedido.tsx
+  - apps/app/src/telas/CidadeConsulta.tsx
+  - apps/app/tests/e2e/f07-meu-negocio.spec.ts
+  - apps/app/tests
+  - .visual/f07-regua
+
+forbidden:
+  - tocar FormularioDePedido.tsx, Pedidos.tsx, negocios/rotas ou qualquer path do RUN-179 em voo (o retoque do bairro ja e dele)
+  - redesenhar a tela: os retoques sao de medida, peso de acao, rotulo de lado e token - composicao estrutural nova seria card, nao lote
+  - afrouxar assercao existente; capturas novas tem que provar o estado que nomeiam
+  - push, merge ou force-push; editar kanban; tocar .work/main ou outra worktree
+  - rodar stack/banco (nada aqui toca servidor; vite 3200/3201 bastam)
+
+acceptance:
+  - "MeuNegocio.tsx: conteudo do formulario e das secoes de gestao limitado a uma medida de leitura (max-w-2xl, alinhado a esquerda como as paginas do app - NAO centralizar, nao inventar nova composicao); mobile inalterado; o estado vazio (Criar a pagina) mantem contexto e proximo passo ja existentes."
+  - "f07-meu-negocio.spec.ts: capturas de EVIDENCIA nos dois estados - vazio (como hoje) e POPULADO apos criar ficha + publicar item + foto, nas 3 larguras do projeto; os PNGs vao para .visual/f07-regua/capturas e o RELATORIO lista cada um com o que prova. O spec continua verde com as assercoes originais intactas."
+  - "Pedido.tsx: Encerrar deixa de dividir peso com Cancelar (acao de conclusao secundaria, cancelar permanece como esta - decidir qual das duas e primaria e REGISTRAR em comentario de uma linha a razao: encerrar fecha com trabalho feito, cancelar e retirada; a régua Nextdoor trata acao destrutiva/reversivel com peso menor). Header do acompanhamento nomeia o lado (Voce pediu / Pedido recebido) reusando o campo lado que ja vem no payload."
+  - "CidadeConsulta.tsx:218: text-(--on-primary) vira text-(--primary-foreground) (token definido nos dois temas, styles.css:65/140); grep final prova zero usos restantes do token fantasma fora de -container."
+  - "Passam: --filter @bivaque/app test; o spec f07-meu-negocio RODADO local nas 3 larguras com as capturas novas geradas; acessibilidade.spec.ts (mede as telas reais - nao pode regredir); app typecheck; gate --fast; biome. Sem navegador nao: este contrato so fecha com print novo no RELATORIO."
+
+proof:
+  - npx pnpm@11.18.0 --filter @bivaque/app test
+  - npx pnpm@11.18.0 --filter @bivaque/app test:e2e
+  - npx pnpm@11.18.0 gate --fast
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/F07-REGUA.task.yml
+
+risk: retoques visuais podem expor fragilidade de seletor em acessibilidade/f07-lista - corrigir na fonte, nunca afrouxar
+risk_level: R1
+
+reviewer_must_differ_from_executor: true
+retry_budget: 1
+on_budget_exhausted: HUMAN_DECISION
+
+closure:
+  requires_runtime_evidence: true

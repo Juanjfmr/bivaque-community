@@ -12,6 +12,7 @@ import {
 import { gravarCepNoCache, lerCepDoCache } from "../../../../../lib/geo/cache"
 import { normalizarCep } from "../../../../../lib/geo/cep"
 import { geocodificarCep } from "../../../../../lib/geo/geocodificador"
+import { consumirConsulta } from "../../../../../lib/geo/limite"
 import { localizacaoDaSessao } from "../_comum"
 
 export const runtime = "nodejs"
@@ -62,7 +63,9 @@ function respostaDaFalhaDeEscrita(request: NextRequest, codigo: string): NextRes
  * função `set_member_location` — o único caminho de escrita da coordenada.
  * A resposta devolve o CEP, a marca de definida e se a distância pode ser
  * calculada: latitude e longitude não saem do banco. CEP conhecido que nenhuma
- * fonte localiza é gravado sem posição e responde 200 (ADR-20261112).
+ * fonte localiza é gravado sem posição e responde 200 (ADR-20261112). Trocar de
+ * CEP fora do cache consome a cota de geocodificação da pessoa e responde 429
+ * quando a janela acabou (SEC-013/F2) — o cache hit não consome.
  */
 export async function PUT(request: NextRequest): Promise<NextResponse> {
   const auth = await exigirSessao(request)
@@ -104,6 +107,22 @@ export async function PUT(request: NextRequest): Promise<NextResponse> {
     } else {
       let coordenada = await lerCepDoCache(servico, cep)
       if (coordenada === null) {
+        // SEC-013/F2: o provedor de CEP só é chamado sob a cota da pessoa — o
+        // mesmo limitador (e o mesmo 429 com `retry-after`) do anúncio e do
+        // pedido. Cache hit não consome: só a chamada real conta.
+        const limite = consumirConsulta(userId)
+        if (!limite.liberado) {
+          const segundos = Math.max(1, Math.ceil(limite.esperarMs / 1000))
+          return responder(
+            request,
+            {
+              erro: "limite-de-consultas",
+              mensagem: `Muitas consultas de CEP em pouco tempo. Tente de novo em ${Math.ceil(segundos / 60)} min.`,
+            },
+            429,
+            { "retry-after": String(segundos) },
+          )
+        }
         const geocodificada = await geocodificarCep(cep)
         if (geocodificada.estado === "nao-encontrado")
           return responder(request, { erro: "cep-nao-encontrado" }, 422)

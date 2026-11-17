@@ -258,6 +258,20 @@ describe("POST /api/app/voce/cidade", () => {
     expect((await POST(pedido({ destino: RIO, prazo: dia(30) }))).status).toBe(401)
   })
 
+  it("conta suspensa ou com exclusão pedida (42501) é 401 com a frase segura, sem eco", async () => {
+    // SEC-014/A2: o RPC passou a vetar conta suspensa e exclusão pedida com
+    // 42501 — a mesma frase fixa da porta de afiliação, nunca o texto do banco.
+    autenticar({ erroDoRpc: { code: "42501", message: "account unavailable" } })
+    const resposta = await POST(pedido({ destino: RIO, prazo: dia(30) }))
+    expect(resposta.status).toBe(401)
+    const texto = await resposta.text()
+    expect(JSON.parse(texto)).toEqual({
+      erro: "sessao-expirada",
+      mensagem: "Sua sessão expirou. Entre novamente para continuar.",
+    })
+    expect(texto).not.toContain("account unavailable")
+  })
+
   it("falha desconhecida do banco vira 503 sem eco do texto do Postgres", async () => {
     autenticar({ erroDoRpc: { code: "XX000", message: "segredo do banco" } })
     const resposta = await POST(pedido({ destino: RIO, prazo: dia(30) }))

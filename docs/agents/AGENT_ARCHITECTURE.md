@@ -65,6 +65,18 @@ Um `PASS` do revisor não fecha tarefa. Quem fecha é a prova de runtime.
 
 ## 3. Os sete papéis
 
+### Roteamento real em uso desde 16/11/2026
+
+| Execução | Modelo e harness | Papel |
+|---|---|---|
+| Implementação | DeepSeek V4.1 Flash pelo OpenCode; ou GPT 6 Luna pelo Codex em sandbox sem gravar o git | implementer |
+| Revisão independente | GLM 5.3 Flash | reviewer |
+| Auditoria de segurança | Qwen4 Max preview | security-auditor |
+| Verificação e operação de CI | Qwen 3.8 Flash | runtime-verifier e operador de CI |
+| Coordenação | Claude | coordenador |
+
+Os arquivos de `.claude/agents` abaixo continuam definindo os papéis e suas ferramentas; o modelo da execução real é o indicado nesta tabela.
+
 | Arquivo | Modelo | Escreve? | Papel |
 |---|---|---|---|
 | `.claude/agents/explorer.md` | haiku | não | localizar mecanismo, medir raio de impacto |

@@ -38,11 +38,21 @@ const read = (...segments: string[]) => readFileSync(join(root, ...segments), "u
 // trilho (preso a >=1024px) tem porta visível no telefone em OUTRO lugar.
 describe("/inicio: o que o trilho oferece continua alcançável no telefone", () => {
   const rail = read("apps", "web", "app", "(shell)", "inicio", "right-rail.tsx")
-  const explorar = read("apps", "web", "app", "(shell)", "explorar", "page.tsx")
-  // LT-002: a página explorar/busca saiu (307 para /app/busca). A porta /localidade
-  // fora do trilho sobrevive em explorar/servicos ("Trocar de cidade"); a prova
-  // reloca para lá em vez de ler um arquivo removido.
-  const servicos = read("apps", "web", "app", "(shell)", "explorar", "servicos", "page.tsx")
+  // RUN-181: a pasta `(shell)/explorar` saiu inteira (307 para /app/busca). As
+  // três provas que liam aqueles arquivos relocam para telas que sobrevivem: os
+  // atalhos do Início (que herdam a grade do Explorar, agora apontando para o
+  // app) e o detalhe da comunidade, onde "Trocar de cidade" segue de pé. Ler
+  // arquivo removido quebraria com ENOENT — a lição do LT-002.
+  const atalhos = read("apps", "web", "app", "(shell)", "inicio", "hub-shortcuts.tsx")
+  const comunidade = read(
+    "apps",
+    "web",
+    "app",
+    "(shell)",
+    "communities",
+    "[id]",
+    "community-detail-screen.tsx",
+  )
   const shell = read("apps", "web", "app", "components", "bivaque", "app-shell.tsx")
   const page = read("apps", "web", "app", "(shell)", "inicio", "page.tsx")
 
@@ -50,17 +60,19 @@ describe("/inicio: o que o trilho oferece continua alcançável no telefone", ()
     expect(rail).toContain('<aside className="hidden w-80 shrink-0 lg:block"')
   })
 
-  it("o Guia do trilho tem porta no Explorar", () => {
+  it("o Guia do trilho tem porta no Início", () => {
     expect(rail).toContain('action="/guide"')
-    expect(explorar).toContain('href: "/guide"')
-    expect(explorar).toContain('href: "/explorar/servicos"')
+    expect(atalhos).toContain('href: "/guide"')
+    // O atalho de Serviços do mesmo bloco agora abre a busca do app.
+    expect(atalhos).toContain('href: "/app/busca"')
   })
 
   it("'De mudança?' tem porta fora do trilho", () => {
-    // CIDADE-169: o trilho aponta para a consulta no app; o Explorar ainda usa o
-    // endereço antigo, que responde 307 para a mesma tela (provado em lan-troca).
+    // CIDADE-169: o trilho aponta para a consulta no app; o endereço antigo
+    // (/localidade) ainda tem porta viva no detalhe da comunidade e responde
+    // 307 para a mesma tela (provado em lan-troca).
     expect(rail).toContain('href={"/app/cidade/atual" as Route}')
-    expect(servicos).toContain('href="/localidade"')
+    expect(comunidade).toContain('href="/localidade"')
   })
 
   it("Indicações tem porta no cabeçalho, em toda largura", () => {

@@ -5385,7 +5385,8 @@
       "proof": [
         "11/11: perfil com CEP e coordenada cálculo-only provado (PR #183, head 4c5e7451): migration 20261110211702_profile_location.sql, grants por coluna (cep/latitude/longitude fora do SELECT de authenticated), RPCs get_my_profile_location/set_member_location/distance_to_neighborhood, API GET/PATCH /api/app/voce + PUT /localizacao, E2E f10-voce-localizacao com gravação verde no smoke. Restam anúncio, pedido, distância de mim e mapa.",
         "16/11: RUN-175 (L1) mergeado em 39597c24 (PR #258; heads 36ece5ff→57de9e36). Reconciliação do checklist: ①'CEP e coordenada no anúncio' FEITO (imovel exige CEP no criar com avo sem backfill forjado — ADR-20261116 §1; desapego CEP opcional; o que falta do item é o PEDIDO — L2); ②'Geocodificação no servidor com cache' FEITO p/ anúncio (modulo único lib/geo/anuncio.ts reaproveitando cache+geocodificador do RUN-029; pedido herda no L2); ③'Mapa exato ou aproximado no imóvel' RESOLVIDO POR DECISÃO, não silêncio: escolha exata/aproximada entregue em texto, infra de mapa fora do lançamento (ADR-20261116 §4; card LOC-MAPA-POS-LANCAMENTO); ④'Coordenada do perfil fora de leitura' já feito 11/11 e ESTENDIDO ao anúncio (grants por coluna; CHECK de grade Listings_aproximada na migration fecha o achado R3 da revisão: coordenada crua alegando aproximada → 23514); ⑤'Desapego com bairro opcional' FEITO (CHECK listings_item_required_fields relaxado). pgTAP 33 asserções no arquivo próprio, suíte 2879/0 falhas; e2E real 45/45 local + CI verde (stateful×3, smoke). R3: revisão Qwen (lente de segurança) — finding médio-alto FECHADO antes do merge com a fórmula da grade documentada; limitador por-processo aceito e registrado (mitigação cache-first), TTL/global/perfil ficam no card próprio.",
-        "16/11 FECHAMENTO L2 (PR #259, merge 8ab4b750, head 686aa03c; revisoes do lote 35aef9ab→dd7472f0→686aa03c): gate completo verde, pgTAP 43/43 no arquivo novo + 2922 assercoes 0 falhas no estado sem-seed/grants do CI, db:lint 0, @stateful 15/15×3 (bairro 'Flores' + 'a cerca de 3,1 km' persistem em recarga; select-* do participante 42501), stub 12/12, round-2 de fixture com 2 negativos permanentes (pedido sem bairro/sem distancia = falha de contrato, licao do parser estrito). R3: parecer Qwen com lente de seguranca APROVO por delegacao, 0 bloqueantes; notas registradas para o dono na ratificacao: (a) o RPC de criacao aceita p_latitude/p_longitude/p_region - a rota nunca os envia do corpo, mas chamada direta pode gravar valor nao-derivado (dado do proprio titular, alimenta so a distancia; fecho futuro: recasar pelo cache dentro do RPC); (b) trilateracao residual: prestador pode refinar a posicao do CEP em passos de 100 m mudando a propria origem - inerente a regra aceita no ADR-20261022 secao 3, o arredondamento e a mitigacao registrada; (c) test:scope alargou a excecao de clienteDeServicoOuNulo para a rota de pedidos (so toca cep_geocodes, sem grants de membro). Smoke: 1 falha home-vitrine-21st:79 em mobile-430 no run 43948658828, rerun do mesmo tip verde - flake da classe GLYPH-SPEC-FLAKE/CI-E2E-UPSTREAM-INSTAVEL, nao daqui. CI cheio verde na revisao entregue (43948658502: fast/core/stateful×3/build)."
+        "16/11 FECHAMENTO L2 (PR #259, merge 8ab4b750, head 686aa03c; revisoes do lote 35aef9ab→dd7472f0→686aa03c): gate completo verde, pgTAP 43/43 no arquivo novo + 2922 assercoes 0 falhas no estado sem-seed/grants do CI, db:lint 0, @stateful 15/15×3 (bairro 'Flores' + 'a cerca de 3,1 km' persistem em recarga; select-* do participante 42501), stub 12/12, round-2 de fixture com 2 negativos permanentes (pedido sem bairro/sem distancia = falha de contrato, licao do parser estrito). R3: parecer Qwen com lente de seguranca APROVO por delegacao, 0 bloqueantes; notas registradas para o dono na ratificacao: (a) o RPC de criacao aceita p_latitude/p_longitude/p_region - a rota nunca os envia do corpo, mas chamada direta pode gravar valor nao-derivado (dado do proprio titular, alimenta so a distancia; fecho futuro: recasar pelo cache dentro do RPC); (b) trilateracao residual: prestador pode refinar a posicao do CEP em passos de 100 m mudando a propria origem - inerente a regra aceita no ADR-20261022 secao 3, o arredondamento e a mitigacao registrada; (c) test:scope alargou a excecao de clienteDeServicoOuNulo para a rota de pedidos (so toca cep_geocodes, sem grants de membro). Smoke: 1 falha home-vitrine-21st:79 em mobile-430 no run 43948658828, rerun do mesmo tip verde - flake da classe GLYPH-SPEC-FLAKE/CI-E2E-UPSTREAM-INSTAVEL, nao daqui. CI cheio verde na revisao entregue (43948658502: fast/core/stateful×3/build).",
+        "17/11: os HIGH F1 e F2 da auditoria R3 de 16/11 sobre o L2 (#259) foram fechados pelo SEC-013 (PR #266). A afirmação de que o arredondamento da distância é a mitigação foi corrigida nos ADRs; o residual de trilateração está aceito para o lançamento e o endurecimento está no SEC-013-RESSALVAS."
       ],
       "tests": [],
       "links": ["docs/decisions/ADR-20261022-localizacao-padrao-de-mercado.md"],
@@ -6067,7 +6068,8 @@
         "02/11: aberto na definição do lançamento (docs/LANCAMENTO.md), por mandato do dono.",
         "05/11: RUN-010 (GPT Sol 6.1) — entram as cinco rotas da sessão (categorias e negócios da cidade atual, ficha com foto por URL assinada de 5 min, criação de pedido, lista e detalhe dos próprios pedidos) e a porta de dados do app, com cancelamento, paginação e falha que preserva o texto; 'Onde atende' usa a cidade real; Mercado segue intacto. Commits c68b9ea6, 16b4b4c7, f1fdb588, 55ea0cd8 e ca6498ee. Números: 126 testes de API passam (70 da F07 e 56 de pedidos antigos); gate final verde sem build Next (falta configuração local); 2.174 de unidade, 261 do app, 76 mobile, 19 web, 189 de privacidade e 192 de escopo passam; 'Onde atende' com 18 cenários em 375/768/1440, claro e escuro, em HTTP controlado; 42 capturas estáveis. Não rodou: E2E com banco local real (Docker negado), pgTAP e build Next. Revisões: Qwen PASS COM RESSALVAS (.visual/run-010/revisao-qwen.md); auditoria de segurança válida do coordenador (security-auditor, Sonnet 5.5): LIBERA COM RESSALVAS, sem crítico nem alto. O arquivo .visual/run-010/45-auditoria.log é autoavaliação do executor e não conta como revisão. Ressalvas abertas no cartão F07-RESSALVAS-REVISAO. E2E com banco real roda no check Install, test, and build do CI deste PR.",
         "05/11: decisão do coordenador, a ratificar pelo dono — a ficha do negócio no app deixa de mostrar contagem de indicações e horário, selo Patrocinado, Benefício para a comunidade e aviso de ficha não assumida, porque não há coluna real para eles (provider_profiles); 'Onde atende' mostra só a cidade. Volta quando houver dado.",
-        "16/11: RUN-177 mergeado em e87b228e (PR #257; heads 6563d602→a92c8c62) — gestão do negócio próprio (/app/meu-negocio: ficha, catálogo, fotos pela porta §5 com service_role só após reconfirmar can_manage_provider_profile), pedidos dos DOIS lados com cancelar/encerrar idempotentes e link da conversa, /app/pedidos/novo?destino= endereçável (menu Criar e Paleta apontam para portas reais), provider-member-business migrado para o E2E real do app com tabela garantia→lar. R3: revisão independente (Qwen) PASS com C1 fechada (server action órfã morta com as 5 garantias realocadas, 1 morte declarada — anexo do pedido volta pela porta, card em F07-RESSALVAS? não: RELATORIO round-2). CI cheio verde em todos os heads (stateful×3, core, smoke 7 shards, mobile-first). F07-AINDA-ABERTO: ① troca de /explorar/servicos adiada por importador vivo (card TROCA-EXPLORAR-SERVICOS), ② painel do prestador civil fica na web — EXCEÇÃO DECIDIDA (convite/aceite/fila funcionam; shell não é rota de membro; portar = card F07-PAINEL-CIVIL-APP), ③ revisão visual às cegas das três telas novas contra a régua (próxima tarefa, antes deste fechar), ④ F07-CONTAGEM-ORDENACAO segue (contagem/'perto de mim' só com API que trouxer), ⑤ F07-RESSALVAS-REVISAO não foi tocada pelo lote — fica aberta com os 5 itens originais."
+        "16/11: RUN-177 mergeado em e87b228e (PR #257; heads 6563d602→a92c8c62) — gestão do negócio próprio (/app/meu-negocio: ficha, catálogo, fotos pela porta §5 com service_role só após reconfirmar can_manage_provider_profile), pedidos dos DOIS lados com cancelar/encerrar idempotentes e link da conversa, /app/pedidos/novo?destino= endereçável (menu Criar e Paleta apontam para portas reais), provider-member-business migrado para o E2E real do app com tabela garantia→lar. R3: revisão independente (Qwen) PASS com C1 fechada (server action órfã morta com as 5 garantias realocadas, 1 morte declarada — anexo do pedido volta pela porta, card em F07-RESSALVAS? não: RELATORIO round-2). CI cheio verde em todos os heads (stateful×3, core, smoke 7 shards, mobile-first). F07-AINDA-ABERTO: ① troca de /explorar/servicos adiada por importador vivo (card TROCA-EXPLORAR-SERVICOS), ② painel do prestador civil fica na web — EXCEÇÃO DECIDIDA (convite/aceite/fila funcionam; shell não é rota de membro; portar = card F07-PAINEL-CIVIL-APP), ③ revisão visual às cegas das três telas novas contra a régua (próxima tarefa, antes deste fechar), ④ F07-CONTAGEM-ORDENACAO segue (contagem/'perto de mim' só com API que trouxer), ⑤ F07-RESSALVAS-REVISAO não foi tocada pelo lote — fica aberta com os 5 itens originais.",
+        "RUN-180 (régua do F07: coluna no Meu negócio, encerrar com peso e lado nomeado, token fantasma): PR #264 mergeado (17fd2563); CI completo e Visual verdes no SHA 68ab930b após um rerun do flake salvar-glyph:165. O critério 2 (revisão às cegas) segue aberto até a revisão das capturas do DS-022."
       ],
       "id": "LAN-F07",
       "title": "F07 Negócios e serviços ligados ao banco",
@@ -9127,7 +9129,7 @@
       "phase": "Lançamento",
       "priority": "P1",
       "category": "frontend",
-      "status": "next",
+      "status": "done",
       "description": "O RUN-177 trocou /negocio, /negocio/catalogo e /pedidos/novo e matou as pastas; /explorar/servicos voltou no commit be50a0d4 porque TEM consumidor vivo: a busca global web (lib/search/groups.ts:166), o atalho Serviços do Início ((shell)/inicio/hub-shortcuts.tsx:108) e 24 e2E em global-search-flow.spec.ts. A cláusula do contrato: a rota morre quando o importador vivo morrer primeiro — a troca vai junto com a jornada da busca web (redirect preservando ?q=, portas do rastreador, capturas, e o bloco 'busca de serviços' do global-search-flow realocado).",
       "checklist": [
         "Buscar na web define o destino novo (app) com q/filtros preservados ou substitui o painel",
@@ -9141,8 +9143,10 @@
       "sourceRevision": "e87b228e",
       "links": ["docs/agents/tasks/F07-FICHA.task.yml"],
       "proof": [
-        "16/11: aberto no round-2 do RUN-177 — CI 43907094015-style: 15 falhas em global-search-flow provaram o importador que o grep do lote não viu (lição LICOES)."
-      ]
+        "16/11: aberto no round-2 do RUN-177 — CI 43907094015-style: 15 falhas em global-search-flow provaram o importador que o grep do lote não viu (lição LICOES).",
+        "RUN-181: PR #262 mergeado por squash (2717c5d0) pelo coordenador; CI completo e Visual verdes no SHA 9321cd8b; revisão GLM PASS COM RESSALVAS e auditoria Qwen4 Max LIBERA COM RESSALVAS (LOW-3, negação anon no pgTAP, segue como pendência)."
+      ],
+      "completedAt": "2026-11-17"
     },
     {
       "id": "F07-PAINEL-CIVIL-APP",
@@ -9188,6 +9192,9 @@
       "links": ["docs/agents/tasks/SALVAR-GLYPH.task.yml"],
       "proof": [
         "16/11: aberto pela falha 43932203007 shard 7 (✘ salvar-glyph.spec.ts:165, 1 failed | 297 passed) + job mobile-first sem ✘; rerun do MESMO tip verde (watcher confirmou 'conclusao final: success'). Codigo identico ao tip anterior verde (39597c24) — diff era docs/board."
+      ],
+      "notes": [
+        "17/11: nova ocorrência no PR #264 (salvar-glyph.spec.ts:165, escuro, desktop-1440), verde no rerun do mesmo SHA."
       ]
     },
     {
@@ -9287,12 +9294,71 @@
     },
     {
       "id": "SEC-013",
-      "title": "SEC-013: provas das ressalvas LOW do SEC-012 (convite por código no banco e no E2E)",
+      "title": "SEC-013: RPCs do pedido sem CEP nem coordenada; geocodificação do perfil com cota; pedido deriva bairro e posição do cache",
+      "phase": "Segurança pré-lançamento",
+      "priority": "P1",
+      "category": "backend",
+      "status": "done",
+      "updatedAt": "2026-11-16",
+      "sourceRevision": "63d0a04",
+      "description": "Fecha os HIGH F1 (close/update/cancel_service_request devolviam CEP e coordenada da solicitante ao prestador por RPC direto) e F2 (PUT do perfil geocodificava sem limitador) da auditoria R3 de 16/11 (lote 2a), mais o F4 (create_service_request confiava em coordenada e bairro do chamador). Emendas nos ADR-20261022 e ADR-20261116.",
+      "dependencies": ["LOC-IMPL"],
+      "checklist": [
+        "[x] RPCs do pedido devolvem lista explícita de colunas, sem CEP nem coordenada",
+        "[x] PUT /api/app/voce/localizacao consome a cota e responde 429",
+        "[x] create_service_request deriva coordenada e bairro do cep_geocodes",
+        "[x] pgTAP negativo dos dois lados e ADRs emendados"
+      ],
+      "proof": [
+        "PR #266 mergeado por squash; CI completo verde no SHA do PR (pgTAP service-request-location e service-request-tracking; f07-negocios-real nas três larguras).",
+        "Pareceres: revisão GLM PASS COM RESSALVAS (.work/orq/relatorios/SEC-013-revisao.md); auditoria Qwen4 Max 2ª rodada LIBERA COM RESSALVAS (.work/orq/relatorios/SEC-013-auditoria2.md); a 1ª rodada (BLOQUEIA por provas T1, T2, G1 e G2) foi resolvida."
+      ],
+      "tests": [
+        "supabase/tests/service-request-location.sql",
+        "supabase/tests/service-request-tracking.sql",
+        "tests/unit/app-api/voce/localizacao.test.ts",
+        "tests/e2e/f07-negocios-real.spec.ts"
+      ],
+      "notes": [
+        "17/11: o id SEC-013 passou a registrar o lote de localização; as ressalvas do SEC-012 que estavam aqui foram para SEC-012-RESSALVAS."
+      ],
+      "completedAt": "2026-11-17"
+    },
+    {
+      "id": "HRN-004",
+      "title": "Diretrizes alinhadas com a execução real; validador aceita qualquer comentário YAML",
+      "phase": "HRN — Harness do quadro (16/11)",
+      "priority": "P2",
+      "category": "infra",
+      "status": "done",
+      "completedAt": "2026-11-16",
+      "description": "AGENT_ARCHITECTURE §3 ganha a tabela do roteamento real em uso desde 16/11 (DeepSeek/GLM/Qwen/GPT via OpenCode e Codex; Claude coordenador), mantendo a tabela de papéis de .claude/agents; AGENTS.md lista os ADRs regentes até 16/11 com um link por ADR; processo enxuto com fonte canônica única na RISK_MATRIX citada em uma linha; TASK_CONTRACT documenta os prefixos DS, RUN, EXP, HRN, SEC, LT e F06; task-contract.mjs aceita qualquer linha iniciada por # (inclusive crase e parêntese) com teste de escopo provando os dois casos e a recusa de chave inválida.",
+      "checklist": [
+        "[x] AGENT_ARCHITECTURE §3 com a tabela do roteamento real e a frase de continuidade dos papéis — trava nova em agent-architecture.test.mjs; node --test dos dois specs 12/12 verde",
+        "[x] AGENTS.md lista os ADRs regentes até 16/11 (porta de dados, entrada enxuta, superfície do proxy, CI em dois tempos + os 4 de 16/11), um link por ADR — conferido contra docs/decisions/",
+        "[x] Processo enxuto com fonte canônica na RISK_MATRIX (#lean-execution-owner-05112026); AGENTS.md e TASK_CONTRACT citam em uma linha; ADR-20261105 intocado",
+        "[x] TASK_CONTRACT.md documenta DS, RUN, EXP, HRN, SEC + LT e F06 sem mudar o que o validador aceita",
+        "[x] Parser aceita # com crase e parêntese (1 linha em task-contract.mjs:175); teste novo prova os dois casos e a recusa de chave inválida; nenhuma checagem removida",
+        "[x] agent-architecture.test.mjs ajustado para a tabela nova sem perder as checagens de papéis somente leitura"
+      ],
+      "proof": [
+        "Contrato docs/agents/tasks/HRN-004.task.yml (R1, retry 2) validado. Provas locais no HEAD final 4e160ede: pnpm test 259/259 via prova-fila, lint exit 0 com zero diagnóstico nos 7 arquivos do diff, validador ok. E2E e pgTAP não rodam localmente nesta orquestração (sandbox nega o Docker): prova é o CI completo no mesmo SHA.",
+        "PR #265 com label ci:full; runs 43975664667 (fast) e 43975682656 (completo verde: Fast checks, Install-test-build com Supabase/pgTAP, core, stateful 375/768/1440) no SHA 4e160ede; merge squash 6b247595.",
+        "Parecer GLM 5.3 Flash (revisor ≠ executor): PASS COM RESSALVAS em .work/orq/relatorios/HRN-004-revisao.md. Sem ressalvas MÉDIAS; os dois achados BAIXO ficam registrados no parecer: mojibake 'coment?rios' no fixture de tests/scope/task-contract.test.mjs (corrigir no próximo toque no arquivo) e o skip de comentário antes da detecção de bloco escalar no parser (duvidoso; virar cartão só se confirmado indesejado).",
+        "Verificação de fechamento: .work/orq/relatorios/HRN-004-verificacao.md"
+      ],
+      "dependencies": [],
+      "updatedAt": "2026-11-16",
+      "sourceRevision": "6b247595"
+    },
+    {
+      "id": "SEC-012-RESSALVAS",
+      "title": "SEC-012-RESSALVAS: provas das ressalvas LOW do SEC-012 (convite por código no banco e no E2E)",
       "phase": "Segurança pré-lançamento",
       "priority": "P3",
       "category": "backend",
       "status": "next",
-      "updatedAt": "2026-11-16",
+      "updatedAt": "2026-11-17",
       "sourceRevision": "63d0a04",
       "description": "Reúne as ressalvas LOW dos dois pareceres da 2ª rodada do SEC-012 (revisão GLM e auditoria Qwen4 Max, 16/11), todas fora dos allowed_paths daquele lote. Nada bloqueou o merge; é fechamento de cobertura de prova do caminho real do convite por código. Itens numerados em .work/orq/relatorios/SEC-012-auditoria.md (§2 F2, §3 faltas 1-4) e §4 da revisão.",
       "dependencies": ["SEC-012"],
@@ -9310,6 +9376,127 @@
         "supabase/tests/entry-provision-atomic.sql",
         "tests/e2e/f01-entrada-real.spec.ts"
       ],
+      "notes": [
+        "17/11: cartão criado com o id SEC-012-RESSALVAS; o conteúdo estava no cartão SEC-013, id reservado ao lote de localização (colisão corrigida pelo coordenador)."
+      ]
+    },
+    {
+      "id": "SEC-013-RESSALVAS",
+      "title": "SEC-013-RESSALVAS: residuais da localização aceitos para o lançamento",
+      "phase": "Segurança pré-lançamento",
+      "priority": "P3",
+      "category": "backend",
+      "status": "next",
+      "updatedAt": "2026-11-17",
+      "sourceRevision": "d194c6c1",
+      "description": "Residuais registrados pela auditoria e pelo implementador do SEC-013, aceitos para o lançamento pelo coordenador em 16/11.",
+      "dependencies": ["SEC-013", "LOC-LIMITE-GEOCODIFICACAO"],
+      "checklist": [
+        "[ ] Barreira de custo contra trilateração da distância do pedido (teto de consultas por participante ou arredondamento mais grosso); residual de cerca de 100 m aceito no ADR-20261116",
+        "[ ] Grafia do bairro: o pedido grava o bairro com a grafia da fonte do CEP (cep_geocodes), não a do catálogo de bairros",
+        "[ ] CEP conhecido sem coordenada deixa o pedido sem bairro (o cache exige latitude e longitude)",
+        "[ ] Retirar p_latitude, p_longitude e p_region de create_service_request quando apps/web/app/api/app/negocios/[id]/pedidos/route.ts entrar num contrato"
+      ],
+      "proof": [
+        "Fonte: .work/orq/relatorios/SEC-013-implementacao.md (Riscos) e SEC-013-auditoria2.md."
+      ],
+      "tests": [],
+      "notes": []
+    },
+    {
+      "id": "SEC-014",
+      "title": "SEC-014: afiliação de terceiro sem caminho vivo; vetos de moderação na transferência de cidade",
+      "phase": "Segurança pré-lançamento",
+      "priority": "P1",
+      "category": "backend",
+      "status": "done",
+      "updatedAt": "2026-11-17",
+      "sourceRevision": "d194c6c1",
+      "description": "Revoga execute de public.profile_affiliations_for (A1 MEDIUM da auditoria R3 de 16/11, lote 2b) e acrescenta à declare_locality_transfer os vetos de conta suspensa e exclusão pedida (A2 LOW). Reabrir a exibição de afiliação a terceiros é decisão do dono no BLOCK-AFFILIATION.",
+      "dependencies": ["BLOCK-AFFILIATION"],
+      "checklist": [
+        "[x] RPC de afiliação por alvo sem execute para authenticated, anon e public",
+        "[x] Transferência recusa conta suspensa e exclusão pedida",
+        "[x] pgTAP 42501 e negativos de moderação",
+        "[x] Emenda do ADR-20261116 de perfil, transferência e afiliação"
+      ],
+      "proof": [
+        "PR #269 mergeado por squash (d194c6c1); CI completo verde no SHA 2ca1799d (ci-core e agregador; Visual não se aplica porque o lote não toca apps/app).",
+        "Pareceres: revisão GLM PASS COM RESSALVAS; auditoria Qwen4 Max LIBERA COM RESSALVAS (.work/orq/relatorios/SEC-014-revisao.md e SEC-014-auditoria.md)."
+      ],
+      "tests": ["supabase/tests/profile-affiliations.sql", "supabase/tests/locality-transfer.sql"],
+      "notes": [],
+      "completedAt": "2026-11-17"
+    },
+    {
+      "id": "SEC-014-RESSALVAS",
+      "title": "SEC-014-RESSALVAS: mensagem dedicada para conta suspensa na transferência",
+      "phase": "Segurança pré-lançamento",
+      "priority": "P3",
+      "category": "backend",
+      "status": "next",
+      "updatedAt": "2026-11-17",
+      "sourceRevision": "d194c6c1",
+      "description": "Hoje a transferência recusada por suspensão mostra a frase segura comum de sessão expirada. A recusa está certa; a mensagem não. Pede 403 com frase própria em apps/web/lib/locality/move-city.ts e o tratamento no app.",
+      "dependencies": ["SEC-014"],
+      "checklist": [
+        "[ ] Frase e status próprios para conta suspensa ou com exclusão pedida na transferência, com teste"
+      ],
+      "proof": ["Fonte: .work/orq/relatorios/SEC-014-implementacao.md (R1)."],
+      "tests": [],
+      "notes": []
+    },
+    {
+      "id": "HRN-005",
+      "title": "HRN-005: CI com cancelamento por PR, caches, anotação de flake e trava mecânica de merge",
+      "phase": "HRN — Harness do quadro (16/11)",
+      "priority": "P1",
+      "category": "infra",
+      "status": "done",
+      "updatedAt": "2026-11-17",
+      "sourceRevision": "d194c6c1",
+      "description": "Implementa P1 a P5 do diagnóstico de CI de 16/11 (.work/orq/relatorios/diagnostico-ci.md): concurrency com cancel-in-progress só em pull_request, Claude Review sob demanda, label ci:full removida no merge, cache de navegadores do Playwright e de imagens do Supabase, anotação de flake e scripts/agents/merge-seguro.mjs. Emenda do ADR-20261114.",
+      "dependencies": [],
+      "checklist": [
+        "[x] Concurrency nos três workflows",
+        "[x] Claude Review sob demanda (o workflow também foi desativado no GitHub a pedido do dono em 16/11)",
+        "[x] ci-label-cleanup.yml",
+        "[x] Caches com fallback",
+        "[x] Anotação de flake",
+        "[x] merge-seguro.mjs"
+      ],
+      "proof": [
+        "PR #263 mergeado por squash (3993497d); CI completo verde no SHA 087deb55 (merge da main no branch para resolver o conflito na RATIFICACAO.md, sem force-push).",
+        "Pareceres: revisão GLM PASS COM RESSALVAS; auditoria Qwen4 Max LIBERA COM RESSALVAS."
+      ],
+      "tests": [
+        "tests/scope/workflows-ci.test.mjs",
+        "tests/scope/merge-seguro.test.mjs",
+        "tests/scope/anotar-flakes.test.mjs"
+      ],
+      "notes": [],
+      "completedAt": "2026-11-17"
+    },
+    {
+      "id": "HRN-005-RESSALVAS",
+      "title": "HRN-005-RESSALVAS: merge-seguro lê o run errado e exige token no ambiente",
+      "phase": "HRN — Harness do quadro (16/11)",
+      "priority": "P1",
+      "category": "infra",
+      "status": "next",
+      "updatedAt": "2026-11-17",
+      "sourceRevision": "d194c6c1",
+      "description": "No primeiro uso real (17/11, PRs #264 e #269), o merge-seguro.mjs recusou os dois dizendo que o completo estava skipped: leu o run da abertura do PR (sem a label, completo pulado pelo gate) e não o run com ci:full no mesmo SHA, que estava verde. Falso negativo, recusa o que podia passar. Também exige GH_TOKEN no ambiente em vez de usar o login do gh.",
+      "dependencies": ["HRN-005"],
+      "checklist": [
+        "[ ] Escolher, entre os runs do PR CI no SHA, o que executou o completo (ci-core presente) e decidir por ele; teste com dois runs no mesmo SHA, um pulado e um verde",
+        "[ ] Ler o token de gh auth token quando GH_TOKEN e GITHUB_TOKEN não existirem",
+        "[ ] Pendências do diagnóstico de CI: P6 painel semanal, P8 árvore idêntica, P7 quarentena condicional"
+      ],
+      "proof": [
+        "Recusas observadas em 17/11 nos PRs #264 e #269; merges feitos pelo coordenador conferindo ci-core e agregador verdes no SHA."
+      ],
+      "tests": [],
       "notes": []
     }
   ],

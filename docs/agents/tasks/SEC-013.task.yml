@@ -1,0 +1,96 @@
+# Localização: os RPCs do pedido deixam de devolver CEP e coordenada; geocodificação do perfil
+# passa pelo limitador; o pedido recasa CEP e bairro pelo cache.
+#
+# Autoridade: auditoria independente do security-auditor de 16/11 sobre a main 2bb231d8
+# (.work/orq/relatorios/auditoria-r3-lote2a.md). BLOQUEIA o PR 259 (RUN-179) por F1 HIGH:
+# close_service_request, update_service_request e cancel_service_request são security definer,
+# fazem select * da linha e devolvem to_jsonb dela; o grant por coluna não vale dentro do definer,
+# e o prestador lê CEP, latitude e longitude da solicitante por chamada direta ao RPC.
+# F2 HIGH pré-existente: o PUT do perfil geocodifica sem consumirConsulta.
+# F4 MEDIUM: create_service_request aceita p_latitude, p_longitude e p_region do chamador.
+#
+# Decisões do coordenador, 16/11, por delegação, registradas nos ADRs deste lote:
+# - F1: as três funções devolvem lista explícita de colunas seguras, sem cep, latitude e longitude.
+# - F2: consumirConsulta no PUT do perfil com 429 honesto. Para o lançamento, o limitador por
+#   processo e o cache sem TTL ficam aceitos e registrados; contador no banco, TTL e teto global
+#   seguem no cartão LOC-LIMITE-GEOCODIFICACAO.
+# - F4: create_service_request deixa de confiar na coordenada e no bairro do chamador: deriva
+#   os dois do cep_geocodes a partir do CEP; sem CEP, o pedido fica sem coordenada e sem bairro.
+# - F3: o residual de trilateração da distância do pedido, cerca de 100 m, fica aceito para o
+#   lançamento e registrado em ADR. A afirmação de que o arredondamento é a mitigação é corrigida.
+#   Endurecimento vira cartão.
+
+task_id: SEC-013
+
+objective: >
+  Nenhuma pessoa recebe o CEP ou a coordenada de outra por qualquer RPC do pedido de serviço;
+  o bairro e a distância que o prestador vê vêm do CEP real da solicitante, nunca de um valor
+  que ela digitou; e trocar a própria localização no perfil não permite consultar o provedor de
+  CEP sem limite.
+
+authority:
+  - .work/orq/relatorios/auditoria-r3-lote2a.md (F1 e F2 HIGH, F3 e F4 MEDIUM, F7 LOW), auditoria do security-auditor de 16/11
+  - docs/decisions/ADR-20261022-localizacao-padrao-de-mercado.md
+  - docs/decisions/ADR-20261116-cep-no-anuncio-avo-limite-e-coordenada-ausente.md
+  - cartões LOC-IMPL (reaberto até este lote) e LOC-LIMITE-GEOCODIFICACAO
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    supabase/migrations/20260911105119_service_request_tracking.sql:230-271 (close_service_request
+    security definer, select * e to_jsonb da linha, grant a authenticated) com as colunas de
+    20261116185541_pedido_cep_bairro_distancia.sql:47-50; apps/web/app/api/app/voce/localizacao/route.ts:105-121
+    geocodifica sem consumirConsulta; 20261116185541:182-185,238-240,343-346 aceita coordenada e
+    region do chamador.
+
+allowed_paths:
+  - supabase/migrations
+  - supabase/tests/service-request-location.sql
+  - supabase/tests/service-request-tracking.sql
+  - supabase/tests/service-requests.sql
+  - supabase/database.generated.ts
+  - apps/web/app/api/app/voce/localizacao/route.ts
+  - apps/web/app/api/app/pedidos
+  - apps/web/lib/app-api/app-pedidos.ts
+  - apps/web/lib/geo
+  - tests/unit/app-api
+  - tests/unit/geo
+  - tests/e2e/f07-negocios-real.spec.ts
+  - docs/decisions/ADR-20261022-localizacao-padrao-de-mercado.md
+  - docs/decisions/ADR-20261116-cep-no-anuncio-avo-limite-e-coordenada-ausente.md
+  - docs/decisions/RATIFICACAO.md
+  - docs/agents/tasks/SEC-013.task.yml
+
+forbidden:
+  - mudar a regra de exibição de localização do anúncio, a grade ou o piso de 300 m
+  - mudar o que o app mostra além do que o recasamento do bairro e da distância muda
+  - expor coordenada do perfil a qualquer outra pessoa ou ao próprio pedido
+  - criar contador de geocodificação no banco, TTL do cep_geocodes ou teto global (ficam no cartão LOC-LIMITE)
+  - push, merge, abrir PR, force-push; ler, criar ou imprimir arquivos de ambiente
+
+acceptance:
+  - "Migration nova redefine close_service_request, update_service_request e cancel_service_request para devolver uma lista explícita de colunas sem cep, latitude e longitude, mantendo os campos que as rotas usam hoje; grants e security definer inalterados no resto."
+  - "pgTAP negativo nas três funções, dos dois lados: chamada direta pelo prestador e pela solicitante não traz cep, latitude nem longitude no jsonb; o positivo do que as rotas consomem continua passando."
+  - "create_service_request deriva latitude, longitude e region do cep_geocodes a partir do CEP informado e ignora ou recusa valores divergentes do chamador; sem CEP ou com CEP fora do cache, o pedido fica sem coordenada e sem region. pgTAP prova que region e coordenada forjadas não são gravadas."
+  - "PUT /api/app/voce/localizacao chama consumirConsulta antes de geocodificar um CEP fora do cache e responde 429 com o mesmo formato das outras rotas que usam o limitador; teste unitário do 429 e do caminho de cache, que não consome."
+  - "ADR-20261116 e ADR-20261022 ganham a emenda de 16/11: as quatro decisões acima, o residual de trilateração aceito para o lançamento, a correção do texto que dizia fechar o LOC-LIMITE e a frase sobre a mitigação pelo arredondamento."
+  - "As rotas e o app continuam funcionando: f07-negocios-real (pedido com CEP, bairro e distância ao prestador) passa nas três larguras."
+
+proof:
+  - npx pnpm@11.18.0 test
+  - npx pnpm@11.18.0 lint
+  - npx pnpm@11.18.0 --filter web build
+  - "node scripts/agents/prova-fila.mjs -- node scripts/agents/prova-sequencia.mjs e2e tests/e2e/f07-negocios-real.spec.ts"
+  - "pgTAP (service-request-*.sql) — só no CI, pelo job completo com a label ci:full"
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/SEC-013.task.yml
+
+risk: RLS, migration, security definer, coordenada e CEP de membro
+risk_level: R3
+adr: docs/decisions/ADR-20261116-cep-no-anuncio-avo-limite-e-coordenada-ausente.md
+
+reviewer_must_differ_from_executor: true
+retry_budget: 2
+on_budget_exhausted: HUMAN_DECISION
+
+closure:
+  requires_runtime_evidence: true

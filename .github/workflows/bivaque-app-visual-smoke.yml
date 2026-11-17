@@ -12,6 +12,12 @@ on:
       - 'pnpm-lock.yaml'
   workflow_dispatch:
 
+# Cada push novo no mesmo PR cancela o run anterior (ver pull-request-ci.yml e a
+# emenda de 16/11 do ADR-20261114). Push na main nunca é cancelado.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 permissions:
   contents: read
 
@@ -57,12 +63,31 @@ jobs:
       - name: Build Vite app
         run: pnpm --filter @bivaque/app build
 
+      - name: Cache Playwright browsers
+        id: playwright-browsers
+        uses: actions/cache@v6
+        with:
+          # Versão pinada em package.json (1.51.1) + lockfile: bump de pin muda a chave.
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-1.51.1-${{ hashFiles('pnpm-lock.yaml') }}
+
+      # Fallback do cache miss: o download de ~2,8 min por shard só acontece quando
+      # a chave muda. No cache hit as bibliotecas de sistema já vêm na imagem do runner.
       - name: Install Chromium
+        if: steps.playwright-browsers.outputs.cache-hit != 'true'
         run: pnpm exec playwright install --with-deps chromium
 
       - name: Run shard ${{ matrix.shard }}/7
         # Script do pacote (config inteiro) + shard de arquivo; workers:1 no config.
-        run: pnpm --filter @bivaque/app test:e2e --shard=${{ matrix.shard }}/7 --trace=retain-on-failure
+        # O --reporter repete o do config (list) e acrescenta o json que o passo de
+        # anotação de flake lê.
+        env:
+          PLAYWRIGHT_JSON_OUTPUT_FILE: ${{ github.workspace }}/visual-report-${{ matrix.shard }}.json
+        run: pnpm --filter @bivaque/app test:e2e --shard=${{ matrix.shard }}/7 --trace=retain-on-failure --reporter=list,json
+
+      - name: Annotate flaky E2E tests
+        if: always()
+        run: node scripts/ci/anotar-flakes.mjs visual-report-${{ matrix.shard }}.json
 
       - name: Save test and screenshot evidence
         if: always()

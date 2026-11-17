@@ -75,12 +75,13 @@ export const AREA_CONTAINERS: ReadonlyArray<readonly [string, PrimaryContainer]>
   ["/denuncias", "perfil"],
   ["/ajuda", "perfil"],
   // Não existe container "cidade" nesta versão (PROCESSO §7), então a pergunta
-  // é de onde se chega aqui. Dentro do shell, os dois únicos links para
-  // /localidade estão em Explorar — `/app/busca` e `explorar/servicos`. O
-  // terceiro é a tela de boas-vindas do onboarding, que roda fora do shell e
-  // não tem lateral para acender. A lateral responde "onde estou e como volto",
-  // não "de quem é o dado": acender Perfil aqui mandaria a pessoa para um
-  // container que não alcança esta tela.
+  // é de onde se chega aqui. Dentro do shell, o link vivo para /localidade está
+  // no detalhe da comunidade (community-detail-screen.tsx, "Trocar de cidade");
+  // `explorar/servicos` também tinha um e saiu com a tela (RUN-181 — o endereço
+  // agora é 307 para `/app/busca`). O terceiro é a tela de boas-vindas do
+  // onboarding, que roda fora do shell e não tem lateral para acender. A lateral
+  // responde "onde estou e como volto", não "de quem é o dado": acender Perfil
+  // aqui mandaria a pessoa para um container que não alcança esta tela.
   ["/localidade", "explorar"],
   // Consulta a outra cidade (25/09/2026): é descoberta — Guia, encontros e
   // anúncios de outro lugar —, e a volta é pelo mesmo caminho de /localidade.

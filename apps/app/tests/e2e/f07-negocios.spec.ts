@@ -162,6 +162,8 @@ for (const tema of ["light"] as const) {
       await capturar(page, `${testInfo.project.name}-${tema}-04-falha`)
       await page.getByRole("button", { name: "Enviar pedido", exact: true }).click()
       await expect(page).toHaveURL(new RegExp(`/app/pedido/${PEDIDO}$`))
+      // RUN-180: o acompanhamento nomeia o lado de quem pediu.
+      await expect(page.getByText("Você pediu — acompanhe o que foi combinado.")).toBeVisible()
       expect(chaves).toHaveLength(2)
       expect(chaves[0]).toBe(chaves[1])
       await expect(page.locator("[data-descricao-do-pedido]")).toHaveText(

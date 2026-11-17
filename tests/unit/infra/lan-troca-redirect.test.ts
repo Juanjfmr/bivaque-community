@@ -50,6 +50,10 @@ const TROCADAS = [
   ["/notifications", "/app/avisos"],
   ["/explorar/busca", "/app/busca"],
   ["/explorar/busca?q=termo", "/app/busca?q=termo"],
+  // RUN-181: a última tela de busca da web (o painel de serviços) saiu. O
+  // destino é a busca do app, que lê `q` e o alias `search` por si.
+  ["/explorar/servicos", "/app/busca"],
+  ["/explorar/servicos?q=climatiza", "/app/busca?q=climatiza"],
   ["/explorar", "/app/busca"],
   ["/events", "/app/agenda"],
   ["/events/novo", "/app/agenda"],
@@ -184,13 +188,18 @@ describe("LAN-TROCA fase 1", () => {
     expect(existsSync(join(shell, "imoveis", "alert-form.tsx"))).toBe(false)
   })
 
-  it("a pasta antiga de busca não deixa tela nem action para trás", () => {
-    const pasta = join(shell, "explorar/busca")
-    const sobras = existsSync(pasta)
-      ? readdirSync(pasta, { recursive: true, encoding: "utf8" })
-      : []
-    expect(sobras).toEqual([])
-  })
+  it.each(["explorar", "explorar/busca", "explorar/servicos"])(
+    "a pasta antiga %s não deixa tela nem action para trás",
+    (relativa) => {
+      // LT-002 removia só a busca; o RUN-181 levou o resto da pasta — o hub e o
+      // painel de serviços. A prova é de ausência: o diretório não existe mais.
+      const pasta = join(shell, relativa)
+      const sobras = existsSync(pasta)
+        ? readdirSync(pasta, { recursive: true, encoding: "utf8" })
+        : []
+      expect(sobras).toEqual([])
+    },
+  )
 
   // CIDADE-169: a consulta de cidade e a referência da cidade são do app. A
   // prova é de ausência — nenhuma tela sobra para alguém "voltar" editando a
