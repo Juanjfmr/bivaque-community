@@ -62,7 +62,7 @@ test("as capturas fixam a localidade e mostram os estados preenchidos", () => {
   )
   const spec = readFileSync(new URL("../e2e/cega-capturas.spec.ts", import.meta.url), "utf8")
   assert.ok((inicio?.seletor ?? "").includes('data-cartao="publicacao"'))
-  assert.match(spec, /locale: "pt-BR", timezoneId: "America\/Manaus"/)
+  assert.match(spec, /locale: "pt-BR",\s*timezoneId: "America\/Manaus"/)
   assert.match(spec, /reducedMotion: "reduce"/)
   assert.match(spec, /#mensagem-da-conversa.*fill/)
   assert.equal(conversa?.id, "conversa")

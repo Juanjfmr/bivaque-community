@@ -28,7 +28,11 @@ const LARGURAS: Readonly<Record<string, number>> = {
 const PRAZO_MS = 45_000
 const PRAZO_PASSO_MS = 15_000
 
-test.use({ locale: "pt-BR", timezoneId: "America/Manaus", reducedMotion: "reduce" })
+test.use({
+  locale: "pt-BR",
+  timezoneId: "America/Manaus",
+  contextOptions: { reducedMotion: "reduce" },
+})
 
 async function entrarComo(contexto: BrowserContext, persona: string): Promise<void> {
   await contexto.clearCookies()

@@ -279,9 +279,10 @@ test.describe("menu Criar (§4 do inventário)", () => {
     await expect(ultimo).toBeFocused()
     await focoDentroDoMenu()
 
-    const acaoDeTras = page.locator('[data-acao="busca"]')
+    // O sino de avisos fica sempre no topo e navegaria para /app/avisos se o clique vazasse.
+    const acaoDeTras = page.locator('[data-acao="avisos"]')
     const caixaDeTras = await acaoDeTras.boundingBox()
-    if (caixaDeTras === null) throw new Error("A ação de busca não tem posição")
+    if (caixaDeTras === null) throw new Error("O sino de avisos não tem posição")
     await page.mouse.click(
       caixaDeTras.x + caixaDeTras.width / 2,
       caixaDeTras.y + caixaDeTras.height / 2,
