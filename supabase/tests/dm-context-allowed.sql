@@ -216,10 +216,7 @@ select set_config('request.jwt.claim.role', 'authenticated', true);
 -- Get the group-context conversation ID
 select lives_ok(
   $$
-    insert into public.dm_messages (conversation_id, sender_id, content)
-    select c.id,
-           '10000000-0000-4000-8000-000000000008',
-           'Ola, esta e uma mensagem de teste'
+    select public.send_conversation_message(c.id, 'Ola, esta e uma mensagem de teste')
     from public.dm_conversations c
     where c.context_type = 'shared_group'
       and c.participant_a = '10000000-0000-4000-8000-000000000008'
@@ -246,10 +243,7 @@ select results_eq(
 -- Other participant can also send a message
 select lives_ok(
   $$
-    insert into public.dm_messages (conversation_id, sender_id, content)
-    select c.id,
-           '10000000-0000-4000-8000-000000000009',
-           'Resposta de teste'
+    select public.send_conversation_message(c.id, 'Resposta de teste')
     from public.dm_conversations c
     where c.context_type = 'shared_group'
       and c.participant_a = '10000000-0000-4000-8000-000000000008'
@@ -353,10 +347,7 @@ select results_eq(
 
 select lives_ok(
   $$
-    insert into public.dm_messages (conversation_id, sender_id, content)
-    select c.id,
-           '10000000-0000-4000-8000-000000000008',
-           'Meu CPF e 123.456.789-00'
+    select public.send_conversation_message(c.id, 'Meu CPF e 123.456.789-00')
     from public.dm_conversations c
     where c.context_type = 'shared_group'
       and c.participant_a = '10000000-0000-4000-8000-000000000008'
@@ -367,10 +358,7 @@ select lives_ok(
 
 select lives_ok(
   $$
-    insert into public.dm_messages (conversation_id, sender_id, content)
-    select c.id,
-           '10000000-0000-4000-8000-000000000008',
-           'Minha organizacao militar e essa'
+    select public.send_conversation_message(c.id, 'Minha organizacao militar e essa')
     from public.dm_conversations c
     where c.context_type = 'shared_group'
       and c.participant_a = '10000000-0000-4000-8000-000000000008'
@@ -381,10 +369,7 @@ select lives_ok(
 
 select lives_ok(
   $$
-    insert into public.dm_messages (conversation_id, sender_id, content)
-    select c.id,
-           '10000000-0000-4000-8000-000000000008',
-           'Meu endereco e Rua das Flores 123'
+    select public.send_conversation_message(c.id, 'Meu endereco e Rua das Flores 123')
     from public.dm_conversations c
     where c.context_type = 'shared_group'
       and c.participant_a = '10000000-0000-4000-8000-000000000008'
@@ -428,10 +413,7 @@ select set_config('request.jwt.claim.role', 'authenticated', true);
 
 select lives_ok(
   $$
-    insert into public.dm_messages (conversation_id, sender_id, content)
-    select c.id,
-           '10000000-0000-4000-8000-000000000025',
-           'Resposta do prestador dentro da conversa aberta pelo membro'
+    select public.send_conversation_message(c.id, 'Resposta do prestador dentro da conversa aberta pelo membro')
       from public.dm_conversations c
      where c.context_type = 'provider'
        and c.context_id = '30000000-0000-4000-8000-000000000025'

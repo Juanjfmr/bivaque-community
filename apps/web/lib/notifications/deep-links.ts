@@ -168,12 +168,12 @@ export function resolveNotificationHref(
       return `/messages?conversation=${notification.target_id}`
     case "recommendation_reply":
       // O pedido tem um endereço só (ADR-20260925-memoria-de-indicacoes).
-      return `/indicacoes/${notification.target_id}`
+      return `/app/pergunta/${notification.target_id}`
     case "recommendation_request":
       // O aviso do dia aponta para a cidade: a lista de pedidos sem resposta.
       return notification.action === "digest"
         ? "/community?vista=indicacoes"
-        : `/indicacoes/${notification.target_id}`
+        : `/app/pergunta/${notification.target_id}`
     case "report_resolved":
       return resolveReportTargetHref(reportTarget)
     case "admission_rejected":
@@ -204,7 +204,7 @@ export function resolveReportTargetHref(target: ReportTarget | null): string | n
       // outra consulta; /messages é o destino real da caixa de entrada.
       return "/messages"
     case "recommendation_request":
-      return `/indicacoes/${target.target_id}`
+      return `/app/pergunta/${target.target_id}`
     case "provider_profile":
       return `/prestadores/${target.target_id}`
     default:

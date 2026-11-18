@@ -98,8 +98,8 @@ describe("idade da dica", () => {
 })
 
 describe("um pedido, um endereço", () => {
-  it("o detalhe mora em /indicacoes/<id>", () => {
-    expect(indicationHref("abc")).toBe("/indicacoes/abc")
+  it("o detalhe mora em /app/pergunta/<id>", () => {
+    expect(indicationHref("abc")).toBe("/app/pergunta/abc")
   })
   it("as indicações moram na Comunidade, e pedir abre a caixa focada", () => {
     expect(INDICATIONS_HREF).toBe("/community?vista=indicacoes")
@@ -158,7 +158,7 @@ describe("endereços antigos", () => {
   })
 
   it("/recommendations?focus=<id> abre o próprio pedido", () => {
-    expect(recommendationsRedirect({ focus: id })).toBe(`/indicacoes/${id}`)
+    expect(recommendationsRedirect({ focus: id })).toBe(`/app/pergunta/${id}`)
   })
 
   it("focus que não é id não vira endereço", () => {

@@ -43,7 +43,7 @@ export const INDICATION_TITLE_MIN = 8
 export const INDICATION_TITLE_MAX = 300
 
 export function indicationHref(requestId: string): string {
-  return `/indicacoes/${requestId}`
+  return `/app/pergunta/${requestId}`
 }
 
 /**

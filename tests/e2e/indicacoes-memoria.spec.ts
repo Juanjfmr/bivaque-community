@@ -47,7 +47,7 @@ test.describe("indicações com memória", () => {
       0,
     )
     await asker.getByRole("button", { name: "Publicar pedido" }).click()
-    await asker.waitForURL(/\/indicacoes\/[0-9a-f-]{36}$/)
+    await asker.waitForURL(/\/app\/pergunta\/[0-9a-f-]{36}$/)
     const requestPath = new URL(asker.url()).pathname
     await expect(asker.getByRole("heading", { level: 1, name: question })).toBeVisible()
 
@@ -72,7 +72,7 @@ test.describe("indicações com memória", () => {
     // Quem pediu marca a resposta que resolveu.
     await asker.reload()
     await asker.getByRole("button", { name: /^Ajudou a resolver/ }).click()
-    await expect(asker.getByText(/Ajudou a resolver · resposta de/)).toBeVisible()
+    await expect(asker.getByText("Resolveu a pergunta")).toBeVisible()
     await expect(asker.getByText("Resolvida")).toBeVisible()
 
     // Uma terceira pessoa procura e vê a resposta sem abrir a conversa.

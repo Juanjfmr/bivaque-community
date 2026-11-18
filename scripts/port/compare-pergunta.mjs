@@ -23,7 +23,7 @@ import { createDeterministicContext } from "../bivaque-html/capture-support.mjs"
 //
 // O que a comparação NÃO prova: interação. Captura é prancha parada; o ciclo
 // (responder, editar, resolver, reabrir, excluir) tem prova em
-// tests/e2e/indicacoes-ciclo-pergunta.spec.ts.
+// apps/app/tests/e2e/pergunta-ciclo.spec.ts.
 
 const root = resolve(import.meta.dirname, "../..")
 const output = join(root, ".visual/port-pergunta")
@@ -49,13 +49,14 @@ const STATES = [
     key: "aberta",
     prototypeFilter: "help",
     nextPath:
-      process.env.BIVAQUE_PERGUNTA_ABERTA ?? "/indicacoes/80000000-0000-4000-8000-000000000f06",
+      process.env.BIVAQUE_PERGUNTA_ABERTA ?? "/app/pergunta/80000000-0000-4000-8000-000000000f06",
   },
   {
     key: "resolvida",
     prototypeFilter: "ok",
     nextPath:
-      process.env.BIVAQUE_PERGUNTA_RESOLVIDA ?? "/indicacoes/80000000-0000-4000-8000-000000000f01",
+      process.env.BIVAQUE_PERGUNTA_RESOLVIDA ??
+      "/app/pergunta/80000000-0000-4000-8000-000000000f01",
   },
 ]
 

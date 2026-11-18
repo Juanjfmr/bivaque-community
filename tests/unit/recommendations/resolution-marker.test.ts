@@ -13,15 +13,6 @@ import {
 // (com resposta marcada) e "Resolvida por quem perguntou" (sem resposta).
 
 const root = join(import.meta.dirname, "..", "..", "..")
-const detailPath = join(
-  root,
-  "apps",
-  "web",
-  "app",
-  "components",
-  "indications",
-  "indication-detail.tsx",
-)
 const indicationsLib = join(root, "apps", "web", "lib", "indications", "indications.ts")
 
 describe("resolution marker (RECON-035)", () => {
@@ -54,38 +45,9 @@ describe("resolution marker (RECON-035)", () => {
     expect(canResolveRequest({ author_id: "member-one" }, "member-two")).toBe(false)
   })
 
-  it("writes through the server RPCs, never a direct table update", () => {
-    const source = readFileSync(detailPath, "utf8")
-    expect(source).toContain("mark_recommendation_reply_resolved")
-    expect(source).toContain("mark_recommendation_resolved")
-    expect(source).toContain("reopen_recommendation")
-    expect(source).toContain("callResolutionRpc")
-    expect(source).not.toMatch(/\.update\(\s*\{[^}]*resolved_reply_id/)
-  })
-
-  it("reads the marker and uses the owner's labels", () => {
-    const source = readFileSync(detailPath, "utf8")
-    expect(source).toContain("resolved_reply_id")
-    expect(source).toContain("Ajudou a resolver")
-    expect(source).toContain("resolutionLabel")
+  it("mantem os rotulos", () => {
     const lib = readFileSync(indicationsLib, "utf8")
     expect(lib).toContain("Resolvida por quem perguntou")
     expect(lib).toContain('return "Resolvida"')
-  })
-
-  it("o salvar virou 'Seguir respostas' (ADR-20261023, secao 2)", () => {
-    const source = readFileSync(detailPath, "utf8")
-    expect(source).toContain('"Seguir respostas"')
-    expect(source).toContain('"Seguindo respostas"')
-  })
-
-  it("gates every resolution control behind isAuthor", () => {
-    const source = readFileSync(detailPath, "utf8")
-    // A fileira de ações da resposta só existe para quem perguntou; dentro
-    // dela, marcar e reabrir se excluem.
-    expect(source).toContain("{isAuthor ? (")
-    expect(source).toContain("{!marked ? (")
-    expect(source).toContain("{marked ? (")
-    expect(source).toContain("isAuthor && request.is_resolved")
   })
 })

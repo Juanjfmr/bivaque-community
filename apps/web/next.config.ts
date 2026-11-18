@@ -111,6 +111,7 @@ const nextConfig: NextConfig = {
       },
       ...(
         [
+          ["/indicacoes/:id", "/app/pergunta/:id"],
           ["/messages", "/app/conversas"],
           ["/messages/:id", "/app/conversa/:id"],
           ["/mercado", "/app/mercado"],

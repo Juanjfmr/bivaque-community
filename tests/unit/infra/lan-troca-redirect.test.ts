@@ -12,6 +12,7 @@ import { routeFromFile } from "../../e2e/helpers/crawl-model"
 const ID = "41000000-0000-4000-8000-000000000051"
 const ORIGEM = "https://bivaque.example.invalid"
 const TROCADAS = [
+  [`/indicacoes/${ID}`, `/app/pergunta/${ID}`],
   [`/mercado/${ID}`, `/app/anuncio/${ID}`],
   [`/mercado/${ID}/editar`, `/app/anuncio/${ID}`],
   ["/mercado/novo", "/app/mercado"],
@@ -155,7 +156,14 @@ describe("LAN-TROCA fase 1", () => {
     },
   )
 
+  it("preserva a lista de indicacoes", async () => {
+    expect((await resolver("/indicacoes")).headers.get("location")).toBeNull()
+  })
+
   const shell = join(process.cwd(), "apps/web/app/(shell)")
+  it("remove o detalhe antigo de indicacoes", () => {
+    expect(existsSync(join(shell, "indicacoes", "[id]"))).toBe(false)
+  })
   const paginas = readdirSync(shell, { recursive: true, encoding: "utf8" })
     .filter((arquivo) => arquivo.replaceAll("\\", "/").endsWith("/page.tsx"))
     .map((arquivo) => routeFromFile(arquivo).replace(/\[[^\]]+\]/g, ID))

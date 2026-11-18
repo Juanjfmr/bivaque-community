@@ -1,10 +1,8 @@
 // A régua da resposta a um pedido de indicação, num módulo só.
 //
 // Os limites são os mesmos de sempre: o CHECK de `recommendation_replies`
-// (migration 20260802001100, 5..2000) e a tela antiga
-// (`app/components/indications/indication-detail.tsx`, REPLY_MIN/REPLY_MAX). A
-// rota do app e a tela antiga não podem discordar sobre o que é uma resposta
-// válida; a cópia que sobra é a da tela, que ainda não usa este módulo.
+// (migration 20260802001100, 5..2000). A tela antiga de indicação saiu em
+// 18/11 (troca para /app/pergunta/:id); a rota do app é quem usa este módulo.
 
 export const REPLY_MIN = 5
 export const REPLY_MAX = 2000
