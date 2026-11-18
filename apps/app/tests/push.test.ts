@@ -176,6 +176,7 @@ describe("preferência do push", () => {
       events: true,
       productNews: false,
       indications: true,
+      messages: true,
       resumoCidade: "off" as const,
       channels: [
         { notificationType: "comments" as const, channel: "email" as const, enabled: true },
@@ -183,12 +184,12 @@ describe("preferência do push", () => {
       ],
     }
     const ligado = comPushEmTodos(base, true)
-    expect(ligado.channels.filter((canal) => canal.channel === "push")).toHaveLength(4)
+    expect(ligado.channels.filter((canal) => canal.channel === "push")).toHaveLength(5)
     expect(ligado.channels.every((canal) => canal.channel !== "push" || canal.enabled)).toBe(true)
     expect(ligado.channels.some((canal) => canal.channel === "email" && canal.enabled)).toBe(true)
 
     const desligado = comPushEmTodos(ligado, false)
-    expect(desligado.channels.filter((canal) => canal.channel === "push")).toHaveLength(4)
+    expect(desligado.channels.filter((canal) => canal.channel === "push")).toHaveLength(5)
     expect(desligado.channels.every((canal) => canal.channel !== "push" || !canal.enabled)).toBe(
       true,
     )
