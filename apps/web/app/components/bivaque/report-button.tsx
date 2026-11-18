@@ -2,11 +2,10 @@
 
 import { scrubReportReason } from "@bivaque/domain"
 import { Button, Modal, Radio, RadioGroup, TextArea, useOverlayState } from "@heroui/react"
-import { useCallback, useEffect, useState } from "react"
+import { useCallback, useState } from "react"
 import type { Database } from "supabase/database.generated"
 import { createBrowserClient } from "../../../lib/supabase/client"
 import { ModalCloseTrigger } from "./close-button"
-import { currentUserIdOnce } from "./feed-post-shared"
 import { FeedbackAlert } from "./feedback-alert"
 
 // Os seis alvos de `public.report_target_type`. Os dois de indicacao entraram
@@ -60,23 +59,14 @@ interface ReportButtonProps {
    * do componente nao e renderizado.
    */
   externalState?: ReturnType<typeof useOverlayState>
-  /**
-   * Autor do conteudo denunciado, quando o pai o conhece. Preenchido, o estado
-   * de sucesso oferece "Bloquear esta pessoa", ligado ao mecanismo real
-   * `public.dm_blocks` (20260802001500) — o mesmo que a conversa usa. Vazio, a
-   * opcao nao aparece: nao se oferece bloqueio sem saber a quem bloquear.
-   */
-  blockUserId?: string
-}
 
-type BlockState = "idle" | "working" | "done"
+}
 
 export function ReportButton({
   targetType,
   targetId,
   label = "Denunciar",
   externalState,
-  blockUserId,
 }: ReportButtonProps) {
   const ownModal = useOverlayState()
   const modal = externalState ?? ownModal
@@ -85,32 +75,8 @@ export function ReportButton({
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState("")
   const [success, setSuccess] = useState(false)
-  const [blockState, setBlockState] = useState<BlockState>("idle")
-  const [blockError, setBlockError] = useState("")
-  const [viewerId, setViewerId] = useState<string | null>(null)
   const supabase = createBrowserClient()
   const presentation = TARGET_PRESENTATION[targetType]
-
-  // O bloqueio so pode ser oferecido entre duas pessoas distintas. Sem sessao
-  // lida, nao se oferece o que nao se pode executar honestamente.
-  // Uma requisicao de identidade para todos os cartoes do feed: este botao e
-  // renderizado por publicacao E por comentario, entao chamar auth.getUser()
-  // aqui multiplicava as requisicoes pelo tamanho do feed.
-  useEffect(() => {
-    let active = true
-    currentUserIdOnce()
-      .then((id) => {
-        if (active) setViewerId(id)
-      })
-      .catch(() => {
-        if (active) setViewerId(null)
-      })
-    return () => {
-      active = false
-    }
-  }, [])
-
-  const canOfferBlock = Boolean(blockUserId && viewerId && blockUserId !== viewerId)
 
   const handleSubmit = useCallback(async () => {
     const chosen = REPORT_CATEGORIES.find((c) => c.value === category)
@@ -159,37 +125,11 @@ export function ReportButton({
     setSubmitting(false)
   }, [category, explanation, targetType, targetId, supabase])
 
-  const handleBlock = useCallback(async () => {
-    if (!blockUserId || !viewerId) return
-    setBlockState("working")
-    setBlockError("")
-
-    const { error: blockInsertError } = await supabase.from("dm_blocks").insert({
-      blocker_user_id: viewerId,
-      blocked_user_id: blockUserId,
-    })
-
-    if (blockInsertError) {
-      if (blockInsertError.code === "23505") {
-        // PK (blocker, blocked) já existe: a pessoa está bloqueada. O desfecho
-        // pedido ja e verdade — encerra como feito, nao como erro.
-        setBlockState("done")
-      } else {
-        setBlockState("idle")
-        setBlockError("Não foi possível bloquear agora. Tente novamente.")
-      }
-    } else {
-      setBlockState("done")
-    }
-  }, [blockUserId, viewerId, supabase])
-
   const resetForm = useCallback(() => {
     setCategory(null)
     setExplanation("")
     setError("")
     setSuccess(false)
-    setBlockState("idle")
-    setBlockError("")
   }, [])
 
   const handleClose = useCallback(() => {
@@ -233,32 +173,6 @@ export function ReportButton({
                       title="Denúncia enviada."
                       description="A equipe vai analisar. Você recebe um aviso quando houver uma decisão."
                     />
-                    {canOfferBlock ? (
-                      <div>
-                        {blockState === "done" ? (
-                          <FeedbackAlert
-                            variant="success"
-                            title="Pessoa bloqueada."
-                            description="As mensagens diretas entre vocês ficam bloqueadas nos dois sentidos."
-                          />
-                        ) : (
-                          <>
-                            <p className="text-sm text-muted">
-                              Prefere não receber mensagens desta pessoa?
-                            </p>
-                            <Button
-                              variant="secondary"
-                              className="mt-2"
-                              onPress={handleBlock}
-                              isDisabled={blockState === "working"}
-                            >
-                              {blockState === "working" ? "Bloqueando…" : "Bloquear esta pessoa"}
-                            </Button>
-                            {blockError ? (
-                              <div className="mt-2">
-                                <FeedbackAlert variant="danger" description={blockError} />
-                              </div>
-                            ) : null}
                           </>
                         )}
                       </div>
