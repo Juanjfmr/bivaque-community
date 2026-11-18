@@ -50,3 +50,12 @@ frase fixa. Nenhum erro expõe detalhe técnico. O bloqueio continua sem avisar 
 
 A revogação dos INSERT diretos em `dm_messages` e `dm_blocks` fica para o lote 3, depois da saída
 da tela antiga de indicações, que ainda grava diretamente em `dm_blocks`.
+
+## Emenda de 18/11/2026 — lote 3 (F09-003)
+
+O lote 3 revoga só o INSERT de `public.dm_messages` para `authenticated`; o SELECT fica. O INSERT
+de `public.dm_blocks` fica: `POST /api/app/voce/bloqueados` grava com o cliente da sessão sob a
+policy `dm_blocks_insert_self`, e revogá-lo tiraria o bloqueio do app. A pergunta ao organizador do
+encontro (`POST /api/app/eventos/[id]/perguntas`), que ainda inseria direto, passa a gravar pela RPC
+`send_conversation_message`. A tela `/indicacoes/[id]` sai da web com 307 para `/app/pergunta/[id]`
+e o ramo de bloqueio do `ReportButton` sai junto, por ficar sem chamador.
