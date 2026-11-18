@@ -73,13 +73,14 @@ test.describe("holder onboarding journey", () => {
 // ---------------------------------------------------------------------------
 
 test.describe("family invite journey", () => {
-  test("the legacy invite screen asks for a new invite", async ({ page }) => {
+  test("the legacy invite link lands on the app entry", async ({ page }) => {
     // Given someone without a session who arrives from an old invite link
-    // When the forwarded address opens
+    // When the forwarded address opens (SEC-017: the old web screen is gone)
     await page.goto("/convite?legado=1")
 
-    // Then the screen explains that the invite now comes with a code
-    await expect(page.getByRole("status")).toContainText("Este link de convite mudou.")
+    // Then the app entry opens, without a password field
+    await expect(page).toHaveURL(/\/app\/entrar/)
+    await expect(page.locator('input[type="password"]')).toHaveCount(0)
   })
 })
 

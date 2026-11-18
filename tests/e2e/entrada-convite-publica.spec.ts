@@ -10,8 +10,6 @@ import { seedSession } from "./helpers/session"
 // negativo de e-mail) fica em supabase/tests/family-invite-code.sql, que é onde
 // ele tem banco sem seed para criar as tentativas.
 
-const INVITE_UNAVAILABLE = "Este convite não existe, venceu ou já foi usado."
-
 test.describe("entrada pública — sem sessão", () => {
   test("a conta apagada é uma página pública e oferece a volta", async ({ page }) => {
     // Given alguém que acabou de pedir a exclusão e perdeu a sessão
@@ -26,34 +24,23 @@ test.describe("entrada pública — sem sessão", () => {
     await expect(voltar).toHaveAttribute("href", "/")
   })
 
-  test("o convite abre sem sessão e preenche o código do link", async ({ page }) => {
-    // Given o link que o titular copia, já com o código
+  // SEC-017: a tela antiga /convite saiu da web. O link antigo leva o código à
+  // porta do app, que aceita o convite sem senha e sem CPF (o fluxo inteiro está
+  // em f01-entrada-real.spec.ts).
+  test("o link antigo do convite abre a porta do app com o código", async ({ page }) => {
+    // Given o link antigo que o titular copiava, já com o código
     await page.goto("/convite?codigo=7k4m-9qrt")
 
-    // Then a tela do código aparece e o campo vem preenchido
-    await expect(page.getByRole("heading", { level: 1 })).toHaveText("Entre pelo convite.")
-    // O campo é o md-outlined-text-field: o valor fica no <input> do Material.
-    await expect(page.locator("#en-code input")).toHaveValue(/7k4m-?9qrt/i)
-    await expect(page.locator("md-filled-button", { hasText: "Continuar" })).toBeVisible()
+    // Then a porta do app abre no caminho do convite, com o código do link
+    await expect(page).toHaveURL(/\/app\/entrar/)
+    await expect(page.getByLabel("Código do convite")).toBeVisible({ timeout: 20_000 })
   })
 
-  test("código errado responde a frase única do ADR", async ({ page }) => {
-    // Given a tela do convite com um código que ninguém emitiu
-    await page.goto("/convite")
-    await page.locator("#en-code input").fill("ZZZZZZZZ")
+  test("o link antigo sem código cai na porta do app, sem senha", async ({ page }) => {
+    await page.goto("/convite?legado=1")
 
-    // When a pessoa continua
-    await page.locator("md-filled-button", { hasText: "Continuar" }).click()
-
-    // Then a resposta não distingue errado de vencido ou usado
-    await expect
-      .poll(() =>
-        page.locator("#en-code").evaluate((element) => element.getAttribute("error-text")),
-      )
-      .toContain(INVITE_UNAVAILABLE)
-
-    // And a conta não é criada: a tela continua pedindo o código
-    await expect(page.getByRole("heading", { level: 1 })).toHaveText("Entre pelo convite.")
+    await expect(page).toHaveURL(/\/app\/entrar/)
+    await expect(page.locator('input[type="password"]')).toHaveCount(0)
   })
 
   test("a Ajuda abre sem login, com as perguntas e o e-mail de contato", async ({ page }) => {
@@ -130,9 +117,9 @@ test.describe("Ajuda com sessão", () => {
     ).toHaveCount(0)
   })
 
-  test("o convite leva à Início quem já tem acesso", async ({ page }) => {
-    // O aceite do código é atômico; se a resposta se perde e a tela recarrega,
-    // quem já tem localidade corrente não volta à etapa do código.
+  test("o link antigo do convite leva à Início quem já tem acesso", async ({ page }) => {
+    // Quem já tem localidade corrente não volta à etapa do código: o link antigo
+    // passa pela porta do app, que segue para a Início (SEC-017).
     await page.goto("/convite?codigo=7K4M9QRT")
 
     await expect(page).toHaveURL(/\/app\/inicio$/, { timeout: 20_000 })
