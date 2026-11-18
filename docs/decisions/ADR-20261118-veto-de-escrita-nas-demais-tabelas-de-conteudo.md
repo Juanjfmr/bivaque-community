@@ -67,3 +67,36 @@ não escreve em nenhuma das sete tabelas (inclusive foto nova e detalhes do imó
 `create_group`, `transition_listing`, `set_group_rules`, `delete_group` e
 `mark_recommendation_resolved`; suspensão vencida devolve a escrita; exclusão pedida congela igual,
 inclusive responder pergunta; cancelar o pedido devolve a escrita; outra pessoa ativa não é afetada.
+
+## Emenda de 18/11, AUTHZ-007
+
+O resíduo "página de negócio e pedido de serviço" (achado M2 do `security-auditor` sobre `f6eca95`)
+vira regra neste lote, com o mesmo predicado e o mesmo erro:
+
+1. `provider_profiles`, `provider_catalog_items` e `provider_portfolio_photos` ganham as três
+   restritivas `<tabela>_veto_conta_insert|update|delete` com `private.can_write_own_content()`;
+   as permissivas de autoria e escopo ficam intactas e toda permissiva futura herda o veto.
+2. `create_member_business_page`, `update_member_business_page` e `create_service_request`
+   recebem o veto no corpo, logo depois da autenticação (42501, `account cannot write content`).
+   Em `create_service_request` o veto substitui o `account_deletion_requested(v_me)` antigo, que
+   cobria só metade do estado e nunca mais era alcançado; o do prestador permanece, porque o
+   prestador não é o chamador.
+3. Os buckets de foto de anúncio (`listing-photos`) e de evento (`event-photos`) não recebem policy:
+   desde o SEC-006 nenhum cliente tem INSERT em `storage.objects` e a prova do SEC-006 veta recriar.
+   O upload é da Server Action com `service_role`, que ignora RLS — então o veto é um TRIGGER
+   `before insert` em `storage.objects` que deriva a conta responsável do caminho (em
+   `listing-photos` a pasta é o id do anúncio e a conta é o dono; em `event-photos` a pasta é o id
+   de quem organiza, a convenção da capa) e recusa com o mesmo 42501. Caminho sem pasta uuid não
+   identifica conta e passa: o que o expõe é a linha da tabela, que já tem o veto do AUTHZ-006.
+   A recusa da foto de anúncio chega à pessoa como falha (503 da action), sem sucesso falso.
+4. Migration `20261118174716_authz_007_veto_prestador`; nenhuma migration aplicada é editada.
+
+Resíduo conhecido: criar trigger em `storage.objects` exige privilégio do dono do storage; o banco
+local do CI (superusuário) aplica sem problema, e se o push de produção reclamar, conceder o
+privilégio é ato do dono.
+
+Prova: `supabase/tests/authz-007-veto-prestador.sql` (38 asserções): catálogo das 9 restritivas e do
+trigger; conta ativa cria, edita e apaga página pela RPC e diretamente, cria, edita e apaga item de
+catálogo e foto de portfólio, sobe foto nos dois buckets e pede serviço; suspensa lê a própria página
+mas não escreve nada disso, nem por RPC nem pelo upload de serviço; suspensão vencida devolve;
+exclusão pedida congela igual e cancelar o pedido devolve; outra pessoa ativa não é afetada.
