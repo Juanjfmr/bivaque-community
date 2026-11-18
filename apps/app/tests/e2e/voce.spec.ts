@@ -44,7 +44,7 @@ test("o perfil vem da rota, a edição sobrevive ao recarregar e o desfazer some
   // A ação que conclui a tela é ardósia (--acao), não o contorno pálido (M10).
   await expect(desbloquear).toHaveAttribute("data-tom", "principal")
   await desbloquear.click()
-  await expect(page.getByText("Ninguém bloqueado")).toBeVisible()
+  await expect(page.getByText("Ninguém bloqueado ainda")).toBeVisible()
   await page.reload()
   await expect(
     page.locator('[data-tela="bloqueados"] [data-linha="bloqueado"]'),

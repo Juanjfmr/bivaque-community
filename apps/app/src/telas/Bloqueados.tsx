@@ -9,7 +9,7 @@ import { EstadoVazio } from "@/components/bivaque/estado-vazio"
 import { Lista } from "@/components/bivaque/lista"
 import { desbloquear, lerBloqueados, type PessoaBloqueada } from "@/lib/dados/voce"
 import { rotuloDeData } from "@/lib/formato"
-import { useNavegacao, useRolagemEFoco } from "@/lib/navegacao/react"
+import { useRolagemEFoco } from "@/lib/navegacao/react"
 import { CARGA_CONCLUIDA } from "@/lib/navegacao/restauracao"
 import { Avatar, Botao as BotaoDaPeca } from "@/src/pecas/pecas"
 
@@ -22,7 +22,6 @@ import { Avatar, Botao as BotaoDaPeca } from "@/src/pecas/pecas"
  * do resto do app para quem não tem foto (IDENTIDADE-DAS-PECAS).
  */
 export function Bloqueados() {
-  const navegacao = useNavegacao()
   const [lista, setLista] = useState<readonly PessoaBloqueada[] | null>(null)
   const [erro, setErro] = useState(false)
   const [rodada, setRodada] = useState(0)
@@ -90,19 +89,14 @@ export function Bloqueados() {
       ) : carregando ? (
         <EsqueletoDeLista linhas={3} />
       ) : linhas.length === 0 ? (
-        // O escopo `.pc` traz as variáveis da peça: sem ele o botão da peça
-        // perde pílula e borda. A saída do vazio é ação de verdade (revisão
-        // às cegas, 5): ardósia preenchida, não o pálido de secundário.
-        <div className="pc pc-embutido">
+        // O vazio é compacto, centrado na coluna (revisão cega R1, M9), e sem
+        // CTA de voltar: a seta de voltar já está na barra (R1, L6).
+        <div className="mx-auto w-full max-w-[27rem]">
           <EstadoVazio
-            titulo="Ninguém bloqueado"
+            titulo="Ninguém bloqueado ainda"
             texto="Quando você bloquear, a pessoa aparece aqui."
             icone="person"
-          >
-            <BotaoDaPeca data-acao="acao-do-vazio" onClick={() => void navegacao.irPara("voce")}>
-              Voltar para Você
-            </BotaoDaPeca>
-          </EstadoVazio>
+          />
         </div>
       ) : (
         <div className="pc pc-embutido">
