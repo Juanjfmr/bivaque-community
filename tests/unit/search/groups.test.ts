@@ -173,7 +173,7 @@ describe("grupo Indicações", () => {
       title: "Alguém indica pediatra?",
       snippet: "A Dra. Helena, na Policlínica.",
       meta: "Saúde · Resolvido",
-      href: "/indicacoes/i1",
+      href: "/app/pergunta/i1",
     })
     expect(group?.verTodosHref).toBe("/community?vista=indicacoes&q=pediatra")
   })

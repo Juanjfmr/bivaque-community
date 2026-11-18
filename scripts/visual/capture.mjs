@@ -128,7 +128,7 @@ export const HEADINGS = {
   // /app/conversa/[id]); capturá-las aqui mediria o redirect.
   // A vista Indicações da Comunidade: o h1 é o nome da comunidade do ator.
   "/community?vista=indicacoes": DYNAMIC_HEADING,
-  "/indicacoes/80000000-0000-4000-8000-000000000f01":
+  "/app/pergunta/80000000-0000-4000-8000-000000000f01":
     "^Alguém indica pediatra que atenda pelo FuSEx\\?$",
   "/prestador": "^Orçamentos para você$",
   "/prestador/ficha": "^Minha ficha$",
@@ -192,7 +192,7 @@ export const HEADINGS = {
   // Prancha 79, painel 2: o H1 da tela que o prestador convidado abre.
   [`/prestador-convite/${PROVIDER_INVITE_TOKEN}`]: "^Ofereça seus serviços no Bivaque$",
   // A conversa do pedido semeado: o h1 é o título do pedido.
-  "/indicacoes/80000000-0000-4000-8000-000000000f00": "^Alguém conhece um bom encanador\\?$",
+  "/app/pergunta/80000000-0000-4000-8000-000000000f00": "^Alguém conhece um bom encanador\\?$",
   // RUN-186: a tela web de Salvos saiu — as capturas dela (e as variantes de
   // `?aba=`) saíram junto; a tela do app tem spec próprio.
   // Prancha 12/61: a rota de sugestão de referência nova (a correção de artigo
@@ -401,12 +401,12 @@ export const ROUTES = [
   // a marca e o destino; o pedido resolvido mostra a memória.
   { path: "/community?vista=indicacoes", name: "indicacoes", auth: true },
   {
-    path: "/indicacoes/80000000-0000-4000-8000-000000000f00",
+    path: "/app/pergunta/80000000-0000-4000-8000-000000000f00",
     name: "indicacao-conversa",
     auth: true,
   },
   {
-    path: "/indicacoes/80000000-0000-4000-8000-000000000f01",
+    path: "/app/pergunta/80000000-0000-4000-8000-000000000f01",
     name: "indicacao-resolvida",
     auth: true,
   },

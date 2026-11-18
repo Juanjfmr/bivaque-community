@@ -100,9 +100,9 @@ describe("o aviso no sino", () => {
   })
 
   it("o aviso de um pedido abre o pedido; o do dia abre a lista da cidade", () => {
-    expect(resolveNotificationHref(notification("new", "abc"), null)).toBe("/indicacoes/abc")
+    expect(resolveNotificationHref(notification("new", "abc"), null)).toBe("/app/pergunta/abc")
     expect(resolveNotificationHref(notification("resolve_prompt", "abc"), null)).toBe(
-      "/indicacoes/abc",
+      "/app/pergunta/abc",
     )
     expect(resolveNotificationHref(notification("digest", "loc"), null)).toBe(
       "/community?vista=indicacoes",
