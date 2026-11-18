@@ -59,11 +59,18 @@ using (user_id = (select auth.uid()));
 
 -- ── 2. o registro é uma função; transferir destino exige as chaves ─────────
 -- Ninguém insere direto: sem INSERT concedido a authenticated, o Data API
--- não é caminho de escrita. A rota chama a função abaixo, que apaga a linha
+-- não é caminho de escrita. Nesta fase a função só aceita Web Push: kind
+-- fechado em 'web', destino começando com https:// e as duas chaves
+-- presentes e não vazias — a chamada direta pela Data API não contorna a
+-- validação da rota; entrada inválida levanta 22023 com mensagem fixa, sem
+-- ecoar o que foi enviado. O kind nativo ganha caminho próprio no lote
+-- nativo (ADR-20261118). A rota chama a função abaixo, que apaga a linha
 -- antiga do mesmo destino apenas quando é do próprio dono (renovação) ou
--- quando as chaves p256dh/auth enviadas batem com a inscrição existente — o
--- mesmo navegador em outra conta. Destino alheio com chaves diferentes não
--- apaga nada: a chave única (kind, destination) recusa o registro e a rota
+-- quando as chaves p256dh/auth enviadas são iguais às da inscrição
+-- existente — o mesmo navegador em outra conta. A comparação é `=`: chave
+-- nula guardada (linha nativa) nunca casa, então quem conhece o destino não
+-- toma a linha alheia. Destino alheio com chaves diferentes não apaga
+-- nada: a chave única (kind, destination) recusa o registro e a rota
 -- devolve 409. O dono da linha nova é sempre o da sessão (auth.uid()).
 
 create function public.register_push_subscription(
@@ -79,14 +86,25 @@ security definer
 set search_path = ''
 as $$
 begin
+  if p_kind is null
+     or p_kind <> 'web'
+     or p_destination is null
+     or p_destination not like 'https://%'
+     or p_key_p256dh is null
+     or p_key_p256dh = ''
+     or p_key_auth is null
+     or p_key_auth = '' then
+    raise exception 'invalid push subscription' using errcode = '22023';
+  end if;
+
   delete from public.push_subscriptions
    where kind = p_kind
      and destination = p_destination
      and (
        user_id = auth.uid()
        or (
-         key_p256dh is not distinct from p_key_p256dh
-         and key_auth is not distinct from p_key_auth
+         key_p256dh = p_key_p256dh
+         and key_auth = p_key_auth
        )
      );
 

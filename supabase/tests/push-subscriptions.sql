@@ -1,7 +1,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(34);
+select plan(42);
 
 \ir fixtures/foundation.inc
 
@@ -163,6 +163,85 @@ select throws_ok(
   'membro não reivindica destino alheio com chaves diferentes'
 );
 
+-- A chamada direta pela Data API não contorna a validação da rota: a função
+-- recusa com 22023 e mensagem fixa, sem ecoar a entrada — e nada é apagado
+-- antes da recusa, então a linha da vítima segue intacta em todos os casos
+-- recusados abaixo (conferido na asserção "a inscrição alheia segue...").
+select throws_ok(
+  $$
+    select public.register_push_subscription(
+      'web',
+      'https://push.example.invalid/sub/one',
+      null,
+      null,
+      'Navegador'
+    )
+  $$,
+  '22023',
+  'invalid push subscription',
+  'chaves nulas são recusadas, sem transferir o destino alheio'
+);
+
+select throws_ok(
+  $$
+    select public.register_push_subscription(
+      'web',
+      'https://push.example.invalid/sub/one',
+      null,
+      'segredo',
+      'Navegador'
+    )
+  $$,
+  '22023',
+  'invalid push subscription',
+  'chave p256dh nula é recusada'
+);
+
+select throws_ok(
+  $$
+    select public.register_push_subscription(
+      'web',
+      'https://push.example.invalid/sub/one',
+      'chave-publica',
+      null,
+      'Navegador'
+    )
+  $$,
+  '22023',
+  'invalid push subscription',
+  'chave auth nula é recusada'
+);
+
+select throws_ok(
+  $$
+    select public.register_push_subscription(
+      'web',
+      'https://push.example.invalid/sub/one',
+      '',
+      'segredo',
+      'Navegador'
+    )
+  $$,
+  '22023',
+  'invalid push subscription',
+  'chave vazia é recusada'
+);
+
+select throws_ok(
+  $$
+    select public.register_push_subscription(
+      'web',
+      'http://push.example.invalid/sub/one',
+      'chave-publica',
+      'segredo',
+      'Navegador'
+    )
+  $$,
+  '22023',
+  'invalid push subscription',
+  'destino sem https é recusado'
+);
+
 select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000002', true);
 
 select is(
@@ -188,6 +267,74 @@ select is(
   0,
   'a linha saiu'
 );
+
+-- ── o cenário da auditoria: linha nativa de chaves nulas não é tomada ───────
+-- Antes da correção, `is not distinct from` casava NULL com NULL: quem
+-- conhecesse o destino registrava o mesmo kind com chaves nulas e tomava a
+-- linha alheia. Agora o kind nativo é recusado nesta fase (o caminho nativo
+-- vem no lote do ADR-20261118) e chaves nulas nem chegam ao delete.
+
+reset role;
+insert into public.push_subscriptions
+  (user_id, kind, destination, key_p256dh, key_auth)
+values (
+  '10000000-0000-4000-8000-000000000002',
+  'android',
+  'https://push.example.invalid/native/one',
+  null,
+  null
+);
+
+set local role authenticated;
+select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000001', true);
+select set_config('request.jwt.claim.role', 'authenticated', true);
+
+select throws_ok(
+  $$
+    select public.register_push_subscription(
+      'android',
+      'https://push.example.invalid/native/one',
+      null,
+      null,
+      'Navegador'
+    )
+  $$,
+  '22023',
+  'invalid push subscription',
+  'kind android com chaves nulas é recusado antes de qualquer delete'
+);
+
+select throws_ok(
+  $$
+    select public.register_push_subscription(
+      'ios',
+      'https://push.example.invalid/native/one',
+      'chave-publica',
+      'segredo',
+      'Navegador'
+    )
+  $$,
+  '22023',
+  'invalid push subscription',
+  'kind ios é recusado nesta fase'
+);
+
+reset role;
+
+select is(
+  (
+    select user_id::text || '/' || coalesce(key_p256dh, 'null')
+    from public.push_subscriptions
+    where kind = 'android'
+      and destination = 'https://push.example.invalid/native/one'
+  ),
+  '10000000-0000-4000-8000-000000000002/null',
+  'a linha nativa da vítima segue intacta com o dono de origem'
+);
+
+delete from public.push_subscriptions
+ where kind = 'android'
+   and destination = 'https://push.example.invalid/native/one';
 
 -- ── anon não alcança a tabela ───────────────────────────────────────────────
 
