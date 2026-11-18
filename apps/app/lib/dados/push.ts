@@ -2,13 +2,12 @@ import { enviar, FalhaDaApi, ler } from "../api/cliente"
 import { type CanalDaPreferencia, type PreferenciasDeAviso, TIPOS_DO_AVISO } from "./avisos"
 
 /**
- * A porta do push no app (RUN-137, ADR-20261107).
+ * A porta do push no app (RUN-188, ADR-20261107).
  *
  * A permissão do sistema só é pedida quando a pessoa liga o push nas
  * preferências — nunca ao abrir o app. A inscrição do aparelho vai para
- * `/api/app/push`, com o `user_id` vindo da sessão no servidor. Sair do app
- * (a rota de entrada é o ponto de saída do app) apaga a inscrição deste
- * aparelho.
+ * `/api/app/push`, com o `user_id` vindo da sessão no servidor. Sair da conta
+ * apaga a inscrição deste aparelho antes de encerrar a sessão.
  *
  * O navegador é injetável para o teste exercitar o interruptor sem DOM, sem
  * Service Worker e sem provedor.
@@ -210,8 +209,26 @@ export async function desinscreverPush(opcoes: Opcoes = {}): Promise<number> {
 }
 
 /**
- * A saída do app. A rota de entrada é o único ponto de saída da sessão no app
- * hoje; a mesma função serve ao "Sair" quando ele existir.
+ * A saída da conta: (a) apaga a inscrição deste aparelho pela rota — com a
+ * sessão ainda válida, porque depois dela o DELETE voltaria 401 e a linha
+ * ficaria no servidor —, (b) cancela a inscrição no navegador mesmo que o
+ * DELETE falhe e (c) só então encerra a sessão. A falha da revogação não
+ * segura a saída: quem chamou decide o que fazer com a falha dela.
+ */
+export async function sairDoApp(
+  encerrarSessao: () => Promise<void>,
+  opcoes: Opcoes = {},
+): Promise<void> {
+  await desinscreverPush(opcoes).catch(() => undefined)
+  await encerrarSessao()
+}
+
+/**
+ * A rede de segurança da casca: a sessão pode se perder fora do "Sair" (cookie
+ * vencido, sessão revogada noutro aparelho). Sem sessão o DELETE responde 401,
+ * mas o navegador ainda cancela a inscrição e o provedor devolve 410 no
+ * próximo envio, que apaga a linha. O "Sair" da tela Você não passa por aqui:
+ * ele revoga com `sairDoApp` antes de encerrar a sessão.
  */
 export async function sairDoAparelho(): Promise<void> {
   await desinscreverPush().catch(() => undefined)

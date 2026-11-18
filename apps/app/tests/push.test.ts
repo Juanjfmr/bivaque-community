@@ -8,6 +8,7 @@ import {
   estadoDoInterruptorDePush,
   inscreverPush,
   type NavegadorDePush,
+  sairDoApp,
   saiuDoApp,
 } from "@/lib/dados/push"
 
@@ -166,6 +167,55 @@ describe("interruptor de push", () => {
     expect(saiuDoApp("entrar", false)).toBe(true)
     expect(saiuDoApp("entrar", true)).toBe(false)
     expect(saiuDoApp("inicio", false)).toBe(false)
+  })
+})
+
+describe("saída da conta (revoga antes de encerrar a sessão)", () => {
+  it("sucesso da revogação: DELETE na rota, cancela no navegador, só então encerra a sessão", async () => {
+    const ordem: string[] = []
+    const fetch = vi.fn(async (_url: string, init?: RequestInit) => {
+      if ((init?.method ?? "GET") === "DELETE") ordem.push("delete")
+      return new Response(JSON.stringify({ removidos: 1 }), { status: 200 })
+    })
+    vi.stubGlobal("fetch", fetch)
+    const encerrar = vi.fn(async () => {
+      ordem.push("encerrar")
+    })
+
+    await sairDoApp(encerrar, {
+      navegador: navegador({
+        cancelar: async () => {
+          ordem.push("cancelar")
+        },
+      }),
+    })
+
+    expect(ordem).toEqual(["delete", "cancelar", "encerrar"])
+  })
+
+  it("revogação que falha ainda cancela no navegador e não segura o encerramento", async () => {
+    const ordem: string[] = []
+    const fetch = vi.fn(async (_url: string, init?: RequestInit) => {
+      if ((init?.method ?? "GET") === "DELETE") {
+        ordem.push("delete")
+        return new Response(JSON.stringify({ erro: "escrita-indisponivel" }), { status: 503 })
+      }
+      return new Response(JSON.stringify({}), { status: 200 })
+    })
+    vi.stubGlobal("fetch", fetch)
+    const encerrar = vi.fn(async () => {
+      ordem.push("encerrar")
+    })
+
+    await sairDoApp(encerrar, {
+      navegador: navegador({
+        cancelar: async () => {
+          ordem.push("cancelar")
+        },
+      }),
+    })
+
+    expect(ordem).toEqual(["delete", "cancelar", "encerrar"])
   })
 })
 

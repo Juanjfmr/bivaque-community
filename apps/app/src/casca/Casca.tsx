@@ -68,10 +68,12 @@ export function Casca() {
     if (entrada.sobreposicao === null) void navegacao.abrir("menu-criar")
   }, comCascaDoApp)
 
-  // RUN-137: a rota de entrada, sem sessão, é a saída do app e apaga a
-  // inscrição deste aparelho. COM sessão (membro abrindo a entrada) nada
-  // acontece. Sem sessão, o DELETE responde 401: o navegador cancela a
-  // inscrição e o provedor devolve 410 no próximo envio, que apaga a linha.
+  // RUN-188: a rota de entrada sem sessão é a rede de segurança da casca: a
+  // sessão pode se perder fora do "Sair" (cookie vencido, revogação noutro
+  // aparelho), e aqui o navegador ainda cancela a inscrição — o DELETE volta
+  // 401 e o provedor devolve 410 no próximo envio, que apaga a linha. O
+  // "Sair" da tela Você não passa por aqui: revoga com a sessão ainda válida
+  // antes de encerrá-la (`sairDoApp` em lib/dados/push.ts).
   useEffect(() => {
     if (rota.nome !== "entrar") return
     void lerProgresso()
