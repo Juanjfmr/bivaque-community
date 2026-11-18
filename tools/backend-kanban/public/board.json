@@ -5889,7 +5889,8 @@
       "proof": [
         "02/11: aberto na definição do lançamento (docs/LANCAMENTO.md), por mandato do dono.",
         "06/11: RUN-015 integrado pelo PR #145 (f9492a1d): perguntar à cidade, anunciar desapego com foto (publicação pela RPC transition_listing) e Meus anúncios, com rascunho, revisão e erro preservado; migration nova veta pergunta de conta suspensa. Implementação GPT Sol 6.1 (parcial) e Qwen 3.8 Flash; revisão DeepSeek V4.1 Flash FAIL (publicação por UPDATE direto recusada pela guarda) e security-auditor (Sonnet 5.5) LIBERA COM RESSALVAS; rodada única de correção fechou; CI verde com o E2E real. Publicação em grupo fica para o F04 Grupos.",
-        "17/11: revisão às cegas (DS-022) achou o único bloqueante real no F03 (menu Criar sem scrim e formulário transparente no celular); corrigido pelo RUN-183 (#272). Falta nova rodada às cegas com as capturas corrigidas."
+        "17/11: revisão às cegas (DS-022) achou o único bloqueante real no F03 (menu Criar sem scrim e formulário transparente no celular); corrigido pelo RUN-183 (#272). Falta nova rodada às cegas com as capturas corrigidas.",
+        "18/11: F03-001 (PR #288, merge 0c2f4ddb). Encontro com rascunho na aba (automático e 'Salvar rascunho') e revisão antes de gravar, com foco no título da revisão e falha voltando à edição; preço do desapego aceita vírgula; Grupo e Publicação mostram a cidade lida no servidor sob RLS (localities_select_same_membership, sem service_role); foco depois de publicar no grupo com uma regra só. Provas: tests/e2e/f03-evento-grupo-real.spec.ts (@stateful: encontro pela revisão sobrevive ao recarregar, cidade do servidor, 401 sem sessão em criar encontro, publicar e ler grupo); foto no grupo gravada e relida em f04-grupos-real; E2E simulado do app 108 passados em 375/768/1440; CI completo verde no head dfb1ff69. Revisão independente (Codex, somente leitura): 5 achados, 4 corrigidos e 1 refutado em execução. Faltam: revisão às cegas com capturas claro/escuro, auditoria de acessibilidade e a retirada das telas antigas (F04)."
       ],
       "id": "LAN-F03",
       "title": "F03 Criar: pergunta, publicação com foto, evento e anúncio",
@@ -5905,7 +5906,8 @@
         "Acessibilidade: teclado, leitor de tela, contraste, alvos, movimento reduzido",
         "Tela antiga do apps/web retirada, com redirecionamento e portão do proxy"
       ],
-      "dependencies": ["LAN-F1-IDENTIDADE", "APP-001"]
+      "dependencies": ["LAN-F1-IDENTIDADE", "APP-001"],
+      "completedChecklist": [true, false, false, true]
     },
     {
       "phase": "Lançamento",
@@ -8520,14 +8522,17 @@
         "Uma única regra de foco entre a folha e a lista",
         "Capturas em .visual/run-ds-021"
       ],
-      "proof": ["11/11: aberto a partir das ressalvas BAIXAS do parecer do PR #197."],
+      "proof": [
+        "11/11: aberto a partir das ressalvas BAIXAS do parecer do PR #197.",
+        "18/11: PR #288 (merge 0c2f4ddb): Grupo.tsx é o único dono do foco depois de publicar (publicação nova, que continua focável; sem confirmação, o botão Escrever); Escrever.tsx só impede a devolução do Radix depois de publicar. Provado em apps/app/tests/e2e/grupos-publicar.spec.ts nos três tamanhos."
+      ],
       "tests": [],
       "links": [],
       "dependencies": ["LAN-F03"],
       "updatedAt": "2026-11-11",
       "sourceRevision": "29e5c2d4",
       "blockers": [],
-      "completedChecklist": [false, false, false]
+      "completedChecklist": [false, true, false]
     },
     {
       "id": "OUTBOX-ASSUNTO-CRLF",
@@ -8997,10 +9002,12 @@
       ],
       "dependencies": [],
       "proof": [
-        "13/11: registrado pelo coordenador no merge do RUN-140 (PR #210); ressalvas 2-4 do veredito Qwen, nao bloqueantes."
+        "13/11: registrado pelo coordenador no merge do RUN-140 (PR #210); ressalvas 2-4 do veredito Qwen, nao bloqueantes.",
+        "18/11: itens 1 e 2 integrados no PR #288 (merge 0c2f4ddb): cidade vem de GET /api/app/grupos/[id] e /publicacoes/[id]; preço em campo de texto com inputMode decimal ('650,00' vira 'R$ 650,00' na revisão). Item 3 (recaptura com clip no diálogo) segue aberto para a rodada às cegas do F03."
       ],
       "tests": [],
-      "blockers": []
+      "blockers": [],
+      "completedChecklist": [true, true]
     },
     {
       "phase": "LanÃ§amento",
