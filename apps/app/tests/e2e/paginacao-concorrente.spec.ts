@@ -69,6 +69,7 @@ test("grupo: página antiga não invade a nova ordenação", async ({ page }) =>
         .fulfill({
           json: {
             grupo: GRUPO,
+            cidade: "Manaus",
             publicacoes: [{ ...POST, id: "post-antigo", texto: "Página obsoleta" }],
             proximo: null,
           },
@@ -79,6 +80,7 @@ test("grupo: página antiga não invade a nova ordenação", async ({ page }) =>
     await rota.fulfill({
       json: {
         grupo: GRUPO,
+        cidade: "Manaus",
         publicacoes: [
           {
             ...POST,

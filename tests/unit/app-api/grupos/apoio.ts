@@ -105,6 +105,7 @@ export function mockClient(opcoes: Opcoes = {}) {
           opcoes.cidade === false
             ? null
             : { locality_id: CITY, localities: { city_name: "Manaus" } }
+      if (tabela === "localities") data = { city_name: "Manaus" }
       if (tabela === "posts")
         data = singular ? ((opcoes.posts ?? [post])[0] ?? null) : (opcoes.posts ?? [post])
       if (tabela === "comments")

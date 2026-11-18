@@ -559,7 +559,7 @@ test.describe("teclado nas superfícies novas", () => {
 
     // Sem os obrigatórios, a ação primária está desligada: não há envio a fazer,
     // e um controle desligado nem entra na ordem de foco.
-    const enviar = folha.getByRole("button", { name: "Criar", exact: true })
+    const enviar = folha.getByRole("button", { name: "Revisar encontro", exact: true })
     await expect(enviar).toBeDisabled()
 
     // O erro nasce no campo: um título de uma letra, ao sair do campo, mostra a

@@ -353,7 +353,11 @@ test.describe("F05 — eventos reais no app", { tag: "@stateful" }, () => {
     await page.getByLabel("Local").fill("Ginásio Municipal")
     await page.getByLabel("Sobre o encontro").fill("Encontro criado pelo teste do piloto.")
     await capturar(page, projeto, "formulario-novo")
-    await page.getByRole("button", { name: "Criar", exact: true }).click()
+    await page.getByRole("button", { name: "Revisar encontro", exact: true }).click()
+    await page
+      .getByRole("dialog")
+      .getByRole("button", { name: "Criar encontro", exact: true })
+      .click()
 
     await expect(
       page.getByRole("heading", { level: 1, name: titulo }),
@@ -399,7 +403,11 @@ test.describe("F05 — eventos reais no app", { tag: "@stateful" }, () => {
     await page.getByLabel("Data").fill("20/01/2027")
     await page.getByLabel("Hora").fill("18:00")
     await page.getByLabel("Local").fill("Praça da Saudade")
-    await page.getByRole("button", { name: "Criar", exact: true }).click()
+    await page.getByRole("button", { name: "Revisar encontro", exact: true }).click()
+    await page
+      .getByRole("dialog")
+      .getByRole("button", { name: "Criar encontro", exact: true })
+      .click()
     await expect(page.getByRole("heading", { level: 1, name: titulo })).toBeVisible({
       timeout: 30_000,
     })

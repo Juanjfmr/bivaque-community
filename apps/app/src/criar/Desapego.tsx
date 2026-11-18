@@ -187,11 +187,8 @@ export function Desapego({
                 onBlur={() => tocar("preco")}
                 erro={erroDe("preco")}
                 ajuda="Só números, como 650 ou 650,00"
-                type="number"
+                type="text"
                 inputMode="decimal"
-                min="1"
-                step="0.01"
-                max="1000000"
                 required
               />
             </div>

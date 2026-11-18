@@ -94,6 +94,7 @@ describe("desapego", () => {
 
   it("o preço aparece em reais na revisão", () => {
     // O Intl separa "R$" do número com espaço fixo; a tela não depende disso.
+    expect(precoBRL("12,50").replace(/\u00a0/g, " ")).toBe("R$ 12,50")
     expect(precoBRL("750.5").replace(/\u00a0/g, " ")).toBe("R$ 750,50")
     expect(precoBRL("")).toBe("R$ —")
   })

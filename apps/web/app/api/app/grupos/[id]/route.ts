@@ -6,6 +6,7 @@ import {
   apresentarGrupo,
   apresentarPublicacoes,
   CAMPOS_DA_PUBLICACAO,
+  cidadeDoGrupo,
   grupoDaSessao,
   type LinhaDaPublicacao,
   pagina,
@@ -32,11 +33,12 @@ export async function GET(request: NextRequest, { params }: Context): Promise<Ne
     const userId = auth.sessao.usuario.id
     const grupo = await grupoDaSessao(client, id)
     if (!grupo) return responder(request, { erro: "grupo-nao-encontrado" }, 404)
+    const cidade = await cidadeDoGrupo(client, grupo.locality_id)
     const membro = await participacao(client, id, userId)
     const membros = (await contarMembrosAprovados(client, [id])).get(id) ?? 0
     const resumo = apresentarGrupo(grupo, membro, userId, membros)
     if (resumo.fechado && !resumo.membro) {
-      return responder(request, { grupo: resumo, publicacoes: [], proximo: null }, 200)
+      return responder(request, { grupo: resumo, cidade, publicacoes: [], proximo: null }, 200)
     }
     const feed = await client
       .rpc("feed_group", {
@@ -72,6 +74,7 @@ export async function GET(request: NextRequest, { params }: Context): Promise<Ne
       request,
       {
         grupo: resumo,
+        cidade,
         publicacoes: await apresentarPublicacoes(client, linhas, userId),
         proximo: ids.length === 20 ? String(depois + 20) : null,
       },

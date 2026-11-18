@@ -30,10 +30,43 @@ test("publica no próprio grupo: a publicação é o primeiro item, com foco nel
   const primeiro = page.locator('[data-publicacao-na-lista="sim"]').first()
   await expect(primeiro).toContainText(TEXTO)
   await expect(primeiro).toContainText("Você")
-  // O anúncio ao vivo diz onde a publicação entrou; o foco fica com o
-  // diálogo, que o devolveu a quem chamou.
+  // O anúncio ao vivo diz onde a publicação entrou, e o foco é da publicação
+  // nova (uma regra só: o diálogo não devolve o foco depois de publicar).
   await expect(page.locator('[data-anuncio-da-publicacao="sim"]')).toContainText("começo da lista")
+  await expect(primeiro.locator('[data-cartao="publicacao"]')).toBeFocused()
   await expect(dialogo(page)).toHaveCount(0)
+})
+
+test("releitura sem confirmação: o anúncio diz isso e o foco volta ao botão", async ({ page }) => {
+  await simularGrupos(page, { membro: true })
+  await page.goto("/app/grupo/g-pets")
+  const abrir = page.locator('[data-acao="escrever-grupo"]')
+  await abrir.click()
+  await dialogo(page).locator("#texto-grupo").fill(TEXTO)
+  // A releitura depois de publicar falha: a tela não confirma onde a publicação entrou.
+  await page.route(
+    (url) => url.pathname.endsWith("/api/app/grupos/g-pets"),
+    (rota) => (rota.request().method() === "GET" ? rota.abort() : rota.fallback()),
+  )
+  await dialogo(page).getByRole("button", { name: "Publicar", exact: true }).click()
+
+  await expect(dialogo(page)).toHaveCount(0)
+  // O mesmo caminho da publicação que não está na página carregada
+  // (Grupo.tsx, aoPublicar): anúncio de "não apareceu na lista" e foco no botão.
+  await expect(page.locator('[data-anuncio-da-publicacao="sim"]')).toContainText(
+    "A publicação foi enviada, mas não apareceu na lista.",
+  )
+  await expect(abrir).toBeFocused()
+})
+
+test("fechar sem publicar devolve o foco ao botão que abriu a folha", async ({ page }) => {
+  await simularGrupos(page, { membro: true })
+  await page.goto("/app/grupo/g-pets")
+  const abrir = page.locator('[data-acao="escrever-grupo"]')
+  await abrir.click()
+  await page.keyboard.press("Escape")
+  await expect(dialogo(page)).toHaveCount(0)
+  await expect(abrir).toBeFocused()
 })
 
 test("recusa por permissão: frase própria, texto preservado, compositor aberto", async ({

@@ -59,7 +59,7 @@ test("encontro: dd/mm/aaaa e 24 h, erro no campo e envio só com os obrigatório
   await abrirNovoEncontro(page)
 
   const folha = page.locator('[data-sobreposicao="folha"]')
-  const criar = folha.getByRole("button", { name: "Criar", exact: true })
+  const criar = folha.getByRole("button", { name: "Revisar encontro", exact: true })
   const titulo = folha.getByLabel("Título")
   const data = folha.getByLabel("Data")
   const hora = folha.getByLabel("Hora")
@@ -94,8 +94,28 @@ test("encontro: dd/mm/aaaa e 24 h, erro no campo e envio só com os obrigatório
   await titulo.fill("Encontro de veteranos no centro")
   await data.fill("05/12/2026")
   await hora.fill("19:00")
+  await folha.getByRole("button", { name: "Salvar rascunho" }).click()
+  await expect(folha.getByRole("status")).toContainText("Rascunho salvo")
+  // Fechar a folha volta ao menu Criar; reabrir o Criar encontro restaura o texto.
+  await folha.getByRole("button", { name: "Cancelar" }).click()
+  await expect(page.getByRole("heading", { name: "Novo encontro" })).toHaveCount(0)
+  await page.locator('[data-escolha="create-event"]').click()
+  await expect(page.getByRole("heading", { name: "Novo encontro" })).toBeVisible()
+  await expect(titulo).toHaveValue("Encontro de veteranos no centro")
+  let envios = 0
+  page.on("request", (request) => {
+    if (request.method() === "POST" && request.url().endsWith("/api/app/eventos")) envios += 1
+  })
   await expect(criar).toBeEnabled()
   await criar.click()
+  expect(envios).toBe(0)
+  await expect(folha.locator('[data-revisao="encontro"]')).toContainText(
+    "Encontro de veteranos no centro",
+  )
+  // A revisão recebe o foco: o teclado e o leitor de tela chegam a ela.
+  await expect(folha.locator('[data-titulo-da-revisao="encontro"]')).toBeFocused()
+  await folha.getByRole("button", { name: "Criar encontro" }).click()
+  await expect.poll(() => envios).toBe(1)
 
   await expect(page).toHaveURL(/\/app\/evento\/90000000-/)
   await expect(page.getByRole("heading", { name: "Encontro de veteranos no centro" })).toBeVisible()
@@ -103,6 +123,27 @@ test("encontro: dd/mm/aaaa e 24 h, erro no campo e envio só com os obrigatório
   await expect(tela).toContainText("05/12/2026")
   await expect(tela).toContainText("às 19h")
   await capturar(page, "encontro-gravado")
+})
+
+test("encontro: o rascunho se guarda sozinho e sai depois de criar", async ({ page }) => {
+  await simularEncontros(page)
+  await abrirNovoEncontro(page)
+  const folha = page.locator('[data-sobreposicao="folha"]')
+  // Sem clicar em "Salvar rascunho": o texto digitado já fica na aba.
+  await folha.getByLabel("Título").fill("Churrasco dos veteranos")
+  await folha.getByLabel("Data").fill("06/12/2026")
+  await folha.getByLabel("Hora").fill("12:00")
+  await folha.getByRole("button", { name: "Cancelar" }).click()
+  await page.locator('[data-escolha="create-event"]').click()
+  await expect(folha.getByLabel("Título")).toHaveValue("Churrasco dos veteranos")
+
+  await folha.getByRole("button", { name: "Revisar encontro", exact: true }).click()
+  await folha.getByRole("button", { name: "Criar encontro" }).click()
+  await expect(page).toHaveURL(/\/app\/evento\/90000000-/)
+
+  // Criado o encontro, o próximo Criar encontro começa em branco.
+  await abrirNovoEncontro(page)
+  await expect(folha.getByLabel("Título")).toHaveValue("")
 })
 
 test("encontro: falha do servidor fica visível e não apaga o que foi digitado", async ({
@@ -115,7 +156,8 @@ test("encontro: falha do servidor fica visível e não apaga o que foi digitado"
   await folha.getByLabel("Título").fill("Café da manhã dos veteranos")
   await folha.getByLabel("Data").fill("05/12/2026")
   await folha.getByLabel("Hora").fill("19:30")
-  await folha.getByRole("button", { name: "Criar", exact: true }).click()
+  await folha.getByRole("button", { name: "Revisar encontro", exact: true }).click()
+  await folha.getByRole("button", { name: "Criar encontro" }).click()
 
   await expect(folha.getByRole("alert")).toContainText("Não foi possível criar o encontro")
   await expect(folha.getByLabel("Título")).toHaveValue("Café da manhã dos veteranos")
@@ -124,7 +166,8 @@ test("encontro: falha do servidor fica visível e não apaga o que foi digitado"
   await capturar(page, "encontro-falha")
 
   // A segunda tentativa é a da pessoa e grava.
-  await folha.getByRole("button", { name: "Criar", exact: true }).click()
+  await folha.getByRole("button", { name: "Revisar encontro", exact: true }).click()
+  await folha.getByRole("button", { name: "Criar encontro" }).click()
   await expect(page).toHaveURL(/\/app\/evento\/90000000-/)
 })
 
