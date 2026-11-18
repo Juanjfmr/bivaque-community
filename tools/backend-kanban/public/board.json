@@ -2358,7 +2358,7 @@
       "phase": "Reconstrução",
       "priority": "P1",
       "category": "backend",
-      "status": "next",
+      "status": "blocked",
       "description": "Duas linhas de outbox não podem ser entregues. community_invite usa o literal 'owner-link@local' como destinatário (apps/web/app/(shell)/communities/community-invite-actions.ts:140) e event_invite usa 'event-invite:{eventId}' (apps/web/app/(shell)/events/event-invites-actions.ts:213), que não é endereço de e-mail e é repassado cru para o campo to: da Resend (lib/outbox/adapters.ts:120). Além disso community_invite, family_invite e event_invite não carregam deep-link algum no corpo, embora /invite/[token] e /events/[id] existam — o convidado recebe um aviso sem como agir. Só provider_invite monta link (adapters.ts:71-86). Levantado pelo inventário de endpoints da etapa W00.",
       "checklist": [
         "community_invite endereça o convidado real e carrega link para /invite/{token}",
@@ -2370,13 +2370,17 @@
       "proof": [
         "npx pnpm@11.18.0 gate",
         "prova de entrega real pelo outbox em ambiente implantado",
-        "16/11: reconciliacao — o produtor antigo (event-invites-actions.ts) morreu com a tela na fase 5 (375c336d); o deep-link de evento ja aponta /app/evento/{id} (adapters.ts:54,215). A linha F05 do LANCAMENTO nao exige convites/fan-out (decisao 16/11 no LAN-TROCA): a parte desta que sobra e a entrega com destinatario real quando e SE alguem re-criar o produtor; nao bloqueia o lancamento."
+        "16/11: reconciliacao — o produtor antigo (event-invites-actions.ts) morreu com a tela na fase 5 (375c336d); o deep-link de evento ja aponta /app/evento/{id} (adapters.ts:54,215). A linha F05 do LANCAMENTO nao exige convites/fan-out (decisao 16/11 no LAN-TROCA): a parte desta que sobra e a entrega com destinatario real quando e SE alguem re-criar o produtor; nao bloqueia o lancamento.",
+        "18/11: reconciliado em 09e5f442 — os literais 'owner-link@local' e 'event-invite:' não existem mais; family_invite grava o endereço normalizado (lib/convite/familia.ts:200-202) e community/event_invite levam link (#193). Sobra só a prova de entrega real, que depende do BLOCK-RESEND (ato do dono): card vai a blocked."
       ],
       "tests": [],
       "links": ["docs/historico/superpowers/specs/2026-09-08-reconstrucao-visual-web-design.md"],
       "dependencies": ["BLOCK-RESEND"],
-      "updatedAt": "2026-11-16",
-      "sourceRevision": "6d998a7"
+      "updatedAt": "2026-11-18",
+      "sourceRevision": "6d998a7",
+      "blockers": [
+        "BLOCK-RESEND: entrega real de e-mail depende do provedor e das chaves (ato do dono); próximo passo: dono cria a conta/chave do Resend e o coordenador roda a prova de entrega."
+      ]
     },
     {
       "id": "NOTIF-DEEPLINKS",
@@ -6157,7 +6161,10 @@
         "05/11: RUN-011 (GPT Terra 6.1) — caixa e conversa do F09 ligadas às rotas autenticadas do app (sessão do membro, RLS, paginação, carregamento, vazio e falha recuperável; resposta só conta após confirmação do servidor e o texto é preservado na falha). Commits f7b92ca8, e7702a9d e 19e5ef5a. Provas: app 240/240 e unitários 2.122/2.122, privacidade 189/189, escopo 192/192, Playwright com API simulada 192/192 em 375/768/1440 e 3/3 de captura claro/escuro (simulada: não prova RLS nem banco). Não rodado: E2E real com banco (Docker recusou o pipe), gate completo e build Next. Revisão Qwen (.visual/run-011/revisao-qwen.md): PASS COM RESSALVAS. Revisão security-auditor (Sonnet): LIBERA COM RESSALVAS. Ressalvas viraram os cartões DM-INSERT-VETO-EXCLUSAO e F09-ENVIO-PELA-RPC; o 'Ver origem' removido fica registrado no segundo.",
         "07/11: conversas (#135) e avisos (#151) na main, com E2E real no CI. Fecha quando NOTIF-DEEPLINKS e LAN-PUSH fecharem (dependências do card).",
         "16/11: RUN-165 (2b48e8bd) colocou bloquear, denunciar mensagem e a preferencia Mensagens no app e provou em runtime o destino do aviso de DM (duas sessoes no CI). O card segue next por LAN-PUSH (canal push nasce desligado, decisao donia) e pela remocao da tela web /messages (RUN-166).",
-        "16/11: RUN-166 (000cdd89) removeu a tela web de conversas — lado-troca das conversas fechado. O card ainda depende de LAN-PUSH (canal; chaves FCM sao ato do dono) para fechar."
+        "16/11: RUN-166 (000cdd89) removeu a tela web de conversas — lado-troca das conversas fechado. O card ainda depende de LAN-PUSH (canal; chaves FCM sao ato do dono) para fechar.",
+        "18/11: F09-001 (#290, 192159f9) — conversa lida e contador real: unread_conversation_count() security invoker + pgTAP, POST /api/app/conversas/[id]/lida (204/400/401/403/404/503), porLer na caixa e no corpo, contador da casca vindo do servidor e marcador 'Por ler' acessível. CI completo verde no head 1bb67c9d (test:db, db:lint, diff de tipos, stateful 375/768/1440 com f09-conversas-real, visual 7 shards). Revisão independente PASS (MEDIUM de casos negativos corrigido) e security-auditor PASS.",
+        "18/11: F09-002 (#291, 09e5f442) — bloqueio corta avisos e e-mails nos dois sentidos (frente D1 do ADR-20261023): trigger BEFORE INSERT em notifications, e-mail de resposta de recomendação/seguidores e alerta de anúncio filtrados, GET /api/app/avisos esconde avisos antigos de ator bloqueado. CI completo verde no head c86304d6 (test:db, db:lint). security-auditor PASS; LOW restantes no card BLOQUEIO-AVISOS-RESTOS.",
+        "18/11: falta para fechar — LAN-PUSH (ADR R3 + tabela de token; chaves FCM/APNs são do dono), F09-B2 (pgTAP da corrida), F09-B3 (lote 3: 307 de /indicacoes/[id] e revogação do INSERT direto em dm_messages), capturas 375/768/1440 claro e revisão cega."
       ],
       "id": "LAN-F09",
       "title": "F09 Conversas e avisos ligados ao banco",
@@ -10102,6 +10109,28 @@
       "proof": ["Fonte: parecer do security-auditor de 18/11 sobre f6eca95 (PR #281)."],
       "tests": [],
       "notes": []
+    },
+    {
+      "id": "BLOQUEIO-AVISOS-RESTOS",
+      "title": "Bloqueio nos avisos: ressalvas LOW do F09-002",
+      "phase": "Lançamento",
+      "priority": "P3",
+      "category": "backend",
+      "status": "repo",
+      "description": "Ressalvas LOW do security-auditor no PR #291. (1) reject_pending_user (20260822215307:207-211) grava o operador como ator: com bloqueio operador↔pessoa o aviso some mas o e-mail sai; nenhum código do app chama a função. (2) A contagem do shell antigo (apps/web/app/(shell)/layout.tsx:209-213) não filtra bloqueio; some com LAN-TROCA. (3) Resumos por e-mail (indications_digest, city_digest) podem trazer conteúdo de pessoa bloqueada — é filtro de leitura (D2 do ADR-20261023). (4) pgTAP não cobre ator = destinatário, seguidores e alerta de anúncio.",
+      "checklist": [
+        "Decidir se avisos de operação ignoram bloqueio (ator do operador) e alinhar e-mail",
+        "Shell antigo removido ou contagem filtrada",
+        "D2: filtro de leitura nos resumos por e-mail",
+        "pgTAP de seguidores, alerta de anúncio e ator = destinatário"
+      ],
+      "proof": ["18/11: aberto a partir do parecer do security-auditor no PR #291."],
+      "tests": [],
+      "links": ["docs/agents/tasks/F09-BLOQUEIO.task.yml"],
+      "blockers": [],
+      "dependencies": [],
+      "updatedAt": "2026-11-18",
+      "sourceRevision": "09e5f442"
     }
   ],
   "launch": {
