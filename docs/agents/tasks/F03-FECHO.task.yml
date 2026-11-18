@@ -1,0 +1,99 @@
+# F03-FECHO — fecha o LAN-F03 (Criar) pelos critérios de pronto (docs/LANCAMENTO.md :34-48, :56).
+#
+# Inventário do coordenador em 18/11 sobre origin/main 5e66cd28 (disco e git). Já está: pergunta
+# (POST /api/app/perguntas) e desapego (POST /api/app/mercado) com rascunho de sessão, revisão,
+# erro de sessão e destino; publicação em grupo com foto (POST .../fotos e .../publicacoes) com
+# rascunho de texto e erro 401/rede; evento (POST /api/app/eventos) com erro de sessão e destino;
+# /mercado/novo, /imoveis/novo, /pedidos/novo e /events/novo com 307 para o app.
+#
+# Decisões do coordenador (mandato 02/11), registradas aqui:
+# - A publicação em grupo continua sem passo de revisão: a folha de escrever já é a prévia (régua
+#   Nextdoor: publicar no grupo é direto). Rascunho do grupo guarda só o texto; fotos ficam fora
+#   do sessionStorage pelo tamanho.
+# - As telas antigas ainda servidas pela web nesta área (groups "Criar grupo",
+#   communities/[id]/invite, communities/[id]/indicar-prestador, denuncias/nova) pertencem às
+#   telas da Comunidade e saem com o F04, não aqui.
+# - A porta "indicate" do menu Criar (rascunho de sessão sem publicação) fica fora: é do F07.
+
+task_id: F03-001
+
+adr: docs/decisions/ADR-20261024-front-react-spa.md
+
+objective: >
+  O evento ganha rascunho de sessão e passo de revisão no molde de Perguntar/Desapego; o preço do
+  desapego aceita vírgula de verdade; o cabeçalho do Grupo e da Publicação mostra a cidade que vem
+  do servidor, não a cidade da casca; o Grupo tem uma única regra de foco e rolagem estável depois
+  de publicar; e criar evento e publicar no grupo com foto ganham E2E contra o servidor real.
+
+authority:
+  - docs/LANCAMENTO.md :34-48 e :56 (linha F03 — rascunho, revisão e erro)
+  - Card LAN-F03
+  - Card CORRETA-F03-RESSALVAS (itens 1, 2 e 3)
+  - Card F03-RESIDUOS-REVISAO (itens 1 e 2)
+  - ADR-20261024-front-react-spa.md §5 (contrato da API) e §8
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    apps/app/src/eventos/FormularioDeEncontro.tsx:48-58 guarda o estado só em memória e o botão
+    Criar grava direto (sem rascunho nem revisão). apps/app/src/criar/Desapego.tsx:189-190 tem
+    ajuda "650 ou 650,00" num campo type="number" (o navegador recusa a vírgula) e
+    apps/app/src/criar/formularios.ts:231-234 (precoBRL) usa Number(), que mostra "R$ —" para
+    "12,50". apps/app/src/telas/Grupo.tsx:243-246 e Publicacao.tsx:230 usam casca.cidade; as
+    rotas apps/web/app/api/app/grupos/[id] e grupos/publicacoes/[id] não devolvem a cidade.
+    Grupo.tsx:104 (useRolagemEFoco) e :105-115 (foco próprio) são duas regras de foco na mesma
+    tela. Não há E2E real de criar evento nem de publicar no grupo com foto.
+
+allowed_paths:
+  - docs/agents/tasks/F03-FECHO.task.yml
+  - apps/app/src/eventos/FormularioDeEncontro.tsx
+  - apps/app/src/eventos/formulario.ts
+  - apps/app/src/criar
+  - apps/app/src/telas/Grupo.tsx
+  - apps/app/src/telas/Publicacao.tsx
+  - apps/app/src/grupos
+  - apps/app/lib/dados/grupos.ts
+  - apps/app/lib/dados/eventos.ts
+  - apps/app/lib/grupos-locais.ts
+  - apps/app/lib/navegacao/react.tsx
+  - apps/app/tests
+  - apps/web/app/api/app/grupos
+  - tests/unit/app-api
+  - tests/e2e/f03-criar-real.spec.ts
+  - tests/e2e/f03-evento-grupo-real.spec.ts
+  - .visual/f03-fecho
+
+forbidden:
+  - tocar supabase/ (migration, seed, pgTAP); a cidade sai de dado já legível pelo membro sob RLS
+  - service_role nas rotas de grupo; mudar campos existentes das respostas (só acrescentar `cidade`)
+  - passo de revisão na publicação em grupo; guardar foto no sessionStorage do grupo
+  - redesenhar telas além do pedido; mexer em telas antigas do apps/web (saem no F04)
+  - apagar teste sem nome e motivo no RELATORIO; skip/fixme novo; afrouxar asserção
+  - credencial inline ou leitura de arquivo de ambiente pelo spec; dado pessoal real
+  - push, merge, force-push, editar o quadro (tools/backend-kanban), tocar outra worktree
+  - supabase start/reset ou escrita em banco (o coordenador roda as provas de banco e E2E real)
+
+acceptance:
+  - "Evento: o formulário guarda rascunho na sessão da aba (chave por cidade, no molde de apps/app/src/criar/rascunho.ts), automático e com botão 'Salvar rascunho'; reabrir o Criar encontro restaura o texto; publicar com sucesso apaga o rascunho. O botão principal leva a um passo de revisão (título, data e hora por extenso, local) com 'Editar' e 'Criar encontro'; só o segundo grava. Falha mantém os campos e volta à edição, com a frase de mensagemDaFalha (sessão vencida tem frase própria)."
+  - "Desapego: o campo de preço vira type='text' com inputMode='decimal' e aceita '650', '650,00' e '650.5'; precoBRL formata '12,50' como 'R$ 12,50'; valor inválido mostra erro no campo. A ajuda continua dizendo o que o campo aceita."
+  - "Cidade: GET /api/app/grupos/[id] e GET /api/app/grupos/publicacoes/[id] acrescentam `cidade` (nome da localidade do grupo, lido com o mesmo cliente do usuário que a rota já usa). Grupo.tsx e Publicacao.tsx mostram essa cidade no cabeçalho; casca.cidade só como reserva enquanto carrega. Teste de unidade da rota com caso positivo (cidade presente) e negativo (sem sessão 401, campos antigos intactos)."
+  - "Grupo: uma única regra de foco — o foco de chegada (useRolagemEFoco) não disputa com o foco da publicação recém-criada: depois de publicar o foco vai para a publicação nova e a rolagem não salta para o topo; quando a publicação não está na página carregada, o anúncio diz isso e o foco fica no botão que abriu a folha. Teste no app (vitest de lógica ou E2E simulado em grupos-publicar.spec.ts)."
+  - "E2E real (@stateful, tests/e2e/f03-evento-grupo-real.spec.ts, nos projetos 375/768/1440): membro semeado cria um encontro pelo Criar passando pela revisão e cai no detalhe com o título gravado; membro publica no grupo com uma foto (fixture de imagem do repositório) e a publicação aparece na lista com a foto depois de recarregar; sem sessão, POST de evento e de publicação respondem 401."
+  - "E2E do app simulado: rascunho e revisão do evento (restaura ao reabrir; revisão não grava; Criar grava), e preço com vírgula até a revisão mostrando 'R$ 650,00', nos projetos 375/768/1440 da config do app."
+  - "RELATORIO em .visual/f03-fecho/RELATORIO.md: arquivos tocados, testes novos e removidos com motivo, comandos rodados com resultado lido, e o que não rodou."
+
+proof:
+  - npx pnpm@11.18.0 gate --fast
+  - npx pnpm@11.18.0 test
+  - npx pnpm@11.18.0 --filter @bivaque/app test -- --run
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/F03-FECHO.task.yml
+
+risk: formulários de criação e campo novo em duas rotas de leitura da API do app
+risk_level: R2
+
+reviewer_must_differ_from_executor: true
+retry_budget: 2
+on_budget_exhausted: HUMAN_DECISION
+
+closure:
+  requires_runtime_evidence: true
