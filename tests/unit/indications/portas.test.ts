@@ -19,7 +19,8 @@ describe("toda porta de um pedido leva a /indicacoes/<id>", () => {
     // com um endereço só (`/indicacoes/<id>`), provado nos dois módulos acima.
     // O verbete do Guia é do app desde o F08: a página web que abria um pedido
     // de indicação saiu com a jornada, e a porta do pedido não mora mais ali.
-    ["perguntas abertas do Início", ["app", "(shell)", "inicio", "questions-guide.tsx"]],
+    // F02-001: as perguntas abertas do Início antigo saíram com a tela; o Início
+    // do app abre a pergunta em /app/pergunta/<id>.
   ])("%s", (_name, path) => {
     const source = web(...path)
     expect(source).toContain("/indicacoes/")
@@ -28,11 +29,8 @@ describe("toda porta de um pedido leva a /indicacoes/<id>", () => {
 })
 
 describe("pedir leva à caixa de pedir", () => {
-  it("o botão de criar e o atalho do Início usam o mesmo destino", () => {
-    for (const path of [
-      ["app", "components", "shell", "create-menu.tsx"],
-      ["app", "components", "bivaque", "intent-launcher.tsx"],
-    ]) {
+  it("o botão de criar usa o destino da caixa de pedir", () => {
+    for (const path of [["app", "components", "shell", "create-menu.tsx"]]) {
       expect(web(...path)).toContain(
         'import { ASK_INDICATION_HREF } from "../../../lib/indications/indications"',
       )
