@@ -140,3 +140,15 @@ casos verde, vermelho, pendente, Visual ausente por paths e SHA divergente com a
 `tests/scope/anotar-flakes.test.mjs` prova a anotação com relatório de exemplo. A prova de
 execução (push novo cancela o anterior, cache hit no segundo run, Claude pulado) corre no PR
 deste lote e é registrada no cartão HRN-005.
+
+## Emenda de 18/11/2026 (HRN-007)
+
+Decisão do dono (18/11, cartão de decisão "CI leve para PRs sem código"): PR que só toca quadro,
+documentação fora de `docs/legal/`, `*.md` da raiz e `AGENTS.md`/`CLAUDE.md` fora de `apps/` e
+`packages/` não sobe a stack. A lista vive em `scripts/ci/pr-leve.mjs` e é lida da base do PR.
+Nesse PR, `ci-core` e `e2e-stateful` pulam mesmo com `ci:full`, e o agregador "Install, test, and
+build" roda e exige a classificação e os Fast checks verdes, então o check nunca fica pendente. O
+merge-seguro aplica a mesma classificação, contando o nome antigo dos renomeados, e aceita Fast
+checks + agregador verdes. Qualquer arquivo fora da lista devolve o PR ao rito completo; push na
+main continua com o completo. Prova: `tests/scope/pr-leve.test.mjs`, os casos leves de
+`tests/scope/merge-seguro.test.mjs` e a guarda em `tests/scope/workflows-ci.test.mjs`.

@@ -21,14 +21,16 @@ import { appendFileSync } from "node:fs"
 import { pathToFileURL } from "node:url"
 
 // docs/legal fica de fora: as páginas de privacidade, conduta e aceite leem esses
-// arquivos em runtime (apps/web/app/(preauth)).
+// arquivos em runtime (apps/web/app/(preauth)). AGENTS.md/CLAUDE.md dentro de apps/ e
+// packages/ também: o Tailwind v4 varre esses diretórios e o texto pode virar classe
+// no CSS gerado; e nada em apps/app pode ser leve sem o Visual.
 export const CAMINHOS_LEVES = [
   /^docs\/(?!legal\/)/,
   /^tools\/backend-kanban\/public\/board\.json$/,
   /^tools\/backend-kanban\/BOARD\.md$/,
   /^[^/]+\.md$/,
-  /(^|\/)AGENTS\.md$/,
-  /(^|\/)CLAUDE\.md$/,
+  /^(?!apps\/|packages\/)(?:[^/]+\/)*AGENTS\.md$/,
+  /^(?!apps\/|packages\/)(?:[^/]+\/)*CLAUDE\.md$/,
 ]
 
 // A API de arquivos do PR para em 3000; nesse teto a lista pode estar cortada.

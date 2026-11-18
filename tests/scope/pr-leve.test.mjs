@@ -15,7 +15,7 @@ test("quadro, docs, RATIFICACAO e regras de agente são leves", () => {
     "docs/agents/tasks/HRN-010.task.yml",
     "README.md",
     "AGENTS.md",
-    "apps/app/AGENTS.md",
+    "supabase/AGENTS.md",
     "CLAUDE.md",
   ])
   assert.equal(leve, true)
@@ -35,6 +35,9 @@ test("código, migration, workflow, lockfile e docs/legal exigem o completo", ()
     "tools/backend-kanban/src/board.mjs",
     "docs/legal/PRIVACIDADE.md",
     "apps/web/README.md",
+    "apps/app/AGENTS.md",
+    "apps/web/CLAUDE.md",
+    "packages/domain/AGENTS.md",
   ]) {
     const { leve, motivo } = classificar(["docs/LANCAMENTO.md", caminho])
     assert.equal(leve, false, caminho)
