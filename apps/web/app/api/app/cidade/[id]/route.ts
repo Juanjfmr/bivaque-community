@@ -25,7 +25,7 @@ type Context = { params: Promise<{ id: string }> }
  * encontros, desapegos, imóveis), sem comunidades, sem perguntas e sem a
  * vitrine de prestadores — a consulta web nunca exibiu nenhuma delas. Cada
  * SELECT repete os filtros do canal da vertical
- * (`(shell)/inicio/hub-loaders.ts`, `lib/listings/queries.ts`,
+ * (o antigo `(shell)/inicio/hub-loaders.ts`, removido no F02-001, `lib/listings/queries.ts`,
  * `lib/listings/highlights.ts`): mesmas tabelas, mesmos status, mesma janela.
  *
  * O `id` é do catálogo (`localities.id`) ou o literal `atual`, e `atual` é

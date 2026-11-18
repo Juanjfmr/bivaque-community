@@ -6,7 +6,7 @@ import Link from "next/link"
 import { type ReactNode, useEffect, useState } from "react"
 import { useLocalityContext } from "../../../lib/locality-context"
 import { createBrowserClient } from "../../../lib/supabase/client"
-import { eventDateChip } from "../../(shell)/inicio/formatters"
+import { eventDateChip } from "../../../lib/inicio/formatters"
 import { Skeleton } from "./skeleton"
 
 // O trilho da Comunidade (25/09/2026, sistema visual mínimo). Referências do

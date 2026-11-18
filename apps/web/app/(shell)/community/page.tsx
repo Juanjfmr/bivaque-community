@@ -12,8 +12,8 @@ import {
   createRequestGuard,
   loadPrimaryCommunity,
   type PrimaryCommunity,
-} from "../inicio/home-loaders"
-import { JoinCommunityCard } from "../inicio/join-community"
+} from "../../../lib/inicio/home-loaders"
+import { JoinCommunityCard } from "./join-community"
 import { CommunityHeader } from "./community-header"
 import { useCommunityHeader } from "./use-community-header"
 
