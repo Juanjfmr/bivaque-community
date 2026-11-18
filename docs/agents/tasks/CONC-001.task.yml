@@ -1,0 +1,49 @@
+task_id: CONC-001
+objective: >
+  Portar para a main atual as proteções contra mutação concorrente dos PRs antigos #174 (pedidos de
+  entrada de grupo) e #172 (participação em grupo e convites de família): clique repetido, resposta
+  fora de ordem e troca de grupo durante a leitura não duplicam pedido, nem aplicam página velha, nem
+  escondem a lista por erro de página.
+authority:
+  - docs/LANCAMENTO.md
+  - "PR #174 (branch pr-174): apps/app/src/grupos/Pedidos.tsx e tests/e2e/conversas-grupos-mobile.spec.ts"
+  - "PR #172 (branch pr-172): Participacao.tsx, Familia.tsx, tests/e2e/mutacoes-concorrentes.spec.ts"
+  - "Triagem de 18/11 contra a main 5237b638 (.work/triagem.log): PORTAR os dois"
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    Na main 5237b638: Pedidos.tsx:26 barra cliques só por estado React e aplica dados capturados;
+    erro de página ativa o erro geral e some com a lista (linha 34); paginação sem cancelamento na
+    troca de grupo (linhas 11-15). Participacao.tsx:25 e Familia.tsx:62 com guarda só em estado;
+    convite e revogação podem concorrer; diálogo de grupo fecha durante a operação (Participacao.tsx:98).
+allowed_paths:
+  - apps/app/src/grupos/Pedidos.tsx
+  - apps/app/src/grupos/Participacao.tsx
+  - apps/app/src/voce/Familia.tsx
+  - apps/app/tests/e2e/conversas-grupos-mobile.spec.ts
+  - apps/app/tests/e2e/mutacoes-concorrentes.spec.ts
+  - apps/app/tests/grupos*.test.tsx
+  - apps/app/tests/familia*.test.tsx
+  - docs/agents/tasks/CONC-001.task.yml
+forbidden:
+  - tocar em Conversa.tsx ou Conversas.tsx (lote REGUA-001 em andamento; a parte delas vai para CONC-002)
+  - mudar visual, cores, textos ou layout além do estado de "enviando" e do erro de página
+  - criar rota de API, mudar banco ou contrato de dados
+  - afrouxar ou apagar teste existente para ficar verde
+acceptance:
+  - guarda síncrona (ref) contra cliques repetidos em Pedidos, Participacao e Familia; segundo clique durante a operação não gera segunda requisição
+  - página de pedidos aplicada por atualização funcional e conferência do cursor; leitura cancelada na troca de grupo
+  - erro de paginação de pedidos aparece junto da lista com "Tentar de novo", sem esconder os itens já carregados
+  - convite e revogação de família não concorrem; diálogo de grupo não fecha durante a operação
+  - E2E portados dos PRs, adaptados ao contrato atual, passando nos três tamanhos
+proof:
+  - npx pnpm@11.18.0 gate --fast
+  - npx pnpm@11.18.0 --filter @bivaque/app test
+  - npx pnpm@11.18.0 --filter @bivaque/app test:e2e -- conversas-grupos-mobile mutacoes-concorrentes
+risk: interface
+risk_level: R2
+reviewer_must_differ_from_executor: true
+retry_budget: 2
+on_budget_exhausted: HUMAN_DECISION
+closure:
+  requires_runtime_evidence: true
