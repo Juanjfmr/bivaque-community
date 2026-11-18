@@ -23,6 +23,12 @@
 // comparados como BigInt, nunca por Number, e `completed_at` não decide nada (run
 // cancelado sem data continuaria perdendo para um verde velho).
 //
+// PR leve (scripts/ci/pr-leve.mjs: só quadro, docs e regras de agente) não sobe a
+// stack: o workflow pula o ci-core e o agregador sai verde com o fast. Aqui vale o
+// mesmo critério, recalculado a partir dos arquivos do PR (com o nome antigo dos
+// renomeados): na execução mais nova, Fast checks e agregador verdes bastam. Um
+// arquivo fora da lista volta à exigência do completo.
+//
 // Qualquer outro estado — completo ausente ou vermelho, Visual ausente num PR que
 // toca apps/app, check de outro SHA, SHA curto, merge recusado — é recusa com
 // mensagem clara e código de saída 1. O script nunca mergeia na dúvida.
@@ -34,6 +40,7 @@
 
 import { execFileSync } from "node:child_process"
 import { pathToFileURL } from "node:url"
+import { classificar, nomesDaApi } from "../ci/pr-leve.mjs"
 
 const API = "https://api.github.com"
 
@@ -41,6 +48,7 @@ const API = "https://api.github.com"
 // mudar aqui faz o script recusar todo merge — falha alta, nunca merge cego.
 export const CHECK_COMPLETO = "CI core / build, db, e2e comuns"
 export const CHECK_AGREGADO = "Install, test, and build"
+export const CHECK_RAPIDO = "Fast checks"
 export const CHECK_VISUAL = "App mobile-first / 320-360-375-430-768-1440"
 
 // Os `paths` de bivaque-app-visual-smoke.yml: se o PR não toca nenhum deles, o
@@ -53,7 +61,7 @@ export const CAMINHOS_DO_VISUAL = [
 
 // Chave dos checks que o rito lê: qualquer um deles sem `check_suite.id` recusa,
 // porque não há como saber a que execução pertence.
-const CHECKS_DO_RITO = [CHECK_COMPLETO, CHECK_AGREGADO, CHECK_VISUAL]
+const CHECKS_DO_RITO = [CHECK_COMPLETO, CHECK_AGREGADO, CHECK_RAPIDO, CHECK_VISUAL]
 
 function paraId(valor) {
   if (typeof valor === "bigint") return valor
@@ -157,8 +165,11 @@ export function avaliar({ headSha, estado, checkRuns = [], arquivos = [] }) {
       id: suite.id,
       ci: doNome(suite.runs, CHECK_COMPLETO),
       agregado: doNome(suite.runs, CHECK_AGREGADO),
+      rapido: doNome(suite.runs, CHECK_RAPIDO),
     }))
     .filter((execucao) => execucao.ci.length > 0 || execucao.agregado.length > 0)
+
+  const leve = classificar(arquivos)
 
   if (!execucoes.length) {
     return {
@@ -170,7 +181,9 @@ export function avaliar({ headSha, estado, checkRuns = [], arquivos = [] }) {
   // Execução em andamento em qualquer suíte do PR CI recusa, mesmo que haja verde
   // antigo em outra: o run mais novo ainda pode mudar o resultado.
   for (const execucao of execucoes) {
-    const run = [...execucao.ci, ...execucao.agregado].find((item) => item.status !== "completed")
+    const run = [...execucao.ci, ...execucao.agregado, ...execucao.rapido].find(
+      (item) => item.status !== "completed",
+    )
     if (run) {
       return {
         ok: false,
@@ -185,6 +198,8 @@ export function avaliar({ headSha, estado, checkRuns = [], arquivos = [] }) {
   )
   const ciCore = escolhida.ci.length ? melhorDoGrupo(escolhida.ci) : null
   const agregado = escolhida.agregado.length ? melhorDoGrupo(escolhida.agregado) : null
+
+  if (leve.leve) return avaliarLeve({ escolhida, agregado, motivoLeve: leve.motivo })
 
   if (!ciCore) {
     return {
@@ -277,6 +292,28 @@ export function avaliar({ headSha, estado, checkRuns = [], arquivos = [] }) {
   }
 }
 
+// PR leve: Fast checks e agregador verdes na execução mais nova. O Visual não entra:
+// nenhum caminho leve está nos paths dele.
+function avaliarLeve({ escolhida, agregado, motivoLeve }) {
+  const rapido = escolhida.rapido.length ? melhorDoGrupo(escolhida.rapido) : null
+  if (rapido?.conclusion !== "success") {
+    return {
+      ok: false,
+      motivo: `PR leve, mas os Fast checks não estão verdes na execução mais nova (${rotuloSuite(escolhida)}, run ${idTexto(rapido)}: ${rapido?.conclusion ?? "ausente"})`,
+    }
+  }
+  if (agregado?.conclusion !== "success") {
+    return {
+      ok: false,
+      motivo: `PR leve, mas o agregador "${CHECK_AGREGADO}" não está verde na execução mais nova (${rotuloSuite(escolhida)}, run ${idTexto(agregado)}: ${agregado?.conclusion ?? "ausente"})`,
+    }
+  }
+  return {
+    ok: true,
+    motivo: `PR leve (${motivoLeve}): Fast checks e agregador verdes; ${rotuloSuite(escolhida)}, runs ${idTexto(rapido)}, ${idTexto(agregado)}`,
+  }
+}
+
 async function pedir(fetchImpl, { metodo = "GET", url, token, corpo, comCabecalhos = false }) {
   const resposta = await fetchImpl(url, {
     method: metodo,
@@ -304,7 +341,7 @@ async function arquivosDoPr(fetchImpl, { repo, pr, token }) {
       url: `${API}/repos/${repo}/pulls/${pr}/files?per_page=100&page=${pagina}`,
       token,
     })
-    for (const item of lote) if (item?.filename) arquivos.push(item.filename)
+    arquivos.push(...nomesDaApi(lote))
     if (lote.length < 100) break
   }
   return arquivos

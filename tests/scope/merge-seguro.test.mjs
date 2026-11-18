@@ -4,6 +4,7 @@ import {
   avaliar,
   CHECK_AGREGADO,
   CHECK_COMPLETO,
+  CHECK_RAPIDO,
   CHECK_VISUAL,
   mergeSeguro,
   obterToken,
@@ -181,9 +182,9 @@ test("completo ausente: recusa apontando a label ci:full", async () => {
 })
 
 test("visual ausente por paths, com o PR fora de apps/app: mergeia", async () => {
-  // Given a docs-only PR, where the visual workflow's paths filter never fires
+  // Given a PR outside apps/app (web and database), where the visual workflow's paths filter never fires
   const { veredito, api } = await rodar({
-    arquivos: ["docs/LANCAMENTO.md", "README.md"],
+    arquivos: ["apps/web/lib/exemplo.ts", "supabase/migrations/exemplo.sql"],
     checkRuns: [check(CHECK_COMPLETO), check(CHECK_AGREGADO)],
   })
 
@@ -252,7 +253,7 @@ test("SHA curto: recusa antes de consultar checks", () => {
 test("merge recusado pelo GitHub: devolve recusa com a mensagem", async () => {
   // Given the checks are green but the API refuses the merge
   const { veredito } = await rodar({
-    arquivos: ["docs/LANCAMENTO.md"],
+    arquivos: ["apps/web/lib/exemplo.ts"],
     checkRuns: [check(CHECK_COMPLETO), check(CHECK_AGREGADO)],
     merge: { merged: false, message: "Pull Request is not mergeable" },
   })
@@ -490,7 +491,7 @@ test("duas execuções sem id de suíte: recusa por falta de id de execução", 
   const veredito = avaliar({
     headSha: SHA,
     estado: "open",
-    arquivos: ["docs/LANCAMENTO.md"],
+    arquivos: ["apps/web/lib/exemplo.ts"],
     checkRuns: [
       emSuite(CHECK_COMPLETO, "100", { id: 1010 }),
       emSuite(CHECK_AGREGADO, "100", { id: 1011 }),
@@ -522,7 +523,7 @@ test("GH_TOKEN vazio conta como ausente e cede para GITHUB_TOKEN", () => {
 
 test("consulta todos os runs do SHA, não só o mais novo de cada nome", async () => {
   const { api } = await rodar({
-    arquivos: ["docs/LANCAMENTO.md"],
+    arquivos: ["apps/web/lib/exemplo.ts"],
     checkRuns: [check(CHECK_COMPLETO), check(CHECK_AGREGADO)],
   })
   const chamada = api.chamadas.find((c) => c.url.includes("/check-runs"))
@@ -535,7 +536,7 @@ test("checks do rito sem id de suíte: recusa, mesmo com ci-core verde numa exec
   const veredito = avaliar({
     headSha: SHA,
     estado: "open",
-    arquivos: ["docs/LANCAMENTO.md"],
+    arquivos: ["apps/web/lib/exemplo.ts"],
     checkRuns: [
       { ...check(CHECK_COMPLETO), id: 3010, check_suite: undefined },
       { ...check(CHECK_AGREGADO), id: 3011, check_suite: undefined },
@@ -573,7 +574,7 @@ test("ids de suíte numéricos acima de 2^53 recusam em vez de misturar execuç�
   const veredito = avaliar({
     headSha: SHA,
     estado: "open",
-    arquivos: ["docs/LANCAMENTO.md"],
+    arquivos: ["apps/web/lib/exemplo.ts"],
     checkRuns: [
       { ...check(CHECK_COMPLETO), id: 1, check_suite: JSON.parse('{"id":9007199254740992}') },
       { ...check(CHECK_AGREGADO), id: 2, check_suite: JSON.parse('{"id":9007199254740992}') },
@@ -589,7 +590,7 @@ test("execução mais nova sem ci-core e com agregador verde recusa, ainda que a
   const veredito = avaliar({
     headSha: SHA,
     estado: "open",
-    arquivos: ["docs/LANCAMENTO.md"],
+    arquivos: ["apps/web/lib/exemplo.ts"],
     checkRuns: [
       emSuite(CHECK_COMPLETO, "100", { id: 1010 }),
       emSuite(CHECK_AGREGADO, "100", { id: 1011 }),
@@ -606,7 +607,7 @@ test("PR #273: suíte antiga cancelada com agregador vermelho perde para a suít
   const veredito = avaliar({
     headSha: SHA,
     estado: "open",
-    arquivos: ["docs/LANCAMENTO.md"],
+    arquivos: ["apps/web/lib/exemplo.ts"],
     checkRuns: [
       emSuite(CHECK_COMPLETO, "100", { id: 1010, conclusion: "cancelled" }),
       emSuite(CHECK_AGREGADO, "100", { id: 1011, conclusion: "failure" }),
@@ -621,7 +622,7 @@ test("PR #273: suíte antiga cancelada com agregador vermelho perde para a suít
 
 test("paginação esgotada com a última página cheia recusa em vez de decidir com lista truncada", async () => {
   const api = apiFalsa({
-    arquivos: ["docs/LANCAMENTO.md"],
+    arquivos: ["apps/web/lib/exemplo.ts"],
     paginas: () => ({
       itens: Array.from({ length: 100 }, (_, indice) => ({
         ...check("Outro check"),
@@ -668,7 +669,7 @@ test("veredito do Visual nomeia a suíte e o run do Visual, na recusa e no suces
 
 test("paginação cheia continua na página seguinte até achar o fim", async () => {
   const { veredito, api } = await rodar({
-    arquivos: ["docs/LANCAMENTO.md"],
+    arquivos: ["apps/web/lib/exemplo.ts"],
     paginas: (pagina) =>
       pagina === 1
         ? {
@@ -684,4 +685,101 @@ test("paginação cheia continua na página seguinte até achar o fim", async ()
   const urls = api.chamadas.filter((c) => c.url.includes("/check-runs")).map((c) => c.url)
   assert.equal(urls.length, 2)
   assert.match(urls[1], /page=2/)
+})
+
+// PR leve (scripts/ci/pr-leve.mjs): o workflow pula o ci-core e o agregador sai verde
+// com o fast. A trava aceita o mesmo, e só quando TODOS os arquivos são leves.
+const QUADRO = ["tools/backend-kanban/public/board.json", "tools/backend-kanban/BOARD.md"]
+
+test("PR leve: fast e agregador verdes mergeiam sem o ci-core", async () => {
+  // Given a board-only PR whose run skipped ci-core
+  const { veredito, api } = await rodar({
+    arquivos: [...QUADRO, "docs/decisions/RATIFICACAO.md"],
+    checkRuns: [
+      check(CHECK_RAPIDO),
+      check(CHECK_COMPLETO, { conclusion: "skipped" }),
+      check(CHECK_AGREGADO),
+    ],
+  })
+
+  // Then the merge goes through and the reason says it was the light path
+  assert.equal(veredito.ok, true)
+  assert.equal(veredito.merged, true)
+  assert.match(veredito.motivo, /PR leve/)
+  assert.equal(api.merges().length, 1)
+})
+
+test("PR leve com fast vermelho: recusa", () => {
+  const veredito = avaliar({
+    headSha: SHA,
+    estado: "open",
+    arquivos: QUADRO,
+    checkRuns: [check(CHECK_RAPIDO, { conclusion: "failure" }), check(CHECK_AGREGADO)],
+  })
+  assert.equal(veredito.ok, false)
+  assert.match(veredito.motivo, /Fast checks/)
+})
+
+test("PR leve sem agregador: recusa como completo ausente", () => {
+  const veredito = avaliar({
+    headSha: SHA,
+    estado: "open",
+    arquivos: QUADRO,
+    checkRuns: [check(CHECK_RAPIDO)],
+  })
+  assert.equal(veredito.ok, false)
+  assert.match(veredito.motivo, /ci:full/)
+})
+
+test("PR leve com fast em andamento: recusa", () => {
+  const veredito = avaliar({
+    headSha: SHA,
+    estado: "open",
+    arquivos: QUADRO,
+    checkRuns: [
+      check(CHECK_RAPIDO, { status: "in_progress", conclusion: null }),
+      check(CHECK_AGREGADO, { status: "queued", conclusion: null }),
+    ],
+  })
+  assert.equal(veredito.ok, false)
+  assert.match(veredito.motivo, /ainda está/)
+})
+
+test("um arquivo de código no meio do quadro exige o completo", () => {
+  // Given a mostly-board PR that also touches a migration, with only the light run
+  const veredito = avaliar({
+    headSha: SHA,
+    estado: "open",
+    arquivos: [...QUADRO, "supabase/migrations/20261118000000_x.sql"],
+    checkRuns: [
+      check(CHECK_RAPIDO),
+      check(CHECK_COMPLETO, { conclusion: "skipped" }),
+      check(CHECK_AGREGADO),
+    ],
+  })
+
+  // Then the light path does not apply and the skipped ci-core refuses
+  assert.equal(veredito.ok, false)
+  assert.match(veredito.motivo, /"skipped"/)
+})
+
+test("renomear código para docs não é leve: o nome antigo conta", async () => {
+  // Given a PR that moves a source file into docs/
+  const api = apiFalsa({
+    checkRuns: [
+      check(CHECK_RAPIDO),
+      check(CHECK_COMPLETO, { conclusion: "skipped" }),
+      check(CHECK_AGREGADO),
+    ],
+  })
+  const fetchImpl = async (url, opcoes) =>
+    url.includes("/files")
+      ? resposta([{ filename: "docs/velho.ts", previous_filename: "apps/web/lib/velho.ts" }])
+      : api.fetchImpl(url, opcoes)
+
+  const veredito = await mergeSeguro({ pr: 7, repo: "bivaque/community", token: "t", fetchImpl })
+
+  // Then it is judged as code and refused without the full run
+  assert.equal(veredito.ok, false)
+  assert.equal(api.merges().length, 0)
 })

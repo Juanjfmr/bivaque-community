@@ -184,3 +184,24 @@ test("a trava de merge é um script conferido, não um rito lembrado", () => {
   const licoes = readFileSync(join(root, "docs", "agents", "LICOES.md"), "utf8")
   assert.match(licoes, /merge-seguro\.mjs/)
 })
+
+test("PR leve pula a stack, mas o agregador sempre reporta", () => {
+  // Given the PR CI workflow
+  const workflow = ler("pull-request-ci.yml")
+
+  // Then a classifier job reads the PR files with read-only permission
+  assert.match(workflow, /\n {2}changes:\n/)
+  assert.match(workflow, /run: node scripts\/ci\/pr-leve\.mjs "\$PR"/)
+  assert.match(workflow, /pull-requests: read/)
+  assert.doesNotMatch(workflow, /pull-requests: write/)
+
+  // And both stack jobs are skipped for a light PR, even with ci:full
+  const gate =
+    "needs: changes\n    if: needs.changes.outputs.leve != 'true' && (github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'ci:full'))"
+  assert.equal(workflow.split(gate).length - 1, 2, "ci-core e e2e-stateful")
+
+  // And the aggregator runs for a light PR and demands the classifier and fast green
+  assert.match(workflow, /needs: \[changes, fast, ci-core, e2e-stateful\]/)
+  assert.match(workflow, /\|\| needs\.changes\.outputs\.leve == 'true'\)/)
+  assert.match(workflow, /if \[ "\$ch" != "success" \] \|\| \[ "\$fa" != "success" \]; then/)
+})
