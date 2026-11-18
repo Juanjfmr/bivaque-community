@@ -82,6 +82,12 @@
   --brasa: rgb(184 74 58);
   --brasa-foreground: rgb(255 255 255);
   --accent-text: rgb(158 59 44);
+  /* Não lido tem um só sinal, em tinta — a Brasa é só do Criar
+     (ADR-20261118; revisão cega 18/11, D10). */
+  /* Seleção é Grafite (IDENTIDADE-DAS-PECAS): chip e segmento ativos. No
+     escuro é um degrau claro, nunca quase branco (revisão cega do F10). */
+  --grafite: rgb(28 38 43);
+  --grafite-texto: rgb(243 245 246);
 
   /* a pele do protótipo, valor por valor */
   --surface: rgb(243 245 246);
@@ -151,12 +157,15 @@
   --ring: rgb(232 236 238);
   --success: rgb(159 188 192);
   --success-foreground: rgb(23 30 32);
-  /* No escuro a ação é clara e sólida: o azul-acinzentado lia como desativado. */
-  --acao: rgb(232 236 238);
-  --acao-foreground: rgb(16 20 23);
+  /* Concluir continua ardósia no escuro, um degrau mais claro (D7, revisão
+     18/11): branco puro disputava com a Brasa do Criar. */
+  --acao: rgb(88 122 144);
+  --acao-foreground: rgb(255 255 255);
   --brasa: rgb(224 122 90);
   --brasa-foreground: rgb(23 30 32);
   --accent-text: rgb(224 122 90);
+  --grafite: rgb(96 108 118);
+  --grafite-texto: rgb(232 236 238);
 
   --surface: rgb(16 20 23);
   --surface-lowest: rgb(26 32 36);
@@ -177,7 +186,9 @@
   --on-tertiary-container: rgb(240 160 138);
   --inverse-surface: rgb(232 236 238);
   --inverse-on-surface: rgb(28 38 43);
-  --scrim: rgb(0 0 0 / 0.52);
+  /* O scrim escurece mais no escuro (D26): o conteúdo de trás não podia
+     parecer ativo sob a folha. */
+  --scrim: rgb(0 0 0 / 0.66);
   --shadow-soft: rgb(0 0 0 / 0.45);
   --shadow-strong: rgb(0 0 0 / 0.55);
   /* No escuro as fotos baixam um pouco (protótipo: `--bv-photo-dim`). */
@@ -760,10 +771,18 @@
   padding-bottom: calc(12px + env(safe-area-inset-bottom));
 }
 
-/* O Criar flutua acima da barra de baixo nas rotas-raiz: o conteúdo precisa
-   rolar por cima dele (na revisão, cobria "Semanal" e "Gravar preferências"). */
+/* O Criar flutua acima da barra de baixo nas rotas-raiz e, nelas, a barra fixa
+   de gravar das preferências sobe junto: o conteúdo precisa rolar por cima dos
+   dois (na revisão, cobria "Semanal" e "Gravar preferências"). O respiro extra
+   vale SÓ onde há algo flutuando para cobrir (achado 12 da revisão de código):
+   a barra de gravar das preferências e o FAB das Conversas, que é rota-raiz
+   deste lote; nas outras rotas o rodapé volta ao respiro padrão da barra. */
 @media (max-width: 1023.98px) {
-  [data-casca="app"]:has([data-nav="principal"][data-visivel="sim"]) #conteudo {
+  [data-casca="app"]:has([data-nav="principal"][data-visivel="sim"]):has(
+      [data-barra="gravar-preferencias"],
+      [data-tela="conversas"]
+    )
+    #conteudo {
     padding-bottom: calc(var(--altura-da-barra) + 92px + env(safe-area-inset-bottom));
     scroll-padding-bottom: calc(var(--altura-da-barra) + 92px + env(safe-area-inset-bottom));
   }
@@ -788,12 +807,19 @@
   -webkit-line-clamp: 2;
 }
 
-/* No computador a barra do topo já diz o nome da tela: o título do corpo não
-   se repete (revisão 18/11). O h1 segue no DOM — é o alvo do foco da
-   restauração — só sai da pintura. */
+/* No computador a barra do topo diz o nome da tela: o título do corpo não se
+   repete (revisão 18/11, F09 e F10 — a regra vale para toda casca do app, não
+   só para Avisos e Conversas). O h1 segue no DOM — é o alvo do foco da
+   restauração. Exceções: telas cujo h1 não é o nome da rota (Início, que abre
+   com "Sua rede em …"; Grupo e Cidade, cujo h1 é o nome do item) ou que não
+   têm título na barra (Busca, cuja barra vira campo; Dono, sem barra do app;
+   Galeria, andaime de prova). */
 @media (min-width: 1024px) {
-  [data-tela="avisos"] [data-cabeca="pagina"] h1,
-  [data-tela="conversas"] [data-cabeca="pagina"] h1 {
+  section[data-tela]:not([data-tela="inicio"]):not([data-tela="grupo"]):not(
+      [data-tela="cidade"]
+    ):not([data-tela="busca"]):not([data-tela="dono"]):not([data-tela="galeria"])
+    [data-cabeca="pagina"]
+    h1 {
     position: absolute;
     width: 1px;
     height: 1px;
@@ -878,6 +904,12 @@
   }
 }
 
+/* O glifo de erro acompanha a caixa de 16 px (D1): a `.bv-icone` desenha 24 px
+   e o transbordo cobria a primeira letra do texto ao lado. */
+[data-mensagem="nao-enviada"] .bv-icone {
+  font-size: 16px;
+}
+
 /* ── Preferências de aviso: interruptores e barra de gravar ──────────────── */
 
 /* O interruptor por canal: 48 × 26 desenhados, alvo de 48 × 44 (a área
@@ -935,9 +967,11 @@
   }
 }
 
-/* A barra de gravar fica fixa no rodapé da seção, sempre visível. No celular
-   ela assenta acima do Criar, que levanta a cabeça sobre a barra de baixo —
-   na revisão, o botão ficava escondido embaixo dela. */
+/* A barra de gravar fica fixa no rodapé da área de leitura, sempre visível e
+   opaca (D4): o cartão que rola passa por baixo dela, nunca a corta no meio
+   da tela. O offset é relativo ao fim do scrollport, que se estende ATRÁS da
+   barra de baixo e do Criar (ambos fixos, z-index maior): sem o offset do
+   celular, a barra gravava por baixo deles. */
 [data-barra="gravar-preferencias"] {
   position: sticky;
   z-index: 30;
@@ -950,17 +984,24 @@
   border-top: 1px solid var(--outline-variant);
   border-radius: 16px 16px 0 0;
   background: var(--background);
+  box-shadow: 0 -10px 24px var(--shadow-soft);
 }
 
+/* Largura de leitura da matriz de preferências (D16): nada de cartão e
+   interruptor a ~1290 px de distância no computador. */
+@media (min-width: 768px) {
+  [data-preferencias-de-aviso="sim"] {
+    max-width: 720px;
+    margin-inline: auto;
+  }
+}
+
+/* No celular a barra assenta acima da barra de baixo e do Criar, que levanta a
+   cabeça sobre ela (56 px + 42 px + folga). No computador, 12 px de respiro no
+   fim do scrollport. */
 @media (max-width: 1023.98px) {
   [data-barra="gravar-preferencias"] {
-    /* Sobe o suficiente para não colidir com o Criar flutuante nem com o que
-       ele levanta sobre a barra de baixo (56 px + 42 px + folga). */
     bottom: calc(var(--altura-da-barra) + 76px + env(safe-area-inset-bottom));
-  }
-
-  [data-preferencias-de-aviso] {
-    padding-bottom: 70px;
   }
 }
 
@@ -968,6 +1009,34 @@
   [data-barra="gravar-preferencias"] {
     bottom: 12px;
   }
+}
+
+/* A barra é o fim da seção: o respiro deixa o último cartão rolar para cima
+   dela sem ficar escondido (D4) — cobre a barra (60 px) e o offset de 12 px
+   do computador, com folga. */
+[data-preferencias-de-aviso="sim"] {
+  padding-bottom: 84px;
+}
+
+/* Apoio de no máximo uma linha, garantido por CSS (achado 7): a 375 px cabe;
+   em telas menores reticencia em vez de quebrar. */
+[data-preferencias-de-aviso="sim"] small {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* A seção das preferências carrega o próprio título com voltar (D17): o
+   título da seção de cima seria o segundo. */
+[data-secao="sim"]:has([data-preferencias-de-aviso]) .bv-titulo-de-secao {
+  display: none;
+}
+
+/* A seção não cola na barra ao vir por âncora ou rolagem programática (D18):
+   o mesmo respiro que as outras telas dão ao título. */
+[data-secao="sim"]:has([data-preferencias-de-aviso]) {
+  scroll-margin-top: calc(var(--altura-do-topo) + 24px);
 }
 
 /* ── Home: descoberta útil antes da decoração ──────────────────────────── */
@@ -1480,9 +1549,24 @@
   backdrop-filter: blur(1.5px);
 }
 
+/* No escuro os divisores dos avisos dão um passo a mais de luz: o cartão não
+   pode quase sumir no fundo (D19). */
+[data-tema="escuro"] [data-tela="avisos"] [data-lista="itens"],
+[data-tema="escuro"] [data-tela="avisos"] [data-linha="lista"] + [data-linha="lista"] {
+  border-color: rgb(56 66 72);
+}
+
 /* A folha sobe; a gaveta entra pela direita (protótipo: `overlayAnimation`). */
 [data-sobreposicao][data-formato="folha"] {
   animation: bv-folha-sobe 500ms cubic-bezier(0.32, 0.72, 0, 1) both;
+}
+
+/* A folha nunca passa da borda de cima e respira na base com safe area (D6):
+   o que não cabe rola dentro dela — o rodapé de ação nunca encosta no limite
+   do viewport. */
+[data-sobreposicao][data-formato="folha"] {
+  max-height: min(88dvh, 760px);
+  padding-bottom: calc(1rem + env(safe-area-inset-bottom));
 }
 
 [data-sobreposicao][data-formato="gaveta"] {

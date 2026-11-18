@@ -384,11 +384,13 @@
     color var(--pc-toque);
 }
 
+/* O chip ativo é Grafite (seleção é Grafite): no escuro, um degrau claro e
+   legível em vez de quase branco (revisão cega do F10). */
 .pc-chip[aria-pressed="true"],
 .pc-chip[aria-selected="true"] {
-  border-color: var(--pc-tinta);
-  background: var(--pc-tinta);
-  color: var(--pc-fundo);
+  border-color: var(--grafite);
+  background: var(--grafite);
+  color: var(--grafite-texto);
 }
 
 .pc-chip .bv-icone {

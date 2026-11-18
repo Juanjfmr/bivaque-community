@@ -177,8 +177,9 @@ export function Conversa() {
     } catch {
       // A mensagem que não saiu fica visível como balão seu, marcada
       // "Não enviada", com a ação de tentar de novo; o texto continua no campo.
+      // A linha de status é a única mensagem do erro (D22): um rodapé no
+      // compositor dizia a mesma coisa duas vezes.
       if (!pedido.signal.aborted) {
-        setErroLocal("Não foi possível enviar. Seu texto foi mantido.")
         setNaoEnviada(texto)
       }
     } finally {
@@ -433,10 +434,17 @@ export function Conversa() {
                   data-mensagem="nao-enviada"
                   className="ml-auto grid max-w-[86%] justify-items-end gap-1"
                 >
-                  <p className="whitespace-pre-wrap break-words rounded-2xl rounded-br-sm bg-(--secondary-container) px-3 py-2.5 text-[14px] leading-5 opacity-80 ring-1 ring-(--outline-variant)">
+                  {/* D24: a bolha falhada se diferencia da enviada — esmaecida
+                      com borda de erro. */}
+                  <p className="whitespace-pre-wrap break-words rounded-2xl rounded-br-sm bg-(--secondary-container) px-3 py-2.5 text-[14px] leading-5 opacity-85 ring-1 ring-(--destructive)/60">
                     {naoEnviada}
                   </p>
-                  <p className="flex min-h-11 items-center gap-1 text-xs text-(--destructive)">
+                  {/* D1: ícone de 16 px como irmão do texto, com 6 px entre
+                      eles; D22: é o único aviso do erro. */}
+                  <p
+                    role="alert"
+                    className="flex min-h-11 items-center gap-1.5 text-xs text-(--destructive)"
+                  >
                     <Icone nome="error" className="size-4" />
                     Não enviada
                     <Botao
@@ -527,7 +535,13 @@ export function Conversa() {
                     nome="send"
                     data-acao="enviar-mensagem"
                     disabled={enviando || !rascunho.trim() || rascunho.length > 2000}
-                    className="size-11 shrink-0 rounded-full bg-(--acao) text-(--acao-foreground) hover:bg-(--acao)/90"
+                    className={
+                      // D14: um desenho só nos três tamanhos — desligado é
+                      // neutro legível (ícone ≥ 3:1); ligado é ardósia.
+                      enviando || !rascunho.trim() || rascunho.length > 2000
+                        ? "size-11 shrink-0 rounded-full bg-(--surface-high) text-(--on-surface-variant)"
+                        : "size-11 shrink-0 rounded-full bg-(--acao) text-(--acao-foreground) hover:bg-(--acao)/90"
+                    }
                   />
                 </div>
               </form>
@@ -575,6 +589,9 @@ export function Conversa() {
           id="conversa-denuncia"
           titulo="Denunciar mensagem"
           descricao="O motivo vai para a moderação. Não inclua dados pessoais na explicação."
+          // D25: no computador nada de folha — diálogo centrado (560 px); a
+          // folha de baixo é do celular (referência Mobbin iOS).
+          formato={menuSuspenso ? "dialogo" : "folha"}
           aoFechar={() => denuncia.aoMudarAberto(false)}
         >
           <p
@@ -583,8 +600,10 @@ export function Conversa() {
           >
             {denunciando.conteudo}
           </p>
+          {/* D23: 16 px entre a última opção, o campo e o botão — nada
+              encostado no rodapé de ação. */}
           <form
-            className="grid gap-3"
+            className="grid gap-4"
             onSubmit={(evento) => {
               evento.preventDefault()
               void enviarDenuncia()

@@ -5,7 +5,7 @@ import { Botao } from "@/components/bivaque/botao"
 import { CabecaDePagina } from "@/components/bivaque/cabeca-de-pagina"
 import { ContextoDaConversa } from "@/components/bivaque/contexto-conversa"
 import { EsqueletoDeLista } from "@/components/bivaque/esqueleto"
-import { EstadoDeErro, EstadoVazio } from "@/components/bivaque/estado-vazio"
+import { EstadoDeErro } from "@/components/bivaque/estado-vazio"
 import { Icone } from "@/components/bivaque/icone"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { type Caixa, type ConversaDaCaixa, lerConversas } from "@/lib/dados/conversas"
@@ -120,39 +120,7 @@ export function Conversas() {
             <EstadoDeErro aoTentar={() => setRodada((atual) => atual + 1)} />
           ) : dados === null ? (
             <EsqueletoDeLista linhas={3} />
-          ) : vazia ? (
-            <>
-              <div className="md:hidden">
-                <EstadoVazio
-                  titulo={
-                    filtro === "todas" ? "Nenhuma conversa ainda" : "Nenhuma conversa neste filtro"
-                  }
-                  texto={
-                    dados.proximo
-                      ? "Carregue mais conversas para continuar procurando."
-                      : "Abra um anúncio ou negócio para iniciar uma conversa."
-                  }
-                  icone="chat_bubble"
-                  acao={
-                    dados.proximo
-                      ? { rotulo: "Ver mais conversas", aoAcionar: () => void mais() }
-                      : {
-                          rotulo: "Ir ao Mercado",
-                          aoAcionar: () => void navegacao.irPara("mercado"),
-                        }
-                  }
-                />
-              </div>
-              {/* No computador o vazio da caixa é dito pelo painel da direita;
-                  à esquerda basta uma linha quieta. */}
-              <p
-                data-caixa="vazia-resumo"
-                className="hidden px-1 pb-4 text-sm text-(--on-surface-variant) md:block"
-              >
-                {filtro === "todas" ? "Nenhuma conversa ainda." : "Nenhuma conversa neste filtro."}
-              </p>
-            </>
-          ) : (
+          ) : vazia ? null : (
             <ListaDeConversas
               conversas={filtradas}
               aoAbrir={(id) => void navegacao.irPara("conversa", { parametros: { id } })}
@@ -167,10 +135,14 @@ export function Conversas() {
             </div>
           ) : null}
         </div>
+        {/* D9: um estado vazio só — o da direita, com saída. Na esquerda ficam
+            só os filtros; no celular este painel é o vazio da tela inteira. */}
         <aside
           data-caixa="vazia"
-          className="hidden min-h-0 place-items-center md:grid"
-          aria-label="Começar uma conversa"
+          aria-label={vazia ? "Começar uma conversa" : "Selecione uma conversa"}
+          className={
+            vazia ? "grid min-h-0 place-items-center" : "hidden min-h-0 place-items-center md:grid"
+          }
         >
           <div className="grid max-w-90 justify-items-center gap-3 px-4 py-10 text-center">
             <img
@@ -179,17 +151,42 @@ export function Conversas() {
               aria-hidden="true"
               className="w-56 max-w-full"
             />
-            <h2 className="text-lg font-semibold leading-6">Comece uma conversa</h2>
-            <p className="text-sm leading-5 text-(--on-surface-variant)">
-              Escolha um anúncio ou negócio e mande a primeira mensagem.
-            </p>
-            <Botao
-              data-acao="ir-ao-mercado"
-              icone="storefront"
-              onClick={() => void navegacao.irPara("mercado")}
-            >
-              Ir ao Mercado
-            </Botao>
+            {vazia ? (
+              <>
+                <h2 className="text-lg font-semibold leading-6">Comece uma conversa</h2>
+                <p className="text-sm leading-5 text-(--on-surface-variant)">
+                  {dados?.proximo
+                    ? "Carregue mais conversas para continuar procurando."
+                    : "Escolha um anúncio ou negócio e mande a primeira mensagem."}
+                </p>
+                {dados?.proximo ? (
+                  <Botao
+                    data-acao="ver-mais-conversas"
+                    disabled={carregandoMais}
+                    onClick={() => void mais()}
+                  >
+                    Ver mais conversas
+                  </Botao>
+                ) : (
+                  <Botao
+                    data-acao="ir-ao-mercado"
+                    icone="storefront"
+                    onClick={() => void navegacao.irPara("mercado")}
+                  >
+                    Ir ao Mercado
+                  </Botao>
+                )}
+              </>
+            ) : (
+              // D8: a lista tem conversas — o painel não manda "começar" para
+              // quem já tem com quem falar, nem oferece o Mercado.
+              <>
+                <h2 className="text-lg font-semibold leading-6">Selecione uma conversa</h2>
+                <p className="text-sm leading-5 text-(--on-surface-variant)">
+                  Escolha uma conversa da lista para continuar por aqui.
+                </p>
+              </>
+            )}
           </div>
         </aside>
       </div>

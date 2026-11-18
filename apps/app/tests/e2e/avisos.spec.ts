@@ -180,4 +180,39 @@ test.describe("F09 — avisos", () => {
     await page.getByRole("button", { name: "Tentar de novo" }).click()
     await expect(page.locator('[data-aviso-item="a1"]')).toBeVisible()
   })
+
+  test("não lido é um sinal só: ponto em tinta, contagem sem ponto, chevron em toda linha", async ({
+    page,
+  }) => {
+    await simularAvisos(page)
+    await page.goto("/app/avisos")
+
+    // Grupo de dois avisos (D21): badge em tinta, sem bolinha junto.
+    const grupo = page.locator('[data-aviso-item="a1"]')
+    await expect(grupo.locator('[data-contagem="2"]')).toBeVisible()
+    await expect(grupo.locator('[data-sinal="nao-lida"]')).toHaveCount(0)
+
+    // Não lida sem contagem (a3): bolinha, sem badge (D21).
+    const simples = page.locator('[data-aviso-item="a3"]')
+    await expect(simples.locator('[data-sinal="nao-lida"]')).toHaveCount(1)
+    await expect(simples.locator("[data-contagem]")).toHaveCount(0)
+
+    // A bolinha é tinta (D10): o mesmo `--primary` dos conversas, nunca Brasa.
+    const cores = await simples.locator('[data-sinal="nao-lida"]').evaluate((elemento) => {
+      const amostra = document.createElement("span")
+      amostra.style.backgroundColor = "var(--primary)"
+      document.body.appendChild(amostra)
+      const esperado = getComputedStyle(amostra).backgroundColor
+      amostra.remove()
+      return { aplicado: getComputedStyle(elemento).backgroundColor, esperado }
+    })
+    expect(cores.aplicado).toBe(cores.esperado)
+
+    // Toda linha abre um detalhe: chevron em todas (D11).
+    for (const id of ["a1", "a2", "a3", "a4", "a5"]) {
+      await expect(
+        page.locator(`[data-aviso-item="${id}"] [data-icone="chevron_right"]`),
+      ).toBeVisible()
+    }
+  })
 })

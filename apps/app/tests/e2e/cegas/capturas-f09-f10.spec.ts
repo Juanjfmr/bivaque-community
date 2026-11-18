@@ -579,9 +579,9 @@ const JORNADAS: ReadonlyArray<{ nome: string; passos: readonly Passo[] }> = [
         ir: async (page) => {
           await abrirDoZero(page, "/app/conversas")
         },
-        // No celular o vazio é o cartão do EstadoVazio; no computador, a linha
-        // quieta da esquerda (o painel da direita completa a saída).
-        pronto: '[data-estado="vazio"]:visible, [data-caixa="vazia-resumo"]:visible',
+        // D9/D20: um estado vazio só, o painel de saída com ilustração — em
+        // toda largura; à esquerda ficam só os filtros.
+        pronto: '[data-caixa="vazia"]:visible',
       },
       {
         nome: "03-conversa",
@@ -599,9 +599,13 @@ const JORNADAS: ReadonlyArray<{ nome: string; passos: readonly Passo[] }> = [
           await expect(page.locator('[data-mensagens="historico"]')).toBeVisible()
           await page.locator("#mensagem-da-conversa").fill("Consigo buscar na quinta à tarde.")
           await page.locator('[data-acao="enviar-mensagem"]').click()
-          await expect(page.getByRole("alert")).toContainText("Seu texto foi mantido")
+          // O balão da própria mensagem é a única mensagem do erro (D22).
+          await expect(page.locator('[data-mensagem="nao-enviada"]')).toBeVisible()
+          await expect(page.locator('[data-mensagem="nao-enviada"] [role="alert"]')).toContainText(
+            "Não enviada",
+          )
         },
-        pronto: '[role="alert"]',
+        pronto: '[data-mensagem="nao-enviada"]',
       },
       {
         nome: "05-menu-de-bloqueio",

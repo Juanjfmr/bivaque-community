@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react"
 
 import { useAvisos as useToast } from "@/components/bivaque/avisos"
-import { Botao } from "@/components/bivaque/botao"
+import { Botao, BotaoDeIcone } from "@/components/bivaque/botao"
 import { EsqueletoDeLista } from "@/components/bivaque/esqueleto"
 import { EstadoDeErro } from "@/components/bivaque/estado-vazio"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -17,12 +17,12 @@ import {
 import { FalhaDaApi } from "@/lib/api/cliente"
 import {
   type CanalDoAviso,
-  comTipo,
   lerPreferenciasDeAviso,
   type PreferenciasDeAviso,
   salvarPreferenciasDeAviso,
   type TipoDoAviso,
 } from "@/lib/dados/avisos"
+import { useEntradaDaTela, useNavegacao } from "@/lib/navegacao/react"
 
 /**
  * Preferências de aviso por tipo e por canal (F09), na área Você.
@@ -32,17 +32,19 @@ import {
  * escolha fica guardada para quando chegar — o canal se chama "No celular",
  * como a pessoa conhece, e não "Push".
  *
- * A régua de 18/11: interruptores de 44 px por canal, apoio de uma linha e o
- * Gravar numa barra fixa no rodapé da seção, sempre visível.
+ * A régua de 18/11 (rodada 1): um controle por decisão — o interruptor é do
+ * canal, sem chave-mestra duplicando a mesma escolha (D15); rótulo e
+ * interruptor na mesma linha, dentro da largura de leitura (D16); a seção abre
+ * com voltar e um título só (D17); apoio de uma linha; e o "Gravar" numa barra
+ * fixa no rodapé da área, sempre visível.
  */
 
-type TipoVisivel = Exclude<TipoDoAviso, "product_news">
-
-const TIPOS: ReadonlyArray<readonly [TipoVisivel, string, string]> = [
+const TIPOS: ReadonlyArray<readonly [TipoDoAviso, string, string]> = [
   ["comments", "Respostas", "Quando alguém comenta ou responde algo seu."],
   ["events", "Encontros", "Mudanças e lembretes dos seus encontros."],
   ["indications", "Pedidos de indicação", "Respostas ao seu pedido e o resumo da cidade."],
   ["messages", "Mensagens", "Quando alguém mandar uma mensagem direta."],
+  ["product_news", "Novidades do Bivaque", "Novidades do produto. Começa desligado."],
 ]
 
 const CANAIS: ReadonlyArray<readonly [CanalDoAviso, string]> = [
@@ -79,6 +81,8 @@ function comCanal(
 
 export function PreferenciasDeAvisos() {
   const { avisar } = useToast()
+  const navegacao = useNavegacao()
+  const entrada = useEntradaDaTela()
   const [preferencias, setPreferencias] = useState<PreferenciasDeAviso | null>(null)
   const [erro, setErro] = useState(false)
   const [rodada, setRodada] = useState(0)
@@ -102,12 +106,6 @@ export function PreferenciasDeAvisos() {
       })
     return () => controle.abort()
   }, [rodada])
-
-  function alterarTipo(tipo: TipoDoAviso, ativo: boolean) {
-    if (envioEmCurso.current) return
-    setPreferencias((atual) => (atual === null ? atual : comTipo(atual, tipo, ativo)))
-    setSujo(true)
-  }
 
   function alterarCanal(tipo: TipoDoAviso, canal: CanalDoAviso, ativo: boolean) {
     if (envioEmCurso.current) return
@@ -145,78 +143,54 @@ export function PreferenciasDeAvisos() {
 
   return (
     <div data-preferencias-de-aviso="sim" aria-busy={salvando} className="grid gap-3">
+      {/* D17: um título só, com voltar — o mesmo molde da lista de avisos. O
+          título da seção de cima sai (styles.css); aqui é a única hierarquia. */}
+      <div className="flex items-center gap-2">
+        <BotaoDeIcone
+          rotulo="Voltar"
+          nome="arrow_back"
+          data-acao="voltar"
+          onClick={() =>
+            void (entrada.pai === null ? navegacao.irPara("inicio") : navegacao.voltar())
+          }
+        />
+        <h2 className="text-[21px] font-bold leading-7">Avisos</h2>
+      </div>
       <p className="text-sm text-(--on-surface-variant)">
         Escolha o que você quer receber e por onde.
       </p>
 
       <ul className="grid gap-2">
-        {TIPOS.map(([tipo, titulo, texto]) => {
-          const ligado = preferencias[tipo]
-          return (
-            <li
-              key={tipo}
-              data-preferencia={tipo}
-              className="grid gap-2 rounded-2xl border border-(--outline-variant) bg-(--surface-lowest) p-3"
-            >
-              <div className="flex min-h-11 items-center justify-between gap-3">
-                <span className="grid min-w-0 gap-0.5">
-                  <b className="text-[15px] font-semibold">{titulo}</b>
-                  <small className="text-[13px] text-(--on-surface-variant)">{texto}</small>
+        {TIPOS.map(([tipo, titulo, texto]) => (
+          <li
+            key={tipo}
+            data-preferencia={tipo}
+            className="grid gap-2 rounded-2xl border border-(--outline-variant) bg-(--surface-lowest) p-3"
+          >
+            <span className="grid min-w-0 gap-0.5">
+              <b className="text-[15px] font-semibold">{titulo}</b>
+              <small className="text-[13px] text-(--on-surface-variant)">{texto}</small>
+            </span>
+            {/* D15: um controle por decisão — o interruptor é do canal, na
+                mesma linha do rótulo (D16). */}
+            <div className="flex flex-wrap items-center gap-x-5 gap-y-2 pl-1">
+              {CANAIS.map(([canal, rotulo]) => (
+                <span key={canal} className="flex min-h-11 items-center gap-2.5 text-sm">
+                  <Checkbox
+                    role="switch"
+                    checked={canalDe(preferencias, tipo, canal)}
+                    disabled={salvando}
+                    onCheckedChange={(valor) => alterarCanal(tipo, canal, valor === true)}
+                    aria-label={`${titulo} por ${rotulo.toLowerCase()}`}
+                    className="bv-interruptor"
+                  />
+                  {rotulo}
                 </span>
-                <Checkbox
-                  role="switch"
-                  checked={ligado}
-                  disabled={salvando}
-                  onCheckedChange={(valor) => alterarTipo(tipo, valor === true)}
-                  aria-label={`Avisos de ${titulo.toLowerCase()}`}
-                  className="bv-interruptor mt-1"
-                />
-              </div>
-              <div
-                className={
-                  ligado
-                    ? "flex flex-wrap items-center gap-x-4 gap-y-1 pl-1"
-                    : "flex flex-wrap items-center gap-x-4 gap-y-1 pl-1 opacity-40"
-                }
-              >
-                {CANAIS.map(([canal, rotulo]) => (
-                  <span key={canal} className="flex min-h-11 items-center gap-2.5 text-sm">
-                    <Checkbox
-                      role="switch"
-                      checked={ligado && canalDe(preferencias, tipo, canal)}
-                      disabled={!ligado || salvando}
-                      onCheckedChange={(valor) => alterarCanal(tipo, canal, valor === true)}
-                      aria-label={`${titulo} por ${rotulo.toLowerCase()}`}
-                      className="bv-interruptor"
-                    />
-                    {rotulo}
-                  </span>
-                ))}
-              </div>
-            </li>
-          )
-        })}
+              ))}
+            </div>
+          </li>
+        ))}
       </ul>
-
-      <div
-        data-preferencia="product_news"
-        className="flex min-h-11 items-center justify-between gap-3 rounded-2xl border border-(--outline-variant) bg-(--surface-lowest) p-3"
-      >
-        <span className="grid min-w-0 gap-0.5">
-          <b className="text-[15px] font-semibold">Novidades do Bivaque</b>
-          <small className="text-[13px] text-(--on-surface-variant)">
-            Novidades do produto. Começa desligado.
-          </small>
-        </span>
-        <Checkbox
-          role="switch"
-          checked={preferencias.productNews}
-          disabled={salvando}
-          onCheckedChange={(valor) => alterarTipo("product_news", valor === true)}
-          aria-label="Novidades do Bivaque"
-          className="bv-interruptor mt-1"
-        />
-      </div>
 
       <div className="grid gap-2 rounded-2xl border border-(--outline-variant) bg-(--surface-lowest) p-3">
         <span id="rotulo-resumo-cidade" className="text-[15px] font-semibold">

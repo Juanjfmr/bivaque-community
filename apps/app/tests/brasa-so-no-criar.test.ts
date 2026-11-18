@@ -24,6 +24,10 @@ const USO = [
 /**
  * As únicas pinturas em Brasa que sobram, cada uma com o porquê. Fora desta
  * lista, qualquer linha que um padrão de USO alcançar reprova o lote.
+ *
+ * Badges de estado (contador da barra, marca de não lido) NÃO moram aqui: são
+ * tinta (ADR-20261118 sem ressalvas; revisão cega D10 e a nota do F10 — o selo
+ * laranja competia com o Criar).
  */
 const PERMITIDAS: ReadonlyArray<{
   readonly arquivo: string
@@ -39,16 +43,6 @@ const PERMITIDAS: ReadonlyArray<{
     arquivo: "components/bivaque/marca.tsx",
     padrao: /fill="var\(--brasa\)"/,
     porque: "o traço da marca no logotipo, não uma ação",
-  },
-  {
-    arquivo: "src/casca/BarraDoTopo.tsx",
-    padrao: /bg-\(--brasa\)/,
-    porque: "o contador sobre o ícone é estado, não ação",
-  },
-  {
-    arquivo: "src/telas/Avisos.tsx",
-    padrao: /bg-\(--brasa\)/,
-    porque: "a marca de aviso não lido é estado, não ação",
   },
   {
     arquivo: "src/galeria/mercado/ecomcn/filter-sheet.tsx",

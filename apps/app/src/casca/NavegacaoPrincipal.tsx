@@ -18,9 +18,14 @@ import { useCasca } from "@/src/contexto/casca"
  * aba acesa é a do dono da tela, com a origem da entrada onde há mais de uma
  * porta (§3.2) — quem diz é `abaAtiva`, não o endereço; sem pai na entrada
  * (link direto), nenhuma aba se acende.
- *
- * O Criar encolhe quando a barra minimiza ao rolar (§6, itens 27 e 28).
  */
+
+/** Rotas que o catálogo (lib/navegacao/rotas.ts) declara sem aba própria: o
+ *  perfil "chega-se por um nome, de qualquer jornada" e a cidade, "pelo chip
+ *  da casca". A origem da entrada não as dona — nem no link direto, nem no
+ *  caminho interno (achado 6 da revisão de código: vindo do feed, o perfil
+ *  acendia Início). */
+const SEM_ABA: ReadonlySet<string> = new Set(["perfil", "cidade"])
 
 type GlifoDeAba = "home" | "volunteer_activism" | "storefront" | "person"
 
@@ -46,10 +51,11 @@ export function NavegacaoPrincipal({
   // para o que tem mais de uma porta — mas a origem só é confiável quando a
   // entrada veio de dentro do app (tem `pai`). Num link direto ou recarga, a
   // origem nasce "inicio" por padrão e NÃO acende nada: Salvos ou o perfil de
-  // um membro abertos por endereço não marcam o Início.
+  // um membro abertos por endereço não marcam o Início. As rotas SEM_ABA não
+  // acendem nada em nenhum caminho (achado 6).
   const entrada = useEntradaDaTela()
   const aba =
-    rotaPorNome(rota.nome)?.dono === "origem" && entrada.pai === null
+    SEM_ABA.has(rota.nome) || (rotaPorNome(rota.nome)?.dono === "origem" && entrada.pai === null)
       ? null
       : abaAtiva(rota.nome, entrada.origem)
   const larguraDaBarra = navegacaoVisivel(rota.nome, largura)

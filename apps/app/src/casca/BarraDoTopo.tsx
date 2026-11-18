@@ -123,13 +123,15 @@ export function BarraDoTopo({
   )
 }
 
-/** O contador sobre o ícone (protótipo: `.badge` na barra). */
+/** O contador sobre o ícone (protótipo: `.badge` na barra). Tinta, nunca
+ *  Brasa (ADR-20261118 e revisão cega do F10): o laranja da barra é só do
+ *  Criar, e o selo não pode competir com ele. */
 function Contador({ quantidade, nome }: { quantidade: number; nome: "avisos" | "conversas" }) {
   if (quantidade <= 0) return null
   return (
     <span
       data-contador={nome}
-      className="absolute -top-0.5 right-0.5 grid min-w-5 place-items-center rounded-full bg-(--brasa) px-1 text-[11px] font-bold text-(--brasa-foreground)"
+      className="absolute -top-0.5 right-0.5 grid min-w-5 place-items-center rounded-full bg-(--primary) px-1 text-[11px] font-bold text-(--primary-foreground)"
     >
       {quantidade}
     </span>
