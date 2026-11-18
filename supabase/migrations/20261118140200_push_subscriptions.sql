@@ -1,11 +1,11 @@
--- RUN-137 (LAN-PUSH, parte web): inscrição do aparelho e o envio pelo outbox.
+-- RUN-188 (LAN-PUSH, parte web): inscrição do aparelho e o envio pelo outbox.
 --
 -- ADR-20261107-push-no-aparelho, itens 1 a 3. A tabela guarda o destino do
 -- provedor (endpoint do Web Push), as chaves públicas da inscrição, um rótulo
 -- curto e a data do último envio aceito. O membro só alcança as próprias
--- linhas, pela rota do app; não existe UPDATE de cliente (a reinscrição do
--- mesmo destino troca de dono pela trigger abaixo). O papel de serviço lê para
--- enviar e apaga quando o provedor recusa o destino.
+-- linhas, pela rota do app; a inscrição nasce só pela função de registro
+-- abaixo (nenhum INSERT direto de cliente), e não existe UPDATE de cliente.
+-- O papel de serviço lê para enviar e apaga quando o provedor recusa o destino.
 --
 -- A notificação gravada (public.notifications) gera a linha do canal `push`
 -- somente quando a preferência do membro liga esse canal e não há bloqueio
@@ -38,7 +38,9 @@ alter table public.push_subscriptions enable row level security;
 alter table public.push_subscriptions force row level security;
 
 revoke all on table public.push_subscriptions from anon, authenticated;
-grant select, insert, delete on table public.push_subscriptions to authenticated;
+-- Sem INSERT para authenticated: o Data API não é caminho de escrita. A
+-- inscrição nasce pela função register_push_subscription, chamada pela rota.
+grant select, delete on table public.push_subscriptions to authenticated;
 -- O envio lê pelo papel de serviço e grava `last_success_at`; apagar é a
 -- resposta ao 404/410 do provedor.
 grant select, update, delete on table public.push_subscriptions to service_role;
@@ -49,44 +51,54 @@ for select
 to authenticated
 using (user_id = (select auth.uid()));
 
-create policy push_subscriptions_insert_own
-on public.push_subscriptions
-for insert
-to authenticated
-with check (user_id = (select auth.uid()));
-
 create policy push_subscriptions_delete_own
 on public.push_subscriptions
 for delete
 to authenticated
 using (user_id = (select auth.uid()));
 
--- ── 2. reinscrever o mesmo destino troca o dono, sem UPDATE de cliente ──────
--- A rota insere com o `user_id` da sessão. A trigger apaga a linha antiga do
--- mesmo destino — do próprio dono (renova a data) ou de outro (troca o dono) —
--- antes de a nova entrar; o cliente nunca vê um UPDATE.
+-- ── 2. o registro é uma função; transferir destino exige as chaves ─────────
+-- Ninguém insere direto: sem INSERT concedido a authenticated, o Data API
+-- não é caminho de escrita. A rota chama a função abaixo, que apaga a linha
+-- antiga do mesmo destino apenas quando é do próprio dono (renovação) ou
+-- quando as chaves p256dh/auth enviadas batem com a inscrição existente — o
+-- mesmo navegador em outra conta. Destino alheio com chaves diferentes não
+-- apaga nada: a chave única (kind, destination) recusa o registro e a rota
+-- devolve 409. O dono da linha nova é sempre o da sessão (auth.uid()).
 
-create function private.claim_push_subscription()
-returns trigger
+create function public.register_push_subscription(
+  p_kind text,
+  p_destination text,
+  p_key_p256dh text,
+  p_key_auth text,
+  p_label text
+)
+returns void
 language plpgsql
 security definer
 set search_path = ''
 as $$
 begin
   delete from public.push_subscriptions
-  where kind = new.kind
-    and destination = new.destination;
+   where kind = p_kind
+     and destination = p_destination
+     and (
+       user_id = auth.uid()
+       or (
+         key_p256dh is not distinct from p_key_p256dh
+         and key_auth is not distinct from p_key_auth
+       )
+     );
 
-  return new;
+  insert into public.push_subscriptions (user_id, kind, destination, key_p256dh, key_auth, label)
+  values (auth.uid(), p_kind, p_destination, p_key_p256dh, p_key_auth, p_label);
 end;
 $$;
 
-revoke all on function private.claim_push_subscription() from public;
-
-create trigger claim_push_subscription_trigger
-before insert on public.push_subscriptions
-for each row
-execute function private.claim_push_subscription();
+revoke all on function public.register_push_subscription(text, text, text, text, text) from public;
+revoke all on function public.register_push_subscription(text, text, text, text, text) from anon;
+grant execute on function public.register_push_subscription(text, text, text, text, text)
+  to authenticated;
 
 -- ── 3. a regra do canal push na entrega ─────────────────────────────────────
 -- Diferente dos canais antigos, o push nasce desligado: sem uma linha

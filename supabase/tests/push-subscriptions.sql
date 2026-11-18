@@ -1,7 +1,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(30);
+select plan(34);
 
 \ir fixtures/foundation.inc
 
@@ -23,13 +23,15 @@ select results_eq(
   'push_subscriptions tem RLS habilitada e forçada'
 );
 
--- ── o dono lê, cria e apaga só as próprias linhas ───────────────────────────
+-- ── o dono lê e apaga as próprias linhas; a criação é só pela função ────────
 
 set local role authenticated;
 select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000001', true);
 select set_config('request.jwt.claim.role', 'authenticated', true);
 
-select lives_ok(
+-- O Data API não é caminho de escrita: sem INSERT concedido, a inscrição só
+-- nasce pela função que a rota chama.
+select throws_ok(
   $$
     insert into public.push_subscriptions
       (user_id, kind, destination, key_p256dh, key_auth, label)
@@ -42,7 +44,22 @@ select lives_ok(
       'Navegador'
     )
   $$,
-  'o dono cria a própria inscrição'
+  '42501',
+  null,
+  'authenticated não insere direto na tabela'
+);
+
+select lives_ok(
+  $$
+    select public.register_push_subscription(
+      'web',
+      'https://push.example.invalid/sub/one',
+      'chave-publica',
+      'segredo',
+      'Navegador'
+    )
+  $$,
+  'o dono registra a própria inscrição pela função'
 );
 
 select is(
@@ -86,13 +103,11 @@ select is(
   'outro membro não apaga a inscrição alheia'
 );
 
--- Reinscrever o mesmo destino troca o dono, sem duplicar.
+-- Reinscrever o mesmo destino com as mesmas chaves troca o dono, sem duplicar:
+-- é o mesmo navegador em outra conta, provando posse das chaves da inscrição.
 select lives_ok(
   $$
-    insert into public.push_subscriptions
-      (user_id, kind, destination, key_p256dh, key_auth, label)
-    values (
-      '10000000-0000-4000-8000-000000000002',
+    select public.register_push_subscription(
       'web',
       'https://push.example.invalid/sub/one',
       'chave-publica',
@@ -100,7 +115,7 @@ select lives_ok(
       'Navegador'
     )
   $$,
-  'o novo dono reinscreve o mesmo destino'
+  'o novo dono reinscreve o mesmo destino com as chaves do navegador'
 );
 
 select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000001', true);
@@ -127,6 +142,37 @@ select is(
   ),
   '10000000-0000-4000-8000-000000000002',
   'a linha pertence a quem reinscreveu'
+);
+
+-- Destino alheio com chaves diferentes não é reivindicado: o DELETE condicional
+-- da função não alcança a linha e a chave única recusa o registro.
+select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000001', true);
+
+select throws_ok(
+  $$
+    select public.register_push_subscription(
+      'web',
+      'https://push.example.invalid/sub/one',
+      'chave-falsificada',
+      'segredo',
+      'Navegador'
+    )
+  $$,
+  '23505',
+  null,
+  'membro não reivindica destino alheio com chaves diferentes'
+);
+
+select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000002', true);
+
+select is(
+  (
+    select user_id::text || '/' || key_p256dh
+    from public.push_subscriptions
+    where destination = 'https://push.example.invalid/sub/one'
+  ),
+  '10000000-0000-4000-8000-000000000002/chave-publica',
+  'a inscrição alheia segue com o dono e as chaves de origem'
 );
 
 select lives_ok(
@@ -173,17 +219,15 @@ select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000001
 
 select lives_ok(
   $$
-    insert into public.push_subscriptions
-      (user_id, kind, destination, key_p256dh, key_auth)
-    values (
-      '10000000-0000-4000-8000-000000000001',
+    select public.register_push_subscription(
       'web',
       'https://push.example.invalid/sub/service',
       'chave-publica',
-      'segredo'
+      'segredo',
+      'Navegador'
     )
   $$,
-  'o dono cria a inscrição que o serviço vai ler'
+  'o dono registra a inscrição que o serviço vai ler'
 );
 
 reset role;
@@ -229,17 +273,15 @@ select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000006
 
 select lives_ok(
   $$
-    insert into public.push_subscriptions
-      (user_id, kind, destination, key_p256dh, key_auth)
-    values (
-      '10000000-0000-4000-8000-000000000006',
+    select public.register_push_subscription(
       'web',
       'https://push.example.invalid/sub/cascade',
       'chave-publica',
-      'segredo'
+      'segredo',
+      'Navegador'
     )
   $$,
-  'a conta nova tem inscrição'
+  'a conta nova registra a inscrição'
 );
 
 reset role;
@@ -333,6 +375,27 @@ select is(
   ),
   'https://push.example.invalid/sub/nova',
   'a inscrição recente continua'
+);
+
+-- ── notificação antes da linha da matriz: nada enfileira ─────────────────────
+
+insert into public.notifications
+  (recipient_user_id, actor_user_id, type, action, target_type, target_id)
+values (
+  '10000000-0000-4000-8000-000000000001',
+  '10000000-0000-4000-8000-000000000002',
+  'comment', 'created', 'post', '90000000-0000-4000-8000-000000000005'
+);
+
+select is(
+  (
+    select count(*)::int
+    from public.outbox
+    where channel = 'push'
+      and recipient = '10000000-0000-4000-8000-000000000001'
+  ),
+  0,
+  'notificação antes de existir a linha da matriz não enfileira push'
 );
 
 -- ── a notificação vira linha de push só com a preferência e sem bloqueio ────

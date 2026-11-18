@@ -2,6 +2,9 @@ import { NextRequest } from "next/server"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 vi.mock("web/lib/app-api/sessao-do-next", () => ({ resolverSessaoDaRequisicao: vi.fn() }))
+vi.mock("web/lib/logger", () => ({
+  log: { error: vi.fn(), warn: vi.fn(), info: vi.fn() },
+}))
 
 import {
   DELETE as apagar,
@@ -9,8 +12,10 @@ import {
   POST as inscrever,
 } from "web/app/api/app/push/route"
 import { resolverSessaoDaRequisicao } from "web/lib/app-api/sessao-do-next"
+import { log } from "web/lib/logger"
 
 const resolver = vi.mocked(resolverSessaoDaRequisicao)
+const logError = vi.mocked(log.error)
 
 const BASE = "http://localhost:3000/api/app/push"
 const USER = "20000000-0000-4000-8000-000000000001"
@@ -26,7 +31,7 @@ const headers = {
 
 type Chamada = {
   table: string
-  op: "select" | "insert" | "delete" | "update"
+  op: "select" | "delete" | "rpc"
   coluna?: string
   valor?: unknown
   corpo?: unknown
@@ -58,16 +63,6 @@ function mockClient(options: Options = {}) {
       chamadas.push({ table, op: operacao, coluna, valor })
       return query
     }
-    query["insert"] = (corpo: unknown) => {
-      operacao = "insert"
-      chamadas.push({ table, op: "insert", corpo })
-      return query
-    }
-    query["update"] = (corpo: unknown) => {
-      operacao = "update"
-      chamadas.push({ table, op: "update", corpo })
-      return query
-    }
     query["delete"] = () => {
       operacao = "delete"
       chamadas.push({ table, op: "delete" })
@@ -82,7 +77,17 @@ function mockClient(options: Options = {}) {
     return query
   })
 
-  return { client: { from } as never, chamadas }
+  // A escrita da inscrição é só pela função de registro do banco: o cliente da
+  // sessão nunca recebe INSERT direto na tabela.
+  const rpc = vi.fn((nome: string, corpo: unknown) => {
+    chamadas.push({ table: `rpc:${nome}`, op: "rpc", corpo })
+    if (options.erroNaEscrita !== undefined) {
+      return Promise.resolve({ error: options.erroNaEscrita })
+    }
+    return Promise.resolve({ error: null })
+  })
+
+  return { client: { from, rpc } as never, chamadas }
 }
 
 function req(method: string, url = BASE, body?: unknown, requestHeaders = headers) {
@@ -164,7 +169,7 @@ describe("rota de push do app", () => {
   })
 
   describe("inscrição", () => {
-    it("grava com o dono da sessão, mesmo com user_id no corpo", async () => {
+    it("grava pela função de registro, sem user_id do corpo", async () => {
       const mock = mockClient()
       autenticar(mock)
       const resposta = await inscrever(
@@ -173,19 +178,21 @@ describe("rota de push do app", () => {
       expect(resposta.status).toBe(201)
       expect(await json(resposta)).toEqual({ inscrito: true })
 
-      const gravado = mock.chamadas.find((chamada) => chamada.op === "insert")?.corpo as Record<
+      const gravado = mock.chamadas.find((chamada) => chamada.op === "rpc")?.corpo as Record<
         string,
         unknown
       >
       expect(gravado).toMatchObject({
-        user_id: USER,
-        kind: "web",
-        destination: DESTINO,
-        key_p256dh: CHAVE,
-        key_auth: CHAVE,
-        label: "Navegador",
+        p_kind: "web",
+        p_destination: DESTINO,
+        p_key_p256dh: CHAVE,
+        p_key_auth: CHAVE,
+        p_label: "Navegador",
       })
-      expect(gravado["user_id"]).not.toBe(OUTRO)
+      // O dono vem da sessão, dentro da função de registro: o corpo do pedido
+      // não carrega identidade nenhuma.
+      expect("user_id" in gravado).toBe(false)
+      expect("userId" in gravado).toBe(false)
     })
 
     it.each([
@@ -196,7 +203,7 @@ describe("rota de push do app", () => {
       autenticar(mock)
       const resposta = await inscrever(req("POST", BASE, corpo, cabecalhos))
       expect(resposta.status).toBe(403)
-      expect(mock.chamadas.some((chamada) => chamada.op === "insert")).toBe(false)
+      expect(mock.chamadas.some((chamada) => chamada.op === "rpc")).toBe(false)
     })
 
     it.each([
@@ -213,7 +220,7 @@ describe("rota de push do app", () => {
       const mock = mockClient()
       autenticar(mock)
       expect((await inscrever(req("POST", BASE, corpo))).status).toBe(400)
-      expect(mock.chamadas.some((chamada) => chamada.op === "insert")).toBe(false)
+      expect(mock.chamadas.some((chamada) => chamada.op === "rpc")).toBe(false)
     })
 
     it("destino repetido que colide devolve conflito, não 500", async () => {
@@ -226,6 +233,26 @@ describe("rota de push do app", () => {
       const mock = mockClient({ erroNaEscrita: { code: "XX000", message: "boom" } })
       autenticar(mock)
       expect((await inscrever(req("POST", BASE, inscricao()))).status).toBe(503)
+    })
+
+    it("erro do banco não leva o endpoint para o log, só o código", async () => {
+      const mock = mockClient({ erroNaEscrita: { code: "XX000", message: `falha em ${DESTINO}` } })
+      autenticar(mock)
+      const resposta = await inscrever(req("POST", BASE, inscricao()))
+      expect(resposta.status).toBe(503)
+      expect(logError).toHaveBeenCalledTimes(1)
+      const campos = logError.mock.calls[0]?.[1] ?? {}
+      expect(campos["codigo"]).toBe("XX000")
+      expect(JSON.stringify(logError.mock.calls)).not.toContain("abc123")
+    })
+
+    it("erro sem código ganha categoria fixa no log, também sem a mensagem", async () => {
+      const mock = mockClient({ erroNaEscrita: { message: `falha em ${DESTINO}` } })
+      autenticar(mock)
+      expect((await inscrever(req("POST", BASE, inscricao()))).status).toBe(503)
+      const campos = logError.mock.calls[0]?.[1] ?? {}
+      expect(campos["codigo"]).toBe("sem-codigo")
+      expect(JSON.stringify(logError.mock.calls)).not.toContain("abc123")
     })
   })
 
@@ -244,6 +271,16 @@ describe("rota de push do app", () => {
       expect(filtros).toContainEqual(
         expect.objectContaining({ coluna: "destination", valor: DESTINO }),
       )
+    })
+
+    it("erro no DELETE também não leva o endpoint para o log, só o código", async () => {
+      const mock = mockClient({ erroNaEscrita: { code: "XX000", message: `falha em ${DESTINO}` } })
+      autenticar(mock)
+      expect((await apagar(req("DELETE", BASE, { destination: DESTINO }))).status).toBe(503)
+      expect(logError).toHaveBeenCalledTimes(1)
+      const campos = logError.mock.calls[0]?.[1] ?? {}
+      expect(campos["codigo"]).toBe("XX000")
+      expect(JSON.stringify(logError.mock.calls)).not.toContain("abc123")
     })
 
     it("corpo sem destino é inválido", async () => {

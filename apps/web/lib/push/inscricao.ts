@@ -4,8 +4,8 @@
  * Só o Web Push entra nesta rodada: `kind` fechado em `web`, destino de um
  * serviço de push conhecido por HTTPS e as duas chaves públicas da inscrição. O
  * dono vem da sessão; o corpo nunca carrega `user_id`. A lista de serviços vale
- * de novo no envio (`adaptador.ts`): o destino também pode ser gravado pelo Data
- * API, não só por esta rota.
+ * de novo no envio (`adaptador.ts`): a gravação é só pela rota, que chama a
+ * função de registro do banco — o Data API não é caminho de escrita.
  */
 
 export type InscricaoWebValida = Readonly<{

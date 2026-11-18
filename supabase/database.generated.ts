@@ -3679,6 +3679,16 @@ export type Database = {
         }
         Returns: undefined
       }
+      register_push_subscription: {
+        Args: {
+          p_destination: string
+          p_key_auth: string
+          p_key_p256dh: string
+          p_kind: string
+          p_label: string
+        }
+        Returns: undefined
+      }
       register_service_request_photo: {
         Args: { p_path: string; p_position: number; p_request_id: string }
         Returns: string
