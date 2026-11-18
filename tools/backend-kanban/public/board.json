@@ -10026,26 +10026,29 @@
       "phase": "HRN — Harness do quadro (16/11)",
       "priority": "P1",
       "category": "infra",
-      "status": "now",
+      "status": "done",
       "updatedAt": "2026-11-18",
-      "sourceRevision": "9626e1a3",
+      "sourceRevision": "5c9315c4",
       "description": "Dono em 18/11 (cartão de decisão: CI leve para PRs sem código): PR que só toca quadro, docs (fora de docs/legal), RATIFICACAO e regras de agente não sobe a stack. Job changes classifica pelos arquivos do PR (scripts/ci/pr-leve.mjs); ci-core e e2e-stateful pulam mesmo com ci:full; o agregador Install, test, and build sempre reporta e exige changes e fast verdes. O merge-seguro usa a mesma classificação (com o nome antigo dos renomeados) e aceita fast + agregador verdes no PR leve; qualquer arquivo fora da lista volta ao completo.",
       "dependencies": [],
       "checklist": [
         "[x] Classificador único scripts/ci/pr-leve.mjs com testes de fronteira",
         "[x] Workflow: job changes, stack pulada no PR leve, agregador sempre reporta",
         "[x] merge-seguro: caminho leve com testes positivos e negativos",
-        "[ ] Prova de runtime: um PR só de quadro fecha em minutos e passa no merge-seguro"
+        "[x] Prova de runtime: um PR só de quadro fecha em minutos e passa no merge-seguro"
       ],
       "proof": [
-        "Origem: PR #282 (só quadro) rodou o completo inteiro (~10 min, run 44236533544) porque a label ci:full tinha ficado no branch e o merge-seguro exigia o ci-core em qualquer PR."
+        "Origem: PR #282 (só quadro) rodou o completo inteiro (~10 min, run 44236533544) porque a label ci:full tinha ficado no branch e o merge-seguro exigia o ci-core em qualquer PR.",
+        "PR #283 mergeado por squash (5c9315c4): completo verde no SHA de801ad8 (run 44239395813; classificador da base sem script caiu no completo, como previsto). Revisão independente (reviewer) PASS com ressalvas; corrigidas no mesmo PR: classificador lido da base e AGENTS/CLAUDE de apps e packages fora da lista. Emenda de 18/11 no ADR-20261114.",
+        "Prova de runtime: PR #284 (só quadro) rodou Classify + Fast checks + agregador verde em ~1,5 min (run 44240484224), com ci-core e e2e-stateful skipped; avaliar() do merge-seguro sobre esses checks: ok, caminho leve. Antes: ~10 min (run 44236533544)."
       ],
       "tests": [
         "tests/scope/pr-leve.test.mjs",
         "tests/scope/merge-seguro.test.mjs",
         "tests/scope/workflows-ci.test.mjs"
       ],
-      "notes": []
+      "notes": [],
+      "completedAt": "2026-11-18"
     }
   ],
   "launch": {
