@@ -10155,7 +10155,8 @@
         "Decidir se a carência da exclusão suspende o push do aparelho"
       ],
       "proof": [
-        "11/11: auditoria security-auditor do #163; HIGH corrigido no PR, MEDIUM/LOW aqui."
+        "11/11: auditoria security-auditor do #163; HIGH corrigido no PR, MEDIUM/LOW aqui.",
+        "18/11 (rodada 2 da auditoria do #163): o Sair chama sairDoApp — DELETE com a sessão válida, cancelamento no navegador mesmo se o DELETE falhar, só então o signOut — e o teste do app prova a ordem; o INSERT direto em push_subscriptions saiu do authenticated (42501 sempre) e a transferência de destino virou a função register_push_subscription, que só reivindica quando destino e chaves p256dh/auth batem com a inscrição existente — destino alheio com chaves diferentes devolve 23505 e a linha da vítima fica intacta. Os logs da rota /api/app/push carregam só o código do erro, nunca a mensagem com o endpoint."
       ],
       "tests": [],
       "links": [
@@ -10164,7 +10165,29 @@
       ],
       "dependencies": [],
       "updatedAt": "2026-11-11",
-      "sourceRevision": "4677fd4f"
+      "sourceRevision": "4677fd4f",
+      "completedChecklist": [false, false, true, true]
+    },
+    {
+      "id": "GATE-LINT-BOARDJSON",
+      "title": "board.json passou de 1 MiB e trava o lint do gate na main e no feat/lan-push",
+      "phase": "Lançamento",
+      "priority": "P2",
+      "category": "repo",
+      "status": "next",
+      "description": "O gate (biome check .) falha em todo o repositório desde que tools/backend-kanban/public/board.json cruzou 1,0 MiB (1,04 MiB na main, 1,05 MiB no branch). Não é regressão do push: reproduz em estado limpo (git stash) nos dois ramos. Próximo passo concreto: decidir entre subir files.maxSize no biome.json (uma linha) ou fatiar o board.json por ciclo com histórico datado; até lá, qualquer 'gate verde' exige conferir o lint por arquivo.",
+      "checklist": [
+        "Decidir o caminho: files.maxSize no biome.json ou histórico fatiado do board.json",
+        "Voltar o `pnpm gate` verde de ponta a ponta na main e no branch"
+      ],
+      "proof": [
+        "18/11: `biome check .` falha com 'The size of the file is 1.0 MiB, which exceeds the configured maximum' em estado limpo no feat/lan-push; main:tools/backend-kanban/public/board.json mede 1,04 MiB."
+      ],
+      "tests": [],
+      "links": [],
+      "dependencies": [],
+      "updatedAt": "2026-11-18",
+      "sourceRevision": "50d8039e1"
     }
   ],
   "launch": {
