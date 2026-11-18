@@ -40,11 +40,20 @@ empacotamento (§7). Ficaram dois pontos sem decisão:
 2. **Titular e revogação** (emenda do §2 de 07/11).
    - Reinscrever um destino que já existe troca o titular numa única instrução atômica (`insert … on
      conflict do update`, só pelo papel da rota). Assim, um aparelho nunca fica com dois titulares.
-   - Ao sair, o app apaga a inscrição deste aparelho antes de encerrar a sessão. Se a chamada falhar (sem
-     rede), o app guarda o pedido e tenta de novo na próxima abertura, antes de qualquer outra chamada.
-   - Mesmo sem essa revogação, o servidor confere o titular, a preferência `push` ligada e o bloqueio
-     entre membros na hora de montar cada envio, não na hora de enfileirar. Um aparelho que trocou de
-     conta ou desligou o canal não recebe aviso da conta anterior.
+   - Ao sair, a ordem é fixa: (a) o app apaga a inscrição deste aparelho pela rota, com a sessão ainda
+     válida; (b) o app cancela o registro no plugin nativo, o que invalida o token no provedor; (c) só
+     então encerra a sessão. O passo (b) roda mesmo se (a) falhar sem rede. Assim, a linha que sobrar no
+     servidor aponta para um token morto: o primeiro envio recebe `UNREGISTERED`/`BadDeviceToken` e a
+     apaga, e a purga a remove de qualquer jeito.
+   - O app não guarda credencial para revogar depois do logout. A nova tentativa de (a) só ocorre se a
+     mesma pessoa entrar de novo no aparelho. Se outra pessoa entrar, a nova inscrição troca o titular
+     atomicamente.
+   - O servidor confere o titular, a preferência `push` ligada e o bloqueio entre membros ao montar cada
+     envio, não ao enfileirar. Isso acontece na mesma instrução SQL que reserva a linha
+     (`… for update skip locked` sobre a inscrição). A troca de titular e a revogação que chegam durante o
+     envio esperam essa linha.
+   - Resíduo aceito: um envio já entregue ao provedor antes da troca não é recolhido. Esse envio carrega só
+     o título e a frase fixa, sem dado de terceiro (decisão 3).
    - Desligar o canal `push` nas preferências apaga as inscrições nativas da pessoa.
    - Retenção: a inscrição sai 90 dias depois de `coalesce(last_success_at, created_at)`. A purga é um job
      periódico (pg_cron) que não depende de haver envio.
