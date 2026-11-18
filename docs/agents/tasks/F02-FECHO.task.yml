@@ -1,0 +1,101 @@
+# F02-FECHO — fecha o LAN-F02 pelos seis critérios de pronto (docs/LANCAMENTO.md :34-48).
+#
+# Inventário do coordenador em 18/11 sobre origin/main 5e66cd28 (disco e git, não o texto
+# do cartão). O que já está: /app/inicio e /app/busca ligados ao banco (PR #138), presença
+# gravada e relida, 401 nas rotas sem sessão, /inicio e /explorar* com 307 para o app,
+# tests/e2e/f02-inicio-real.spec.ts rodando nos três projetos (375/768/1440). O que falta é
+# este contrato.
+
+task_id: F02-001
+
+adr: docs/decisions/ADR-20261024-front-react-spa.md
+
+objective: >
+  A Busca e o Início do app distinguem sessão vencida (401) e acesso negado (403) de falha de
+  rede, com a saída real para /app/entrar; a prova negativa de navegador "entrada pendente não
+  aparece na busca" volta a existir; a tela antiga apps/web/app/(shell)/inicio sai inteira do
+  apps/web (o 307 /inicio → /app/inicio já existe) com os módulos ainda usados por outras telas
+  realocados; o proxy manda o membro com sessão de "/" direto para /app/inicio; e as duas
+  melhorias baratas da revisão às cegas de 17/11 para o F02 entram.
+
+authority:
+  - docs/LANCAMENTO.md :34-48 (critérios 1, 3 e 6) e :55 (linha F02)
+  - Card LAN-F02 (checklist "Tela antiga do apps/web retirada, com redirecionamento e portão do proxy")
+  - Card BUSCA-SESSAO-VENCIDA (quatro itens do checklist)
+  - Card CEGA-MELHORIAS-17-11 (itens F02 — chips cortados em 375; texto de apoio longo no Início)
+  - ADR-20261024-front-react-spa.md §8 (ordem da troca; redirect e portão do proxy no mesmo PR)
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    apps/app/src/telas/Busca.tsx:131-150 e :256-257 transformam toda falha em EstadoDeErro (o
+    401 de /api/app/busca vira "Confira a conexão"); Inicio.tsx:299 idem. O molde certo existe:
+    Agenda.tsx:59-61 com sessaoVencida()/acessoNegado() e EstadoDeSessaoVencida/EstadoNegado de
+    apps/app/src/eventos/EstadosDeAcesso.tsx. tests/e2e/busca-redirects.spec.ts:27-30 afirma o
+    estado de erro errado. A pasta apps/web/app/(shell)/inicio tem 22 arquivos servindo tela
+    inalcançável (next.config.ts tem ["/inicio", "/app/inicio"]), mas ainda é importada por
+    (shell)/community/page.tsx:15-16 (home-loaders, join-community),
+    components/bivaque/feed-right-rail.tsx:9 (formatters), components/bivaque/intent-launcher.tsx:10
+    (use-avatar-src) e por tests/unit/ui/inicio-going-line, inicio-hub, inicio-novidade e
+    shell-create-action. proxy.ts:92 redireciona "/" com sessão para "/inicio" (salto duplo).
+
+allowed_paths:
+  - docs/agents/tasks/F02-FECHO.task.yml
+  - apps/app/src/telas/Busca.tsx
+  - apps/app/src/telas/Inicio.tsx
+  - apps/app/src/eventos/EstadosDeAcesso.tsx
+  - apps/app/components/bivaque/chips-de-filtro.tsx
+  - apps/app/tests
+  - apps/web/app/(shell)/inicio
+  - apps/web/app/(shell)/community
+  - apps/web/app/components/bivaque/feed-right-rail.tsx
+  - apps/web/app/components/bivaque/intent-launcher.tsx
+  - apps/web/app/api/app/cidade/[id]/route.ts
+  - apps/web/lib/inicio
+  - apps/web/proxy.ts
+  - tests/unit/ui
+  - tests/unit/infra
+  - tests/unit/proxy
+  - tests/e2e/busca-redirects.spec.ts
+  - tests/e2e/f02-inicio-real.spec.ts
+  - tests/e2e/link-crawl.spec.ts
+  - scripts/visual/capture.mjs
+  - .visual/f02-fecho
+
+forbidden:
+  - tocar supabase/ (migration, seed, pgTAP) ou qualquer rota em apps/web/app/api além do comentário de cidade/[id]/route.ts
+  - mudar o contrato de resposta de /api/app/busca ou /api/app/inicio
+  - redesenhar Início ou Busca além dos dois itens da revisão às cegas; mexer no tema escuro
+  - apagar teste sem lar declarado no RELATORIO (teste de código morto morre junto, nomeado)
+  - skip/fixme novo, afrouxar asserção, inline de credencial ou leitura de arquivo .env pelo spec
+  - push, merge, force-push, editar o quadro (tools/backend-kanban), tocar outra worktree
+  - supabase start/reset ou qualquer escrita em banco (o coordenador roda as provas de banco e E2E real)
+
+acceptance:
+  - "Busca.tsx e Inicio.tsx guardam o tipo da falha no molde de Agenda.tsx (sessao | negado | falhou) usando sessaoVencida()/acessoNegado() já existentes; 401 renderiza EstadoDeSessaoVencida (botão 'Entrar de novo' leva a /app/entrar), 403 renderiza EstadoNegado com texto próprio da tela, e só falha de rede/5xx mantém EstadoDeErro com 'Tentar de novo'. Abortar continua ignorado."
+  - "Teste de unidade no app (vitest, apps/app/tests) cobrindo os três ramos nas duas telas, com caso negativo: falha de rede NÃO mostra sessão vencida."
+  - "E2E do app (apps/app/tests/e2e, rotas simuladas no molde de busca-resultado-ficha.spec.ts): /app/busca?q=escola com a API respondendo 401 mostra [data-estado='sessao-vencida'] e o botão leva a /app/entrar, nos projetos de 375, 768 e 1440 da config do app; o mesmo para /app/inicio."
+  - "tests/e2e/busca-redirects.spec.ts: o 307 e o q preservado ficam intactos; a asserção do estado na aterrissagem sem sessão passa a ser [data-estado='sessao-vencida'] (não afrouxar: continua exigindo o estado visível nas três larguras)."
+  - "tests/e2e/f02-inicio-real.spec.ts ganha a prova negativa de navegador A4: com a sessão do membro semeado, uma busca por termo que só exista em conteúdo de entrada pendente/oculta no seed não lista esse conteúdo. O executor escolhe o termo lendo supabase/seed.sql (sem alterá-lo) e registra no RELATORIO qual linha do seed sustenta o caso; se o seed não tiver conteúdo pendente buscável, registrar BLOQUEADO para este item com a linha exata do seed que falta, em vez de inventar."
+  - "Pasta apps/web/app/(shell)/inicio REMOVIDA inteira. O que ainda tem importador vivo (loadPrimaryCommunity/createRequestGuard/PrimaryCommunity e buildGoingLine de home-loaders, JoinCommunityCard, eventDateChip, useAvatarSrc e o que eles puxarem) vai para apps/web/lib/inicio/ (lógica) ou apps/web/app/(shell)/community/ (componente usado só lá), com imports repontados. Testes de unidade que exercitam código que sobrevive mudam só o import; testes de código que morre (hub, novidade, hub-view, etc.) morrem nomeados no RELATORIO. grep -rn \"(shell)/inicio\" apps tests scripts retorna só comentários históricos ou nada."
+  - "proxy.ts: '/' com sessão e aceite vai para '/app/inicio' direto (sem aceite segue '/onboarding'); teste de unidade do proxy cobre os dois casos e o anônimo continua recebendo a landing. Nenhum ciclo de redirect: /app/inicio não passa pelo portão que manda para '/'."
+  - "link-crawl.spec.ts e capture.mjs sem a tela antiga /inicio (o 307 continua válido como destino)."
+  - "CEGA F02: (a) em 375 os chips de filtro da Busca não terminam cortados sem sinal — a rolagem horizontal mantém respiro final e o último chip alcança a borda com folga (padding final), sem quebrar 768/1440; (b) o texto de apoio do Início que a revisão julgou longo vira uma frase curta (no máximo ~80 caracteres), sem URL nem jargão (regra 'copy fala com a pessoa')."
+  - "RELATORIO no fim da execução (em .visual/f02-fecho/RELATORIO.md): arquivos tocados, testes que morreram e por quê, comandos rodados com o resultado lido, e o que não rodou."
+
+proof:
+  - npx pnpm@11.18.0 gate --fast
+  - npx pnpm@11.18.0 test
+  - npx pnpm@11.18.0 test:scope
+  - npx pnpm@11.18.0 --filter @bivaque/app test -- --run
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/F02-FECHO.task.yml
+
+risk: troca de tela e portão do proxy (redirect de membro); estado de sessão na interface
+risk_level: R2
+
+reviewer_must_differ_from_executor: true
+retry_budget: 2
+on_budget_exhausted: HUMAN_DECISION
+
+closure:
+  requires_runtime_evidence: true
