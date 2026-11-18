@@ -11,6 +11,7 @@ import { EstadoDeErro } from "@/components/bivaque/estado-vazio"
 import { LinhaDeAjuste } from "@/components/bivaque/lista"
 import { Secao } from "@/components/bivaque/secao"
 import { FalhaDaApi } from "@/lib/api/cliente"
+import { sairDoApp } from "@/lib/dados/push"
 import {
   type CidadeDoCatalogo,
   cidadeDoLink,
@@ -147,7 +148,10 @@ export function Voce() {
     setFalhaAoSair(false)
     void (async () => {
       try {
-        await sairDaConta()
+        // A revogação do push corre ANTES de encerrar a sessão: depois dela o
+        // DELETE voltaria 401 e a inscrição ficaria no servidor. A falha da
+        // revogação não segura a saída.
+        await sairDoApp(sairDaConta)
         irParaEntrada()
       } catch (falha: unknown) {
         if (falha instanceof FalhaDaApi && falha.status === 401) {
