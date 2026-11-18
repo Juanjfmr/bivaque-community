@@ -19,7 +19,9 @@ import {
   buscarConversa,
   type DetalheDaConversa,
   enviarMensagem,
+  lerConversas,
   type Mensagem,
+  marcarConversaLida,
   novaChaveDeEnvio,
 } from "@/lib/dados/conversas"
 import { bloquear, lerBloqueados } from "@/lib/dados/voce"
@@ -92,7 +94,15 @@ export function Conversa() {
     setCarregandoMais(false)
     void buscarConversa(id, { signal: pedido.signal })
       .then((valor) => {
-        if (!pedido.signal.aborted) setDados(valor)
+        if (!pedido.signal.aborted) {
+          setDados(valor)
+          void marcarConversaLida(id, pedido.signal)
+            .then(() => lerConversas({ signal: pedido.signal }))
+            .then((caixa) => {
+              if (!pedido.signal.aborted) casca.definir({ conversas: caixa.porLer })
+            })
+            .catch(() => undefined)
+        }
       })
       .catch((falha: unknown) => {
         if (!pedido.signal.aborted)

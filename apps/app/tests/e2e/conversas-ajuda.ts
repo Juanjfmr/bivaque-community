@@ -24,6 +24,7 @@ export async function simularConversas(page: Page) {
       tipo: "listing",
       contextoId: "i3",
       ultima: "Olá",
+      porLer: false,
     },
     {
       id: "t2",
@@ -32,6 +33,7 @@ export async function simularConversas(page: Page) {
       tipo: "provider",
       contextoId: "n1",
       ultima: "Oi",
+      porLer: false,
     },
   ]
   const mensagens: Record<
@@ -42,7 +44,7 @@ export async function simularConversas(page: Page) {
     const url = new URL(rota.request().url())
     const partes = url.pathname.split("/").filter(Boolean)
     const id = partes[3]
-    if (!id) return rota.fulfill({ json: { conversas, proximo: null } })
+    if (!id) return rota.fulfill({ json: { conversas, proximo: null, porLer: 0 } })
     if (id === "nao-existe") return rota.fulfill({ status: 404, json: { erro: "nao-encontrado" } })
     const conversa = conversas.find((item) => item.id === id) ?? {
       id,
@@ -51,7 +53,9 @@ export async function simularConversas(page: Page) {
       tipo: "shared_group",
       contextoId: "g1",
       ultima: "",
+      porLer: false,
     }
+    if (partes[4] === "lida") return rota.fulfill({ status: 204 })
     if (partes[4] === "mensagens") {
       const body = rota.request().postDataJSON() as { texto: string }
       const mensagem = {

@@ -1,0 +1,103 @@
+# F09-LEITURA — primeiro lote do LAN-F09 (Conversas e avisos): conversa lida e contador real.
+#
+# Inventário do coordenador em 18/11 sobre origin/main 054d511b (disco e git). Já está: caixa
+# (Conversas.tsx), conversa com resposta, falha guardada, bloquear e denunciar (Conversa.tsx),
+# avisos com destino do servidor e preferências por canal; rotas /api/app/conversas, mensagens,
+# avisos, avisos/lidos e avisos/preferencias com testes; E2E real f09-conversas-real,
+# f09-avisos-real e f09-rpc-real; /messages e /notifications com 307 para o app.
+#
+# Lacuna deste lote: o contador de conversas no topo vem da demonstração
+# (apps/app/src/contexto/casca.tsx:73-78 usa dadosDoApp.resumoDaCasca(), e
+# apps/app/lib/dados/index.ts:42-47 conta `unread === true` sobre números, então dá sempre 0);
+# a RPC public.mark_conversation_read (supabase/migrations/20260911105119_service_request_tracking.sql:193)
+# não é chamada em lugar nenhum; GET /api/app/conversas não diz o que está por ler.
+#
+# Decisões do coordenador (mandato 02/11):
+# - "Por ler" = existe mensagem da outra pessoa com created_at maior que o last_read_at da própria
+#   linha em dm_read_states (ou sem linha). Mensagem própria nunca conta.
+# - A contagem exata vem de uma função nova de leitura, security invoker, sob a RLS que já existe
+#   (dm_conversations, dm_messages, dm_read_states); nenhuma política nova nem mudança de grant em
+#   tabela. Sem decisão nova; o nível é R3 só porque toca supabase/migrations.
+# - Abrir a conversa marca lida (depois que as mensagens carregam e a cada mensagem nova recebida
+#   pela releitura); falha ao marcar é silenciosa para a pessoa e não bloqueia a leitura.
+# - Bloqueio no caminho dos avisos/e-mail, push e limpeza do web são lotes seguintes, não este.
+
+task_id: F09-001
+
+adr: docs/decisions/ADR-20261105-porta-de-dados-do-app.md
+
+objective: >
+  Abrir uma conversa a marca como lida no banco; a caixa mostra quais conversas têm mensagem por
+  ler; o contador de conversas no topo do app é o do servidor, não o da demonstração; e tudo isso
+  tem prova de banco, de rota e de navegador.
+
+authority:
+  - docs/LANCAMENTO.md :34-48 e :62 (linha F09)
+  - Card LAN-F09
+  - ADR-20261024-front-react-spa.md §5 (contrato da API) e §8
+  - ADR-20261105-porta-de-dados-do-app.md (rota por jornada com o cliente da sessão sob RLS); sem decisão nova, R3 pelo toque em supabase/migrations, com security-auditor antes do merge
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    rg "mark_conversation_read" apps tests não acha chamada; apps/web/app/api/app/conversas/route.ts
+    devolve id, nome, outroId, tipo, contextoId e ultima, sem estado de leitura;
+    apps/app/src/contexto/casca.tsx:78 lê conversas de dadosDoApp.resumoDaCasca() (demonstração).
+
+allowed_paths:
+  - docs/agents/tasks/F09-LEITURA.task.yml
+  - supabase/migrations
+  - supabase/tests
+  - apps/web/app/api/app/conversas
+  - apps/web/lib/security/api-surface.ts
+  - apps/web/lib/database.types.ts
+  - packages/contracts
+  - apps/app/lib/dados
+  - apps/app/src/contexto/casca.tsx
+  - apps/app/src/telas/Conversas.tsx
+  - apps/app/src/telas/Conversa.tsx
+  - apps/app/src/conversas
+  - apps/app/tests
+  - tests/unit/app-api/conversas
+  - tests/unit/security
+  - tests/e2e/f09-conversas-real.spec.ts
+  - .visual/f09-leitura
+
+forbidden:
+  - editar migration já aplicada (só migration nova, criada com supabase migration new)
+  - política RLS nova, grant em tabela, security definer na função de contagem, service_role nas rotas
+  - mudar ou remover campos existentes das respostas (só acrescentar)
+  - presença, "visto por" ou confirmação de leitura para a outra pessoa (fora do lançamento)
+  - redesenhar telas além do marcador de "por ler" e do contador
+  - apagar teste sem nome e motivo no RELATORIO; skip/fixme novo; afrouxar asserção
+  - credencial inline, leitura de arquivo de ambiente pelo spec, dado pessoal real
+  - push, merge, force-push, editar o quadro (tools/backend-kanban), tocar outra worktree
+  - supabase start/reset ou escrita em banco (o coordenador roda as provas de banco e E2E real)
+
+acceptance:
+  - "Banco: migration nova cria public.unread_conversation_count() returns integer, language sql, stable, security invoker, search_path vazio, execute só para authenticated (revoke de public e anon), contando as conversas da pessoa com mensagem da outra pessoa mais nova que o próprio last_read_at (ou sem linha em dm_read_states)."
+  - "pgTAP novo em supabase/tests (identidades example.invalid, UUIDs fixos, dentro de transação com rollback): mensagem da outra pessoa conta 1; mensagem própria não conta; depois de mark_conversation_read conta 0; mensagem nova depois da leitura volta a 1; conversa de terceiros nunca entra na contagem nem pode ser marcada (42501); anon não executa nenhuma das duas funções."
+  - "POST /api/app/conversas/[id]/lida chama mark_conversation_read com o cliente do usuário e responde 204; id que não é UUID 400; não participante 404 (42501 vira 404, sem eco do banco); sem sessão 401; escrita por cookie sem o cabeçalho do app ou de origem fora da lista recusada como as outras escritas; erro do banco 503. Registrada em apps/web/lib/security/api-surface.ts."
+  - "GET /api/app/conversas acrescenta em cada conversa `porLer: boolean` (mesma regra da função) e no corpo `porLer: number` vindo de unread_conversation_count(); campos antigos intactos. Testes de rota com casos positivos e negativos."
+  - "App: a casca lê o contador de conversas do servidor do mesmo jeito que já lê o de avisos (casca.tsx:92-104), e nunca da demonstração fora do modo de prova; abrir a conversa chama a rota de lida e baixa o contador; a caixa marca as conversas por ler com peso de texto e um ponto com nome acessível ('Por ler'), sem depender só de cor."
+  - "E2E do app simulado (apps/app/tests/e2e, projetos 375/768/1440): o contador do topo mostra o número do servidor; abrir uma conversa por ler envia um POST de lida e o contador cai; a caixa mostra 'Por ler' só nas conversas certas."
+  - "E2E real (@stateful, tests/e2e/f09-conversas-real.spec.ts): a outra pessoa semeada manda mensagem ao membro semeado numa conversa existente; o membro vê a conversa marcada como por ler e o contador maior que zero; ao abrir, o marcador some e continua sumido depois de recarregar; POST de lida em conversa alheia responde 404 e sem sessão 401."
+  - "RELATORIO em .visual/f09-leitura/RELATORIO.md: arquivos tocados, testes novos e removidos com motivo, comandos rodados com resultado lido, e o que não rodou."
+
+proof:
+  - npx pnpm@11.18.0 gate --fast
+  - npx pnpm@11.18.0 test
+  - npx pnpm@11.18.0 --filter @bivaque/app test -- --run
+  - npx pnpm@11.18.0 test:db
+  - npx pnpm@11.18.0 db:lint
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/F09-LEITURA.task.yml
+
+risk: função nova de leitura sob RLS existente, rota nova de escrita na API do app e contador da casca
+risk_level: R3
+
+reviewer_must_differ_from_executor: true
+retry_budget: 2
+on_budget_exhausted: HUMAN_DECISION
+
+closure:
+  requires_runtime_evidence: true
