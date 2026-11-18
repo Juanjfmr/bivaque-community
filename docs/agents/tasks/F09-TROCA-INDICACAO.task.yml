@@ -74,6 +74,8 @@ allowed_paths:
   - apps/web/lib/notifications/deep-links.ts
   - apps/web/lib/reports/reports.ts
   - apps/web/lib/recommendations/trigger-label.ts
+  - apps/web/lib/recommendations/write-failure-copy.ts
+  - apps/web/lib/recommendations/reply.ts
   - scripts/port/compare-pergunta.mjs
   - scripts/visual/capture.mjs
   - tests/unit

@@ -757,6 +757,7 @@ describe("rotas de eventos do app", () => {
       )
       expect(resposta.status).toBe(403)
       expect(JSON.stringify(mock.inserts)).not.toContain("dm_messages")
+      expect(mock.chamadasRpc.map((c) => c.nome)).not.toContain("send_conversation_message")
     })
 
     it("de outra cidade a pergunta é recusada antes do banco", async () => {

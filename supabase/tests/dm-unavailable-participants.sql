@@ -1,7 +1,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(11);
+select plan(12);
 
 \ir fixtures/foundation.inc
 \ir fixtures/dm.inc
@@ -203,6 +203,23 @@ select throws_ok(
   '42501',
   'recipient unavailable',
   'destinatário com exclusão pedida não recebe'
+);
+
+-- Defesa em profundidade: mesmo fora da RPC (aqui como postgres, que ainda tem
+-- INSERT), o gatilho veta a escrita para quem pediu exclusão.
+reset role;
+select throws_ok(
+  $$
+    insert into public.dm_messages (conversation_id, sender_id, content)
+    values (
+      'd0000000-0000-4000-8000-000000000001',
+      '10000000-0000-4000-8000-000000000008',
+      'Escrita direta para conta em exclusão.'
+    )
+  $$,
+  '42501',
+  'conversation participant unavailable',
+  'gatilho veta escrita direta para destinatário com exclusão pedida'
 );
 
 select * from finish();

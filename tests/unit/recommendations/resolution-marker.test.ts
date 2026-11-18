@@ -47,6 +47,7 @@ describe("resolution marker (RECON-035)", () => {
 
   it("mantem os rotulos", () => {
     const lib = readFileSync(indicationsLib, "utf8")
+    expect(lib).toContain("Resolvida por quem perguntou")
     expect(lib).toContain('return "Resolvida"')
   })
 })

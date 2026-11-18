@@ -258,7 +258,7 @@ select throws_ok(
     'Mensagem intrusa'
   ),
   42501,
-  null,
+  'not a participant',
   'non-participant cannot insert message into conversation'
 );
 
@@ -462,7 +462,7 @@ select throws_ok(
     limit 1
   $$,
   42501,
-  null,
+  'blocked',
   'blocked user cannot send message in existing conversation'
 );
 
@@ -476,7 +476,7 @@ select throws_ok(
     limit 1
   $$,
   '42501',
-  null,
+  'blocked',
   'blocker can no longer send either — block protects both ways'
 );
 
@@ -578,7 +578,7 @@ select throws_ok(
      limit 1
   $$,
   '42501',
-  null,
+  'blocked',
   'blocked member still cannot send'
 );
 
@@ -599,7 +599,7 @@ select throws_ok(
      limit 1
   $$,
   '42501',
-  null,
+  'blocked',
   'blocker also cannot send — block now protects both ways'
 );
 

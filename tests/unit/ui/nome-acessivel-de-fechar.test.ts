@@ -115,10 +115,10 @@ describe("o rótulo de fechar não volta a ser herdado em inglês", () => {
     const callers = files.filter((file) =>
       readFileSync(file, "utf8").includes("<ModalCloseTrigger"),
     )
-    // 10 pontos de montagem em 8 arquivos (feed-post-edit e indication-detail têm
-    // dois cada): é o número da varredura desta rodada, e cair abaixo dele
-    // significa que um modal deixou de passar pelo wrapper. Saiu de 12 para 10 no
-    // RUN-184, com a tela de conta da web (dois modais: sair e excluir).
+    // 8 pontos de montagem: é o número da varredura desta rodada, e cair abaixo
+    // dele significa que um modal deixou de passar pelo wrapper. Saiu de 12 para
+    // 10 no RUN-184 (tela de conta da web: sair e excluir) e de 10 para 8 em
+    // 18/11, com a saída de indication-detail (troca para /app/pergunta/:id).
     const sites = callers.reduce(
       (total, file) =>
         total + (readFileSync(file, "utf8").match(/<ModalCloseTrigger/g) ?? []).length,

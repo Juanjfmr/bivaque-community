@@ -186,7 +186,7 @@ select throws_ok(
     :'q_conv_id'
   ),
   42501,
-  null,
+  'not a participant',
   'terceiro não escreve na conversa de pergunta'
 );
 

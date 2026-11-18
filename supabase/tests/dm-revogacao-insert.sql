@@ -1,6 +1,6 @@
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(8);
+select plan(10);
 \ir fixtures/foundation.inc
 \ir fixtures/dm.inc
 
@@ -19,5 +19,7 @@ select ok(exists (select 1 from pg_indexes where schemaname = 'public' and table
 select throws_ok($$insert into public.dm_messages (conversation_id, sender_id, content, client_key) values ('41000000-0000-4000-8000-000000000091', '10000000-0000-4000-8000-000000000008', 'duplicada', 'chave-fixa')$$, '23505', null, 'índice impede duplicata concorrente');
 select ok(has_table_privilege('authenticated', 'public.dm_messages', 'select') and not has_table_privilege('authenticated', 'public.dm_messages', 'insert'), 'authenticated mantém somente leitura');
 select ok(not has_table_privilege('anon', 'public.dm_messages', 'select') and not has_table_privilege('anon', 'public.dm_messages', 'insert'), 'anon não lê nem insere');
+select ok(not has_table_privilege('authenticated', 'public.dm_messages', 'update') and not has_table_privilege('authenticated', 'public.dm_messages', 'delete'), 'authenticated não altera nem apaga mensagens');
+select ok(not exists (select 1 from information_schema.column_privileges where table_schema = 'public' and table_name = 'dm_messages' and grantee in ('authenticated', 'anon') and privilege_type in ('INSERT', 'UPDATE')), 'nenhum grant de coluna reabre a escrita');
 select * from finish();
 rollback;

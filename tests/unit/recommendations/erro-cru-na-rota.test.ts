@@ -164,6 +164,13 @@ describe("nenhum ponto do fluxo repassa erro cru ao usuário", () => {
     ])
   })
 
+  it("todo o vocabulário do módulo tem uso: nada de frase órfã", () => {
+    const tudo = Object.values(CODIGO).join("\n")
+    for (const operacao of [...ESCRITAS, ...LEITURAS]) {
+      expect(tudo, operacao).toContain(`"${operacao}"`)
+    }
+  })
+
   it("usa o logger do projeto, nunca console direto", () => {
     for (const tela of telas) {
       expect(CODIGO[tela]).not.toMatch(/console\.(error|warn|info)\(/)

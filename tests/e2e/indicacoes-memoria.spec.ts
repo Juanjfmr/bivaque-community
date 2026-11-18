@@ -72,7 +72,7 @@ test.describe("indicações com memória", () => {
     // Quem pediu marca a resposta que resolveu.
     await asker.reload()
     await asker.getByRole("button", { name: /^Ajudou a resolver/ }).click()
-    await expect(asker.getByText(/Ajudou a resolver · resposta de/)).toBeVisible()
+    await expect(asker.getByText("Resolveu a pergunta")).toBeVisible()
     await expect(asker.getByText("Resolvida")).toBeVisible()
 
     // Uma terceira pessoa procura e vê a resposta sem abrir a conversa.
