@@ -87,7 +87,10 @@ test("dessalvar em Salvos tira o cartão da lista e o marcador volta", async ({ 
 
   await cartao.getByRole("button", { name: "Remover dos salvos", exact: true }).click()
   await expect(cartao).toHaveCount(0)
-  await expect(secao.getByText("Nenhum anúncio salvo")).toBeVisible()
+  // Todas as seções estão vazias: um vazio único, da tela inteira (REGUA-002).
+  const vazio = page.locator('[data-tela="salvos"] [data-estado="vazio"]')
+  await expect(vazio).toHaveCount(1)
+  await expect(vazio).toContainText("Nada salvo ainda")
 
   // E o marcador do cartão do Mercado volta a "não salvo" no próximo carregamento.
   await page.goto("/app/desapegos")

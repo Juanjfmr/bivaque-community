@@ -16,25 +16,35 @@ test("o perfil vem da rota, a edição sobrevive ao recarregar e o desfazer some
   await expect(page.getByText("perfil de demonstração")).toHaveCount(0)
   await expect(page.locator('[data-tela="voce"]')).toContainText("Manaus")
 
+  // A barra e a tela leem a mesma pessoa (REGUA-002): o avatar da aba "Você"
+  // é o da leitura do perfil, não o da demonstração.
+  const avatarDaBarra = page.locator(
+    '[data-nav="principal"] [data-aba="voce"] [data-avatar="membro"]',
+  )
+  await expect(avatarDaBarra).toHaveText("AV")
+
   await page.getByRole("button", { name: "Editar" }).click()
   await page.getByLabel("Nome").fill("Ana Editada")
   await page.getByLabel("Apresentação").fill("Nova apresentação do teste.")
   await page.getByRole("button", { name: "Salvar" }).click()
   await expect(page.getByText("Ana Editada")).toBeVisible()
+  await expect(avatarDaBarra, "o nome gravado também muda o avatar da barra").toHaveText("AE")
 
   await page.reload()
   await expect(page.getByText("Ana Editada"), "o nome gravado volta no recarregar").toBeVisible()
   await expect(page.getByText("Nova apresentação do teste.")).toBeVisible()
+  await expect(avatarDaBarra).toHaveText("AE")
 
   await page.goto("/app/bloqueados")
-  const linha = page.locator('[data-tela="bloqueados"] [data-linha="lista"]')
+  const linha = page.locator('[data-tela="bloqueados"] [data-linha="bloqueado"]')
   await expect(linha).toHaveCount(1)
   await expect(linha).toContainText("Maria Souza")
-  await linha.click()
+  await expect(linha).toContainText("Bloqueio desde 03/11/2026")
+  await page.getByRole("button", { name: "Desbloquear Maria Souza" }).click()
   await expect(page.getByText("Ninguém bloqueado")).toBeVisible()
   await page.reload()
   await expect(
-    page.locator('[data-tela="bloqueados"] [data-linha="lista"]'),
+    page.locator('[data-tela="bloqueados"] [data-linha="bloqueado"]'),
     "o desbloqueio precisa sobreviver ao recarregar",
   ).toHaveCount(0)
 
@@ -46,19 +56,32 @@ test("o perfil vem da rota, a edição sobrevive ao recarregar e o desfazer some
   await expect(page.getByText("Nada oculto por aqui")).toBeVisible()
 })
 
-test("falha de leitura mostra erro com tentar de novo", async ({ page }) => {
+test("falha de leitura mostra um único aviso e a tela segue de pé", async ({ page }) => {
   await simularVoce(page)
   await page.route("**/api/app/voce", (rota) => rota.abort())
   await page.goto("/app/voce")
 
-  const erro = page.locator('[data-estado="erro"]')
-  await expect(erro).toBeVisible()
-  await expect(erro).toContainText("Não foi possível carregar")
-  await expect(page.getByText("Ninguém bloqueado")).toHaveCount(0)
+  const aviso = page.locator('[data-aviso="perfil"]')
+  await expect(aviso).toBeVisible()
+  await expect(aviso).toContainText("Não foi possível carregar o seu perfil agora.")
+  await expect(page.getByRole("button", { name: "Tentar de novo" })).toBeVisible()
+  await expect(page.locator('[data-estado="erro"]')).toHaveCount(0)
+  // Sem leitura não há identidade: a barra cai no ícone, sem nome herdado.
+  await expect(
+    page.locator('[data-nav="principal"] [data-aba="voce"] [data-avatar="membro"]'),
+  ).toHaveCount(0)
+  // A estrutura é a da tela de sucesso: as seções continuam na tela.
+  await expect(page.getByRole("heading", { name: "Seu Bivaque" })).toBeVisible()
+  await expect(page.getByRole("heading", { name: "Família" })).toBeVisible()
+  await expect(page.getByRole("heading", { name: "Avisos" })).toBeVisible()
+  await expect(page.getByRole("heading", { name: "Privacidade e ajuda" })).toBeVisible()
+  // O formulário de cidade depende da leitura: a linha não aparece sem perfil.
+  await expect(page.getByRole("button", { name: "Mudar de cidade" })).toHaveCount(0)
 
   await page.unroute("**/api/app/voce")
   await page.getByRole("button", { name: "Tentar de novo" }).click()
   await expect(page.getByText("Ana Verificada")).toBeVisible()
+  await expect(page.locator('[data-aviso="perfil"]')).toHaveCount(0)
 })
 
 // RUN-184: o aviso da exclusão é o mesmo da tela antiga da web (o que sai agora, o

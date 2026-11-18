@@ -1,12 +1,11 @@
 "use client"
 
 import { type Dispatch, type SetStateAction, useEffect, useRef, useState } from "react"
-import { BotaoDeIcone } from "@/components/bivaque/botao"
+import { Botao, BotaoDeIcone } from "@/components/bivaque/botao"
 import { CabecaDePagina } from "@/components/bivaque/cabeca-de-pagina"
 import { CartaoDeFoto } from "@/components/bivaque/cartao-de-anuncio"
-import type { ItemDeFiltro } from "@/components/bivaque/chips-de-filtro"
 import { EsqueletoDeLista } from "@/components/bivaque/esqueleto"
-import { EstadoDeErro, EstadoVazio } from "@/components/bivaque/estado-vazio"
+import { EstadoVazio } from "@/components/bivaque/estado-vazio"
 import { Grade } from "@/components/bivaque/grade"
 import { LinhaDeLista, Lista } from "@/components/bivaque/lista"
 import { FalhaDaApi } from "@/lib/api/cliente"
@@ -19,15 +18,14 @@ import { useNavegacao, useRolagemEFoco } from "@/lib/navegacao/react"
 import { CARGA_CONCLUIDA } from "@/lib/navegacao/restauracao"
 import { foiAbortada } from "@/src/eventos/formulario"
 import { ICONE_DA_CATEGORIA } from "@/src/guia/comum"
-import { CampoDeBusca } from "@/src/pecas/pecas"
-import { Segmentos } from "@/src/pecas/segmentos"
+import { CampoDeBusca, Chip } from "@/src/pecas/pecas"
 
 type AbaDosSalvos = "desapegos" | "imoveis"
 
 /** As seções que sabem remover — o nome guarda, por seção, quem está saindo. */
 type SecaoDosSalvos = "anuncios" | "publicacoes" | "perguntas" | "guia"
 
-const ABAS: readonly ItemDeFiltro[] = [
+const ABAS: ReadonlyArray<{ readonly id: AbaDosSalvos; readonly rotulo: string }> = [
   { id: "desapegos", rotulo: "Desapegos" },
   { id: "imoveis", rotulo: "Imóveis" },
 ]
@@ -268,231 +266,287 @@ export function Salvos() {
 
   const imoveis = aba === "imoveis"
 
+  // Um vazio só, da tela inteira, quando nada foi salvo: quatro vazios
+  // empilhados dizem quatro vezes a mesma coisa (REGUA-002).
+  const tudoCarregado =
+    anuncios !== null && publicacoes !== null && perguntas !== null && guia !== null
+  const nadaSalvo =
+    tudoCarregado &&
+    anuncios.length === 0 &&
+    publicacoes.length === 0 &&
+    perguntas.length === 0 &&
+    guia.length === 0
+
   return (
-    <section data-tela="salvos" className="grid gap-2">
+    <section data-tela="salvos" className="grid gap-2 lg:mx-auto lg:max-w-[1040px]">
       <CabecaDePagina
         titulo="Salvos"
         subtitulo="Anúncios, publicações, perguntas e referências do guia guardados para ver com calma."
       />
 
-      <CampoDeBusca
-        rotulo="Buscar nos salvos"
-        placeholder="Buscar nos salvos"
-        value={busca}
-        onChange={(evento) => setBusca(evento.target.value)}
-      />
-
-      {aviso === null ? null : (
-        <p role="alert" className="text-sm text-(--destructive)">
-          {aviso}
-        </p>
-      )}
-
-      <section data-salvos="anuncios" className="grid gap-2">
-        <Segmentos
-          itens={ABAS}
-          valor={aba}
-          aoEscolher={(escolhida) => setAba(escolhida === "imoveis" ? "imoveis" : "desapegos")}
-          rotulo="Seções dos salvos"
-          grupo="salvos"
+      {nadaSalvo ? (
+        <EstadoVazio
+          titulo="Nada salvo ainda"
+          texto="Toque no marcador para guardar por aqui."
+          icone="bookmark_border"
+          acao={{
+            rotulo: "Ver o Mercado",
+            aoAcionar: () => void navegacao.irPara("mercado"),
+          }}
         />
+      ) : (
+        <>
+          {/* O escopo `.pc` traz as variáveis das peças (borda, cartão, tinta):
+              sem ele o campo da peça perde a forma (REGUA-002). */}
+          <div className="pc pc-embutido">
+            <CampoDeBusca
+              rotulo="Buscar nos salvos"
+              placeholder="Buscar nos salvos"
+              value={busca}
+              onChange={(evento) => setBusca(evento.target.value)}
+            />
+          </div>
 
-        {erroDosAnuncios ? (
-          <EstadoDeErro
-            titulo="Não foi possível carregar seus anúncios salvos"
-            aoTentar={() => setRodadaDosAnuncios((atual) => atual + 1)}
-          />
-        ) : anuncios === null || anunciosVisiveis === null ? (
-          <EsqueletoDeLista linhas={3} />
-        ) : anuncios.length === 0 ? (
-          <EstadoVazio
-            titulo={imoveis ? "Nenhum imóvel salvo" : "Nenhum anúncio salvo"}
-            texto={
-              imoveis
-                ? "Toque no marcador de um imóvel para guardá-lo nesta lista."
-                : "Toque no marcador de um anúncio para guardá-lo nesta lista."
-            }
-            icone="bookmark_border"
-            acao={{
-              rotulo: imoveis ? "Ver imóveis" : "Ver anúncios",
-              aoAcionar: () => void navegacao.irPara(imoveis ? "imoveis" : "desapegos"),
-            }}
-          />
-        ) : anunciosVisiveis.length === 0 ? (
-          // A busca não casou nesta seção, mas os segmentos continuam à mão:
-          // é por eles que se chega ao imóvel procurado.
-          <p role="status" className="text-sm text-(--on-surface-variant)">
-            {imoveis
-              ? "Nenhum imóvel salvo corresponde à busca."
-              : "Nenhum anúncio salvo corresponde à busca."}
-          </p>
-        ) : (
-          <Grade formato="cartoes">
-            {anunciosVisiveis.map((anuncio) => (
-              <CartaoDeFoto
-                key={anuncio.id}
-                anuncio={{
-                  id: anuncio.id,
-                  fonte: anuncio.foto,
-                  titulo: anuncio.titulo,
-                  preco: anuncio.precoCents === null ? null : anuncio.precoCents / 100,
-                  porMes: anuncio.deal === "rent",
-                  icone: anuncio.tipo === "property" ? "apartment" : iconeDeDado(anuncio.categoria),
-                  meta: anuncio.bairro ?? anuncio.cidade ?? "",
-                  salvo: true,
-                }}
-                aoSalvar={() =>
-                  void remover(
-                    "anuncios",
-                    anuncio.id,
-                    anuncios,
-                    setAnuncios,
-                    () => marcarSalvoAnuncio(anuncio.id, false),
-                    () => abaAtual.current === aba,
-                  )
-                }
-                aoAbrir={() => void navegacao.irPara("anuncio", { parametros: { id: anuncio.id } })}
+          {aviso === null ? null : (
+            <p role="alert" className="text-sm text-(--destructive)">
+              {aviso}
+            </p>
+          )}
+
+          <section data-salvos="anuncios" className="grid gap-2">
+            <h2 className="text-[17px]">Anúncios salvos</h2>
+            <fieldset
+              aria-label="Seções dos salvos"
+              className="pc pc-embutido flex flex-wrap gap-2 border-0 p-0"
+            >
+              {ABAS.map((abaDeAnuncio) => (
+                <Chip
+                  key={abaDeAnuncio.id}
+                  selecionado={aba === abaDeAnuncio.id}
+                  onClick={() => setAba(abaDeAnuncio.id)}
+                >
+                  {abaDeAnuncio.rotulo}
+                </Chip>
+              ))}
+            </fieldset>
+
+            {erroDosAnuncios ? (
+              <AvisoDaSecao
+                texto="Não foi possível carregar seus anúncios salvos."
+                aoTentar={() => setRodadaDosAnuncios((atual) => atual + 1)}
               />
-            ))}
-          </Grade>
-        )}
-      </section>
-
-      {mostra(publicacoes, publicacoesVisiveis) ? (
-        <section data-salvos="publicacoes" className="grid gap-2">
-          <h2 className="text-[17px]">Publicações salvas</h2>
-          {erroDasPublicacoes ? (
-            <EstadoDeErro
-              titulo="Não foi possível carregar suas publicações"
-              aoTentar={() => setRodadaDasPublicacoes((atual) => atual + 1)}
-            />
-          ) : publicacoes === null || publicacoesVisiveis === null ? (
-            <EsqueletoDeLista linhas={2} />
-          ) : publicacoes.length === 0 ? (
-            <p className="text-sm text-(--on-surface-variant)">
-              Nenhuma publicação salva ainda. Toque em Salvar publicação no menu de uma publicação
-              de grupo.
-            </p>
-          ) : (
-            <Lista>
-              {publicacoesVisiveis.map((publicacao) => (
-                <div key={publicacao.id} className="flex items-center gap-1 pr-1">
-                  <LinhaDeLista
-                    className="grow"
-                    icone="forum"
-                    titulo={publicacao.texto}
-                    subtitulo={publicacao.autor || "Membro do grupo"}
-                    tituloMultilinha
-                    onClick={() =>
-                      void navegacao.irPara("publicacao", { parametros: { id: publicacao.id } })
-                    }
-                  />
-                  <BotaoDeIcone
-                    rotulo={`Remover dos salvos: ${publicacao.texto}`}
-                    nome="bookmark_remove"
-                    disabled={removendo === publicacao.id}
-                    onClick={() =>
-                      void remover("publicacoes", publicacao.id, publicacoes, setPublicacoes, () =>
-                        agirNaPublicacao(publicacao.id, "salvar", false),
+            ) : anuncios === null || anunciosVisiveis === null ? (
+              <EsqueletoDeLista linhas={3} />
+            ) : anuncios.length === 0 ? (
+              <p className="text-sm text-(--on-surface-variant)">
+                {imoveis
+                  ? "Nenhum imóvel salvo ainda. Toque no marcador de um imóvel para guardá-lo."
+                  : "Nenhum anúncio salvo ainda. Toque no marcador de um anúncio para guardá-lo."}
+              </p>
+            ) : anunciosVisiveis.length === 0 ? (
+              // A busca não casou nesta seção, mas os chips continuam à mão:
+              // é por eles que se chega ao imóvel procurado.
+              <p role="status" className="text-sm text-(--on-surface-variant)">
+                {imoveis
+                  ? "Nenhum imóvel salvo corresponde à busca."
+                  : "Nenhum anúncio salvo corresponde à busca."}
+              </p>
+            ) : (
+              <Grade formato="cartoes">
+                {anunciosVisiveis.map((anuncio) => (
+                  <CartaoDeFoto
+                    key={anuncio.id}
+                    anuncio={{
+                      id: anuncio.id,
+                      fonte: anuncio.foto,
+                      titulo: anuncio.titulo,
+                      preco: anuncio.precoCents === null ? null : anuncio.precoCents / 100,
+                      porMes: anuncio.deal === "rent",
+                      icone:
+                        anuncio.tipo === "property" ? "apartment" : iconeDeDado(anuncio.categoria),
+                      meta: anuncio.bairro ?? anuncio.cidade ?? "",
+                      salvo: true,
+                    }}
+                    aoSalvar={() =>
+                      void remover(
+                        "anuncios",
+                        anuncio.id,
+                        anuncios,
+                        setAnuncios,
+                        () => marcarSalvoAnuncio(anuncio.id, false),
+                        () => abaAtual.current === aba,
                       )
                     }
+                    aoAbrir={() =>
+                      void navegacao.irPara("anuncio", { parametros: { id: anuncio.id } })
+                    }
                   />
-                </div>
-              ))}
-            </Lista>
-          )}
-        </section>
-      ) : null}
+                ))}
+              </Grade>
+            )}
+          </section>
 
-      {mostra(perguntas, perguntasVisiveis) ? (
-        <section data-salvos="perguntas" className="grid gap-2">
-          <h2 className="text-[17px]">Perguntas que você segue</h2>
-          {erroDasPerguntas ? (
-            <EstadoDeErro
-              titulo="Não foi possível carregar suas perguntas"
-              aoTentar={() => setRodadaDasPerguntas((atual) => atual + 1)}
-            />
-          ) : perguntas === null || perguntasVisiveis === null ? (
-            <EsqueletoDeLista linhas={2} />
-          ) : perguntas.length === 0 ? (
-            <p className="text-sm text-(--on-surface-variant)">
-              Nenhuma pergunta seguida ainda. Toque em Seguir respostas em uma pergunta para
-              acompanhar as respostas dela.
-            </p>
-          ) : (
-            <Lista>
-              {perguntasVisiveis.map((pergunta) => (
-                <div key={pergunta.id} className="flex items-center gap-1 pr-1">
-                  <LinhaDeLista
-                    className="grow"
-                    icone="forum"
-                    titulo={pergunta.titulo}
-                    subtitulo={pergunta.resolvida ? "Resolvida" : pergunta.assunto}
-                    tituloMultilinha
-                    onClick={() =>
-                      void navegacao.irPara("pergunta", { parametros: { id: pergunta.id } })
-                    }
-                  />
-                  <BotaoDeIcone
-                    rotulo={`Remover dos salvos: ${pergunta.titulo}`}
-                    nome="bookmark_remove"
-                    disabled={removendo === pergunta.id}
-                    onClick={() =>
-                      void remover("perguntas", pergunta.id, perguntas, setPerguntas, () =>
-                        marcarSalvaPergunta(pergunta.id, false),
-                      )
-                    }
-                  />
-                </div>
-              ))}
-            </Lista>
-          )}
-        </section>
-      ) : null}
+          {mostra(publicacoes, publicacoesVisiveis) ? (
+            <section data-salvos="publicacoes" className="grid gap-2">
+              <h2 className="text-[17px]">Publicações salvas</h2>
+              {erroDasPublicacoes ? (
+                <AvisoDaSecao
+                  texto="Não foi possível carregar suas publicações."
+                  aoTentar={() => setRodadaDasPublicacoes((atual) => atual + 1)}
+                />
+              ) : publicacoes === null || publicacoesVisiveis === null ? (
+                <EsqueletoDeLista linhas={2} />
+              ) : publicacoes.length === 0 ? (
+                <p className="text-sm text-(--on-surface-variant)">
+                  Nenhuma publicação salva ainda. Toque em Salvar publicação no menu de uma
+                  publicação de grupo.
+                </p>
+              ) : (
+                <Lista>
+                  {publicacoesVisiveis.map((publicacao) => (
+                    <div key={publicacao.id} className="flex items-center gap-1 pr-1">
+                      <LinhaDeLista
+                        className="grow"
+                        icone="forum"
+                        titulo={publicacao.texto}
+                        subtitulo={publicacao.autor || "Membro do grupo"}
+                        tituloMultilinha
+                        onClick={() =>
+                          void navegacao.irPara("publicacao", { parametros: { id: publicacao.id } })
+                        }
+                      />
+                      <BotaoDeIcone
+                        rotulo={`Remover dos salvos: ${publicacao.texto}`}
+                        nome="bookmark_remove"
+                        disabled={removendo === publicacao.id}
+                        onClick={() =>
+                          void remover(
+                            "publicacoes",
+                            publicacao.id,
+                            publicacoes,
+                            setPublicacoes,
+                            () => agirNaPublicacao(publicacao.id, "salvar", false),
+                          )
+                        }
+                      />
+                    </div>
+                  ))}
+                </Lista>
+              )}
+            </section>
+          ) : null}
 
-      {mostra(guia, guiaVisivel) ? (
-        <section data-salvos="guia" className="grid gap-2">
-          <h2 className="text-[17px]">Referências do guia</h2>
-          {erroDoGuia ? (
-            <EstadoDeErro
-              titulo="Não foi possível carregar suas referências"
-              aoTentar={() => setRodadaDoGuia((atual) => atual + 1)}
-            />
-          ) : guia === null || guiaVisivel === null ? (
-            <EsqueletoDeLista linhas={2} />
-          ) : guia.length === 0 ? (
-            <p className="text-sm text-(--on-surface-variant)">
-              Nenhuma referência do guia salva ainda.
-            </p>
-          ) : (
-            <Lista>
-              {guiaVisivel.map((entrada) => (
-                <div key={entrada.id} className="flex items-center gap-1 pr-1">
-                  <LinhaDeLista
-                    className="grow"
-                    icone={ICONE_DA_CATEGORIA[entrada.categoria]}
-                    titulo={entrada.nome}
-                    subtitulo={entrada.descricao}
-                    onClick={() =>
-                      void navegacao.irPara("verbete", { parametros: { id: entrada.id } })
-                    }
-                  />
-                  <BotaoDeIcone
-                    rotulo={`Remover dos salvos: ${entrada.nome}`}
-                    nome="bookmark_remove"
-                    disabled={removendo === entrada.id}
-                    onClick={() =>
-                      void remover("guia", entrada.id, guia, setGuia, () =>
-                        marcarNoGuia(entrada.id, false),
-                      )
-                    }
-                  />
-                </div>
-              ))}
-            </Lista>
-          )}
-        </section>
-      ) : null}
+          {mostra(perguntas, perguntasVisiveis) ? (
+            <section data-salvos="perguntas" className="grid gap-2">
+              <h2 className="text-[17px]">Perguntas que você segue</h2>
+              {erroDasPerguntas ? (
+                <AvisoDaSecao
+                  texto="Não foi possível carregar suas perguntas."
+                  aoTentar={() => setRodadaDasPerguntas((atual) => atual + 1)}
+                />
+              ) : perguntas === null || perguntasVisiveis === null ? (
+                <EsqueletoDeLista linhas={2} />
+              ) : perguntas.length === 0 ? (
+                <p className="text-sm text-(--on-surface-variant)">
+                  Nenhuma pergunta seguida ainda. Toque em Seguir respostas em uma pergunta para
+                  acompanhar as respostas dela.
+                </p>
+              ) : (
+                <Lista>
+                  {perguntasVisiveis.map((pergunta) => (
+                    <div key={pergunta.id} className="flex items-center gap-1 pr-1">
+                      <LinhaDeLista
+                        className="grow"
+                        icone="forum"
+                        titulo={pergunta.titulo}
+                        subtitulo={pergunta.resolvida ? "Resolvida" : pergunta.assunto}
+                        tituloMultilinha
+                        onClick={() =>
+                          void navegacao.irPara("pergunta", { parametros: { id: pergunta.id } })
+                        }
+                      />
+                      <BotaoDeIcone
+                        rotulo={`Remover dos salvos: ${pergunta.titulo}`}
+                        nome="bookmark_remove"
+                        disabled={removendo === pergunta.id}
+                        onClick={() =>
+                          void remover("perguntas", pergunta.id, perguntas, setPerguntas, () =>
+                            marcarSalvaPergunta(pergunta.id, false),
+                          )
+                        }
+                      />
+                    </div>
+                  ))}
+                </Lista>
+              )}
+            </section>
+          ) : null}
+
+          {mostra(guia, guiaVisivel) ? (
+            <section data-salvos="guia" className="grid gap-2">
+              <h2 className="text-[17px]">Referências do guia</h2>
+              {erroDoGuia ? (
+                <AvisoDaSecao
+                  texto="Não foi possível carregar suas referências."
+                  aoTentar={() => setRodadaDoGuia((atual) => atual + 1)}
+                />
+              ) : guia === null || guiaVisivel === null ? (
+                <EsqueletoDeLista linhas={2} />
+              ) : guia.length === 0 ? (
+                <p className="text-sm text-(--on-surface-variant)">
+                  Nenhuma referência do guia salva ainda.
+                </p>
+              ) : (
+                <Lista>
+                  {guiaVisivel.map((entrada) => (
+                    <div key={entrada.id} className="flex items-center gap-1 pr-1">
+                      <LinhaDeLista
+                        className="grow"
+                        icone={ICONE_DA_CATEGORIA[entrada.categoria]}
+                        titulo={entrada.nome}
+                        subtitulo={entrada.descricao}
+                        onClick={() =>
+                          void navegacao.irPara("verbete", { parametros: { id: entrada.id } })
+                        }
+                      />
+                      <BotaoDeIcone
+                        rotulo={`Remover dos salvos: ${entrada.nome}`}
+                        nome="bookmark_remove"
+                        disabled={removendo === entrada.id}
+                        onClick={() =>
+                          void remover("guia", entrada.id, guia, setGuia, () =>
+                            marcarNoGuia(entrada.id, false),
+                          )
+                        }
+                      />
+                    </div>
+                  ))}
+                </Lista>
+              )}
+            </section>
+          ) : null}
+        </>
+      )}
     </section>
+  )
+}
+
+/** A falha de uma seção: aviso único com a saída, sem trocar a estrutura. */
+function AvisoDaSecao({
+  texto,
+  aoTentar,
+}: {
+  readonly texto: string
+  readonly aoTentar: () => void
+}) {
+  return (
+    <div className="flex items-center justify-between gap-2">
+      <p role="alert" className="text-sm text-(--destructive)">
+        {texto}
+      </p>
+      <Botao tom="texto" className="shrink-0" onClick={aoTentar}>
+        Tentar de novo
+      </Botao>
+    </div>
   )
 }
