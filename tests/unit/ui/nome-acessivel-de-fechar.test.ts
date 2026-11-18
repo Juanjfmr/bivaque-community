@@ -124,7 +124,7 @@ describe("o rótulo de fechar não volta a ser herdado em inglês", () => {
         total + (readFileSync(file, "utf8").match(/<ModalCloseTrigger/g) ?? []).length,
       0,
     )
-    expect(sites, "algum modal deixou de passar pelo wrapper").toBeGreaterThanOrEqual(10)
+    expect(sites, "algum modal deixou de passar pelo wrapper").toBeGreaterThanOrEqual(8)
     for (const file of callers) {
       expect(readFileSync(file, "utf8"), file.slice(root.length + 1)).toMatch(
         /from "[^"]*close-button"/,

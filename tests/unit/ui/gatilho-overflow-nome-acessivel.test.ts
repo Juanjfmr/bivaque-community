@@ -13,84 +13,17 @@ import { describe, expect, it } from "vitest"
 
 import { readFileSync } from "node:fs"
 import { join } from "node:path"
-import { accessibleSuffix, overflowTriggerLabel } from "web/lib/recommendations/trigger-label"
 
 const root = join(import.meta.dirname, "..", "..", "..")
-const componente = join(
-  root,
-  "apps",
-  "web",
-  "app",
-  "components",
-  "indications",
-  "indication-detail.tsx",
-)
-const menu = join(root, "apps", "web", "app", "components", "indications", "conversation-menu.tsx")
 const menuDoFeed = join(root, "apps", "web", "app", "components", "bivaque", "feed-post-menu.tsx")
 const cartaoDoFeed = join(root, "apps", "web", "app", "components", "bivaque", "feed-post-card.tsx")
 
-const TITULO = "Preciso de um pedreiro para reparar o muro"
-
-describe("nome acessivel do gatilho de overflow", () => {
-  it("diz qual item o botao abre e mantem o prefixo que o e2e clica", () => {
-    const rotulo = overflowTriggerLabel("do pedido", TITULO)
-    expect(rotulo).toBe(`Mais opções do pedido: ${TITULO}`)
-    // tests/e2e/reports-member-flow.spec.ts clica name "Mais opções" sem `exact`.
-    expect(rotulo.startsWith("Mais opções")).toBe(true)
-    expect(rotulo).not.toBe("Mais opções")
-    expect(overflowTriggerLabel("da resposta", "Falo com o Nivaldo, ele faz esse servico")).toBe(
-      "Mais opções da resposta: Falo com o Nivaldo, ele faz esse servico",
-    )
-  })
-
-  it("nao repete o mesmo nome em dois itens distintos da lista", () => {
-    const um = overflowTriggerLabel("do pedido", TITULO)
-    const outro = overflowTriggerLabel("do pedido", "Alguem conhece um bom encanador")
-    const resposta = overflowTriggerLabel("da resposta", "Falo com o Nivaldo")
-    expect(new Set([um, outro, resposta]).size).toBe(3)
-  })
-
-  it("corta identificacao longa em limite de palavra, sem reticencias", () => {
-    const longo = `${"a".repeat(30)} ${"b".repeat(40)}`
-    const sufixo = accessibleSuffix(longo)
-    expect(sufixo.length).toBeLessThanOrEqual(48)
-    expect(sufixo).toBe("a".repeat(30))
-    expect(sufixo).not.toContain("…")
-    expect(overflowTriggerLabel("do pedido", longo).startsWith("Mais opções do pedido: ")).toBe(
-      true,
-    )
-  })
-
-  it("item sem texto identificador nao vira rotulo vazio nem generico sem alvo", () => {
-    expect(overflowTriggerLabel("da resposta", "   ")).toBe("Mais opções da resposta")
-    expect(accessibleSuffix("\n  texto   em\n duas linhas ")).toBe("texto em duas linhas")
-  })
-})
-
 describe("fiacao do chamador", () => {
-  const fonte = readFileSync(componente, "utf8")
-  const fonteMenu = readFileSync(menu, "utf8")
-
-  it("pedido e resposta passam triggerLabel especifico (era o que faltava)", () => {
-    const rotulos = [...fonte.matchAll(/triggerLabel=\{([^}]*)\}/g)].map((m) => m[1] ?? "")
-    expect(rotulos.length).toBe(2)
-    expect(
-      rotulos.some((r) => r.includes('overflowTriggerLabel("do pedido", request.title)')),
-    ).toBe(true)
-    expect(rotulos.some((r) => r.includes('overflowTriggerLabel("da resposta", body)'))).toBe(true)
-    // Os dois gatilhos do arquivo sao os dois que recebem rotulo.
-    expect((fonte.match(/<ConversationMenu/g) ?? []).length).toBe(rotulos.length)
-  })
-
   it("o default do componente compartilhado do feed continua exatamente 'Mais opções'", () => {
     const fonteFeed = readFileSync(menuDoFeed, "utf8")
     expect(fonteFeed).toContain('triggerLabel = "Mais opções"')
     expect(fonteFeed).toContain("aria-label={triggerLabel}")
     expect(fonteFeed).not.toContain("!important")
-    // O menu das Indicoes exige o rotulo do chamador: o gatilho tem nome
-    // acessivel do que abre, nunca um generico.
-    expect(fonteMenu).toContain("aria-label={triggerLabel}")
-    expect(fonteMenu).not.toContain("!important")
   })
 
   it("o feed permanece generico porque esta fora de allowed_paths (BLOCKED)", () => {

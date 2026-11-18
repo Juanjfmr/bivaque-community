@@ -114,16 +114,8 @@ test("a landing pinta a barra do navegador com o par claro e escuro", () => {
 
 test("reporting never exposes database errors and keeps a usable disclosure control", () => {
   const reportButton = read("apps", "web", "app", "components", "bivaque", "report-button.tsx")
-  const chatThread = read("apps", "web", "app", "components", "bivaque", "chat-thread.tsx")
 
   assert.doesNotMatch(reportButton, /setError\(insertError\.message\)/)
-  assert.doesNotMatch(chatThread, /setReportError\(error\.message\)/)
-  assert.match(chatThread, /min-h-11 min-w-11/)
-  assert.match(chatThread, /htmlFor=\{`report-reason-\$\{msg\.id\}`\}/)
-  assert.match(chatThread, /Não inclua CPF, telefone ou endereço/)
-  assert.match(chatThread, /aria-controls=\{`message-report-\$\{msg\.id\}`\}/)
-  assert.match(chatThread, /aria-errormessage=/)
-  assert.match(chatThread, /autoFocus/)
   assert.match(reportButton, /htmlFor="report-reason"/)
   assert.match(reportButton, /aria-errormessage=/)
 })

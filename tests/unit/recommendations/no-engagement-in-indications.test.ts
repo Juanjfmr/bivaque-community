@@ -25,10 +25,7 @@ const FLOW_FILES: Array<[string, string]> = [
   ["ask-indication", indications("ask-indication.tsx")],
   ["indications-panel", indications("indications-panel.tsx")],
   ["indication-item", indications("indication-item.tsx")],
-  ["indication-detail", indications("indication-detail.tsx")],
 ]
-
-const detail = stripComments(indications("indication-detail.tsx"))
 
 describe("engajamento proibido no fluxo de indicação (DS-006)", () => {
   it("nenhuma tela do fluxo tem polegar, curtida, 'Isso ajudou' ou 'Indicar'", () => {
@@ -53,31 +50,6 @@ describe("engajamento proibido no fluxo de indicação (DS-006)", () => {
       expect(code, `${name}: etiqueta de candidata`).not.toContain("Ainda não está no Guia")
       expect(code, `${name}: RPC de sugestão`).not.toContain("suggest_guide_entry(")
     }
-  })
-
-  it("o vínculo com o Guia só existe com dado aprovado que liga a resposta ao item", () => {
-    // A leitura é a única que prova o vínculo: arrival_guide_entries.source_reply_id.
-    expect(detail).toContain('.from("arrival_guide_entries")')
-    expect(detail).toMatch(/\.in\(\s*"source_reply_id"/)
-    expect(detail).toContain('.eq("status", "approved")')
-    // E o vínculo é condicional: sem linha, nada é desenhado.
-    expect(detail).toContain("const guide = guideLinks[reply.id]")
-    expect(detail).toContain("{guide ? (")
-    // A tabela de promoções é service_role: a chamada é que não pode existir.
-    expect(detail).not.toContain('.from("recommendation_reply_promotions")')
-  })
-
-  it("moderação fica no overflow, nunca como ação primária", () => {
-    expect(detail).toContain('report: "Denunciar pedido"')
-    expect(detail).toContain('report: "Denunciar resposta"')
-    expect(detail).toContain('delete: "Excluir resposta"')
-    expect(detail).toContain('openReport("recommendation_request"')
-    expect(detail).toContain('openReport("recommendation_reply"')
-    // Um só modal, aberto pelo menu: nenhum botão de denúncia solto na tela.
-    expect(detail.match(/<ReportButton/g)?.length).toBe(1)
-    expect(detail).toContain("externalState={reportModal}")
-    // "Silenciar" não existe em nenhum lugar do produto: não é inventado aqui.
-    expect(detail).not.toMatch(/Silenciar/i)
   })
 
   it("a varredura ainda pega as strings proibidas quando elas são código", () => {

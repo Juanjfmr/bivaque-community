@@ -47,7 +47,7 @@ test.describe("indicações com memória", () => {
       0,
     )
     await asker.getByRole("button", { name: "Publicar pedido" }).click()
-    await asker.waitForURL(/\/indicacoes\/[0-9a-f-]{36}$/)
+    await asker.waitForURL(/\/app\/pergunta\/[0-9a-f-]{36}$/)
     const requestPath = new URL(asker.url()).pathname
     await expect(asker.getByRole("heading", { level: 1, name: question })).toBeVisible()
 

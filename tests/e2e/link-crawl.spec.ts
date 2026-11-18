@@ -246,13 +246,6 @@ const PORTAS_FORA_DO_LINK: readonly PortaDeclarada[] = [
   //   por ela que a casca se abre, a entrada do dono da vila foi para `entradas`, não para cá:
   //   a casca não tem link saindo do app, e entrada declarada não é dívida.
   {
-    route: "/indicacoes/[id]",
-    porta:
-      "CONDICIONAL: vista Indicações da Comunidade, que só linka o pedido quando a cidade já tem pedidos (RUN-172/RUN-176; a lista de /salvos saiu no RUN-186)",
-    dependeDeDados: true,
-    dono: "dono de vila",
-  },
-  {
     route: "/nova-senha",
     porta: "EXTERNO: link do e-mail de recuperação de senha",
     dono: "visitante",

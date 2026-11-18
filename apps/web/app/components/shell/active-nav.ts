@@ -117,6 +117,7 @@ export const OUTSIDE_SHELL_PREFIXES = [
   // inteiro ou o prefixo seguido de "/", e "prestador-convite" não é
   // "prestador/…".
   "/prestador-convite",
+  "/app",
 ] as const
 
 function matches(pathname: string, href: string): boolean {

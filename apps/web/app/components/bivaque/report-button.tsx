@@ -59,7 +59,6 @@ interface ReportButtonProps {
    * do componente nao e renderizado.
    */
   externalState?: ReturnType<typeof useOverlayState>
-
 }
 
 export function ReportButton({
@@ -173,10 +172,6 @@ export function ReportButton({
                       title="Denúncia enviada."
                       description="A equipe vai analisar. Você recebe um aviso quando houver uma decisão."
                     />
-                          </>
-                        )}
-                      </div>
-                    ) : null}
                   </div>
                 ) : (
                   <>

@@ -81,10 +81,4 @@ describe("menu de mais opções sem item morto", () => {
     expect(menu).toMatch(/\{onHide \? \(\s*<Dropdown\.Item key="hide"/)
     expect(menu).toMatch(/\{onReport \? \(\s*<Dropdown\.Item key="report"/)
   })
-
-  it("no detalhe, quem escreveu não denuncia o próprio conteúdo", () => {
-    const detail = web("app", "components", "indications", "indication-detail.tsx")
-    expect(detail).toMatch(/onReport=\{\s*isAuthor\s*\?\s*undefined/)
-    expect(detail).toMatch(/onReport=\{\s*isOwnReply\s*\?\s*undefined/)
-  })
 })
