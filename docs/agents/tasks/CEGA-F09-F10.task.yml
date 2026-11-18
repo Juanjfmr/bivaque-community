@@ -10,6 +10,10 @@
 # Decisões do coordenador (mandato 02/11): só tema claro (decisão do dono de 14/11); o spec só tira
 # fotos, sem veredito; o julgamento é de outro modelo, depois, a partir das imagens. Sem mudança de
 # produto: se uma tela não puder ser fotografada com dados simulados, registrar no RELATORIO.
+#
+# Execução (18/11): F09/F10 ficaram em `apps/app/tests/e2e/cegas/capturas-f09-f10.spec.ts`, arquivo
+# próprio, porque `capturas.spec.ts` roda com o modo de prova ligado (apoio.ts) e o modo de prova
+# troca toda tela real pela TelaDeProva. F02/F03/F07/F08 seguem no spec antigo, sem passo removido.
 
 task_id: CEGA-001
 
@@ -55,6 +59,7 @@ acceptance:
 
 proof:
   - npx pnpm@11.18.0 --filter @bivaque/app exec playwright test tests/e2e/cegas/capturas.spec.ts --project=desktop-1440
+  - npx pnpm@11.18.0 --filter @bivaque/app exec playwright test tests/e2e/cegas/capturas-f09-f10.spec.ts --project=desktop-1440
   - npx pnpm@11.18.0 --filter @bivaque/app exec tsc --noEmit
   - node scripts/agents/task-contract.mjs docs/agents/tasks/CEGA-F09-F10.task.yml
 
