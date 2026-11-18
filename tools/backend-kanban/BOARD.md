@@ -6,7 +6,7 @@
 
 > docs/LANCAMENTO.md define o lançamento e o que é pronto; os cards LAN-* acompanham cada fase e jornada. O ADR-20261024-front-react-spa governa o app (apps/app) e a troca das telas antigas do apps/web. Documentos de agosto a outubro estão em docs/historico e não orientam trabalho. Código e provas atuais determinam entrega, sem apagar evidências ou criar outra fila.
 
-**Mapa:** 295 frentes · 3 agora · 8 bloqueadas · 166 concluídas · 0 drifts
+**Mapa:** 296 frentes · 1 agora · 8 bloqueadas · 168 concluídas · 0 drifts
 
 Para trabalho autônomo, rode `node tools/backend-kanban/src/board.mjs --next` e resolva um card por commit. Drift é evidência temporária; não é fechamento.
 
@@ -14,8 +14,6 @@ Use o ID abaixo com `node tools/backend-kanban/src/board.mjs --card <ID>` antes 
 
 ## Agora
 
-- **AUTHZ-001** · P0 · AUTHZ-001: conta suspensa ou com exclusão pedida não edita nem apaga post e comentário
-- **AUTHZ-002** · P0 · AUTHZ-002: grupo não troca dono, autoria, cidade nem exclusão por UPDATE direto
 - **HRN-007** · P1 · HRN-007: PR só de quadro/docs roda CI leve (fast + agregador) e o merge-seguro aceita
 
 ## Bloqueios
