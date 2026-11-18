@@ -106,7 +106,7 @@ export const HEADINGS = {
   "/reports": "^Fila de denúncias$",
   "/arrivals": "^Chegadas declaradas$",
   "/guide-queue": "Guia|Referências",
-  "/inicio": "Bom dia|Boa tarde|Boa noite|Olá",
+  // F02-001: a tela antiga /inicio saiu do apps/web (307 para /app/inicio).
   // RUN-181: a pasta `(shell)/explorar` saiu inteira — o hub e o painel de
   // serviços são 307 para /app/busca (LT-002 desde o RUN-181; a busca já era
   // desde o LT-002). Capturar qualquer um deles mediria o redirect, e as 4
@@ -361,7 +361,7 @@ export const ROUTES = [
   // elas as capturas — do hub e do painel de serviços. As 4 de /explorar/busca
   // abaixo já mediam redirect desde o LT-002; saem agora por serem do mesmo
   // arquivo, e não porque outra frente as reivindique.
-  { path: "/inicio", name: "inicio", auth: true },
+  // F02-001: `/inicio` saiu da web; o Início é capturado no app (/app/inicio).
   // CIDADE-169: a tela antiga de localidade saiu (307 para /app/cidade/atual);
   // a captura dela é a da consulta no app.
   // RECON-027: Moradia. `/imoveis` não depende de fixture. Criar imóvel saiu da
@@ -1035,17 +1035,16 @@ export function auditPage({ nonTextPairs, minimumTextSize, readingMeasureMax }) 
 async function main() {
   const runDir = join(OUT_ROOT, RUN_ID)
   const shotsDir = join(runDir, "shots")
-  if (SCENARIO && !["publish", "edit", "offline"].includes(SCENARIO)) {
-    throw new Error(`Unknown visual scenario: ${SCENARIO}`)
-  }
-  if (SCENARIO && ROUTE_PATH && ROUTE_PATH !== "/inicio") {
-    throw new Error(`The ${SCENARIO} scenario starts at /inicio`)
+  // F02-001: os cenários publish/edit/offline abriam o compositor do Início
+  // antigo da web, que saiu inteiro. A publicação do app tem os próprios E2E.
+  if (SCENARIO) {
+    throw new Error(`The ${SCENARIO} scenario measured the old web /inicio, removed in F02-001`)
   }
   // BIVAQUE_VISUAL_ROUTE casa o caminho exato ou o nome da rota — o nome é a
   // única forma de pedir uma rota cujo caminho só existe em runtime (fixture).
   // Lista separada por vírgula roda várias rotas num único processo, para que o
   // report.json da run carregue a prova de todas elas de uma vez.
-  const requestedList = (SCENARIO ? "/inicio" : (ROUTE_PATH ?? ""))
+  const requestedList = (ROUTE_PATH ?? "")
     .split(",")
     .map((entry) => entry.trim())
     .filter(Boolean)

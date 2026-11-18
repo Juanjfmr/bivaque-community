@@ -5,6 +5,10 @@
 # gravada e relida, 401 nas rotas sem sessão, /inicio e /explorar* com 307 para o app,
 # tests/e2e/f02-inicio-real.spec.ts rodando nos três projetos (375/768/1440). O que falta é
 # este contrato.
+#
+# Emenda do coordenador (rodada 2, depois da revisão FAIL): allowed_paths ganha o classificador
+# tipo-de-falha.ts e os órfãos que a remoção expôs (highlights e os três testes que liam a
+# tela antiga). Nenhum critério de aceite mudou.
 
 task_id: F02-001
 
@@ -44,6 +48,7 @@ allowed_paths:
   - apps/app/src/telas/Busca.tsx
   - apps/app/src/telas/Inicio.tsx
   - apps/app/src/eventos/EstadosDeAcesso.tsx
+  - apps/app/src/eventos/tipo-de-falha.ts
   - apps/app/components/bivaque/chips-de-filtro.tsx
   - apps/app/tests
   - apps/web/app/(shell)/inicio
@@ -52,10 +57,14 @@ allowed_paths:
   - apps/web/app/components/bivaque/intent-launcher.tsx
   - apps/web/app/api/app/cidade/[id]/route.ts
   - apps/web/lib/inicio
+  - apps/web/lib/listings/highlights.ts
   - apps/web/proxy.ts
   - tests/unit/ui
   - tests/unit/infra
   - tests/unit/proxy
+  - tests/unit/indications/portas.test.ts
+  - tests/unit/recommendations/no-engagement-in-indications.test.ts
+  - tests/unit/listings/highlights.test.ts
   - tests/e2e/busca-redirects.spec.ts
   - tests/e2e/f02-inicio-real.spec.ts
   - tests/e2e/link-crawl.spec.ts

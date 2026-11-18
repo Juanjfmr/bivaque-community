@@ -26,7 +26,8 @@ import { registrarRecente } from "@/src/busca/recentes"
 import { termoAceito } from "@/src/busca/termo-url"
 import { useCasca } from "@/src/contexto/casca"
 import { EstadoDeSessaoVencida, EstadoNegado } from "@/src/eventos/EstadosDeAcesso"
-import { acessoNegado, foiAbortada, sessaoVencida } from "@/src/eventos/formulario"
+import { foiAbortada } from "@/src/eventos/formulario"
+import { type TipoDeFalha, tipoDeFalha } from "@/src/eventos/tipo-de-falha"
 import { CartaoDaPublicacao } from "@/src/inicio/CartaoDaPublicacao"
 import { rotuloDaCategoria } from "@/src/inicio/categorias"
 import { mensagemDaFalha } from "@/src/mercado/falha"
@@ -68,7 +69,7 @@ export function Inicio() {
   const navegacao = useNavegacao()
   const navegar = useNavigate()
   const [dados, setDados] = useState<InicioDaCidade | null>(null)
-  const [erro, setErro] = useState<"sessao" | "negado" | "falhou" | null>(null)
+  const [erro, setErro] = useState<TipoDeFalha | null>(null)
   const [rodada, setRodada] = useState(0)
   const [termo, setTermo] = useState("")
   const [termoCurto, setTermoCurto] = useState(false)
@@ -94,8 +95,7 @@ export function Inicio() {
         if (!controle.signal.aborted) setDados(valor)
       })
       .catch((falha: unknown) => {
-        if (!controle.signal.aborted)
-          setErro(sessaoVencida(falha) ? "sessao" : acessoNegado(falha) ? "negado" : "falhou")
+        if (!controle.signal.aborted) setErro(tipoDeFalha(falha))
       })
     return () => controle.abort()
   }, [rodada])
