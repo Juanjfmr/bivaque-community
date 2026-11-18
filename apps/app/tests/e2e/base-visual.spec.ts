@@ -61,17 +61,19 @@ test("V14: perguntas mostram o título completo sem truncar no celular", async (
   expect(geometria.semCorteVertical).toBe(true)
 })
 
-test("V15: o botão preenchido usa a Brasa oficial", async ({ page }) => {
+test("V15: o botão preenchido usa a ardósia de concluir", async ({ page }) => {
   await page.addInitScript(() => {
     ;(window as unknown as { __BIVAQUE_MODO_DE_PROVA__?: boolean }).__BIVAQUE_MODO_DE_PROVA__ = true
   })
   await page.goto("/app/galeria")
   await expect(page.locator('[data-tela="galeria"]')).toBeVisible()
   const botao = page.locator('[data-galeria="botao"] [data-exemplo="botao-padrao"]')
-  await expect(botao).toHaveAttribute("data-variant", "brasa")
+  // ADR-20261118-brasa-so-no-criar: concluir é ardósia; a Brasa ficou no FAB e
+  // no Criar da barra. `tests/brasa-so-no-criar.test.ts` guarda a regra na fonte.
+  await expect(botao).toHaveAttribute("data-variant", "default")
   const cores = await botao.evaluate((elemento) => {
     const amostra = document.createElement("span")
-    amostra.style.backgroundColor = "var(--brasa)"
+    amostra.style.backgroundColor = "var(--acao)"
     document.body.appendChild(amostra)
     const esperado = getComputedStyle(amostra).backgroundColor
     amostra.remove()

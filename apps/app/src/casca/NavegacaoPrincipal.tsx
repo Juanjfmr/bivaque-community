@@ -2,8 +2,10 @@ import { MembroAvatar } from "@/components/bivaque/avatar"
 import { Icone } from "@/components/bivaque/icone"
 import { Marca } from "@/components/bivaque/marca"
 import { criaVisivel, navegacaoVisivel } from "@/lib/casca"
-import { useAbaDaEntrada, useNavegacao, useRotaAtual } from "@/lib/navegacao/react"
+import { abaAtiva } from "@/lib/navegacao/abas"
+import { useEntradaDaTela, useNavegacao, useRotaAtual } from "@/lib/navegacao/react"
 import type { Aba } from "@/lib/navegacao/rotas"
+import { rotaPorNome } from "@/lib/navegacao/rotas"
 import { cn } from "@/lib/utils"
 import { useCasca } from "@/src/contexto/casca"
 
@@ -14,7 +16,8 @@ import { useCasca } from "@/src/contexto/casca"
  *
  * Conversas **não** está aqui: é o ícone do topo, com o contador de não lidas. A
  * aba acesa é a do dono da tela, com a origem da entrada onde há mais de uma
- * porta (§3.2) — quem diz é `abaAtiva`, não o endereço.
+ * porta (§3.2) — quem diz é `abaAtiva`, não o endereço; sem pai na entrada
+ * (link direto), nenhuma aba se acende.
  *
  * O Criar encolhe quando a barra minimiza ao rolar (§6, itens 27 e 28).
  */
@@ -39,7 +42,16 @@ export function NavegacaoPrincipal({
 }) {
   const rota = useRotaAtual()
   const navegacao = useNavegacao()
-  const aba = useAbaDaEntrada()
+  // A aba acesa (ADR §3.2) é a dona da tela; a regra de origem por entrada vale
+  // para o que tem mais de uma porta — mas a origem só é confiável quando a
+  // entrada veio de dentro do app (tem `pai`). Num link direto ou recarga, a
+  // origem nasce "inicio" por padrão e NÃO acende nada: Salvos ou o perfil de
+  // um membro abertos por endereço não marcam o Início.
+  const entrada = useEntradaDaTela()
+  const aba =
+    rotaPorNome(rota.nome)?.dono === "origem" && entrada.pai === null
+      ? null
+      : abaAtiva(rota.nome, entrada.origem)
   const larguraDaBarra = navegacaoVisivel(rota.nome, largura)
   const compacto = minimizada && larguraDaBarra
 

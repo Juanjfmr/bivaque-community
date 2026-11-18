@@ -15,14 +15,16 @@ import { abrir as abrirRota, SELETOR_TITULO } from "../apoio"
  * `/api/app/*` simuladas no mesmo contrato do servidor — como `avisos.spec.ts` e
  * `salvos.spec.ts` já fazem para medir estas telas.
  *
- * O spec só tira fotos, num tema (claro, decisão do dono de 14/11): não afirma
- * veredito, nota nem aparência. O julgamento é de outro modelo, a partir destas
- * imagens. As capturas ficam em `.visual/blind/<jornada>/<largura>-light-<passo>.png`,
+ * O spec só tira fotos, nos dois temas — claro e escuro, dormente até
+ * `data-tema="escuro"` (decisão do dono de 14/11: o escuro não segue o
+ * sistema; a captura liga o atributo no documento): não afirma veredito, nota
+ * nem aparência. O julgamento é de outro modelo, a partir destas imagens. As
+ * capturas ficam em `.visual/blind/<jornada>/<largura>-<tema>-<passo>.png`,
  * nomeadas só pela jornada.
  */
 
 const LARGURAS = [375, 768, 1440] as const
-const TEMA = "light"
+const TEMAS = ["light", "dark"] as const
 const RAIZ = join(process.cwd(), "..", "..", ".visual", "blind")
 
 const CIDADE_MANAUS = "00000000-0000-4000-8000-000000000001"
@@ -422,6 +424,15 @@ async function assentar(page: Page): Promise<void> {
   })
 }
 
+/** O escuro é dormente (dono, 14/11): só acende com data-tema no documento. */
+async function aplicarTema(page: Page, tema: "light" | "dark"): Promise<void> {
+  await page.emulateMedia({ colorScheme: tema })
+  await page.evaluate((escuro) => {
+    if (escuro) document.documentElement.dataset["tema"] = "escuro"
+    else delete document.documentElement.dataset["tema"]
+  }, tema === "dark")
+}
+
 /**
  * Abre a rota num documento novo. Recarregar a MESMA rota reidrata o estado da
  * entrada que ficou no histórico — a sobreposição do passo anterior —, e a tela
@@ -568,7 +579,9 @@ const JORNADAS: ReadonlyArray<{ nome: string; passos: readonly Passo[] }> = [
         ir: async (page) => {
           await abrirDoZero(page, "/app/conversas")
         },
-        pronto: '[data-estado="vazio"]',
+        // No celular o vazio é o cartão do EstadoVazio; no computador, a linha
+        // quieta da esquerda (o painel da direita completa a saída).
+        pronto: '[data-estado="vazio"]:visible, [data-caixa="vazia-resumo"]:visible',
       },
       {
         nome: "03-conversa",
@@ -614,7 +627,7 @@ const JORNADAS: ReadonlyArray<{ nome: string; passos: readonly Passo[] }> = [
           await page.getByRole("button", { name: "Denunciar mensagem" }).first().click()
           await page.getByRole("radio", { name: "Spam" }).check()
         },
-        pronto: '[data-sobreposicao="denuncia-de-mensagem"]',
+        pronto: '[data-sobreposicao="conversa-denuncia"]',
       },
     ],
   },
@@ -732,19 +745,25 @@ const JORNADAS: ReadonlyArray<{ nome: string; passos: readonly Passo[] }> = [
   },
 ]
 
-async function fotografar(page: Page, jornada: string, largura: number, passo: Passo) {
+async function fotografar(
+  page: Page,
+  jornada: string,
+  largura: number,
+  tema: (typeof TEMAS)[number],
+  passo: Passo,
+) {
   const diretorio = join(RAIZ, jornada)
   mkdirSync(diretorio, { recursive: true })
   await page.screenshot({
-    path: join(diretorio, `${largura}-${TEMA}-${passo.nome}.png`),
+    path: join(diretorio, `${largura}-${tema}-${passo.nome}.png`),
     fullPage: true,
   })
 }
 
 test.describe("capturas para a revisão cega de F09 e F10", () => {
-  test("F09 e F10 em 375, 768 e 1440, tema claro", async ({ page }, info) => {
+  test("F09 e F10 em 375, 768 e 1440, claro e escuro", async ({ page }, info) => {
     test.skip(info.project.name !== "desktop-1440", "a matriz fixa as três larguras")
-    test.setTimeout(600_000)
+    test.setTimeout(900_000)
     const erros: string[] = []
     page.on("pageerror", (erro) => erros.push(`pageerror: ${erro.message}`))
 
@@ -757,15 +776,19 @@ test.describe("capturas para a revisão cega de F09 e F10", () => {
 
     for (const largura of LARGURAS) {
       await page.setViewportSize({ width: largura, height: 900 })
-      await page.emulateMedia({ colorScheme: TEMA })
-      for (const jornada of JORNADAS) {
-        for (const passo of jornada.passos) {
-          aplicar(passo.cenario)
-          await passo.ir(page)
-          await expect(page.locator(passo.pronto)).toBeVisible()
-          await expect(page.locator(SELETOR_TITULO)).toBeVisible()
-          await assentar(page)
-          await fotografar(page, jornada.nome, largura, passo)
+      for (const tema of TEMAS) {
+        // Cada passo recarrega o documento (about:blank antes da rota): o tema
+        // escuro, que é dormente, se aplica depois de chegar.
+        for (const jornada of JORNADAS) {
+          for (const passo of jornada.passos) {
+            aplicar(passo.cenario)
+            await passo.ir(page)
+            await aplicarTema(page, tema)
+            await expect(page.locator(passo.pronto)).toBeVisible()
+            await expect(page.locator(SELETOR_TITULO)).toBeVisible()
+            await assentar(page)
+            await fotografar(page, jornada.nome, largura, tema, passo)
+          }
         }
       }
     }

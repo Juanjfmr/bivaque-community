@@ -113,15 +113,16 @@ const CORES: readonly { nome: string; papel: string; variavel: string }[] = [
   { nome: "Cartão", papel: "Publicação, campo, folha", variavel: "--pc-cartao" },
   { nome: "Grafite", papel: "Texto, seleção, link", variavel: "--pc-tinta" },
   { nome: "Suave", papel: "Apoio e hora", variavel: "--pc-suave" },
-  { nome: "Brasa", papel: "Só a ação principal", variavel: "--pc-acao" },
-  { nome: "Ardósia", papel: "Só o que está feito", variavel: "--pc-feito" },
+  { nome: "Ardósia", papel: "A ação de concluir, uma por tela", variavel: "--pc-acao" },
+  { nome: "Brasa", papel: "Só o começar a criar: FAB e Criar da barra", variavel: "--pc-criar" },
+  { nome: "Feito", papel: "Só o que já está feito", variavel: "--pc-feito" },
 ]
 
 function Cores() {
   return (
     <Secao
       titulo="Cor"
-      regra="Brasa aparece uma vez por tela, no botão principal. Seleção é Grafite. Nada de cor para enfeitar rótulo."
+      regra="Concluir é ardósia, uma por tela. Brasa só no começar a criar (FAB e Criar da barra). Seleção é Grafite. Nada de cor para enfeitar rótulo."
     >
       <ul className="gp-cores">
         {CORES.map((cor) => (
@@ -143,7 +144,7 @@ function Botoes() {
   return (
     <Secao
       titulo="Botões"
-      regra="Toda ação é pílula. Principal em Brasa, uma por tela; o resto em tom, contorno ou texto."
+      regra="Toda ação é pílula. Principal em ardósia, uma por tela; o resto em tom, contorno ou texto. A Brasa fica só no começar a criar."
     >
       <div className="gp-linha">
         <Botao tom="principal">Continuar</Botao>
@@ -196,7 +197,7 @@ function Escolhas() {
   return (
     <Secao
       titulo="Chips e abas"
-      regra="Marcado é Grafite cheio, com o check. Aba usa o mesmo chip. Segmento navega e pinta a Brasa, com a contagem que a lista já tem."
+      regra="Marcado é Grafite cheio, com o check. Aba usa o mesmo chip. Segmento navega e marca em Grafite, com a contagem que a lista já tem."
     >
       <ul className="pc-chips" aria-label="Assuntos">
         {assuntos.map((assunto) => (

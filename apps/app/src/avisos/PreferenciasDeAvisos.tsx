@@ -29,26 +29,26 @@ import {
  *
  * A escolha é a mesma matriz que a web antiga usa: cinco tipos × três canais.
  * O push nasce desligado porque ainda não há envio no celular (LAN-PUSH); a
- * escolha fica guardada e a frase diz isso, em vez de prometer o que não chega.
+ * escolha fica guardada para quando chegar — o canal se chama "No celular",
+ * como a pessoa conhece, e não "Push".
+ *
+ * A régua de 18/11: interruptores de 44 px por canal, apoio de uma linha e o
+ * Gravar numa barra fixa no rodapé da seção, sempre visível.
  */
 
 type TipoVisivel = Exclude<TipoDoAviso, "product_news">
 
 const TIPOS: ReadonlyArray<readonly [TipoVisivel, string, string]> = [
   ["comments", "Respostas", "Quando alguém comenta ou responde algo seu."],
-  ["events", "Encontros", "Confirmações, mudanças e lembretes dos encontros que você acompanha."],
-  [
-    "indications",
-    "Pedidos de indicação",
-    "Respostas ao seu pedido e o resumo de pedidos da cidade.",
-  ],
-  ["messages", "Mensagens", "Quando alguém te manda uma mensagem direta."],
+  ["events", "Encontros", "Mudanças e lembretes dos seus encontros."],
+  ["indications", "Pedidos de indicação", "Respostas ao seu pedido e o resumo da cidade."],
+  ["messages", "Mensagens", "Quando alguém mandar uma mensagem direta."],
 ]
 
 const CANAIS: ReadonlyArray<readonly [CanalDoAviso, string]> = [
   ["in_app", "No app"],
   ["email", "E-mail"],
-  ["push", "Push"],
+  ["push", "No celular"],
 ]
 
 function canalDe(
@@ -146,8 +146,7 @@ export function PreferenciasDeAvisos() {
   return (
     <div data-preferencias-de-aviso="sim" aria-busy={salvando} className="grid gap-3">
       <p className="text-sm text-(--on-surface-variant)">
-        Escolha o que você quer receber e por onde. O push no celular passa a chegar quando o app da
-        loja estiver instalado; a escolha fica guardada.
+        Escolha o que você quer receber e por onde.
       </p>
 
       <ul className="grid gap-2">
@@ -159,33 +158,36 @@ export function PreferenciasDeAvisos() {
               data-preferencia={tipo}
               className="grid gap-2 rounded-2xl border border-(--outline-variant) bg-(--surface-lowest) p-3"
             >
-              <div className="flex min-h-11 items-start justify-between gap-3">
+              <div className="flex min-h-11 items-center justify-between gap-3">
                 <span className="grid min-w-0 gap-0.5">
                   <b className="text-[15px] font-semibold">{titulo}</b>
                   <small className="text-[13px] text-(--on-surface-variant)">{texto}</small>
                 </span>
                 <Checkbox
+                  role="switch"
                   checked={ligado}
                   disabled={salvando}
                   onCheckedChange={(valor) => alterarTipo(tipo, valor === true)}
                   aria-label={`Avisos de ${titulo.toLowerCase()}`}
-                  className="mt-1"
+                  className="bv-interruptor mt-1"
                 />
               </div>
               <div
                 className={
                   ligado
-                    ? "flex flex-wrap items-center gap-4 pl-1"
-                    : "flex flex-wrap items-center gap-4 pl-1 opacity-40"
+                    ? "flex flex-wrap items-center gap-x-4 gap-y-1 pl-1"
+                    : "flex flex-wrap items-center gap-x-4 gap-y-1 pl-1 opacity-40"
                 }
               >
                 {CANAIS.map(([canal, rotulo]) => (
-                  <span key={canal} className="flex min-h-11 items-center gap-2 text-sm">
+                  <span key={canal} className="flex min-h-11 items-center gap-2.5 text-sm">
                     <Checkbox
+                      role="switch"
                       checked={ligado && canalDe(preferencias, tipo, canal)}
                       disabled={!ligado || salvando}
                       onCheckedChange={(valor) => alterarCanal(tipo, canal, valor === true)}
                       aria-label={`${titulo} por ${rotulo.toLowerCase()}`}
+                      className="bv-interruptor"
                     />
                     {rotulo}
                   </span>
@@ -198,20 +200,21 @@ export function PreferenciasDeAvisos() {
 
       <div
         data-preferencia="product_news"
-        className="flex min-h-11 items-start justify-between gap-3 rounded-2xl border border-(--outline-variant) bg-(--surface-lowest) p-3"
+        className="flex min-h-11 items-center justify-between gap-3 rounded-2xl border border-(--outline-variant) bg-(--surface-lowest) p-3"
       >
         <span className="grid min-w-0 gap-0.5">
           <b className="text-[15px] font-semibold">Novidades do Bivaque</b>
           <small className="text-[13px] text-(--on-surface-variant)">
-            Comunicações sobre o produto. Começa desligado.
+            Novidades do produto. Começa desligado.
           </small>
         </span>
         <Checkbox
+          role="switch"
           checked={preferencias.productNews}
           disabled={salvando}
           onCheckedChange={(valor) => alterarTipo("product_news", valor === true)}
           aria-label="Novidades do Bivaque"
-          className="mt-1"
+          className="bv-interruptor mt-1"
         />
       </div>
 
@@ -220,8 +223,7 @@ export function PreferenciasDeAvisos() {
           Resumo da cidade por e-mail
         </span>
         <p className="text-[13px] text-(--on-surface-variant)">
-          Perguntas novas, encontros da semana e respostas às suas perguntas. Só chega quando há
-          novidades.
+          Perguntas novas e encontros da semana.
         </p>
         <Select
           value={preferencias.resumoCidade}
@@ -246,15 +248,16 @@ export function PreferenciasDeAvisos() {
 
       {/* "Gravar", não "Salvar": o Salvar do perfil casa com qualquer nome que
           contenha "Salvar" no seletor por papel, e esta seção vive na mesma tela. */}
-      <Botao
-        tom="tonal"
-        onClick={salvar}
-        disabled={!sujo || salvando}
-        aria-label="Gravar preferências de avisos"
-        className="justify-self-end"
-      >
-        {salvando ? "Salvando…" : "Gravar preferências"}
-      </Botao>
+      <div data-barra="gravar-preferencias">
+        <Botao
+          tom="tonal"
+          onClick={salvar}
+          disabled={!sujo || salvando}
+          aria-label="Gravar preferências de avisos"
+        >
+          {salvando ? "Salvando…" : "Gravar preferências"}
+        </Botao>
+      </div>
     </div>
   )
 }

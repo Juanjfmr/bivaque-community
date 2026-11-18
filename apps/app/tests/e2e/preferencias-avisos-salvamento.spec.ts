@@ -34,8 +34,8 @@ test("avisos: bloqueia edição enquanto salva e não envia PATCH duplicado", as
 
   await page.goto("/app/voce")
   const secao = page.locator('[data-preferencias-de-aviso="sim"]')
-  const respostas = secao.getByRole("checkbox", { name: "Avisos de respostas" })
-  const noticias = secao.getByRole("checkbox", { name: "Novidades do Bivaque" })
+  const respostas = secao.getByRole("switch", { name: "Avisos de respostas" })
+  const noticias = secao.getByRole("switch", { name: "Novidades do Bivaque" })
   const gravar = secao.getByRole("button", { name: "Gravar preferências de avisos" })
 
   await expect(respostas).toBeChecked()
@@ -70,7 +70,7 @@ test("avisos: falha de gravação preserva escolha e permite nova tentativa", as
 
   await page.goto("/app/voce")
   const secao = page.locator('[data-preferencias-de-aviso="sim"]')
-  const respostas = secao.getByRole("checkbox", { name: "Avisos de respostas" })
+  const respostas = secao.getByRole("switch", { name: "Avisos de respostas" })
   const gravar = secao.getByRole("button", { name: "Gravar preferências de avisos" })
   await respostas.click()
   await gravar.click()
