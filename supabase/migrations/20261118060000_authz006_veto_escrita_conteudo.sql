@@ -15,7 +15,7 @@
 -- As restritivas são `to authenticated`: funções SECURITY DEFINER (rodam como
 -- dono) e service_role não passam por elas. Por isso toda RPC definer que
 -- cria ou muda conteúdo a pedido do membro ganha o mesmo veto no corpo:
--- create_group, transition_listing, set_group_rules, pin_group_post,
+-- create_group, create_group_in_community, transition_listing, set_group_rules, pin_group_post,
 -- unpin_group_post, transfer_group_ownership, delete_group, complete_event e as
 -- quatro de resolução de pergunta. Nenhuma delas é chamada por job ou por outra
 -- função: só pela sessão do membro.
@@ -569,3 +569,47 @@ begin
   end if;
 end;
 $$;
+-- create_group_in_community: mesmo corpo de 20260805215419_community_rpcs.sql, com o veto no início.
+create or replace function public.create_group_in_community(
+  p_name text,
+  p_description text,
+  p_visibility public.group_visibility,
+  p_community_id uuid
+)
+returns uuid
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v_group_id uuid;
+  v_locality_id uuid;
+begin
+  if not private.can_write_own_content() then
+    raise exception 'account cannot write content' using errcode = '42501';
+  end if;
+
+  if not private.is_community_member(p_community_id) then
+    raise exception 'only approved community members can create groups here';
+  end if;
+
+  select locality_id into v_locality_id
+  from public.communities
+  where id = p_community_id and is_deleted = false;
+
+  insert into public.groups (
+    name, description, visibility, locality_id, community_id, created_by, owner_user_id
+  )
+  values (
+    p_name, p_description, p_visibility, v_locality_id, p_community_id,
+    (select auth.uid()), (select auth.uid())
+  )
+  returning id into v_group_id;
+
+  insert into public.group_memberships (group_id, user_id, role, status)
+  values (v_group_id, (select auth.uid()), 'owner', 'approved');
+
+  return v_group_id;
+end;
+$$;
+

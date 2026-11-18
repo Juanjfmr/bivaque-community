@@ -16,7 +16,7 @@ cartão AUTHZ-006) encontrou a mesma brecha, preexistente, nas outras tabelas de
   `property_details`, `listing_photos` e `events` checam só autoria. Um anunciante suspenso ainda
   muda preço e descrição pelas rotas do app, que usam o cliente da pessoa sob RLS.
 - As RPCs SECURITY DEFINER que criam ou mudam conteúdo a pedido do membro (`create_group`,
-  `transition_listing`, `set_group_rules`, `pin_group_post`, `unpin_group_post`,
+  `create_group_in_community`, `transition_listing`, `set_group_rules`, `pin_group_post`, `unpin_group_post`,
   `transfer_group_ownership`, `delete_group`, `complete_event` e as quatro de resolução de pergunta)
   não olham suspensão nem exclusão pedida.
 
@@ -31,7 +31,7 @@ cartão AUTHZ-006) encontrou a mesma brecha, preexistente, nas outras tabelas de
    faz AND entre restritivas e o OR das permissivas: nada antes negado passa a ser permitido, as
    policies permissivas atuais ficam intactas (sem reescrever autoria nem escopo) e qualquer
    permissiva futura nessas tabelas herda o veto.
-3. As doze RPCs definer listadas acima recebem o mesmo veto no corpo (42501): `transition_listing`
+3. As treze RPCs definer listadas acima recebem o mesmo veto no corpo (42501): `transition_listing`
    logo depois da autenticação, as outras na primeira linha. O resto de cada corpo é idêntico à
    versão anterior. Nenhuma delas é chamada por job nem por outra função, só pela sessão do membro.
    As restritivas usam `(select private.can_write_own_content())`, avaliado uma vez por comando.
@@ -40,10 +40,9 @@ cartão AUTHZ-006) encontrou a mesma brecha, preexistente, nas outras tabelas de
 
 ## Consequências
 
-- As rotas do app que editam e apagam pergunta, resposta, anúncio e evento já tratam zero linhas
-  como 404 e erro do banco como falha; nenhuma devolve sucesso falso. A mensagem para a conta
-  suspensa ainda é a genérica de "não encontrado" ou "sua conta não pode…"; um texto dedicado é
-  melhoria, não brecha.
+- As rotas do app que editam e apagam pergunta, resposta, anúncio e evento tratam a recusa como
+  falha (404, 403 ou 503, conforme a rota); nenhuma devolve sucesso falso. A mensagem para a conta
+  suspensa ainda é genérica; um texto dedicado é melhoria, não brecha.
 - Service role e funções definer (operação, purga da conta, jobs) não passam pelas restritivas e
   continuam funcionando.
 - `events` e `groups` não têm GRANT DELETE para `authenticated`; as restritivas de DELETE dessas
@@ -52,7 +51,13 @@ cartão AUTHZ-006) encontrou a mesma brecha, preexistente, nas outras tabelas de
   (`apps/web/app/components/indications/indication-detail.tsx`) olha só o erro e trata zero linhas
   como sucesso, então a conta suspensa vê o diálogo fechar como se tivesse editado. Nada é gravado;
   a tela sai na troca da fase 6. As rotas do app que usam `.single()` respondem 503 em vez de "sua
-  conta não pode…" quando a linha some pela RLS: mensagem errada, sem sucesso falso.
+  conta não pode…" quando a linha some pela RLS: mensagem errada, sem sucesso falso. Desafixar pela
+  rota de ações do grupo devolve 200 com o estado real (ainda fixado), sem gravar nada.
+- Resíduo fora das sete tabelas, para um cartão próprio: a página de negócio
+  (`create_member_business_page`, `update_member_business_page` e as policies de
+  `provider_profiles`, `provider_catalog_items` e `provider_portfolio_photos`) não olha suspensão, e
+  `create_service_request` só veta exclusão pedida. Os buckets de foto de anúncio e de evento não
+  olham suspensão; o objeto enviado fica órfão, porque a linha no banco é vetada.
 
 ## Prova
 
