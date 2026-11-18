@@ -84,6 +84,69 @@ test("falha de leitura mostra um único aviso e a tela segue de pé", async ({ p
   await expect(page.locator('[data-aviso="perfil"]')).toHaveCount(0)
 })
 
+// REGUA-002, achado 2 da revisão de código: o gesto central da aceitação 4 —
+// bloquear pelo perfil de membro — precisava de prova em runtime, positiva e
+// negativa, pela rota existente POST /api/app/voce/bloqueados.
+test("bloquear pelo perfil de membro: espera visível, menu fora e estado bloqueado", async ({
+  page,
+}) => {
+  await simularVoce(page)
+  // A resposta demora o bastante para a espera aparecer na tela (achado 5).
+  await page.route(/\/api\/app\/voce\/bloqueados$/, async (rota) => {
+    if (rota.request().method() !== "POST") return rota.fallback()
+    await new Promise((espera) => setTimeout(espera, 1500))
+    return rota.fallback()
+  })
+
+  await page.goto("/app/perfil/u-paulo")
+  await expect(page.getByRole("heading", { name: "Paulo Roberto" })).toBeVisible()
+
+  await page.getByRole("button", { name: "Opções" }).click()
+  await page.getByRole("menuitem", { name: "Bloquear Paulo Roberto" }).click()
+
+  const dialogo = page.getByRole("alertdialog")
+  await expect(dialogo).toContainText("Bloquear Paulo Roberto?")
+  const gravou = page.waitForResponse(
+    (resposta) =>
+      resposta.url().endsWith("/api/app/voce/bloqueados") && resposta.request().method() === "POST",
+  )
+  await dialogo.getByRole("button", { name: "Bloquear", exact: true }).click()
+
+  // Durante o envio: a espera é visível e o item do menu não aceita outro
+  // disparo — desabilitado e marcado com aria-busy (achado 5). A resposta
+  // só é aguardada DEPOIS: esperar antes consumiria a espera que se mede.
+  await expect(page.getByRole("status")).toContainText("Bloqueando…")
+  await page.getByRole("button", { name: "Opções" }).click()
+  await expect(page.getByRole("menuitem", { name: /Paulo Roberto/ })).toBeDisabled()
+  await expect(page.getByRole("menuitem", { name: /Paulo Roberto/ })).toHaveAttribute(
+    "aria-busy",
+    "true",
+  )
+  await page.keyboard.press("Escape")
+
+  // Sucesso: o menu sai da tela e o estado bloqueado fica, com o que acontece.
+  expect((await gravou).ok(), "o bloqueio precisa responder com sucesso").toBe(true)
+  await expect(page.getByRole("status")).toContainText("Você bloqueou Paulo Roberto")
+  await expect(page.getByRole("button", { name: "Opções" })).toHaveCount(0)
+})
+
+test("bloquear pelo perfil com o servidor fora: o alerta diz para tentar e o menu continua", async ({
+  page,
+}) => {
+  await simularVoce(page, { respostaDoBloqueio: "indisponivel" })
+
+  await page.goto("/app/perfil/u-paulo")
+  await expect(page.getByRole("heading", { name: "Paulo Roberto" })).toBeVisible()
+  await page.getByRole("button", { name: "Opções" }).click()
+  await page.getByRole("menuitem", { name: "Bloquear Paulo Roberto" }).click()
+  await page.getByRole("alertdialog").getByRole("button", { name: "Bloquear", exact: true }).click()
+
+  await expect(page.getByRole("alert")).toContainText("Não foi possível bloquear agora")
+  // A falha não finge sucesso: sem estado de bloqueado, com a saída à mão.
+  await expect(page.getByRole("status")).toHaveCount(0)
+  await expect(page.getByRole("button", { name: "Opções" })).toBeVisible()
+})
+
 // RUN-184: o aviso da exclusão é o mesmo da tela antiga da web (o que sai agora, o
 // que sai no prazo, o que permanece e por quê), e o pedido registrado fica na própria
 // tela. Os seis tamanhos da config do app (320 a 1440, com 375/768/1440 entre eles)

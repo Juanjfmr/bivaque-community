@@ -209,7 +209,17 @@ test("remover tira a linha de cada seção pela rota daquele tipo", async ({ pag
   await expect(cartao).toBeVisible()
   await cartao.getByRole("button", { name: "Remover dos salvos", exact: true }).click()
   await expect(cartao).toHaveCount(0)
-  await expect(anuncios.getByText("Nenhum anúncio salvo")).toBeVisible()
+
+  // Sobrou só o que é SEGUIDO, não salvo: o vazio único dos salvos não
+  // contradiz a seção de perguntas — ela segue listada abaixo dele
+  // (REGUA-002, rodada 1).
+  const vazio = page.locator('[data-tela="salvos"] [data-estado="vazio"]')
+  await expect(vazio).toHaveCount(1)
+  await expect(vazio).toContainText("Nada salvo ainda")
+  await expect(page.getByRole("searchbox", { name: "Buscar nos salvos" })).toHaveCount(0)
+  const perguntasAinda = page.locator('[data-salvos="perguntas"]')
+  await expect(perguntasAinda).toContainText(TITULO_DA_SEGUNDA_PERGUNTA)
+  await expect(perguntasAinda).toContainText(TITULO_DA_TERCEIRA_PERGUNTA)
 
   await expect
     .poll(() => escritas)
@@ -354,6 +364,35 @@ test("nada salvo em nenhuma seção: um vazio só, da tela inteira", async ({ pa
   await expect(page.locator('[data-salvos="guia"]')).toHaveCount(0)
   await vazio.getByRole("button", { name: "Ver o Mercado" }).click()
   await expect(page).toHaveURL(/\/app\/mercado$/)
+})
+
+test("só imóveis salvos: a tela não mente vazio e a lista está a um chip", async ({ page }) => {
+  aplicarStubMercado(page)
+  // As seções de lista vazias: o único conteúdo salvo é um imóvel.
+  await page.route(/\/api\/app\/grupos\/salvas(?:\?|$)/, (rota) =>
+    rota.fulfill({ json: { publicacoes: [] } }),
+  )
+  await page.route(/\/api\/app\/perguntas\/salvas(?:\?|$)/, (rota) =>
+    rota.fulfill({ json: { perguntas: [] } }),
+  )
+  await page.route(/\/api\/app\/guia\/salvos(?:\?|$)/, (rota) =>
+    rota.fulfill({ json: { entradas: [] } }),
+  )
+  await salvarAnuncio(page, IMOVEL)
+
+  await page.goto("/app/salvos")
+
+  // REGUA-002, achado 1 da revisão de código: quem só tem imóveis salvos abre
+  // a tela no segmento de desapegos vazio — a tela não pode dizer "Nada salvo
+  // ainda" com o imóvel existindo. Os chips ficam à mão e a lista aparece.
+  const vazio = page.locator('[data-tela="salvos"] [data-estado="vazio"]')
+  await expect(vazio).toHaveCount(0)
+  const anuncios = page.locator('[data-salvos="anuncios"]')
+  await expect(anuncios).toContainText("Nenhum anúncio salvo ainda")
+  await anuncios.getByRole("button", { name: "Imóveis", exact: true }).click()
+  await expect(
+    anuncios.locator('[data-cartao="anuncio"]', { hasText: TITULO_DO_IMOVEL }),
+  ).toBeVisible()
 })
 
 test("leitura que começou antes do sucesso e chega depois dele não repõe o anúncio removido", async ({

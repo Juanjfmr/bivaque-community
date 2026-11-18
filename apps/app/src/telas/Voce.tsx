@@ -115,6 +115,17 @@ export function Voce() {
   const perfil = conta?.perfil ?? null
   const carregando = conta === null && !erro
 
+  // O rodapé do seletor de cidade da casca web traz `/app/voce#cidade` — o
+  // destino é o formulário, não a linha fechada (achado 4 da revisão de
+  // código). A âncora abre a linha sozinha, como o `?mudar=` já faz, e
+  // aterrissa no bloco quando o perfil já está na tela.
+  useEffect(() => {
+    if (window.location.hash !== "#cidade") return
+    setCidadeAberta(true)
+    if (perfil === null) return
+    document.getElementById("cidade")?.scrollIntoView({ block: "start" })
+  }, [perfil])
+
   const gravar = (dados: { nome: string; bio: string; cep: string | null }) => {
     setSalvando(true)
     setMensagem(null)
@@ -215,22 +226,27 @@ export function Voce() {
   }
 
   return (
-    <section data-tela="voce" className="grid gap-2 lg:mx-auto lg:max-w-[720px]">
+    <section data-tela="voce" className="grid gap-2 md:mx-auto md:max-w-[720px]">
       <CabecaDePagina titulo="Você" subtitulo="Sua conta, seus anúncios e seus ajustes." />
 
       {carregando ? (
         <EsqueletoDeLista linhas={1} />
       ) : erro ? (
-        // A falha ocupa o lugar do perfil, na mesma caixa: a estrutura do
-        // resto segue inteira — um aviso só, com a saída.
+        // A falha mora no cartão do perfil (revisão às cegas, 2): a caixa é a
+        // mesma do estado de sucesso e a saída é um botão de verdade, ao lado
+        // da mensagem — não um texto solto no canto da tela.
         <div
           data-aviso="perfil"
-          className="flex items-center justify-between gap-2 rounded-2xl bg-(--surface-lowest) px-4 py-3 ring-1 ring-(--outline-variant)"
+          className="flex flex-wrap items-center gap-2 rounded-2xl bg-(--surface-lowest) p-4 ring-1 ring-(--outline-variant)"
         >
-          <p role="alert" className="text-sm text-(--destructive)">
+          <p role="alert" className="min-w-0 grow text-sm text-(--destructive)">
             Não foi possível carregar o seu perfil agora.
           </p>
-          <Botao tom="texto" className="shrink-0" onClick={() => setRodada((atual) => atual + 1)}>
+          <Botao
+            tom="contornado"
+            className="shrink-0"
+            onClick={() => setRodada((atual) => atual + 1)}
+          >
             Tentar de novo
           </Botao>
         </div>
@@ -253,7 +269,10 @@ export function Voce() {
               setEditando((aberto) => !aberto)
             }}
           >
-            Editar
+            {/* Em telas estreitas o rótulo visual sai e sobra o lápis (revisão
+                às cegas, 12): nome e bio usam a largura; o nome acessível
+                continua "Editar". */}
+            <span className="max-md:sr-only">Editar</span>
           </Botao>
         </div>
       )}

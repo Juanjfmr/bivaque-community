@@ -7,13 +7,19 @@ import { Botao } from "@/components/bivaque/botao"
 import { Confirmacao } from "@/components/bivaque/confirmacao"
 import { EsqueletoDeLista } from "@/components/bivaque/esqueleto"
 import { EstadoVazio } from "@/components/bivaque/estado-vazio"
-import { ItemDoMenu, MenuDaLinha } from "@/components/bivaque/menu-de-linha"
+import { Icone } from "@/components/bivaque/icone"
+import { ItemDoMenu } from "@/components/bivaque/menu-de-linha"
 import { Secao } from "@/components/bivaque/secao"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import { FalhaDaApi } from "@/lib/api/cliente"
 import { lerPerfilDeMembro, type PerfilDeMembro as Perfil } from "@/lib/dados/perfil"
 import { bloquear } from "@/lib/dados/voce"
 import { rotuloDeData } from "@/lib/formato"
-import { useNavegacao, useRolagemEFoco } from "@/lib/navegacao/react"
+import { useNavegacao, useRolagemEFoco, useSobreposicaoDaEntrada } from "@/lib/navegacao/react"
 import { CARGA_CONCLUIDA } from "@/lib/navegacao/restauracao"
 import { validarParametros } from "@/lib/navegacao/rotas"
 import { EstadoDeSessaoVencida } from "@/src/eventos/EstadosDeAcesso"
@@ -30,14 +36,19 @@ import { TelaIndisponivel } from "@/src/telas/TelaIndisponivel"
  * invisível chega como 404 e a tela responde "página indisponível", nunca
  * "sem acesso": a existência da pessoa também é privada.
  *
- * A saída é o menu ⋯ (Mobbin f23df80d): Bloquear, pela porta existente
+ * A saída é o menu de opções (Mobbin f23df80d): Bloquear, pela porta existente
  * `/api/app/voce/bloqueados`, com confirmação. "Mandar mensagem" e "Denunciar
  * a pessoa" não têm rota no produto e ficam de fora (REGUA-002).
+ *
+ * O menu é o mesmo mecanismo do `MenuDaLinha` (sobreposição da entrada, Voltar
+ * fecha), com o gatilho que esta tela pede: rótulo "Opções" ao lado do nome
+ * (revisão às cegas, 13) — a ação visível do perfil quando não há mensagem.
  */
 export function PerfilDeMembro() {
   const parametros = useParams({ strict: false }) as Record<string, string | undefined>
   const id = parametros["id"] ?? ""
   const navegacao = useNavegacao()
+  const { aberto: menuAberto, aoMudarAberto: mudarMenu } = useSobreposicaoDaEntrada("menu-de-linha")
   const [perfil, setPerfil] = useState<Perfil | null>(null)
   const [erro, setErro] = useState<"falhou" | "sessao" | "ausente" | null>(null)
   const [rodada, setRodada] = useState(0)
@@ -77,7 +88,7 @@ export function PerfilDeMembro() {
 
   if (erro === "sessao") {
     return (
-      <section data-tela="perfil" className="grid gap-2 pt-4 lg:mx-auto lg:max-w-[720px]">
+      <section data-tela="perfil" className="grid gap-2 pt-4 md:mx-auto md:max-w-[720px]">
         <EstadoDeSessaoVencida />
       </section>
     )
@@ -97,16 +108,20 @@ export function PerfilDeMembro() {
     perfil === null ? "" : perfil.nome.trim() === "" ? "Membro da comunidade" : perfil.nome
 
   return (
-    <section data-tela="perfil" className="grid gap-2 pt-4 lg:mx-auto lg:max-w-[720px]">
+    <section data-tela="perfil" className="grid gap-2 pt-4 md:mx-auto md:max-w-[720px]">
       {erro === "falhou" ? (
         <div
           data-aviso="perfil"
-          className="flex items-center justify-between gap-2 rounded-2xl bg-(--surface-lowest) px-4 py-3 ring-1 ring-(--outline-variant)"
+          className="flex flex-wrap items-center gap-2 rounded-2xl bg-(--surface-lowest) px-4 py-3 ring-1 ring-(--outline-variant)"
         >
-          <p role="alert" className="text-sm text-(--destructive)">
+          <p role="alert" className="min-w-0 grow text-sm text-(--destructive)">
             Não foi possível carregar este perfil agora.
           </p>
-          <Botao tom="texto" className="shrink-0" onClick={() => setRodada((atual) => atual + 1)}>
+          <Botao
+            tom="contornado"
+            className="shrink-0"
+            onClick={() => setRodada((atual) => atual + 1)}
+          >
             Tentar de novo
           </Botao>
         </div>
@@ -116,17 +131,22 @@ export function PerfilDeMembro() {
 
       {perfil === null ? null : (
         <>
-          {/* A capa do vizinho (Mobbin 041fb7de): ilustrada, sem foto de
-              pessoa que não a enviou. O escopo `.pc` traz o raio da peça. */}
+          {/* A capa em faixa (Mobbin 041fb7de): ilustrada, sem foto de pessoa
+              que não a enviou. O recorte é do contêiner — cantos arredondados
+              e janela da cena pela `Ilustracao`, nunca a borda do arquivo
+              (revisão às cegas, 20). O escopo `.pc` traz o raio da peça. */}
           <div className="pc pc-embutido overflow-hidden rounded-2xl">
-            <Ilustracao nome="cidade" proporcao="21 / 9" />
+            <Ilustracao nome="cidade" proporcao="21 / 9" enquadre="50% 30%" />
           </div>
 
-          <header className="-mt-7 flex items-end gap-3 px-1">
+          {/* A identidade mora na superfície, abaixo da capa (revisão às cegas,
+              1): nenhum texto sobre a arte, legível nos dois temas. O avatar é
+              o único que atravessa a divisa, no máximo 24 px. */}
+          <header className="-mt-6 flex items-end gap-3 px-1">
             <span className="rounded-full ring-4 ring-(--background)">
               <Avatar nome={nome} tamanho={56} />
             </span>
-            <span className="grid min-w-0 grow gap-0.5 pb-1">
+            <span className="grid min-w-0 gap-0.5 pb-1">
               <h1
                 id="titulo-da-tela"
                 data-titulo-da-tela
@@ -138,32 +158,62 @@ export function PerfilDeMembro() {
               <small className="text-(--on-surface-variant)">Membro da comunidade</small>
             </span>
             {bloqueado ? null : (
-              <MenuDaLinha rotulo={`Opções do perfil de ${nome}`} className="ml-auto shrink-0 pb-1">
+              <DropdownMenu open={menuAberto} onOpenChange={mudarMenu} modal>
                 {/*
                   A confirmação SUBSTITUI o menu na mesma entrada. Deixar o Radix
                   fechar o menu (Voltar da entrada) fecharia a confirmação junto,
                   porque cada entrada tem uma sobreposição só — o molde da
                   Conversa (RUN-165).
                 */}
-                <ItemDoMenu
-                  perigo
-                  onSelect={(evento) => evento.preventDefault()}
-                  onClick={() =>
-                    void navegacao.atualizarCom((atual) => ({
-                      ...atual,
-                      sobreposicao: "confirmacao",
-                    }))
-                  }
+                <DropdownMenuTrigger asChild>
+                  <button
+                    type="button"
+                    data-acao="opcoes"
+                    aria-haspopup="menu"
+                    className="inline-flex h-11 shrink-0 items-center gap-1 rounded-full px-3 text-sm font-medium text-(--on-surface-variant) hover:bg-(--muted)"
+                    onClick={() => mudarMenu(true)}
+                  >
+                    <Icone nome="more_vert" />
+                    Opções
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent
+                  data-sobreposicao="menu-de-linha"
+                  aria-label={`Opções do perfil de ${nome}`}
+                  sideOffset={6}
+                  align="end"
+                  className="min-w-52"
                 >
-                  Bloquear {nome}
-                </ItemDoMenu>
-              </MenuDaLinha>
+                  <ItemDoMenu
+                    perigo
+                    disabled={bloqueando}
+                    aria-busy={bloqueando ? "true" : undefined}
+                    onSelect={(evento) => evento.preventDefault()}
+                    onClick={() =>
+                      void navegacao.atualizarCom((atual) => ({
+                        ...atual,
+                        sobreposicao: "confirmacao",
+                      }))
+                    }
+                  >
+                    {bloqueando ? `Bloqueando ${nome}…` : `Bloquear ${nome}`}
+                  </ItemDoMenu>
+                </DropdownMenuContent>
+              </DropdownMenu>
             )}
           </header>
 
           {perfil.bio.trim() === "" ? null : (
             <p className="px-1 text-[15px] leading-6 whitespace-pre-line">{perfil.bio}</p>
           )}
+
+          {bloqueando ? (
+            // A espera do bloqueio é visível (achado 5 da revisão de código):
+            // entre o clique e a resposta, a tela diz o que está fazendo.
+            <p role="status" className="px-1 text-sm text-(--on-surface-variant)">
+              Bloqueando…
+            </p>
+          ) : null}
 
           {bloqueado ? (
             <p
@@ -218,10 +268,13 @@ export function PerfilDeMembro() {
                 {perfil.eventos.map((evento) => (
                   <li
                     key={evento.id}
-                    className="flex items-center justify-between gap-3 rounded-2xl bg-(--surface-lowest) px-4 py-3 ring-1 ring-(--outline-variant)"
+                    // Em 375 o título e a data empilham (revisão às cegas, 14);
+                    // da largura pequena em diante, ficam lado a lado com a
+                    // data inteira numa linha só.
+                    className="grid gap-1 rounded-2xl bg-(--surface-lowest) px-4 py-3 ring-1 ring-(--outline-variant) sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center sm:gap-3"
                   >
                     <b className="text-[15px]">{evento.titulo}</b>
-                    <small className="shrink-0 text-(--on-surface-variant)">
+                    <small className="shrink-0 whitespace-nowrap text-(--on-surface-variant)">
                       {rotuloDeData(evento.comecaEm.slice(0, 10))}
                     </small>
                   </li>

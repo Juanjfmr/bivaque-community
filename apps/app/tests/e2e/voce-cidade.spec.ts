@@ -125,6 +125,23 @@ test("o link ?mudar= abre o formulário com o destino escolhido", async ({ page 
   await expect(page.getByRole("alertdialog")).toContainText("Mudar para Rio de Janeiro?")
 })
 
+test("a âncora #cidade abre a linha sozinha, como o ?mudar=", async ({ page }) => {
+  await simularVoce(page)
+  // É o endereço que o rodapé do seletor de cidade da casca web linka
+  // (achado 4 da revisão de código): quem chega por ele não pode aterrissar
+  // num bloco vazio, um clique atrás do que veio buscar.
+  await page.goto("/app/voce#cidade")
+
+  // O formulário aberto também tem um botão "Mudar de cidade" (o que grava);
+  // a linha que interessa é a da lista "Seu Bivaque".
+  const linha = page
+    .locator('[data-secao="sim"]', { hasText: "Seu Bivaque" })
+    .getByRole("button", { name: "Mudar de cidade" })
+  await expect(linha).toHaveAttribute("aria-expanded", "true")
+  const cidade = page.locator('[data-secao="sim"]', { hasText: "Sua cidade" })
+  await expect(cidade.getByText("Sua cidade é")).toContainText("Manaus")
+})
+
 test("Força Armada e OM: gravar, sobreviver ao recarregar e apagar limpando o campo", async ({
   page,
 }) => {

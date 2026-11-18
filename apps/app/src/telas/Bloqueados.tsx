@@ -66,7 +66,7 @@ export function Bloqueados() {
   const linhas = lista ?? []
 
   return (
-    <section data-tela="bloqueados" className="grid gap-2 lg:mx-auto lg:max-w-[720px]">
+    <section data-tela="bloqueados" className="grid gap-2 md:mx-auto md:max-w-[720px]">
       <CabecaDePagina titulo="Pessoas bloqueadas" subtitulo="Quem não aparece mais para você." />
 
       {mensagem === null ? null : (
@@ -78,57 +78,73 @@ export function Bloqueados() {
       {erro ? (
         <div
           data-aviso="lista"
-          className="flex items-center justify-between gap-2 rounded-2xl bg-(--surface-lowest) px-4 py-3 ring-1 ring-(--outline-variant)"
+          className="flex flex-wrap items-center gap-2 rounded-2xl bg-(--surface-lowest) px-4 py-3 ring-1 ring-(--outline-variant)"
         >
-          <p role="alert" className="text-sm text-(--destructive)">
+          <p role="alert" className="min-w-0 grow text-sm text-(--destructive)">
             Não foi possível carregar a lista agora.
           </p>
-          <Botao tom="texto" className="shrink-0" onClick={() => setRodada((atual) => atual + 1)}>
+          <Botao
+            tom="contornado"
+            className="shrink-0"
+            onClick={() => setRodada((atual) => atual + 1)}
+          >
             Tentar de novo
           </Botao>
         </div>
       ) : carregando ? (
         <EsqueletoDeLista linhas={3} />
       ) : linhas.length === 0 ? (
-        <EstadoVazio
-          titulo="Ninguém bloqueado"
-          texto="Quando você bloquear, a pessoa aparece aqui."
-          icone="person"
-          acao={{
-            rotulo: "Voltar para Você",
-            aoAcionar: () => void navegacao.irPara("voce"),
-          }}
-        />
+        // O escopo `.pc` traz as variáveis da peça: sem ele o botão da peça
+        // perde pílula e borda. A saída do vazio é ação de verdade (revisão
+        // às cegas, 5): ardósia preenchida, não o pálido de secundário.
+        <div className="pc pc-embutido">
+          <EstadoVazio
+            titulo="Ninguém bloqueado"
+            texto="Quando você bloquear, a pessoa aparece aqui."
+            icone="person"
+          >
+            <BotaoDaPeca data-acao="acao-do-vazio" onClick={() => void navegacao.irPara("voce")}>
+              Voltar para Você
+            </BotaoDaPeca>
+          </EstadoVazio>
+        </div>
       ) : (
-        <Lista>
-          {linhas.map((pessoa) => {
-            const nome = pessoa.nome ?? "Pessoa bloqueada"
-            return (
-              <div
-                key={pessoa.id}
-                data-linha="bloqueado"
-                className="flex min-h-20 items-center gap-3 px-4 py-3"
-              >
-                <Avatar nome={nome} tamanho={40} />
-                <span className="grid min-w-0 grow gap-0.5">
-                  <b className="truncate text-[15px] font-semibold">{nome}</b>
-                  <small className="text-[13px] text-(--on-surface-variant)">
-                    {`Bloqueio desde ${quando(pessoa.bloqueadoEm)}`}
-                  </small>
-                </span>
-                <BotaoDaPeca
-                  tom="contorno"
-                  compacto
-                  aria-label={`Desbloquear ${nome}`}
-                  disabled={removendo !== null}
-                  onClick={() => desfazer(pessoa.id)}
+        <div className="pc pc-embutido">
+          <Lista>
+            {linhas.map((pessoa) => {
+              const nome = pessoa.nome ?? "Pessoa bloqueada"
+              return (
+                <div
+                  key={pessoa.id}
+                  data-linha="bloqueado"
+                  className="flex min-h-20 flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center"
                 >
-                  {removendo === pessoa.id ? "Desbloqueando…" : "Desbloquear"}
-                </BotaoDaPeca>
-              </div>
-            )
-          })}
-        </Lista>
+                  <span className="flex min-w-0 items-center gap-3">
+                    <Avatar nome={nome} tamanho={40} />
+                    <span className="grid min-w-0 grow gap-0.5">
+                      <b className="truncate text-[15px] font-semibold">{nome}</b>
+                      {/* A data inteira numa linha só (revisão às cegas, 4): em
+                          375 o botão desce para a linha de baixo em vez de
+                          quebrar "Bloqueio desde 03/11/2026" no meio. */}
+                      <small className="whitespace-nowrap text-[13px] text-(--on-surface-variant)">
+                        {`Bloqueio desde ${quando(pessoa.bloqueadoEm)}`}
+                      </small>
+                    </span>
+                  </span>
+                  <BotaoDaPeca
+                    tom="contorno"
+                    aria-label={`Desbloquear ${nome}`}
+                    disabled={removendo !== null}
+                    onClick={() => desfazer(pessoa.id)}
+                    className="sm:ml-auto"
+                  >
+                    {removendo === pessoa.id ? "Desbloqueando…" : "Desbloquear"}
+                  </BotaoDaPeca>
+                </div>
+              )
+            })}
+          </Lista>
+        </div>
       )}
     </section>
   )
