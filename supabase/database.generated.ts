@@ -3862,6 +3862,7 @@ export type Database = {
         Returns: Database["public"]["Enums"]["listing_status"]
       }
       unpin_group_post: { Args: { p_group_id: string }; Returns: undefined }
+      unread_conversation_count: { Args: never; Returns: number }
       unsubscribe_city_digest: { Args: { p_token: string }; Returns: boolean }
       update_member_business_page: {
         Args: {

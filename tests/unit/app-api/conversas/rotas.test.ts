@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest"
 
 vi.mock("web/lib/app-api/sessao-do-next", () => ({ resolverSessaoDaRequisicao: vi.fn() }))
 
+import { POST as marcarLida } from "web/app/api/app/conversas/[id]/lida/route"
 import { POST as enviar } from "web/app/api/app/conversas/[id]/mensagens/route"
 import { GET as detalhe } from "web/app/api/app/conversas/[id]/route"
 import { GET as listar } from "web/app/api/app/conversas/route"
@@ -34,6 +35,7 @@ type OpcoesDoCliente = {
   erro?: string
   erroDoEnvio?: { code: string; message: string }
   dadoDoEnvio?: unknown
+  erroDaLeitura?: { code: string; message: string }
 }
 
 function cliente(opcoes: OpcoesDoCliente = {}) {
@@ -51,11 +53,13 @@ function cliente(opcoes: OpcoesDoCliente = {}) {
           data: single ? { display_name: "Maria" } : [{ user_id: OUTRO, display_name: "Maria" }],
           error: null,
         }
+      if (tabela === "dm_read_states") return { data: null, error: null }
       if (tabela === "dm_messages") return { data: single ? mensagem : [mensagem], error: null }
       return { data: null, error: null }
     }
     const q: Record<string, unknown> = {}
-    for (const metodo of ["select", "eq", "lt", "or", "order", "limit", "in"]) q[metodo] = () => q
+    for (const metodo of ["select", "eq", "neq", "gt", "lt", "or", "order", "limit", "in"])
+      q[metodo] = () => q
     q["insert"] = (valor: unknown) => {
       insert = true
       insercoes.push(valor)
@@ -71,6 +75,9 @@ function cliente(opcoes: OpcoesDoCliente = {}) {
   })
   const rpc = vi.fn(async (funcao: string, argumentos: Record<string, unknown> = {}) => {
     chamadas.push({ funcao, argumentos })
+    if (funcao === "unread_conversation_count") return { data: 1, error: null }
+    if (funcao === "mark_conversation_read")
+      return { data: null, error: opcoes.erroDaLeitura ?? null }
     if (funcao === "send_conversation_message") {
       if (opcoes.erroDoEnvio) return { data: null, error: opcoes.erroDoEnvio }
       return { data: "dadoDoEnvio" in opcoes ? opcoes.dadoDoEnvio : mensagem, error: null }
@@ -112,6 +119,7 @@ describe("conversas do app", () => {
   })
   it.each([
     ["caixa", () => listar(req("GET"))],
+    ["marcar lida", () => marcarLida(req("POST", `/${ID}/lida`), context)],
     ["detalhe", () => detalhe(req("GET", `/${ID}`), context)],
     ["envio", () => enviar(req("POST", `/${ID}/mensagens`, '{"texto":"Olá"}'), context)],
   ])("%s exige sessão", async (_, chamar) => expect((await chamar()).status).toBe(401))
@@ -125,8 +133,24 @@ describe("conversas do app", () => {
     const resposta = await listar(req("GET"))
     expect(resposta.status).toBe(200)
     expect(await resposta.json()).toMatchObject({
-      conversas: [{ id: ID, nome: "Maria", outroId: OUTRO, ultima: "Olá" }],
+      porLer: 1,
+      conversas: [{ porLer: true, id: ID, nome: "Maria", outroId: OUTRO, ultima: "Olá" }],
     })
+  })
+  it("marca leitura e recusa erros", async () => {
+    const mock = autenticar()
+    expect((await marcarLida(req("POST", `/${ID}/lida`), context)).status).toBe(204)
+    expect(mock.chamadas).toEqual([
+      { funcao: "mark_conversation_read", argumentos: { p_conversation_id: ID } },
+    ])
+    expect(
+      (await marcarLida(req("POST", "/x/lida"), { params: Promise.resolve({ id: "x" }) })).status,
+    ).toBe(400)
+    expect((await marcarLida(req("POST", `/${ID}/lida`, undefined, {}), context)).status).toBe(403)
+    autenticar(cliente({ erroDaLeitura: { code: "42501", message: "segredo" } }))
+    expect((await marcarLida(req("POST", `/${ID}/lida`), context)).status).toBe(404)
+    autenticar(cliente({ erroDaLeitura: { code: "XX000", message: "segredo" } }))
+    expect((await marcarLida(req("POST", `/${ID}/lida`), context)).status).toBe(503)
   })
   it("detalha mensagens visíveis e identifica as próprias", async () => {
     autenticar()

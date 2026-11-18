@@ -25,6 +25,54 @@ async function capturar(page: Page, projeto: string, tela: string) {
 }
 
 test.describe("F09 — conversas reais", { tag: "@stateful" }, () => {
+  test("leitura persiste e recusa conversa alheia", async ({ page, context, browser }) => {
+    await semearSessaoDeMembro(context, MEMBRO_SEMEADO)
+    const outra = await browser.newContext()
+    const anonima = await browser.newContext()
+    try {
+      await semearSessaoDeMembro(outra, OUTRA_PESSOA)
+      const enviada = await outra.request.post(
+        `${ORIGEM}/api/app/conversas/${CONVERSA}/mensagens`,
+        {
+          headers: { origin: ORIGEM, "x-bivaque-app": "bivaque-spa" },
+          data: { texto: `Leitura ${Date.now()}` },
+        },
+      )
+      expect(enviada.status()).toBe(201)
+      await page.goto("/app")
+      await expect(page.locator('[data-contador="conversas"]')).toBeVisible()
+      await page.goto("/app/conversas")
+      const linha = page.locator(`[data-thread="${CONVERSA}"]`)
+      await expect(linha.getByLabel("Por ler")).toBeVisible()
+      await linha.getByRole("button").first().click()
+      await expect(page.locator('[data-mensagens="historico"]')).toBeVisible()
+      await expect
+        .poll(
+          async () =>
+            (await (await page.request.get("/api/app/conversas")).json()).conversas.find(
+              (item: { id: string }) => item.id === CONVERSA,
+            )?.porLer,
+        )
+        .toBe(false)
+      await page.goto("/app/conversas")
+      await page.reload()
+      await expect(page.locator(`[data-thread="${CONVERSA}"]`).getByLabel("Por ler")).toHaveCount(0)
+      expect(
+        (
+          await page.request.post(`/api/app/conversas/${CONVERSA_ALHEIA}/lida`, {
+            headers: { origin: ORIGEM, "x-bivaque-app": "bivaque-spa" },
+          })
+        ).status(),
+      ).toBe(404)
+      expect(
+        (await anonima.request.post(`${ORIGEM}/api/app/conversas/${CONVERSA}/lida`)).status(),
+      ).toBe(401)
+    } finally {
+      await outra.close()
+      await anonima.close()
+    }
+  })
+
   test("caixa, conversa e resposta persistida; outra conversa é negada", async ({
     page,
     context,
