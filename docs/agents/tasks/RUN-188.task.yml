@@ -32,6 +32,7 @@ allowed_paths:
   - apps/web/lib/outbox
   - apps/web/lib/notifications
   - apps/web/lib/push
+  - apps/web/lib/security/api-surface.ts
   - apps/web/public
   - apps/web/package.json
   - pnpm-lock.yaml
@@ -40,6 +41,7 @@ allowed_paths:
   - apps/app/lib/dados/push.ts
   - apps/app/src/avisos
   - apps/app/src/casca
+  - apps/app/src/telas/Voce.tsx
   - apps/app/public
   - apps/app/vite.config.ts
   - apps/app/tests
