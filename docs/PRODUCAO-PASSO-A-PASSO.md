@@ -92,7 +92,7 @@ O job `bivaque-resumo-cidade` roda a cada dez minutos e usa `resumo-worker-endpo
 | `RLS_PROBE_EMAIL` e `RLS_PROBE_PASSWORD` | opcional (conta de teste do probe de RLS do operador) |
 | `BIVAQUE_AUTH_BYPASS` | **não definir em produção**: só vale em `development`. Em `test`, `production` ou `NODE_ENV` ausente, o proxy responde 503 com log e não libera a rota (ADR-20261110-superficie-publica-do-proxy) |
 
-O push no aparelho (RUN-137) usa o par de chaves VAPID. Gere uma vez com
+O push no aparelho (RUN-188) usa o par de chaves VAPID. Gere uma vez com
 `npx web-push@4.0.0 generate-vapid-keys` e guarde os três valores nas variáveis acima. Sem
 `WEB_PUSH_PUBLIC_KEY`/`WEB_PUSH_PRIVATE_KEY`, o envio fica desligado — sem erro e sem retentativa — e o
 app não oferece o interruptor de push. A chave privada nunca aparece em log, no repositório ou no bundle
