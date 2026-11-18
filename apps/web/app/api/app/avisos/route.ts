@@ -65,22 +65,35 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   const userId = auth.sessao.usuario.id
   try {
     const client = auth.sessao.cliente
+    const bloqueios = await client
+      .from("dm_blocks")
+      .select("blocker_user_id,blocked_user_id")
+      .or(`blocker_user_id.eq.${userId},blocked_user_id.eq.${userId}`)
+    if (bloqueios.error) throw bloqueios.error
+    const bloqueados = [
+      ...new Set(
+        (bloqueios.data ?? []).map((b) =>
+          b.blocker_user_id === userId ? b.blocked_user_id : b.blocker_user_id,
+        ),
+      ),
+    ]
+    const filtroDeAtores = `actor_user_id.is.null,actor_user_id.not.in.(${bloqueados.join(",")})`
     let consulta = client
       .from("notifications")
       .select("id,type,action,target_type,target_id,actor_user_id,read_at,created_at")
       .eq("recipient_user_id", userId)
       .order("created_at", { ascending: false })
       .range(depois, depois + limite - 1)
+    if (bloqueados.length > 0) consulta = consulta.or(filtroDeAtores)
     if (filtro === "nao-lidas") consulta = consulta.is("read_at", null)
+    let consultaContagem = client
+      .from("notifications")
+      .select("id", { count: "exact", head: true })
+      .eq("recipient_user_id", userId)
+      .is("read_at", null)
+    if (bloqueados.length > 0) consultaContagem = consultaContagem.or(filtroDeAtores)
 
-    const [pagina, contagem] = await Promise.all([
-      consulta,
-      client
-        .from("notifications")
-        .select("id", { count: "exact", head: true })
-        .eq("recipient_user_id", userId)
-        .is("read_at", null),
-    ])
+    const [pagina, contagem] = await Promise.all([consulta, consultaContagem])
     if (pagina.error) throw pagina.error
     if (contagem.error) throw contagem.error
 

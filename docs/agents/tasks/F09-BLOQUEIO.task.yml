@@ -1,0 +1,95 @@
+# F09-BLOQUEIO — segundo lote do LAN-F09: bloqueio vale também para avisos e e-mails.
+#
+# Inventário do coordenador em 18/11 sobre origin/main 054d511b (disco e git). Só a conversa
+# (send_conversation_message, 20260922161000:57-65) e o aviso de pedido
+# (20260926022416_aviso_de_pedido.sql:204-211) respeitam public.dm_blocks. Os demais produtores de
+# public.notifications com ator humano não filtram: notify_comment, notify_group_post,
+# notify_group_pin (20261024120000_group_base.sql), notify_event_rsvp, notify_event_change
+# (20260911054812), notify_group_admission, notify_invitation_accepted (20260802001400),
+# notify_recommendation_reply (20260821000011), notify_recommendation_reply_followers
+# (20260821000012), dispatch_listing_alerts (20260911051005), send_recurring_event_reminders
+# (20260820052745). Os que gravam e-mail em public.outbox com ator humano:
+# notify_recommendation_reply (:63), notify_recommendation_reply_followers (:44),
+# dispatch_listing_alerts (:183). GET /api/app/avisos e a contagem de não lidos também não filtram.
+#
+# Decisões do coordenador (mandato 02/11), sem decisão nova de produto: bloquear alguém já significa
+# não receber nada dessa pessoa; este lote só estende a regra existente aos avisos.
+# - O filtro fica na criação: um trigger BEFORE INSERT em public.notifications descarta a linha
+#   (return null) quando há bloqueio em qualquer direção entre recipient_user_id e actor_user_id.
+#   Ator nulo (sistema/operação) passa sem mudança.
+# - E-mail: as três funções que gravam em public.outbox com ator humano ganham o mesmo
+#   not exists antes de gravar, recriadas com create or replace numa migration nova, sem mudar mais
+#   nada do corpo.
+# - Avisos antigos já gravados: GET /api/app/avisos e a contagem escondem os de ator bloqueado
+#   (qualquer direção), sob a RLS do usuário; isso cobre bloqueios feitos depois do aviso.
+# - R3 por tocar supabase/migrations e dado de privacidade; security-auditor antes do merge.
+
+task_id: F09-002
+
+adr: docs/decisions/ADR-20261105-porta-de-dados-do-app.md
+
+objective: >
+  Quem bloqueou uma pessoa não recebe aviso no app nem e-mail causado por ela, nos dois sentidos do
+  bloqueio, e avisos antigos dessa pessoa somem da lista e da contagem; avisos de sistema seguem
+  iguais; tudo com prova de banco e de rota.
+
+authority:
+  - docs/LANCAMENTO.md (linha F09: conversas e avisos, bloqueio)
+  - Card LAN-F09
+  - ADR-20261023-comunidade-do-prototipo.md, frente D1 (bloqueio com corte de notificação; este lote entrega só o corte de avisos e e-mails, sem os filtros de leitura de D2)
+  - ADR-20261116-bloqueio-e-denuncia-pela-porta-do-app.md (o corte da fila de notificação ficou adiado para D1/D2; este lote o executa)
+  - ADR-20261024-front-react-spa.md §5
+  - ADR-20261105-porta-de-dados-do-app.md; sem decisão nova (aplica a regra de bloqueio existente), R3 pelo toque em supabase/migrations, com security-auditor antes do merge
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    rg dm_blocks supabase/migrations só acha filtro em send_conversation_message e no aviso de
+    pedido; os produtores listados no cabeçalho inserem em public.notifications e public.outbox
+    sem consultar dm_blocks; apps/web/app/api/app/avisos/route.ts:68-82 filtra só por
+    recipient_user_id.
+
+allowed_paths:
+  - docs/agents/tasks/F09-BLOQUEIO.task.yml
+  - supabase/migrations
+  - supabase/tests
+  - apps/web/app/api/app/avisos
+  - tests/unit/app-api
+  - tests/e2e/f09-avisos-real.spec.ts
+  - .visual/f09-bloqueio
+
+forbidden:
+  - editar migration já aplicada (só migration nova)
+  - política RLS nova ou grant em tabela; mudar grants de public.notifications ou public.outbox
+  - mudar o corpo das funções recriadas além do not exists de bloqueio (copiar a versão vigente exata)
+  - filtrar avisos sem ator (sistema/operação)
+  - mudar ou remover campos das respostas
+  - apagar teste sem nome e motivo no RELATORIO; skip/fixme novo; afrouxar asserção
+  - credencial inline, leitura de arquivo de ambiente pelo spec, dado pessoal real
+  - push, merge, force-push, editar o quadro (tools/backend-kanban), tocar outra worktree
+  - supabase start/reset ou escrita em banco (o coordenador roda as provas de banco e E2E real)
+
+acceptance:
+  - "Banco: migration nova (timestamp depois de 20261118120000) cria private.drop_blocked_notification() security definer, search_path vazio, sem execute para public/anon/authenticated, e o trigger BEFORE INSERT em public.notifications que devolve null quando existe linha em public.dm_blocks entre recipient_user_id e actor_user_id em qualquer direção; actor_user_id nulo ou igual ao destinatário passa."
+  - "Banco: a mesma migration recria notify_recommendation_reply, notify_recommendation_reply_followers e dispatch_listing_alerts a partir da versão vigente de cada uma (a última migration que a define), acrescentando só a condição de bloqueio entre destinatário e ator antes de gravar em public.outbox."
+  - "pgTAP novo em supabase/tests (identidades example.invalid, UUIDs fixos, transação com rollback): aviso de ator bloqueado pelo destinatário não é gravado; aviso de ator que bloqueou o destinatário não é gravado; sem bloqueio é gravado; ator nulo é gravado; e-mail de resposta de recomendação de pessoa bloqueada não entra em public.outbox e sem bloqueio entra; anon e authenticated não executam a função do trigger."
+  - "GET /api/app/avisos (lista e contagem de não lidos) esconde avisos cujo actor_user_id está bloqueado em qualquer direção com a pessoa da sessão, com o cliente da sessão sob RLS (dm_blocks já é legível pelas próprias linhas; se não for nas duas direções, usar uma função existente ou registrar como bloqueio no RELATORIO, sem criar política). Testes de rota com caso positivo e negativo."
+  - "E2E real (@stateful, tests/e2e/f09-avisos-real.spec.ts): se a semente permitir, um aviso de ator bloqueado não aparece na lista do membro; senão, registrar no RELATORIO por que não e qual prova de banco cobre."
+  - "RELATORIO em .visual/f09-bloqueio/RELATORIO.md: arquivos tocados, testes novos e removidos com motivo, comandos rodados com resultado lido, e o que não rodou."
+
+proof:
+  - npx pnpm@11.18.0 gate --fast
+  - npx pnpm@11.18.0 test
+  - npx pnpm@11.18.0 test:db
+  - npx pnpm@11.18.0 db:lint
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/F09-BLOQUEIO.task.yml
+
+risk: trigger novo em public.notifications, recriação de três produtores de e-mail e filtro na rota de avisos
+risk_level: R3
+
+reviewer_must_differ_from_executor: true
+retry_budget: 2
+on_budget_exhausted: HUMAN_DECISION
+
+closure:
+  requires_runtime_evidence: true

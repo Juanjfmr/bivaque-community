@@ -58,6 +58,7 @@ const canaisGravados = [
 ]
 
 type Options = {
+  bloqueios?: { blocker_user_id: string; blocked_user_id: string }[]
   avisos?: (typeof linha)[]
   naoLidos?: number
   atualizados?: { id: string }[]
@@ -111,6 +112,7 @@ function mockClient(options: Options = {}) {
           .map((linha) => ({ id: linha.id }))
         return { data: visiveis, count: null, error: null }
       }
+      if (table === "dm_blocks") return { data: options.bloqueios ?? [], count: null, error: null }
       if (table === "notifications") {
         if (operacao === "select") {
           return contar
@@ -150,6 +152,10 @@ function mockClient(options: Options = {}) {
     query["in"] = (coluna: string, valores: unknown[]) => {
       chamadas.push({ table, op: operacao, coluna, valor: valores })
       filtros.push({ coluna, valor: valores })
+      return query
+    }
+    query["or"] = (valor: string) => {
+      chamadas.push({ table, op: operacao, coluna: "or", valor })
       return query
     }
     query["order"] = () => query
@@ -255,6 +261,31 @@ describe("rotas de avisos do app", () => {
   })
 
   describe("lista", () => {
+    it("aplica os dois sentidos do bloqueio ? lista e ? contagem", async () => {
+      const mock = mockClient({
+        bloqueios: [
+          { blocker_user_id: USER, blocked_user_id: OUTRA_PESSOA },
+          { blocker_user_id: OUTRA_PESSOA, blocked_user_id: USER },
+        ],
+      })
+      autenticar(mock)
+      expect((await listar(req("GET"))).status).toBe(200)
+      const filtros = mock.chamadas.filter((c) => c.table === "notifications" && c.coluna === "or")
+      expect(filtros).toHaveLength(2)
+      expect(
+        filtros.every(
+          (c) => c.valor === `actor_user_id.is.null,actor_user_id.not.in.(${OUTRA_PESSOA})`,
+        ),
+      ).toBe(true)
+    })
+
+    it("recusa a leitura se a consulta de bloqueios falhar", async () => {
+      const mock = mockClient({ errorTable: "dm_blocks" })
+      autenticar(mock)
+      expect((await listar(req("GET"))).status).toBe(503)
+      expect(mock.from).not.toHaveBeenCalledWith("notifications")
+    })
+
     it("valida os parâmetros antes de consultar o banco", async () => {
       const mock = mockClient()
       autenticar(mock)
