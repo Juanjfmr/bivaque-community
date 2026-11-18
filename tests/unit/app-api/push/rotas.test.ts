@@ -251,7 +251,16 @@ describe("rota de push do app", () => {
       autenticar(mock)
       expect((await inscrever(req("POST", BASE, inscricao()))).status).toBe(503)
       const campos = logError.mock.calls[0]?.[1] ?? {}
-      expect(campos["codigo"]).toBe("sem-codigo")
+      expect(campos["codigo"]).toBe("desconhecido")
+      expect(JSON.stringify(logError.mock.calls)).not.toContain("abc123")
+    })
+
+    it("code de cara livre não entra no log, só a categoria fixa", async () => {
+      const mock = mockClient({ erroNaEscrita: { code: DESTINO, message: "boom" } })
+      autenticar(mock)
+      expect((await inscrever(req("POST", BASE, inscricao()))).status).toBe(503)
+      const campos = logError.mock.calls[0]?.[1] ?? {}
+      expect(campos["codigo"]).toBe("desconhecido")
       expect(JSON.stringify(logError.mock.calls)).not.toContain("abc123")
     })
   })

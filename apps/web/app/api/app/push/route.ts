@@ -98,14 +98,20 @@ export async function DELETE(request: NextRequest): Promise<NextResponse> {
   }
 }
 
+// SQLSTATE: cinco caracteres entre dígito e maiúscula. Qualquer outra string
+// em `code` pode carregar a entrada da rota (endpoint, chaves) e não entra
+// no log.
+const CODIGO_SQLSTATE = /^[0-9A-Z]{5}$/
+
 /**
  * Só o código do erro do banco, nunca a mensagem: a mensagem pode carregar o
  * destino (endpoint do provedor de push), que é dado do titular e não entra em
- * log. Erro sem código ganha uma categoria fixa.
+ * log. O `code` só entra quando tem cara de SQLSTATE; qualquer outra string
+ * ganha a categoria fixa "desconhecido".
  */
 function codigoDoErro(erro: unknown): string {
   const codigo = (erro as { code?: unknown } | null)?.code
-  return typeof codigo === "string" ? codigo : "sem-codigo"
+  return typeof codigo === "string" && CODIGO_SQLSTATE.test(codigo) ? codigo : "desconhecido"
 }
 
 export function OPTIONS(request: NextRequest): NextResponse {
