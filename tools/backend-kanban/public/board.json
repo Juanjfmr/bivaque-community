@@ -9838,6 +9838,88 @@
       "proof": ["Fonte: .work/orq/relatorios/RUN-184-implementacao.md (riscos, item 3)."],
       "tests": [],
       "notes": []
+    },
+    {
+      "id": "AUTHZ-001",
+      "title": "AUTHZ-001: conta suspensa ou com exclusão pedida não edita nem apaga post e comentário",
+      "phase": "Segurança pré-lançamento",
+      "priority": "P0",
+      "category": "backend",
+      "status": "now",
+      "updatedAt": "2026-11-18",
+      "sourceRevision": "0ef76ed7",
+      "description": "As policies de UPDATE/DELETE de posts e comments (versão de 20261019222259) não vetavam conta suspensa nem pedido de exclusão, ao contrário do INSERT e do ADR-20260901. Reproduzido em Supabase local em 18/11 (4 asserções RED do PR #213). Corrigido pela migration 20261118030820 e pelo ADR-20261118-congelamento-de-escrita-e-colunas-de-grupo (R3 por delegação).",
+      "dependencies": [],
+      "checklist": [
+        "[x] RED reproduzido em banco local",
+        "[x] Migration nova pela CLI",
+        "[x] pgTAP: ativo, suspenso, suspensão vencida, pedido de exclusão",
+        "[x] ADR por delegação e RATIFICACAO",
+        "[ ] PR com CI completo verde e merge"
+      ],
+      "proof": [
+        "18/11, main 0ef76ed7 + lote: supabase db reset --local --no-seed; test:db 184 arquivos/2.996 asserções PASS; db:lint sem achados; gate --fast verde.",
+        "Revisão independente (reviewer) PASS COM RESSALVAS; security-auditor LIBERA COM RESSALVAS com teste de mutação (testes ficam vermelhos com as policies e o grant antigos). Ressalvas de prova e ADR fechadas no lote."
+      ],
+      "tests": ["supabase/tests/authz-suspension-write-freeze.sql"],
+      "notes": [
+        "Origem: auditoria de 13/11 no PR #213 (rascunho).",
+        "A tela antiga de edição (feed-post-edit.tsx) passa a tratar zero linhas como falha, para a conta congelada não ver 'Alterações salvas'."
+      ]
+    },
+    {
+      "id": "AUTHZ-002",
+      "title": "AUTHZ-002: grupo não troca dono, autoria, cidade nem exclusão por UPDATE direto",
+      "phase": "Segurança pré-lançamento",
+      "priority": "P0",
+      "category": "backend",
+      "status": "now",
+      "updatedAt": "2026-11-18",
+      "sourceRevision": "0ef76ed7",
+      "description": "20261107093000 regranteou UPDATE em groups com owner_user_id, created_by, locality_id, community_id e is_deleted; groups_update_owner decide a linha, não a coluna. Reproduzido em Supabase local em 18/11 (2 asserções RED do PR #213). A migration 20261118030820 deixa o grant só em name, description, visibility, rules e pinned_post_id; titularidade, exclusão e padrão seguem pelas RPCs. reports-denials #11 passa a esperar 42501.",
+      "dependencies": [],
+      "checklist": [
+        "[x] RED reproduzido em banco local",
+        "[x] Migration nova pela CLI",
+        "[x] pgTAP: privilégios de coluna, dono edita nome, dono não troca dono/autoria/cidade, moderador não administra",
+        "[x] ADR por delegação e RATIFICACAO",
+        "[ ] PR com CI completo verde e merge"
+      ],
+      "proof": [
+        "18/11, main 0ef76ed7 + lote: supabase db reset --local --no-seed; test:db 184 arquivos/2.996 asserções PASS; db:lint sem achados; gate --fast verde.",
+        "Revisão independente (reviewer) PASS COM RESSALVAS; security-auditor LIBERA COM RESSALVAS com teste de mutação (testes ficam vermelhos com as policies e o grant antigos). Ressalvas de prova e ADR fechadas no lote."
+      ],
+      "tests": [
+        "supabase/tests/authz-group-sensitive-columns.sql",
+        "supabase/tests/reports-denials.sql"
+      ],
+      "notes": [
+        "Origem: auditoria de 13/11 no PR #213 (rascunho). AUTHZ-003 a 005 do mesmo relatório seguem fora deste lote."
+      ]
+    },
+    {
+      "id": "AUTHZ-006",
+      "title": "AUTHZ-006: veto de suspensão e exclusão pedida no UPDATE/DELETE das demais tabelas de conteúdo",
+      "phase": "Segurança pré-lançamento",
+      "priority": "P1",
+      "category": "backend",
+      "status": "next",
+      "updatedAt": "2026-11-18",
+      "sourceRevision": "0ef76ed7",
+      "description": "Achado F1 do security-auditor em 18/11 (lote AUTHZ-001/002): as policies de UPDATE/DELETE de recommendation_requests, recommendation_replies, listings, listing_photos e events, e o INSERT/UPDATE de groups (incluindo create_group), checam só autoria, sem o veto do ADR-20260901. Um anunciante suspenso ainda altera preço e descrição pelas rotas do app que usam o cliente da pessoa. Preexistente; não introduzido pelo lote AUTHZ-001/002.",
+      "dependencies": ["AUTHZ-001"],
+      "checklist": [
+        "[ ] Varredura de todas as policies de escrita de conteúdo",
+        "[ ] RED em pgTAP por tabela",
+        "[ ] Migration nova com os vetos",
+        "[ ] Telas e rotas tratam zero linhas como falha",
+        "[ ] Emenda do ADR-20261118 e RATIFICACAO"
+      ],
+      "proof": [
+        "Origem: auditoria do security-auditor de 18/11 sobre o lote AUTHZ-001/002 (policies de 20261019222259 e posteriores lidas no catálogo local)."
+      ],
+      "tests": [],
+      "notes": []
     }
   ],
   "launch": {
