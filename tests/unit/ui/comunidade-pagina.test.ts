@@ -19,7 +19,9 @@ const web = (...segments: string[]) =>
   readFileSync(join(root, "apps", "web", "app", ...segments), "utf8")
 
 const page = stripComments(web("(shell)", "community", "page.tsx"))
-const homeLoaders = stripComments(web("(shell)", "inicio", "home-loaders.ts"))
+const homeLoaders = stripComments(
+  readFileSync(join(root, "apps", "web", "lib", "inicio", "home-loaders.ts"), "utf8"),
+)
 const composer = stripComments(web("components", "bivaque", "feed-post-create.tsx"))
 
 describe("página da Comunidade", () => {
