@@ -229,7 +229,7 @@ export function semErros(erros: Readonly<Partial<Record<string, string>>>): bool
 
 /** "750.5" → "R$ 750,50": o preço como se lê em português. */
 export function precoBRL(bruto: string): string {
-  const valor = Number(bruto.trim())
-  if (bruto.trim() === "" || !Number.isFinite(valor)) return "R$ —"
-  return valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })
+  const centavos = precoEmCentavos(bruto)
+  if (centavos === null) return "R$ —"
+  return (centavos / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })
 }

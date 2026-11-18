@@ -61,6 +61,7 @@ allowed_paths:
   - tests/unit/app-api
   - tests/e2e/f03-criar-real.spec.ts
   - tests/e2e/f03-evento-grupo-real.spec.ts
+  - tests/e2e/f05-eventos-real.spec.ts
   - .visual/f03-fecho
 
 forbidden:
@@ -78,7 +79,7 @@ acceptance:
   - "Desapego: o campo de preço vira type='text' com inputMode='decimal' e aceita '650', '650,00' e '650.5'; precoBRL formata '12,50' como 'R$ 12,50'; valor inválido mostra erro no campo. A ajuda continua dizendo o que o campo aceita."
   - "Cidade: GET /api/app/grupos/[id] e GET /api/app/grupos/publicacoes/[id] acrescentam `cidade` (nome da localidade do grupo, lido com o mesmo cliente do usuário que a rota já usa). Grupo.tsx e Publicacao.tsx mostram essa cidade no cabeçalho; casca.cidade só como reserva enquanto carrega. Teste de unidade da rota com caso positivo (cidade presente) e negativo (sem sessão 401, campos antigos intactos)."
   - "Grupo: uma única regra de foco — o foco de chegada (useRolagemEFoco) não disputa com o foco da publicação recém-criada: depois de publicar o foco vai para a publicação nova e a rolagem não salta para o topo; quando a publicação não está na página carregada, o anúncio diz isso e o foco fica no botão que abriu a folha. Teste no app (vitest de lógica ou E2E simulado em grupos-publicar.spec.ts)."
-  - "E2E real (@stateful, tests/e2e/f03-evento-grupo-real.spec.ts, nos projetos 375/768/1440): membro semeado cria um encontro pelo Criar passando pela revisão e cai no detalhe com o título gravado; membro publica no grupo com uma foto (fixture de imagem do repositório) e a publicação aparece na lista com a foto depois de recarregar; sem sessão, POST de evento e de publicação respondem 401."
+  - "E2E real (@stateful, tests/e2e/f03-evento-grupo-real.spec.ts, nos projetos 375/768/1440): membro semeado cria um encontro pelo Criar passando pela revisão (a revisão não grava) e cai no detalhe com o título gravado, que sobrevive ao recarregar; o GET do grupo devolve a cidade do servidor e o cabeçalho a mostra; sem sessão, POST de evento e de publicação respondem 401. A publicação no grupo com foto, relida depois de recarregar, já é provada em tests/e2e/f04-grupos-real.spec.ts (passo 'publicar com foto'); emenda do coordenador em 18/11 para não duplicar a prova. Os specs reais que criam encontro (f05-eventos-real) passam pela revisão."
   - "E2E do app simulado: rascunho e revisão do evento (restaura ao reabrir; revisão não grava; Criar grava), e preço com vírgula até a revisão mostrando 'R$ 650,00', nos projetos 375/768/1440 da config do app."
   - "RELATORIO em .visual/f03-fecho/RELATORIO.md: arquivos tocados, testes novos e removidos com motivo, comandos rodados com resultado lido, e o que não rodou."
 

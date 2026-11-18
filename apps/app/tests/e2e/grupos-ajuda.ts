@@ -184,6 +184,7 @@ export async function simularGrupos(
           json: {
             publicacao: post,
             grupo,
+            cidade: "Manaus",
             comentarios: comentarios.filter((c) => c.postId === post.id),
             proximo: null,
           },
@@ -337,6 +338,7 @@ export async function simularGrupos(
     await rota.fulfill({
       json: {
         grupo,
+        cidade: "Manaus",
         publicacoes:
           grupo.fechado && !grupo.membro
             ? []

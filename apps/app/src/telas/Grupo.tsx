@@ -18,7 +18,6 @@ import {
 } from "@/lib/dados/grupos"
 import { useNavegacao, useRolagemEFoco } from "@/lib/navegacao/react"
 import { CARGA_CONCLUIDA } from "@/lib/navegacao/restauracao"
-import { useCasca } from "@/src/contexto/casca"
 import { useAcoesDaPublicacao } from "@/src/grupos/AcoesDaPublicacao"
 import { Escrever } from "@/src/grupos/Escrever"
 import { EstadoDaLeitura } from "@/src/grupos/EstadoDaLeitura"
@@ -60,10 +59,20 @@ const VAZIO_DO_GRUPO: Readonly<Record<OrdemDoGrupo, { titulo: string; texto: str
   },
 }
 
+/**
+ * Depois de publicar, a tela do grupo é a única dona do foco: vai para a
+ * publicação nova quando ela está na página; senão volta ao botão que abriu a
+ * folha. O foco de chegada (useRolagemEFoco) só age ao entrar na tela.
+ */
+function focarQuemAbriu() {
+  document
+    .querySelector<HTMLElement>('[data-acao="escrever-grupo"]')
+    ?.focus({ preventScroll: true })
+}
+
 export function Grupo() {
   const { id = "" } = useParams({ strict: false }) as { id?: string }
   const navegacao = useNavegacao()
-  const casca = useCasca()
   const [dados, setDados] = useState<DetalheDoGrupo | null>(null)
   const [erro, setErro] = useState<unknown>(null)
   const [rodada, setRodada] = useState(0)
@@ -81,6 +90,9 @@ export function Grupo() {
   // releitura termina. `carimbo` sobe a cada envio e reinicia o anúncio.
   const [recemPublicada, setRecemPublicada] = useState<{ id: string; carimbo: number } | null>(null)
   const [anuncio, setAnuncio] = useState("")
+  // A publicação que ficou com o foco continua focável depois que a marca de
+  // recém-publicada sai: sem isso o navegador tira o foco do cartão.
+  const [focada, setFocada] = useState<string | null>(null)
   const baseParaPublicar = useRef<BaseParaPublicar | null>(null)
   const envios = useRef(0)
   const acoes = useAcoesDaPublicacao({
@@ -108,7 +120,11 @@ export function Grupo() {
     const alvo = document.getElementById(`publicacao-${recemPublicada.id}`)
     setAnuncio(anuncioDaPublicacao(dados.publicacoes, recemPublicada.id))
     setRecemPublicada(null)
-    if (alvo === null) return
+    if (alvo === null) {
+      focarQuemAbriu()
+      return
+    }
+    setFocada(recemPublicada.id)
     // Rola e foca sem animação: é um deslocamento de contexto, não um gesto.
     alvo.focus({ preventScroll: true })
     alvo.scrollIntoView({ block: "nearest", behavior: "instant" })
@@ -204,6 +220,7 @@ export function Grupo() {
             },
       )
       setAnuncio(semConfirmacao({ primeiros: retemOTopo(ordem) }).frase)
+      focarQuemAbriu()
       return
     }
     setDados((atual) => {
@@ -219,6 +236,7 @@ export function Grupo() {
       return
     }
     setAnuncio(semConfirmacao({ primeiros: retemOTopo(base?.ordem ?? ordem) }).frase)
+    focarQuemAbriu()
   }
   /**
    * A pergunta saiu: ela entra no bloco de cima do feed. O anúncio diz o que de
@@ -240,10 +258,8 @@ export function Grupo() {
     )
   const { grupo, publicacoes } = dados
   const primeira = recemPublicada !== null && publicacoes[0]?.id === recemPublicada.id
-  // O grupo é da cidade de quem lê: a política do banco só mostra grupo da
-  // própria localidade, e a cidade é a mesma que o topo do app mostra.
   const subtitulo = [
-    casca.cidade,
+    dados.cidade,
     grupo.membros === null ? "" : `${grupo.membros} membros`,
     grupo.fechado ? "Fechado" : "Aberto",
   ]
@@ -299,7 +315,7 @@ export function Grupo() {
         <Escrever
           key={`escrever-${grupo.id}`}
           grupo={grupo}
-          cidade={casca.cidade}
+          cidade={dados.cidade}
           aoPublicar={aoPublicar}
           aoPerguntar={aoPerguntar}
         />
@@ -402,7 +418,7 @@ export function Grupo() {
                   </Etiqueta>
                 ) : null}
                 <CartaoDePublicacao
-                  alvoDeFoco={primeira && p.id === recemPublicada?.id}
+                  alvoDeFoco={(primeira && p.id === recemPublicada?.id) || p.id === focada}
                   publicacao={{
                     ...p,
                     tipo: "publicacao",

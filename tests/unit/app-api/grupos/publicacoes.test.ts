@@ -318,6 +318,7 @@ describe("publicar, ler e comentar em grupo", () => {
     const r = await detalhe(req("GET", BASE + "/publicacoes/" + POST), postContext)
     expect(r.status).toBe(200)
     const corpo = await r.json()
+    expect(corpo.cidade).toBe("Manaus")
     expect(corpo.publicacao.fotos).toHaveLength(2)
     expect(corpo.comentarios[1]).toMatchObject({
       parentId: COMMENT,

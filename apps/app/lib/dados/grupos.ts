@@ -35,6 +35,7 @@ export type ListaDeGrupos = Readonly<{
 }>
 export type DetalheDoGrupo = Readonly<{
   grupo: GrupoReal
+  cidade: string
   publicacoes: readonly PublicacaoReal[]
   proximo: string | null
 }>
@@ -130,6 +131,7 @@ export async function buscarGrupo(
   const corpo = await ler(`/api/app/grupos/${encodeURIComponent(id)}?${busca}`, opcoes)
   return {
     grupo: grupo(corpo["grupo"]),
+    cidade: texto(corpo["cidade"]),
     publicacoes: lista(corpo["publicacoes"], publicacao),
     proximo: cursor(corpo["proximo"]),
   }
@@ -179,6 +181,7 @@ export type ComentarioReal = Readonly<{
 export type DetalheDaPublicacao = Readonly<{
   publicacao: PublicacaoReal
   grupo: GrupoReal
+  cidade: string
   comentarios: readonly ComentarioReal[]
   proximo: string | null
 }>
@@ -207,6 +210,7 @@ export async function buscarPublicacao(
   return {
     publicacao: publicacao(corpo["publicacao"]),
     grupo: grupo(corpo["grupo"]),
+    cidade: texto(corpo["cidade"]),
     comentarios: lista(corpo["comentarios"], comentario),
     proximo: cursor(corpo["proximo"]),
   }

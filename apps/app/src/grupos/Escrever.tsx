@@ -68,6 +68,9 @@ export function Escrever({
   const [erroDaFoto, setErroDaFoto] = useState("")
   const [erroDaPergunta, setErroDaPergunta] = useState("")
   const [recusa, setRecusa] = useState<Recusa | null>(null)
+  // Depois de publicar, quem decide o foco é a tela do grupo (a publicação nova
+  // ou este botão): o diálogo não devolve o foco por conta própria.
+  const publicou = useRef(false)
   const [ocupado, setOcupado] = useState(false)
   // O limite é dito antes do envio: texto que o servidor recusaria não sai.
   const [avisoDoLimite, setAvisoDoLimite] = useState(false)
@@ -188,6 +191,7 @@ export function Escrever({
       setFotos([])
       // A sobreposição se fecha sem `history.back()`: o compositor é o que
       // abriu esta entrada, e voltar demais tiraria a pessoa do grupo.
+      publicou.current = true
       setAberto(false)
       aoPublicar(criada)
     } catch (falha: unknown) {
@@ -280,7 +284,15 @@ export function Escrever({
         </p>
       ) : null}
       <Dialog open={aberto} onOpenChange={setAberto}>
-        <DialogContent data-dialogo="escrever-grupo" className="max-h-[90dvh] overflow-y-auto">
+        <DialogContent
+          data-dialogo="escrever-grupo"
+          className="max-h-[90dvh] overflow-y-auto"
+          onCloseAutoFocus={(evento) => {
+            if (!publicou.current) return
+            publicou.current = false
+            evento.preventDefault()
+          }}
+        >
           <DialogTitle>Escrever no grupo</DialogTitle>
           <DialogDescription>
             A publicação será lida por quem tem acesso a {grupo.nome}. As fotos são tratadas para

@@ -4,6 +4,8 @@ import { useEffect, useState } from "react"
 
 import { Sobreposicao } from "@/components/bivaque/sobreposicao"
 import { criarEncontro, type Encontro, editarEncontro } from "@/lib/dados/eventos"
+import { useCasca } from "@/src/contexto/casca"
+import { excluirRascunho, guardarRascunho, lerRascunho } from "@/src/criar/rascunho"
 import {
   type CampoDoEncontro,
   corpoDoEncontro,
@@ -45,17 +47,25 @@ export function FormularioDeEncontro({
   readonly aoSalvar: (id: string) => void
 }) {
   const editando = encontro !== undefined
+  const { cidadeDeCasa } = useCasca()
+  const chave = `bivaque:f03:encontro:${cidadeDeCasa}`
+  const [revisando, setRevisando] = useState(false)
+  const [aviso, setAviso] = useState("")
   const [rascunho, setRascunho] = useState<RascunhoDoEncontro>(() => {
     const quando =
       encontro === undefined ? { data: "", hora: "" } : paraDataEHora(encontro.comecaEm)
-    return {
+    const inicial = {
       titulo: encontro?.titulo ?? "",
       descricao: encontro?.descricao ?? "",
       data: quando.data,
       hora: quando.hora,
       local: encontro?.local ?? "",
     }
+    return editando ? inicial : lerRascunho(chave, inicial)
   })
+  useEffect(() => {
+    if (!editando) guardarRascunho(chave, rascunho)
+  }, [chave, editando, rascunho])
   // O erro de um campo aparece depois que a pessoa passou por ele: não acusa
   // quem ainda não digitou nada, e continua no lugar enquanto não for corrigido.
   const [tocados, setTocados] = useState<ReadonlySet<CampoDoEncontro>>(new Set())
@@ -78,6 +88,10 @@ export function FormularioDeEncontro({
   async function gravar(evento: React.FormEvent<HTMLFormElement>) {
     evento.preventDefault()
     if (salvando || !valido) return
+    if (!editando && !revisando) {
+      setRevisando(true)
+      return
+    }
     const corpo = corpoDoEncontro(rascunho)
     if (corpo === null) return
     setErroDoEnvio(null)
@@ -90,9 +104,11 @@ export function FormularioDeEncontro({
         await editarEncontro(encontro.id, corpo, { signal: controle.signal })
         id = encontro.id
       }
+      if (!editando) excluirRascunho(chave)
       aoSalvar(id)
     } catch (falha: unknown) {
       if (!foiAbortada(falha)) {
+        setRevisando(false)
         // O que a pessoa digitou continua na folha.
         setErroDoEnvio(mensagemDaFalha(falha, editando ? "editar" : "criar"))
       }
@@ -110,86 +126,118 @@ export function FormularioDeEncontro({
     >
       <form onSubmit={(evento) => void gravar(evento)} noValidate>
         <div className="pc pc-embutido grid gap-4">
-          <Campo
-            id="encontro-titulo"
-            rotulo="Título"
-            value={rascunho.titulo}
-            onChange={(evento) => mudar({ titulo: evento.target.value })}
-            onBlur={() => tocar("titulo")}
-            erro={erroDe("titulo")}
-            maxLength={200}
-            autoComplete="off"
-            required
-          />
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Campo
-              id="encontro-data"
-              rotulo="Data"
-              value={rascunho.data}
-              onChange={(evento) => mudar({ data: evento.target.value })}
-              onBlur={() => tocar("data")}
-              erro={erroDe("data")}
-              ajuda="dia/mês/ano"
-              inputMode="numeric"
-              autoComplete="off"
-              maxLength={10}
-              required
-            />
-            <Campo
-              id="encontro-hora"
-              rotulo="Hora"
-              value={rascunho.hora}
-              onChange={(evento) => mudar({ hora: evento.target.value })}
-              onBlur={() => tocar("hora")}
-              erro={erroDe("hora")}
-              ajuda="24 h, como 19:30"
-              inputMode="numeric"
-              autoComplete="off"
-              maxLength={5}
-              required
-            />
-          </div>
-          <p className="pc-apoio" aria-live="polite" data-quando-do-encontro="sim">
-            {quando === null ? "" : rotuloDeDataHora(quando)}
-          </p>
-          <Campo
-            id="encontro-local"
-            rotulo="Local"
-            value={rascunho.local}
-            onChange={(evento) => mudar({ local: evento.target.value })}
-            onBlur={() => tocar("local")}
-            erro={erroDe("local")}
-            ajuda="Ponto de referência público. Endereço residencial não vai no encontro."
-            maxLength={200}
-            autoComplete="off"
-          />
-          <AreaDeTexto
-            id="encontro-descricao"
-            rotulo="Sobre o encontro"
-            value={rascunho.descricao}
-            onChange={(evento) => mudar({ descricao: evento.target.value })}
-            onBlur={() => tocar("descricao")}
-            erro={erroDe("descricao")}
-            rows={4}
-          />
-
+          {revisando ? (
+            <div data-revisao="encontro" className="grid gap-3">
+              <b>Revise seu encontro</b>
+              <p>{rascunho.titulo}</p>
+              <p>{quando === null ? "" : rotuloDeDataHora(quando)}</p>
+              <p>{rascunho.local || "Local não informado"}</p>
+              <p>{rascunho.descricao}</p>
+            </div>
+          ) : (
+            <>
+              <Campo
+                id="encontro-titulo"
+                rotulo="Título"
+                value={rascunho.titulo}
+                onChange={(evento) => mudar({ titulo: evento.target.value })}
+                onBlur={() => tocar("titulo")}
+                erro={erroDe("titulo")}
+                maxLength={200}
+                autoComplete="off"
+                required
+              />
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Campo
+                  id="encontro-data"
+                  rotulo="Data"
+                  value={rascunho.data}
+                  onChange={(evento) => mudar({ data: evento.target.value })}
+                  onBlur={() => tocar("data")}
+                  erro={erroDe("data")}
+                  ajuda="dia/mês/ano"
+                  inputMode="numeric"
+                  autoComplete="off"
+                  maxLength={10}
+                  required
+                />
+                <Campo
+                  id="encontro-hora"
+                  rotulo="Hora"
+                  value={rascunho.hora}
+                  onChange={(evento) => mudar({ hora: evento.target.value })}
+                  onBlur={() => tocar("hora")}
+                  erro={erroDe("hora")}
+                  ajuda="24 h, como 19:30"
+                  inputMode="numeric"
+                  autoComplete="off"
+                  maxLength={5}
+                  required
+                />
+              </div>
+              <p className="pc-apoio" aria-live="polite" data-quando-do-encontro="sim">
+                {quando === null ? "" : rotuloDeDataHora(quando)}
+              </p>
+              <Campo
+                id="encontro-local"
+                rotulo="Local"
+                value={rascunho.local}
+                onChange={(evento) => mudar({ local: evento.target.value })}
+                onBlur={() => tocar("local")}
+                erro={erroDe("local")}
+                ajuda="Ponto de referência público. Endereço residencial não vai no encontro."
+                maxLength={200}
+                autoComplete="off"
+              />
+              <AreaDeTexto
+                id="encontro-descricao"
+                rotulo="Sobre o encontro"
+                value={rascunho.descricao}
+                onChange={(evento) => mudar({ descricao: evento.target.value })}
+                onBlur={() => tocar("descricao")}
+                erro={erroDe("descricao")}
+                rows={4}
+              />
+            </>
+          )}
           {erroDoEnvio === null ? null : (
             <p role="alert" className="text-sm text-(--destructive)">
               {erroDoEnvio}
             </p>
           )}
 
-          <div className="flex justify-end gap-2">
-            <Botao tom="texto" onClick={aoFechar}>
-              Cancelar
+          {aviso && <p role="status">{aviso}</p>}
+          <div className="flex flex-wrap justify-end gap-2">
+            <Botao tom="texto" onClick={() => (revisando ? setRevisando(false) : aoFechar())}>
+              {revisando ? "Editar" : "Cancelar"}
             </Botao>
+            {!editando && !revisando && (
+              <Botao
+                tom="contorno"
+                onClick={() =>
+                  setAviso(
+                    guardarRascunho(chave, rascunho)
+                      ? "Rascunho salvo nesta aba."
+                      : "Não foi possível salvar nesta aba. Seu texto continua aqui.",
+                  )
+                }
+              >
+                Salvar rascunho
+              </Botao>
+            )}
             <Botao
               tom="principal"
               type="submit"
               disabled={salvando || !valido}
               carregando={salvando}
             >
-              {salvando ? "Salvando…" : editando ? "Salvar" : "Criar"}
+              {salvando
+                ? "Salvando…"
+                : editando
+                  ? "Salvar"
+                  : revisando
+                    ? "Criar encontro"
+                    : "Revisar encontro"}
             </Botao>
           </div>
         </div>

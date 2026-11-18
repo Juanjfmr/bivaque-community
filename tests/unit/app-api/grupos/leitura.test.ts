@@ -95,6 +95,7 @@ describe("grupos — diretório e detalhe sob RLS", () => {
     const r = await detalhe(req("GET", BASE + "/" + ID), context)
     expect(r.status).toBe(200)
     const corpo = await r.json()
+    expect(corpo.cidade).toBe("Manaus")
     expect(corpo.publicacoes[0]).toMatchObject({
       texto: post.content,
       autor: "Ana",

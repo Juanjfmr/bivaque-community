@@ -49,7 +49,7 @@ it("lê o diretório pelo cliente único, com sinal e cursor", async () => {
   )
 })
 it("lê detalhe com ordem e paginação sem inventar cidade", async () => {
-  const fetch = resposta({ grupo, publicacoes: [], proximo: null })
+  const fetch = resposta({ grupo, cidade: "Manaus", publicacoes: [], proximo: null })
   expect((await buscarGrupo("g1", { ordem: "discutidas", depois: "20" })).grupo).toEqual(grupo)
   expect(fetch).toHaveBeenCalledWith(
     "/api/app/grupos/g1?ordem=discutidas&depois=20",
@@ -127,7 +127,7 @@ it("publicação que volta de outro grupo ou fora do contrato não vira sucesso"
 })
 
 it("conta a primeira página para saber se a publicação abriu outra", async () => {
-  const fetch = resposta({ grupo, publicacoes: [publicacao], proximo: "p1" })
+  const fetch = resposta({ grupo, cidade: "Manaus", publicacoes: [publicacao], proximo: "p1" })
   expect(await contarPublicacoes("g1", { ordem: "recentes" })).toBe(1)
   expect(fetch).toHaveBeenCalledWith("/api/app/grupos/g1?ordem=recentes", expect.any(Object))
 })
@@ -161,7 +161,7 @@ it("resposta em fio retorna o comentário persistido", async () => {
   )
 })
 it("detalhe não transforma comentário fora do contrato em lista vazia", async () => {
-  resposta({ publicacao: {}, grupo, comentarios: [], proximo: null })
+  resposta({ publicacao: {}, grupo, cidade: "Manaus", comentarios: [], proximo: null })
   await expect(buscarPublicacao("p1")).rejects.toBeInstanceOf(FalhaDaApi)
 })
 

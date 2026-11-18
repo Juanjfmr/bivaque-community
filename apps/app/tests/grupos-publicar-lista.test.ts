@@ -34,6 +34,7 @@ function detalhe(corpo: unknown) {
   if (typeof corpo !== "object" || corpo === null) return corpo
   const { grupo: g, ...resto } = corpo as Record<string, unknown>
   return {
+    cidade: "Manaus",
     grupo: {
       id: "g1",
       nome: "Grupo de prova",
