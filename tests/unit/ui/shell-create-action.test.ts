@@ -52,7 +52,6 @@ describe("onde o botão de criação aparece", () => {
 describe("montagem no shell", () => {
   const shell = read("apps", "web", "app", "components", "bivaque", "app-shell.tsx")
   const menu = read("apps", "web", "app", "components", "shell", "create-menu.tsx")
-  const inicio = read("apps", "web", "app", "(shell)", "inicio", "page.tsx")
 
   it("o shell monta o botão flutuante e o Criar do cabeçalho pela mesma regra", () => {
     expect(shell).toContain("const showCreate = showsCreateAction(pathname)")
@@ -101,13 +100,5 @@ describe("montagem no shell", () => {
     const community = read("apps", "web", "app", "(shell)", "community", "page.tsx")
     expect(community).not.toContain("POST_CREATED_EVENT")
     expect(community).not.toContain("FeedPost")
-    expect(inicio).not.toContain("<CityFeed")
-  })
-
-  it("o Início não monta um segundo botão de criação", () => {
-    expect(inicio).not.toContain("<CreateFab")
-    expect(inicio).not.toContain("<CreateButton")
-    // Publicar não muda nada na tela: o Início não tem seção para recarregar.
-    expect(inicio).not.toContain("POST_CREATED_EVENT")
   })
 })

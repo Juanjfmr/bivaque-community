@@ -28,6 +28,8 @@ import { CARGA_CONCLUIDA } from "@/lib/navegacao/restauracao"
 import { lerRecentes } from "@/src/busca/recentes"
 import { termoDaUrl } from "@/src/busca/termo-url"
 import { useCasca } from "@/src/contexto/casca"
+import { EstadoDeSessaoVencida, EstadoNegado } from "@/src/eventos/EstadosDeAcesso"
+import { type TipoDeFalha, tipoDeFalha } from "@/src/eventos/tipo-de-falha"
 import { EXPLORAR, negocioDoGrupo, rotuloDaCategoria } from "@/src/inicio/categorias"
 
 /**
@@ -85,7 +87,7 @@ export function Busca() {
   const navegacao = useNavegacao()
   const [dados, setDados] = useState<BuscaDaCidade | null>(null)
   const [explorar, setExplorar] = useState<InicioDaCidade | null>(null)
-  const [erro, setErro] = useState(false)
+  const [erro, setErro] = useState<TipoDeFalha | null>(null)
   const [rodada, setRodada] = useState(0)
   const [escopo, setEscopo] = useState("all")
   const [topico, setTopico] = useState("todos")
@@ -132,9 +134,9 @@ export function Busca() {
   // biome-ignore lint/correctness/useExhaustiveDependencies: rodada solicita nova leitura
   useEffect(() => {
     const controle = new AbortController()
-    setErro(false)
-    const falhou = () => {
-      if (!controle.signal.aborted) setErro(true)
+    setErro(null)
+    const falhou = (falha: unknown) => {
+      if (!controle.signal.aborted) setErro(tipoDeFalha(falha))
     }
     if (comTermo) {
       setDados(null)
@@ -253,7 +255,11 @@ export function Busca() {
         </div>
       ) : null}
 
-      {erro ? (
+      {erro === "sessao" ? (
+        <EstadoDeSessaoVencida />
+      ) : erro === "negado" ? (
+        <EstadoNegado texto="Sua conta não tem acesso à busca desta cidade." />
+      ) : erro === "falhou" ? (
         <EstadoDeErro aoTentar={() => setRodada((atual) => atual + 1)} />
       ) : carregando ? (
         <EsqueletoDeLista linhas={4} />

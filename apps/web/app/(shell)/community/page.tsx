@@ -2,19 +2,19 @@
 
 import { useSearchParams } from "next/navigation"
 import { useCallback, useEffect, useRef, useState } from "react"
+import {
+  createRequestGuard,
+  loadPrimaryCommunity,
+  type PrimaryCommunity,
+} from "../../../lib/inicio/home-loaders"
 import { useLocalityContext } from "../../../lib/locality-context"
 import { useMemberContext } from "../../../lib/member-context"
 import { createBrowserClient } from "../../../lib/supabase/client"
 import { ErrorState } from "../../components/bivaque/error-state"
 import { FeedCardSkeleton } from "../../components/bivaque/skeleton"
 import { IndicationsPanel } from "../../components/indications/indications-panel"
-import {
-  createRequestGuard,
-  loadPrimaryCommunity,
-  type PrimaryCommunity,
-} from "../inicio/home-loaders"
-import { JoinCommunityCard } from "../inicio/join-community"
 import { CommunityHeader } from "./community-header"
+import { JoinCommunityCard } from "./join-community"
 import { useCommunityHeader } from "./use-community-header"
 
 // A Comunidade sem feed e sem a vista "Conversa" (lote 5, tarefa N2 —

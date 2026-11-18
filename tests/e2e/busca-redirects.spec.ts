@@ -24,9 +24,8 @@ test("/explorar/busca leva ao app com o termo em 375, 768 e 1440 px, sem sessão
       .toBe(1)
     expect(new URL(page.url()).pathname).toBe("/app/busca")
     expect(new URL(page.url()).searchParams.get("q")).toBe("escola")
-    const erro = page.locator('[data-estado="erro"]')
+    const erro = page.locator('[data-estado="sessao-vencida"]')
     await expect(erro).toBeVisible()
-    await expect(erro.getByText("Não foi possível carregar")).toBeVisible()
-    await expect(erro.getByText("Confira a conexão e tente de novo.")).toBeVisible()
+    await expect(erro.getByText("Sua sessão venceu")).toBeVisible()
   }
 })

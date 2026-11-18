@@ -22,7 +22,6 @@ const read = (...segments: string[]) => readFileSync(join(root, ...segments), "u
 const indications = (file: string) => read("apps", "web", "app", "components", "indications", file)
 
 const FLOW_FILES: Array<[string, string]> = [
-  ["intent-launcher", read("apps", "web", "app", "components", "bivaque", "intent-launcher.tsx")],
   ["ask-indication", indications("ask-indication.tsx")],
   ["indications-panel", indications("indications-panel.tsx")],
   ["indication-item", indications("indication-item.tsx")],

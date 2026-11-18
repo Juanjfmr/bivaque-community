@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { buildGoingLine } from "../../../apps/web/app/(shell)/inicio/home-loaders"
+import { buildGoingLine } from "../../../apps/web/lib/inicio/home-loaders"
 
 describe("buildGoingLine monta a linha de presença do próximo encontro", () => {
   it("sem gente não inventa linha", () => {

@@ -142,8 +142,5 @@ describe("costura das telas", () => {
     const queries = web("lib", "listings", "queries.ts")
     expect(queries).toContain("scope: PropertyScope,")
     expect(queries).toContain('query.eq("locality_id", scope.localityId)')
-    // A lista de imóveis foi para o app (F06, LT-005); o caller web que ainda soma
-    // as comunidades da cidade é o hub do Início.
-    expect(web("app", "(shell)", "inicio", "use-hub-data.ts")).toContain("withCommunities: true")
   })
 })
