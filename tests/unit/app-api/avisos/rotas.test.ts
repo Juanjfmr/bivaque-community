@@ -261,7 +261,7 @@ describe("rotas de avisos do app", () => {
   })
 
   describe("lista", () => {
-    it("aplica os dois sentidos do bloqueio ? lista e ? contagem", async () => {
+    it("aplica os dois sentidos do bloqueio à lista e à contagem", async () => {
       const mock = mockClient({
         bloqueios: [
           { blocker_user_id: USER, blocked_user_id: OUTRA_PESSOA },
