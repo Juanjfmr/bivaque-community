@@ -63,7 +63,7 @@ export function Conversa() {
   const [motivo, setMotivo] = useState("")
   const [explicacao, setExplicacao] = useState("")
   const [agindo, setAgindo] = useState(false)
-  const denuncia = useSobreposicaoDaEntrada("dialogo")
+  const denuncia = useSobreposicaoDaEntrada("conversa-denuncia")
   const controle = useRef<AbortController | null>(null)
   const ultimaChave = useRef<{ texto: string; chave: string } | null>(null)
   useRolagemEFoco(CARGA_CONCLUIDA)
