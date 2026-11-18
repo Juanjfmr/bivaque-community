@@ -101,12 +101,14 @@ test("bloquear pelo perfil de membro: espera visível, menu fora e estado bloque
     return rota.fallback()
   })
 
+  // A capa do topo: se a arte falha, a faixa continua com fundo neutro — a
+  // área não fica vazia (revisão cega R1, G4). O bloqueio entra antes do
+  // goto para o pedido da imagem realmente falhar.
+  await page.route(/\/ilustracoes\/cidade\.webp$/, (rota) => rota.abort())
+
   await page.goto("/app/perfil/u-paulo")
   await expect(page.getByRole("heading", { name: "Paulo Roberto" })).toBeVisible()
 
-  // A capa do topo: se a arte falha, a faixa continua com fundo neutro — a
-  // área não fica vazia (revisão cega R1, G4).
-  await page.route(/\/ilustracoes\/cidade\.webp$/, (rota) => rota.abort())
   const capa = page.locator('[data-tela="perfil"] [data-capa="membro"]')
   await expect(capa).toBeVisible()
   expect(
