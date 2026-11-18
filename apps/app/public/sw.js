@@ -1,7 +1,7 @@
 /*
  * Service worker do app (`/app/sw.js`, escopo `/app/`).
  *
- * RUN-137 / ADR-20261107: mostra o título e o corpo recebidos do servidor —
+ * RUN-188 / ADR-20261107: mostra o título e o corpo recebidos do servidor —
  * título fixo "Bivaque" e frase fixa por tipo, sem dado de terceiro — e, no
  * toque, abre o destino do aviso no app. Destino fora do contrato cai na tela
  * segura (`/app/voce`), a mesma regra de `destinoEmRota` em
@@ -21,6 +21,10 @@ const ROTAS_DE_DESTINO = new Set([
   "pergunta",
   "pedido",
   "anuncio",
+  // A situação da entrada é rota real do app (`/app/entrar/<estado>`). O estado
+  // é validado pelo roteador do app, não aqui: a lista não pode ser importada
+  // do bundle porque este arquivo é servido como está.
+  "entrar",
   "comunidade",
   "chamados",
   "voce",
