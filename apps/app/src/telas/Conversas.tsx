@@ -50,7 +50,11 @@ export function Conversas() {
     try {
       const pagina = await lerConversas({ depois: dados.proximo, signal: pedido.signal })
       if (!pedido.signal.aborted)
-        setDados({ conversas: [...dados.conversas, ...pagina.conversas], proximo: pagina.proximo })
+        setDados({
+          conversas: [...dados.conversas, ...pagina.conversas],
+          proximo: pagina.proximo,
+          porLer: pagina.porLer,
+        })
     } catch {
       if (!pedido.signal.aborted) setErroMais(true)
     } finally {
@@ -144,10 +148,23 @@ export function Conversas() {
                       </Avatar>
                       <span className="grid min-w-0 flex-1 gap-1">
                         <b className="truncate text-sm">{conversa.nome}</b>
-                        <span className="truncate text-[13px] text-(--on-surface-variant)">
+                        <span
+                          className={
+                            conversa.porLer
+                              ? "truncate text-[13px] font-semibold"
+                              : "truncate text-[13px] text-(--on-surface-variant)"
+                          }
+                        >
                           {conversa.ultima || "Comece a conversa"}
                         </span>
                       </span>
+                      {conversa.porLer && (
+                        <span
+                          role="img"
+                          aria-label="Por ler"
+                          className="size-2 shrink-0 rounded-full bg-(--primary)"
+                        />
+                      )}
                       <Icone
                         nome="chevron_right"
                         className="size-5 shrink-0 text-(--on-surface-variant)"

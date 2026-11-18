@@ -1,10 +1,34 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { Botao } from "@/components/bivaque/botao"
 import { Campo, Selecao } from "@/components/bivaque/campos"
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog"
-import { type RascunhoImovel, salvarRascunhoImovel } from "@/lib/rascunhos-imoveis"
+import { FalhaDaApi } from "@/lib/api/cliente"
+import { publicarImovel } from "@/lib/dados/mercado"
+import { cepComMascara, cepEmDigitos, errosDoImovel } from "@/src/criar/formularios"
+
+/**
+ * Anunciar imóvel (F06): a folha publica de verdade. O corpo fala a língua do
+ * formulário de Moradia da web (`title`, `deal`, `propertyType`…), o servidor
+ * valida com a mesma régua e a pessoa já vê o anúncio publicado. O erro preserva
+ * o que foi digitado; nenhum campo ou anúncio é inventado na tela.
+ */
+
+const VAZIO = {
+  titulo: "",
+  tipo: "apartamento",
+  finalidade: "aluguel",
+  cep: "",
+  bairro: "",
+  valor: "",
+  quartos: "2",
+  vagas: "1",
+  area: "",
+  endereco: "",
+  localizacao: "aproximada",
+  descricao: "",
+}
 
 export function FormularioImovel({
   aberto,
@@ -15,61 +39,85 @@ export function FormularioImovel({
   readonly aberto: boolean
   readonly cidade: string
   readonly aoFechar: () => void
-  readonly aoSalvar: (rascunho: RascunhoImovel) => void
+  readonly aoSalvar: (id: string) => void
 }) {
-  const [titulo, setTitulo] = useState("")
-  const [tipo, setTipo] = useState("apartamento")
-  const [finalidade, setFinalidade] = useState("aluguel")
-  const [bairro, setBairro] = useState("")
-  const [preco, setPreco] = useState("")
-  const [quartos, setQuartos] = useState("2")
-  const [area, setArea] = useState("")
-  const [vagas, setVagas] = useState("1")
-  const [descricao, setDescricao] = useState("")
+  const [dados, setDados] = useState(VAZIO)
   const [erro, setErro] = useState("")
+  const [salvando, setSalvando] = useState(false)
+  const controle = useRef<AbortController | null>(null)
+  useEffect(
+    () => () => {
+      controle.current?.abort()
+    },
+    [],
+  )
 
-  function salvar() {
-    const valor = Number(preco.replace(",", "."))
-    const metragem = Number(area.replace(",", "."))
-    const quantidadeDeQuartos = Number(quartos)
-    const quantidadeDeVagas = Number(vagas)
-    const rascunho = salvarRascunhoImovel(cidade, {
-      titulo,
-      tipo: tipo === "casa" ? "casa" : "apartamento",
-      finalidade: finalidade === "venda" ? "venda" : "aluguel",
-      bairro,
-      preco: valor,
-      quartos: quantidadeDeQuartos,
-      area: metragem,
-      vagas: quantidadeDeVagas,
-      descricao,
-    })
-    if (rascunho === "limite") {
-      setErro(
-        "Limite de 10 rascunhos de imóveis atingido. Exclua um rascunho antes de salvar outro. Os anteriores foram preservados.",
-      )
+  const erros = errosDoImovel({ ...dados, localizacaoPublica: localizacaoEscolhida() })
+  const mudar = (pedaco: Partial<typeof dados>): void =>
+    setDados((atual) => ({ ...atual, ...pedaco }))
+
+  /** Sem endereço só existe o aproximado (ADR-20261022 §1: exato é o endereço). */
+  function localizacaoEscolhida(): "exata" | "aproximada" {
+    return dados.endereco.trim() === ""
+      ? "aproximada"
+      : dados.localizacao === "exata"
+        ? "exata"
+        : "aproximada"
+  }
+
+  async function publicar() {
+    if (controle.current) return
+    const primeiro = Object.values(erros).find((mensagem) => mensagem !== undefined)
+    if (primeiro !== undefined) {
+      setErro(primeiro)
       return
     }
-    if (rascunho === null) {
-      setErro(
-        "Confira título, bairro, preço, metragem e quantidades. O armazenamento desta sessão precisa estar disponível.",
-      )
-      return
-    }
+    const envio = new AbortController()
+    controle.current = envio
+    setSalvando(true)
     setErro("")
-    setTitulo("")
-    setBairro("")
-    setPreco("")
-    setArea("")
-    setDescricao("")
-    aoSalvar(rascunho)
+    try {
+      const id = await publicarImovel(
+        {
+          title: dados.titulo,
+          deal: dados.finalidade === "venda" ? "sale" : "rent",
+          propertyType: dados.tipo === "casa" ? "house" : "apartment",
+          valor: dados.valor,
+          bedrooms: dados.quartos,
+          vagas: dados.vagas,
+          areaM2: dados.area,
+          description: dados.descricao,
+          neighborhood: dados.bairro,
+          address: dados.endereco,
+          cep: cepEmDigitos(dados.cep) ?? "",
+          localizacaoPublica: localizacaoEscolhida(),
+        },
+        { signal: envio.signal },
+      )
+      if (envio.signal.aborted) return
+      setDados(VAZIO)
+      aoSalvar(id)
+    } catch (falha) {
+      if (!envio.signal.aborted) {
+        setErro(
+          falha instanceof FalhaDaApi && falha.codigo === "sem-sessao"
+            ? "Sua sessão expirou. Entre de novo para publicar. Os campos foram mantidos."
+            : falha instanceof FalhaDaApi && falha.mensagem
+              ? falha.mensagem
+              : "Não foi possível publicar o imóvel. Os campos foram mantidos. Tente de novo.",
+        )
+      }
+    } finally {
+      controle.current = null
+      if (!envio.signal.aborted) setSalvando(false)
+    }
   }
 
   return (
     <Dialog
       open={aberto}
       onOpenChange={(novo) => {
-        if (!novo) aoFechar()
+        if (!novo && !salvando) aoFechar()
       }}
     >
       <DialogContent
@@ -80,24 +128,25 @@ export function FormularioImovel({
       >
         <DialogTitle className="pr-12 text-xl">Anunciar imóvel</DialogTitle>
         <DialogDescription id="rascunho-imovel-descricao">
-          Crie um rascunho para revisar seu imóvel em {cidade}. Nesta demonstração, nada é publicado
-          nem enviado a outros usuários.
+          Descreva o imóvel e publique: ele aparece para a cidade de {cidade} assim que você
+          publicar.
         </DialogDescription>
         <form
           data-formulario="imovel"
           className="grid gap-3"
+          aria-busy={salvando}
+          noValidate
           onSubmit={(evento) => {
             evento.preventDefault()
-            salvar()
+            void publicar()
           }}
         >
           <Campo
             id="imovel-titulo"
             rotulo="Título"
-            valor={titulo}
-            aoMudar={setTitulo}
-            minLength={10}
-            maxLength={100}
+            valor={dados.titulo}
+            aoMudar={(titulo) => mudar({ titulo })}
+            maxLength={120}
             required
             placeholder="Apartamento com 3 quartos na Ponta Negra"
           />
@@ -105,8 +154,8 @@ export function FormularioImovel({
             <Selecao
               id="imovel-tipo"
               rotulo="Tipo"
-              valor={tipo}
-              aoMudar={setTipo}
+              valor={dados.tipo}
+              aoMudar={(tipo) => mudar({ tipo })}
               opcoes={[
                 { valor: "apartamento", titulo: "Apartamento" },
                 { valor: "casa", titulo: "Casa" },
@@ -115,8 +164,8 @@ export function FormularioImovel({
             <Selecao
               id="imovel-finalidade"
               rotulo="Finalidade"
-              valor={finalidade}
-              aoMudar={setFinalidade}
+              valor={dados.finalidade}
+              aoMudar={(finalidade) => mudar({ finalidade })}
               opcoes={[
                 { valor: "aluguel", titulo: "Aluguel" },
                 { valor: "venda", titulo: "Venda" },
@@ -125,24 +174,39 @@ export function FormularioImovel({
           </div>
           <div className="grid grid-cols-2 gap-3">
             <Campo
+              id="imovel-cep"
+              rotulo="CEP"
+              valor={dados.cep}
+              aoMudar={(cep) => mudar({ cep: cepComMascara(cep) })}
+              inputMode="numeric"
+              autoComplete="postal-code"
+              maxLength={9}
+              required
+              placeholder="69000-000"
+              {...(erros.cep === undefined ? {} : { nota: erros.cep })}
+            />
+            <Campo
               id="imovel-bairro"
               rotulo="Bairro"
-              valor={bairro}
-              aoMudar={setBairro}
-              minLength={2}
+              valor={dados.bairro}
+              aoMudar={(bairro) => mudar({ bairro })}
               maxLength={80}
               required
               placeholder="Ex.: Flores"
             />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
             <Campo
               id="imovel-preco"
-              rotulo={finalidade === "aluguel" ? "Aluguel por mês (R$)" : "Valor de venda (R$)"}
-              valor={preco}
-              aoMudar={setPreco}
-              inputMode="decimal"
+              rotulo={
+                dados.finalidade === "aluguel" ? "Aluguel por mês (R$)" : "Valor de venda (R$)"
+              }
+              valor={dados.valor}
+              aoMudar={(valor) => mudar({ valor })}
+              inputMode="numeric"
               type="number"
               min="1"
-              step="0.01"
+              step="1"
               required
               placeholder="3200"
             />
@@ -151,62 +215,78 @@ export function FormularioImovel({
             <Campo
               id="imovel-quartos"
               rotulo="Quartos"
-              valor={quartos}
-              aoMudar={setQuartos}
-              type="number"
-              inputMode="numeric"
-              min="0"
-              max="30"
-              step="1"
-              required
-            />
-            <Campo
-              id="imovel-area"
-              rotulo="Área (m²)"
-              valor={area}
-              aoMudar={setArea}
-              type="number"
-              inputMode="decimal"
-              min="1"
-              step="0.01"
-              required
-            />
-            <Campo
-              id="imovel-vagas"
-              rotulo="Vagas"
-              valor={vagas}
-              aoMudar={setVagas}
+              valor={dados.quartos}
+              aoMudar={(quartos) => mudar({ quartos })}
               type="number"
               inputMode="numeric"
               min="0"
               max="20"
               step="1"
-              required
+            />
+            <Campo
+              id="imovel-area"
+              rotulo="Área (m²)"
+              valor={dados.area}
+              aoMudar={(area) => mudar({ area })}
+              type="number"
+              inputMode="decimal"
+              min="1"
+              step="0.01"
+            />
+            <Campo
+              id="imovel-vagas"
+              rotulo="Vagas"
+              valor={dados.vagas}
+              aoMudar={(vagas) => mudar({ vagas })}
+              type="number"
+              inputMode="numeric"
+              min="0"
+              max="20"
+              step="1"
             />
           </div>
           <Campo
+            id="imovel-endereco"
+            rotulo="Endereço (opcional)"
+            valor={dados.endereco}
+            aoMudar={(endereco) => mudar({ endereco })}
+            maxLength={200}
+            autoComplete="street-address"
+            nota="Opcional. Preenchido, o endereço aparece no local exato; vazio, o anúncio mostra bairro e cidade."
+          />
+          <Selecao
+            id="imovel-localizacao"
+            rotulo="Como mostrar o local"
+            valor={localizacaoEscolhida()}
+            aoMudar={(localizacao) => mudar({ localizacao })}
+            opcoes={
+              dados.endereco.trim() === ""
+                ? [{ valor: "aproximada", titulo: "Local aproximado" }]
+                : [
+                    { valor: "aproximada", titulo: "Local aproximado" },
+                    { valor: "exata", titulo: "Endereço exato" },
+                  ]
+            }
+          />
+          <Campo
             id="imovel-descricao"
             rotulo="Descrição (opcional)"
-            valor={descricao}
-            aoMudar={setDescricao}
+            valor={dados.descricao}
+            aoMudar={(descricao) => mudar({ descricao })}
             area
-            nota="Evite número do apartamento, documentos e telefone. Esses dados não são necessários para este rascunho."
+            nota="Evite número do apartamento, documentos e telefone."
           />
           {erro === "" ? null : (
             <p role="alert" className="text-sm text-(--destructive)">
               {erro}
             </p>
           )}
-          <p className="text-xs text-(--on-surface-variant)">
-            Rascunhos ficam apenas nesta aba do navegador. Fotos, contato e publicação real ainda
-            não estão disponíveis.
-          </p>
           <div className="flex justify-end gap-2">
-            <Botao type="button" tom="texto" onClick={aoFechar}>
+            <Botao type="button" tom="texto" disabled={salvando} onClick={aoFechar}>
               Cancelar
             </Botao>
-            <Botao type="submit" data-acao="salvar-rascunho-imovel">
-              Salvar rascunho
+            <Botao type="submit" data-acao="publicar-imovel" disabled={salvando}>
+              {salvando ? "Publicando…" : "Publicar imóvel"}
             </Botao>
           </div>
         </form>

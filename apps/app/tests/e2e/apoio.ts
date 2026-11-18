@@ -244,19 +244,22 @@ export async function simularNegocios(page: Page): Promise<void> {
   })
 }
 
+/** A primeira referência da prova; é ela que o verbete da rota devolve. */
+export const VERBETE_DA_PROVA = {
+  id: "guia-escola-rio-negro",
+  categoria: "school",
+  nome: "Escola Municipal Rio Negro",
+  descricao: "Ensino fundamental no Centro.",
+  site: null,
+  telefone: null,
+  salvo: false,
+}
+
 /** A primeira página do guia, com cursor para a segunda. */
 export const GUIA_DA_PROVA = {
   cidade: "Manaus",
   entradas: [
-    {
-      id: "guia-escola-rio-negro",
-      categoria: "school",
-      nome: "Escola Municipal Rio Negro",
-      descricao: "Ensino fundamental no Centro.",
-      site: null,
-      telefone: null,
-      salvo: false,
-    },
+    VERBETE_DA_PROVA,
     {
       id: "guia-hospital-getulio",
       categoria: "hospital",
@@ -292,6 +295,19 @@ export async function simularGuia(page: Page): Promise<void> {
   await page.route(/\/api\/app\/guia(?:\?|$)/, async (rota) => {
     const depois = new URL(rota.request().url()).searchParams.get("depois")
     await rota.fulfill({ json: depois === null ? GUIA_DA_PROVA : GUIA_PAGINA_2 })
+  })
+}
+
+/**
+ * O verbete aberto pela rota `/app/guia/<id>`, no contrato que `lerVerbete` lê.
+ * Sem `podeSugerir`, a tela não pede "Minhas sugestões" — a prova do movimento
+ * reduzido só precisa da referência lida.
+ */
+export async function simularVerbeteDoGuia(page: Page): Promise<void> {
+  await page.route(/\/api\/app\/guia\/[^/?]+$/, async (rota) => {
+    await rota.fulfill({
+      json: { entrada: VERBETE_DA_PROVA, podeSalvar: true, podeSugerir: false },
+    })
   })
 }
 
@@ -362,10 +378,24 @@ export const NEGOCIO_DA_PROVA = {
   fotoDescricao: null,
 }
 
-/** A ficha da prova em `/api/app/negocios/<id>`; a lista continua com `simularNegocios`. */
-export async function simularNegocio(page: Page): Promise<void> {
+/**
+ * A ficha da prova em `/api/app/negocios/<id>`; a lista continua com `simularNegocios`.
+ * Com `foto`, o valor vira uma imagem de 1×1 para a captura mostrar a área da
+ * capa como ela aparece com foto, sem baixar arquivo.
+ */
+export async function simularNegocio(
+  page: Page,
+  opcoes: { readonly foto?: boolean } = {},
+): Promise<void> {
+  const ficha = opcoes.foto
+    ? {
+        ...NEGOCIO_DA_PROVA,
+        foto: "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==",
+        fotoDescricao: "Fachada da clínica",
+      }
+    : NEGOCIO_DA_PROVA
   await page.route(/\/api\/app\/negocios\/negocio-da-prova(?:\?|$)/, async (rota) => {
-    await rota.fulfill({ json: { negocio: NEGOCIO_DA_PROVA } })
+    await rota.fulfill({ json: { negocio: ficha } })
   })
 }
 
@@ -385,11 +415,99 @@ export const PEDIDO_DA_PROVA = {
   criadoEm: "2026-11-05T12:00:00.000Z",
   atualizadoEm: "2026-11-06T09:30:00.000Z",
   conversaId: null,
+  // RUN-177: campo aditivo do contrato do pedido (lado de quem lê).
+  lado: "solicitante",
+  // RUN-179: bairro e distância também são aditivos; `null` é o pedido sem CEP
+  // (o parser do app é estrito — o fixture acompanha o contrato).
+  bairro: null,
+  distanciaMetros: null,
 }
 
 /** O pedido da prova em `/api/app/pedidos/<id>`. */
 export async function simularPedido(page: Page): Promise<void> {
   await page.route(/\/api\/app\/pedidos\/pedido-da-prova(?:\?|$)/, async (rota) => {
     await rota.fulfill({ json: { pedido: PEDIDO_DA_PROVA } })
+  })
+}
+
+/**
+ * A busca da prova (LAN-TROCA): um resultado de cada tipo que a tela mostra,
+ * todos falando do mesmo termo, mais um termo que não acha nada. Serve para
+ * separar "a lista filtrada chegou" de "o estado vazio abriu" sem depender dos
+ * fixtures de outra tela — o que interessa aqui é o termo que veio no endereço,
+ * não o conteúdo do banco.
+ */
+export const TERMO_DA_PROVA = "ipiranga"
+export const TERMO_SEM_ACHADO = "zarabatana"
+export const CIDADE_DA_BUSCA = "Manaus"
+
+/**
+ * O corpo cru que a rota `/api/app/busca` devolve (`apps/web/app/api/app/busca/route.ts`):
+ * as colunas do banco, não os nomes do app. Assim a prova passa pelo mesmo
+ * parser (`buscarNaCidade`) que a resposta real.
+ */
+export const BUSCA_DA_PROVA = {
+  anuncios: [
+    {
+      id: "anuncio-ipiranga",
+      title: "Moto 150cc seminova do Ipiranga",
+      kind: "item",
+      price_cents: 850000,
+      neighborhood: "Ipiranga",
+    },
+  ],
+  negocios: [{ id: "negocio-ipiranga", display_name: "Oficina Ipiranga", category: "servicos" }],
+  perguntas: [
+    {
+      id: "pergunta-ipiranga",
+      title: "Alguém indica mecânico perto da avenida Ipiranga?",
+      reply_count: 2,
+      is_resolved: false,
+      group_name: null,
+    },
+  ],
+  grupos: [{ id: "grupo-ipiranga", name: "Vizinhos do Ipiranga", members: 5 }],
+  guia: [
+    {
+      id: "guia-ipiranga",
+      name: "Serviços e escolas do Ipiranga",
+      description: "Endereços e contatos do bairro.",
+    },
+  ],
+} as const
+
+const BUSCA_VAZIA = { anuncios: [], negocios: [], perguntas: [], grupos: [], guia: [] } as const
+
+/**
+ * `/api/app/busca` respondendo como o servidor: o termo do endereço decide se
+ * volta a lista da prova ou nada. O Início da cidade tem só um negócio de
+ * saúde: o bastante para o estado sem termo desenhar a grade "Explorar" (que
+ * mostra apenas categorias com negócio na cidade, RUN-139) sem herdar resultado
+ * de outro fixture. A cidade vazia é provada em inicio-busca-primeira-entrada.
+ */
+export async function simularBuscaDaProva(page: Page): Promise<void> {
+  await page.route(/\/api\/app\/busca(?:\?|$)/, async (rota) => {
+    const termo = new URL(rota.request().url()).searchParams.get("q") ?? ""
+    const achou = termo.toLocaleLowerCase("pt-BR") === TERMO_DA_PROVA
+    await rota.fulfill({
+      json: { cidade: CIDADE_DA_BUSCA, ...(achou ? BUSCA_DA_PROVA : BUSCA_VAZIA) },
+    })
+  })
+  await page.route(/\/api\/app\/inicio(?:\?|$)/, async (rota) => {
+    await rota.fulfill({
+      json: {
+        ...BUSCA_VAZIA,
+        negocios: [
+          {
+            id: "negocio-explorar",
+            display_name: "Clínica da Prova",
+            category: "saude_e_bem_estar",
+          },
+        ],
+        cidade: CIDADE_DA_BUSCA,
+        eventos: [],
+        proximo: null,
+      },
+    })
   })
 }

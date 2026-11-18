@@ -22,6 +22,110 @@ const PEDIDO_SEMEADO = "40000000-0000-4000-8000-000000000023"
 const CAPTURAS = join(process.cwd(), ".visual", "run-010", "capturas")
 const CABECALHOS = { origin: "http://127.0.0.1:3000", "x-bivaque-app": "bivaque-spa" }
 
+// RUN-177 (F07): a página de negócio do MEMBRO. Uma persona isolada por largura
+// (as mesmas do spec web que este bloco substitui) e limpeza por service_role
+// antes de cada uma: a ficha, o catálogo, as fotos e os pedidos que ela recebeu
+// são da fixture, não do seed.
+const DONOS_DO_NEGOCIO: Record<string, { email: string; id: string }> = {
+  "mobile-375": {
+    email: "negocio-e2e-mobile@bivaque.example.invalid",
+    id: "21000000-0000-4000-8000-000000000001",
+  },
+  "tablet-768": {
+    email: "negocio-e2e-tablet@bivaque.example.invalid",
+    id: "21000000-0000-4000-8000-000000000002",
+  },
+  "desktop-1440": {
+    email: "negocio-e2e-desktop@bivaque.example.invalid",
+    id: "21000000-0000-4000-8000-000000000003",
+  },
+}
+const NOME_DO_NEGOCIO = "Bivaque Vizinhança"
+const APRESENTACAO = "Apoio prático para quem está chegando à cidade."
+const APRESENTACAO_EDITADA = "Atendimento acolhedor para famílias que acabaram de chegar."
+const SERVICO = "Orientação para mudança"
+const LEGENDA_DA_FOTO = "Acolhida de quem chega à cidade"
+
+// RUN-179 (LOC-IMPL L2): o CEP do pedido no E2E é SINTÉTICO e pré-gravado no
+// cache, no molde do F06 — nenhuma chamada ao provedor e nenhum CEP de rua real.
+// A coordenada fica a ~3,1 km da origem do prestador (o CEP 69000-000 do seed).
+const CEP_DO_PEDIDO = "69000001"
+const CEP_DO_PEDIDO_MASCARADO = "69000-001"
+const BAIRRO_DO_PEDIDO = "Flores"
+const DISTANCIA_DO_PEDIDO = "A cerca de 3,1 km de você."
+
+/**
+ * Grava o CEP sintético do pedido no cache de geocodificação do servidor.
+ * `cep_geocodes` é tabela de serviço: a fixture fala com ela pelo service_role,
+ * como a limpeza da ficha já faz. Coordenada sintética, perto de Manaus.
+ */
+async function semearCepDoPedido(): Promise<void> {
+  const chave =
+    process.env["SUPABASE_SERVICE_ROLE_KEY"] ?? readEnvLocal("SUPABASE_SERVICE_ROLE_KEY")
+  if (!chave) throw new Error("SUPABASE_SERVICE_ROLE_KEY é necessária para semear o CEP.")
+  const api = await apiRequest.newContext({
+    baseURL: urlDoSupabase(),
+    extraHTTPHeaders: { apikey: chave, Authorization: `Bearer ${chave}` },
+  })
+  try {
+    const resposta = await api.post("rest/v1/cep_geocodes", {
+      headers: { Prefer: "resolution=merge-duplicates" },
+      data: {
+        cep: CEP_DO_PEDIDO,
+        latitude: -3.12194,
+        longitude: -60.045,
+        source: "brasilapi",
+        neighborhood: BAIRRO_DO_PEDIDO,
+        fetched_at: new Date().toISOString(),
+      },
+    })
+    expect(resposta.ok(), "semear o CEP sintético do pedido").toBe(true)
+  } finally {
+    await api.dispose()
+  }
+}
+
+/**
+ * Apaga a ficha de negócio da persona e o que pende dela (cascata nas linhas;
+ * os objetos do Storage saem antes, porque o bucket não conhece a ficha).
+ */
+async function limparNegocioDoDono(ownerId: string): Promise<void> {
+  const chave =
+    process.env["SUPABASE_SERVICE_ROLE_KEY"] ?? readEnvLocal("SUPABASE_SERVICE_ROLE_KEY")
+  if (!chave) throw new Error("SUPABASE_SERVICE_ROLE_KEY é necessária para limpar a fixture.")
+  const api = await apiRequest.newContext({
+    baseURL: urlDoSupabase(),
+    extraHTTPHeaders: { apikey: chave, Authorization: `Bearer ${chave}` },
+  })
+  try {
+    const perfis = await api.get("rest/v1/provider_profiles", {
+      params: { owner_user_id: `eq.${ownerId}`, select: "id" },
+    })
+    expect(perfis.ok(), "limpar a ficha do negócio").toBe(true)
+    const ids = (await perfis.json()) as { id: string }[]
+    const caminhos: string[] = []
+    for (const { id } of ids) {
+      const fotos = await api.get("rest/v1/provider_portfolio_photos", {
+        params: { provider_id: `eq.${id}`, select: "photo_path" },
+      })
+      expect(fotos.ok()).toBe(true)
+      caminhos.push(...((await fotos.json()) as { photo_path: string }[]).map((r) => r.photo_path))
+    }
+    if (caminhos.length > 0) {
+      const removidos = await api.delete("storage/v1/object/provider-photos", {
+        data: { prefixes: caminhos },
+      })
+      expect(removidos.ok(), "remover as fotos da fixture").toBe(true)
+    }
+    const apagados = await api.delete("rest/v1/provider_profiles", {
+      params: { owner_user_id: `eq.${ownerId}` },
+    })
+    expect(apagados.ok(), "apagar a ficha da fixture").toBe(true)
+  } finally {
+    await api.dispose()
+  }
+}
+
 function exigirAmbienteLocal() {
   // A chave anônima tem erro próprio no helper; a senha segue a mesma ordem:
   // processo primeiro, depois apps/web. Nada é embutido aqui.
@@ -45,34 +149,28 @@ async function tokenDaSessao(context: BrowserContext) {
 
 async function capturar(page: Page, projeto: string, etapa: string) {
   mkdirSync(CAPTURAS, { recursive: true })
-  for (const tema of ["claro", "escuro"] as const) {
-    await page.emulateMedia({ colorScheme: tema === "claro" ? "light" : "dark" })
-    await page.evaluate(async () => {
-      await document.fonts.ready
+  await page.evaluate(async () => {
+    await document.fonts.ready
+  })
+  // Tema claro: o lançamento (14/11) é só claro; o app ignora o esquema do sistema.
+  await expect
+    .poll(async () => {
+      const cor = await page
+        .locator("[data-tela] h1")
+        .first()
+        .evaluate((elemento) => getComputedStyle(elemento).color)
+      const canais = (cor.match(/[\d.]+/g) ?? []).map(Number).slice(0, 3)
+      return canais.length === 3 && canais.every((canal) => canal < 128)
     })
-    await expect
-      .poll(async () => {
-        const cor = await page
-          .locator("[data-tela] h1")
-          .first()
-          .evaluate((elemento) => getComputedStyle(elemento).color)
-        const canais = (cor.match(/[\d.]+/g) ?? []).map(Number).slice(0, 3)
-        return (
-          canais.length === 3 &&
-          canais.every((canal) => (tema === "claro" ? canal < 128 : canal > 128))
-        )
-      })
-      .toBe(true)
-    await expect
-      .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth))
-      .toBe(true)
-    await page.screenshot({
-      path: join(CAPTURAS, `${projeto}-${tema}-${etapa}.png`),
-      fullPage: true,
-      animations: "disabled",
-    })
-  }
-  await page.emulateMedia({ colorScheme: "light" })
+    .toBe(true)
+  await expect
+    .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth))
+    .toBe(true)
+  await page.screenshot({
+    path: join(CAPTURAS, `${projeto}-claro-${etapa}.png`),
+    fullPage: true,
+    animations: "disabled",
+  })
 }
 
 async function abrirFicha(page: Page) {
@@ -93,7 +191,7 @@ test.describe("F07 — negócios e pedidos reais", { tag: "@stateful" }, () => {
     test.setTimeout(180_000)
     await semearSessaoDeMembro(context, MEMBRO)
     await page.goto("/app/negocios")
-    await expect(page.getByRole("heading", { level: 1, name: "Negócios locais" })).toBeVisible({
+    await expect(page.getByRole("heading", { level: 1, name: "Mercado da cidade" })).toBeVisible({
       timeout: 30_000,
     })
     await expect(
@@ -111,13 +209,19 @@ test.describe("F07 — negócios e pedidos reais", { tag: "@stateful" }, () => {
     await expect(page.getByRole("heading", { name: "Onde atende", exact: true })).toBeVisible()
     await capturar(page, testInfo.project.name, "02-ficha")
 
-    const pedir = page.getByRole("button", { name: "Pedir orçamento", exact: true })
+    // RUN-177: o orçamento é a MESMA folha com endereço próprio; o CTA da ficha é
+    // um link para /app/pedidos/novo?destino=<id>.
+    const pedir = page.getByRole("link", { name: "Pedir orçamento", exact: true })
     const alvo = await pedir.boundingBox()
     expect(alvo?.height).toBeGreaterThanOrEqual(44)
     expect(alvo?.width).toBeGreaterThanOrEqual(44)
     await pedir.click()
+    await expect(page).toHaveURL(new RegExp(`/app/pedidos/novo\\?destino=${NEGOCIO}$`))
     await expect(page.getByRole("dialog")).toBeVisible()
-    const descricao = `Limpar o ar-condicionado — ${testInfo.project.name}`
+    // F07 resíduo: o descritivo leva um selo único por execução — rodar de novo no
+    // MESMO banco (local) não pode casar com o pedido que a rodada anterior deixou
+    // encerrado. O CI começa do seed, mas repetir localmente é rotina.
+    const descricao = `Limpar o ar-condicionado — ${testInfo.project.name} ${Date.now().toString(36)}`
     await page.getByLabel("O que você precisa?").fill(descricao)
     await page.getByLabel("Quando precisa? (opcional)").fill("Nesta semana")
     await capturar(page, testInfo.project.name, "03-formulario")
@@ -167,7 +271,7 @@ test.describe("F07 — negócios e pedidos reais", { tag: "@stateful" }, () => {
     expect(reenviada.status()).toBe(201)
     expect((await reenviada.json()).pedido.id).toBe(gravado.pedido.id)
 
-    await page.getByRole("button", { name: "Ver meus pedidos", exact: true }).click()
+    await page.getByRole("button", { name: "Ver pedidos", exact: true }).click()
     const linha = page.locator('[data-tela="pedidos"] [data-linha="lista"]', { hasText: descricao })
     await expect(linha).toBeVisible()
     await page.reload()
@@ -187,7 +291,7 @@ test.describe("F07 — negócios e pedidos reais", { tag: "@stateful" }, () => {
     test.setTimeout(120_000)
     await semearSessaoDeMembro(context, MEMBRO)
     await abrirFicha(page)
-    await page.getByRole("button", { name: "Pedir orçamento", exact: true }).click()
+    await page.getByRole("link", { name: "Pedir orçamento", exact: true }).click()
     await page.getByLabel("O que você precisa?").fill("Conferir o ar sem perder este texto")
     await page.route("**/api/app/negocios/*/pedidos", (rota) => rota.abort())
     await page.getByRole("button", { name: "Enviar pedido", exact: true }).click()
@@ -198,7 +302,7 @@ test.describe("F07 — negócios e pedidos reais", { tag: "@stateful" }, () => {
       "Conferir o ar sem perder este texto",
     )
     await expect(page.getByRole("button", { name: "Enviar pedido", exact: true })).toBeEnabled()
-    await expect(page).toHaveURL(new RegExp(`/app/negocio/${NEGOCIO}$`))
+    await expect(page).toHaveURL(new RegExp(`/app/pedidos/novo\\?destino=${NEGOCIO}$`))
     await capturar(page, testInfo.project.name, "06-falha-de-escrita")
     await page.getByRole("button", { name: "Cancelar", exact: true }).click()
 
@@ -281,10 +385,14 @@ test.describe("F07 — negócios e pedidos reais", { tag: "@stateful" }, () => {
       ).status(),
     ).toBe(403)
 
-    // A RLS deixa o destinatário ler o pedido; a API do membro exige solicitante.
+    // A RLS sempre deixou o destinatário ler o pedido; desde o RUN-177 (F07) a
+    // porta também serve os DOIS lados — o dono do negócio vê o que recebeu, com
+    // `lado: "dono"`. Quem não participa continua sem ver (provado acima).
     await context.clearCookies()
     await semearSessaoDeMembro(context, PRESTADOR)
-    expect((await page.request.get(`/api/app/pedidos/${PEDIDO_SEMEADO}`)).status()).toBe(404)
+    const doDestinatario = await page.request.get(`/api/app/pedidos/${PEDIDO_SEMEADO}`)
+    expect(doDestinatario.status()).toBe(200)
+    expect((await doDestinatario.json()).pedido.lado).toBe("dono")
   })
 
   test("vazios da cidade e dos próprios pedidos vêm de leituras reais", async ({
@@ -304,5 +412,222 @@ test.describe("F07 — negócios e pedidos reais", { tag: "@stateful" }, () => {
     await page.getByRole("button", { name: "Meus pedidos", exact: true }).click()
     await expect(page.getByText("Nenhum pedido ainda", { exact: true })).toBeVisible()
     await capturar(page, testInfo.project.name, "08-pedidos-vazio")
+  })
+})
+
+/**
+ * RUN-177 (F07) — a jornada do DONO do negócio, que vivia no spec web
+ * `provider-member-business.spec.ts` e agora é do app. Cada garantia do spec
+ * morto está aqui: entrada de produto, validação do nome, falha de escrita que
+ * preserva o texto, criação, edição, ficha pública, item de catálogo, foto do
+ * portfólio, presença na lista da cidade, e o pedido recebido — que o dono
+ * encerra e o solicitante vê encerrado.
+ */
+test.describe("F07 — página de negócio do membro (dono)", { tag: "@stateful" }, () => {
+  test.beforeAll(exigirAmbienteLocal)
+
+  test.beforeEach(async ({ page: _pagina }, testInfo) => {
+    const dono = DONOS_DO_NEGOCIO[testInfo.project.name]
+    if (!dono) throw new Error(`Sem dono de negócio para ${testInfo.project.name}.`)
+    await limparNegocioDoDono(dono.id)
+    // O CEP do pedido existe no cache antes de qualquer requisição: a rota não
+    // vai ao provedor (o E2E não pode depender de rede).
+    await semearCepDoPedido()
+  })
+
+  test("cria, edita, publica catálogo e foto, aparece na lista e acompanha o pedido", async ({
+    page,
+    context,
+  }, testInfo) => {
+    test.setTimeout(240_000)
+    const dono = DONOS_DO_NEGOCIO[testInfo.project.name]
+    if (!dono) throw new Error(`Sem dono de negócio para ${testInfo.project.name}.`)
+    await semearSessaoDeMembro(context, dono.email)
+
+    // RUN-179: a origem privada do prestador (CEP do seed, cache hit) é o que dá
+    // distância ao pedido recebido. Vai pela MESMA rota do perfil.
+    const origem = await page.request.put("/api/app/voce/localizacao", {
+      headers: CABECALHOS,
+      data: { cep: "69000-000" },
+    })
+    expect(origem.status(), "origem do prestador").toBe(200)
+
+    // Entrada de produto: o Mercado da cidade leva a Meu negócio.
+    await page.goto("/app/negocios")
+    await page.getByRole("button", { name: "Divulgar meu negócio", exact: true }).first().click()
+    await expect(page).toHaveURL(/\/app\/meu-negocio$/)
+    await expect(page.getByRole("heading", { level: 1, name: "Meu negócio" })).toBeVisible({
+      timeout: 30_000,
+    })
+
+    // Nome curto é recusado e o texto digitado continua no campo.
+    await page.getByLabel("Nome do negócio").fill("A")
+    await page.getByRole("button", { name: "Criar minha página" }).click()
+    await expect(page.getByRole("alert")).toContainText("entre 2 e 80")
+    await expect(page.getByLabel("Nome do negócio")).toHaveValue("A")
+
+    await page.getByLabel("Nome do negócio").fill(NOME_DO_NEGOCIO)
+    await page.getByLabel("Categoria").selectOption("assistencia_tecnica")
+    await page.getByLabel("O que você oferece (opcional)").fill(APRESENTACAO)
+
+    // Falha simulada da porta: a mensagem promete o texto preservado, e ele está.
+    await page.route(
+      (url) => url.pathname === "/api/app/negocio",
+      async (rota) => {
+        if (rota.request().method() !== "POST") return rota.fallback()
+        await rota.fulfill({ status: 503, json: { erro: "escrita-indisponivel" } })
+      },
+    )
+    await page.getByRole("button", { name: "Criar minha página" }).click()
+    await expect(page.getByRole("alert")).toContainText("continuam preenchidos")
+    await expect(page.getByLabel("Nome do negócio")).toHaveValue(NOME_DO_NEGOCIO)
+    await capturar(page, testInfo.project.name, "09-meu-negocio-falha")
+    await page.unrouteAll({ behavior: "wait" })
+
+    await page.getByRole("button", { name: "Criar minha página" }).click()
+    await expect(page.getByText("Sua página foi criada.")).toBeVisible({ timeout: 30_000 })
+
+    // Edição da apresentação.
+    await page.getByLabel("O que você oferece (opcional)").fill(APRESENTACAO_EDITADA)
+    await page.getByRole("button", { name: "Salvar alterações" }).click()
+    await expect(page.getByText("Sua página foi salva.")).toBeVisible({ timeout: 30_000 })
+
+    // A página pública: mesmo id que o link carrega.
+    await page.getByRole("button", { name: "Ver página pública" }).click()
+    await expect(page).toHaveURL(/\/app\/negocio\/[0-9a-f-]+$/)
+    const fichaPublica = new URL(page.url())
+    const providerId = fichaPublica.pathname.split("/").at(-1)
+    expect(providerId).toBeTruthy()
+    await expect(page.getByRole("heading", { level: 1, name: NOME_DO_NEGOCIO })).toBeVisible()
+    await expect(page.getByText(APRESENTACAO_EDITADA)).toBeVisible()
+    await capturar(page, testInfo.project.name, "10-ficha-publica")
+
+    // Catálogo: publicar o item e vê-lo na própria ficha.
+    await page.goto("/app/meu-negocio")
+    await page.getByLabel("Título do item").fill(SERVICO)
+    await page.getByLabel("Descrição do item (opcional)").fill("Atendimento sob orçamento.")
+    await page.getByRole("button", { name: "Publicar item", exact: true }).click()
+    await expect(page.getByText("Serviço publicado.")).toBeVisible({ timeout: 30_000 })
+    await expect(page.locator('[data-lista="servicos"]')).toContainText(SERVICO)
+
+    // Foto do portfólio: upload pela porta, assinatura na leitura, e a imagem
+    // sobrevive à recarga (nada de estado só na tela).
+    await page.getByLabel("Legenda da foto (opcional)").fill(LEGENDA_DA_FOTO)
+    const envioDaFoto = page.waitForResponse(
+      (resposta) =>
+        new URL(resposta.url()).pathname === "/api/app/negocio/fotos" &&
+        resposta.request().method() === "POST",
+    )
+    await page
+      .locator("#foto-arquivo")
+      .setInputFiles(
+        join(process.cwd(), "apps", "web", "public", "landing", "hero-bivaque-arrival.webp"),
+      )
+    expect((await envioDaFoto).status()).toBe(201)
+    await page.reload()
+    await expect(page.getByRole("img", { name: LEGENDA_DA_FOTO })).toBeVisible({
+      timeout: 30_000,
+    })
+    await capturar(page, testInfo.project.name, "11-meu-negocio")
+
+    // A ficha aparece na busca da cidade. RUN-181: o painel web
+    // (`/explorar/servicos`) morreu — a garantia do spec morto passa a ser
+    // exercida na busca do app, que é o destino do redirect e lê o mesmo `q`
+    // pelo mesmo RPC (`search_providers`), com a contagem e os filtros do app.
+    await page.goto("/app/busca?q=vizinhanca")
+    await expect(page.getByText(NOME_DO_NEGOCIO, { exact: true }).first()).toBeVisible({
+      timeout: 30_000,
+    })
+
+    // /negocio é 307 para a gestão no app.
+    await page.goto("/negocio")
+    await expect(page).toHaveURL(/\/app\/meu-negocio$/)
+    await expect(page.getByRole("heading", { level: 1, name: "Meu negócio" })).toBeVisible()
+
+    // ── O pedido, dos dois lados ────────────────────────────────────────────
+    // O membro pede à ficha recém-publicada.
+    await context.clearCookies()
+    await semearSessaoDeMembro(context, MEMBRO)
+    await page.goto(`/app/negocio/${providerId}`)
+    await page.getByRole("link", { name: "Pedir orçamento", exact: true }).click()
+    await expect(page).toHaveURL(new RegExp(`/app/pedidos/novo\\?destino=${providerId}$`))
+    const descricaoDoPedido = `Orientação para a mudança — ${testInfo.project.name}`
+    await page.getByLabel("O que você precisa?").fill(descricaoDoPedido)
+    await page.getByLabel("Quando precisa? (opcional)").fill("Nesta semana")
+    // RUN-179: o CEP é opcional e vem do cache sintético semeado acima.
+    await page.getByLabel("CEP (opcional)").fill(CEP_DO_PEDIDO_MASCARADO)
+    const criacao = page.waitForResponse(
+      (resposta) =>
+        resposta.url().endsWith(`/api/app/negocios/${providerId}/pedidos`) &&
+        resposta.request().method() === "POST",
+    )
+    await page.getByRole("button", { name: "Enviar pedido", exact: true }).click()
+    const enviado = await criacao
+    expect(enviado.status()).toBe(201)
+    const corpoDoPedido = (await enviado.json()) as {
+      pedido: { id: string; bairro: string | null; distanciaMetros: number | null }
+    }
+    const pedidoId = corpoDoPedido.pedido.id
+    // O bairro do CEP vai para o prestador; a coordenada, não (nem para o autor).
+    expect(corpoDoPedido.pedido.bairro).toBe(BAIRRO_DO_PEDIDO)
+    expect(corpoDoPedido.pedido).not.toHaveProperty("cep")
+    expect(corpoDoPedido.pedido).not.toHaveProperty("latitude")
+    await expect(page).toHaveURL(new RegExp(`/app/pedido/${pedidoId}$`))
+    await expect(page.getByText("Em aberto", { exact: true })).toBeVisible()
+    await expect(page.getByText(`Bairro informado ao prestador: ${BAIRRO_DO_PEDIDO}`)).toBeVisible()
+
+    // Onde a recusa aparece é na LEITURA: `select *` do participante não devolve
+    // as colunas cruas (42501) — nem para quem pediu.
+    const seletorEstrela = await page.request.get(
+      `${urlDoSupabase()}/rest/v1/service_requests?select=*&id=eq.${pedidoId}`,
+      {
+        headers: {
+          apikey: chaveAnonimaDoSupabase(),
+          authorization: `Bearer ${await tokenDaSessao(context)}`,
+        },
+      },
+    )
+    expect(seletorEstrela.ok()).toBe(false)
+    expect(await seletorEstrela.text()).toContain("42501")
+
+    // O dono recebe, vê de que lado está, abre a conversa e encerra.
+    await context.clearCookies()
+    await semearSessaoDeMembro(context, dono.email)
+    await page.goto("/app/pedidos")
+    const recebidos = page.locator('[data-tela="pedidos"]', { hasText: "Recebidos" })
+    await expect(recebidos).toContainText(descricaoDoPedido, { timeout: 30_000 })
+    await capturar(page, testInfo.project.name, "12-pedidos-recebidos")
+    await page.locator('[data-linha="lista"]', { hasText: descricaoDoPedido }).click()
+    await expect(page.getByText("Recebido", { exact: true })).toBeVisible()
+    // RUN-179: o prestador vê o bairro do pedido e a distância DA ORIGEM DELE.
+    await expect(page.getByText(`Bairro do pedido: ${BAIRRO_DO_PEDIDO}`)).toBeVisible()
+    await expect(page.getByText(DISTANCIA_DO_PEDIDO)).toBeVisible()
+    await page.reload()
+    await expect(page.getByText(`Bairro do pedido: ${BAIRRO_DO_PEDIDO}`)).toBeVisible({
+      timeout: 30_000,
+    })
+    await expect(page.getByText(DISTANCIA_DO_PEDIDO)).toBeVisible()
+    await expect(page.getByRole("button", { name: "Abrir conversa" })).toBeVisible()
+    await expect(page.getByRole("button", { name: "Cancelar pedido" })).toHaveCount(0)
+    await page.getByRole("button", { name: "Encerrar pedido" }).click()
+    const confirmacao = page.locator('[data-sobreposicao="confirmacao"]')
+    await expect(confirmacao).toBeVisible()
+    await expect(page.locator("[data-sobreposicao]")).toHaveCount(1)
+    await confirmacao.getByRole("button", { name: "Encerrar pedido" }).click()
+    await expect(page.getByText("Pedido encerrado.")).toBeVisible({ timeout: 30_000 })
+    await expect(page.getByText("Encerrado", { exact: true })).toBeVisible()
+    await capturar(page, testInfo.project.name, "13-pedido-encerrado")
+
+    // O solicitante vê o mesmo estado encerrado (persistido, não presumido).
+    await context.clearCookies()
+    await semearSessaoDeMembro(context, MEMBRO)
+    await page.goto(`/app/pedido/${pedidoId}`)
+    await expect(page.getByText("Encerrado", { exact: true })).toBeVisible({ timeout: 30_000 })
+    await expect(page.getByRole("button", { name: "Encerrar pedido" })).toHaveCount(0)
+    await expect(page.getByRole("button", { name: "Abrir conversa" })).toBeVisible()
+
+    // F06 resíduo: /mercado/novo segue chegando à lista do app.
+    await page.goto("/mercado/novo")
+    await expect(page).toHaveURL(/\/app\/mercado(\?.*)?$/)
   })
 })

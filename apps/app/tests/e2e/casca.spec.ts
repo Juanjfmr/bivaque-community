@@ -36,7 +36,7 @@ test.describe("barra do topo por rota", () => {
     // A marca é o símbolo do Bivaque em `components/bivaque/marca.tsx`
     // (`data-marca="simbolo"`), como no protótipo (`utilities/format.js: mark`).
     const marcaNoTopo = page.locator(`${SELETOR_BARRA} [data-marca="simbolo"]`)
-    if ((page.viewportSize()?.width ?? 0) < 720) await expect(marcaNoTopo).toBeVisible()
+    if ((page.viewportSize()?.width ?? 0) < 1024) await expect(marcaNoTopo).toBeVisible()
     else {
       await expect(marcaNoTopo).toBeHidden()
       await expect(page.locator('[data-marca="rail"] [data-marca="simbolo"]')).toBeVisible()
@@ -115,14 +115,14 @@ test.describe("barra do topo por rota", () => {
     expect(new URL(page.url()).pathname).toBe("/app/inicio")
   })
 
-  test("trocar de cidade liga a faixa de visita, e ela volta para casa", async ({ page }) => {
-    await definirCascaDaProva(page, { cidade: "Manaus" })
+  test("a faixa de visita aparece quando a casca vê outra cidade, e volta para casa", async ({
+    page,
+  }) => {
+    // CIDADE-169: o painel do chip não troca mais o rótulo da casca — ele abre a
+    // consulta de verdade. O estado cosmético que continua existindo (a faixa)
+    // é semeado pela prova, que é o instrumento para isso.
+    await definirCascaDaProva(page, { cidade: "Recife" })
     await abrir(page, "/app/inicio")
-    await page.locator(SELETOR_CHIP_CIDADE).click()
-
-    await page.locator('[data-campo="cidade"]').fill("Recife")
-    await page.locator('[data-acao="aplicar-cidade"]').click()
-    await expect(page.locator('[data-sobreposicao="cidade"]')).toHaveCount(0)
 
     await expect(page.locator(SELETOR_CHIP_CIDADE)).toContainText("Recife")
     const faixa = page.locator('[data-faixa="visita"]')
@@ -168,7 +168,7 @@ test.describe("navegação de baixo e lateral", () => {
     const nav = page.locator(SELETOR_NAVEGACAO)
     await expect(nav).toHaveCount(1)
     const largura = page.viewportSize()?.width ?? 0
-    if (largura >= 720) {
+    if (largura >= 1024) {
       await expect(nav).toBeVisible()
     } else {
       await expect(nav).toBeHidden()
@@ -177,7 +177,7 @@ test.describe("navegação de baixo e lateral", () => {
 
   test("minimiza ao rolar para baixo e volta ao subir", async ({ page }) => {
     const largura = page.viewportSize()?.width ?? 0
-    test.skip(largura >= 720, "a minimização é do celular")
+    test.skip(largura >= 1024, "a minimização é do celular")
 
     await abrir(page, "/app/inicio")
     const nav = page.locator(SELETOR_NAVEGACAO)
@@ -243,6 +243,56 @@ test.describe("menu Criar (§4 do inventário)", () => {
     expect(new URL(page.url()).pathname).toBe("/app/inicio")
   })
 
+  test("no celular e tablet o menu tem scrim, prende foco e fecha pelo fundo", async ({ page }) => {
+    const largura = page.viewportSize()?.width ?? 0
+    test.skip(largura >= 1024, "o scrim desta pilha é para celular e tablet")
+
+    await abrir(page, "/app/inicio")
+    await page.locator(SELETOR_CRIAR).click()
+    const menu = page.locator(SELETOR_MENU_CRIAR)
+    const scrim = page.locator(".bv-scrim")
+    await expect(menu.locator('[data-escolha="ask"]')).toBeFocused()
+    await expect(scrim).toBeVisible()
+    await expect(scrim).not.toHaveAttribute("data-criar-fundo", "pilha")
+    const alfa = await scrim.evaluate((element) => {
+      const cor = getComputedStyle(element).backgroundColor
+      return Number(cor.match(/, ([\d.]+)\)$/)?.[1] ?? 0)
+    })
+    expect(alfa).toBeGreaterThan(0)
+
+    const focalizaveis = menu.locator('button[data-criar="fechar"], [data-escolha]')
+    await expect(focalizaveis).toHaveCount(8)
+    const primeiro = focalizaveis.first()
+    const ultimo = focalizaveis.last()
+    await expect(primeiro).toHaveAttribute("aria-label", "Fechar")
+    await expect(ultimo).toHaveAttribute("data-escolha", "my-biz")
+
+    const focoDentroDoMenu = async () =>
+      expect(await menu.evaluate((element) => element.contains(document.activeElement))).toBe(true)
+
+    await ultimo.focus()
+    await focoDentroDoMenu()
+    await page.keyboard.press("Tab")
+    await expect(primeiro).toBeFocused()
+    await focoDentroDoMenu()
+    await page.keyboard.press("Shift+Tab")
+    await expect(ultimo).toBeFocused()
+    await focoDentroDoMenu()
+
+    // O sino de avisos fica sempre no topo e navegaria para /app/avisos se o clique vazasse.
+    const acaoDeTras = page.locator('[data-acao="avisos"]')
+    const caixaDeTras = await acaoDeTras.boundingBox()
+    if (caixaDeTras === null) throw new Error("O sino de avisos não tem posição")
+    await page.mouse.click(
+      caixaDeTras.x + caixaDeTras.width / 2,
+      caixaDeTras.y + caixaDeTras.height / 2,
+    )
+    await expect(menu).toHaveCount(0)
+    await expect(page.locator(SELETOR_CRIAR)).toBeFocused()
+    expect(new URL(page.url()).pathname).toBe("/app/inicio")
+    await expect(page.locator('[data-sobreposicao="busca"]')).toHaveCount(0)
+  })
+
   test("o Voltar do sistema fecha o menu antes de trocar de rota", async ({ page }) => {
     await abrir(page, "/app/comunidade")
     await page.locator(SELETOR_CRIAR).click()
@@ -303,9 +353,9 @@ test.describe("menu Criar (§4 do inventário)", () => {
 })
 
 test.describe("título grande e dockagem (§6.7)", () => {
-  test("abaixo de 720 px o título some sob a barra e volta depois", async ({ page }) => {
+  test("abaixo de 1024 px o título some sob a barra e volta depois", async ({ page }) => {
     const largura = page.viewportSize()?.width ?? 0
-    test.skip(largura >= 720, "o efeito só existe abaixo de 720 px")
+    test.skip(largura >= 1024, "o efeito só existe abaixo de 1024 px")
 
     await abrir(page, "/app/salvos")
     const barra = page.locator(SELETOR_BARRA)
@@ -329,7 +379,7 @@ test.describe("título grande e dockagem (§6.7)", () => {
 
   test("na Início o título grande nunca sobe", async ({ page }) => {
     const largura = page.viewportSize()?.width ?? 0
-    test.skip(largura >= 720, "o efeito só existe abaixo de 720 px")
+    test.skip(largura >= 1024, "o efeito só existe abaixo de 1024 px")
     await abrir(page, "/app/inicio")
     await rolarOCorpo(page, 400)
     await expect(page.locator(SELETOR_BARRA)).toHaveAttribute("data-docada", "nao")

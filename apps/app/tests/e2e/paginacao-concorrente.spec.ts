@@ -6,6 +6,7 @@ const POST = {
   texto: "Publicação atual",
   criadaEm: "2026-11-08T10:00:00.000Z",
   autor: "Ana",
+  autorId: "u-ana",
   propria: false,
   comentarios: 0,
   uteis: 0,
@@ -68,6 +69,7 @@ test("grupo: página antiga não invade a nova ordenação", async ({ page }) =>
         .fulfill({
           json: {
             grupo: GRUPO,
+            cidade: "Manaus",
             publicacoes: [{ ...POST, id: "post-antigo", texto: "Página obsoleta" }],
             proximo: null,
           },
@@ -78,6 +80,7 @@ test("grupo: página antiga não invade a nova ordenação", async ({ page }) =>
     await rota.fulfill({
       json: {
         grupo: GRUPO,
+        cidade: "Manaus",
         publicacoes: [
           {
             ...POST,

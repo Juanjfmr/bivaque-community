@@ -10,6 +10,11 @@ test("publica, comenta, responde e relê as ações gravadas", async ({ page }) 
   await page.getByRole("button", { name: "Escrever", exact: true }).click()
   await page.getByLabel("Sua publicação").fill("Publicação da comunidade")
   await page.getByRole("button", { name: "Publicar", exact: true }).click()
+  // Publicar não troca de tela: a publicação entra na lista do grupo, e
+  // comentar a ela é o gesto que abre a publicação (DS-021).
+  const nova = page.locator('[data-publicacao-na-lista="sim"]').first()
+  await expect(nova).toContainText("Publicação da comunidade")
+  await nova.getByRole("button", { name: "Comentar", exact: true }).click()
   await expect(page).toHaveURL(/\/app\/publicacao\/p-real-/)
   await page.getByLabel("Seu comentário").fill("Meu comentário")
   await page.getByRole("button", { name: "Comentar", exact: true }).last().click()
@@ -50,7 +55,9 @@ test("ocultar permite desfazer; denúncia usa motivo e mostra o envio", async ({
   await page.getByRole("button", { name: "Denunciar publicação", exact: true }).click()
   await page.getByLabel("Spam", { exact: true }).check()
   await page.getByRole("button", { name: "Enviar denúncia" }).click()
-  await expect(page.getByRole("status")).toContainText("Denúncia enviada")
+  // A tela anuncia o envio no seu próprio status; o recado da publicação
+  // recente continua ao vivo, sem ser um segundo `status`.
+  await expect(page.getByRole("status").filter({ hasText: "Denúncia enviada" })).toBeVisible()
 })
 
 test("falhas preservam publicação e comentário e oferecem nova leitura", async ({ page }) => {

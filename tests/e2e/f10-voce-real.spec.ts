@@ -1,7 +1,12 @@
 import { mkdirSync } from "node:fs"
 import { join } from "node:path"
 import { expect, type Page, test } from "@playwright/test"
-import { MEMBRO_SEMEADO, restaurarPerfilSemeado, semearSessaoDeMembro } from "./entrada-real-ajuda"
+import {
+  limparInteressesDaPersona,
+  MEMBRO_SEMEADO,
+  restaurarPerfilSemeado,
+  semearSessaoDeMembro,
+} from "./entrada-real-ajuda"
 
 // F10 — a área "Você" lendo e gravando no banco de verdade (RUN-016 /
 // ADR-20261105). Contra o Next que serve `/app` e o Supabase local com seed.
@@ -32,9 +37,11 @@ async function capturar(page: Page, projeto: string, etapa: string): Promise<voi
 test.describe("F10 — Você real no app", { tag: "@stateful" }, () => {
   // Rede de segurança: se um passo falhar antes do "desfaz" da tela, o perfil da
   // persona volta ao seed mesmo assim, e as próximas larguras e specs não herdam
-  // "Ana E2E".
+  // "Ana E2E". O mesmo vale para os interesses: quem marcou um grupo e falhou
+  // antes do "Limpar" não deixa o retry começar com a caixa já marcada.
   test.afterEach(async () => {
     await restaurarPerfilSemeado(MEMBRO_SEMEADO, { nome: NOME_SEMEADO, bio: null })
+    await limparInteressesDaPersona(MEMBRO_SEMEADO)
   })
 
   test("o perfil vem da conta, a edição sobrevive ao recarregar e as listas são as do banco", async ({
@@ -217,5 +224,131 @@ test.describe("F10 — Você real no app", { tag: "@stateful" }, () => {
       timeout: 30_000,
     })
     await expect(linhas).toHaveCount(antes)
+  })
+
+  test("os interesses vêm do banco: marcar, recarregar, persistir e limpar", async ({
+    page,
+    context,
+  }, testInfo) => {
+    test.setTimeout(180_000)
+    await semearSessaoDeMembro(context, MEMBRO_SEMEADO)
+    await page.goto("/app/voce")
+    await expect(page.getByRole("heading", { level: 1, name: "Você" })).toBeVisible({
+      timeout: 30_000,
+    })
+
+    // O grupo semeado de Manaus em que a persona não entrou. Ela não é membro de
+    // nenhum grupo do seed, então a lista são os públicos da cidade.
+    const caixa = page.getByRole("checkbox", { name: "Marcar Trocas de Livros como interesse" })
+    const abrir = async () => {
+      if (await caixa.isVisible()) return
+      await page.getByRole("button", { name: /^Interesses/ }).click()
+    }
+
+    await abrir()
+    await expect(caixa).toBeVisible({ timeout: 30_000 })
+    await expect(caixa).toHaveAttribute("aria-checked", "false")
+    // Grupo privado do seed sem participação da persona não é oferecido: é o
+    // mesmo recorte de visibilidade que o RPC aplica à sugestão.
+    await expect(
+      page.getByRole("checkbox", { name: /Pesca e Trilha/ }),
+      "grupo privado sem participação não pode aparecer",
+    ).toHaveCount(0)
+
+    // Escrita fora da porta do app (sem o cabeçalho) é recusada como CSRF.
+    const semCabecalho = await page.request.post("/api/app/voce/interesses", {
+      data: { grupos: [] },
+      headers: { origin: new URL(page.url()).origin },
+    })
+    expect(semCabecalho.status(), "escrita sem x-bivaque-app").toBe(403)
+
+    await caixa.click()
+    await expect(caixa).toHaveAttribute("aria-checked", "true")
+    const gravou = page.waitForResponse(
+      (resposta) =>
+        resposta.url().includes("/api/app/voce/interesses") &&
+        resposta.request().method() === "POST",
+      { timeout: 30_000 },
+    )
+    await page.getByRole("button", { name: "Salvar", exact: true }).click()
+    expect((await gravou).ok(), "a gravação dos interesses precisa responder com sucesso").toBe(
+      true,
+    )
+    await expect(caixa).toHaveAttribute("aria-checked", "true")
+    await capturar(page, testInfo.project.name, "voce-interesses")
+
+    // O que fica é o que o banco gravou: recarregar e reabrir a folha. A folha é
+    // fechada antes de recarregar porque o app restaura a sobreposição aberta na
+    // entrada, e o fundo inerte do modal tira o heading "Você" da árvore de
+    // acessibilidade — com ela fechada, o estado restaurado é o da tela.
+    const folha = page.locator('[data-sobreposicao="interesses"]')
+    await folha.getByRole("button", { name: "Fechar", exact: true }).click()
+    await expect(folha).toHaveCount(0)
+    await page.reload()
+    await expect(page.getByRole("heading", { level: 1, name: "Você" })).toBeVisible({
+      timeout: 30_000,
+    })
+    await abrir()
+    await expect(caixa, "o interesse precisa sobreviver ao recarregamento").toHaveAttribute(
+      "aria-checked",
+      "true",
+      { timeout: 30_000 },
+    )
+
+    // Limpar esvazia o conjunto e devolve a persona ao estado do seed.
+    const limpou = page.waitForResponse(
+      (resposta) =>
+        resposta.url().includes("/api/app/voce/interesses") &&
+        resposta.request().method() === "POST",
+      { timeout: 30_000 },
+    )
+    await page.getByRole("button", { name: "Limpar" }).click()
+    expect((await limpou).ok()).toBe(true)
+    await expect(caixa).toHaveAttribute("aria-checked", "false")
+    await expect(page.getByRole("button", { name: "Limpar" })).toHaveCount(0)
+
+    await folha.getByRole("button", { name: "Fechar", exact: true }).click()
+    await expect(folha).toHaveCount(0)
+    await page.reload()
+    await expect(page.getByRole("heading", { level: 1, name: "Você" })).toBeVisible({
+      timeout: 30_000,
+    })
+    await abrir()
+    await expect(caixa, "limpar precisa sobreviver ao recarregamento").toHaveAttribute(
+      "aria-checked",
+      "false",
+      { timeout: 30_000 },
+    )
+  })
+
+  test("sair da conta encerra a sessão e a tela protegida devolve à entrada", async ({
+    page,
+    context,
+  }) => {
+    test.setTimeout(120_000)
+    await semearSessaoDeMembro(context, MEMBRO_SEMEADO)
+    await page.goto("/app/voce")
+    await expect(page.getByRole("heading", { level: 1, name: "Você" })).toBeVisible({
+      timeout: 30_000,
+    })
+
+    await page.getByRole("button", { name: "Sair da conta" }).click()
+    await page.getByRole("button", { name: "Sair", exact: true }).click()
+
+    await expect(page, "sair leva à porta única").toHaveURL(/\/app\/entrar$/, {
+      timeout: 30_000,
+    })
+    await expect(
+      page.getByRole("heading", { level: 1, name: "A comunidade militar da sua cidade." }),
+    ).toBeVisible({ timeout: 30_000 })
+
+    const restantes = (await context.cookies()).filter((cookie) => cookie.name.startsWith("sb-"))
+    expect(restantes, "o cookie da sessão não pode sobreviver à saída").toHaveLength(0)
+
+    // Sem sessão, a tela protegida da web devolve à entrada — nunca à tela antiga.
+    // /community segue na web (LAN-TROCA) e é gateada por sessão. /configuracoes/familia
+    // não serve: tem redirect de troca para /app/voce (next.config.ts:128), que é público.
+    await page.goto("/community")
+    await expect(page).toHaveURL(/\/app\/entrar/, { timeout: 30_000 })
   })
 })

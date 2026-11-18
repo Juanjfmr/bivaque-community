@@ -17,7 +17,12 @@ export default defineConfig({
       : {}),
   },
   webServer: {
-    command: "pnpm --filter web build && pnpm --filter web start --hostname 127.0.0.1 --port 3000",
+    // RUN-149: no CI o build já roda no step dedicado "Build web app"; aqui só
+    // sobe o servidor. Antes, `build && start` rebuildava o Next em CADA chamada
+    // (comuns e stateful), 3 builds no total, e os testes não usavam o build validado.
+    command: process.env.CI
+      ? "pnpm --filter web start --hostname 127.0.0.1 --port 3000"
+      : "pnpm --filter web build && pnpm --filter web start --hostname 127.0.0.1 --port 3000",
     url: "http://127.0.0.1:3000",
     reuseExistingServer: !process.env.CI,
     // The Next production build does not fit the 60s default on a cold

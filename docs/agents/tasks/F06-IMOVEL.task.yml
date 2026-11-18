@@ -1,0 +1,92 @@
+# RUN-164 — F06 Lote A: criar e editar IMOVEL no app (kind property).
+#
+# LANCAMENTO.md:59 exige desapegos E imoveis com criar, revisar e gerenciar
+# anuncio. Hoje o app so cria desapego (_criar.ts fixa kind item) e o PATCH
+# app recusa imovel com 400 (rotas.test.ts:779). Criar/editar imovel e web
+# (imoveis/novo + imoveis/[id]/editar via createPropertyAction/
+# updatePropertyAction) — fase 6 nao pode deixar essas telas de membro servindo.
+# A folha do app (formulario-imovel.tsx) e rascunho em sessionStorage: deixa de
+# ser demo e passa a gravar de verdade. SEM migration — tabelas/RLS prontos
+# (20260911043053); NAO puxar geocode/mapa/CEP novo (LOC-IMPL, card próprio).
+
+task_id: RUN-164
+
+objective: >
+  Criar e editar imovel pelo app de ponta a ponta: POST /api/app/mercado aceita
+  kind property (com property_details e endereco no mesmo nivel que a web grava
+  hoje), PATCH /api/app/mercado/[id] passa a editar property (mantendo as
+  negativas de item intactas), a folha rascunho-imovel vira criacao real,
+  gerenciar abre formulario de imovel, e as telas web imoveis/novo e
+  imoveis/[id]/editar saem com redirect 307 + provas migradas.
+
+authority:
+  - docs/LANCAMENTO.md:59 (linha F06) + criterios 1-6 (:40-48)
+  - Mapa do explorer 16/11 (gaps F06; LOTES A-D)
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    apps/web/app/api/app/mercado/_criar.ts:79 fixa kind item;
+    apps/web/app/api/app/mercado/[id]/_editar.ts:61-70 recusa property com 400
+    (prova rotas.test.ts:779); formulario-imovel.tsx:36-65 salva sessionStorage
+    (rascunhos-imoveis.ts:3 "sem escrita no banco"); web imoveis/novo e
+    imoveis/[id]/editar servem sem redirect (next.config.ts:123 exclui
+    novo|alertas), portas declaradas como divida em link-crawl.spec.ts:196-210.
+
+allowed_paths:
+  - docs/agents/tasks/F06-IMOVEL.task.yml
+  - apps/web/app/api/app/mercado
+  - apps/web/lib/security/api-surface.ts
+  - apps/web/next.config.ts
+  - apps/web/app/(shell)/imoveis
+  - apps/web/lib/listings
+  - apps/app/lib/dados/mercado.ts
+  - apps/app/components/bivaque/formulario-imovel.tsx
+  - apps/app/src/telas/Mercado.tsx
+  - apps/app/src/mercado
+  - apps/app/src/criar
+  - apps/app/lib/rascunhos-imoveis.ts
+  - apps/app/tests
+  - tests/unit/app-api/mercado
+  - tests/unit/listings
+  - tests/e2e/f06-mercado-real.spec.ts
+  - tests/e2e/mercado-redirects.spec.ts
+  - tests/e2e/portas-de-entrada.spec.ts
+  - tests/e2e/link-crawl.spec.ts
+  - tests/unit/infra/lan-troca-redirect.test.ts
+  - scripts/visual/capture.mjs
+  - .visual/f06-imovel
+
+forbidden:
+  - criar migration ou mudar RPCs/tabelas/RLS do banco
+  - geocodificacao, mapa, CEP novo, distancia por endereco (LOC-IMPL e outro card)
+  - tocar alertas (Lote B), filtros server-side (Lote C), salvar/contagem (Lote D)
+  - mexer no fluxo de DESAPEGO alem de estender POST/PATCH a property (regressao proibida; negativas atuais devem continuar)
+  - trocar /imoveis/alertas ou /imoveis/[id] (detalhe ja trocado) — somente novo e [id]/editar
+  - usar skip/fixme novo ou afrouxar assercao
+  - push, merge ou force-push; ler/criar/editar arquivos de ambiente; imprimir credenciais
+  - tocar em .work/main ou em outra worktree
+
+acceptance:
+  - "POST /api/app/mercado: corpo kind property com os campos que createPropertyAction (actions.ts:363+) hoje grava (titulo/descricao/valor/bairro/cidade? + property_details: quartos, banheiros, area, tipo do imovel — espelhar EXATAMENTE as colunas e validacoes que a web grava, sem inventar nem geocode). Validacao compartilhada num modulo novo chamado pela rota (e pela web ate as paginas morrerem, se ainda importar). Erros tipados ADR §5; CSRF/OPTIONS no molde das rotas mercado existentes; SEM service_role. Resposta devolve o id/status (como o POST item faz) e o autorId/donoId se o contrato de leitura ja os expoe (nao quebrar RUN-161)."
+  - "PATCH /api/app/mercado/[id]: aceitar kind property editando as mesmas colunas que updatePropertyAction, com as validacoes equivalentes; continuar recusando o que a web recusa (dono, status, conta suspensa). As negativas existentes de item (403/404/409/situacao) NAO mudam. Guardar-se de editar cross-kind."
+  - "App: folha rascunho-imovel (MenuCriar/Mercado.tsx:231-241, formulario-imovel.tsx) passa a chamar o POST real (estado ocupado/erro/vazio honestos; remover o texto 'nesta demonstracao nada e publicado' e o rascunho sessionStorage do caminho real; gerenciar.tsx abre formulario de imovel com PATCH property quando kind property; manter o 'vendido' escondido para imovel)."
+  - "Troca: next.config.ts regras /imoveis/novo → /app/mercado e /imoveis/:id(editar) → /app/anuncio/:id (molde RUN-156; lookahead para nao engolir novo nem alertas; query preservada). Remover imoveis/novo/ + imoveis/[id]/editar/ + property-form se ficar 100% 6rfao (grep; alertas usa o que? NAO remover nada usado por alertas — se property-form for compartilhado com alert-form, deixar e registrar). createPropertyAction e updatePropertyAction morrem com as telas se sem importador vivo (grep); TROCADAS + prova de ausencia + link-crawl: tirar as portas declaradas :196-210 dos itens trocados, deixar /imoveis/alertas declarado. capture.mjs: rotas trocidas saem das capturas web."
+  - "Testes: unit POST property (positivo grava property_details; negativos: validacao, CSRF 403, sem sessao 401, conta suspensa), PATCH property (dono ok; nao-dono; item-regressoes intactas); E2E real f06-mercado-real (criar imovel pelo app a partir do MenuCriar → abre detalhe → editar → recarrega e persiste; em 375/768/1440 via stateful), redirect specs (307 + negativa lista/alertas). Positivo E negativo em toda permissao. Seed tem imovel (:1806; usar persona dona p/ editar)."
+  - "Passam: app test, app typecheck, gate --fast, tsc -p tests/e2e, pnpm test (raiz), test:scope. TOTAL_DE_ROTAS NAO muda (nenhum arquivo route.ts novo; conferir mesmo assim)."
+
+proof:
+  - npx pnpm@11.18.0 --filter @bivaque/app test
+  - npx pnpm@11.18.0 gate --fast
+  - npx pnpm@11.18.0 test
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/F06-IMOVEL.task.yml
+
+risk: POST/PATCH de escrita com validacao portada da web; troca de 2 telas de membro
+risk_level: R2
+
+reviewer_must_differ_from_executor: true
+retry_budget: 2
+on_budget_exhausted: HUMAN_DECISION
+
+closure:
+  requires_runtime_evidence: true

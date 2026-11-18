@@ -1,243 +1,267 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
+import { NextRequest } from "next/server"
+import { beforeEach, describe, expect, it, vi } from "vitest"
 
 // PORT-005, achado P2 da revisão independente: a leitura dos interesses que
-// ficou no perfil não exigia verificação. O problema é anterior a esta frente,
-// mas o teste que o provava (interest-options-require-verification) saiu junto
-// com a action da entrada. Este é o mesmo contrato, agora sobre a action que
-// sobreviveu: app/(shell)/profile/interests-actions.ts.
+// ficou no perfil não exigia verificação. A tela web saiu (RUN-163) e a porta
+// passou a ser a rota do app; a admissão foi portada junto, porque quem lê e
+// grava é o cliente de serviço e a sessão sozinha não é permissão.
 //
-// A action lê grupos com service_role, então a sessão sozinha não é permissão.
-// Sem admissão, a lista nem é consultada. A cidade vem do vínculo CORRENTE,
-// nunca do vínculo de saída.
-//
-// Segunda correção (desta rodada): admissão é `verified` OU convite familiar
-// aceito. O dependente familiar não tem verificação própria (D16) e era
-// recusado pela guarda que exigia `verified` da própria pessoa. A regra do
-// familiar vem do banco (`has_verified_family_holder`), nunca do cliente.
-// Convenção de mock: o teste removido da entrada e profile-affiliation-actions.
+// A regra é a mesma da web: verificação própria `verified` OU convite familiar
+// aceito. O dependente familiar não tem verificação própria (D16) e era recusado
+// pela guarda que exigia `verified`; a regra do familiar vem do banco
+// (`has_verified_family_holder`), nunca do cliente. A cidade é a do vínculo
+// `current`, não a do vínculo de saída.
 
-vi.mock("next/headers", () => ({
-  cookies: vi.fn(async () => ({ getAll: () => [], setAll: () => {} })),
-}))
+vi.mock("web/lib/app-api/sessao-do-next", () => ({ resolverSessaoDaRequisicao: vi.fn() }))
+vi.mock("web/lib/supabase/server", () => ({ createServerClient: vi.fn() }))
 
-vi.mock("next/cache", () => ({
-  revalidatePath: vi.fn(),
-}))
+import { GET, POST } from "web/app/api/app/voce/interesses/route"
+import { resolverSessaoDaRequisicao } from "web/lib/app-api/sessao-do-next"
+import { createServerClient } from "web/lib/supabase/server"
 
-vi.mock("@supabase/ssr", () => ({
-  createServerClient: vi.fn(() => ({
-    auth: {
-      getUser: async () => ({ data: { user: { id: "10000000-0000-4000-8000-000000000001" } } }),
-    },
-  })),
-}))
+const resolver = vi.mocked(resolverSessaoDaRequisicao)
+const criarCliente = vi.mocked(createServerClient)
 
-const state = vi.hoisted(() => ({
-  calls: [] as string[],
-  familyError: null as { message: string } | null,
-  hasCurrentMembership: true,
-  hasVerifiedFamilyHolder: false,
-  membershipEqs: [] as Array<[string, string]>,
-  status: null as string | null,
-  statusError: null as { message: string } | null,
-  writeArgs: null as Record<string, unknown> | null,
-}))
-
-vi.mock("web/lib/supabase/server", () => ({
-  createServerClient: vi.fn(() => ({
-    from: (table: string) => {
-      state.calls.push(`from:${table}`)
-      const query = {
-        select: () => query,
-        eq: (column: string, value: string) => {
-          if (table === "locality_memberships") state.membershipEqs.push([column, value])
-          return query
-        },
-        limit: () => query,
-        maybeSingle: async () => ({
-          data: state.hasCurrentMembership
-            ? { locality_id: "00000000-0000-4000-8000-000000000001" }
-            : null,
-          error: null,
-        }),
-      }
-      return query
-    },
-    rpc: async (name: string, args: Record<string, unknown>) => {
-      state.calls.push(name)
-      if (name === "read_verification_status") {
-        return {
-          data: state.status === null ? [] : [{ status: state.status }],
-          error: state.statusError,
-        }
-      }
-      if (name === "has_verified_family_holder") {
-        return { data: state.hasVerifiedFamilyHolder, error: state.familyError }
-      }
-      if (name === "list_available_groups_for_interests") {
-        return {
-          data: [{ id: "g-1", name: "Corrida", description: null, visibility: "public" }],
-          error: null,
-        }
-      }
-      if (name === "list_user_group_interests") {
-        return { data: [], error: null }
-      }
-      if (name === "record_user_group_interests") {
-        state.writeArgs = args
-        return { data: null, error: null }
-      }
-      return { data: null, error: null }
-    },
-  })),
-}))
-
-import {
-  clearUserGroupInterestsAction,
-  getUserInterestsDataAction,
-  recordUserGroupInterestsAction,
-} from "web/app/(shell)/profile/interests-actions"
-
-beforeEach(() => {
-  vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "https://example.supabase.co")
-  vi.stubEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY", "anon-key")
-  vi.stubEnv("SUPABASE_URL", "https://example.supabase.co")
-  vi.stubEnv("SUPABASE_SERVICE_ROLE_KEY", "service-role-key")
-})
-
-afterEach(() => {
-  vi.unstubAllEnvs()
-  state.calls = []
-  state.familyError = null
-  state.hasCurrentMembership = true
-  state.hasVerifiedFamilyHolder = false
-  state.membershipEqs = []
-  state.status = null
-  state.statusError = null
-  state.writeArgs = null
-})
+const PESSOA = { id: "10000000-0000-4000-8000-000000000001", email: "pessoa@example.invalid" }
+const CIDADE = "00000000-0000-4000-8000-000000000001"
+const GRUPO = "60000000-0000-4000-8000-000000000001"
+const ORIGEM = "http://localhost:3000"
+const URL_DA_ROTA = `${ORIGEM}/api/app/voce/interesses`
 
 const LIST_RPCS = ["list_available_groups_for_interests", "list_user_group_interests"]
 
-const EXPECTED_GROUPS = {
-  available: [{ description: null, id: "g-1", name: "Corrida", visibility: "public" }],
-  recorded: [],
+const estado = {
+  chamadas: [] as Array<{ nome: string; argumentos: Record<string, unknown> }>,
+  familiar: false,
+  familiarFalha: false,
+  familiarSemResposta: false,
+  status: null as string | null,
+  statusFalha: false,
+  statusSemResposta: false,
 }
+
+const mockVinculo = vi.fn()
+
+function clienteDeServico() {
+  const cadeia = {
+    select: () => cadeia,
+    eq: () => cadeia,
+    order: () => cadeia,
+    limit: () => ({ maybeSingle: mockVinculo }),
+  }
+  return {
+    from: (tabela: string) => {
+      if (tabela !== "locality_memberships") throw new Error(`tabela inesperada: ${tabela}`)
+      return cadeia
+    },
+    rpc: (nome: string, argumentos: Record<string, unknown>) => {
+      estado.chamadas.push({ nome, argumentos })
+      if (nome === "read_verification_status") {
+        if (estado.statusSemResposta) return Promise.resolve({ data: null, error: null })
+        return Promise.resolve({
+          data: estado.statusFalha
+            ? null
+            : estado.status === null
+              ? []
+              : [{ status: estado.status }],
+          error: estado.statusFalha ? { message: "boom" } : null,
+        })
+      }
+      if (nome === "has_verified_family_holder") {
+        if (estado.familiarSemResposta) return Promise.resolve({ data: null, error: null })
+        return Promise.resolve({
+          data: estado.familiarFalha ? null : estado.familiar,
+          error: estado.familiarFalha ? { message: "boom" } : null,
+        })
+      }
+      if (nome === "list_available_groups_for_interests") {
+        return Promise.resolve({
+          data: [{ id: GRUPO, name: "Trocas de Livros", already_member: false }],
+          error: null,
+        })
+      }
+      if (nome === "list_user_group_interests") return Promise.resolve({ data: [], error: null })
+      if (nome === "record_user_group_interests")
+        return Promise.resolve({ data: null, error: null })
+      return Promise.reject(new Error(`rpc inesperada: ${nome}`))
+    },
+  }
+}
+
+function sessaoAutenticada() {
+  return {
+    estado: "autenticada",
+    via: "cookie",
+    usuario: PESSOA,
+    cliente: {},
+    cabecalhos: {},
+  }
+}
+
+function leitura() {
+  return new NextRequest(URL_DA_ROTA, { method: "GET", headers: { origin: ORIGEM } })
+}
+
+function escrita(grupos: string[] = [GRUPO]) {
+  return new NextRequest(URL_DA_ROTA, {
+    method: "POST",
+    headers: {
+      origin: ORIGEM,
+      "x-bivaque-app": "bivaque-spa",
+      "content-type": "application/json",
+    },
+    body: JSON.stringify({ grupos }),
+  })
+}
+
+function nomesDasChamadas(): string[] {
+  return estado.chamadas.map((chamada) => chamada.nome)
+}
+
+function gravacao() {
+  return estado.chamadas.find((chamada) => chamada.nome === "record_user_group_interests")
+}
+
+beforeEach(() => {
+  vi.clearAllMocks()
+  vi.stubEnv("BIVAQUE_APP_ORIGINS", "")
+  estado.chamadas = []
+  estado.familiar = false
+  estado.familiarFalha = false
+  estado.familiarSemResposta = false
+  estado.status = null
+  estado.statusFalha = false
+  estado.statusSemResposta = false
+  mockVinculo.mockResolvedValue({
+    data: { locality_id: CIDADE, localities: { city_name: "Manaus" } },
+    error: null,
+  })
+  criarCliente.mockReturnValue(clienteDeServico() as never)
+  resolver.mockResolvedValue(sessaoAutenticada() as never)
+})
 
 describe("interesses exigem admissão", () => {
   it.each([null, "pending", "temporary_error", "rejected"])(
     "sem verificação e sem familiar (situação %s), a lista nem é consultada",
     async (status) => {
-      state.status = status
-      state.hasVerifiedFamilyHolder = false
+      estado.status = status
 
-      await expect(getUserInterestsDataAction()).rejects.toThrow(/Conclua a verificação/)
-      for (const rpc of LIST_RPCS) expect(state.calls).not.toContain(rpc)
-      expect(state.calls).toContain("has_verified_family_holder")
+      const resposta = await GET(leitura())
+      expect(resposta.status).toBe(403)
+      expect(await resposta.json()).toMatchObject({ erro: "nao-admitido" })
+      for (const rpc of LIST_RPCS) expect(nomesDasChamadas()).not.toContain(rpc)
+      expect(nomesDasChamadas()).toContain("has_verified_family_holder")
     },
   )
 
   it("quem está verificado vê os grupos da cidade, sem consultar o vínculo familiar", async () => {
-    state.status = "verified"
+    estado.status = "verified"
 
-    await expect(getUserInterestsDataAction()).resolves.toEqual(EXPECTED_GROUPS)
-
-    for (const rpc of LIST_RPCS) expect(state.calls).toContain(rpc)
+    const resposta = await GET(leitura())
+    expect(resposta.status).toBe(200)
+    expect(await resposta.json()).toEqual({
+      grupos: [{ id: GRUPO, nome: "Trocas de Livros", jaMembro: false }],
+      interesses: [],
+    })
+    for (const rpc of LIST_RPCS) expect(nomesDasChamadas()).toContain(rpc)
     // A verificação própria é a condição mais estreita que já existia para o
     // titular; o familiar só é consultado para quem não é verificado.
-    expect(state.calls).not.toContain("has_verified_family_holder")
+    expect(nomesDasChamadas()).not.toContain("has_verified_family_holder")
   })
 
   it("o familiar admitido consulta os grupos mesmo sem verificação própria", async () => {
     // O convite familiar é a única porta sem CPF (D16): não há linha em
     // verification_outcomes, e é o vínculo com o titular verificado que admite.
-    state.status = null
-    state.hasVerifiedFamilyHolder = true
+    estado.familiar = true
 
-    await expect(getUserInterestsDataAction()).resolves.toEqual(EXPECTED_GROUPS)
-
-    expect(state.calls).toContain("read_verification_status")
-    expect(state.calls).toContain("has_verified_family_holder")
-    for (const rpc of LIST_RPCS) expect(state.calls).toContain(rpc)
+    const resposta = await GET(leitura())
+    expect(resposta.status).toBe(200)
+    expect(nomesDasChamadas()).toContain("read_verification_status")
+    expect(nomesDasChamadas()).toContain("has_verified_family_holder")
+    for (const rpc of LIST_RPCS) expect(nomesDasChamadas()).toContain(rpc)
   })
 
   it("falha ao ler a verificação não libera a lista", async () => {
-    state.statusError = { message: "boom" }
+    estado.statusFalha = true
 
-    await expect(getUserInterestsDataAction()).rejects.toThrow(/Não foi possível/)
-    expect(state.calls).toEqual(["read_verification_status"])
-    for (const rpc of LIST_RPCS) expect(state.calls).not.toContain(rpc)
+    const resposta = await GET(leitura())
+    expect(resposta.status).toBe(503)
+    expect(await resposta.json()).toEqual({ erro: "admissao-indisponivel" })
+    expect(nomesDasChamadas()).toEqual(["read_verification_status"])
+    for (const rpc of LIST_RPCS) expect(nomesDasChamadas()).not.toContain(rpc)
+  })
+
+  it("RPC de verificação sem valor nem erro é 'não deu para conferir', não recusa nem crash", async () => {
+    // O achado P3 da revisão: data null sem error não pode virar TypeError (500)
+    // nem "não admitido" (403) — quem não consegue conferir não lê nem grava: 503.
+    estado.statusSemResposta = true
+
+    const resposta = await GET(leitura())
+    expect(resposta.status).toBe(503)
+    expect(await resposta.json()).toEqual({ erro: "admissao-indisponivel" })
+    for (const rpc of LIST_RPCS) expect(nomesDasChamadas()).not.toContain(rpc)
+  })
+
+  it("RPC do vínculo familiar sem valor nem erro também falha fechado em 503", async () => {
+    estado.status = "pending"
+    estado.familiarSemResposta = true
+
+    const resposta = await GET(leitura())
+    expect(resposta.status).toBe(503)
+    expect(await resposta.json()).toEqual({ erro: "admissao-indisponivel" })
+    for (const rpc of LIST_RPCS) expect(nomesDasChamadas()).not.toContain(rpc)
   })
 
   it("falha ao ler o vínculo familiar não libera a lista", async () => {
     // Não conseguir conferir o vínculo não é o mesmo que não ter vínculo.
-    state.status = "pending"
-    state.hasVerifiedFamilyHolder = true
-    state.familyError = { message: "boom" }
+    estado.status = "pending"
+    estado.familiar = true
+    estado.familiarFalha = true
 
-    await expect(getUserInterestsDataAction()).rejects.toThrow(/Não foi possível/)
-    for (const rpc of LIST_RPCS) expect(state.calls).not.toContain(rpc)
+    const resposta = await GET(leitura())
+    expect(resposta.status).toBe(503)
+    for (const rpc of LIST_RPCS) expect(nomesDasChamadas()).not.toContain(rpc)
+    expect(gravacao()).toBeUndefined()
   })
 
-  it("a cidade vem do vínculo corrente, não do vínculo de saída", async () => {
-    state.status = "verified"
-    state.hasCurrentMembership = false
+  it("sem admissão, gravar interesses também é recusado", async () => {
+    estado.status = "pending"
 
-    // Quem só tem vínculo de saída não recebe sugestão de grupos.
-    await expect(getUserInterestsDataAction()).resolves.toBeNull()
-    expect(state.membershipEqs).toContainEqual(["kind", "current"])
-    for (const rpc of LIST_RPCS) expect(state.calls).not.toContain(rpc)
-  })
-
-  it("sem admissão, gravar e limpar interesses também é recusado", async () => {
-    state.status = "pending"
-    state.hasVerifiedFamilyHolder = false
-
-    const form = new FormData()
-    form.append("groupIds", "g-1")
-
-    await expect(recordUserGroupInterestsAction(form)).rejects.toThrow(/Conclua a verificação/)
-    await expect(clearUserGroupInterestsAction()).rejects.toThrow(/Conclua a verificação/)
-    expect(state.calls).not.toContain("record_user_group_interests")
-    expect(state.writeArgs).toBeNull()
+    const resposta = await POST(escrita())
+    expect(resposta.status).toBe(403)
+    expect(await resposta.json()).toMatchObject({ erro: "nao-admitido" })
+    expect(nomesDasChamadas()).not.toContain("record_user_group_interests")
+    expect(gravacao()).toBeUndefined()
   })
 
   it("verificado grava os interesses com a cidade do vínculo corrente", async () => {
-    state.status = "verified"
-    const form = new FormData()
-    form.append("groupIds", "g-1")
+    estado.status = "verified"
 
-    await recordUserGroupInterestsAction(form)
-
-    expect(state.writeArgs).toEqual({
-      p_group_ids: ["g-1"],
-      p_locality_id: "00000000-0000-4000-8000-000000000001",
-      p_user_id: "10000000-0000-4000-8000-000000000001",
+    const resposta = await POST(escrita([GRUPO]))
+    expect(resposta.status).toBe(200)
+    expect(gravacao()?.argumentos).toEqual({
+      p_group_ids: [GRUPO],
+      p_locality_id: CIDADE,
+      p_user_id: PESSOA.id,
     })
   })
 
   it("o familiar admitido grava e limpa os interesses", async () => {
-    state.status = null
-    state.hasVerifiedFamilyHolder = true
+    estado.familiar = true
 
-    const form = new FormData()
-    form.append("groupIds", "g-1")
-
-    await recordUserGroupInterestsAction(form)
-
-    expect(state.writeArgs).toEqual({
-      p_group_ids: ["g-1"],
-      p_locality_id: "00000000-0000-4000-8000-000000000001",
-      p_user_id: "10000000-0000-4000-8000-000000000001",
+    await POST(escrita([GRUPO]))
+    expect(gravacao()?.argumentos).toEqual({
+      p_group_ids: [GRUPO],
+      p_locality_id: CIDADE,
+      p_user_id: PESSOA.id,
     })
 
-    state.writeArgs = null
-    await clearUserGroupInterestsAction()
-
-    expect(state.writeArgs).toEqual({
+    estado.chamadas = []
+    await POST(escrita([]))
+    expect(gravacao()?.argumentos).toEqual({
       p_group_ids: [],
-      p_locality_id: "00000000-0000-4000-8000-000000000001",
-      p_user_id: "10000000-0000-4000-8000-000000000001",
+      p_locality_id: CIDADE,
+      p_user_id: PESSOA.id,
     })
   })
 })

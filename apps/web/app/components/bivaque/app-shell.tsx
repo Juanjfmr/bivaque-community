@@ -108,15 +108,12 @@ export function AppShell({ children }: AppShellProperties) {
           <hr className="my-2 border-ui-line" />
 
           {/* Salvos e Notificações são destinos secundários no MESMO landmark:
-              a auditoria exige um único aria-current por <nav> visível. */}
+              a auditoria exige um único aria-current por <nav> visível.
+              RUN-186: Salvos é tela do app — o item leva direto para lá e nunca
+              acende nesta casca, porque o endereço antigo é um 307. */}
+          <SidebarSecondaryItem href="/app/salvos" label="Salvos" Icon={Bookmark} />
           <SidebarSecondaryItem
-            href="/salvos"
-            label="Salvos"
-            Icon={Bookmark}
-            active={activeNav.kind === "secondary" && activeNav.href === "/salvos"}
-          />
-          <SidebarSecondaryItem
-            href="/notifications"
+            href="/app/avisos"
             label="Notificações"
             Icon={Bell}
             badge={unreadCount}
@@ -158,7 +155,7 @@ export function AppShell({ children }: AppShellProperties) {
               </p>
             </div>
           </div>
-          <a href="/configuracoes" className={`${NAV_LINK} ${NAV_IDLE}`}>
+          <a href="/app/voce" className={`${NAV_LINK} ${NAV_IDLE}`}>
             <Settings size={20} className="shrink-0" aria-hidden="true" />
             <span className={RAIL_LABEL}>Configurações</span>
           </a>
@@ -199,9 +196,10 @@ export function AppShell({ children }: AppShellProperties) {
               </span>
             </a>
 
-            {/* Caixa de conversas (MSG-SEM-ENTRADA, decisão de 22/09/2026). */}
+            {/* Caixa de conversas (MSG-SEM-ENTRADA, decisão de 22/09/2026).
+                RUN-166: a caixa mora no app; o link vai direto, sem 307. */}
             <a
-              href="/messages"
+              href="/app/conversas"
               aria-label={conversationsLabel(unreadConversations)}
               className={ICON_BUTTON}
             >
@@ -216,7 +214,7 @@ export function AppShell({ children }: AppShellProperties) {
               ) : null}
             </a>
 
-            <a href="/notifications" aria-label="Notificações" className={ICON_BUTTON}>
+            <a href="/app/avisos" aria-label="Notificações" className={ICON_BUTTON}>
               <Bell size={20} aria-hidden="true" />
               {unreadCount > 0 ? (
                 <span
@@ -228,7 +226,7 @@ export function AppShell({ children }: AppShellProperties) {
 
             {/* No celular o avatar repetia a aba Perfil da barra inferior. */}
             <a
-              href="/profile"
+              href="/app/voce"
               aria-label="Perfil"
               className="hidden h-11 w-11 shrink-0 items-center justify-center rounded-full transition-colors hover:bg-ui-subtle md:flex"
             >

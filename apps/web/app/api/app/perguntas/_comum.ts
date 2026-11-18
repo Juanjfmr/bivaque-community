@@ -26,3 +26,40 @@ export async function nomesDeAutores(
   if (error) throw error
   return new Map((data ?? []).map((perfil) => [perfil.user_id, perfil.display_name]))
 }
+
+/**
+ * A pergunta como a tela a recebe. UMA função, para todos os caminhos que
+ * devolvem uma pergunta — lista da cidade, detalhe e criação em grupo — porque
+ * a origem dupla (RUN-178) acrescentou `grupo` ao formato e um caminho que
+ * esquecesse o campo quebraria o contrato só nele.
+ */
+export type LinhaDePergunta = Readonly<{
+  id: string
+  title: string
+  category: Database["public"]["Enums"]["recommendation_category"]
+  created_at: string
+  is_resolved: boolean
+  reply_count: number
+  author_id: string
+  group_id: string | null
+  group_name: string | null
+}>
+
+export function apresentarPergunta(
+  linha: LinhaDePergunta,
+  nomes: ReadonlyMap<string, string>,
+  userId: string,
+) {
+  return {
+    id: linha.id,
+    titulo: linha.title,
+    categoria: linha.category,
+    criadaEm: linha.created_at,
+    resolvida: linha.is_resolved === true,
+    respostas: linha.reply_count,
+    propria: linha.author_id !== "" && linha.author_id === userId,
+    autor: nomes.get(linha.author_id) ?? "",
+    autorId: linha.author_id,
+    grupo: linha.group_id === null ? null : { id: linha.group_id, nome: linha.group_name ?? "" },
+  }
+}

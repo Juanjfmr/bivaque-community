@@ -38,6 +38,16 @@ export async function grupoDaSessao(client: SupabaseClient<Database>, id: string
   return data
 }
 
+export async function cidadeDoGrupo(client: SupabaseClient<Database>, id: string) {
+  const { data, error } = await client
+    .from("localities")
+    .select("city_name")
+    .eq("id", id)
+    .maybeSingle()
+  if (error) throw error
+  return data?.city_name ?? ""
+}
+
 export async function participacao(client: SupabaseClient<Database>, id: string, userId: string) {
   const { data, error } = await client
     .from("group_memberships")
@@ -150,6 +160,7 @@ export async function apresentarPublicacoes(
     texto: linha.content,
     criadaEm: linha.created_at,
     autor: nomes.get(linha.user_id) ?? "",
+    autorId: linha.user_id,
     propria: linha.user_id === userId,
     comentarios: linha.comments[0]?.count ?? 0,
     uteis: linha.post_reactions[0]?.count ?? 0,

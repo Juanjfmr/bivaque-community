@@ -4,12 +4,19 @@ type Corpo = Record<string, unknown>
 export type ConversaDaCaixa = Readonly<{
   id: string
   nome: string
+  /** O outro participante, para abrir o perfil pelo cabeçalho. */
+  outroId: string
   tipo: string
   contextoId: string
   ultima: string
+  porLer: boolean
 }>
 export type Mensagem = Readonly<{ id: string; conteudo: string; minha: boolean; criadaEm: string }>
-export type Caixa = Readonly<{ conversas: readonly ConversaDaCaixa[]; proximo: string | null }>
+export type Caixa = Readonly<{
+  conversas: readonly ConversaDaCaixa[]
+  proximo: string | null
+  porLer: number
+}>
 export type DetalheDaConversa = Readonly<{
   conversa: ConversaDaCaixa
   mensagens: readonly Mensagem[]
@@ -36,9 +43,11 @@ function conversaDe(valor: unknown): ConversaDaCaixa {
   return {
     id: texto(item["id"]),
     nome: texto(item["nome"]),
+    outroId: texto(item["outroId"]),
     tipo: texto(item["tipo"]),
     contextoId: texto(item["contextoId"]),
     ultima: typeof item["ultima"] === "string" ? item["ultima"] : "",
+    porLer: item["porLer"] === true,
   }
 }
 function mensagemDe(valor: unknown): Mensagem {
@@ -57,7 +66,12 @@ export async function lerConversas(
   const busca = opcoes.depois === undefined ? "" : `?depois=${encodeURIComponent(opcoes.depois)}`
   const corpo = await ler(`/api/app/conversas${busca}`, opcoes)
   if (!Array.isArray(corpo["conversas"])) return invalido()
-  return { conversas: corpo["conversas"].map(conversaDe), proximo: cursor(corpo["proximo"]) }
+  if (typeof corpo["porLer"] !== "number") return invalido()
+  return {
+    conversas: corpo["conversas"].map(conversaDe),
+    proximo: cursor(corpo["proximo"]),
+    porLer: corpo["porLer"],
+  }
 }
 export async function buscarConversa(
   id: string,
@@ -95,4 +109,13 @@ export async function enviarMensagem(
     { ...(opcoes.signal === undefined ? {} : { signal: opcoes.signal }) },
   )
   return mensagemDe(corpo["mensagem"])
+}
+
+export async function marcarConversaLida(id: string, signal?: AbortSignal): Promise<void> {
+  await enviar(
+    "POST",
+    `/api/app/conversas/${encodeURIComponent(id)}/lida`,
+    undefined,
+    signal === undefined ? {} : { signal },
+  )
 }

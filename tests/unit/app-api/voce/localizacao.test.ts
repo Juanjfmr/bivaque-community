@@ -7,6 +7,7 @@ const mocks = vi.hoisted(() => ({
   lerCepDoCache: vi.fn(),
   gravarCepNoCache: vi.fn(),
   geocodificarCep: vi.fn(),
+  consumirConsulta: vi.fn(),
 }))
 
 vi.mock("web/lib/app-api/sessao-do-next", () => ({
@@ -30,6 +31,10 @@ vi.mock("web/lib/geo/geocodificador", () => ({
   geocodificarCep: mocks.geocodificarCep,
 }))
 
+// SEC-013/F2: o limitador só existe para a ida ao provedor; aqui ele é mockado
+// para o teste poder recusar sem gastar 20 consultas.
+vi.mock("web/lib/geo/limite", () => ({ consumirConsulta: mocks.consumirConsulta }))
+
 import { PUT } from "web/app/api/app/voce/localizacao/route"
 
 const USER = "20000000-0000-4000-8000-000000000001"
@@ -42,13 +47,22 @@ const CABECALHOS: Record<string, string> = {
   "content-type": "application/json",
 }
 
-type Localizacao = { cep: string | null; definida: boolean }
+type Localizacao = { cep: string | null; definida: boolean; comCoordenada?: boolean }
 
 function clienteDaSessao(localizacao: Localizacao) {
   return {
     rpc: vi.fn(async (funcao: string) => {
       if (funcao !== "get_my_profile_location") return { data: null, error: null }
-      return { data: [{ cep: localizacao.cep, definida: localizacao.definida }], error: null }
+      return {
+        data: [
+          {
+            cep: localizacao.cep,
+            definida: localizacao.definida,
+            com_coordenada: localizacao.comCoordenada ?? localizacao.definida,
+          },
+        ],
+        error: null,
+      }
     }),
   }
 }
@@ -95,6 +109,7 @@ beforeEach(() => {
   mocks.lerCepDoCache.mockResolvedValue(null)
   mocks.gravarCepNoCache.mockResolvedValue(undefined)
   mocks.geocodificarCep.mockResolvedValue({ estado: "nao-encontrado" })
+  mocks.consumirConsulta.mockReturnValue({ liberado: true })
 })
 
 describe("PUT /api/app/voce/localizacao", () => {
@@ -192,6 +207,25 @@ describe("PUT /api/app/voce/localizacao", () => {
     expect(mocks.geocodificarCep).not.toHaveBeenCalled()
   })
 
+  it("responde 429 com retry-after quando a janela de consultas da pessoa acabou", async () => {
+    autenticar()
+    mocks.clienteDeServicoOuNulo.mockReturnValue(clienteDeServico().client)
+    mocks.consumirConsulta.mockReturnValue({ liberado: false, esperarMs: 120_000 })
+
+    const resposta = await PUT(pedido({ cep: "69000000" }))
+
+    expect(resposta.status).toBe(429)
+    expect(resposta.headers.get("retry-after")).toBe("120")
+    expect(await resposta.json()).toEqual({
+      erro: "limite-de-consultas",
+      mensagem: "Muitas consultas de CEP em pouco tempo. Tente de novo em 2 min.",
+    })
+    expect(mocks.consumirConsulta).toHaveBeenCalledWith(USER)
+    // A recusa acontece ANTES do provedor: nenhuma chamada paga.
+    expect(mocks.geocodificarCep).not.toHaveBeenCalled()
+    expect(mocks.gravarCepNoCache).not.toHaveBeenCalled()
+  })
+
   it("usa o cache e não chama o geocodificador quando o CEP já foi resolvido", async () => {
     const localizacaoFinal: Localizacao = { cep: "69000000", definida: true }
     autenticar({ localizacao: localizacaoFinal })
@@ -208,6 +242,8 @@ describe("PUT /api/app/voce/localizacao", () => {
 
     expect(resposta.status).toBe(200)
     expect(mocks.geocodificarCep).not.toHaveBeenCalled()
+    // Cache hit não consome cota: só a ida ao provedor conta (SEC-013/F2).
+    expect(mocks.consumirConsulta).not.toHaveBeenCalled()
     expect(servico.chamadas).toEqual([
       {
         funcao: "set_member_location",
@@ -221,6 +257,119 @@ describe("PUT /api/app/voce/localizacao", () => {
     ])
     expect(await resposta.json()).toEqual({
       localizacao: { cep: "69000-000", definida: true },
+      distanciaDisponivel: true,
+    })
+  })
+
+  it("linha vencida consulta o provedor, regrava e grava a coordenada nova (SEC-016)", async () => {
+    autenticar({ localizacao: { cep: "69000000", definida: true } })
+    const servico = clienteDeServico()
+    mocks.clienteDeServicoOuNulo.mockReturnValue(servico.client)
+    mocks.lerCepDoCache.mockResolvedValue({
+      cep: "69000000",
+      latitude: -3.119,
+      longitude: -60.0217,
+      fonte: "brasilapi",
+      vencida: true,
+    })
+    const coordenada = { latitude: -3.12, longitude: -60.03, fonte: "google" }
+    mocks.geocodificarCep.mockResolvedValue({
+      estado: "encontrado",
+      coordenada,
+      endereco: { cidade: "Manaus", bairro: "Compensa" },
+    })
+
+    const resposta = await PUT(pedido({ cep: "69000000" }))
+
+    expect(resposta.status).toBe(200)
+    expect(mocks.geocodificarCep).toHaveBeenCalledWith("69000000")
+    // O bairro da fonte é gravado junto (SEC-016): o upsert não pode zerar o
+    // `neighborhood` que anúncio e pedido leem.
+    expect(mocks.gravarCepNoCache).toHaveBeenCalledWith(
+      servico.client,
+      "69000000",
+      coordenada,
+      "Compensa",
+    )
+    expect(servico.chamadas[0]?.args).toMatchObject({
+      p_latitude: -3.12,
+      p_longitude: -60.03,
+    })
+  })
+
+  it("linha vencida sem bairro na fonte preserva o bairro que a linha já tinha (SEC-016)", async () => {
+    autenticar({ localizacao: { cep: "69000000", definida: true } })
+    const servico = clienteDeServico()
+    mocks.clienteDeServicoOuNulo.mockReturnValue(servico.client)
+    mocks.lerCepDoCache.mockResolvedValue({
+      cep: "69000000",
+      latitude: -3.119,
+      longitude: -60.0217,
+      fonte: "brasilapi",
+      bairro: "Flores",
+      vencida: true,
+    })
+    const coordenada = { latitude: -3.121, longitude: -60.022, fonte: "brasilapi" }
+    mocks.geocodificarCep.mockResolvedValue({
+      estado: "encontrado",
+      coordenada,
+      endereco: { cidade: "Manaus", bairro: null },
+    })
+
+    const resposta = await PUT(pedido({ cep: "69000000" }))
+
+    expect(resposta.status).toBe(200)
+    expect(mocks.gravarCepNoCache).toHaveBeenCalledWith(
+      servico.client,
+      "69000000",
+      coordenada,
+      "Flores",
+    )
+  })
+
+  it("linha vencida com provedor fora usa a coordenada antiga em vez de falhar", async () => {
+    autenticar({ localizacao: { cep: "69000000", definida: true } })
+    const servico = clienteDeServico()
+    mocks.clienteDeServicoOuNulo.mockReturnValue(servico.client)
+    mocks.lerCepDoCache.mockResolvedValue({
+      cep: "69000000",
+      latitude: -3.119,
+      longitude: -60.0217,
+      fonte: "brasilapi",
+      vencida: true,
+    })
+    mocks.geocodificarCep.mockResolvedValue({ estado: "indisponivel" })
+
+    const resposta = await PUT(pedido({ cep: "69000000" }))
+
+    expect(resposta.status).toBe(200)
+    expect(mocks.gravarCepNoCache).not.toHaveBeenCalled()
+    expect(servico.chamadas[0]?.args).toMatchObject({
+      p_latitude: -3.119,
+      p_longitude: -60.0217,
+    })
+  })
+
+  it("linha vencida com o teto esgotado usa a coordenada antiga, sem 429", async () => {
+    autenticar({ localizacao: { cep: "69000000", definida: true } })
+    const servico = clienteDeServico()
+    mocks.clienteDeServicoOuNulo.mockReturnValue(servico.client)
+    mocks.lerCepDoCache.mockResolvedValue({
+      cep: "69000000",
+      latitude: -3.119,
+      longitude: -60.0217,
+      fonte: "brasilapi",
+      vencida: true,
+    })
+    mocks.consumirConsulta.mockReturnValue({ liberado: false, esperarMs: 120_000 })
+
+    const resposta = await PUT(pedido({ cep: "69000000" }))
+
+    expect(resposta.status).toBe(200)
+    expect(mocks.geocodificarCep).not.toHaveBeenCalled()
+    expect(servico.chamadas[0]?.args).toMatchObject({
+      p_latitude: -3.119,
+      p_longitude: -60.0217,
     })
   })
 
@@ -229,12 +378,22 @@ describe("PUT /api/app/voce/localizacao", () => {
     const servico = clienteDeServico()
     mocks.clienteDeServicoOuNulo.mockReturnValue(servico.client)
     const coordenada = { latitude: -3.119, longitude: -60.0217, fonte: "google" }
-    mocks.geocodificarCep.mockResolvedValue({ estado: "encontrado", coordenada })
+    mocks.geocodificarCep.mockResolvedValue({
+      estado: "encontrado",
+      coordenada,
+      endereco: { cidade: "Manaus", bairro: "Flores" },
+    })
 
     const resposta = await PUT(pedido({ cep: "69000000" }))
 
     expect(resposta.status).toBe(200)
-    expect(mocks.gravarCepNoCache).toHaveBeenCalledWith(servico.client, "69000000", coordenada)
+    expect(mocks.consumirConsulta).toHaveBeenCalledWith(USER)
+    expect(mocks.gravarCepNoCache).toHaveBeenCalledWith(
+      servico.client,
+      "69000000",
+      coordenada,
+      "Flores",
+    )
     expect(servico.chamadas[0]?.args).toMatchObject({
       p_user_id: USER,
       p_cep: "69000000",
@@ -242,7 +401,38 @@ describe("PUT /api/app/voce/localizacao", () => {
       p_longitude: -60.0217,
     })
     const corpo = await resposta.json()
-    expect(corpo).toEqual({ localizacao: { cep: "69000-000", definida: true } })
+    expect(corpo).toEqual({
+      localizacao: { cep: "69000-000", definida: true },
+      distanciaDisponivel: true,
+    })
+    expect(JSON.stringify(corpo)).not.toContain("latitude")
+    expect(JSON.stringify(corpo)).not.toContain("longitude")
+  })
+
+  it("guarda o CEP conhecido sem coordenada e responde 200 sem posição", async () => {
+    autenticar({
+      localizacao: { cep: "69900000", definida: true, comCoordenada: false },
+    })
+    const servico = clienteDeServico()
+    mocks.clienteDeServicoOuNulo.mockReturnValue(servico.client)
+    mocks.geocodificarCep.mockResolvedValue({ estado: "sem-coordenada" })
+
+    const resposta = await PUT(pedido({ cep: "69900-000" }))
+
+    expect(resposta.status).toBe(200)
+    // Sem posição: as duas coordenadas vão nulas, nunca zero nem inventadas.
+    expect(servico.chamadas).toEqual([
+      {
+        funcao: "set_member_location",
+        args: { p_user_id: USER, p_cep: "69900000", p_latitude: null, p_longitude: null },
+      },
+    ])
+    expect(mocks.gravarCepNoCache, "CEP sem posição não entra no cache").not.toHaveBeenCalled()
+    const corpo = await resposta.json()
+    expect(corpo).toEqual({
+      localizacao: { cep: "69900-000", definida: true },
+      distanciaDisponivel: false,
+    })
     expect(JSON.stringify(corpo)).not.toContain("latitude")
     expect(JSON.stringify(corpo)).not.toContain("longitude")
   })
@@ -282,6 +472,7 @@ describe("PUT /api/app/voce/localizacao", () => {
     ])
     expect(await resposta.json()).toEqual({
       localizacao: { cep: null, definida: false },
+      distanciaDisponivel: false,
     })
   })
 

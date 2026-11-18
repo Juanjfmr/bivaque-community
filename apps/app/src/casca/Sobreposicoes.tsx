@@ -17,10 +17,14 @@ import { PainelDeCidade } from "@/src/casca/PainelDeCidade"
  * | `menu-criar` | `MenuCriar`, que traz o próprio diálogo |
  * | `menu-de-linha` | `MenuDaLinha`, na linha que o abriu |
  * | `confirmacao` | `Confirmacao` |
+ * | `grupo-novo` | `Diretorio`, com a folha de criar grupo |
+ * | `interesses` | `Voce`, com a folha de interesses |
+ * | `conversa-denuncia` | `Conversa`, com o diálogo de denúncia |
+ * | `grupo-pedir` | `Participacao`, com o pedido de entrada |
  *
- * Por isso a casca não desenha nada para `menu-criar`, `menu-de-linha` e
- * `confirmacao`: desenhar duas vezes o mesmo id abriria dois overlays para uma
- * entrada só. O conteúdo do diálogo e da folha genéricos ainda é provisório —
+ * Por isso a casca não desenha nada para `menu-criar`, `menu-de-linha`,
+ * `confirmacao`, `grupo-novo` e `interesses`: desenhar duas vezes o mesmo id
+ * abriria dois overlays para uma entrada só. O conteúdo do diálogo e da folha genéricos ainda é provisório —
  * cada tela das ondas 2 a 8 traz o seu.
  */
 export function Sobreposicoes() {
@@ -33,14 +37,26 @@ export function Sobreposicoes() {
   const aoFechar = () => navegacao.fecharSobreposicao()
 
   if (aberta === "menu-criar") return <MenuCriar aoFechar={aoFechar} />
-  if (aberta === "menu-de-linha" || aberta === "confirmacao" || aberta === "paleta") return null
+  if (
+    aberta === "menu-de-linha" ||
+    aberta === "confirmacao" ||
+    aberta === "paleta" ||
+    // A folha de criar grupo é da tela do Diretório, que a desenha com o próprio id.
+    aberta === "grupo-novo" ||
+    // A folha de interesses é da tela Você.
+    aberta === "interesses" ||
+    // A denúncia de mensagem é da Conversa; o pedido de entrada, da Participação.
+    aberta === "conversa-denuncia" ||
+    aberta === "grupo-pedir"
+  )
+    return null
 
   if (aberta === "cidade") {
     return (
       <Sobreposicao
         id="cidade"
         titulo="Trocar de cidade"
-        descricao="Mude a cidade que você está vendo. Sua cidade continua a mesma."
+        descricao="Veja o Guia, os encontros e os anúncios de outra cidade. Sua cidade continua a mesma."
         aoFechar={aoFechar}
       >
         <PainelDeCidade aoFechar={aoFechar} />

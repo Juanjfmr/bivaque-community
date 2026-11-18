@@ -35,6 +35,30 @@ describe("modelo do rastreador de links", () => {
     expect(unreachedRoutes(patterns, new Set(), [])).not.toContain("/pedidos/[id]")
     expect(unreachedRoutes(patterns, new Set(), [])).toContain("/pedidos/novo")
   })
+
+  // LAN-TROCA: o endereço antigo migrado para o app nem sempre tem page.tsx (o /guide, por
+  // exemplo, é só um redirect do next.config). Link para ele continua válido — sem o padrão,
+  // todo <a href> para a rota antiga virava "rota inexistente" no rastreador.
+  it("endereço antigo sem page.tsx é destino válido de link e não exige porta", () => {
+    const patterns = buildPatterns(PAGES, HANDLERS, [], ["/guide"])
+    expect(matchRoute("/guide", patterns)).toMatchObject({ route: "/guide", kind: "redirect" })
+    expect(unreachedRoutes(patterns, new Set(), [])).not.toContain("/guide")
+    // e quem tem página continua sendo página, não redirect
+    expect(matchRoute("/pedidos", patterns)?.kind).toBe("page")
+  })
+
+  // A distinção do RUN-176, no modelo: entrar por semente visita, mas não torna a rota
+  // alcançável por link.
+  it("semente visita sem satisfazer o invariante de porta", () => {
+    const patterns = buildPatterns(["(shell)/pedidos/page.tsx"], [])
+    const porta = { route: "/pedidos", porta: "semente da persona dona" }
+    const frontier = new Frontier(patterns, 1)
+    frontier.enter({ target: "/pedidos", from: "(porta declarada)", persona: "dono de vila" })
+    expect(frontier.next()?.target).toBe("/pedidos")
+    expect(unreachedRoutes(patterns, new Set(), [])).toEqual(["/pedidos"])
+    expect(unreachedRoutes(patterns, new Set(), [porta])).toEqual([])
+    expect(staleAllowances(patterns, new Set(["/pedidos"]), [porta])).toEqual(["/pedidos"])
+  })
   it("tira os grupos de rota da URL", () => {
     expect(routeFromFile("(shell)/pedidos/[id]/page.tsx")).toBe("/pedidos/[id]")
     expect(routeFromFile("page.tsx")).toBe("/")

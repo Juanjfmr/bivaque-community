@@ -1,0 +1,68 @@
+# RUN-139 — F02 — Início e Busca com estado de primeira entrada, cartões e busca visível
+#
+# Fecha CORRETA-F02-ESTADO-VAZIO, CORRETA-F02-COLUNA-DE-LEITURA, CORRETA-F02-BUSCA-VISIVEL (parecer cego de 12/11). Lote paralelo: outros
+# lotes de tela rodam ao mesmo tempo em outros worktrees, por isso o quadro e o
+# apoio.ts comum ficam fora e o E2E passa pela fila de provas.
+
+task_id: RUN-139
+
+objective: "O Início mostra cada publicação como cartão numa coluna de leitura com rail de contexto no desktop e barra inferior até 1024; Início e Busca têm estado de primeira entrada honesto; o campo 'Buscar em [cidade]' fica visível nos três tamanhos e leva o termo digitado a /app/busca?q=, que já semeia a consulta (PR #195)."
+
+authority:
+  - "docs/LANCAMENTO.md (critério 2 — no nível da régua; critério 3 — provada)"
+  - "docs/agents/regua-nextdoor/PADRAO-DE-TELA.md e IDENTIDADE-DAS-PECAS.md"
+  - "apps/app/AGENTS.md (prova de tela: 375/768/1440, claro e escuro, teclado)"
+  - "parecer cego de 12/11 registrado no board pelo PR #201"
+  - "tools/backend-kanban/public/board.json (CORRETA-F02-ESTADO-VAZIO, CORRETA-F02-COLUNA-DE-LEITURA, CORRETA-F02-BUSCA-VISIVEL)"
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: "Parecer cego de 12/11: feed do Início em lista de texto com 500 px no meio de 1.200 px; rail de 100 px quebra 'Comunidade' no 768; Busca sem estado vazio; o campo do topo não navega para /app/busca. A Busca já lê ?q= desde o #195."
+
+allowed_paths:
+  - "docs/agents/tasks/RUN-139.task.yml"
+  - "apps/app/src/telas/Inicio.tsx"
+  - "apps/app/src/telas/Busca.tsx"
+  - "apps/app/src/inicio/**"
+  - "apps/app/src/busca/**"
+  - "apps/app/src/casca/**"
+  - "apps/app/src/pecas/**"
+  - "apps/app/src/styles.css"
+  - "apps/app/tests/**"
+  - ".visual/run-139/"
+
+forbidden:
+  - "alterar apps/web, supabase, migrations ou rotas de API"
+  - "editar tools/backend-kanban/public/board.json ou BOARD.md (o coordenador atualiza no merge)"
+  - "editar apps/app/tests/e2e/apoio.ts (crie um arquivo de apoio próprio do lote em apps/app/tests/e2e/)"
+  - "mudar a biblioteca de peças de forma que quebre outra tela; peça nova só aditiva"
+  - "inventar dado: estado vazio mostra o que existe ou o caminho que resolve, nunca conteúdo fictício"
+  - "usar skip/fixme novo, afrouxar asserção existente ou apagar teste"
+  - "rodar E2E fora da fila: sempre `node scripts/agents/prova-fila.mjs -- <comando>`"
+
+acceptance:
+  - "Cada publicação do Início é um cartão da biblioteca de peças (autor, bairro, texto, ações); no 1440 há coluna de leitura de largura máxima e rail de contexto."
+  - "Até 1024 px a navegação é a barra inferior; no 768 nenhum rótulo da navegação quebra."
+  - "Início sem conteúdo e Busca sem termo mostram estado de primeira entrada honesto: frase humana, o que existe na cidade e o caminho que resolve (atalhos do Criar, sugestões de bairro/cidade); buscas recentes só se já houver registro real delas."
+  - "O campo 'Buscar em [cidade]' aparece em 375/768/1440; enviar o termo navega para /app/busca?q=<termo> e dispara a consulta; termo vazio não navega."
+  - "Os specs existentes de Início, Busca (busca-termo-url), casca e acessibilidade continuam verdes; o E2E novo prova do toque no campo ao resultado nos três tamanhos e nos dois temas."
+  - "Capturas 375/768/1440 claro e escuro de Início e Busca (com e sem conteúdo) em .visual/run-139/."
+
+proof:
+  - "npx pnpm@11.18.0 lint"
+  - "npx pnpm@11.18.0 --filter @bivaque/app typecheck"
+  - "npx pnpm@11.18.0 --filter @bivaque/app test"
+  - "npx pnpm@11.18.0 --filter @bivaque/app build"
+  - "node scripts/agents/prova-fila.mjs -- npx pnpm@11.18.0 --filter @bivaque/app test:e2e (specs do lote e vizinhos)"
+  - "node scripts/agents/task-contract.mjs docs/agents/tasks/RUN-139.task.yml"
+
+risk: interface do app, sem dado novo
+risk_level: R2
+
+reviewer_must_differ_from_executor: true
+
+retry_budget: 1
+on_budget_exhausted: BLOCKED
+
+closure:
+  requires_runtime_evidence: true

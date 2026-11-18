@@ -39,7 +39,7 @@ insert into convite_resend select id from novo;
 
 select lives_ok(
   $$
-    select public.resend_family_invitation(
+    select private.resend_family_invitation(
             (select id from convite_resend),
       '10000000-0000-4000-8000-000000000001',
       extensions.digest(decode(repeat('22', 32), 'hex'), 'sha256'),
@@ -70,7 +70,7 @@ select ok(
 
 select throws_ok(
   $$
-    select public.resend_family_invitation(
+    select private.resend_family_invitation(
             (select id from convite_resend),
       '10000000-0000-4000-8000-000000000001',
       extensions.digest(decode(repeat('33', 32), 'hex'), 'sha256'),
@@ -84,7 +84,7 @@ select throws_ok(
 
 select throws_ok(
   $$
-    select public.resend_family_invitation(
+    select private.resend_family_invitation(
             (select id from convite_resend),
       '10000000-0000-4000-8000-000000000002',
       extensions.digest(decode(repeat('44', 32), 'hex'), 'sha256'),
@@ -102,7 +102,7 @@ update private.family_invitations
 
 select throws_ok(
   $$
-    select public.resend_family_invitation(
+    select private.resend_family_invitation(
             (select id from convite_resend),
       '10000000-0000-4000-8000-000000000001',
       extensions.digest(decode(repeat('55', 32), 'hex'), 'sha256'),
@@ -114,22 +114,22 @@ select throws_ok(
   'convite revogado não é reenviável'
 );
 
+-- SEC-011 (A2-1): o reenvio público deriva o titular de auth.uid() e é do
+-- membro autenticado; o papel de serviço não o executa porque não é identidade
+-- de ninguém (supabase/AGENTS.md).
 select ok(
-  not has_function_privilege(
+  has_function_privilege(
     'authenticated',
-    'public.resend_family_invitation(uuid, uuid, bytea, bytea)',
+    'public.resend_family_invitation(uuid, bytea, bytea, bytea)',
     'EXECUTE'
   ),
-  'o membro não chama o reenvio direto: quem enfileira é a ação de servidor'
+  'o membro reenvia o próprio convite pela posse derivada da sessão'
 );
 
 select ok(
-  has_function_privilege(
-    'service_role',
-    'public.resend_family_invitation(uuid, uuid, bytea, bytea)',
-    'EXECUTE'
-  ),
-  'service_role executa o reenvio'
+  to_regprocedure('public.resend_family_invitation(uuid, uuid, bytea, bytea)') is null
+  and to_regprocedure('public.resend_family_invitation(uuid, uuid, bytea, bytea, bytea)') is null,
+  'o reenvio não aceita id de titular em nenhuma assinatura pública'
 );
 
 select * from finish();

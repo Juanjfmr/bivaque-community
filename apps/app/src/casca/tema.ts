@@ -1,28 +1,20 @@
 import { useEffect } from "react"
 
 /**
- * O tema do sistema, do lado do JS: o `data-tema` do documento e a cor da barra
- * do navegador (inventário §5.9: `theme()`).
+ * O tema do lado do JS: o `data-tema` do documento e a cor da barra do
+ * navegador (inventário §5.9: `theme()`).
  *
- * As **cores** não passam por aqui: elas são tokens de CSS que trocam sozinhos
- * com `prefers-color-scheme`. O que não dá para fazer só com CSS é o
- * `<meta name="theme-color">`, e é isso que este gancho acompanha — inclusive
- * quando a pessoa troca o tema com o app aberto.
+ * O lançamento é só claro (dono, 14/11): o app força `data-tema="claro"` e a
+ * barra clara, sem seguir o `prefers-color-scheme`. O escuro continua no CSS,
+ * dormente atrás de `:root[data-tema="escuro"]`, para voltar sem reescrever
+ * tokens.
  */
 export const COR_DA_BARRA = { claro: "#F3F5F6", escuro: "#101417" } as const
 
 export function useCorDaBarraDoSistema(): void {
   useEffect(() => {
-    if (typeof window.matchMedia !== "function") return
-    const midia = window.matchMedia("(prefers-color-scheme: dark)")
-    const aplicar = () => {
-      const escuro = midia.matches
-      document.documentElement.dataset["tema"] = escuro ? "escuro" : "claro"
-      const meta = document.querySelector('meta[name="theme-color"]')
-      if (meta) meta.setAttribute("content", escuro ? COR_DA_BARRA.escuro : COR_DA_BARRA.claro)
-    }
-    aplicar()
-    midia.addEventListener("change", aplicar)
-    return () => midia.removeEventListener("change", aplicar)
+    document.documentElement.dataset["tema"] = "claro"
+    const meta = document.querySelector('meta[name="theme-color"]')
+    if (meta) meta.setAttribute("content", COR_DA_BARRA.claro)
   }, [])
 }

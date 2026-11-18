@@ -44,6 +44,7 @@ type Options = {
   count?: number | null
   errorTable?: string
   rpcError?: string
+  mensagemError?: { code: string; message: string }
   updateError?: { code: string; message: string } | null
   insertError?: { code: string; message: string } | null
   upsertError?: { code: string; message: string } | null
@@ -58,8 +59,16 @@ function mockClient(options: Options = {}) {
   const orCalls: string[] = []
   const neqCalls: Array<{ column: string; value: unknown }> = []
   const donosDoRpc: unknown[] = []
-  const rpc = function (this: unknown) {
+  const chamadasRpc: Array<{ nome: string; args: unknown }> = []
+  const rpc = function (this: unknown, nome: string, args: unknown) {
     donosDoRpc.push(this)
+    chamadasRpc.push({ nome, args })
+    if (nome === "send_conversation_message") {
+      return Promise.resolve({
+        data: options.mensagemError ? null : { id: "message-1" },
+        error: options.mensagemError ?? null,
+      })
+    }
     return Promise.resolve({
       data: options.rpcError === undefined ? "conversation-1" : null,
       error: options.rpcError === undefined ? null : { message: options.rpcError },
@@ -176,6 +185,7 @@ function mockClient(options: Options = {}) {
     orCalls,
     neqCalls,
     donosDoRpc,
+    chamadasRpc,
   }
 }
 
@@ -215,6 +225,10 @@ describe("rotas de eventos do app", () => {
     ["POST evento", () => criar(req("POST", BASE, "{}"))],
     ["GET detalhe", () => detalhe(req("GET"), context)],
     ["PATCH evento", () => editar(req("PATCH", `${BASE}/${ID}`, "{}"), context)],
+    [
+      "PATCH cancelar",
+      () => editar(req("PATCH", `${BASE}/${ID}`, '{"status":"cancelled"}'), context),
+    ],
     ["PUT presença", () => presenca(req("PUT", `${BASE}/${ID}/presenca`, "{}"), context)],
     ["DELETE presença", () => cancelar(req("DELETE", `${BASE}/${ID}/presenca`), context)],
     ["POST pergunta", () => perguntar(req("POST", `${BASE}/${ID}/perguntas`, "{}"), context)],
@@ -233,6 +247,17 @@ describe("rotas de eventos do app", () => {
         () =>
           editar(
             req("PATCH", `${BASE}/${ID}`, "{}", { ...headers, origin: "https://fora.example" }),
+            context,
+          ),
+      ],
+      [
+        "PATCH cancelar",
+        () =>
+          editar(
+            req("PATCH", `${BASE}/${ID}`, '{"status":"cancelled"}', {
+              ...headers,
+              origin: "https://fora.example",
+            }),
             context,
           ),
       ],
@@ -282,6 +307,14 @@ describe("rotas de eventos do app", () => {
       expect((await criar(req("POST", BASE, "{}", semCabecalho))).status).toBe(403)
       expect(
         (await editar(req("PATCH", `${BASE}/${ID}`, "{}", semCabecalho), context)).status,
+      ).toBe(403)
+      expect(
+        (
+          await editar(
+            req("PATCH", `${BASE}/${ID}`, '{"status":"cancelled"}', semCabecalho),
+            context,
+          )
+        ).status,
       ).toBe(403)
       expect(
         (await presenca(req("PUT", `${BASE}/${ID}/presenca`, "{}", semCabecalho), context)).status,
@@ -617,6 +650,81 @@ describe("rotas de eventos do app", () => {
     })
   })
 
+  describe("cancelar encontro", () => {
+    const cancelarCorpo = JSON.stringify({ status: "cancelled" })
+
+    it("o organizador cancela e o update leva só a situação", async () => {
+      const mock = mockClient()
+      authenticate(mock)
+      const resposta = await editar(req("PATCH", `${BASE}/${ID}`, cancelarCorpo), context)
+      expect(resposta.status).toBe(200)
+      expect(await json(resposta)).toEqual({ evento: { id: ID } })
+      // Título, descrição, data, capa e alcance ficam de fora: o ramo do
+      // cancelamento carrega a situação e mais nada.
+      expect(mock.updates).toEqual([{ status: "cancelled" }])
+      expect(mock.eqCalls).toContainEqual({ table: "events", column: "organizer_id", value: USER })
+    })
+
+    it("quem não organiza é 403 e nada é escrito", async () => {
+      const mock = mockClient({ event: { ...event, organizer_id: "outro" } })
+      authenticate(mock)
+      const resposta = await editar(req("PATCH", `${BASE}/${ID}`, cancelarCorpo), context)
+      expect(resposta.status).toBe(403)
+      expect(await json(resposta)).toEqual({ erro: "nao-organiza" })
+      expect(mock.updates).toHaveLength(0)
+    })
+
+    it("já cancelado é o mesmo estado: 200 sem reescrever", async () => {
+      const mock = mockClient({ event: { ...event, status: "cancelled" } })
+      authenticate(mock)
+      const resposta = await editar(req("PATCH", `${BASE}/${ID}`, cancelarCorpo), context)
+      expect(resposta.status).toBe(200)
+      expect(await json(resposta)).toEqual({ evento: { id: ID } })
+      // Sem escrita não há mudança de situação: o aviso em cascata não repete.
+      expect(mock.updates).toHaveLength(0)
+    })
+
+    it.each([
+      ["concluído", { status: "completed" }],
+      ["futuro", { status: "upcoming" }],
+      ["nulo", { status: null }],
+      ["maiúsculo", { status: "CANCELLED" }],
+    ])("status %s é 400 antes de qualquer escrita", async (_label, corpo) => {
+      const mock = mockClient()
+      authenticate(mock)
+      const resposta = await editar(req("PATCH", `${BASE}/${ID}`, JSON.stringify(corpo)), context)
+      expect(resposta.status).toBe(400)
+      // Recusado antes de tocar no banco: nem leitura, nem update.
+      expect(mock.from).not.toHaveBeenCalled()
+      expect(mock.updates).toHaveLength(0)
+    })
+
+    it("encontro inexistente é 404", async () => {
+      const mock = mockClient({ event: null })
+      authenticate(mock)
+      expect((await editar(req("PATCH", `${BASE}/${ID}`, cancelarCorpo), context)).status).toBe(404)
+    })
+
+    it("recusa do banco no cancelamento é 403 traduzido", async () => {
+      const mock = mockClient({ updateError: { code: "42501", message: "denied" } })
+      authenticate(mock)
+      const resposta = await editar(req("PATCH", `${BASE}/${ID}`, cancelarCorpo), context)
+      expect(resposta.status).toBe(403)
+      expect(await json(resposta)).toEqual({
+        erro: "recusado",
+        mensagem: "Só quem organiza pode cancelar este encontro.",
+      })
+    })
+
+    it("falha de banco no cancelamento é 503, sem eco", async () => {
+      const mock = mockClient({ updateError: { code: "XX000", message: "boom" } })
+      authenticate(mock)
+      const resposta = await editar(req("PATCH", `${BASE}/${ID}`, cancelarCorpo), context)
+      expect(resposta.status).toBe(503)
+      expect(await json(resposta)).toEqual({ erro: "escrita-indisponivel" })
+    })
+  })
+
   describe("pergunta ao organizador", () => {
     const foraDoProprio = { ...event, organizer_id: "outro-organizador" }
 
@@ -634,9 +742,9 @@ describe("rotas de eventos do app", () => {
       })
       // Regressão de 05/11: chamar a função solta perdia o `this` e virava 503.
       expect(mock.donosDoRpc[0]).toBe(mock.client)
-      expect(mock.inserts).toContainEqual({
-        table: "dm_messages",
-        value: { conversation_id: "conversation-1", sender_id: USER, content: "Olá" },
+      expect(mock.chamadasRpc).toContainEqual({
+        nome: "send_conversation_message",
+        args: { p_conversation_id: "conversation-1", p_content: "Ol\u00e1" },
       })
     })
 
@@ -649,6 +757,7 @@ describe("rotas de eventos do app", () => {
       )
       expect(resposta.status).toBe(403)
       expect(JSON.stringify(mock.inserts)).not.toContain("dm_messages")
+      expect(mock.chamadasRpc.map((c) => c.nome)).not.toContain("send_conversation_message")
     })
 
     it("de outra cidade a pergunta é recusada antes do banco", async () => {
@@ -691,6 +800,24 @@ describe("rotas de eventos do app", () => {
       })
     })
 
+    it.each([
+      [
+        { code: "42501", message: "blocked" },
+        403,
+        { erro: "recusado", mensagem: "N\u00e3o \u00e9 poss\u00edvel enviar a esta pessoa." },
+      ],
+      [{ code: "22023", message: "message required" }, 400, { erro: "corpo-invalido" }],
+    ])("traduz recusa da RPC de envio", async (mensagemError, status, corpo) => {
+      const mock = mockClient({ event: foraDoProprio, mensagemError })
+      authenticate(mock)
+      const resposta = await perguntar(
+        req("POST", `${BASE}/${ID}/perguntas`, JSON.stringify({ texto: "Oi" })),
+        context,
+      )
+      expect(resposta.status).toBe(status)
+      expect(await json(resposta)).toEqual(corpo)
+    })
+
     it("encontro inexistente é 404", async () => {
       const mock = mockClient({ event: null })
       authenticate(mock)
@@ -705,7 +832,10 @@ describe("rotas de eventos do app", () => {
     })
 
     it("falha de banco na mensagem é 503", async () => {
-      const mock = mockClient({ event: foraDoProprio, errorTable: "dm_messages" })
+      const mock = mockClient({
+        event: foraDoProprio,
+        mensagemError: { code: "XX000", message: "boom" },
+      })
       authenticate(mock)
       const resposta = await perguntar(
         req("POST", `${BASE}/${ID}/perguntas`, JSON.stringify({ texto: "Oi" })),

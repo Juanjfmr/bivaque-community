@@ -1,4 +1,4 @@
-﻿import { mkdirSync } from "node:fs"
+import { mkdirSync } from "node:fs"
 import { join } from "node:path"
 import AxeBuilder from "@axe-core/playwright"
 import type { Locator, Page } from "@playwright/test"
@@ -22,6 +22,7 @@ import {
   simularNegocios,
   simularPedido,
   simularProgresso,
+  simularVerbeteDoGuia,
   test as testDaProva,
 } from "./apoio"
 import { simularConversas } from "./conversas-ajuda"
@@ -31,8 +32,8 @@ import { aplicarStubMercado } from "./stub-mercado"
 /**
  * Acessibilidade das superfícies reais e da casca (§5.9).
  *
- * A matriz de axe roda nas superfícies reais, em 375, 768 e 1440, nos dois
- * temas, pelas tags WCAG A/AA e 2.1 AA, e falha em impacto sério ou crítico —
+ * A matriz de axe roda nas superfícies reais, em 375, 768 e 1440, pelas tags
+ * WCAG A/AA e 2.1 AA, e falha em impacto sério ou crítico —
  * contraste AA entra por aí, sem limiar afrouxado. Além das cinco telas do
  * lançamento, ela cobre a busca (vazia e com termo), o menu Criar, o formulário
  * de encontro, a ficha do negócio e o pedido. Teclado, foco, movimento reduzido
@@ -45,7 +46,7 @@ import { aplicarStubMercado } from "./stub-mercado"
  */
 
 const LARGURAS = [375, 768, 1440] as const
-const TEMAS = ["light", "dark"] as const
+const TEMAS = ["light"] as const
 const TAGS_DO_AXE = ["wcag2a", "wcag2aa", "wcag21aa"] as const
 
 type Superficie = Readonly<{
@@ -352,9 +353,7 @@ async function medirContrasteDaTela(page: Page, rotuloDoBotao: string): Promise<
 
 test.describe("axe nas telas reais", () => {
   for (const superficie of SUPERFICIES) {
-    test(`${superficie.nome}: sem violação séria em 375/768/1440, claro e escuro`, async ({
-      page,
-    }, info) => {
+    test(`${superficie.nome}: sem violação séria em 375/768/1440`, async ({ page }, info) => {
       // A matriz fixa as três larguras de dentro de um projeto só; rodar nos seis
       // projetos repetiria as mesmas análises seis vezes.
       test.skip(info.project.name !== "desktop-1440", "a matriz fixa as três larguras")
@@ -494,7 +493,7 @@ test.describe("teclado nas superfícies novas", () => {
     await expect(page.locator('[data-chip="anuncios"]')).toHaveAttribute("data-estado", "on")
   })
 
-  test("no negócio o Tab chega ao orçamento, o Enter abre a folha e o Esc volta", async ({
+  test("no negócio o Tab chega ao orçamento, o Enter abre a folha endereçável e o Esc devolve ao Mercado", async ({
     page,
   }) => {
     await simularProgresso(page)
@@ -502,17 +501,24 @@ test.describe("teclado nas superfícies novas", () => {
     await page.goto(`/app/negocio/${NEGOCIO_DA_PROVA.id}`)
     await expect(page.locator('[data-tela="negocio"]')).toBeVisible()
 
-    const pedir = page.getByRole("button", { name: "Pedir orçamento" })
+    // RUN-177: o orçamento é a MESMA folha, agora com endereço próprio; o CTA da
+    // ficha é um link, então o Tab e o Enter continuam chegando nela.
+    const pedir = page.getByRole("link", { name: "Pedir orçamento", exact: true })
     await alcancarComTab(page, pedir)
     await page.keyboard.press("Enter")
 
+    await expect(page).toHaveURL(new RegExp(`/app/pedidos/novo\\?destino=${NEGOCIO_DA_PROVA.id}$`))
     const folha = page.locator('[data-sobreposicao="contato-interesse"]')
     await expect(folha).toBeVisible()
-    await expect(page.getByRole("heading", { name: "Pedir orçamento" })).toBeVisible()
+    await expect(
+      page.getByRole("dialog").getByRole("heading", { name: "Pedir orçamento" }),
+    ).toBeVisible()
 
     await page.keyboard.press("Escape")
     await expect(folha).toHaveCount(0)
-    await expect(pedir).toBeFocused()
+    // O link carrega a página (load novo): sem a entrada do app, fechar usa o pai
+    // declarado da rota — o Mercado da cidade, que é de onde o pedido sai.
+    await expect(page).toHaveURL(/\/app\/negocios$/)
   })
 
   test("no pedido o Tab chega à ação primária e o Enter leva ao negócio", async ({ page }) => {
@@ -551,10 +557,21 @@ test.describe("teclado nas superfícies novas", () => {
     await expect(folha).toBeVisible()
     await expect(page.getByRole("heading", { name: "Novo encontro" })).toBeVisible()
 
-    // Enter sem preencher prova o caminho do erro sem sair da folha.
-    await alcancarComTab(page, folha.getByRole("button", { name: "Criar", exact: true }))
-    await page.keyboard.press("Enter")
-    await expect(folha.getByRole("alert")).toBeVisible()
+    // Sem os obrigatórios, a ação primária está desligada: não há envio a fazer,
+    // e um controle desligado nem entra na ordem de foco.
+    const enviar = folha.getByRole("button", { name: "Revisar encontro", exact: true })
+    await expect(enviar).toBeDisabled()
+
+    // O erro nasce no campo: um título de uma letra, ao sair do campo, mostra a
+    // frase logo abaixo e o campo aponta para ela por aria-describedby.
+    const titulo = folha.getByLabel("Título")
+    await alcancarComTab(page, titulo)
+    await page.keyboard.type("C")
+    await page.keyboard.press("Tab")
+    await expect(folha.locator("#encontro-titulo-erro")).toContainText("pelo menos 2 caracteres")
+    await expect(titulo).toHaveAttribute("aria-describedby", /encontro-titulo-erro/)
+    await expect(titulo).toHaveAttribute("aria-invalid", "true")
+    await expect(enviar).toBeDisabled()
 
     await page.keyboard.press("Escape")
     await expect(folha).toHaveCount(0)
@@ -568,18 +585,27 @@ test.describe("teclado nas superfícies novas", () => {
 })
 
 test.describe("movimento reduzido nas telas reais", () => {
-  test("com prefers-reduced-motion a folha do guia não anima", async ({ page }) => {
+  test("com prefers-reduced-motion o verbete do guia entra sem animação", async ({ page }) => {
     await page.emulateMedia({ reducedMotion: "reduce" })
     await simularProgresso(page)
     await simularGuia(page)
+    await simularVerbeteDoGuia(page)
     await page.goto("/app/guia")
     await expect(page.locator('[data-tela="guia"]')).toBeVisible()
 
+    // O verbete é tela própria desde o F08: a folha local saiu, e a linha leva
+    // pela rota. O nome da referência é o `h1` da tela.
     await page.locator('[data-linha="lista"]').first().click()
-    const folha = page.locator('[data-sobreposicao="folha"]')
-    await expect(folha).toBeVisible()
+    await expect(page).toHaveURL(/\/app\/guia\/guia-escola-rio-negro$/)
+    await expect(
+      page.getByRole("heading", { level: 1, name: "Escola Municipal Rio Negro" }),
+    ).toBeVisible()
 
-    const animacao = await folha.evaluate((elemento) => {
+    // A troca de página é a entrada que resta na rota: com movimento reduzido
+    // ela não chega a ser montada, e nada anima.
+    const pagina = page.locator('[data-animacao="pagina"]')
+    await expect(pagina).toHaveAttribute("data-entrando", "nao")
+    const animacao = await pagina.evaluate((elemento) => {
       const estilo = getComputedStyle(elemento)
       return { nome: estilo.animationName, duracao: estilo.animationDuration }
     })
@@ -631,7 +657,7 @@ test.describe("movimento reduzido nas telas reais", () => {
 })
 
 test.describe("contraste nas telas reais", () => {
-  test("texto e tom contornado passam AA nos dois temas", async ({ page }) => {
+  test("texto e tom contornado passam AA", async ({ page }) => {
     await simularProgresso(page)
     await simularGuia(page)
 
@@ -672,9 +698,9 @@ test.describe("contraste nas telas reais", () => {
 
       await page.goto(`/app/pedido/${PEDIDO_DA_PROVA.id}`)
       await expect(page.locator("h1[data-titulo-da-tela]")).toBeVisible()
-      await expect(page.getByRole("button", { name: "Ver meus pedidos" })).toBeVisible()
+      await expect(page.getByRole("button", { name: "Ver pedidos", exact: true })).toBeVisible()
       await aguardarAnimacoes(page)
-      const pedido = await medirContrasteDaTela(page, "Ver meus pedidos")
+      const pedido = await medirContrasteDaTela(page, "Ver pedidos")
       expect(pedido.texto, `título do pedido no tema ${tema}`).toBeGreaterThanOrEqual(pedido.limiar)
       expect(pedido.contorno, `contorno do pedido no tema ${tema}`).toBeGreaterThanOrEqual(4.5)
       expect(pedido.usaTinta, `contorno do pedido usa a tinta no tema ${tema}`).toBe(true)
@@ -781,7 +807,7 @@ test.describe("sem rolagem horizontal e sem erro de console", () => {
 })
 
 test.describe("capturas das superfícies novas", () => {
-  test("375, 768 e 1440 nos dois temas", async ({ page }, info) => {
+  test("375, 768 e 1440", async ({ page }, info) => {
     test.skip(info.project.name !== "desktop-1440", "a matriz fixa as três larguras")
     test.setTimeout(300_000)
     const diretorio = join(process.cwd(), "..", "..", ".visual", "run-136")

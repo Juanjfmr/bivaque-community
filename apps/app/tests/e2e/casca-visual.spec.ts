@@ -8,7 +8,7 @@ test.beforeEach(async ({ page }) => {
 
 test("a busca tem uma entrada que filtra e limpa os resultados", async ({ page }) => {
   await page.goto("/app/busca")
-  const campo = page.getByRole("searchbox", { name: "Buscar no Bivaque", exact: true })
+  const campo = page.getByRole("searchbox", { name: "Buscar em Manaus", exact: true })
   await expect(campo).toHaveCount(1)
   await campo.fill("berço")
   await expect(page.getByText("Berço com colchão", { exact: true })).toBeVisible()
@@ -17,8 +17,8 @@ test("a busca tem uma entrada que filtra e limpa os resultados", async ({ page }
   await page.getByRole("button", { name: "Limpar busca", exact: true }).click()
   await expect(campo).toHaveValue("")
   await expect(campo).toBeFocused()
-  await expect(page.getByRole("heading", { name: "Sugestões", exact: true })).toBeVisible()
-  await page.getByRole("button", { name: "berço", exact: true }).click()
+  await expect(page.getByRole("heading", { name: "Explorar em Manaus", exact: true })).toBeVisible()
+  await campo.fill("berço")
   await expect(campo).toHaveValue("berço")
   await expect(page.getByText("Berço com colchão", { exact: true })).toBeVisible()
 })
@@ -40,11 +40,21 @@ test("cidade mantém a folha móvel e fica compacta e centralizada no desktop", 
   await page.getByRole("button", { name: "Cancelar", exact: true }).click()
   await expect(painel).toHaveCount(0)
   await expect(cidade).toBeFocused()
+  // CIDADE-169: o painel agora CONSULTA (UF → município do catálogo), e a
+  // navegação dele é provada em cidade-consulta-painel.spec.ts. Aqui só se mede
+  // que a segunda abertura traz o catálogo sem desmontar a folha.
+  await page.route(/\/api\/localities$/, (rota) => rota.fulfill({ json: { ufs: ["AM", "RJ"] } }))
+  await page.route(/\/api\/localities\/[A-Z]{2}$/, (rota) =>
+    rota.fulfill({
+      json: { municipalities: [{ id: "cidade-1", cityName: "Manaus", ibgeCode: "1302603" }] },
+    }),
+  )
   await cidade.click()
-  await page.getByLabel("Cidade", { exact: true }).fill("Recife")
-  await page.getByRole("button", { name: "Ver esta cidade", exact: true }).click()
-  await expect(cidade).toContainText("Recife")
-  await expect(page.getByText("Você está conhecendo Recife.", { exact: false })).toBeVisible()
+  await expect(painel).toBeVisible()
+  await expect(page.locator('[data-selecao="cidade-uf"]')).toBeVisible()
+  await expect(page.getByRole("button", { name: "Minha cidade (Manaus)" })).toBeVisible()
+  await page.getByRole("button", { name: "Cancelar", exact: true }).click()
+  await expect(painel).toHaveCount(0)
 })
 
 test("o topo preserva ações e mostra Encontro sem cortar em 375", async ({ page }) => {

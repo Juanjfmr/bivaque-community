@@ -82,7 +82,13 @@ function Salvar({
       isActive={salvo}
       onClick={aoSalvar}
       className="!top-2 !right-2 !min-h-11 !min-w-11 !justify-center !rounded-full !bg-(--surface-lowest)/90 !text-(--on-surface) shadow-sm backdrop-blur-sm"
-      icon={<Icone nome={salvo ? "bookmark" : "bookmark_border"} className="size-5" />}
+      icon={
+        <Icone
+          nome={salvo ? "bookmark" : "bookmark_border"}
+          preenchido={salvo}
+          className="size-5"
+        />
+      }
     />
   )
 }

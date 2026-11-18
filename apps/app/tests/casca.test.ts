@@ -56,14 +56,17 @@ describe("barra de baixo e Criar (§5.3)", () => {
   it("no celular a barra de baixo só existe nas rotas-raiz", () => {
     expect(navegacaoVisivel("inicio", 375)).toBe(true)
     expect(navegacaoVisivel("salvos", 375)).toBe(false)
-    // Acima de 720 px a navegação nunca some: vira a coluna da esquerda.
-    expect(navegacaoVisivel("salvos", 768)).toBe(true)
+    // A barra inferior só some em rotas internas abaixo do rail de 1024 px.
+    expect(navegacaoVisivel("salvos", 768)).toBe(false)
+    expect(navegacaoVisivel("salvos", 1023)).toBe(false)
+    expect(navegacaoVisivel("salvos", 1024)).toBe(true)
     expect(navegacaoVisivel("salvos", 1440)).toBe(true)
   })
 
   it("o Criar acompanha a barra de baixo", () => {
     expect(criaVisivel("inicio", 375)).toBe(true)
     expect(criaVisivel("pergunta", 375)).toBe(false)
+    expect(criaVisivel("pergunta", 768)).toBe(false)
     expect(criaVisivel("pergunta", 1024)).toBe(true)
   })
 })

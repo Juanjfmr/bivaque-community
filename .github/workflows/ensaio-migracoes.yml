@@ -1,0 +1,127 @@
+name: Ensaio de migrações
+
+# Ensaio da publicação (docs/agents/ENSAIO-DE-PUBLICACAO.md): reproduz o banco
+# de produção no ponto da última publicação e aplica as migrações pendentes na
+# ordem em que o `supabase db push --include-all` aplicaria. Não toca produção:
+# tudo roda no Supabase local do runner.
+#
+# Prova: as pendentes aplicam sem erro, o pgTAP e o lint passam no resultado, e o
+# esquema obtido pela ordem real é igual ao de um banco criado do zero.
+
+on:
+  workflow_dispatch:
+    inputs:
+      producao_ref:
+        description: Commit publicado em produção (última execução de Deploy migrations)
+        required: true
+        default: 3194fcf12d7f0c87626ddce9caf7a9ef1db9a63b
+  push:
+    branches: [docs/ensaio-publicacao]
+
+permissions:
+  contents: read
+
+env:
+  PRODUCAO_REF: ${{ inputs.producao_ref || '3194fcf12d7f0c87626ddce9caf7a9ef1db9a63b' }}
+
+jobs:
+  ensaio:
+    name: Migrações na ordem de produção
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          run_install: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # Mesmo remédio do Pull Request CI contra o limite do ECR público.
+      - name: Pre-pull Supabase images
+        run: |
+          pull() {
+            local ecr="public.ecr.aws/supabase/$1" hub="$2"
+            for delay in 0 10 30 60; do
+              sleep "$delay"
+              docker pull -q "$ecr" && return 0
+            done
+            docker pull -q "$hub" && docker tag "$hub" "$ecr" || echo "::warning::$1 nao baixou"
+          }
+          pull postgres:17.6.1.136 supabase/postgres:17.6.1.136
+          pull gotrue:v2.190.0 supabase/gotrue:v2.190.0
+          pull postgrest:v14.13 postgrest/postgrest:v14.13
+          pull storage-api:v1.60.20 supabase/storage-api:v1.60.20
+          pull postgres-meta:v0.96.6 supabase/postgres-meta:v0.96.6
+          pull studio:2026.06.15-sha-a412298 supabase/studio:2026.06.15-sha-a412298
+          pull kong:2.8.1 kong:2.8.1
+          pull imgproxy:v3.8.0 darthsim/imgproxy:v3.8.0
+          pull mailpit:v1.22.3 axllent/mailpit:v1.22.3
+          pull postgres-meta:v0.96.1 supabase/postgres-meta:v0.96.1
+          pull pg_prove:3.36 supabase/pg_prove:3.36
+
+      - name: Lista as migrações pendentes
+        run: |
+          set -euo pipefail
+          git diff --name-only --diff-filter=A "$PRODUCAO_REF" HEAD -- supabase/migrations | sort > /tmp/pendentes.txt
+          ultima=$(git ls-tree --name-only "$PRODUCAO_REF" supabase/migrations/ | sort | tail -1)
+          echo "ultima aplicada em producao: $ultima"
+          echo "pendentes: $(wc -l < /tmp/pendentes.txt)"
+          echo "fora de ordem (data anterior a ultima aplicada):"
+          awk -v u="$ultima" '$0 < u' /tmp/pendentes.txt
+
+      - name: Banco no estado de produção
+        run: |
+          set -euo pipefail
+          git checkout "$PRODUCAO_REF" -- supabase/migrations supabase/seed.sql
+          xargs -r rm -f < /tmp/pendentes.txt
+          echo "migracoes no estado de producao: $(ls supabase/migrations | wc -l)"
+          pnpm exec supabase start
+          # O pgTAP mede contra um banco sem o seed de desenvolvimento, como no
+          # Pull Request CI; produção também não tem as personas do seed.
+          pnpm exec supabase db reset --local --no-seed
+
+      - name: Aplica as pendentes como o db push --include-all
+        run: |
+          set -euo pipefail
+          git checkout HEAD -- supabase/migrations supabase/seed.sql
+          echo "migracoes na main: $(ls supabase/migrations | wc -l)"
+          pnpm exec supabase migration up --local --include-all
+
+      - name: Esquema pela ordem de produção
+        run: pnpm exec supabase db dump --local --schema public,private -f /tmp/esquema-producao.sql
+
+      - name: pgTAP e lint sobre o resultado
+        run: |
+          set -euo pipefail
+          pnpm test:db
+          pnpm db:lint
+
+      - name: Esquema de um banco criado do zero
+        run: |
+          set -euo pipefail
+          pnpm exec supabase db reset --local --no-seed
+          pnpm exec supabase db dump --local --schema public,private -f /tmp/esquema-zero.sql
+
+      - name: Compara os dois esquemas
+        run: |
+          if diff -u /tmp/esquema-zero.sql /tmp/esquema-producao.sql > /tmp/esquema.diff; then
+            echo "esquemas iguais: a ordem de producao chega ao mesmo banco"
+          else
+            echo "::error::os esquemas diferem"
+            head -200 /tmp/esquema.diff
+            exit 1
+          fi

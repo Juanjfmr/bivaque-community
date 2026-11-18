@@ -2,8 +2,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { setCommunityImageAction } from "web/app/(owner)/communities/actions"
 import { uploadVerificationDocumentAction } from "web/app/(preauth)/onboarding/document-actions"
 import { addPortfolioPhotoAction } from "web/app/(provider)/prestador/actions"
-import { uploadServiceRequestPhotoAction } from "web/app/(shell)/pedidos/novo/actions"
-import { uploadAvatarAction } from "web/app/(shell)/profile/avatar-actions"
 import { uploadPostPhotoAction } from "web/app/components/bivaque/post-photo-action"
 import { uploadPropertyPhotoAction } from "web/lib/listings/actions"
 import { sanitizeImage } from "web/lib/storage/sanitize-image"
@@ -93,11 +91,16 @@ const formats = ["jpeg", "png", "webp"] as const
 const paths = [
   { name: "moradia criar", field: "photo", bucket: "listing-photos", maxMB: 10 },
   { name: "moradia editar", field: "photo", bucket: "listing-photos", maxMB: 10 },
-  { name: "avatar", field: "avatar", bucket: "avatars", maxMB: 5 },
+  // RUN-172: a porta de upload de avatar morreu com a edição do perfil na web
+  // (ADR-20261116 — o app é iniciais por régua). O `sanitize-image` continua
+  // provado nas outras oito portas vivas deste mesmo arquivo.
+  // RUN-177 (F07): a porta de foto do PEDIDO morreu com a tela web; o app ainda
+  // não aceita anexo no pedido (ver RELATORIO, C1). O `sanitize-image` do
+  // portfólio do negócio também é provado pela porta nova em
+  // tests/unit/app-api/negocio/rotas.test.ts.
   { name: "comunidade faixa", field: "image", bucket: "community-images", maxMB: 10 },
   { name: "comunidade miniatura", field: "image", bucket: "community-images", maxMB: 10 },
   { name: "portfolio", field: "file", bucket: "provider-photos", maxMB: 5 },
-  { name: "pedido", field: "photo", bucket: "service-request-photos", maxMB: 10 },
   { name: "identidade", field: "document", bucket: "verification-documents", maxMB: 10 },
   { name: "evento", field: "photo", bucket: "event-photos", maxMB: 5 },
 ] as const
@@ -126,15 +129,11 @@ async function send(path: UploadPath, file: File) {
     case "moradia criar":
     case "moradia editar":
       return uploadPropertyPhotoAction(form)
-    case "avatar":
-      return uploadAvatarAction(form)
     case "comunidade faixa":
     case "comunidade miniatura":
       return setCommunityImageAction(form)
     case "portfolio":
       return addPortfolioPhotoAction(form)
-    case "pedido":
-      return uploadServiceRequestPhotoAction(form)
     case "identidade":
       return uploadVerificationDocumentAction(form)
     case "evento":
@@ -240,6 +239,9 @@ trailer
 %%EOF
 `
   const file = new File([pdf], "identity.pdf", { type: "application/pdf" })
-  expect(await send(paths[7], file)).toEqual({ ok: true })
+  // Por nome, não por índice: a tabela ganha e perde portas (o avatar saiu no
+  // RUN-172) e um `paths[7]` silencioso mandaria o PDF para a porta errada.
+  const identidade = paths[paths.findIndex((path) => path.name === "identidade")]
+  expect(await send(identidade, file)).toEqual({ ok: true })
   expect(Buffer.from(mocks.upload.mock.calls[0]?.[1])).toEqual(Buffer.from(pdf))
 })

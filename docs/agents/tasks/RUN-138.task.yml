@@ -1,0 +1,93 @@
+# RUN-138 — CEP conhecido sem coordenada é guardado sem posição
+#
+# Fecha LOC-CEP-SEM-COORDENADA conforme o ADR-20261112-cep-sem-coordenada (R3,
+# aceito por delegação). Hoje um CEP que a BrasilAPI conhece mas devolve sem
+# coordenada vira 422 «CEP não encontrado». Passa a ser guardado sem posição,
+# sem coordenada inventada, e a tela avisa que a distância ainda não pode ser
+# calculada.
+
+task_id: RUN-138
+
+objective: >
+  Quem informa um CEP verdadeiro que as fontes conhecem mas não sabem localizar
+  consegue salvá-lo: o CEP fica guardado sem latitude e longitude, a rota
+  responde 200 marcando a localização como sem coordenada, e a tela diz que a
+  distância ainda não pode ser calculada. CEP desconhecido continua 422 e fonte
+  fora do ar continua 503.
+
+authority:
+  - docs/decisions/ADR-20261112-cep-sem-coordenada.md
+  - docs/decisions/ADR-20261022-localizacao-padrao-de-mercado.md (origem só para cálculo, nunca inventar coordenada)
+  - tools/backend-kanban/public/board.json (LOC-CEP-SEM-COORDENADA)
+  - docs/decisions/ADR-20261024-front-react-spa.md §5 (contrato de segurança das rotas do app)
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    apps/web/lib/geo/geocodificador.ts:82-87 trata resposta 200 da BrasilAPI sem
+    location.coordinates como `nao-encontrado`; apps/web/app/api/app/voce/localizacao/route.ts:107-108
+    responde 422 cep-nao-encontrado; supabase/migrations/20261110211702_profile_location.sql
+    tem a restrição profiles_location_all_or_nothing e set_member_location lança
+    'coordinate is required with cep'. O E2E atual só cobre sucesso e CEP inválido.
+
+allowed_paths:
+  - docs/agents/tasks/RUN-138.task.yml
+  - docs/decisions/ADR-20261112-cep-sem-coordenada.md
+  - docs/decisions/RATIFICACAO.md
+  - supabase/migrations/
+  - supabase/tests/profile-location.sql
+  - supabase/database.generated.ts
+  - packages/contracts/
+  - apps/web/lib/geo/
+  - apps/web/app/api/app/voce/
+  - apps/app/src/voce/
+  - apps/app/src/telas/Voce.tsx
+  - apps/app/lib/dados/
+  - apps/app/tests/
+  - tests/unit/app-api/voce/
+  - tests/unit/geo/
+  - tools/backend-kanban/public/board.json
+  - tools/backend-kanban/BOARD.md
+  - .visual/run-138/
+
+forbidden:
+  - editar migração já aplicada (criar uma nova com supabase migration new)
+  - inventar coordenada (centro de cidade, bairro, média) ou gravar coordenada parcial
+  - expor latitude/longitude na resposta da rota ou deixar outro membro ler CEP/coordenada
+  - gravar no cache public.cep_geocodes um CEP sem coordenada como se tivesse posição
+  - usar --linked, banco remoto, db push ou qualquer operação fora do Supabase local
+  - CEP real de pessoa em teste (use CEPs sintéticos e respostas simuladas da BrasilAPI/Google)
+  - chamar a BrasilAPI ou o Google de verdade em teste
+  - usar skip/fixme novo ou afrouxar asserção existente
+
+acceptance:
+  - Uma migração nova troca a restrição e a função: CEP com latitude e longitude nulas é aceito; coordenada sem CEP e latitude sem longitude continuam recusadas; a faixa de latitude/longitude continua valendo.
+  - O pgTAP de profile-location cobre CEP com coordenada, CEP sem coordenada aceito, coordenada sem CEP recusada, latitude sem longitude recusada e leitura negada a outro membro; test:db e db:lint verdes depois de reset local sem seed.
+  - O geocodificador devolve `sem-coordenada` quando alguma fonte conhece o CEP e nenhuma devolve posição (o Google é tentado antes), `nao-encontrado` quando nenhuma conhece e `indisponivel` quando as fontes falham; testes unitários cobrem os quatro estados.
+  - A rota PUT responde 200 com a localização marcada como sem coordenada no caso `sem-coordenada`, mantém 422 para `nao-encontrado` e 503 para `indisponivel`, nunca devolve latitude/longitude, e o cache não recebe o CEP sem coordenada; testes positivos e negativos da rota cobrem os três.
+  - Todo cálculo de distância que lê a origem do perfil trata a origem sem coordenada como ausente, nunca como zero (listar os pontos encontrados e provar ao menos um).
+  - A tela de localização do app mostra o CEP salvo e avisa, sem jargão, que a distância ainda não pode ser calculada para esse CEP; o caso sem coordenada tem prova de navegador em 375/768/1440 nos dois temas, com a resposta da rota simulada.
+  - Tipos públicos regenerados se a assinatura mudar; o cartão LOC-CEP-SEM-COORDENADA recebe prova e checklist atualizados, com BOARD.md regenerado.
+
+proof:
+  - npx pnpm@11.18.0 lint
+  - npx pnpm@11.18.0 typecheck
+  - node scripts/agents/prova-fila.mjs -- npx supabase db reset --local --no-seed
+  - npx pnpm@11.18.0 test:db
+  - npx pnpm@11.18.0 db:lint
+  - npx pnpm@11.18.0 test
+  - npx pnpm@11.18.0 --filter @bivaque/app test:e2e (spec da localização)
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/RUN-138.task.yml
+  - node tools/backend-kanban/src/board.mjs --check
+
+risk: dado pessoal de localização, migração de restrição e função
+risk_level: R3
+adr: docs/decisions/ADR-20261112-cep-sem-coordenada.md
+
+reviewer_must_differ_from_executor: true
+
+retry_budget: 1
+on_budget_exhausted: BLOCKED
+
+closure:
+  requires_runtime_evidence: true

@@ -48,17 +48,17 @@ export function acoesDaBarraDoTopo(nomeDaRota: string): AcoesDaBarra {
 
 /**
  * §5.3: no celular a barra de baixo só aparece nas rotas-raiz
- * (`syncMobileNavigation`); a partir de 720 px ela é a coluna da esquerda e
+ * (`syncMobileNavigation`); a partir de 1024 px ela é a coluna da esquerda e
  * nunca some.
  */
 export function navegacaoVisivel(nomeDaRota: string, largura: number): boolean {
-  if (largura >= 720) return true
+  if (largura >= 1024) return true
   return rotaPorNome(nomeDaRota)?.raiz ?? false
 }
 
 /** §5.3: o Criar acompanha a barra de baixo. */
 export function criaVisivel(nomeDaRota: string, largura: number): boolean {
-  if (largura >= 720) return true
+  if (largura >= 1024) return true
   return rotaPorNome(nomeDaRota)?.raiz ?? false
 }
 

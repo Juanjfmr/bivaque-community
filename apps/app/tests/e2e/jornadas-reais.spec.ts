@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test"
 import { simularInicio } from "./inicio-ajuda"
-import { simularPerguntas } from "./perguntas-ajuda"
+import { ID_PERGUNTA, simularPerguntas } from "./perguntas-ajuda"
 
 test.beforeEach(async ({ page }) => {
   await simularInicio(page)
@@ -17,7 +17,7 @@ test("o Início normal mostra conteúdo e não o andaime de navegação", async 
 
 test("enviar indicação mantém a resposta visível na sessão", async ({ page }) => {
   await simularPerguntas(page)
-  await page.goto("/app/pergunta/a1")
+  await page.goto(`/app/pergunta/${ID_PERGUNTA}`)
   const campo = page.getByLabel("Sua resposta")
   const enviar = page.getByRole("button", { name: "Enviar indicação", exact: true })
   await campo.fill("   ")

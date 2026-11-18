@@ -31,14 +31,25 @@ export type AnuncioDaLista = Readonly<{
   condoFeeCents: number | null
   /** URL assinada pronta, ou null quando o anúncio não tem foto. */
   foto: string | null
+  /** O marcador da pessoa, vindo da lista/detalhe — nunca do aparelho. */
+  salvo: boolean
   criadoEm: string | null
+  /**
+   * Como o anunciante escolheu aparecer (RUN-175). `null` no anúncio publicado
+   * antes do CEP; a tela mostra bairro · cidade nos dois casos.
+   */
+  localizacaoPublica: "exata" | "aproximada" | null
+  /** CEP do próprio anúncio — só o dono recebe (lista de gestão e detalhe). */
+  cep: string | null
 }>
 
 export type AnuncioDetalhado = Readonly<
   AnuncioDaLista & {
-    /** Só existe para o nível que o anunciante escolheu — a tela nunca mostra. */
+    /** Só existe quando o anunciante escolheu o local exato. */
     endereco: string | null
     donoNome: string | null
+    /** Id de quem anuncia, para abrir o perfil. */
+    donoId: string | null
     fotos: readonly string[]
     meu: boolean
     salvo: boolean
@@ -49,8 +60,17 @@ export type AnuncioDetalhado = Readonly<
 export type FiltrosDoMercado = Readonly<{
   tipo: AnuncioTipo
   ordem?: "recent" | "price_asc" | "price_desc"
+  /** Busca no título, no servidor. */
+  q?: string
+  /** Bairro (`ilike`), inclusive o que vem do link de alerta. */
+  bairro?: string
+  /** Aluguel ou venda — só o imóvel tem o satélite que responde por ele. */
+  tipoNegocio?: "rent" | "sale"
   quartos?: number
   valorMax?: number
+  /** Faixa do desapego, em centavos: é o preço de `price_cents`. */
+  precoMinCents?: number
+  precoMaxCents?: number
   tipoImovel?: string
   depois?: string
   /** Página (1-based) que a URL pediu: a porta persegue o cursor até ela. */
@@ -97,6 +117,11 @@ function exigirTipo(valor: unknown): AnuncioTipo {
   throw foraDoContrato()
 }
 
+/** A escolha publicada: só os dois valores do contrato; o resto é "sem escolha". */
+function lerLocalizacaoPublica(valor: unknown): "exata" | "aproximada" | null {
+  return valor === "exata" || valor === "aproximada" ? valor : null
+}
+
 function lerAnuncio(corpo: Corpo): AnuncioDaLista {
   return {
     id: exigirTexto(corpo, "id"),
@@ -115,7 +140,13 @@ function lerAnuncio(corpo: Corpo): AnuncioDaLista {
     areaM2: numeroOuNulo(corpo["areaM2"]),
     condoFeeCents: numeroOuNulo(corpo["condoFeeCents"]),
     foto: texto(corpo["foto"]),
+    // Campo aditivo: a lista da cidade e a dos salvos mandam; detalhe também.
+    salvo: corpo["salvo"] === true,
     criadoEm: texto(corpo["criadoEm"]),
+    // Aditivo do RUN-175: anúncio publicado antes do CEP não tem escolha.
+    localizacaoPublica: lerLocalizacaoPublica(corpo["localizacaoPublica"]),
+    // Só a lista de gestão e o detalhe do dono mandam o CEP.
+    cep: texto(corpo["cep"]),
   }
 }
 
@@ -149,6 +180,8 @@ async function lerPaginaMercado(
 ): Promise<ListaDoMercado> {
   const busca = new URLSearchParams({ tipo: exigirTipo(filtros.tipo) })
   if (filtros.ordem !== undefined) busca.set("ordem", filtros.ordem)
+  if (filtros.q !== undefined && filtros.q !== "") busca.set("q", filtros.q)
+  if (filtros.bairro !== undefined && filtros.bairro !== "") busca.set("bairro", filtros.bairro)
   if (filtros.tipo === "property") {
     if (filtros.quartos !== undefined && filtros.quartos > 0) {
       busca.set("quartos", String(filtros.quartos))
@@ -156,12 +189,22 @@ async function lerPaginaMercado(
     if (filtros.valorMax !== undefined && filtros.valorMax > 0) {
       busca.set("valor_max", String(filtros.valorMax))
     }
+    if (filtros.tipoNegocio !== undefined) busca.set("tipo_negocio", filtros.tipoNegocio)
     if (
       filtros.tipoImovel !== undefined &&
       filtros.tipoImovel !== "" &&
       filtros.tipoImovel !== "todos"
     ) {
       busca.set("tipo_imovel", filtros.tipoImovel)
+    }
+  } else {
+    // A faixa do desapego é `price_cents` em centavos; com imóvel a rota
+    // recusaria a chave, então ela só vai na aba certa.
+    if (filtros.precoMinCents !== undefined && filtros.precoMinCents > 0) {
+      busca.set("preco_min", String(filtros.precoMinCents))
+    }
+    if (filtros.precoMaxCents !== undefined && filtros.precoMaxCents > 0) {
+      busca.set("preco_max", String(filtros.precoMaxCents))
     }
   }
   if (filtros.depois !== undefined) busca.set("depois", filtros.depois)
@@ -190,9 +233,9 @@ export async function buscarAnuncio(
     ...lerAnuncio(corpo),
     endereco: texto(corpo["endereco"]),
     donoNome: texto(corpo["donoNome"]),
+    donoId: texto(corpo["donoId"]),
     fotos,
     meu: corpo["meu"] === true,
-    salvo: corpo["salvo"] === true,
   }
 }
 
@@ -233,6 +276,8 @@ export type EdicaoDoDesapego = Readonly<{
   descricao: string
   categoria: string
   condicao: string
+  /** RUN-175: opcional; com CEP a coordenada é sempre aproximada. */
+  cep?: string
   /** Data URL local; ausente ou vazio = as fotos continuam como estão. */
   foto?: string
 }>
@@ -263,10 +308,95 @@ export async function editarDesapego(
       descricao: dados.descricao,
       categoria: dados.categoria,
       condicao: dados.condicao,
+      ...(dados.cep === undefined ? {} : { cep: dados.cep }),
       ...(foto ? { foto: { tipo: foto[1], conteudo: foto[2] } } : {}),
     },
     opcoes,
   )
+}
+
+/**
+ * O imóvel no vocabulário da web: o mesmo rascunho que o formulário de Moradia
+ * enviava (título, negócio, tipo, valor do lado do negócio, quartos, área...).
+ * É de propósito que não há tradução no meio — o servidor valida com
+ * `validatePropertyDraft`, a mesma função da tela antiga.
+ */
+export type DadosDoImovel = Readonly<{
+  title: string
+  deal: "rent" | "sale"
+  propertyType: "apartment" | "house"
+  /** O valor do campo único de preço, em reais inteiros (a validação recusa centavos). */
+  valor: string
+  bedrooms: string
+  areaM2: string
+  description: string
+  neighborhood: string
+  /** Opcional: vazio é "não informar", nunca erro. Ausente preserva o gravado. */
+  address?: string
+  /**
+   * RUN-175: o CEP do imóvel é obrigatório no criar e na primeira edição do
+   * imóvel antigo. Ausente preserva o gravado (quem preenche é a edição).
+   */
+  cep?: string
+  /** Como o anúncio aparece; ausente no PATCH preserva o gravado. */
+  localizacaoPublica?: "exata" | "aproximada"
+}>
+
+function corpoDoImovel(dados: DadosDoImovel, extras: { vagas?: string } = {}) {
+  return {
+    title: dados.title,
+    deal: dados.deal,
+    propertyType: dados.propertyType,
+    // Aluguel e venda são exclusivos: o lado que não é o negócio vai vazio.
+    rent: dados.deal === "rent" ? dados.valor : "",
+    salePrice: dados.deal === "sale" ? dados.valor : "",
+    bedrooms: dados.bedrooms,
+    areaM2: dados.areaM2,
+    description: dados.description,
+    neighborhood: dados.neighborhood,
+    ...(dados.address === undefined ? {} : { address: dados.address }),
+    ...(dados.cep === undefined ? {} : { cep: dados.cep }),
+    ...(dados.localizacaoPublica === undefined
+      ? {}
+      : { localizacaoPublica: dados.localizacaoPublica }),
+    ...(extras.vagas === undefined ? {} : { parkingSpots: extras.vagas }),
+  }
+}
+
+/**
+ * Publica o imóvel pelo POST do Mercado (`kind: "property"`). `vagas` só na
+ * criação: a leitura do app não devolve vagas, então a edição não a manda e o
+ * servidor preserva a gravada.
+ */
+export async function publicarImovel(
+  dados: DadosDoImovel & Readonly<{ vagas: string }>,
+  opcoes: { signal?: AbortSignal } = {},
+): Promise<string> {
+  const corpo = await enviar(
+    "POST",
+    "/api/app/mercado",
+    { kind: "property", ...corpoDoImovel(dados, { vagas: dados.vagas }) },
+    opcoes,
+  )
+  const anuncio = corpo["anuncio"]
+  if (
+    typeof anuncio === "object" &&
+    anuncio !== null &&
+    "id" in anuncio &&
+    typeof anuncio.id === "string" &&
+    anuncio.id !== ""
+  )
+    return anuncio.id
+  throw new FalhaDaApi("indisponivel", 0)
+}
+
+/** Grava a edição do próprio imóvel pelo PATCH; o servidor valida e decide. */
+export async function editarImovel(
+  id: string,
+  dados: DadosDoImovel,
+  opcoes: { signal?: AbortSignal } = {},
+): Promise<void> {
+  await enviar("PATCH", `/api/app/mercado/${encodeURIComponent(id)}`, corpoDoImovel(dados), opcoes)
 }
 
 /** Ações de situação que o app oferece — o servidor decide a passagem. */
@@ -285,4 +415,46 @@ export async function mudarSituacao(
     opcoes,
   )
   return exigirTexto(corpo, "status")
+}
+
+/**
+ * Salvar (`ativo`) ou dessalvar um anúncio. Uma chamada, um verbo: o servidor
+ * grava em `listing_saves` com o usuário da SESSÃO. A tela já mostrou o estado
+ * novo; falhou, ela volta atrás com a mensagem daqui.
+ */
+export async function marcarSalvoAnuncio(
+  id: string,
+  ativo: boolean,
+  opcoes: { signal?: AbortSignal } = {},
+): Promise<void> {
+  await enviar(
+    ativo ? "POST" : "DELETE",
+    `/api/app/mercado/${encodeURIComponent(id)}/salvo`,
+    undefined,
+    opcoes,
+  )
+}
+
+export type ListaDeSalvos = Readonly<{
+  anuncios: readonly AnuncioDaLista[]
+  proximo: string | null
+}>
+
+/** Os anúncios salvos de uma aba (`item` ou `property`), na ordem do salvamento. */
+export async function listarAnunciosSalvos(
+  filtros: Readonly<{ tipo: AnuncioTipo; depois?: string; limite?: number }>,
+  opcoes: { signal?: AbortSignal } = {},
+): Promise<ListaDeSalvos> {
+  const busca = new URLSearchParams({ tipo: exigirTipo(filtros.tipo) })
+  if (filtros.depois !== undefined) busca.set("depois", filtros.depois)
+  if (filtros.limite !== undefined) busca.set("limite", String(filtros.limite))
+  const corpo = await ler(`/api/app/mercado/salvos?${busca.toString()}`, opcoes)
+  const anuncios = corpo["anuncios"]
+  if (!Array.isArray(anuncios)) throw foraDoContrato()
+  const proximo = corpo["proximo"]
+  if (proximo !== null && typeof proximo !== "string") throw foraDoContrato()
+  return {
+    anuncios: anuncios.map((linha) => lerAnuncio(exigirRegistro(linha))),
+    proximo,
+  }
 }

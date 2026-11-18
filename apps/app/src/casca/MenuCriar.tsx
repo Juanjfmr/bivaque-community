@@ -99,7 +99,7 @@ export function MenuCriar({ aoFechar }: { readonly aoFechar: () => void }) {
       painel || tipo !== null || concluido ? 620 : 262,
       window.innerWidth - 24,
     )
-    const central = window.innerWidth < 720
+    const central = window.innerWidth < 1024
     const esquerda = painel
       ? ancora.left
       : central
@@ -157,7 +157,13 @@ export function MenuCriar({ aoFechar }: { readonly aoFechar: () => void }) {
           return
         }
         if (escolha.id === "create-request") {
-          void navegacao.irPara("negocios")
+          void navegacao.irPara("pedido-novo")
+          return
+        }
+        if (escolha.id === "my-biz") {
+          // F07 (RUN-177): a página do negócio é real e mora em Meu negócio; o
+          // rascunho de sessão que esta escolha abria não publicava nada.
+          void navegacao.irPara("meu-negocio")
           return
         }
         if (TIPOS_RASCUNHO.some((item) => item === escolha.id)) {
@@ -232,7 +238,7 @@ export function MenuCriar({ aoFechar }: { readonly aoFechar: () => void }) {
           showCloseButton={false}
           data-sobreposicao="menu-criar"
           data-modo={painel ? "painel" : "pilha"}
-          overlayProps={{ "data-criar-fundo": painel ? "painel" : "pilha" }}
+          overlayProps={{ "data-criar-fundo": painel ? "painel" : undefined }}
           onOpenAutoFocus={(evento) => {
             // O foco vai para a escolha que abriu o fluxo e, na primeira
             // abertura, para a primeira escolha (§5.4) — nunca para o botão de
@@ -257,7 +263,7 @@ export function MenuCriar({ aoFechar }: { readonly aoFechar: () => void }) {
             evento.preventDefault()
             document.querySelector<HTMLElement>('[data-acao="criar"]')?.focus()
           }}
-          className="bv-painel bv-criar-menu"
+          className="bv-painel bv-criar-menu rounded-2xl border border-(--outline-variant) bg-(--surface-lowest) p-3 shadow-[0_28px_64px_-16px_var(--shadow-strong)]"
         >
           <div className={cn("flex items-start justify-between gap-3", !painel && "sr-only")}>
             <div>

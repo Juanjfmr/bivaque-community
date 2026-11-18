@@ -1,0 +1,96 @@
+# F08 — verbete endereçavel + remover botao fake de sugestao + acompanhamento de correcao.
+#
+# A lista /guide ja trocou (LT-007). Faltam tres pecas, todas no dominio Guia:
+# 1. Verbete endereçavel: hoje a folha do verbete e estado local (Guia.tsx), sem rota
+#    /app/guia/$id. A API GET /api/app/guia/[id] ja existe (entrada/podeSalvar/podeSugerir),
+#    lerVerbete (guia.ts:127) e o componente Verbete.tsx prontos. Falta rota no catalogo,
+#    tela, navegacao, e o swap web /guide/[id]. Destrava /guide/[id].
+# 2. Botao fake Sugerir um lugar (Guia.tsx:206-211): abre MenuCriar que NAO tem porta
+#    de guia = tela de mentira. Sugerir lugar novo esta FORA do escopo F08 do lancamento
+#    (LANCAMENTO: busca/categorias/leitura/salvar/sugerir atualizacao). Decisao do dono
+#    14/11: REMOVER o botao fake (feature completa pos-lancamento).
+# 3. Acompanhamento de correcao: o app envia sugestao (Verbete.tsx → POST .../sugestao)
+#    mas nao lista as proprias. A web /guide/[id]/correcao lista (loadOwnCorrectionRequests,
+#    RLS select own ja existe). Falta um GET + secao Minhas sugestoes no verbete.
+#
+# SEM migration (RLS select own ja existe e testada). O verbete mostra a ENTRADA (o que
+# o app ja tem); a migracao do artigo estruturado (guide_articles) NAO e deste lote —
+# se a leitura web do artigo for essencial, registrar gap, nao expandir aqui. R2.
+
+task_id: RUN-154
+
+objective: >
+  Fechar tres pecas do F08: (1) verbete endereçavel — rota /app/guia/$id no catalogo,
+  tela VerbeteDoGuia, navegacao (Guia abre por rota, folha local sai), Salvos leva ao
+  verbete, swap web /guide/[id]→/app/guia/[id]; (2) remover o botao fake "Sugerir um
+  lugar" do Guia (fora do escopo, tela de mentira); (3) acompanhamento de correcao —
+  GET /api/app/guia/[id]/correcoes (dono) + secao Minhas sugestoes no verbete + swap
+  /guide/[id]/correcao.
+
+authority:
+  - docs/LANCAMENTO.md (F08: leitura, salvar, sugerir atualizacao)
+  - Decisao do dono 14/11: botao fake de sugestao de lugar novo sai
+  - Mapa do explorer 14/11 (API/Verbete prontos; molde rota $id = anuncio)
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    Guia.tsx abre o verbete como folha local (sem rota /app/guia/$id); botao Sugerir um
+    lugar abre MenuCriar sem porta (fake, fixado em guia-estrutura.spec.ts:191-219).
+    Verbete.tsx envia sugestao mas nao lista as proprias. GET /api/app/guia/[id] existe;
+    RLS select own de guide_article existe (supabase/tests/guide-article.sql:161-175).
+
+allowed_paths:
+  - docs/agents/tasks/F08-VERBETE.task.yml
+  - apps/app/lib/navegacao/rotas.ts
+  - apps/app/src/roteador.tsx
+  - apps/app/src/telas
+  - apps/app/src/guia
+  - apps/app/lib/dados/guia.ts
+  - apps/web/app/api/app/guia
+  - apps/web/lib/guide/app-guia.ts
+  - apps/web/next.config.ts
+  - apps/web/app/(shell)/guide
+  - apps/app/tests
+  - tests/unit/app-api/guia
+  - tests/e2e/f08-guia-real.spec.ts
+  - tests/e2e/empty-locality.spec.ts
+  - tests/e2e/portas-de-entrada.spec.ts
+  - tests/e2e/guia-redirects.spec.ts
+  - tests/e2e/guia-estrutura.spec.ts
+  - tests/e2e/link-crawl.spec.ts
+  - apps/app/tests/e2e/acessibilidade.spec.ts
+  - .visual/f08-verbete
+
+forbidden:
+  - criar migration ou tabela nova (RLS select own ja existe)
+  - migrar o artigo estruturado guide_articles (fora deste lote; registrar gap se essencial)
+  - implementar sugestao de lugar novo (fora do escopo; so remover o botao fake)
+  - tocar outras jornadas (Pergunta, grupos, mercado), tema, ou o Util de grupo
+  - usar skip/fixme novo ou afrouxar assercao
+  - push, merge ou force-push; ler/criar/editar arquivos de ambiente; imprimir credenciais
+  - tocar em .work/main ou em outra worktree
+
+acceptance:
+  - "Rota verbete no catalogo (rotas.ts: union + linha /guia/$id pai guia + excluir de NOMES_DAS_33 para nao virar 34). Tela VerbeteDoGuia.tsx (useParams + Verbete + vazio/404, molde Anuncio.tsx), registrada em TELAS_REAIS (roteador.tsx). Guia.tsx abre por navegacao.irPara(verbete,{id}); a folha local sai; Voltar fecha (resolve F08-RESSALVAS). Salvos.tsx:190 leva ao verbete certo."
+  - "Remover o botao fake Sugerir um lugar (Guia.tsx:206-211) e reescrever guia-estrutura.spec.ts:191-219,233-254 (hoje fixam o desvio pelo Criar). NAO implementar sugestao de lugar novo."
+  - "GET /api/app/guia/[id]/correcoes (dono, contrato ADR §5; molde guia/[id]/route.ts; precisa article_id published; devolve sugestoes [{id,status,descricao,decisao,criadaEm}]; lista vazia ≠ 404). correctionStatusLabel movido para app-guia.ts (web importa do mesmo). guia.ts lerMinhasCorrecoes. Verbete.tsx secao Minhas sugestoes (carregando/vazio/erro, molde Salvos.tsx:169-195), recarrega apos o 201."
+  - "Swap web: redirect /guide/[id]→/app/guia/[id] e /guide/[id]/correcao→app (next.config.ts); remover apps/web/app/(shell)/guide/[id]/{page,loading,error,not-found,guide-toc} e correcao/. guia-redirects.spec.ts: mover /guide/a000…001 da lista negativa para positiva; correcao idem."
+  - "Testes: rotas.test.ts (33 nomes), rotas.spec.ts, guia-dados.test.ts (lerVerbete/lerMinhasCorrecoes/status desconhecido), unit guia rotas (correcoes dono/sem artigo/503/CSRF), f08-guia-real (URL direta sobrevive a recarga e Voltar; enviar sugestao→recarrega→status listado). Positivo E negativo."
+  - "Passam: app test, app typecheck, gate --fast, tsc -p tests/e2e, pnpm test (raiz). E2E navegador no CI."
+
+proof:
+  - npx pnpm@11.18.0 --filter @bivaque/app test
+  - npx pnpm@11.18.0 gate --fast
+  - npx pnpm@11.18.0 test
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/F08-VERBETE.task.yml
+
+risk: rota/tela nova + 2 endpoints (leitura correcoes) + swap web; sem migration
+risk_level: R2
+
+reviewer_must_differ_from_executor: true
+retry_budget: 2
+on_budget_exhausted: HUMAN_DECISION
+
+closure:
+  requires_runtime_evidence: true

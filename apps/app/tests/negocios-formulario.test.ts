@@ -1,11 +1,22 @@
 import { describe, expect, it } from "vitest"
 import { FalhaDaApi } from "@/lib/api/cliente"
-import { mensagemDoPedido, validarPedido } from "@/src/negocios/formulario"
+import { mensagemDoPedido, textoDaDistancia, validarPedido } from "@/src/negocios/formulario"
 
 describe("formulário do pedido", () => {
   it("aceita a descrição e um prazo opcional", () => {
     expect(validarPedido("Limpar o ar", "")).toBeNull()
     expect(validarPedido("a".repeat(500), "a".repeat(120))).toBeNull()
+  })
+  // RUN-179: o CEP é opcional (ADR-20261022 §3). Vazio passa; preenchido tem que
+  // ter os oito dígitos — a mesma régua do servidor.
+  it("o CEP opcional só recusa o que não tem oito dígitos", () => {
+    expect(validarPedido("Limpar o ar", "", "")).toBeNull()
+    expect(validarPedido("Limpar o ar", "", "69000-000")).toBeNull()
+    expect(validarPedido("Limpar o ar", "", "6900-000")).toMatch(/oito dígitos/)
+  })
+  it("mostra a distância que o servidor calculou, arredondada à centena", () => {
+    expect(textoDaDistancia(3100)).toBe("3,1 km")
+    expect(textoDaDistancia(0)).toBe("0 km")
   })
   it.each([
     [" ", ""],

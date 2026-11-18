@@ -88,6 +88,8 @@ export function BotaoDeIcone({
   compacto?: boolean
   preenchido?: boolean
 }) {
+  // O eixo FILL da fonte é o que desenha o "ligado"; `aria-pressed` já o diz.
+  const ligado = preenchido || props["aria-pressed"] === true || props["aria-pressed"] === "true"
   return (
     <button
       type={type}
@@ -97,7 +99,7 @@ export function BotaoDeIcone({
       data-tamanho={compacto ? "compacto" : undefined}
       {...props}
     >
-      <Icone nome={nome} preenchido={preenchido} />
+      <Icone nome={nome} preenchido={ligado} />
     </button>
   )
 }
@@ -305,14 +307,18 @@ export function Campo({
   ajuda,
   erro,
   acessorio,
+  id: idExterno,
   ...entrada
 }: {
   rotulo: string
   ajuda?: ReactNode
   erro?: string | null
   acessorio?: ReactNode
-} & Omit<ComponentProps<"input">, "placeholder">) {
-  const id = useId()
+  /** Id conhecido por quem chama (as provas apontam para ele); sem ele, um gerado. */
+  id?: string
+} & Omit<ComponentProps<"input">, "placeholder" | "id">) {
+  const gerado = useId()
+  const id = idExterno ?? gerado
   const idAjuda = `${id}-ajuda`
   const idErro = `${id}-erro`
   return (
@@ -339,14 +345,17 @@ export function CampoDeEscolha({
   erro,
   opcoes,
   value,
+  id: idExterno,
   ...entrada
 }: {
   rotulo: string
   erro?: string | null
   opcoes: readonly { valor: string; rotulo: string }[]
   value: string
-} & Omit<ComponentProps<"select">, "children" | "value">) {
-  const id = useId()
+  id?: string
+} & Omit<ComponentProps<"select">, "children" | "value" | "id">) {
+  const gerado = useId()
+  const id = idExterno ?? gerado
   const idErro = `${id}-erro`
   return (
     <div className="pc-campo-bloco">
@@ -380,9 +389,11 @@ export function CampoDeEscolha({
 export function AreaDeTexto({
   rotulo,
   erro,
+  id: idExterno,
   ...entrada
-}: { rotulo: string; erro?: string | null } & ComponentProps<"textarea">) {
-  const id = useId()
+}: { rotulo: string; erro?: string | null; id?: string } & Omit<ComponentProps<"textarea">, "id">) {
+  const gerado = useId()
+  const id = idExterno ?? gerado
   const idErro = `${id}-erro`
   return (
     <div className="pc-campo-bloco">
@@ -392,6 +403,7 @@ export function AreaDeTexto({
       <textarea
         id={id}
         className="pc-area"
+        data-erro={erro ? "sim" : "nao"}
         aria-invalid={erro ? "true" : undefined}
         aria-describedby={idErro}
         {...entrada}
@@ -515,6 +527,7 @@ export function CampoDeArquivo({
   aceitar,
   aoEscolher,
   erro,
+  id: idExterno,
 }: {
   rotulo: string
   dica: string
@@ -523,12 +536,19 @@ export function CampoDeArquivo({
   aceitar: string
   aoEscolher: (arquivo: File | undefined) => void
   erro?: string | null
+  id?: string
 }) {
-  const id = useId()
+  const gerado = useId()
+  const id = idExterno ?? gerado
   const idErro = `${id}-erro`
   return (
     <div className="pc-campo-bloco">
-      <label htmlFor={id} className="pc-arquivo" data-escolhido={escolhido ? "sim" : "nao"}>
+      <label
+        htmlFor={id}
+        className="pc-arquivo"
+        data-escolhido={escolhido ? "sim" : "nao"}
+        data-erro={erro ? "sim" : "nao"}
+      >
         <Icone nome={escolhido ? "check_circle" : "upload"} preenchido={escolhido !== null} />
         <span>
           <strong>{escolhido ? "Arquivo pronto" : rotulo}</strong>
@@ -866,3 +886,8 @@ export function Esqueleto({
     />
   )
 }
+
+// ── segmentos ──────────────────────────────────────────────────────────────
+// Peça novo da correção do F07 (12/11): seções irmãs de uma página. Mora no
+// próprio arquivo porque o CSS é Tailwind, como o resto de `components/bivaque`.
+export { type ItemDeSegmento, Segmentos } from "./segmentos"

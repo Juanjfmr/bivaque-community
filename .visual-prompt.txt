@@ -1,0 +1,14 @@
+Você continua o contrato docs/agents/tasks/RUN-137.task.yml nesta worktree (branch feat/lan-push, PR #163). Não delegue a subagentes.
+
+Objetivo deste lote: trazer a main para o #163 e deixar o PR pronto para merge, sem mudar o escopo.
+1. npx pnpm@11.18.0 install --frozen-lockfile; git fetch origin main; git merge origin/main (merge, nunca rebase nem force-push).
+2. Resolva os conflitos preservando o que a main já tem (a main é a verdade para tudo que não é push). Atenção:
+   - Migrations: as do #163 (supabase/migrations/20261111210000/210100/210200) têm data anterior a migrations já aplicadas na main. NUNCA edite migration aplicada da main. Renomeie as três do #163 para timestamps novos e posteriores à última migration da main, mantendo o conteúdo e a ordem entre elas.
+   - supabase/database.generated.ts: resolva unindo os tipos das duas pontas (main + push_subscriptions) e diga no relatório.
+   - board.json/BOARD.md: aceite a versão da main e reaplique só as notas do push com node tools/backend-kanban/src/board.mjs --apply <patch>; depois --write-summary e --check.
+   - docs/decisions/RATIFICACAO.md: mantenha todas as linhas da main e a linha do ADR-20261107.
+   - Na tela, use "No celular" no lugar de "Push" se a main já tiver mudado essa copy.
+3. Rode: npx pnpm@11.18.0 gate --fast; npx pnpm@11.18.0 test; npx pnpm@11.18.0 --filter @bivaque/app test. Corrija o que o merge quebrou, dentro do contrato.
+4. Não reinicie nem reconstrua o banco local (é compartilhado); o CI prova o banco.
+5. Commits em português, sem linha de atribuição e sem nome de modelo. Faça git push origin feat/lan-push (sem force).
+6. Escreva .visual/run-137-merge/RELATORIO.md: conflitos e como resolveu, migrations renomeadas, comandos com resultado real, pendências.

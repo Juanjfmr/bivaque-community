@@ -43,6 +43,7 @@ export const CPF_SINTETICO = "52998224725"
 export const MEMBRO_SEMEADO = "visual@bivaque.example.invalid"
 
 // Titular verificado com cidade no seed (Manaus): é quem "convida" nos testes.
+// É a persona `MEMBRO_SEMEADO` — o harness entra como ela para criar convite.
 const INVITER_VERIFICADO = "20000000-0000-4000-8000-000000000001"
 
 const URL_DO_MAILPIT_PADRAO = "http://127.0.0.1:55324"
@@ -144,7 +145,7 @@ function senhaDaPersona(): string {
 }
 
 export function mascararEmail(email: string): string {
-  // Mesma regra de `emailHint` (apps/web/app/(shell)/profile/family-invite-email-hint.ts):
+  // Mesma regra de `emailHint` (apps/web/lib/convite/hint.ts):
   // o CHECK de family_invitations recusa domínio com mais de um rótulo visível.
   const [usuario = "", dominio = ""] = email.trim().split("@")
   const visivelLocal = usuario.length <= 2 ? usuario.slice(0, 1) : usuario.slice(0, 2)
@@ -182,7 +183,7 @@ export function enderecoSintetico(prefixo: string): string {
 type RespostaHttp = Readonly<{ status: number; corpo: unknown }>
 
 type PedidoHttp = Readonly<{
-  metodo?: "GET" | "POST" | "PATCH"
+  metodo?: "GET" | "POST" | "PATCH" | "DELETE"
   cabecalhos?: Readonly<Record<string, string>>
   corpo?: unknown
 }>
@@ -241,6 +242,36 @@ function resumoDoCorpo(corpo: unknown): string {
 
 function cabecalhosDeServico(chave: string): Record<string, string> {
   return { apikey: chave, Authorization: `Bearer ${chave}` }
+}
+
+/**
+ * Cabeçalhos do titular semeado, com o JWT dele.
+ *
+ * SEC-011 (auditoria de 16/11, A2-1): as funções públicas de convite derivam o
+ * dono de `auth.uid()` e recusam 28000 sem sessão. O papel de serviço não é
+ * identidade de ninguém (supabase/AGENTS.md), então semear um convite exige
+ * entrar como a persona que convida — o mesmo caminho da tela.
+ */
+async function cabecalhosDoTitular(): Promise<Record<string, string>> {
+  const chave = exigirChaveAnonima()
+  const resposta = await pedirJson(
+    `${urlDoSupabase()}/auth/v1/token?grant_type=password`,
+    {
+      metodo: "POST",
+      cabecalhos: { apikey: chave },
+      corpo: { email: MEMBRO_SEMEADO, password: senhaDaPersona() },
+    },
+    "Supabase (password grant do titular)",
+  )
+  const token = textoDe(resposta.corpo, "access_token")
+  if (resposta.status !== 200 || token === null) {
+    throw new Error(
+      `Não foi possível entrar como o titular de teste (HTTP ${resposta.status}). A persona ` +
+        `${mascararEmail(MEMBRO_SEMEADO)} é criada pelo seed local: rode ` +
+        "`npx pnpm@11.18.0 exec supabase db reset`.",
+    )
+  }
+  return { apikey: chave, Authorization: `Bearer ${token}` }
 }
 
 function textoDe(corpo: unknown, chave: string): string | null {
@@ -496,9 +527,12 @@ async function marcarVinculoVerificado(userId: string, classe: string): Promise<
  * O titular do seed tem teto de 5 convites ativos. Como cada rodada deixa o
  * convite pendente quando o fluxo falha antes do aceite, a rodada seguinte
  * esbarraria no teto. Revoga os pendentes do próprio titular de teste antes de
- * criar o próximo — sempre no banco local, com service_role.
+ * criar o próximo — sempre no banco local, e a revogação vai com o JWT dele
+ * (a função deriva o dono de auth.uid()).
  */
-async function revogarConvitesPendentesDoTitular(): Promise<void> {
+async function revogarConvitesPendentesDoTitular(
+  cabecalhosDoTitularDaRodada: Readonly<Record<string, string>>,
+): Promise<void> {
   const chave = exigirChaveDeServico()
   const listagem = await pedirJson(
     `${urlDoSupabase()}/rest/v1/rpc/list_pending_invites_with_hint`,
@@ -524,8 +558,8 @@ async function revogarConvitesPendentesDoTitular(): Promise<void> {
       `${urlDoSupabase()}/rest/v1/rpc/revoke_family_invitation`,
       {
         metodo: "POST",
-        cabecalhos: cabecalhosDeServico(chave),
-        corpo: { p_invitation_id: id, p_inviter_user_id: INVITER_VERIFICADO },
+        cabecalhos: cabecalhosDoTitularDaRodada,
+        corpo: { p_invitation_id: id },
       },
       "Supabase (revogar convite pendente)",
     )
@@ -533,21 +567,22 @@ async function revogarConvitesPendentesDoTitular(): Promise<void> {
       throw new Error(
         `Não foi possível revogar o convite pendente de teste: HTTP ${revogacao.status} ` +
           `(${resumoDoCorpo(revogacao.corpo)}). A ponte é ` +
-          "public.revoke_family_invitation, concedida a service_role.",
+          "public.revoke_family_invitation, que deriva o titular da sessão.",
       )
     }
   }
 }
 
 /**
- * Cria um convite familiar PENDENTE para `email`, pelo RPC que a tela do titular
- * usa (`create_family_invitation`). Quem convida é a persona verificada com
+ * Cria um convite familiar PENDENTE para `email`, pela função que a tela do
+ * titular usa (`create_family_invitation`), com o JWT da persona verificada com
  * cidade do seed. Devolve o código em claro — ele só existe aqui e na tela; o
  * banco guarda o hash.
  */
 export async function criarConvitePendente(email: string): Promise<{ codigo: string }> {
   const alvo = exigirEmailSintetico(email)
-  await revogarConvitesPendentesDoTitular()
+  const cabecalhos = await cabecalhosDoTitular()
+  await revogarConvitesPendentesDoTitular(cabecalhos)
   const alfabeto = "ABCDEFGHJKMNPQRSTUVWXYZ23456789"
   let codigo = ""
   for (let indice = 0; indice < 8; indice += 1) {
@@ -558,10 +593,9 @@ export async function criarConvitePendente(email: string): Promise<{ codigo: str
     `${urlDoSupabase()}/rest/v1/rpc/create_family_invitation`,
     {
       metodo: "POST",
-      cabecalhos: cabecalhosDeServico(exigirChaveDeServico()),
+      cabecalhos,
       corpo: {
         p_code_hash: `\\x${sha256(codigo)}`,
-        p_inviter_user_id: INVITER_VERIFICADO,
         p_token_digest: `\\x${sha256(randomBytes(32).toString("hex"))}`,
         p_invitee_email_digest: `\\x${sha256(alvo.trim().toLowerCase())}`,
         p_invitee_email_hint: mascararEmail(alvo),
@@ -573,7 +607,7 @@ export async function criarConvitePendente(email: string): Promise<{ codigo: str
     throw new Error(
       `Não foi possível criar o convite familiar de ${mascararEmail(alvo)}: HTTP ` +
         `${resposta.status} (${resumoDoCorpo(resposta.corpo)}). A ponte é ` +
-        "public.create_family_invitation, concedida a service_role.",
+        "public.create_family_invitation, que deriva o titular da sessão.",
     )
   }
   const invitationId = Array.isArray(resposta.corpo) ? resposta.corpo[0] : resposta.corpo
@@ -728,6 +762,31 @@ export async function restaurarPerfilSemeado(
 }
 
 /**
+ * Apaga os interesses de uma persona do seed. `user_group_interests` é tabela
+ * operacional sem grant para o cliente (só `service_role`), então o `finally` do
+ * teste de interesses fala com ela pelo papel de serviço: se a tela falhar antes
+ * do "Limpar", a tentativa seguinte não herda o grupo marcado.
+ */
+export async function limparInteressesDaPersona(email: string): Promise<void> {
+  const id = await idDoUsuarioPorEmail(email)
+  if (id === null) throw new Error("A persona do seed não existe no Auth local.")
+  const resposta = await pedirJson(
+    `${urlDoSupabase()}/rest/v1/user_group_interests?user_id=eq.${id}`,
+    {
+      metodo: "DELETE",
+      cabecalhos: cabecalhosDeServico(exigirChaveDeServico()),
+    },
+    "Supabase (limpar interesses da persona)",
+  )
+  if (resposta.status !== 200 && resposta.status !== 204) {
+    throw new Error(
+      `Os interesses semeados não foram limpos: HTTP ${resposta.status} ` +
+        `(${resumoDoCorpo(resposta.corpo)}).`,
+    )
+  }
+}
+
+/**
  * Apaga CEP e coordenada de uma persona do seed pela RPC de serviço. É o
  * `finally` do teste de localização: a próxima largura precisa começar sem
  * localização, como o seed a deixou.
@@ -748,6 +807,56 @@ export async function limparLocalizacaoSemeada(email: string): Promise<void> {
   if (resposta.status !== 200 && resposta.status !== 204) {
     throw new Error(
       `A localização semeada não foi limpa: HTTP ${resposta.status} ` +
+        `(${resumoDoCorpo(resposta.corpo)}).`,
+    )
+  }
+}
+
+/**
+ * Desfaz a transferência de cidade de uma persona do seed pelo `hatch` de
+ * suporte (`reverse_locality_transfer`, service_role). É o `finally` do teste
+ * de mudança de cidade: o produto NÃO tem desfazer (ADR-20261116), mas a
+ * persona compartilhada precisa voltar ao seed para as próximas larguras e para
+ * os outros specs. Não existir saída para desfazer é estado válido — a persona
+ * que o teste não chegou a mover não tem o que reverter.
+ */
+export async function desfazerTransferenciaDaPersona(email: string): Promise<void> {
+  const id = await idDoUsuarioPorEmail(email)
+  if (id === null) throw new Error("A persona do seed não existe no Auth local.")
+  const resposta = await pedirJson(
+    `${urlDoSupabase()}/rest/v1/rpc/reverse_locality_transfer`,
+    {
+      metodo: "POST",
+      cabecalhos: cabecalhosDeServico(exigirChaveDeServico()),
+      corpo: { p_user_id: id },
+    },
+    "Supabase (desfazer a transferência da persona)",
+  )
+  if (resposta.status === 200 || resposta.status === 204) return
+  // `23514` é o `raise` de "no leaving row to reverse": nada aconteceu na tela.
+  if (textoDe(resposta.corpo, "code") === "23514") return
+  throw new Error(
+    `A transferência da persona não foi desfeita: HTTP ${resposta.status} ` +
+      `(${resumoDoCorpo(resposta.corpo)}).`,
+  )
+}
+
+/**
+ * Apaga as linhas de `profile_affiliations` de uma persona (service role). O
+ * `finally` do teste de Força/OM: se a tela falhar antes do "apagar", a próxima
+ * largura não herda o que este teste gravou.
+ */
+export async function limparAfiliacaoDaPersona(email: string): Promise<void> {
+  const id = await idDoUsuarioPorEmail(email)
+  if (id === null) throw new Error("A persona do seed não existe no Auth local.")
+  const resposta = await pedirJson(
+    `${urlDoSupabase()}/rest/v1/profile_affiliations?user_id=eq.${id}`,
+    { metodo: "DELETE", cabecalhos: cabecalhosDeServico(exigirChaveDeServico()) },
+    "Supabase (limpar afiliação da persona)",
+  )
+  if (resposta.status !== 200 && resposta.status !== 204) {
+    throw new Error(
+      `A afiliação semeada não foi limpa: HTTP ${resposta.status} ` +
         `(${resumoDoCorpo(resposta.corpo)}).`,
     )
   }
@@ -871,6 +980,58 @@ export async function semearSessaoDeMembro(
     { name: `sb-${projectRef}-auth-token`, value: cookieDeSessao, ...comum },
     { name: "bivaque-consent-version", value: CURRENT_CONSENT, ...comum },
   ])
+}
+
+// ── conta descartável até o estado de membro ────────────────────────────────
+
+/**
+ * Deixa a conta da sessão instalada no estado de membro sem percorrer as cinco
+ * etapas da entrada: chama as duas rotas que a tela chama — o aceite
+ * (`/api/app/entry/consent`) e o provisionamento (`/api/app/entry/provision`) —
+ * com o cookie do contexto. Serve à spec que precisa de um membro descartável e
+ * NÃO está provando a entrada; essa é a `f01-entrada-real.spec.ts`, pela tela.
+ *
+ * A conta precisa já estar verificada (criarContaVerificada) e assinada no
+ * contexto (signInAsWithPassword), senão a rota recusa com 403 — e a recusa
+ * aparece aqui, nunca como tela vazia no teste.
+ *
+ * `baseURL` é a origem do servidor E2E: escrita por cookie confere `Origin`
+ * contra a lista do servidor (SPA ADR §5), e o request context do Playwright
+ * não manda esse cabeçalho sozinho.
+ */
+export async function provisionarMembroDescartavel(
+  page: Page,
+  baseURL: string | undefined,
+  opcoes: Readonly<{ nome?: string; ibge?: string }> = {},
+): Promise<void> {
+  const origem = (baseURL ?? "http://127.0.0.1:3000").replace(/\/+$/, "")
+  const cabecalhos = { origin: origem, "x-bivaque-app": "bivaque-spa" }
+
+  const aceite = await page.request.post(`${origem}/api/app/entry/consent`, {
+    headers: cabecalhos,
+  })
+  if (aceite.status() !== 200) {
+    throw new Error(
+      `O aceite da entrada recusou a conta descartável: HTTP ${aceite.status()} ` +
+        `(${(await aceite.text()).slice(0, 200)}). A sessão foi instalada antes?`,
+    )
+  }
+
+  const provisionamento = await page.request.post(`${origem}/api/app/entry/provision`, {
+    headers: cabecalhos,
+    data: {
+      // Manaus é referência durável do primeiro passo de migração.
+      ibge_code: opcoes.ibge ?? "1302603",
+      display_name: opcoes.nome ?? "Pessoa Sintética",
+      moment: "resident",
+    },
+  })
+  if (provisionamento.status() !== 200) {
+    throw new Error(
+      `O provisionamento recusou a conta descartável: HTTP ${provisionamento.status()} ` +
+        `(${(await provisionamento.text()).slice(0, 200)}). O vínculo está verificado?`,
+    )
+  }
 }
 
 // ── passos da tela ──────────────────────────────────────────────────────────
@@ -1163,28 +1324,16 @@ async function capturar(page: Page, arquivo: string): Promise<void> {
 }
 
 /**
- * Um ponto-chave nos dois temas. A captura escura troca a mídia e volta ao claro,
- * então a jornada continua uma vez só — não é preciso repetir o fluxo por tema.
+ * Um ponto-chave no tema claro — o lançamento (14/11) é só claro; o app ignora
+ * o esquema do sistema.
  */
-export async function capturarEmDoisTemas(
-  page: Page,
-  projeto: string,
-  etapa: string,
-): Promise<void> {
-  for (const tema of ["claro", "escuro"] as const) {
-    await page.emulateMedia({ colorScheme: tema === "claro" ? "light" : "dark" })
-    await capturar(page, `${projeto}-${tema}-${etapa}.png`)
-  }
-  await page.emulateMedia({ colorScheme: "light" })
+export async function capturarNoClaro(page: Page, projeto: string, etapa: string): Promise<void> {
+  await capturar(page, `${projeto}-claro-${etapa}.png`)
 }
 
-/** As capturas canônicas pedidas pelo contrato: `<projeto>-<tema>.png`. */
+/** As capturas canônicas pedidas pelo contrato: `<projeto>-claro.png`. */
 export async function capturarFinais(page: Page, projeto: string): Promise<void> {
-  for (const tema of ["claro", "escuro"] as const) {
-    await page.emulateMedia({ colorScheme: tema === "claro" ? "light" : "dark" })
-    await capturar(page, `${projeto}-${tema}.png`)
-  }
-  await page.emulateMedia({ colorScheme: "light" })
+  await capturar(page, `${projeto}-claro.png`)
 }
 
 // ── Marca de grupo padrão (RUN-025b, ADR-20261107 item 4) ──────────────────

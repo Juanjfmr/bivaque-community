@@ -10,7 +10,7 @@ import { useCasca } from "@/src/contexto/casca"
 /**
  * A navegação principal (ADR §3.1): Início · Comunidade · **Criar** · Mercado ·
  * Você. O mesmo nó é a barra de baixo no celular e a coluna da esquerda a partir
- * de 720 px, como no protótipo.
+ * de 1024 px, como no protótipo.
  *
  * Conversas **não** está aqui: é o ícone do topo, com o contador de não lidas. A
  * aba acesa é a do dono da tela, com a origem da entrada onde há mais de uma

@@ -2,7 +2,15 @@
 import { FalhaDaApi } from "@/lib/api/cliente"
 import { buscarConversa, enviarMensagem, lerConversas } from "@/lib/dados/conversas"
 
-const conversa = { id: "c1", nome: "Maria", tipo: "provider", contextoId: "p1", ultima: "Oi" }
+const conversa = {
+  id: "c1",
+  nome: "Maria",
+  outroId: "u-maria",
+  tipo: "provider",
+  contextoId: "p1",
+  ultima: "Oi",
+  porLer: true,
+}
 const mensagem = { id: "m1", conteudo: "Olá", minha: true, criadaEm: "2026-11-05T12:00:00Z" }
 function responder(corpo: unknown, status = 200) {
   const fetch = vi.fn(async () => new Response(JSON.stringify(corpo), { status }))
@@ -13,11 +21,12 @@ afterEach(() => vi.unstubAllGlobals())
 
 describe("porta de conversas", () => {
   it("lê a caixa e encaminha cursor e sinal", async () => {
-    const fetch = responder({ conversas: [conversa], proximo: "cursor" })
+    const fetch = responder({ conversas: [conversa], proximo: "cursor", porLer: 1 })
     const signal = new AbortController().signal
     expect(await lerConversas({ depois: "um|dois", signal })).toEqual({
       conversas: [conversa],
       proximo: "cursor",
+      porLer: 1,
     })
     expect(fetch).toHaveBeenCalledWith(
       "/api/app/conversas?depois=um%7Cdois",

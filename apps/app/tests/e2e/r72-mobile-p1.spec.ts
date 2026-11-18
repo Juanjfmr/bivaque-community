@@ -107,13 +107,13 @@ test("P1: negócio sem foto usa a capa do desenho e o grupo mostra a foto da fix
 
 test("P1: home desktop separa o catálogo do contexto sem duplicar seções", async ({ page }) => {
   await page.goto("/app/inicio")
-  const principal = page.locator(".bv-home-principal")
-  const lateral = page.getByRole("complementary", { name: "Comunidade na cidade" })
+  const principal = page.locator('[data-home="leitura"]')
+  const lateral = page.locator('[data-home="contexto"]')
   await expect(principal).toBeVisible()
-  await expect(lateral).toBeVisible()
   await expect(page.getByRole("heading", { name: "Serviços recomendados" })).toHaveCount(1)
   await expect(page.getByRole("heading", { name: "Oportunidades perto de você" })).toHaveCount(1)
   if ((page.viewportSize()?.width ?? 0) < 1024) return
+  await expect(lateral).toBeVisible()
   const limites = await Promise.all([principal.boundingBox(), lateral.boundingBox()])
   const a = limites[0]
   const b = limites[1]
@@ -146,9 +146,7 @@ test("P1: anúncios de imóveis mostram somente os metadados declarados na fixtu
   await expect(dois.locator("[data-extras-imovel]")).not.toContainText("Disponível")
 })
 
-test("P1: Anunciar imóvel cria rascunho real na sessão, sem publicar no catálogo", async ({
-  page,
-}) => {
+test("P1: Anunciar imóvel publica de verdade e abre o anúncio devolvido", async ({ page }) => {
   aplicarStubMercado(page)
   await page.goto("/app/imoveis")
   const publicos = page.locator('[data-tela="imoveis"] [data-cartao="anuncio"]')
@@ -156,8 +154,12 @@ test("P1: Anunciar imóvel cria rascunho real na sessão, sem publicar no catál
   await page.locator('[data-acao="anunciar-imovel"]').click()
   const folha = page.locator('[data-fluxo="rascunho-imovel"]')
   await expect(folha).toBeVisible()
-  await expect(folha.getByText("nada é publicado")).toBeVisible()
+  // O texto da demonstração saiu: a folha publica.
+  await expect(folha.getByText("nada é publicado")).toHaveCount(0)
   await folha.locator("#imovel-titulo").fill("Apartamento reformado com três quartos")
+  // RUN-175: o imóvel nasce do CEP. Sem ele a folha não publica (a régua do
+  // servidor espelhada na tela); a escolha fica no padrão aproximado.
+  await folha.locator("#imovel-cep").fill("69000-000")
   await folha.locator("#imovel-bairro").fill("Flores")
   await folha.locator("#imovel-preco").fill("3200")
   await folha.locator("#imovel-area").fill("98")
@@ -169,23 +171,63 @@ test("P1: Anunciar imóvel cria rascunho real na sessão, sem publicar no catál
     expect(geometria.x).toBeGreaterThanOrEqual(-1)
     expect(geometria.x + geometria.width).toBeLessThanOrEqual(largura + 1)
   }
-  await folha.locator('[data-acao="salvar-rascunho-imovel"]').click()
-  await expect(folha).toHaveCount(0)
-  const rascunho = page.locator('[data-rascunhos-imoveis="sim"] [data-rascunho-imovel]')
-  await expect(rascunho).toHaveCount(1)
-  await expect(rascunho).toContainText("Apartamento reformado com três quartos")
-  await expect(page.getByText("Seus rascunhos (1) — não publicados")).toBeVisible()
-  await expect(publicos).toHaveCount(2)
-  await page.reload()
-  await expect(page.locator('[data-rascunhos-imoveis="sim"] [data-rascunho-imovel]')).toHaveCount(1)
-  await page.goto("/app/meus-anuncios")
-  await expect(page.locator('[data-meus-rascunhos="sim"]')).toContainText(
-    "Apartamento reformado com três quartos",
+
+  const publicacao = page.waitForRequest(
+    (pedido) =>
+      /\/api\/app\/mercado$/.test(new URL(pedido.url()).pathname) && pedido.method() === "POST",
   )
-  await page.locator('[data-meus-rascunhos="sim"] button').click()
+  await folha.locator('[data-acao="publicar-imovel"]').click()
+  const enviado = await publicacao
+  // O corpo fala o vocabulário do formulário de Moradia: a mesma validação do
+  // servidor, com o preço no lado do negócio e o CEP em dígitos.
+  expect(enviado.postDataJSON()).toMatchObject({
+    kind: "property",
+    title: "Apartamento reformado com três quartos",
+    deal: "rent",
+    propertyType: "apartment",
+    rent: "3200",
+    salePrice: "",
+    bedrooms: "2",
+    parkingSpots: "1",
+    areaM2: "98",
+    description: "Condomínio informado pelo proprietário",
+    neighborhood: "Flores",
+    cep: "69000000",
+    localizacaoPublica: "aproximada",
+  })
+  await expect(page).toHaveURL(/\/app\/anuncio\/p-1$/)
+  // O detalhe abre o anúncio que a folha acabou de publicar (o stub devolve o
+  // criado, como o servidor), com a escolha aproximada à mostra.
+  await expect(
+    page.getByRole("heading", { level: 1, name: "Apartamento reformado com três quartos" }),
+  ).toBeVisible()
+  await expect(page.getByText("Local aproximado, sem o endereço exato.")).toBeVisible()
+  await expect(folha).toHaveCount(0)
+})
+
+test("P1: a folha de imóvel recusa o que o servidor recusaria, sem sair da tela", async ({
+  page,
+}) => {
+  aplicarStubMercado(page)
+  await page.goto("/app/imoveis")
+  await page.locator('[data-acao="anunciar-imovel"]').click()
+  const folha = page.locator('[data-fluxo="rascunho-imovel"]')
+  await folha.locator("#imovel-titulo").fill("Apartamento reformado")
+  await folha.locator("#imovel-bairro").fill("Flores")
+  await folha.locator("#imovel-preco").fill("3200")
+  // A primeira recusa é a do CEP: o imóvel não existe sem ele (RUN-175).
+  await folha.locator('[data-acao="publicar-imovel"]').click()
+  await expect(folha.getByRole("alert")).toContainText("Informe o CEP do imóvel.")
   await expect(page).toHaveURL(/\/app\/imoveis$/)
-  await page.locator('[data-acao="excluir-rascunho"]').click()
-  await expect(page.locator('[data-rascunhos-imoveis="sim"]')).toHaveCount(0)
+
+  // Com o CEP, a recusa seguinte é a mesma de antes: centavos voltam 400 do
+  // servidor e a régua do app avisa antes de sair.
+  await folha.locator("#imovel-cep").fill("69000-000")
+  await folha.locator("#imovel-preco").fill("3200.5")
+  await folha.locator('[data-acao="publicar-imovel"]').click()
+  await expect(folha.getByRole("alert")).toContainText("sem centavos")
+  await expect(folha.locator("#imovel-preco")).toHaveValue("3200.5")
+  await expect(page).toHaveURL(/\/app\/imoveis$/)
 })
 
 test("P1: Criar > Anunciar imóvel chega ao formulário, sem destino morto", async ({ page }) => {

@@ -1,0 +1,74 @@
+# CEGA-F09-F10 — capturas das jornadas F09 e F10 (e F02/F03 atualizadas) para a revisão cega do
+# lançamento (critério 2 de docs/LANCAMENTO.md).
+#
+# Inventário do coordenador em 18/11 sobre origin/main 44bc2284: apps/app/tests/e2e/cegas/capturas.spec.ts
+# (PR #199, depois só tema claro pelo RUN-152) fotografa F02, F03, F07 e F08 nas três larguras; não
+# há jornada de F09 (Conversas, Conversa, Avisos, Preferências de avisos) nem de F10 (Você,
+# Bloqueados, Salvos, Perfil de membro). Os simuladores de rota já existem em
+# apps/app/tests/e2e/conversas-ajuda.ts, voce-ajuda.ts e nos specs avisos/salvos.
+#
+# Decisões do coordenador (mandato 02/11): só tema claro (decisão do dono de 14/11); o spec só tira
+# fotos, sem veredito; o julgamento é de outro modelo, depois, a partir das imagens. Sem mudança de
+# produto: se uma tela não puder ser fotografada com dados simulados, registrar no RELATORIO.
+#
+# Execução (18/11): F09/F10 ficaram em `apps/app/tests/e2e/cegas/capturas-f09-f10.spec.ts`, arquivo
+# próprio, porque `capturas.spec.ts` roda com o modo de prova ligado (apoio.ts) e o modo de prova
+# troca toda tela real pela TelaDeProva. F02/F03/F07/F08 seguem no spec antigo, sem passo removido.
+
+task_id: CEGA-001
+
+objective: >
+  O spec de capturas cegas passa a fotografar também as jornadas de F09 e F10, com dados simulados
+  realistas, nas larguras 375/768/1440 no tema claro, incluindo os estados de vazio e de falha
+  principal de cada jornada, e as imagens ficam em .visual/blind/<jornada>/.
+
+authority:
+  - docs/LANCAMENTO.md (critério 2, revisão às cegas, e linhas F09 e F10)
+  - Cards LAN-F09 e LAN-F10
+  - docs/agents/regua-nextdoor/ (régua da revisão; o spec não julga)
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    grep "nome: \"f0" apps/app/tests/e2e/cegas/capturas.spec.ts lista só f02-inicio-e-busca,
+    f03-criar, f07-negocios e f08-guia.
+
+allowed_paths:
+  - docs/agents/tasks/CEGA-F09-F10.task.yml
+  - apps/app/tests/e2e/cegas
+  - apps/app/tests/e2e/conversas-ajuda.ts
+  - apps/app/tests/e2e/voce-ajuda.ts
+  - apps/app/tests/e2e/apoio.ts
+  - .visual/blind
+  - .visual/cega-f09-f10
+
+forbidden:
+  - mudar código de produto (apps/app/src, apps/app/lib, apps/web) ou qualquer outro teste
+  - afrouxar ou apagar passo existente das jornadas f02, f03, f07 e f08
+  - tema escuro, veredito, asserção de aparência ou de nota no spec
+  - nome de arquivo, título ou texto que revele quem fez o trabalho
+  - dado pessoal real, credencial, leitura de arquivo de ambiente
+  - push, merge, force-push, editar o quadro (tools/backend-kanban), tocar outra worktree
+
+acceptance:
+  - "Jornada f09-conversas: caixa com conversas, uma marcada 'Por ler' e o contador do topo; caixa vazia; conversa aberta com mensagens dos dois lados; envio que falhou com nova tentativa; menu de bloquear/denunciar aberto."
+  - "Jornada f09-avisos: lista de avisos com lidos e não lidos; lista vazia; preferências de avisos por canal."
+  - "Jornada f10-voce: Você (perfil próprio); Bloqueados com uma pessoa e vazio; Salvos com itens e vazio; perfil de outro membro."
+  - "As jornadas f02-inicio-e-busca e f03-criar seguem fotografando como hoje (sem passo removido)."
+  - "O spec roda verde no projeto desktop-1440 com 'npx vite build' antes e grava as imagens em .visual/blind/<jornada>/<largura>-light-<passo>.png; RELATORIO em .visual/cega-f09-f10/RELATORIO.md com a lista de imagens geradas, comandos rodados com resultado lido e o que não deu para fotografar e por quê."
+
+proof:
+  - npx pnpm@11.18.0 --filter @bivaque/app exec playwright test tests/e2e/cegas/capturas.spec.ts --project=desktop-1440
+  - npx pnpm@11.18.0 --filter @bivaque/app exec playwright test tests/e2e/cegas/capturas-f09-f10.spec.ts --project=desktop-1440
+  - npx pnpm@11.18.0 --filter @bivaque/app exec tsc --noEmit
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/CEGA-F09-F10.task.yml
+
+risk: só testes de captura; nenhum código de produto
+risk_level: R1
+
+reviewer_must_differ_from_executor: true
+retry_budget: 2
+on_budget_exhausted: HUMAN_DECISION
+
+closure:
+  requires_runtime_evidence: true

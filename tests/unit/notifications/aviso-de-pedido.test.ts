@@ -3,17 +3,17 @@ import { join } from "node:path"
 import type { OutboxMessage } from "@bivaque/domain"
 import { describe, expect, it } from "vitest"
 import {
-  formatNotificationLabel,
-  type NotificationRow,
-  rendersWithActor,
-  resolveNotificationHref,
-} from "web/app/(shell)/notifications/deep-links"
-import {
   notificationChannelAllows,
   outboxDeliveryAllowed,
   preferenceKeyForOutboxType,
   type TypePreferenceRow,
 } from "web/lib/notifications/channel-preferences"
+import {
+  formatNotificationLabel,
+  type NotificationRow,
+  rendersWithActor,
+  resolveNotificationHref,
+} from "web/lib/notifications/deep-links"
 import { renderEmail } from "web/lib/outbox/adapters"
 
 // ADR-20260925-aviso-de-pedido. O banco decide quem é avisado (pgTAP
@@ -100,9 +100,9 @@ describe("o aviso no sino", () => {
   })
 
   it("o aviso de um pedido abre o pedido; o do dia abre a lista da cidade", () => {
-    expect(resolveNotificationHref(notification("new", "abc"), null)).toBe("/indicacoes/abc")
+    expect(resolveNotificationHref(notification("new", "abc"), null)).toBe("/app/pergunta/abc")
     expect(resolveNotificationHref(notification("resolve_prompt", "abc"), null)).toBe(
-      "/indicacoes/abc",
+      "/app/pergunta/abc",
     )
     expect(resolveNotificationHref(notification("digest", "loc"), null)).toBe(
       "/community?vista=indicacoes",
@@ -131,7 +131,8 @@ describe("o e-mail do resumo", () => {
     expect(email.text).toContain("• Pediatra")
     expect(email.text).toContain("• Eletricista")
     expect(email.text).toContain("/community?vista=indicacoes")
-    expect(email.text).toContain("Configurações > Notificações")
+    // RUN-184: a tela de conta saiu da web; as preferências de aviso vivem no Você.
+    expect(email.text).toContain("Você > Avisos")
   })
 
   it("um pedido só vai no singular", () => {
@@ -141,47 +142,8 @@ describe("o e-mail do resumo", () => {
   })
 })
 
-// Achado da prova de 25/09/2026: no celular a grade de Configurações crescia até
-// o conteúdo mais largo (a tabela de canais), empurrando os interruptores para
-// fora da tela. A coluna única precisa ter a largura da tela.
-describe("Configurações no celular", () => {
-  it("a coluna do conteúdo não cresce além da tela", () => {
-    const layout = readFileSync(
-      join(
-        import.meta.dirname,
-        "..",
-        "..",
-        "..",
-        "apps",
-        "web",
-        "app",
-        "(shell)",
-        "configuracoes",
-        "layout.tsx",
-      ),
-      "utf8",
-    )
-    expect(layout).toContain("grid-cols-[minmax(0,1fr)]")
-  })
-
-  it("a tabela de canais rola sozinha se faltar espaço, nunca a página", () => {
-    const page = readFileSync(
-      join(
-        import.meta.dirname,
-        "..",
-        "..",
-        "..",
-        "apps",
-        "web",
-        "app",
-        "(shell)",
-        "configuracoes",
-        "notificacoes",
-        "page.tsx",
-      ),
-      "utf8",
-    )
-    expect(page).toContain('aria-label="Resumo diário de pedidos de indicação por e-mail"')
-    expect(page).toContain("overflow-x-auto")
-  })
-})
+// O achado da prova de 25/09/2026 (a grade de Configurações crescendo até a
+// tabela de canais e empurrando os interruptores para fora da tela) ficou sem
+// casa no RUN-184: o layout que ele media era o da tela de conta da web, que saiu
+// com a troca, e a coluna única do Você é do app (`apps/app/src/telas/Voce.tsx`),
+// medida nas capturas de 375/768/1440 — não por leitura de fonte daqui.

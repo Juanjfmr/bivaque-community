@@ -1,0 +1,74 @@
+# RUN-149 — lote de MEDIÇÃO de velocidade do fechamento (não é otimização permanente ainda).
+#
+# Baseline medida pelo dono (14/11): fast 1m35s; full install 7s, build 17s;
+# E2E comuns 3m50s; E2E stateful serial 8m40s; visual do app 32m05s. O fechamento
+# é o max(full, visual) e hoje o visual domina.
+#
+# Duas mudanças de config, ambas reversíveis:
+# A) web webServer no CI = só start (playwright.config.ts). Antes build&&start
+#    rebuildava o Next em cada chamada (comuns+stateful) = 3 builds com o step
+#    dedicado. reuseExistingServer é false no CI, então cada chamada rebuildava.
+# B) app E2E workers:1 -> 4 (apps/app/playwright.config.ts), fullyParallel segue
+#    false (paralelismo por arquivo, conservador). Os 7 projetos rodavam em série.
+#    HIPÓTESE a testar: o scaffold modo-de-prova isola estado por spec. Se colidir,
+#    B fica vermelho e o caminho passa a ser sharding com isolamento (plano B).
+#
+# O CI é o instrumento de medição: rodar fast + full + visual com ci:full e comparar
+# as durações por step com a baseline. Manter o que ficar verde e mais rápido;
+# reverter B se colidir. A é seguro (testa o build validado) e fica de qualquer forma.
+
+task_id: RUN-149
+
+objective: >
+  Medir o efeito de duas mudanças de config na velocidade do fechamento: (A) webServer
+  da web no CI só sobe o servidor (elimina 2 rebuilds do Next e usa o build validado),
+  (B) workers:4 no E2E do app (paralelismo por arquivo contra o série workers:1).
+  Registrar as durações por step contra a baseline; manter o subconjunto verde e mais
+  rápido; reverter B se o estado do scaffold colidir (sharding vira o próximo passo).
+
+authority:
+  - Instrução do dono (14/11): aprovar o lote de medição das fases A+B
+  - docs/agents/LICOES.md (processo enxuto; prova local antes do ci:full)
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    Baseline do dono: visual 32m05s (workers:1, 7 projetos em série, sem Supabase),
+    stateful 8m40s, comuns 3m50s, build 17s. playwright.config.ts:20 build&&start +
+    :22 reuseExistingServer false no CI = 3 builds do Next. apps/app/playwright.config.ts:34
+    workers:1. Nenhum destes é gargalo de produto; é trabalho repetido e série evitável.
+
+allowed_paths:
+  - docs/agents/tasks/RUN-149.task.yml
+  - playwright.config.ts
+  - apps/app/playwright.config.ts
+  - .github/workflows/bivaque-app-visual-smoke.yml
+  - .visual/run-149
+
+forbidden:
+  - alterar código de produto, specs, testes, fixtures, supabase, migrations
+  - alterar runner, pins, ou remover/enfraquecer qualquer teste ou asserção
+  - mudar fullyParallel para true nesta medição (escopo: workers por arquivo)
+  - push, merge ou force-push; ler/criar/editar arquivos de ambiente; imprimir credenciais
+  - tocar em .work/main ou em outra worktree
+
+acceptance:
+  - "A: playwright.config.ts webServer.command no CI = só start (build fica no step dedicado); local mantém build&&start."
+  - "B: apps/app/playwright.config.ts workers:4, fullyParallel false."
+  - "Medição: completo + visual no PR com ci:full; durações por step registradas em .visual/run-149 contra a baseline (visual 32m05, stateful 8m40, comuns 3m50, build 17s)."
+  - "Decisão com números: B (workers:4) COLIDIU e foi revertido (workers:1, lição no config). A (start-only) mantido. Visual distribuído por PROJETO em 7 runners isolados (matrix, fail-fast false) + agregador com o nome de check antigo; cada job roda um projeto com workers:1 e scaffold próprio, sem Supabase."
+  - "Medição do visual shardado: wall time (max dos 7 jobs) contra baseline 32m05s; agregador verde quando todos passam ou pulado, vermelho se algum falha. Merge do subconjunto verde e mais rápido."
+
+proof:
+  - gate do PR com ci:full: fast + full + visual verdes (ou B revertido se colidir), durações por step medidas
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/RUN-149.task.yml
+
+risk: mudança de config de teste/CI (reversível); B é experimento com risco de colisão de fixture
+risk_level: R0
+
+reviewer_must_differ_from_executor: false
+retry_budget: 2
+on_budget_exhausted: HUMAN_DECISION
+
+closure:
+  requires_runtime_evidence: true

@@ -28,13 +28,10 @@ const ESPERA = { timeout: 20_000 } as const
 
 async function capturar(page: Page, nome: string) {
   mkdirSync(CAPTURAS, { recursive: true })
-  for (const tema of ["light", "dark"] as const) {
-    await page.emulateMedia({ colorScheme: tema, reducedMotion: "reduce" })
-    await page.waitForFunction(() => document.fonts.status === "loaded", undefined, ESPERA)
-    await page.screenshot({ path: join(CAPTURAS, `${nome}-${tema}.png`), fullPage: true })
-    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
-  }
-  await page.emulateMedia({ colorScheme: "light" })
+  await page.emulateMedia({ reducedMotion: "reduce" })
+  await page.waitForFunction(() => document.fonts.status === "loaded", undefined, ESPERA)
+  await page.screenshot({ path: join(CAPTURAS, `${nome}-claro.png`), fullPage: true })
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
 }
 
 async function servicoLocal(): Promise<APIRequestContext> {
@@ -140,6 +137,8 @@ test.describe("F04 — grupos reais", { tag: "@stateful" }, () => {
     const servico = await servicoLocal()
     const aberto = randomUUID()
     const fechado = randomUUID()
+    const nomeDoGrupo = `Grupo F04 criado ${randomUUID().slice(0, 8)}`
+    let grupoCriado = ""
     let banco: APIRequestContext | null = null
     try {
       await test.step("fixture: os grupos aberto e fechado da cidade", async () => {
@@ -179,6 +178,82 @@ test.describe("F04 — grupos reais", { tag: "@stateful" }, () => {
             })),
           }),
         )
+      })
+
+      await test.step("criar grupo: quem cria vira dono e o grupo aparece no diretório", async () => {
+        await signInAs(context, "visual@bivaque.example.invalid")
+        await page.goto("/app/comunidade", ESPERA)
+        await page.getByRole("radio", { name: "Filtrar por Grupos", exact: true }).click(ESPERA)
+        const diretorio = page.locator("[data-diretorio-grupos]")
+        await expect(diretorio, "a aba Grupos mostra o diretório").toBeVisible(ESPERA)
+        await diretorio.getByRole("button", { name: "Criar grupo", exact: true }).click(ESPERA)
+        const folha = page.locator('[data-sobreposicao="grupo-novo"]')
+        await expect(folha, "a folha de criar grupo abre sobre o diretório").toBeVisible(ESPERA)
+        const campoDoNome = folha.getByLabel("Nome do grupo")
+        await campoDoNome.fill("ab", ESPERA)
+        await campoDoNome.blur(ESPERA)
+        await expect(
+          folha.getByText("Dê um nome ao grupo, com pelo menos 3 letras."),
+          "nome curto é recusado no campo que o originou",
+        ).toBeVisible(ESPERA)
+        await expect(
+          folha.getByRole("button", { name: "Criar grupo", exact: true }),
+          "com o nome inválido a ação primária fica desligada",
+        ).toBeDisabled(ESPERA)
+        await campoDoNome.fill(nomeDoGrupo, ESPERA)
+        await folha.getByLabel("Sobre o grupo").fill("Criado pelo app na prova do F04", ESPERA)
+        await folha.getByLabel("Regras do grupo").fill("Respeito entre os membros.", ESPERA)
+        await folha.getByRole("button", { name: "Criar grupo", exact: true }).click(ESPERA)
+        await expect(page, "criar abre o grupo gravado").toHaveURL(
+          /\/app\/grupo\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/,
+          ESPERA,
+        )
+        grupoCriado = new URL(page.url()).pathname.split("/").at(-1) ?? ""
+        // O painel de pedidos é do administrador do grupo: é a tela dizendo que
+        // quem criou é o dono, e a linha do vínculo confirma no banco.
+        await expect(
+          page.locator("[data-pedidos-entrada]"),
+          "quem criou administra o grupo",
+        ).toBeVisible(ESPERA)
+        const sessoes = await apiForSession(context)
+        const vinculo = await sessoes.get(
+          `/rest/v1/group_memberships?select=role,status&group_id=eq.${grupoCriado}`,
+        )
+        expect(vinculo.ok(), "o vínculo é legível pela sessão de quem criou").toBe(true)
+        expect(await vinculo.json(), "quem criou é dono aprovado").toEqual([
+          { role: "owner", status: "approved" },
+        ])
+        await sessoes.dispose()
+
+        await page.goto("/app/comunidade", ESPERA)
+        await page.getByRole("radio", { name: "Filtrar por Grupos", exact: true }).click(ESPERA)
+        const lista = page.locator("[data-diretorio-grupos]")
+        const alvo = lista.locator("article", { hasText: nomeDoGrupo })
+        const mais = lista.getByRole("button", { name: "Ver mais grupos" })
+        for (let volta = 0; volta < 40; volta++) {
+          if (await alvo.isVisible()) break
+          if (!(await mais.isVisible())) break
+          await mais.click(ESPERA)
+          await expect(
+            lista.getByRole("button", { name: "Carregando…" }),
+            "a página seguinte termina de carregar",
+          ).toHaveCount(0, ESPERA)
+        }
+        await expect(alvo, "o grupo criado aparece no diretório").toBeVisible(ESPERA)
+
+        // Repetir o nome é recusado pelo servidor: a folha fica aberta e o que
+        // a pessoa digitou continua nela.
+        await lista.getByRole("button", { name: "Criar grupo", exact: true }).click(ESPERA)
+        const repetida = page.locator('[data-sobreposicao="grupo-novo"]')
+        await repetida.getByLabel("Nome do grupo").fill(nomeDoGrupo, ESPERA)
+        await repetida.getByRole("button", { name: "Criar grupo", exact: true }).click(ESPERA)
+        await expect(
+          repetida.getByRole("alert"),
+          "nome repetido é recusado com o próximo passo",
+        ).toContainText("Já existe um grupo com esse nome. Busque e entre nele.", ESPERA)
+        // `exact`: a alça da folha chama-se "Arrastar para fechar" e casaria
+        // com o nome "Fechar" na busca por substring.
+        await repetida.getByRole("button", { name: "Fechar", exact: true }).click(ESPERA)
       })
 
       await test.step("entrar: quem não é membro não publica nem lê o grupo fechado", async () => {
@@ -266,8 +341,8 @@ test.describe("F04 — grupos reais", { tag: "@stateful" }, () => {
         ).toBeVisible(ESPERA)
       })
 
-      let id = ""
-      await test.step("publicar com foto: a foto sobe e a publicação abre no detalhe", async () => {
+      let publicada = ""
+      await test.step("publicar com foto: a foto sobe e a publicação entra na lista do grupo", async () => {
         await page.getByRole("button", { name: "Escrever", exact: true }).click(ESPERA)
         await page.getByLabel("Sua publicação").fill("Publicação real do F04", ESPERA)
         const imagem = await sharp({
@@ -286,11 +361,33 @@ test.describe("F04 — grupos reais", { tag: "@stateful" }, () => {
           201,
         )
         await page.getByRole("button", { name: "Publicar", exact: true }).click(ESPERA)
-        await expect(page, "publicar abre a publicação gravada").toHaveURL(
-          /\/app\/publicacao\/[0-9a-f-]+$/,
+        // Publicar não sai da tela do grupo: o cartão entra no começo da lista,
+        // com o texto gravado, e o anúncio ao vivo diz o que aconteceu.
+        await expect(
+          page.locator('[data-publicacao-na-lista="sim"]').first(),
+          "a publicação gravada entra na lista do grupo",
+        ).toContainText("Publicação real do F04", ESPERA)
+        await expect(
+          page.locator('[data-anuncio-da-publicacao="sim"]'),
+          "o anúncio confirma a publicação",
+        ).toContainText("começo da lista", ESPERA)
+        const listaDoTexto = await servico.get(
+          `/rest/v1/posts?select=id&group_id=eq.${aberto}&content=eq.Publicação real do F04`,
+        )
+        const achadas = (await listaDoTexto.json()) as { id: string }[]
+        expect(achadas.length, "a publicação está gravada uma vez").toBe(1)
+        publicada = achadas[0]?.id ?? ""
+        // O cartão da lista não é um link: a publicação abre pela ação
+        // "Comentar", que leva à tela da publicação com o fio dela.
+        await page
+          .locator('[data-publicacao-na-lista="sim"]')
+          .first()
+          .getByRole("button", { name: /Comentar|comentários/ })
+          .click(ESPERA)
+        await expect(page, "o cartão abre a publicação gravada").toHaveURL(
+          new RegExp(`/app/publicacao/${publicada}$`),
           ESPERA,
         )
-        id = new URL(page.url()).pathname.split("/").at(-1) ?? ""
       })
 
       await test.step("comentar e responder: o fio é gravado", async () => {
@@ -330,7 +427,7 @@ test.describe("F04 — grupos reais", { tag: "@stateful" }, () => {
         await page.reload({ timeout: ESPERA.timeout })
         await expect(
           page.getByText("Publicação real do F04", { exact: true }),
-          "o texto sobrevive ao recarregamento",
+          "o texto sobrevive ao recarregamento na tela da publicação",
         ).toBeVisible(ESPERA)
         await expect(
           page.locator('[data-resposta="sim"]'),
@@ -355,6 +452,8 @@ test.describe("F04 — grupos reais", { tag: "@stateful" }, () => {
           { content: "Publicação real do F04" },
         ])
         await capturar(page, `${info.project.name}-publicacao`)
+        // A lista do grupo é a outra tela desta prova: voltar para ela.
+        await page.goto(`/app/grupo/${aberto}`, ESPERA)
         await page.getByRole("button", { name: "Opções da publicação" }).click(ESPERA)
         await expect(
           page.getByRole("button", { name: "Tirar dos salvos" }),
@@ -365,15 +464,18 @@ test.describe("F04 — grupos reais", { tag: "@stateful" }, () => {
           "quem escreveu não denuncia a própria publicação",
         ).toHaveCount(0, ESPERA)
         await page.getByRole("button", { name: "Ocultar publicação" }).click(ESPERA)
-        await expect(
-          page.getByText("Esta publicação está oculta para você no grupo."),
-          "ocultar avisa na própria publicação",
-        ).toBeVisible(ESPERA)
-        await page.goto(`/app/grupo/${aberto}`, ESPERA)
+        // Ocultar tira a publicação de "Recentes": o aviso fica na tela dela,
+        // que a prova não abre aqui (a lista é o estado da tela do grupo).
         await expect(
           page.locator('[data-cartao="publicacao"]'),
           "a publicação oculta sai da lista do grupo",
         ).toHaveCount(0, ESPERA)
+        await page.goto(`/app/publicacao/${publicada}`, ESPERA)
+        await expect(
+          page.getByText("Esta publicação está oculta para você no grupo."),
+          "a publicação oculta avisa ao ser aberta",
+        ).toBeVisible(ESPERA)
+        await page.goto(`/app/grupo/${aberto}`, ESPERA)
         await page.getByRole("button", { name: "Ocultadas", exact: true }).click(ESPERA)
         await page.getByRole("button", { name: "Opções da publicação" }).click(ESPERA)
         await page.getByRole("button", { name: "Mostrar novamente" }).click(ESPERA)
@@ -381,7 +483,7 @@ test.describe("F04 — grupos reais", { tag: "@stateful" }, () => {
         // Fixar é do dono do grupo: outra sessão, mesmo banco.
         await context.clearCookies()
         await signInAs(context, "visual@bivaque.example.invalid")
-        await page.goto(`/app/publicacao/${id}`, ESPERA)
+        await page.goto(`/app/publicacao/${publicada}`, ESPERA)
         await page.getByRole("button", { name: "Opções da publicação" }).click(ESPERA)
         await page.getByRole("button", { name: "Fixar publicação" }).click(ESPERA)
         await expect(page.getByRole("status"), "fixar confirma na tela").toContainText(
@@ -413,7 +515,7 @@ test.describe("F04 — grupos reais", { tag: "@stateful" }, () => {
         // escreveu, e a rota responde `proprio-conteudo`.
         await context.clearCookies()
         await signInAs(context, "visual@bivaque.example.invalid")
-        await page.goto(`/app/publicacao/${id}`, ESPERA)
+        await page.goto(`/app/publicacao/${publicada}`, ESPERA)
         await page.getByRole("button", { name: "Opções da publicação" }).click(ESPERA)
         await page.getByRole("button", { name: "Denunciar publicação", exact: true }).click(ESPERA)
         await page.getByLabel("Spam", { exact: true }).check(ESPERA)
@@ -423,19 +525,179 @@ test.describe("F04 — grupos reais", { tag: "@stateful" }, () => {
           ESPERA,
         )
         const denuncias = await servico.get(
-          `/rest/v1/reports?select=target_id&target_type=eq.post&target_id=eq.${id}`,
+          `/rest/v1/reports?select=target_id&target_type=eq.post&target_id=eq.${publicada}`,
         )
         expect(denuncias.ok(), "a denúncia é legível pelo serviço local").toBe(true)
         expect(await denuncias.json(), "a denúncia gravada aponta para a publicação").toEqual([
-          { target_id: id },
+          { target_id: publicada },
         ])
       })
     } finally {
       await test.step("limpeza: a fixture sai do banco e do storage", async () => {
         try {
-          await limpar(servico, [aberto, fechado])
+          await limpar(servico, [aberto, fechado, ...(grupoCriado === "" ? [] : [grupoCriado])])
         } finally {
           await banco?.dispose()
+          await servico.dispose()
+        }
+      })
+    }
+  })
+
+  test("pergunta do grupo Aberto aparece na cidade com o nome do grupo, e a resposta volta", async ({
+    page,
+    context,
+  }, info) => {
+    test.setTimeout(240_000)
+    page.setDefaultTimeout(ESPERA.timeout)
+    expect(
+      info.config.workers,
+      "use --workers=1 para devolver o banco antes da próxima largura",
+    ).toBe(1)
+    expect([375, 768, 1440], "a jornada roda nas três larguras do protótipo").toContain(
+      page.viewportSize()?.width,
+    )
+    const origem = new URL(info.project.use.baseURL ?? "http://127.0.0.1:3000")
+    if (!["127.0.0.1", "localhost"].includes(origem.hostname))
+      throw new Error("F04 só usa servidor local")
+    const servico = await servicoLocal()
+    const grupo = randomUUID()
+    const titulo = `Pergunta do grupo ${randomUUID().slice(0, 8)}: alguém indica fono?`
+    let perguntaCriada = ""
+    try {
+      await test.step("fixture: grupo aberto com a dona participando", async () => {
+        await conferir(
+          "criar o grupo da pergunta",
+          await servico.post("/rest/v1/groups", {
+            data: [
+              {
+                id: grupo,
+                name: "Grupo F04 pergunta",
+                description: "Fixture local F04 da pergunta de origem dupla",
+                visibility: "public",
+                locality_id: CIDADE,
+                created_by: DONO,
+                owner_user_id: DONO,
+              },
+            ],
+          }),
+        )
+        await conferir(
+          "inscrever a dona no grupo da pergunta",
+          await servico.post("/rest/v1/group_memberships", {
+            data: [{ group_id: grupo, user_id: DONO, role: "owner", status: "approved" }],
+          }),
+        )
+      })
+
+      await test.step("publicar: a dona pergunta à cidade de dentro do grupo", async () => {
+        await signInAs(context, "visual@bivaque.example.invalid")
+        await page.goto(`/app/grupo/${grupo}`, ESPERA)
+        await page.getByRole("button", { name: "Escrever", exact: true }).click(ESPERA)
+        const dialogo = page.locator('[data-dialogo="escrever-grupo"]')
+        await dialogo.getByRole("button", { name: "Pergunta", exact: true }).click(ESPERA)
+        await expect(
+          dialogo.locator('[data-aviso-cidade="sim"]'),
+          "o aviso da cidade aparece antes de publicar",
+        ).toContainText("Sua pergunta aparecerá na cidade com o nome do grupo.", ESPERA)
+        await dialogo.locator("#titulo-pergunta-grupo").fill(titulo, ESPERA)
+        await dialogo.getByRole("button", { name: "Perguntar à cidade" }).click(ESPERA)
+        await expect(dialogo, "a pergunta sai sem sair da tela do grupo").toHaveCount(0, ESPERA)
+        const bloco = page.locator('[data-perguntas-do-grupo="sim"]')
+        await expect(bloco, "a pergunta entra no bloco do feed").toContainText(titulo, ESPERA)
+        await expect(bloco).toContainText("Também perguntada à cidade", ESPERA)
+        // A linha gravada é de origem dupla: cidade do grupo + grupo.
+        const consulta = await servico.get(
+          `/rest/v1/recommendation_requests?select=id,locality_id,group_id&group_id=eq.${grupo}`,
+        )
+        expect(consulta.ok(), "a pergunta é legível pelo serviço local").toBe(true)
+        const linhas = (await consulta.json()) as {
+          id: string
+          locality_id: string | null
+          group_id: string | null
+        }[]
+        expect(linhas.length, "a pergunta de origem dupla é UMA linha").toBe(1)
+        expect(linhas[0]?.locality_id, "a cidade é a do grupo").toBe(CIDADE)
+        expect(linhas[0]?.group_id, "o grupo é o de origem").toBe(grupo)
+        perguntaCriada = linhas[0]?.id ?? ""
+        await capturar(page, `${info.project.name}-pergunta-do-grupo`)
+      })
+
+      await test.step("a cidade: outro membro vê a pergunta com o nome do grupo e responde", async () => {
+        await context.clearCookies()
+        await signInAs(context, "membro-1@bivaque.example.invalid")
+        await page.goto("/app/comunidade", ESPERA)
+        // A pergunta é aberta e sem resposta: ela abre a lista "Para ajudar".
+        const linha = page.locator("[data-linha='pergunta']", { hasText: titulo })
+        await expect(linha, "a pergunta do grupo aparece nas Indicações da cidade").toBeVisible(
+          ESPERA,
+        )
+        await expect(linha, "e diz de qual grupo ela veio").toContainText(
+          "Perguntada no grupo Grupo F04 pergunta",
+          ESPERA,
+        )
+        await linha.click(ESPERA)
+        await expect(page, "abre a ficha normal da pergunta").toHaveURL(
+          new RegExp(`/app/pergunta/${perguntaCriada}$`),
+          ESPERA,
+        )
+        await page.getByLabel("Sua resposta").fill("A Clínica do Ouvido atende até as 19h.", ESPERA)
+        await page.getByRole("button", { name: "Enviar indicação" }).click(ESPERA)
+        await expect(
+          page.getByText("A Clínica do Ouvido atende até as 19h."),
+          "a resposta gravada aparece na ficha",
+        ).toBeVisible(ESPERA)
+        // A pessoa da cidade também segue a pergunta: a policy nova aceita a
+        // linha de origem dupla (antes, a tela dizia que não podia).
+        await page.getByRole("button", { name: "Seguir respostas" }).click(ESPERA)
+        await expect(
+          page.getByRole("button", { name: "Seguindo respostas" }),
+          "seguir a pergunta do grupo grava",
+        ).toBeVisible(ESPERA)
+      })
+
+      await test.step("a autora: a resposta chega na ficha e a pergunta segue no feed do grupo", async () => {
+        await context.clearCookies()
+        await signInAs(context, "visual@bivaque.example.invalid")
+        await page.goto(`/app/pergunta/${perguntaCriada}`, ESPERA)
+        await expect(
+          page.getByText("A Clínica do Ouvido atende até as 19h."),
+          "a resposta de outra pessoa aparece para a autora",
+        ).toBeVisible(ESPERA)
+        await expect(
+          page.locator('[data-origem-da-pergunta="grupo"]'),
+          "a ficha nomeia o grupo de origem",
+        ).toContainText("Perguntada no grupo Grupo F04 pergunta", ESPERA)
+        await page.goto(`/app/grupo/${grupo}`, ESPERA)
+        await expect(
+          page.locator('[data-perguntas-do-grupo="sim"]'),
+          "a pergunta sobrevive ao recarregamento no feed do grupo",
+        ).toContainText(titulo, ESPERA)
+      })
+    } finally {
+      await test.step("limpeza: pergunta e grupo da fixture saem do banco", async () => {
+        try {
+          if (perguntaCriada !== "") {
+            // A pergunta sai pela sessão de QUEM A ESCREVEU, sob RLS
+            // (`recommendation_requests_delete_own`), como o app apaga. Não pelo
+            // service_role: no banco do CI ele não tem DELETE nesta tabela (o
+            // grant é só SELECT e UPDATE(is_deleted), 20260821000033) e a
+            // limpeza virava 42501 "permission denied for table
+            // recommendation_requests" em cima do teste. Entrar de novo aqui
+            // garante a identidade da autora mesmo se o teste falhou antes.
+            await signInAs(context, "visual@bivaque.example.invalid")
+            const autor = await apiForSession(context)
+            try {
+              await conferir(
+                "apagar a pergunta da fixture",
+                await autor.delete(`/rest/v1/recommendation_requests?id=eq.${perguntaCriada}`),
+              )
+            } finally {
+              await autor.dispose()
+            }
+          }
+          await limpar(servico, [grupo])
+        } finally {
           await servico.dispose()
         }
       })

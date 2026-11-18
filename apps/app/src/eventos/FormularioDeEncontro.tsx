@@ -1,23 +1,25 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 
-import { Botao } from "@/components/bivaque/botao"
-import { Campo, Formulario } from "@/components/bivaque/campos"
 import { Sobreposicao } from "@/components/bivaque/sobreposicao"
+import { criarEncontro, type Encontro, editarEncontro } from "@/lib/dados/eventos"
+import { useCasca } from "@/src/contexto/casca"
+import { excluirRascunho, guardarRascunho, lerRascunho } from "@/src/criar/rascunho"
 import {
-  criarEncontro,
-  type DadosDoEncontro,
-  type Encontro,
-  editarEncontro,
-} from "@/lib/dados/eventos"
-import {
+  type CampoDoEncontro,
   corpoDoEncontro,
+  type ErrosDoEncontro,
+  encontroValido,
+  errosDoEncontro,
   foiAbortada,
+  instanteDoEncontro,
   mensagemDaFalha,
-  paraCampoDeDataHora,
-  validarEncontro,
+  paraDataEHora,
+  type RascunhoDoEncontro,
+  rotuloDeDataHora,
 } from "@/src/eventos/formulario"
+import { AreaDeTexto, Botao, Campo } from "@/src/pecas/pecas"
 
 /**
  * A folha de criar e editar encontro.
@@ -26,6 +28,11 @@ import {
  * muda de lado, e o alcance não está aqui — vem da sessão, no servidor. Em
  * edição o título já vem preenchido e o alcance original não é oferecido, que é
  * a proibição da cláusula R35.
+ *
+ * Data e hora são dois campos de texto em pt-BR (dd/mm/aaaa e 24 h): o campo
+ * nativo de data segue o idioma do navegador e num navegador em inglês mostra
+ * mm/dd/yyyy com AM/PM. O erro nasce no campo que o originou, e a ação primária
+ * fica desligada enquanto os obrigatórios não fecham.
  *
  * Ao gravar, a tela vai para o detalhe do encontro gravado: o que aparece depois
  * é o que o banco devolveu, não o que o formulário achava que ia gravar.
@@ -40,31 +47,62 @@ export function FormularioDeEncontro({
   readonly aoSalvar: (id: string) => void
 }) {
   const editando = encontro !== undefined
-  const [titulo, setTitulo] = useState(encontro?.titulo ?? "")
-  const [descricao, setDescricao] = useState(encontro?.descricao ?? "")
-  const [comecaEm, setComecaEm] = useState(
-    encontro === undefined ? "" : paraCampoDeDataHora(encontro.comecaEm),
-  )
-  const [local, setLocal] = useState(encontro?.local ?? "")
-  const [erro, setErro] = useState<string | null>(null)
+  const { cidadeDeCasa } = useCasca()
+  const chave = `bivaque:f03:encontro:${cidadeDeCasa}`
+  const [revisando, setRevisando] = useState(false)
+  const [aviso, setAviso] = useState("")
+  // Entrar na revisão leva o foco ao título dela: quem usa teclado ou leitor
+  // de tela ouve o que vai ser criado antes de confirmar.
+  const tituloDaRevisao = useRef<HTMLHeadingElement>(null)
+  useEffect(() => {
+    if (revisando) tituloDaRevisao.current?.focus()
+  }, [revisando])
+  const [rascunho, setRascunho] = useState<RascunhoDoEncontro>(() => {
+    const quando =
+      encontro === undefined ? { data: "", hora: "" } : paraDataEHora(encontro.comecaEm)
+    const inicial = {
+      titulo: encontro?.titulo ?? "",
+      descricao: encontro?.descricao ?? "",
+      data: quando.data,
+      hora: quando.hora,
+      local: encontro?.local ?? "",
+    }
+    return editando ? inicial : lerRascunho(chave, inicial)
+  })
+  useEffect(() => {
+    if (!editando) guardarRascunho(chave, rascunho)
+  }, [chave, editando, rascunho])
+  // O erro de um campo aparece depois que a pessoa passou por ele: não acusa
+  // quem ainda não digitou nada, e continua no lugar enquanto não for corrigido.
+  const [tocados, setTocados] = useState<ReadonlySet<CampoDoEncontro>>(new Set())
+  const [erroDoEnvio, setErroDoEnvio] = useState<string | null>(null)
   const [salvando, setSalvando] = useState(false)
   // Fechar a folha cancela a gravação que ainda estava a caminho.
   const [controle] = useState(() => new AbortController())
   useEffect(() => () => controle.abort(), [controle])
 
+  const erros: ErrosDoEncontro = errosDoEncontro(rascunho)
+  const valido = encontroValido(rascunho)
+  const quando = instanteDoEncontro(rascunho)
+  const erroDe = (campo: CampoDoEncontro): string | null =>
+    tocados.has(campo) ? (erros[campo] ?? null) : null
+  const tocar = (campo: CampoDoEncontro): void =>
+    setTocados((atual) => (atual.has(campo) ? atual : new Set(atual).add(campo)))
+  const mudar = (pedaco: Partial<RascunhoDoEncontro>): void =>
+    setRascunho((atual) => ({ ...atual, ...pedaco }))
+
   async function gravar(evento: React.FormEvent<HTMLFormElement>) {
     evento.preventDefault()
-    if (salvando) return
-    const dados: DadosDoEncontro = { titulo, descricao, comecaEm, local }
-    const problema = validarEncontro(dados)
-    if (problema !== null) {
-      setErro(problema)
+    if (salvando || !valido) return
+    if (!editando && !revisando) {
+      setRevisando(true)
       return
     }
-    setErro(null)
+    const corpo = corpoDoEncontro(rascunho)
+    if (corpo === null) return
+    setErroDoEnvio(null)
     setSalvando(true)
     try {
-      const corpo = corpoDoEncontro(dados)
       let id: string
       if (encontro === undefined) {
         id = await criarEncontro(corpo, { signal: controle.signal })
@@ -72,9 +110,14 @@ export function FormularioDeEncontro({
         await editarEncontro(encontro.id, corpo, { signal: controle.signal })
         id = encontro.id
       }
+      if (!editando) excluirRascunho(chave)
       aoSalvar(id)
     } catch (falha: unknown) {
-      if (!foiAbortada(falha)) setErro(mensagemDaFalha(falha, editando ? "editar" : "criar"))
+      if (!foiAbortada(falha)) {
+        setRevisando(false)
+        // O que a pessoa digitou continua na folha.
+        setErroDoEnvio(mensagemDaFalha(falha, editando ? "editar" : "criar"))
+      }
     } finally {
       setSalvando(false)
     }
@@ -87,55 +130,130 @@ export function FormularioDeEncontro({
       descricao="Quem pode ver é a cidade do encontro: ela vem do seu perfil."
       aoFechar={aoFechar}
     >
-      <form onSubmit={(evento) => void gravar(evento)}>
-        <Formulario>
-          <Campo
-            id="encontro-titulo"
-            rotulo="Título"
-            valor={titulo}
-            aoMudar={setTitulo}
-            maxLength={200}
-            autoComplete="off"
-          />
-          <Campo
-            id="encontro-quando"
-            rotulo="Data e hora"
-            type="datetime-local"
-            valor={comecaEm}
-            aoMudar={setComecaEm}
-          />
-          <Campo
-            id="encontro-local"
-            rotulo="Local"
-            valor={local}
-            aoMudar={setLocal}
-            maxLength={200}
-            nota="Ponto de referência público. Endereço residencial não vai no encontro."
-            autoComplete="off"
-          />
-          <Campo
-            id="encontro-descricao"
-            rotulo="Sobre o encontro"
-            valor={descricao}
-            aoMudar={setDescricao}
-            area
-          />
-
-          {erro === null ? null : (
+      <form onSubmit={(evento) => void gravar(evento)} noValidate>
+        <div className="pc pc-embutido grid gap-4">
+          {revisando ? (
+            <div data-revisao="encontro" className="grid gap-3">
+              <h3
+                ref={tituloDaRevisao}
+                tabIndex={-1}
+                className="font-semibold outline-none"
+                data-titulo-da-revisao="encontro"
+              >
+                Revise seu encontro
+              </h3>
+              <p>{rascunho.titulo}</p>
+              <p>{quando === null ? "" : rotuloDeDataHora(quando)}</p>
+              <p>{rascunho.local || "Local não informado"}</p>
+              <p>{rascunho.descricao}</p>
+            </div>
+          ) : (
+            <>
+              <Campo
+                id="encontro-titulo"
+                rotulo="Título"
+                value={rascunho.titulo}
+                onChange={(evento) => mudar({ titulo: evento.target.value })}
+                onBlur={() => tocar("titulo")}
+                erro={erroDe("titulo")}
+                maxLength={200}
+                autoComplete="off"
+                required
+              />
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Campo
+                  id="encontro-data"
+                  rotulo="Data"
+                  value={rascunho.data}
+                  onChange={(evento) => mudar({ data: evento.target.value })}
+                  onBlur={() => tocar("data")}
+                  erro={erroDe("data")}
+                  ajuda="dia/mês/ano"
+                  inputMode="numeric"
+                  autoComplete="off"
+                  maxLength={10}
+                  required
+                />
+                <Campo
+                  id="encontro-hora"
+                  rotulo="Hora"
+                  value={rascunho.hora}
+                  onChange={(evento) => mudar({ hora: evento.target.value })}
+                  onBlur={() => tocar("hora")}
+                  erro={erroDe("hora")}
+                  ajuda="24 h, como 19:30"
+                  inputMode="numeric"
+                  autoComplete="off"
+                  maxLength={5}
+                  required
+                />
+              </div>
+              <p className="pc-apoio" aria-live="polite" data-quando-do-encontro="sim">
+                {quando === null ? "" : rotuloDeDataHora(quando)}
+              </p>
+              <Campo
+                id="encontro-local"
+                rotulo="Local"
+                value={rascunho.local}
+                onChange={(evento) => mudar({ local: evento.target.value })}
+                onBlur={() => tocar("local")}
+                erro={erroDe("local")}
+                ajuda="Ponto de referência público. Endereço residencial não vai no encontro."
+                maxLength={200}
+                autoComplete="off"
+              />
+              <AreaDeTexto
+                id="encontro-descricao"
+                rotulo="Sobre o encontro"
+                value={rascunho.descricao}
+                onChange={(evento) => mudar({ descricao: evento.target.value })}
+                onBlur={() => tocar("descricao")}
+                erro={erroDe("descricao")}
+                rows={4}
+              />
+            </>
+          )}
+          {erroDoEnvio === null ? null : (
             <p role="alert" className="text-sm text-(--destructive)">
-              {erro}
+              {erroDoEnvio}
             </p>
           )}
 
-          <div className="flex justify-end gap-2">
-            <Botao tom="texto" type="button" onClick={aoFechar}>
-              Cancelar
+          {aviso && <p role="status">{aviso}</p>}
+          <div className="flex flex-wrap justify-end gap-2">
+            <Botao tom="texto" onClick={() => (revisando ? setRevisando(false) : aoFechar())}>
+              {revisando ? "Editar" : "Cancelar"}
             </Botao>
-            <Botao type="submit" disabled={salvando}>
-              {salvando ? "Salvando…" : editando ? "Salvar" : "Criar"}
+            {!editando && !revisando && (
+              <Botao
+                tom="contorno"
+                onClick={() =>
+                  setAviso(
+                    guardarRascunho(chave, rascunho)
+                      ? "Rascunho salvo nesta aba."
+                      : "Não foi possível salvar nesta aba. Seu texto continua aqui.",
+                  )
+                }
+              >
+                Salvar rascunho
+              </Botao>
+            )}
+            <Botao
+              tom="principal"
+              type="submit"
+              disabled={salvando || !valido}
+              carregando={salvando}
+            >
+              {salvando
+                ? "Salvando…"
+                : editando
+                  ? "Salvar"
+                  : revisando
+                    ? "Criar encontro"
+                    : "Revisar encontro"}
             </Botao>
           </div>
-        </Formulario>
+        </div>
       </form>
     </Sobreposicao>
   )

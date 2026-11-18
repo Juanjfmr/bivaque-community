@@ -7,12 +7,13 @@ import { FalhaDaApi } from "@/lib/api/cliente"
  * formulário dos eventos não é deste lote e não se edita.
  */
 
-export type AcaoDeMercado = "lista" | "detalhe" | "interesse"
+export type AcaoDeMercado = "lista" | "detalhe" | "interesse" | "salvar"
 
 const PADRAO: Readonly<Record<AcaoDeMercado, string>> = {
   lista: "Não foi possível carregar os anúncios. Tente de novo.",
   detalhe: "Não foi possível carregar o anúncio. Tente de novo.",
   interesse: "Não foi possível abrir a conversa. Tente de novo.",
+  salvar: "Não foi possível guardar o anúncio. Tente de novo.",
 }
 
 export function mensagemDaFalha(falha: unknown, acao: AcaoDeMercado): string {

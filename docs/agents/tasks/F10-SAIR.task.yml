@@ -1,0 +1,81 @@
+# F10 — sair da conta (sign-out) pelo app.
+#
+# O app tem Apagar a conta mas NAO tem Sair da conta. A web sai pelo cliente
+# Supabase de navegador (profile/page.tsx:159, configuracoes/conta/page.tsx:100).
+# O app NAO tem cliente Supabase (ADR-20261105 proibe supabase-js no navegador;
+# entrada/servidor.ts: O app nunca fala com o Supabase). Por isso o sign-out do
+# app e uma ROTA DE SERVIDOR que revoga a sessao e limpa o cookie, nao signOut no
+# cliente. Molde exato: apps/web/app/api/app/voce/apagar-conta/route.ts.
+#
+# Este lote e SO o sign-out. NAO troca /profile web (a jornada F10 inteira e
+# esforco separado, card LAN-F10). SEM migration. R2 (escrita que revoga sessao,
+# CSRF, cookie). A contagem TOTAL_DE_ROTAS sobe 1 (registrar a rota no manifesto).
+
+task_id: RUN-157
+
+objective: >
+  Adicionar Sair da conta ao app: rota POST /api/app/voce/sair (exigirSessao ->
+  conferirEscrita -> auth.sessao.cliente.auth.signOut() -> responder 200 com os
+  cookies de remocao), funcao sairDaConta() em lib/dados/voce.ts, e LinhaDeAjuste
+  Sair da conta na tela Voce com Confirmacao (perigo). Ao confirmar: limpar
+  sessionStorage/localStorage e window.location.replace(/app/entrar). 401 = ja
+  saiu (segue para a entrada); outra falha = mensagem na tela, a pessoa fica.
+
+authority:
+  - docs/LANCAMENTO.md (F10: conta — sair e funcao basica de conta)
+  - ADR-20261105-porta-de-dados-do-app.md §5 (contrato de rota, sem supabase-js no app)
+  - ADR-20261024-front-react-spa.md §5.5 (cache local limpo ao sair da conta)
+  - Mapa do explorer 15/11 (molde apagar-conta, peca Confirmacao, semearSessaoDeMembro)
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    apps/app/src/telas/Voce.tsx tem Apagar a conta (:226-231) mas nenhum Sair da
+    conta. Nao existe rota de sign-out em apps/web/app/api (grep zero). O app nao
+    tem cliente Supabase (lib/dados/contrato.ts so importa tipos). A web sai via
+    createBrowserClient().auth.signOut() (profile/page.tsx:159).
+
+allowed_paths:
+  - docs/agents/tasks/F10-SAIR.task.yml
+  - apps/web/app/api/app/voce/sair
+  - apps/web/lib/security/api-surface.ts
+  - apps/app/lib/dados/voce.ts
+  - apps/app/src/telas/Voce.tsx
+  - apps/app/tests
+  - tests/unit/app-api/voce
+  - tests/unit/security/api-surface.test.ts
+  - tests/e2e/f10-voce-real.spec.ts
+  - .visual/f10-sair
+
+forbidden:
+  - adicionar cliente Supabase / supabase-js ao app (ADR-20261105 proibe)
+  - trocar ou remover a tela /profile web, ou qualquer subrota de profile
+  - criar migration ou tabela nova
+  - tocar outras jornadas (guia/grupos/mercado/perguntas), tema, ou o apagar-conta
+  - usar skip/fixme novo ou afrouxar assercao
+  - push, merge ou force-push; ler/criar/editar arquivos de ambiente; imprimir credenciais
+  - tocar em .work/main ou em outra worktree
+
+acceptance:
+  - "POST /api/app/voce/sair no contrato ADR §5: exigirSessao (401 sem sessao) -> conferirEscrita (403 sem header x-bivaque-app ou Origin fora da lista) -> auth.sessao.cliente.auth.signOut() -> responder(request,{ok:true},200). Os cookies de remocao sao aplicados pelo mecanismo existente (responder/aplicarCookies, mesmo array cookiesParaGravar). OPTIONS com opcoesDoApp. Falha do GoTrue -> 503, nunca silencio. Molde: apps/web/app/api/app/voce/apagar-conta/route.ts:19-49. SEM service_role."
+  - "Registrar a rota em apps/web/lib/security/api-surface.ts (lista SESSAO, exigirSessao) e bumpar TOTAL_DE_ROTAS em 1 (conferir a contagem real em disco, nao chutar). tests/unit/security/api-surface.test.ts verde."
+  - "apps/app/lib/dados/voce.ts: sairDaConta() via enviar(POST, /api/app/voce/sair), molde pedirExclusao (:228-238). O cliente unico ja manda cookie + header."
+  - "Voce.tsx: LinhaDeAjuste Sair da conta (icone logout, ja existe em lib/icones.ts:35) na secao Privacidade e ajuda, IMEDIATAMENTE ANTES de Apagar a conta. Confirmacao (components/bivaque/confirmacao.tsx, variante perigo, sobreposicao confirmacao via navegacao.abrir). DECISAO: a peca Confirmacao NAO tem slot de erro/busy — NAO estender a peca; ao confirmar, a tela assume: estado ocupado (evitar duplo clique), sairDaConta(), e em falha mostrar mensagem na tela (role=alert, molde mensagem do Voce.tsx:32,79-83). Sucesso ou 401: limpar sessionStorage + localStorage e window.location.replace(/app/entrar). Outra falha: a pessoa fica, com a mensagem."
+  - "Testes: unit da rota (200 com cookies de remocao, 401 sem sessao, 403 sem header/origem, GoTrue fora -> 503; molde tests/unit/app-api/voce/rotas.test.ts:236-344); voce-dados.test.ts (sairDaConta caminho/metodo); E2E stub voce.spec.ts/voce-ajuda.ts (stub do sign-out) e E2E real f10-voce-real.spec.ts (semearSessaoDeMembro -> sair -> URL /app/entrar -> rota protegida devolve a entrada). Positivo E negativo em toda permissao."
+  - "Passam: app test, app typecheck, gate --fast, tsc -p tests/e2e, pnpm test (raiz). E2E navegador no CI."
+
+proof:
+  - npx pnpm@11.18.0 --filter @bivaque/app test
+  - npx pnpm@11.18.0 gate --fast
+  - npx pnpm@11.18.0 test
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/F10-SAIR.task.yml
+
+risk: endpoint de escrita que revoga a sessao (CSRF + cookie); sem migration
+risk_level: R2
+
+reviewer_must_differ_from_executor: true
+retry_budget: 2
+on_budget_exhausted: HUMAN_DECISION
+
+closure:
+  requires_runtime_evidence: true

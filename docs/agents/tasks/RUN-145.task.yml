@@ -1,0 +1,69 @@
+# CI-E2E-UPSTREAM-INSTAVEL — testemunha do flaky (salvada do RUN-144 abandonado).
+#
+# O RUN-144 (recriar o Kong com idle=10) foi abandonado: a hipótese keep-alive
+# Kong/PostgREST foi refutada (experimento autenticado 0/40 502s) e a recriação
+# causava regressão F01 (perdia os bind-mounts dos templates de email -> GoTrue 404
+# -> magic link sem código). A causa real do 502 segue em aberto; falta a rota e o
+# timestamp dos eventos no CI. Este lote salva APENAS a coleta melhorada de logs da
+# stack local em falha, para que a próxima queda traga a causa exata. NÃO recria o
+# Kong, NÃO muda keep-alive, NÃO toca produto/testes/timeout/retries.
+
+task_id: RUN-145
+
+objective: >
+  Em falha do job, coletar os logs da stack Supabase local com a testemunha que falta:
+  tail maior do Kong (o evento 502 ficava fora das últimas 200 linhas, que só traziam
+  access log) e extração à parte dos erros/upstream com rota e timestamp
+  (kong-errors.log), além de RestartCount e conexões do banco. Tudo no artefato
+  playwright-artifacts (ci-stack-logs/). Diagnóstico puro: não altera o comportamento
+  do CI em sucesso, não recria container, não muda keep-alive.
+
+authority:
+  - tools/backend-kanban/public/board.json (card CI-E2E-UPSTREAM-INSTAVEL)
+  - .work/w-ci-flaky/.visual/run-144/REINVESTIGACAO.md (causa F01 isolada; keep-alive refutado; falta rota/timestamp dos 502)
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    No run 43513829451 a coleta docker logs --tail 200 do Kong só trouxe access log;
+    o evento 502 (upstream) ficou fora da janela e a causa real não pôde ser diagnosticada.
+    A reinvestigação (.visual/run-144/REINVESTIGACAO.md) confirmou: hipótese keep-alive
+    refutada (0/40 502s em RPC autenticada, gaps 10/35/50s, idle 60 e 10); regressão F01
+    causada pela perda dos bind-mounts dos templates de email na recriação do Kong
+    (auth.log do CI tem 404 de confirmation.html/magic_link.html em kong:8088). Falta a
+    rota/timestamp exatos dos 502 para apontar o upstream real (candidatos: storage-api
+    keepAliveTimeout, fechamento em voo sob CPU starvation, janela pós-db reset).
+
+allowed_paths:
+  - docs/agents/tasks/RUN-145.task.yml
+  - .github/workflows/pull-request-ci.yml
+  - .visual/run-145
+
+forbidden:
+  - recriar o container Kong ou alterar keep-alive/timeout/retries (o RUN-144 foi abandonado por isso)
+  - alterar código de produto, specs de teste, playwright.config.ts, package.json, supabase/config.toml
+  - mudar o comportamento do CI em sucesso (a coleta só roda em if: failure())
+  - push, merge ou force-push; ler/criar/editar .env; imprimir secrets
+  - tocar em .work/main ou em outra worktree
+
+acceptance:
+  - "Step 'Collect local Supabase diagnostics' com if: failure() coleta docker logs de kong/rest/auth/db (tail 10000 para kong, 200 para os demais), RestartCount, e extrai kong-errors.log (grep 502/upstream/prematurely/closed connection/error) + db-connections (max_connections, pg_stat_activity)."
+  - "ci-stack-logs/ incluído no path do artefato playwright-artifacts."
+  - "Nenhuma recriação de container, nenhuma mudança de keep-alive/timeout/retries; o CI em sucesso fica idêntico. test:scope segue verde."
+  - "YAML do workflow válido."
+
+proof:
+  - npx pnpm@11.18.0 test:scope
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/RUN-145.task.yml
+  - validação YAML do workflow
+  - CI verde da revisão entregue (a coleta só atua em falha; não introduz regressão)
+
+risk: mudança de infra/CI apenas de diagnóstico (coleta de logs em falha)
+risk_level: R2
+
+reviewer_must_differ_from_executor: true
+retry_budget: 2
+on_budget_exhausted: HUMAN_DECISION
+
+closure:
+  requires_runtime_evidence: true

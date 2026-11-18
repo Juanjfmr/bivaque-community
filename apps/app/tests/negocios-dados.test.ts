@@ -3,9 +3,17 @@ import { FalhaDaApi } from "@/lib/api/cliente"
 import {
   buscarNegocio,
   buscarPedido,
+  criarMinhaFicha,
   criarPedido,
+  lerMinhaFicha,
   lerNegocios,
   lerPedidos,
+  moverServico,
+  mudarPedido,
+  publicarFoto,
+  publicarServico,
+  removerServico,
+  salvarMinhaFicha,
 } from "@/lib/dados/negocios"
 
 const negocio = {
@@ -23,9 +31,13 @@ const pedido = {
   descricao: "Limpar o ar",
   quando: null,
   situacao: "open",
+  // RUN-179: o payload do pedido ganhou bairro e distância (campos aditivos).
+  bairro: null,
+  distanciaMetros: null,
   criadoEm: "2026-11-05T12:00:00Z",
   atualizadoEm: "2026-11-05T12:00:00Z",
   conversaId: null,
+  lado: "solicitante",
 }
 
 function responder(corpo: unknown, status = 200) {
@@ -81,7 +93,7 @@ describe("porta de negócios e pedidos", () => {
   it("escreve uma vez e retorna o pedido confirmado pelo servidor", async () => {
     const fetch = responder({ pedido }, 201)
     const controle = new AbortController()
-    const dados = { descricao: "Limpar o ar", quando: "", chave: "mesmo-envio" }
+    const dados = { descricao: "Limpar o ar", quando: "", chave: "mesmo-envio", cep: "" }
     await expect(criarPedido("n1", dados, { signal: controle.signal })).resolves.toEqual(pedido)
     expect(fetch).toHaveBeenCalledTimes(1)
     expect(fetch).toHaveBeenCalledWith(
@@ -124,6 +136,15 @@ describe("porta de negócios e pedidos", () => {
       () => buscarPedido("p1"),
       { pedido: { ...pedido, situacao: undefined } },
     ],
+    ["pedido sem lado", () => buscarPedido("p1"), { pedido: { ...pedido, lado: undefined } }],
+    // RUN-179: bairro e distância são parte do contrato; ausência é falha de
+    // contrato, não "sem localização" (foi o que derrubou dois specs no CI).
+    ["pedido sem bairro", () => buscarPedido("p1"), { pedido: { ...pedido, bairro: undefined } }],
+    [
+      "pedido sem distância",
+      () => buscarPedido("p1"),
+      { pedido: { ...pedido, distanciaMetros: undefined } },
+    ],
     [
       "situação desconhecida",
       () => buscarPedido("p1"),
@@ -132,7 +153,7 @@ describe("porta de negócios e pedidos", () => {
     ["lista de pedidos quebrada", () => lerPedidos(), { pedidos: "quebrado" }],
     [
       "criação sem confirmação",
-      () => criarPedido("n1", { descricao: "Limpar", quando: "", chave: "k" }),
+      () => criarPedido("n1", { descricao: "Limpar", quando: "", chave: "k", cep: "" }),
       {},
     ],
   ] as const)("%s falha alto em vez de virar vazio ou sucesso", async (_nome, chamar, corpo) => {
@@ -148,7 +169,7 @@ describe("porta de negócios e pedidos", () => {
   it("falha de escrita não vira pedido otimista nem repete envio", async () => {
     const fetch = responder({ erro: "escrita-indisponivel" }, 503)
     await expect(
-      criarPedido("n1", { descricao: "Limpar", quando: "", chave: "mesma-chave" }),
+      criarPedido("n1", { descricao: "Limpar", quando: "", chave: "mesma-chave", cep: "" }),
     ).rejects.toMatchObject({ codigo: "indisponivel" })
     expect(fetch).toHaveBeenCalledTimes(1)
   })
@@ -161,5 +182,84 @@ describe("porta de negócios e pedidos", () => {
       }),
     )
     await expect(lerPedidos()).rejects.toMatchObject({ name: "AbortError" })
+  })
+})
+
+const ficha = {
+  id: "n1",
+  nome: "Climatiza",
+  categoria: "assistencia_tecnica",
+  categoriaNome: "Assistência técnica",
+  descricao: "Instalação",
+  servicos: [{ id: "s1", titulo: "Limpeza", descricao: null }],
+  fotos: [{ id: "f1", url: "https://midia.example.invalid/assinada", legenda: "Trabalho" }],
+}
+
+describe("porta do negócio próprio (F07 RUN-177)", () => {
+  it("lê a ficha do dono com as categorias do servidor, e o vazio sem ficha", async () => {
+    const fetch = responder({
+      negocio: ficha,
+      categorias: [{ id: "assistencia_tecnica", nome: "Assistência técnica" }],
+    })
+    const lida = await lerMinhaFicha()
+    expect(fetch.mock.calls[0]?.[0]).toBe("/api/app/negocio")
+    expect(lida.ficha?.servicos[0]?.titulo).toBe("Limpeza")
+    expect(lida.ficha?.fotos[0]?.url).toContain("assinada")
+    expect(lida.categorias[0]?.nome).toBe("Assistência técnica")
+
+    responder({ negocio: null, categorias: [] })
+    await expect(lerMinhaFicha()).resolves.toEqual({ ficha: null, categorias: [] })
+  })
+
+  it("cria e edita a ficha por POST e PATCH, sem id no corpo", async () => {
+    const fetch = responder({ negocio: ficha, categorias: [] }, 201)
+    await expect(
+      criarMinhaFicha({ nome: "Climatiza", categoria: "assistencia_tecnica", descricao: "" }),
+    ).resolves.toEqual(ficha)
+    expect(fetch.mock.calls[0]?.[1]).toMatchObject({ method: "POST" })
+
+    await salvarMinhaFicha({ nome: "Climatiza", categoria: "assistencia_tecnica", descricao: "" })
+    expect(fetch.mock.calls[1]?.[0]).toBe("/api/app/negocio")
+    expect(fetch.mock.calls[1]?.[1]).toMatchObject({ method: "PATCH" })
+  })
+
+  it("publica, move e remove serviço sempre com a lista ordenada de volta", async () => {
+    const fetch = responder({ servicos: ficha.servicos }, 201)
+    await expect(publicarServico({ titulo: "Limpeza", descricao: "" })).resolves.toEqual(
+      ficha.servicos,
+    )
+    expect(fetch.mock.calls[0]?.[0]).toBe("/api/app/negocio/catalogo")
+
+    await moverServico("s1", "cima")
+    expect(fetch.mock.calls[1]?.[0]).toBe("/api/app/negocio/catalogo/s1")
+    expect(fetch.mock.calls[1]?.[1]).toMatchObject({ method: "PATCH", body: '{"direcao":"cima"}' })
+
+    await removerServico("s1")
+    expect(fetch.mock.calls[2]?.[1]).toMatchObject({ method: "DELETE" })
+  })
+
+  it("envia a foto como formulário, sem content-type de JSON", async () => {
+    const fetch = responder({ fotos: ficha.fotos }, 201)
+    const arquivo = new File([new Uint8Array([1, 2, 3])], "foto.png", { type: "image/png" })
+    await expect(publicarFoto(arquivo, " Trabalho ")).resolves.toEqual(ficha.fotos)
+    const envio = fetch.mock.calls[0]?.[1] as RequestInit
+    expect(fetch.mock.calls[0]?.[0]).toBe("/api/app/negocio/fotos")
+    expect(envio.method).toBe("POST")
+    expect(envio.body).toBeInstanceOf(FormData)
+    expect((envio.body as FormData).get("legenda")).toBe("Trabalho")
+    expect(envio.headers).not.toHaveProperty("content-type")
+  })
+
+  it("cancela e encerra com a ação no corpo e a situação relida do servidor", async () => {
+    const encerrado = { ...pedido, situacao: "closed", lado: "dono" }
+    const fetch = responder({ pedido: encerrado })
+    await expect(mudarPedido("p1", "encerrar")).resolves.toEqual(encerrado)
+    expect(fetch.mock.calls[0]?.[0]).toBe("/api/app/pedidos/p1")
+    expect(fetch.mock.calls[0]?.[1]).toMatchObject({ method: "PATCH", body: '{"acao":"encerrar"}' })
+  })
+
+  it("ficha fora do contrato falha alto em vez de inventar página", async () => {
+    responder({ negocio: { id: "n1" }, categorias: [] })
+    await expect(lerMinhaFicha()).rejects.toBeInstanceOf(FalhaDaApi)
   })
 })

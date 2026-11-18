@@ -17,9 +17,11 @@
    e é ele que gera as utilidades (`bg-background`, `text-foreground`, …) a
    partir dos mesmos nomes.
 
-   O tema segue o sistema: cada bloco semântico aparece duas vezes, em `:root` e
-   na consulta de esquema escuro, então a troca de tema do aparelho vale na hora
-   e sem JavaScript. `color-scheme` acompanha, para barra de rolagem e campos. */
+   O lançamento é só claro (dono, 14/11): o `:root` claro é o tema do app e não
+   segue o sistema. O escuro fica dormente atrás de `data-tema="escuro"` no
+   documento — nenhuma tela liga esse atributo hoje, e ele só volta a valer se
+   alguém o setar de propósito. `color-scheme` acompanha, para barra de rolagem
+   e campos. */
 
 /* ── as fontes do protótipo, servidas pelo próprio app ───────────────────── */
 
@@ -123,67 +125,71 @@
   --altura-da-barra: 64px;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    color-scheme: dark;
+/* Escuro dormente (lançamento claro-only, dono 14/11): só ativa com
+   data-tema="escuro" no <html>, nunca pelo esquema do sistema. */
+:root[data-tema="escuro"] {
+  color-scheme: dark;
 
-    --background: rgb(16 20 23);
-    --foreground: rgb(232 236 238);
-    --card: rgb(26 32 36);
-    --card-foreground: rgb(232 236 238);
-    --popover: rgb(26 32 36);
-    --popover-foreground: rgb(232 236 238);
-    --primary: rgb(232 236 238);
-    --primary-foreground: rgb(16 20 23);
-    --secondary: rgb(36 50 57);
-    --secondary-foreground: rgb(232 236 238);
-    --muted: rgb(32 39 44);
-    --muted-foreground: rgb(156 170 178);
-    --accent: rgb(38 46 51);
-    --accent-foreground: rgb(232 236 238);
-    --destructive: rgb(255 180 171);
-    --destructive-foreground: rgb(105 0 5);
-    --border: rgb(48 58 62);
-    --input: rgb(56 66 72);
-    --ring: rgb(232 236 238);
-    --success: rgb(159 188 192);
-    --success-foreground: rgb(23 30 32);
-    /* No escuro a ação é clara e sólida: o azul-acinzentado lia como desativado. */
-    --acao: rgb(232 236 238);
-    --acao-foreground: rgb(16 20 23);
-    --brasa: rgb(224 122 90);
-    --brasa-foreground: rgb(23 30 32);
-    --accent-text: rgb(224 122 90);
+  --background: rgb(16 20 23);
+  --foreground: rgb(232 236 238);
+  --card: rgb(26 32 36);
+  --card-foreground: rgb(232 236 238);
+  --popover: rgb(26 32 36);
+  --popover-foreground: rgb(232 236 238);
+  --primary: rgb(232 236 238);
+  --primary-foreground: rgb(16 20 23);
+  --secondary: rgb(36 50 57);
+  --secondary-foreground: rgb(232 236 238);
+  --muted: rgb(32 39 44);
+  --muted-foreground: rgb(156 170 178);
+  --accent: rgb(38 46 51);
+  --accent-foreground: rgb(232 236 238);
+  --destructive: rgb(255 180 171);
+  --destructive-foreground: rgb(105 0 5);
+  --border: rgb(48 58 62);
+  --input: rgb(56 66 72);
+  --ring: rgb(232 236 238);
+  --success: rgb(159 188 192);
+  --success-foreground: rgb(23 30 32);
+  /* No escuro a ação é clara e sólida: o azul-acinzentado lia como desativado. */
+  --acao: rgb(232 236 238);
+  --acao-foreground: rgb(16 20 23);
+  --brasa: rgb(224 122 90);
+  --brasa-foreground: rgb(23 30 32);
+  --accent-text: rgb(224 122 90);
 
-    --surface: rgb(16 20 23);
-    --surface-lowest: rgb(26 32 36);
-    --surface-low: rgb(21 26 30);
-    --surface-container: rgb(32 39 44);
-    --surface-high: rgb(38 46 51);
-    --surface-highest: rgb(46 55 60);
-    --on-surface: rgb(232 236 238);
-    --on-surface-variant: rgb(156 170 178);
-    --outline: rgb(122 138 146);
-    --outline-variant: rgb(48 58 62);
-    --primary-container: rgb(38 52 59);
-    --on-primary-container: rgb(232 236 238);
-    --secondary-container: rgb(38 58 61);
-    --on-secondary-container: rgb(232 236 238);
-    --tertiary: rgb(240 160 138);
-    --tertiary-container: rgb(62 42 38);
-    --on-tertiary-container: rgb(240 160 138);
-    --inverse-surface: rgb(232 236 238);
-    --inverse-on-surface: rgb(28 38 43);
-    --scrim: rgb(0 0 0 / 0.52);
-    --shadow-soft: rgb(0 0 0 / 0.45);
-    --shadow-strong: rgb(0 0 0 / 0.55);
-    /* No escuro as fotos baixam um pouco (protótipo: `--bv-photo-dim`). */
-    --photo-dim: brightness(0.86) contrast(1.02);
-  }
+  --surface: rgb(16 20 23);
+  --surface-lowest: rgb(26 32 36);
+  --surface-low: rgb(21 26 30);
+  --surface-container: rgb(32 39 44);
+  --surface-high: rgb(38 46 51);
+  --surface-highest: rgb(46 55 60);
+  --on-surface: rgb(232 236 238);
+  --on-surface-variant: rgb(156 170 178);
+  --outline: rgb(122 138 146);
+  --outline-variant: rgb(48 58 62);
+  --primary-container: rgb(38 52 59);
+  --on-primary-container: rgb(232 236 238);
+  --secondary-container: rgb(38 58 61);
+  --on-secondary-container: rgb(232 236 238);
+  --tertiary: rgb(240 160 138);
+  --tertiary-container: rgb(62 42 38);
+  --on-tertiary-container: rgb(240 160 138);
+  --inverse-surface: rgb(232 236 238);
+  --inverse-on-surface: rgb(28 38 43);
+  --scrim: rgb(0 0 0 / 0.52);
+  --shadow-soft: rgb(0 0 0 / 0.45);
+  --shadow-strong: rgb(0 0 0 / 0.55);
+  /* No escuro as fotos baixam um pouco (protótipo: `--bv-photo-dim`). */
+  --photo-dim: brightness(0.86) contrast(1.02);
 }
 
+/* As utilidades `dark:` do Tailwind seguem o mesmo portão do bloco acima:
+   sem data-tema="escuro" elas não existem, mesmo com o sistema em escuro. */
+@custom-variant dark (&:where([data-tema="escuro"], [data-tema="escuro"] *));
+
 /* O tema do Tailwind: as utilidades saem destes nomes, e o valor é o token
-   semântico — que muda com o esquema do sistema. */
+   semântico — que hoje é sempre o claro. */
 @theme {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -348,7 +354,7 @@
   flex: none;
 }
 
-/* Em 375 px o topo precisa caber com as ações; 720 px continua sendo a troca da navegação. */
+/* Em 375 px o topo precisa caber com as ações; 1024 px é a troca da navegação. */
 @media (max-width: 479.98px) {
   [data-topo="barra"] [data-titulo="topo"] {
     font-size: 16px;
@@ -390,7 +396,7 @@
 }
 
 /* A navegação: barra de baixo no celular e coluna da esquerda a partir de
-   720 px — o mesmo nó, como no protótipo. */
+   1024 px — o mesmo nó, como no protótipo. */
 [data-nav="principal"] {
   position: fixed;
   inset: auto 0 0 0;
@@ -442,7 +448,12 @@
   background: var(--surface-high);
 }
 
-@media (max-width: 719.98px) {
+@media (max-width: 1023.98px) {
+  #conteudo {
+    padding-bottom: calc(var(--altura-da-barra) + 2.5rem + env(safe-area-inset-bottom));
+    scroll-padding-bottom: calc(var(--altura-da-barra) + 2.5rem + env(safe-area-inset-bottom));
+  }
+
   [data-nav="principal"][data-minimizada="sim"] {
     transform: translateY(100%);
     pointer-events: none;
@@ -453,7 +464,7 @@
   }
 }
 
-@media (min-width: 720px) {
+@media (min-width: 1024px) {
   [data-casca="app"],
   [data-casca="entrada"],
   [data-casca="painel"] {
@@ -488,6 +499,8 @@
     gap: 6px;
     height: 100%;
     padding: 18px 0;
+    /* Um degrau acima do fundo no escuro: a coluna não some no preto. */
+    background: var(--surface-low);
     border-top: 0;
     border-right: 1px solid var(--outline-variant);
     box-shadow: none;
@@ -542,7 +555,7 @@
   opacity: 0;
 }
 
-@media (max-width: 719.98px) {
+@media (max-width: 1023.98px) {
   /* O FAB continua acionável quando a barra sai; o protótipo o mantém fora
      do nav. Aqui compensamos o bloco transformado, preservando um único botão. */
   [data-nav="principal"][data-minimizada="sim"] [data-aba] {
@@ -572,7 +585,7 @@
   }
 }
 
-@media (min-width: 720px) {
+@media (min-width: 1024px) {
   [data-acao="criar"] [data-criar="botao"] {
     margin-top: 0;
     width: 52px;
@@ -726,24 +739,11 @@
   object-fit: cover;
 }
 
-/* Home desktop: conteúdo principal tem duas colunas de cards, ao lado de
-   contexto enxuto (grupos, encontro e perguntas) sem repetir widgets. */
-@media (min-width: 1024px) {
-  .bv-home-principal .bv-grade {
+/* Home desktop: a coluna de leitura mantém dois cartões por linha; a grade
+   global (3 e 4 colunas) vale para telas cheias, não para 640 px. */
+@media (min-width: 720px) {
+  [data-home="leitura"] .bv-grade {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
-/* Na lista de imóveis o rótulo continua associado ao Select, mas no telefone
-   não ocupa uma linha inteira adicional acima da ordenação. */
-@media (max-width: 719.98px) {
-  .bv-ordenar-imoveis > label {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
-    white-space: nowrap;
-    clip-path: inset(50%);
   }
 }
 
@@ -800,11 +800,11 @@
 .bv-home-busca {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 2px;
   width: 100%;
   min-width: 0;
   min-height: 48px;
-  padding: 0 13px;
+  padding: 0 2px;
   border: 1px solid var(--outline-variant);
   border-radius: 12px;
   background: var(--surface-lowest);
@@ -812,7 +812,59 @@
   touch-action: manipulation;
 }
 
-.bv-home-busca:focus-visible,
+.bv-home-busca:focus-within {
+  border-color: var(--ring);
+  outline: 2px solid var(--ring);
+  outline-offset: 1px;
+}
+
+.bv-home-busca-form {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  width: 100%;
+  min-width: 0;
+}
+
+.bv-home-busca-campo {
+  flex: 1;
+  min-width: 0;
+  min-height: 44px;
+  border: 0;
+  background: transparent;
+  color: var(--on-surface);
+  font: inherit;
+  font-size: 15px;
+  outline: none;
+}
+
+.bv-home-busca-campo::placeholder {
+  color: var(--on-surface-variant);
+  opacity: 1;
+}
+
+.bv-home-busca-campo::-webkit-search-cancel-button {
+  display: none;
+}
+
+.bv-home-busca-acao {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 40px;
+  height: 44px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--on-surface-variant);
+  cursor: pointer;
+}
+
+.bv-home-busca-acao:hover {
+  background: var(--muted);
+}
+
+.bv-home-busca-acao:focus-visible,
 .bv-home-atalho:focus-visible,
 .bv-home-contratar:focus-visible {
   outline: 2px solid var(--ring);
@@ -892,7 +944,79 @@
   color: var(--brasa);
 }
 
-[data-tela="inicio"] .bv-home-principal > [data-secao="sim"]:first-child {
+/* Início: coluna de leitura e trilho de contexto (parecer cego de 12/11).
+   Até 1024 px a tela é uma coluna; daí para cima o feed para de esticar e
+   ganha o trilho de contexto ao lado. */
+[data-home="conteudo"] {
+  display: grid;
+  min-width: 0;
+  gap: 24px;
+}
+
+@media (min-width: 1024px) {
+  [data-tela="inicio"] {
+    /* 640 de leitura + 28 de respiro + 320 de contexto: o cabeçalho e o feed
+       começam na mesma borda. */
+    max-width: 988px;
+    margin-inline: auto;
+  }
+
+  [data-home="conteudo"] {
+    grid-template-columns: minmax(0, 640px) minmax(280px, 320px);
+    justify-content: center;
+    align-items: start;
+    gap: 28px;
+  }
+
+  [data-home="contexto"] {
+    position: sticky;
+    top: 16px;
+  }
+}
+
+/* A busca no computador: a mesma coluna do resto, em vez de 1.300 px de
+   campo e cartões esticados. */
+@media (min-width: 1024px) {
+  [data-tela="busca"] {
+    max-width: 1040px;
+    margin-inline: auto;
+  }
+}
+
+/* A publicação do feed: cartão da biblioteca (nada de lista de texto). */
+.bv-publicacao {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+  border-radius: 16px;
+  background: var(--surface-lowest);
+  box-shadow: inset 0 0 0 1px var(--outline-variant);
+}
+
+.bv-publicacao-cabeca {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 12px;
+}
+
+.bv-publicacao-texto {
+  margin: 0;
+  color: var(--on-surface);
+  font-size: 15px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.bv-publicacao-acoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding-top: 8px;
+  border-top: 1px solid var(--outline-variant);
+}
+
+[data-tela="inicio"] [data-home="leitura"] > [data-secao="sim"]:first-child {
   margin-top: 15px;
 }
 
@@ -911,7 +1035,7 @@
     margin-top: 19px;
   }
 
-  [data-tela="inicio"] .bv-home-principal > [data-secao="sim"]:first-child {
+  [data-tela="inicio"] [data-home="leitura"] > [data-secao="sim"]:first-child {
     margin-top: 15px;
   }
 
@@ -1238,7 +1362,7 @@ body[data-profundidade="sim"] [data-casca="app"] {
 
 /* ── o título grande que sobe (§6, item 29) ──────────────────────────────── */
 
-@media (max-width: 719.98px) {
+@media (max-width: 1023.98px) {
   [data-topo="barra"] {
     border-bottom-color: transparent;
     transition: border-color 0.18s ease-out;
@@ -1547,7 +1671,7 @@ body[data-profundidade="sim"] [data-casca="app"] {
    Celular primeiro: faixa de foto 16:10, valor e formulário em uma coluna. */
 
 /* As composições A e B tomam a altura toda, sem o recuo da casca. A casca da
-   entrada não tem navegação; sem isso, a coluna reservada a ela em ≥720 px sobra
+   entrada não tem navegação; sem isso, a coluna reservada a ela em ≥1024 px sobra
    à esquerda, e o corpo fica na faixa `auto` da grade, com a altura do conteúdo. */
 [data-casca="entrada"]:has(.entrada-acesso, .entrada-etapa) [data-casca="corpo"] {
   grid-row: 1 / -1;
@@ -2551,6 +2675,14 @@ body[data-profundidade="sim"] [data-casca="app"] {
   }
   .entrada-etapa-dias > label {
     white-space: nowrap;
+  }
+}
+
+@media (max-width: 1023.98px) {
+  [data-casca="app"] [data-cabeca="pagina"] {
+    min-width: 0;
+    width: 100%;
+    max-width: calc(100vw - 32px);
   }
 }
 /* Cantos do bloco nos campos; a altura fica nos 44 px da regra do celular e

@@ -1,6 +1,6 @@
 ﻿import type { NextRequest, NextResponse } from "next/server"
 import { exigirSessao, opcoesDoApp, responder } from "../../../../lib/app-api/rota-do-app"
-import { cursorDe, nomeDaConversa } from "./_comum"
+import { cursorDe, nomeDaConversa, outroParticipante } from "./_comum"
 
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
@@ -14,7 +14,9 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   if (bruto !== null && cursor === null) return responder(request, { erro: "cursor-invalido" }, 400)
   try {
     const client = auth.sessao.cliente
-    let query = client.from("dm_conversations").select("id,context_type,context_id,created_at")
+    let query = client
+      .from("dm_conversations")
+      .select("id,participant_a,participant_b,context_type,context_id,created_at")
     if (cursor)
       query = query.or(
         `created_at.lt."${cursor.data}",and(created_at.eq."${cursor.data}",id.lt.${cursor.id})`,
@@ -25,9 +27,35 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       .limit(21)
     if (error) throw error
     const pagina = (data ?? []).slice(0, 20)
+    const eu = auth.sessao.usuario.id
+    const [contagem, leituras] = await Promise.all([
+      client.rpc("unread_conversation_count"),
+      pagina.length > 0
+        ? client
+            .from("dm_read_states")
+            .select("conversation_id,last_read_at")
+            .eq("user_id", eu)
+            .in(
+              "conversation_id",
+              pagina.map((linha) => linha.id),
+            )
+        : Promise.resolve({ data: [], error: null }),
+    ])
+    if (contagem.error) throw contagem.error
+    if (leituras.error) throw leituras.error
+    const lidaEm = new Map(
+      (leituras.data ?? []).map((leitura) => [leitura.conversation_id, leitura.last_read_at]),
+    )
     const conversas = await Promise.all(
       pagina.map(async (linha) => {
-        const [nome, ultima] = await Promise.all([
+        let recebidas = client
+          .from("dm_messages")
+          .select("id")
+          .eq("conversation_id", linha.id)
+          .neq("sender_id", eu)
+        const ultimaLida = lidaEm.get(linha.id)
+        if (ultimaLida) recebidas = recebidas.gt("created_at", ultimaLida)
+        const [nome, ultima, naoLida] = await Promise.all([
           nomeDaConversa(client, linha.id),
           client
             .from("dm_messages")
@@ -37,14 +65,18 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
             .order("id", { ascending: false })
             .limit(1)
             .maybeSingle(),
+          recebidas.limit(1),
         ])
         if (ultima.error) throw ultima.error
+        if (naoLida.error) throw naoLida.error
         return {
           id: linha.id,
           nome,
+          outroId: outroParticipante(linha, auth.sessao.usuario.id),
           tipo: linha.context_type,
           contextoId: linha.context_id,
           ultima: ultima.data?.content ?? "",
+          porLer: (naoLida.data?.length ?? 0) > 0,
         }
       }),
     )
@@ -53,6 +85,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       request,
       {
         conversas,
+        porLer: contagem.data,
         proximo: (data?.length ?? 0) > 20 && ultima ? `${ultima.created_at}|${ultima.id}` : null,
       },
       200,

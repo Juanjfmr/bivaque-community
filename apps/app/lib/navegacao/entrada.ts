@@ -38,6 +38,10 @@ export type Sobreposicao =
   | "contato-oferta"
   | "grupo-escrever"
   | "grupo-sair"
+  | "grupo-pedir"
+  | "conversa-denuncia"
+  | "grupo-novo"
+  | "interesses"
 
 export type EstadoDaEntrada = {
   readonly versao: 1
@@ -114,6 +118,10 @@ export const SOBREPOSICOES: readonly Sobreposicao[] = [
   "contato-oferta",
   "grupo-escrever",
   "grupo-sair",
+  "grupo-pedir",
+  "conversa-denuncia",
+  "grupo-novo",
+  "interesses",
 ]
 
 const ABAS: readonly Aba[] = ["inicio", "comunidade", "mercado", "voce"]

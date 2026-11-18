@@ -6,6 +6,8 @@ import {
   buscarGrupo,
   buscarPublicacao,
   comentarPublicacao,
+  contarPublicacoes,
+  criarGrupo,
   denunciarPublicacao,
   lerGrupos,
   lerPedidosDoGrupo,
@@ -47,7 +49,7 @@ it("lê o diretório pelo cliente único, com sinal e cursor", async () => {
   )
 })
 it("lê detalhe com ordem e paginação sem inventar cidade", async () => {
-  const fetch = resposta({ grupo, publicacoes: [], proximo: null })
+  const fetch = resposta({ grupo, cidade: "Manaus", publicacoes: [], proximo: null })
   expect((await buscarGrupo("g1", { ordem: "discutidas", depois: "20" })).grupo).toEqual(grupo)
   expect(fetch).toHaveBeenCalledWith(
     "/api/app/grupos/g1?ordem=discutidas&depois=20",
@@ -61,6 +63,26 @@ it.each([{}, { grupos: null }, { grupos: [{}], cidade: "", proximo: null }])(
     await expect(lerGrupos()).rejects.toBeInstanceOf(FalhaDaApi)
   },
 )
+it("cria grupo pelo cliente único e devolve o grupo da sessão", async () => {
+  const fetch = resposta({ grupo })
+  const signal = new AbortController().signal
+  const dados = { nome: "Famílias", descricao: "", regras: "Respeito", fechado: false }
+  expect(await criarGrupo(dados, { signal })).toEqual(grupo)
+  expect(fetch).toHaveBeenCalledWith(
+    "/api/app/grupos",
+    expect.objectContaining({ method: "POST", signal, body: JSON.stringify(dados) }),
+  )
+})
+it("criação preserva a recusa do servidor e rejeita resposta fora do contrato", async () => {
+  resposta({ erro: "nome-em-uso", mensagem: "Já existe um grupo com esse nome." }, 409)
+  await expect(
+    criarGrupo({ nome: "Famílias", descricao: "", regras: "", fechado: false }),
+  ).rejects.toMatchObject({ status: 409, motivoDoServidor: "nome-em-uso" })
+  resposta({ grupo: { ...grupo, admin: "sim" } })
+  await expect(
+    criarGrupo({ nome: "Famílias", descricao: "", regras: "", fechado: false }),
+  ).rejects.toBeInstanceOf(FalhaDaApi)
+})
 it("conserva o status da recusa para a tela", async () => {
   resposta({ erro: "sem-sessao" }, 401)
   await expect(buscarGrupo("g1")).rejects.toMatchObject({ status: 401 })
@@ -80,9 +102,10 @@ it("participação mostra o resultado gravado e DELETE não manda corpo", async 
   )
 })
 
-it("publica texto/fotos e envia comentário pelo cliente único", async () => {
-  const fetch = resposta({ publicacao: { id: "p1" } })
-  expect(await publicarNoGrupo("g1", { texto: "Texto", fotos: ["pasta/foto.png"] })).toBe("p1")
+it("publica texto/fotos e devolve a publicação pronta e o cursor da próxima página", async () => {
+  const fetch = resposta({ publicacao, proximo: "p1" })
+  const criada = await publicarNoGrupo("g1", { texto: "Texto", fotos: ["pasta/foto.png"] })
+  expect(criada).toEqual({ publicacao, proximo: "p1" })
   expect(fetch).toHaveBeenCalledWith(
     "/api/app/grupos/g1/publicacoes",
     expect.objectContaining({
@@ -90,6 +113,23 @@ it("publica texto/fotos e envia comentário pelo cliente único", async () => {
       body: JSON.stringify({ texto: "Texto", fotos: ["pasta/foto.png"] }),
     }),
   )
+})
+
+it("publicação que volta de outro grupo ou fora do contrato não vira sucesso", async () => {
+  resposta({ publicacao: { ...publicacao, grupoId: "g2" }, proximo: null })
+  await expect(publicarNoGrupo("g1", { texto: "Texto", fotos: [] })).rejects.toBeInstanceOf(
+    FalhaDaApi,
+  )
+  resposta({ publicacao: { id: "p1" }, proximo: null })
+  await expect(publicarNoGrupo("g1", { texto: "Texto", fotos: [] })).rejects.toBeInstanceOf(
+    FalhaDaApi,
+  )
+})
+
+it("conta a primeira página para saber se a publicação abriu outra", async () => {
+  const fetch = resposta({ grupo, cidade: "Manaus", publicacoes: [publicacao], proximo: "p1" })
+  expect(await contarPublicacoes("g1", { ordem: "recentes" })).toBe(1)
+  expect(fetch).toHaveBeenCalledWith("/api/app/grupos/g1?ordem=recentes", expect.any(Object))
 })
 it("foto passa pelo cliente único com tipo e base64", async () => {
   const fetch = resposta({ caminho: "pasta/foto.png" })
@@ -105,6 +145,7 @@ it("resposta em fio retorna o comentário persistido", async () => {
     texto: "Concordo",
     criadaEm: "2026-11-06",
     autor: "",
+    autorId: "",
     propria: true,
     parentId: "c1",
     respondeA: "c1",
@@ -120,7 +161,7 @@ it("resposta em fio retorna o comentário persistido", async () => {
   )
 })
 it("detalhe não transforma comentário fora do contrato em lista vazia", async () => {
-  resposta({ publicacao: {}, grupo, comentarios: [], proximo: null })
+  resposta({ publicacao: {}, grupo, cidade: "Manaus", comentarios: [], proximo: null })
   await expect(buscarPublicacao("p1")).rejects.toBeInstanceOf(FalhaDaApi)
 })
 
@@ -131,6 +172,7 @@ it("lê as publicações salvas pela rota da sessão", async () => {
     texto: "Texto",
     criadaEm: "2026-11-06",
     autor: "Ana",
+    autorId: "u-ana",
     propria: false,
     comentarios: 0,
     uteis: 0,
@@ -156,6 +198,7 @@ const publicacao = {
   texto: "Texto",
   criadaEm: "2026-11-06",
   autor: "Ana",
+  autorId: "u-ana",
   propria: false,
   comentarios: 0,
   uteis: 2,
@@ -237,6 +280,7 @@ it("pedidos leem motivo e paginação pelo cliente único", async () => {
 })
 it.each([
   () => lerGrupos(),
+  () => criarGrupo({ nome: "Famílias", descricao: "", regras: "", fechado: false }),
   () => buscarGrupo("g1"),
   () => buscarPublicacao("p1"),
   () => mudarParticipacao("g1", true),

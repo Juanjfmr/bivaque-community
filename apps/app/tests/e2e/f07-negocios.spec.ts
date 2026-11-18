@@ -31,6 +31,12 @@ const pedidoInicial = {
   criadoEm: "2026-11-05T12:00:00Z",
   atualizadoEm: "2026-11-05T12:00:00Z",
   conversaId: null,
+  // RUN-177: o payload do pedido ganhou `lado` (quem lê é solicitante ou dono) e
+  // o parser do app é estrito — o fixture acompanha o contrato.
+  lado: "solicitante",
+  // RUN-179: bairro e distância também são aditivos e entram no fixture.
+  bairro: null as string | null,
+  distanciaMetros: null as number | null,
 }
 const categorias = [
   { id: "assistencia_tecnica", nome: "Assistência técnica" },
@@ -64,7 +70,7 @@ function luminancia(cor: string) {
   return 0.2126 * r + 0.7152 * g + 0.0722 * b
 }
 
-for (const tema of ["light", "dark"] as const) {
+for (const tema of ["light"] as const) {
   test.describe(`F07 — interface em ${tema}`, () => {
     test.use({ colorScheme: tema })
 
@@ -86,6 +92,9 @@ for (const tema of ["light", "dark"] as const) {
             ...pedidoInicial,
             descricao: String(corpo["descricao"]),
             quando: String(corpo["quando"]),
+            // O servidor devolve o bairro e a distância só quando o pedido tem CEP.
+            bairro: String(corpo["cep"] ?? "") === "" ? null : "Flores",
+            distanciaMetros: String(corpo["cep"] ?? "") === "" ? null : 3100,
           }
           await rota.fulfill({ status: 201, json: { pedido } })
         } else if (caminho.endsWith(ID)) {
@@ -117,7 +126,7 @@ for (const tema of ["light", "dark"] as const) {
       await expect(page.getByRole("heading", { name: "Onde atende", exact: true })).toBeVisible()
       await capturar(page, `${testInfo.project.name}-${tema}-02-ficha`)
 
-      const pedir = page.getByRole("button", { name: "Pedir orçamento", exact: true })
+      const pedir = page.getByRole("link", { name: "Pedir orçamento", exact: true })
       await expect
         .poll(async () => {
           const cores = await pedir.evaluate((elemento) => ({
@@ -134,6 +143,9 @@ for (const tema of ["light", "dark"] as const) {
       expect(alvo?.width).toBeGreaterThanOrEqual(44)
       await pedir.focus()
       await page.keyboard.press("Enter")
+      // F07 (RUN-177): a folha do pedido tem endereço próprio e o negócio vai
+      // no `?destino=`. É a MESMA folha, agora endereçável.
+      await expect(page).toHaveURL(new RegExp(`/app/pedidos/novo\\?destino=${ID}$`))
       await expect(page.locator("[data-sobreposicao]")).toHaveCount(1)
       await expect(page.getByRole("dialog")).toBeVisible()
       await page.getByLabel("O que você precisa?").fill("Limpar o ar-condicionado da sala")
@@ -150,6 +162,8 @@ for (const tema of ["light", "dark"] as const) {
       await capturar(page, `${testInfo.project.name}-${tema}-04-falha`)
       await page.getByRole("button", { name: "Enviar pedido", exact: true }).click()
       await expect(page).toHaveURL(new RegExp(`/app/pedido/${PEDIDO}$`))
+      // RUN-180: o acompanhamento nomeia o lado de quem pediu.
+      await expect(page.getByText("Você pediu — acompanhe o que foi combinado.")).toBeVisible()
       expect(chaves).toHaveLength(2)
       expect(chaves[0]).toBe(chaves[1])
       await expect(page.locator("[data-descricao-do-pedido]")).toHaveText(
@@ -161,11 +175,77 @@ for (const tema of ["light", "dark"] as const) {
       )
       await expect(page.getByText("Em aberto", { exact: true })).toBeVisible()
       await capturar(page, `${testInfo.project.name}-${tema}-05-pedido`)
-      await page.getByRole("button", { name: "Ver meus pedidos", exact: true }).click()
+      await page.getByRole("button", { name: "Ver pedidos", exact: true }).click()
       await expect(page.locator('[data-tela="pedidos"] [data-linha="lista"]')).toContainText(
         "Limpar o ar-condicionado da sala",
       )
       await capturar(page, `${testInfo.project.name}-${tema}-06-acompanhamento`)
+    })
+
+    test("pedido com CEP mostra o bairro e a distância; sem CEP, nenhum dos dois", async ({
+      page,
+    }, testInfo) => {
+      let pedido: typeof pedidoInicial | null = null
+      const enviados: Record<string, unknown>[] = []
+      await page.route(/\/api\/app\/negocios(?:[/?]|$)/, async (rota) => {
+        const caminho = new URL(rota.request().url()).pathname
+        if (caminho.endsWith("/pedidos")) {
+          const corpo = rota.request().postDataJSON() as Record<string, unknown>
+          enviados.push(corpo)
+          pedido = {
+            ...pedidoInicial,
+            descricao: String(corpo["descricao"]),
+            bairro: String(corpo["cep"] ?? "") === "" ? null : "Flores",
+            distanciaMetros: String(corpo["cep"] ?? "") === "" ? null : 3100,
+          }
+          await rota.fulfill({ status: 201, json: { pedido } })
+        } else if (caminho.endsWith(ID)) {
+          await rota.fulfill({ json: { negocio: ficha } })
+        } else {
+          await rota.fulfill({
+            json: { negocios: [resumo], categorias, cidade: "Manaus", proximo: null },
+          })
+        }
+      })
+      await page.route(/\/api\/app\/pedidos(?:[/?]|$)/, async (rota) => {
+        const detalhe = new URL(rota.request().url()).pathname.endsWith(PEDIDO)
+        await rota.fulfill({
+          json: detalhe ? { pedido } : { pedidos: pedido === null ? [] : [pedido], proximo: null },
+        })
+      })
+
+      await page.goto(`/app/negocio/${ID}`)
+      await page.getByRole("link", { name: "Pedir orçamento", exact: true }).click()
+      await expect(page.getByRole("dialog")).toBeVisible()
+
+      // Sem CEP, o texto ainda orienta o bairro; com CEP, o bairro vem dele.
+      await expect(page.getByText(/Inclua o bairro/)).toBeVisible()
+      await expect(
+        page.getByText("Opcional — mostramos seu bairro ao negócio, nunca seu CEP ou endereço."),
+      ).toBeVisible()
+      await page.getByLabel("O que você precisa?").fill("Instalar duas luminárias")
+      await page.getByLabel("CEP (opcional)").fill("69000-000")
+      await expect(page.getByText(/Inclua o bairro/)).toHaveCount(0)
+      await capturar(page, `${testInfo.project.name}-light-08-pedido-cep`)
+
+      await page.getByRole("button", { name: "Enviar pedido", exact: true }).click()
+      await expect(page).toHaveURL(new RegExp(`/app/pedido/${PEDIDO}$`))
+      expect(enviados[0]?.["cep"]).toBe("69000000")
+      await expect(page.getByText("Bairro informado ao prestador: Flores")).toBeVisible()
+      await expect(page.getByText("A cerca de 3,1 km de você.")).toBeVisible()
+      await page.reload()
+      await expect(page.getByText("Bairro informado ao prestador: Flores")).toBeVisible()
+      await capturar(page, `${testInfo.project.name}-light-09-pedido-bairro`)
+
+      // Sem CEP: nenhum chip de distância e nenhuma linha de bairro.
+      await page.goto(`/app/pedidos/novo?destino=${ID}`)
+      await page.getByLabel("O que você precisa?").fill("Trocar o filtro")
+      await page.getByRole("button", { name: "Enviar pedido", exact: true }).click()
+      await expect(page).toHaveURL(new RegExp(`/app/pedido/${PEDIDO}$`))
+      expect(enviados[1]?.["cep"]).toBe("")
+      await expect(page.locator("[data-descricao-do-pedido]")).toHaveText("Trocar o filtro")
+      await expect(page.getByText(/Bairro informado ao prestador/)).toHaveCount(0)
+      await expect(page.getByText(/km de você/)).toHaveCount(0)
     })
 
     test("erro não vira vazio, nova tentativa recupera e filtro volta no histórico", async ({

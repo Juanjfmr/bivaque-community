@@ -98,8 +98,8 @@ describe("idade da dica", () => {
 })
 
 describe("um pedido, um endereço", () => {
-  it("o detalhe mora em /indicacoes/<id>", () => {
-    expect(indicationHref("abc")).toBe("/indicacoes/abc")
+  it("o detalhe mora em /app/pergunta/<id>", () => {
+    expect(indicationHref("abc")).toBe("/app/pergunta/abc")
   })
   it("as indicações moram na Comunidade, e pedir abre a caixa focada", () => {
     expect(INDICATIONS_HREF).toBe("/community?vista=indicacoes")
@@ -158,7 +158,7 @@ describe("endereços antigos", () => {
   })
 
   it("/recommendations?focus=<id> abre o próprio pedido", () => {
-    expect(recommendationsRedirect({ focus: id })).toBe(`/indicacoes/${id}`)
+    expect(recommendationsRedirect({ focus: id })).toBe(`/app/pergunta/${id}`)
   })
 
   it("focus que não é id não vira endereço", () => {
@@ -167,7 +167,9 @@ describe("endereços antigos", () => {
 
   it("cada aba antiga tem destino", () => {
     expect(recommendationsRedirect({ aba: "request" })).toBe("/community?vista=indicacoes&pedir=1")
-    expect(recommendationsRedirect({ aba: "saved" })).toBe("/salvos?aba=indicacao")
+    // RUN-186: a tela de salvos saiu da web e o endereço antigo é um 307 — a aba
+    // "Salvas" vai direto à tela do app, sem `?aba=` (decisão 2.3.6 do lote).
+    expect(recommendationsRedirect({ aba: "saved" })).toBe("/app/salvos")
     expect(recommendationsRedirect({ aba: "browse" })).toBe("/community?vista=indicacoes")
     expect(recommendationsRedirect({})).toBe("/community?vista=indicacoes")
   })

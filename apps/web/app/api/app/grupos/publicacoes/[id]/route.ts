@@ -8,6 +8,7 @@ import {
   apresentarPublicacoes,
   CAMPOS_DO_COMENTARIO,
   type ComentarioBruto,
+  cidadeDoGrupo,
   grupoDaSessao,
   pagina,
   participacao,
@@ -38,6 +39,7 @@ export async function GET(request: NextRequest, { params }: Context): Promise<Ne
     if (grupo.visibility === "private" && membro?.status !== "approved") {
       return responder(request, { erro: "publicacao-nao-encontrada" }, 404)
     }
+    const cidade = await cidadeDoGrupo(client, grupo.locality_id)
     const conversa = await client
       .from("comments")
       .select(CAMPOS_DO_COMENTARIO)
@@ -66,11 +68,13 @@ export async function GET(request: NextRequest, { params }: Context): Promise<Ne
       {
         publicacao: publicacoes[0],
         grupo: apresentarGrupo(grupo, membro, userId, membros),
+        cidade,
         comentarios: linhas.map((c) => ({
           id: c.id,
           texto: c.content,
           criadaEm: c.created_at,
           autor: nomes.get(c.user_id) ?? "",
+          autorId: c.user_id,
           propria: c.user_id === userId,
           parentId: c.parent_id,
           respondeA: c.reply_to_id,

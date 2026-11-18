@@ -1,6 +1,13 @@
 ﻿import type { NextRequest, NextResponse } from "next/server"
 import { exigirSessao, opcoesDoApp, responder } from "../../../../../lib/app-api/rota-do-app"
-import { conversaDaSessao, cursorDe, mensagemDaLinha, nomeDaConversa, UUID } from "../_comum"
+import {
+  conversaDaSessao,
+  cursorDe,
+  mensagemDaLinha,
+  nomeDaConversa,
+  outroParticipante,
+  UUID,
+} from "../_comum"
 
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
@@ -36,7 +43,13 @@ export async function GET(request: NextRequest, { params }: Contexto): Promise<N
     return responder(
       request,
       {
-        conversa: { id, nome, tipo: conversa.context_type, contextoId: conversa.context_id },
+        conversa: {
+          id,
+          nome,
+          outroId: outroParticipante(conversa, auth.sessao.usuario.id),
+          tipo: conversa.context_type,
+          contextoId: conversa.context_id,
+        },
         mensagens: pagina.reverse().map((linha) => mensagemDaLinha(linha, auth.sessao.usuario.id)),
         anterior:
           (resultado.data?.length ?? 0) > 50 && ultima ? `${ultima.created_at}|${ultima.id}` : null,

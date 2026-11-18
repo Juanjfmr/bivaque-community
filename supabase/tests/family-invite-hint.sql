@@ -20,10 +20,11 @@ select is(
   'a two-letter local part does not leak its second character'
 );
 
--- 2. Creating an invite through the 4-argument path records the hint.
+-- 2. Creating an invite through the private path (the one the public session
+-- function calls) records the hint.
 select lives_ok(
   $$
-    select public.create_family_invitation(
+    select private.create_family_invitation(
       '10000000-0000-4000-8000-000000000001'::uuid,
       decode(repeat('de', 32), 'hex'),
       decode(repeat('12', 32), 'hex'),

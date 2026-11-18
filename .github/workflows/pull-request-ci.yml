@@ -4,15 +4,110 @@ on:
   push:
     branches: [main]
   pull_request:
+    # `labeled` faz aplicar a label ci:full disparar o run completo neste PR.
+    types: [opened, synchronize, reopened, labeled]
   workflow_dispatch:
+
+# Cada push novo no mesmo PR cancela o run anterior: só a última árvore do PR
+# interessa, e run obsoleto vira vermelho que ninguém olha. `cancel-in-progress` só
+# é verdadeiro em pull_request — run de push na main nunca é cancelado, porque cada
+# árvore da main precisa da própria prova (ADR-20261114, emenda de 16/11).
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
   contents: read
 
 jobs:
-  ci:
-    name: Install, test, and build
-    runs-on: ubuntu-latest
+  # PR leve (só quadro, docs e regras de agente; lista em scripts/ci/pr-leve.mjs) não
+  # sobe a stack: fast + agregador bastam, mesmo com a label ci:full. Qualquer arquivo
+  # fora da lista devolve o PR ao CI completo. Fora de pull_request a saída fica vazia
+  # e nada muda: push na main roda o completo de sempre.
+  changes:
+    name: Classify PR (leve ou completo)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      pull-requests: read # lista de arquivos do PR
+    outputs:
+      leve: ${{ steps.classify.outputs.leve }}
+    steps:
+      # O classificador vem da BASE, nunca do PR: um PR que alargue a lista de
+      # caminhos leves não pode se classificar com a própria regra.
+      - name: Checkout the classifier from the base
+        if: github.event_name == 'pull_request'
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          sparse-checkout: scripts/ci
+
+      - name: Classify changed files
+        id: classify
+        if: github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR: ${{ github.event.pull_request.number }}
+        # Base sem classificador (o PR que o introduz): completo.
+        run: |
+          if [ -f scripts/ci/pr-leve.mjs ]; then
+            node scripts/ci/pr-leve.mjs "$PR"
+          else
+            echo "base sem scripts/ci/pr-leve.mjs: completo"
+            echo "leve=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  # Ciclo de implementação: feedback em <=5 min, sem Supabase/build/E2E (ADR-20261114).
+  fast:
+    name: Fast checks
+    # ubuntu-latest migrou para 26.04, que o Playwright 1.51.1 não suporta
+    # (chromium). Pinar 24.04 até o Playwright ser atualizado (pin intencional).
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          run_install: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Typecheck E2E specs
+        run: pnpm exec tsc -p tests/e2e/tsconfig.json
+
+      - name: Unit, privacy and scope tests
+        run: pnpm test
+
+      - name: Secrets scan
+        run: pnpm test:secrets
+
+  ci-core:
+    name: CI core / build, db, e2e comuns
+    # ubuntu-latest migrou para 26.04, que o Playwright 1.51.1 não suporta
+    # (chromium). Pinar 24.04 até o Playwright ser atualizado (pin intencional).
+    runs-on: ubuntu-24.04
+    # Completo só no fechamento do lote (label ci:full), push na main ou dispatch;
+    # ver ADR-20261114.
+    needs: changes
+    if: needs.changes.outputs.leve != 'true' && (github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'ci:full'))
 
     steps:
       - name: Checkout
@@ -41,24 +136,10 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Lint
-        run: pnpm lint
-
-      - name: Typecheck
-        run: pnpm typecheck
-
-      # Os specs de E2E da raiz são TypeScript e não passam pelo typecheck dos
-      # workspaces; sem este passo um spec quebrado só aparecia depois de subir
-      # o Supabase inteiro. Os specs de apps/app entram no `tsc --noEmit` do
-      # build do app, que inclui `tests/`.
-      - name: Typecheck E2E specs
-        run: pnpm exec tsc -p tests/e2e/tsconfig.json
-
-      - name: Unit, privacy and scope tests
-        run: pnpm test
-
-      - name: Secrets scan
-        run: pnpm test:secrets
+      # Lint, typecheck, typecheck:e2e, unit/privacy/scope e secrets scan rodam no
+      # job fast (sempre). O agregador ci exige o fast, então não se duplicam aqui
+      # (RUN-151: ~60s a menos no ci-core). O build do Next abaixo faz o próprio
+      # typecheck; os specs E2E da raiz são typecheckados no fast.
 
       # `supabase start` pulls the whole stack from the public ECR, and the ECR
       # refused it twice in a row with "toomanyrequests: Data limit exceeded"
@@ -67,7 +148,24 @@ jobs:
       # ECR still refuses, take the same tag from Docker Hub and retag it under
       # the name the CLI asks for, so `supabase start` finds it locally.
       # Tags are the defaults of the pinned CLI (2.107.0), from `supabase services`.
+      #
+      # O pull da stack custa ~6 min por run completo (diagnóstico de 16/11, P4). O
+      # cache é por CONJUNTO de tags: um `docker load` devolve os mesmos bytes, e um
+      # tag novo muda a chave e nada mais. O pre-pull com backoff abaixo continua
+      # sendo o caminho do cache miss.
+      - name: Cache Supabase stack images
+        id: supabase-images
+        uses: actions/cache@v6
+        with:
+          path: /tmp/supabase-images.tar
+          key: supabase-images-2.107.0-postgres-17.6.1.136-gotrue-v2.190.0-postgrest-v14.13-storage-api-v1.60.20-postgres-meta-v0.96.6-studio-2026.06.15-sha-a412298-kong-2.8.1-imgproxy-v3.8.0-mailpit-v1.22.3
+
+      - name: Load Supabase stack images from cache
+        if: steps.supabase-images.outputs.cache-hit == 'true'
+        run: docker load -i /tmp/supabase-images.tar
+
       - name: Pre-pull Supabase stack images
+        if: steps.supabase-images.outputs.cache-hit != 'true'
         run: |
           pull() {
             local ecr="public.ecr.aws/supabase/$1" hub="$2"
@@ -86,6 +184,20 @@ jobs:
           pull kong:2.8.1 kong:2.8.1
           pull imgproxy:v3.8.0 darthsim/imgproxy:v3.8.0
           pull mailpit:v1.22.3 axllent/mailpit:v1.22.3
+          # Grava o conjunto para o cache do próximo run. Imagem que faltou não
+          # derruba o passo (o pull acima já avisou); o cache simplesmente não é
+          # gravado e o run seguinte baixa de novo.
+          docker save -o /tmp/supabase-images.tar \
+            public.ecr.aws/supabase/postgres:17.6.1.136 \
+            public.ecr.aws/supabase/gotrue:v2.190.0 \
+            public.ecr.aws/supabase/postgrest:v14.13 \
+            public.ecr.aws/supabase/storage-api:v1.60.20 \
+            public.ecr.aws/supabase/postgres-meta:v0.96.6 \
+            public.ecr.aws/supabase/studio:2026.06.15-sha-a412298 \
+            public.ecr.aws/supabase/kong:2.8.1 \
+            public.ecr.aws/supabase/imgproxy:v3.8.0 \
+            public.ecr.aws/supabase/mailpit:v1.22.3 \
+            || echo "::warning::nem todas as imagens foram salvas; o proximo run baixa de novo"
 
       - name: Start local Supabase
         run: pnpm exec supabase start
@@ -170,25 +282,124 @@ jobs:
       - name: Schema lint
         run: pnpm db:lint
 
+      - name: Cache Playwright browsers
+        id: playwright-browsers
+        uses: actions/cache@v6
+        with:
+          # Versão pinada em package.json (1.51.1) + lockfile: bump de pin muda a chave.
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-1.51.1-${{ hashFiles('pnpm-lock.yaml') }}
+
+      # Fallback do cache miss. No cache hit não roda: a imagem ubuntu-24.04 do
+      # runner já traz as bibliotecas de sistema que o --with-deps instalaria.
       - name: Install Playwright Chromium
+        if: steps.playwright-browsers.outputs.cache-hit != 'true'
         run: pnpm exec playwright install --with-deps chromium
 
       - name: Reset local database (with seed)
         run: pnpm exec supabase db reset --local
 
+      # CI-E2E-UPSTREAM-INSTAVEL: mitigacao candidata da corrida Kong<->PostgREST
+      # (502: recv() failed 104 / upstream prematurely closed) no lote serial. Aplica
+      # upstream_keepalive_idle_timeout=10 no Kong EM EXECUCAO via `kong prepare` com
+      # o template custom + HUP no master (receita provada na reinvestigacao do
+      # RUN-144). NUNCA `kong reload` (regenera o template default, derruba o server
+      # 8088 de templates -> GoTrue 404 -> F01 sem codigo) e NUNCA recriar o container
+      # (perde os binds: a regressao do RUN-144). DEPOIS dos resets: se o reset
+      # reinicia o Kong, o entrypoint regenera .kong_env sem o override e aplicar
+      # antes seria neutralizado. A cura nao e provada (idle=10 absolvido no
+      # experimento isolado); o card fecha pelos 10 runs verdes, nao por este step.
+      - name: Apply Kong upstream keepalive idle timeout
+        run: |
+          set -euo pipefail
+          kong=$(docker ps --filter "name=supabase_kong_" --format "{{.Names}}" | head -n1)
+          if [ -z "$kong" ]; then
+            echo "::error::container supabase_kong_* nao encontrado; o override nao foi aplicado"
+            exit 1
+          fi
+
+          # `prepare` le o env do processo do exec e escreve .kong_env, que o init
+          # do nginx relê no HUP. O -p e obrigatorio: sem ele o --nginx-conf e
+          # silenciosamente ignorado nesta imagem.
+          docker exec -e KONG_UPSTREAM_KEEPALIVE_IDLE_TIMEOUT=10 "$kong" \
+            kong prepare -p /usr/local/kong --nginx-conf /home/kong/custom_nginx.template
+          docker exec "$kong" sh -c 'kill -HUP $(cat /usr/local/kong/pids/nginx.pid)'
+          sleep 2
+
+          echo "Kong: $kong"
+          echo "--- .kong_env ---"
+          docker exec "$kong" grep -i upstream_keepalive_idle_timeout /usr/local/kong/.kong_env
+          if ! docker exec "$kong" grep -qiE '^upstream_keepalive_idle_timeout *= *10$' /usr/local/kong/.kong_env; then
+            echo "::error::.kong_env nao ficou com upstream_keepalive_idle_timeout = 10; o HUP nao aplicou o valor"
+            exit 1
+          fi
+
+          echo "--- server 8088 no nginx.conf gerado ---"
+          if ! docker exec "$kong" grep -q 'listen 0.0.0.0:8088' /usr/local/kong/nginx.conf; then
+            echo "::error::nginx.conf gerado nao tem o server 8088 dos templates; o GoTrue cairia no template default (F01)"
+            exit 1
+          fi
+          docker exec "$kong" grep -n '8088' /usr/local/kong/nginx.conf
+
+          echo "--- fetch de um template de email em 127.0.0.1:8088 ---"
+          # A imagem nao tem curl; o wget do BusyBox responde o status HTTP.
+          docker exec "$kong" wget -q -S -O /dev/null http://127.0.0.1:8088/email/confirmation.html 2>&1 \
+            | tee /tmp/kong-8088.txt || true
+          if ! grep -q '200 OK' /tmp/kong-8088.txt; then
+            echo "::error::o server 8088 nao respondeu 200 para o template; o F01 quebraria (GoTrue 404 -> magic link)"
+            exit 1
+          fi
+          echo 'OK: upstream_keepalive_idle_timeout=10 aplicado, 8088 vivo servindo os templates'
+
       # Dois lotes de propósito: o normal roda em paralelo e EXCLUI os specs
-      # marcados @stateful; esses rodam em serial depois, porque escrevem nas
-      # mesmas linhas (grupo privado, save da mesma conta, pendentes da vila) e
-      # colidiam entre si quando tudo rodava junto. Ver o contrato em
+      # marcados @stateful; esses rodam no job matrix e2e-stateful (um runner por
+      # viewport, banco independente, serial dentro de cada um). Ver o contrato em
       # tests/scope/local-command-surface.test.mjs.
       - name: Root E2E tests (parallel, excluding @stateful)
-        run: pnpm test:e2e
+        env:
+          # O `--reporter` do CLI substitui o do config: aqui vai o mesmo par do
+          # playwright.config.ts (html em playwright-report/, list no log) mais o
+          # json que o passo seguinte lê para anotar flake.
+          PLAYWRIGHT_JSON_OUTPUT_FILE: ${{ github.workspace }}/ci-e2e-report.json
+        run: pnpm test:e2e --reporter=html,list,json
 
-      # O trace de falha vai junto no artefato (test-results/): o relatório só
-      # mostra o passo que travou, e um spec stateful que passa local e falha
-      # aqui não tem outra testemunha do que a tela tinha (PR #98, 21/10/2026).
-      - name: Root E2E tests (stateful, serial)
-        run: pnpm test:e2e:stateful --trace=retain-on-failure
+      # Flake absorvido pelo retry vira aviso no check em vez de sumir no artefato.
+      # Roda mesmo em falha, e nunca muda o código de saída do job.
+      - name: Annotate flaky E2E tests
+        if: always()
+        run: node scripts/ci/anotar-flakes.mjs ci-e2e-report.json
+
+      # Testemunha do flaky (CI-E2E-UPSTREAM-INSTAVEL): em falha, guarda os logs da
+      # stack local. O tail de 200 linhas do Kong só pegava access log e o evento 502
+      # ficava de fora; aqui o tail do Kong é maior e os erros/upstream são extraídos
+      # à parte, com rota e timestamp, para diagnosticar a causa real do 502.
+      - name: Collect local Supabase diagnostics
+        if: failure()
+        run: |
+          mkdir -p ci-stack-logs
+          for service in kong rest auth db; do
+            container=$(docker ps -a --filter "name=supabase_${service}_" --format "{{.Names}}" | head -n1)
+            if [ -z "$container" ]; then
+              echo "Container supabase_${service}_* nao encontrado" > "ci-stack-logs/${service}-container-missing.txt"
+              continue
+            fi
+            tail_lines=200
+            if [ "$service" = "kong" ]; then tail_lines=10000; fi
+            docker logs --tail "$tail_lines" "$container" > "ci-stack-logs/${service}.log" 2>&1 || true
+            docker inspect --format '{{.RestartCount}}' "$container" > "ci-stack-logs/${service}-restart-count.txt" 2>&1 || true
+          done
+          kong=$(docker ps -a --filter "name=supabase_kong_" --format "{{.Names}}" | head -n1)
+          if [ -n "$kong" ]; then
+            docker logs "$kong" 2>&1 | grep -iE '\[error\]|\[crit\]|\[warn\]|upstream|prematurely|reset by peer|HTTP/1.1" 502' > ci-stack-logs/kong-errors.log || true
+          fi
+          db=$(docker ps -a --filter "name=supabase_db_" --format "{{.Names}}" | head -n1)
+          if [ -n "$db" ]; then
+            docker exec -u postgres "$db" psql -U postgres -d postgres -Atc \
+              "SHOW max_connections; SELECT count(*) FROM pg_stat_activity;" \
+              > ci-stack-logs/db-connections.txt 2>&1 || true
+          else
+            echo "Container do banco nao encontrado" > ci-stack-logs/db-connections.txt
+          fi
 
       - name: Upload Playwright artifacts
         if: always()
@@ -201,6 +412,7 @@ jobs:
             test-results/
             apps/web/playwright-report/
             apps/web/test-results/
+            ci-stack-logs/
 
       # `.visual/` é ignorado pelo Git e concentra as capturas de tela das
       # provas visuais. Sem o artefato, a evidência de uma falha de UI morre
@@ -214,3 +426,238 @@ jobs:
           include-hidden-files: true
           path: .visual/
           retention-days: 7
+
+  # RUN-150 (fase C): o lote stateful rodava em série num runner só (3 viewports,
+  # ~8-10 min). Agora um runner por viewport, cada um com sua stack Supabase e banco
+  # INDEPENDENTE: serial dentro do viewport (preserva a separação das mesmas linhas —
+  # grupo privado, save da mesma conta, pendentes da vila), sem colisão cross-viewport
+  # porque os bancos são separados. O script test:e2e:stateful não muda (guard
+  # local-command-surface); --project recorta o viewport. O setup é duplicado do
+  # ci-core porque cada runner precisa da própria stack; o tradeoff é mais minutos de
+  # runner em troca de wall time menor no fechamento.
+  e2e-stateful:
+    name: Stateful / ${{ matrix.project }}
+    # ubuntu-latest migrou para 26.04, que o Playwright 1.51.1 não suporta (pin intencional).
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    needs: changes
+    if: needs.changes.outputs.leve != 'true' && (github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'ci:full'))
+    strategy:
+      fail-fast: false
+      matrix:
+        project: [mobile-375, tablet-768, desktop-1440]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          run_install: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Cache Next.js build artifacts
+        uses: actions/cache@v6
+        with:
+          path: apps/web/.next/cache
+          key: ${{ runner.os }}-next-${{ hashFiles('pnpm-lock.yaml') }}-${{ hashFiles('apps/web/**/*.[jt]s', 'apps/web/**/*.[jt]sx') }}
+          restore-keys: |
+            ${{ runner.os }}-next-${{ hashFiles('pnpm-lock.yaml') }}-
+            ${{ runner.os }}-next-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Cache Supabase stack images
+        id: supabase-images
+        uses: actions/cache@v6
+        with:
+          path: /tmp/supabase-images.tar
+          key: supabase-images-2.107.0-postgres-17.6.1.136-gotrue-v2.190.0-postgrest-v14.13-storage-api-v1.60.20-postgres-meta-v0.96.6-studio-2026.06.15-sha-a412298-kong-2.8.1-imgproxy-v3.8.0-mailpit-v1.22.3
+
+      - name: Load Supabase stack images from cache
+        if: steps.supabase-images.outputs.cache-hit == 'true'
+        run: docker load -i /tmp/supabase-images.tar
+
+      - name: Pre-pull Supabase stack images
+        if: steps.supabase-images.outputs.cache-hit != 'true'
+        run: |
+          pull() {
+            local ecr="public.ecr.aws/supabase/$1" hub="$2"
+            for delay in 0 10 30 60; do
+              sleep "$delay"
+              docker pull -q "$ecr" && return 0
+            done
+            docker pull -q "$hub" && docker tag "$hub" "$ecr"               || echo "::warning::$1 nao baixou do ECR nem do Docker Hub; o supabase start tenta de novo"
+          }
+          pull postgres:17.6.1.136 supabase/postgres:17.6.1.136
+          pull gotrue:v2.190.0 supabase/gotrue:v2.190.0
+          pull postgrest:v14.13 postgrest/postgrest:v14.13
+          pull storage-api:v1.60.20 supabase/storage-api:v1.60.20
+          pull postgres-meta:v0.96.6 supabase/postgres-meta:v0.96.6
+          pull studio:2026.06.15-sha-a412298 supabase/studio:2026.06.15-sha-a412298
+          pull kong:2.8.1 kong:2.8.1
+          pull imgproxy:v3.8.0 darthsim/imgproxy:v3.8.0
+          pull mailpit:v1.22.3 axllent/mailpit:v1.22.3
+          docker save -o /tmp/supabase-images.tar \
+            public.ecr.aws/supabase/postgres:17.6.1.136 \
+            public.ecr.aws/supabase/gotrue:v2.190.0 \
+            public.ecr.aws/supabase/postgrest:v14.13 \
+            public.ecr.aws/supabase/storage-api:v1.60.20 \
+            public.ecr.aws/supabase/postgres-meta:v0.96.6 \
+            public.ecr.aws/supabase/studio:2026.06.15-sha-a412298 \
+            public.ecr.aws/supabase/kong:2.8.1 \
+            public.ecr.aws/supabase/imgproxy:v3.8.0 \
+            public.ecr.aws/supabase/mailpit:v1.22.3 \
+            || echo "::warning::nem todas as imagens foram salvas; o proximo run baixa de novo"
+
+      - name: Start local Supabase
+        run: pnpm exec supabase start
+
+      - name: Write local Supabase env
+        run: |
+          pnpm exec supabase status -o env > /tmp/supabase.env
+          . /tmp/supabase.env
+          {
+            echo "SUPABASE_URL=$API_URL"
+            echo "SUPABASE_SERVICE_ROLE_KEY=$SERVICE_ROLE_KEY"
+            echo "NEXT_PUBLIC_SUPABASE_URL=$API_URL"
+            echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=$ANON_KEY"
+            echo "BIVAQUE_VISUAL_EMAIL=visual@bivaque.example.invalid"
+            echo "BIVAQUE_VISUAL_PASSWORD=bivaque-e2e-local"
+            echo "BIVAQUE_E2E_OPERATOR_PASSWORD=bivaque-e2e-local"
+            echo "BIVAQUE_LIMITER_PEPPER=ci-e2e-limiter-pepper"
+          } > apps/web/.env.local
+
+      - name: Build web app
+        run: pnpm build
+
+      - name: Cache Playwright browsers
+        id: playwright-browsers
+        uses: actions/cache@v6
+        with:
+          # Versão pinada em package.json (1.51.1) + lockfile: bump de pin muda a chave.
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-1.51.1-${{ hashFiles('pnpm-lock.yaml') }}
+
+      # Fallback do cache miss. No cache hit não roda: a imagem ubuntu-24.04 do
+      # runner já traz as bibliotecas de sistema que o --with-deps instalaria.
+      - name: Install Playwright Chromium
+        if: steps.playwright-browsers.outputs.cache-hit != 'true'
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Reset local database (with seed)
+        run: pnpm exec supabase db reset --local
+
+      - name: Apply Kong upstream keepalive idle timeout
+        run: |
+          set -euo pipefail
+          kong=$(docker ps --filter "name=supabase_kong_" --format "{{.Names}}" | head -n1)
+          if [ -z "$kong" ]; then
+            echo "::error::container supabase_kong_* nao encontrado; o override nao foi aplicado"
+            exit 1
+          fi
+          docker exec -e KONG_UPSTREAM_KEEPALIVE_IDLE_TIMEOUT=10 "$kong" \
+            kong prepare -p /usr/local/kong --nginx-conf /home/kong/custom_nginx.template
+          docker exec "$kong" sh -c 'kill -HUP $(cat /usr/local/kong/pids/nginx.pid)'
+          sleep 2
+          docker exec "$kong" grep -i upstream_keepalive_idle_timeout /usr/local/kong/.kong_env
+          if ! docker exec "$kong" grep -qiE '^upstream_keepalive_idle_timeout *= *10$' /usr/local/kong/.kong_env; then
+            echo "::error::.kong_env nao ficou com upstream_keepalive_idle_timeout = 10; o HUP nao aplicou o valor"
+            exit 1
+          fi
+          if ! docker exec "$kong" grep -q 'listen 0.0.0.0:8088' /usr/local/kong/nginx.conf; then
+            echo "::error::nginx.conf gerado nao tem o server 8088 dos templates; o GoTrue cairia no template default (F01)"
+            exit 1
+          fi
+          docker exec "$kong" wget -q -S -O /dev/null http://127.0.0.1:8088/email/confirmation.html 2>&1 \
+            | tee /tmp/kong-8088.txt || true
+          if ! grep -q '200 OK' /tmp/kong-8088.txt; then
+            echo "::error::o server 8088 nao respondeu 200 para o template; o F01 quebraria (GoTrue 404 -> magic link)"
+            exit 1
+          fi
+          echo 'OK: upstream_keepalive_idle_timeout=10 aplicado, 8088 vivo servindo os templates'
+
+      # Serial dentro do viewport (workers:1 no script); banco independente por runner.
+      - name: Root E2E tests (stateful, ${{ matrix.project }})
+        env:
+          # Mesmo par do playwright.config.ts + json para o passo de anotação.
+          PLAYWRIGHT_JSON_OUTPUT_FILE: ${{ github.workspace }}/ci-e2e-report-${{ matrix.project }}.json
+        run: pnpm test:e2e:stateful --project=${{ matrix.project }} --trace=retain-on-failure --reporter=html,list,json
+
+      - name: Annotate flaky E2E tests
+        if: always()
+        run: node scripts/ci/anotar-flakes.mjs ci-e2e-report-${{ matrix.project }}.json
+
+      - name: Collect local Supabase diagnostics
+        if: failure()
+        run: |
+          mkdir -p ci-stack-logs
+          for service in kong rest auth db; do
+            container=$(docker ps -a --filter "name=supabase_${service}_" --format "{{.Names}}" | head -n1)
+            if [ -z "$container" ]; then
+              echo "Container supabase_${service}_* nao encontrado" > "ci-stack-logs/${service}-container-missing.txt"
+              continue
+            fi
+            tail_lines=200
+            if [ "$service" = "kong" ]; then tail_lines=10000; fi
+            docker logs --tail "$tail_lines" "$container" > "ci-stack-logs/${service}.log" 2>&1 || true
+            docker inspect --format '{{.RestartCount}}' "$container" > "ci-stack-logs/${service}-restart-count.txt" 2>&1 || true
+          done
+          kong=$(docker ps -a --filter "name=supabase_kong_" --format "{{.Names}}" | head -n1)
+          if [ -n "$kong" ]; then
+            docker logs "$kong" 2>&1 | grep -iE '\[error\]|\[crit\]|\[warn\]|upstream|prematurely|reset by peer|HTTP/1.1" 502' > ci-stack-logs/kong-errors.log || true
+          fi
+
+      - name: Upload Playwright artifacts
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: playwright-artifacts-stateful-${{ matrix.project }}
+          if-no-files-found: ignore
+          path: |
+            playwright-report/
+            test-results/
+            apps/web/playwright-report/
+            apps/web/test-results/
+            ci-stack-logs/
+
+  # Agregador: preserva o nome de check "Install, test, and build" (gate de merge).
+  # Verde se ci-core e os 3 stateful passaram (ou foram pulados sem a label); vermelho
+  # se qualquer parte falhou. O if always() garante que roda mesmo se um need falhar.
+  # Em PR leve ele também roda e sai verde só com o fast verde: o check obrigatório
+  # nunca fica pendente num PR de quadro/docs.
+  ci:
+    name: Install, test, and build
+    needs: [changes, fast, ci-core, e2e-stateful]
+    if: always() && (github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'ci:full') || needs.changes.outputs.leve == 'true')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Aggregate CI results
+        run: |
+          ch="${{ needs.changes.result }}"
+          leve="${{ needs.changes.outputs.leve }}"
+          fa="${{ needs.fast.result }}"
+          core="${{ needs.ci-core.result }}"
+          st="${{ needs.e2e-stateful.result }}"
+          echo "changes: $ch (leve=$leve) | fast: $fa | ci-core: $core | e2e-stateful: $st"
+          if [ "$ch" != "success" ] || [ "$fa" != "success" ]; then
+            echo "::error::a classificação ou os Fast checks não passaram (changes=$ch, fast=$fa)"
+            exit 1
+          fi
+          for r in "$core" "$st"; do
+            if [ "$r" = "failure" ] || [ "$r" = "cancelled" ]; then
+              echo "::error::uma parte do CI falhou ($r)"
+              exit 1
+            fi
+          done
+          if [ "$leve" = "true" ]; then
+            echo "PR leve: só quadro/docs; build, banco e E2E não se aplicam"
+          fi

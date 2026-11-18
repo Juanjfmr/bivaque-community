@@ -1,0 +1,35 @@
+{
+  "title": "Quadro mínimo de fixture",
+  "updatedAt": "2026-11-15",
+  "sourcePolicy": "Fixture de tests/fixtures/board-apply; não é o quadro real.",
+  "cards": [
+    {
+      "id": "MINI-01",
+      "title": "Primeiro cartão da fixture",
+      "phase": "Teste",
+      "priority": "P1",
+      "category": "infra",
+      "status": "now",
+      "description": "Cartão que será movido para done pela fixture.",
+      "checklist": ["escrever o comando de escrita", "provar atomicidade"],
+      "proof": ["fixture criada para o lote HRN-001"],
+      "dependencies": [],
+      "updatedAt": "2026-11-15",
+      "sourceRevision": "a1b2c3d"
+    },
+    {
+      "id": "MINI-02",
+      "title": "Segundo cartão da fixture",
+      "phase": "Teste",
+      "priority": "P2",
+      "category": "infra",
+      "status": "next",
+      "description": "Cartão que recebe update, nota e item de checklist.",
+      "checklist": ["primeiro item", "segundo item"],
+      "proof": ["fixture criada para o lote HRN-001"],
+      "dependencies": ["MINI-01"],
+      "updatedAt": "2026-11-15",
+      "sourceRevision": "a1b2c3d"
+    }
+  ]
+}

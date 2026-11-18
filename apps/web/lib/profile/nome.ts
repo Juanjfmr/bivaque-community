@@ -1,7 +1,7 @@
-// Nome de exibição — a regra da edição do perfil que a web antiga aplicava
-// (`(shell)/profile/editar/page.tsx`: 2 a 80 caracteres, espaços colapsados).
-// A tela valida para responder rápido; o CHECK de `profiles.display_name` é a
-// fronteira real. Extraído da tela para a rota do app chamar a MESMA regra.
+// Nome de exibição — a regra da edição do perfil que a tela web aplicava
+// (2 a 80 caracteres, espaços colapsados) e que a rota do app chama desde o
+// RUN-172, quando a tela saiu. A tela valida para responder rápido; o CHECK de
+// `profiles.display_name` é a fronteira real.
 
 export const NOME_MIN_LENGTH = 2
 export const NOME_MAX_LENGTH = 80

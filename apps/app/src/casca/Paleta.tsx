@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/command"
 import type { NomeDeIcone } from "@/lib/icones"
 import { useEntradaDaTela, useNavegacao } from "@/lib/navegacao/react"
+import { tituloDaRota } from "@/lib/navegacao/rotas"
 import { normalizar } from "@/lib/texto"
 
 /**
@@ -51,7 +52,8 @@ const ITENS: readonly Item[] = [
     rotulo: "Contratar serviço",
     icone: "build",
     grupo: "Ações",
-    destino: "pedidos",
+    // F07 (RUN-177): o pedido tem endereço próprio; a paleta leva à folha.
+    destino: "pedido-novo",
   },
   {
     id: "acao-desapego",
@@ -98,7 +100,7 @@ const ITENS: readonly Item[] = [
   },
   {
     id: "ir-negocios",
-    rotulo: "Negócios locais",
+    rotulo: tituloDaRota("negocios"),
     icone: "storefront",
     grupo: "Ir para",
     destino: "negocios",

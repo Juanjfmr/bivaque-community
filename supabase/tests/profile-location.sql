@@ -11,12 +11,14 @@
 --     bairro, distâncias diferentes) e devolve metros inteiros;
 --   * o cache `public.cep_geocodes` é só do service_role;
 --   * as constraints recusam CEP inválido, coordenada solta e fora de faixa;
+--   * CEP conhecido sem coordenada é aceito e a origem sem posição não vira
+--     distância zero (ADR-20261112);
 --   * a purga da conta zera cep, latitude e longitude.
 
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(44);
+select plan(54);
 
 \ir fixtures/foundation.inc
 
@@ -99,8 +101,8 @@ select is(
 
 select is(
   pg_get_function_result('public.get_my_profile_location()'::regprocedure),
-  'TABLE(cep text, definida boolean)',
-  'a função não devolve latitude nem longitude'
+  'TABLE(cep text, definida boolean, com_coordenada boolean)',
+  'a função não devolve latitude nem longitude, só se há posição'
 );
 
 select throws_ok(
@@ -341,7 +343,7 @@ select throws_ok(
 select throws_ok(
   $$
     update public.profiles
-       set latitude = 1
+       set cep = null, latitude = 1, longitude = 1
      where user_id = '10000000-0000-4000-8000-000000000004'
   $$,
   '23514', null,
@@ -365,7 +367,7 @@ select throws_ok(
      where user_id = '10000000-0000-4000-8000-000000000004'
   $$,
   '23514', null,
-  'CEP sem as duas coordenadas é recusado pela constraint'
+  'latitude sem longitude é recusada pela constraint'
 );
 
 -- ───────────────────────────────────────────────────────────────────────────
@@ -470,6 +472,107 @@ select is(
   null,
   'a purga zera a longitude'
 );
+
+-- ───────────────────────────────────────────────────────────────────────────
+-- 10. CEP conhecido sem coordenada (ADR-20261112)
+-- ───────────────────────────────────────────────────────────────────────────
+
+-- A constraint aceita CEP sozinho, que é o que a rota grava quando nenhuma
+-- fonte localiza o CEP.
+select lives_ok(
+  $$
+    update public.profiles
+       set cep = '69000001', latitude = null, longitude = null
+     where user_id = '10000000-0000-4000-8000-000000000004'
+  $$,
+  'CEP sem coordenada é aceito pela constraint'
+);
+
+set local role service_role;
+
+select lives_ok(
+  $$ select public.set_member_location('10000000-0000-4000-8000-000000000004', '69000001', null, null) $$,
+  'a função grava CEP sem coordenada'
+);
+
+select throws_ok(
+  $$
+    select public.set_member_location(
+      '10000000-0000-4000-8000-000000000004',
+      '69000001',
+      -3.1,
+      null
+    )
+  $$,
+  '22023', null,
+  'latitude sem longitude é recusada pela função'
+);
+
+select throws_ok(
+  $$
+    select public.set_member_location(
+      '10000000-0000-4000-8000-000000000004',
+      '69000001',
+      null,
+      -60
+    )
+  $$,
+  '22023', null,
+  'longitude sem latitude é recusada pela função'
+);
+
+reset role;
+
+-- O helper de distância não transforma origem sem posição em distância: com
+-- qualquer argumento nulo a função é `strict` e devolve NULL.
+select is(
+  private.distancia_em_metros(null, null, -3.100000, -60.000000),
+  null,
+  'o helper de distância com origem nula devolve NULL, nunca quilômetros inventados'
+);
+
+set local role authenticated;
+select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000004', true);
+
+select is(
+  (select cep from public.get_my_profile_location()),
+  '69000001',
+  'o dono vê o CEP guardado sem posição'
+);
+
+select is(
+  (select com_coordenada from public.get_my_profile_location()),
+  false,
+  'a leitura do dono marca a localização como sem posição'
+);
+
+select is(
+  (select definida from public.get_my_profile_location()),
+  true,
+  'CEP sem posição continua sendo localização definida'
+);
+
+-- Distância com origem sem posição é ausente, nunca zero: um zero seria uma
+-- distância inventada, que o ADR proíbe.
+select is(
+  public.distance_to_neighborhood('70000000-0000-4000-8000-000000000001'),
+  null,
+  'origem sem coordenada devolve NULL, nunca zero'
+);
+
+-- Nem a linha do CEP sem posição tem caminho de leitura para outro membro.
+select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000002', true);
+
+select throws_ok(
+  $$
+    select cep from public.profiles
+     where user_id = '10000000-0000-4000-8000-000000000004'
+  $$,
+  '42501', null,
+  'outro membro não lê a linha do CEP sem posição'
+);
+
+reset role;
 
 select * from finish();
 

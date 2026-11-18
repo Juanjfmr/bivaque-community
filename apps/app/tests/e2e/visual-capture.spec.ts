@@ -10,7 +10,7 @@ const TELAS = [
 ] as const
 
 for (const tela of TELAS) {
-  for (const esquema of ["light", "dark"] as const) {
+  for (const esquema of ["light"] as const) {
     test(`captura real ${tela.id} — ${esquema}`, async ({ page }, testInfo) => {
       await page.emulateMedia({ colorScheme: esquema, reducedMotion: "reduce" })
       await page.goto(tela.caminho)

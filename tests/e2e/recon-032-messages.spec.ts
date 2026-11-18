@@ -1,10 +1,10 @@
 // RECON-032 — conversa endereçavel por URL (spec C12) e leitura de
 // notificacoes (C08) na conta do membro-1. A conversa e criada pelo RPC
-// `open_conversation`, idempotente pelo par — o mesmo id vale entre execucoes
-// e vira a fixture da captura /messages/<thread>.
+// `open_conversation`, idempotente pelo par — o mesmo id vale entre execucoes.
+// Desde o RUN-166 a tela antiga saiu da web: cada visita a /messages aqui
+// tambem prova que a URL velha cai no app (/app/conversa/[id]) pela regra de
+// redirect, que nao mudou.
 
-import { mkdirSync, writeFileSync } from "node:fs"
-import { join } from "node:path"
 import { expect, test } from "@playwright/test"
 import {
   mintSession,
@@ -59,11 +59,6 @@ test.beforeAll(async () => {
     throw new Error(`open_conversation falhou: ${result.status}`)
   }
   conversationId = String(result.data)
-  mkdirSync(join(process.cwd(), ".visual", "fixtures"), { recursive: true })
-  writeFileSync(
-    join(process.cwd(), ".visual", "fixtures", "message-thread.json"),
-    `${JSON.stringify({ path: `/messages/${conversationId}` }, null, 2)}\n`,
-  )
 })
 
 test.describe("conversa por URL estavel", () => {
@@ -155,21 +150,13 @@ test.describe("leitura de notificacoes persiste (prancha 54)", () => {
     await seedAs(context, MEMBRO_1_EMAIL)
     const page = await context.newPage()
 
-    await page.goto("/notifications")
-    await expect(page.getByRole("heading", { name: "Notificações" })).toBeVisible()
-    const badge = page.locator('a[href="/notifications"] span.ml-auto')
+    // RUN-172: o host era /profile; o contador da sidebar é o da casca web, viva
+    // em toda rota de membro do grupo. RUN-186: /salvos virou 307 para o app.
+    await page.goto("/community")
+    const badge = page.locator('a[href="/app/avisos"] span.ml-auto')
     await expect(badge).toBeVisible({ timeout: 10_000 })
     const unreadCount = Number(await badge.textContent())
     expect(unreadCount).toBeGreaterThan(0)
-
-    await page.getByRole("button", { name: "Marcar todas como lidas" }).click()
-    await expect(page.getByRole("button", { name: "Marcar todas como lidas" })).toHaveCount(0)
-
-    // leitura persiste: reload nao reabre o contador nem reentrega as lidas
-    await page.reload()
-    await expect(page.locator('a[href="/notifications"] span.ml-auto')).toHaveCount(0)
-    await page.getByRole("tab", { name: "Não lidas" }).click()
-    await expect(page.getByText("Nada por ler")).toBeVisible()
 
     await context.close()
   })

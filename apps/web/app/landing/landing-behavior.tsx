@@ -33,6 +33,12 @@ export function LandingBehavior() {
     }
     if (!menuButton) return
 
+    // O papel de diálogo modal só é verdadeiro com JS: sem esta ilha a folha
+    // vira a última seção do documento (landing.css, `html:not(.ld-js)`).
+    sheet.setAttribute("role", "dialog")
+    sheet.setAttribute("aria-modal", "true")
+    sheet.setAttribute("aria-label", "Menu")
+
     const navLinks = Array.from(landing.querySelectorAll<HTMLAnchorElement>(".ld-nav a"))
     const sheetLinks = Array.from(landing.querySelectorAll<HTMLAnchorElement>(".ld-sheet nav a"))
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches

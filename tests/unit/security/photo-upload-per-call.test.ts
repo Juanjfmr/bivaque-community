@@ -1,13 +1,14 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
-import {
-  submitServiceRequest,
-  uploadServiceRequestPhotoAction,
-} from "web/app/(shell)/pedidos/novo/actions"
 import { uploadPropertyPhotoAction } from "web/lib/listings/actions"
 
-// SEC-006 (revisão M2) — Moradia e Pedido enviam uma foto por chamada. Estes
-// testes exercitam a borda real (as Server Actions) com arquivos que, somados,
-// passam dos 12 MB do `bodySizeLimit`, mas cada chamada leva menos que isso.
+// SEC-006 (revisão M2) — uma imagem de cada vez. Estes testes exercitam a borda
+// real (a Server Action de Moradia) com arquivos que, somados, passam dos 12 MB
+// do `bodySizeLimit`, mas cada chamada leva menos que isso.
+//
+// RUN-177 (F07): o caso do PEDIDO saiu com a tela web — o app cria o pedido por
+// `/api/app/negocios/[id]/pedidos` (route handler, sem o teto de corpo da Server
+// Action) e ainda não aceita anexo. A disciplina "uma imagem por chamada" volta
+// com o card de anexos do pedido.
 
 const mocks = vi.hoisted(() => {
   const serviceUpload = vi.fn()
@@ -93,33 +94,6 @@ describe("SEC-006 M2 Moradia", () => {
       await expect(uploadPropertyPhotoAction(form)).resolves.toMatchObject({
         path: expect.stringMatching(/^fixture-listing\//),
       })
-    }
-
-    expect(files.reduce((total, file) => total + file.size, 0)).toBeGreaterThan(12 * MB)
-    expect(mocks.serviceUpload).toHaveBeenCalledTimes(2)
-  })
-})
-
-describe("SEC-006 M2 Pedido", () => {
-  function requestForm(): FormData {
-    const form = new FormData()
-    form.set("providerId", "fixture-provider")
-    form.set("description", "Descricao sintetica do pedido")
-    form.set("idempotencyKey", "fixture-key")
-    return form
-  }
-
-  it("cria o pedido e envia 14 MB em duas chamadas de 7 MB", async () => {
-    const created = await submitServiceRequest(requestForm())
-    expect(created).toEqual({ status: "success", requestId: "fixture-request" })
-
-    const files = [jpeg(7 * MB), jpeg(7 * MB)]
-    for (const [index, file] of files.entries()) {
-      const form = new FormData()
-      form.set("requestId", "fixture-request")
-      form.set("position", String(index))
-      form.set("photo", file)
-      await expect(uploadServiceRequestPhotoAction(form)).resolves.toEqual({ ok: true })
     }
 
     expect(files.reduce((total, file) => total + file.size, 0)).toBeGreaterThan(12 * MB)

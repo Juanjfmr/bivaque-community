@@ -143,25 +143,23 @@ test.describe("DS-010 — shell header reflects real current locality, not pilot
     expect(asideText).not.toMatch(/Manaus, AM/)
   })
 
-  test("profile header also reflects the Rio current locality (no Manaus fallback)", async ({
+  test("the app's Você also reflects the Rio current locality (no Manaus fallback)", async ({
     page,
   }) => {
     await loadShell(page)
 
-    await page.goto(`${APP_URL}/profile`, { waitUntil: "load" })
-    await page.waitForLoadState("networkidle")
-    await page.waitForTimeout(500)
+    // RUN-172: o perfil próprio é tela do app, e é lá que o fallback do piloto
+    // apareceria — a seção "Sua cidade" e o aviso de saída citam Manaus de
+    // propósito ("Você está saindo de Manaus"), a origem, nunca a atual.
+    await page.goto(`${APP_URL}/app/voce`, { waitUntil: "load" })
+    await expect(page.getByRole("heading", { level: 1, name: "Você" })).toBeVisible({
+      timeout: 20_000,
+    })
 
-    // O cabeçalho do perfil (o <header> dentro do main) é onde um fallback para
-    // o piloto apareceria. A seção "Sua cidade" mais abaixo cita Manaus de
-    // propósito: é o aviso de transferência ("Você está saindo de Manaus, AM").
-    const profileHeader = page.locator("main header").first()
-    const profileText = (await profileHeader.textContent()) ?? ""
-
-    expect(profileText).toMatch(/Rio de Janeiro/)
-    expect(profileText).not.toMatch(/Manaus, AM/)
-
-    // And the transfer notice names the origin city, never as the current one
-    await expect(page.locator("main").getByText(/Você está saindo de Manaus, AM/)).toBeVisible()
+    const voce = page.locator('[data-tela="voce"]')
+    const atual = voce.locator("p", { hasText: "Sua cidade é" })
+    await expect(atual).toContainText("Rio de Janeiro")
+    await expect(atual).not.toContainText("Manaus")
+    await expect(voce.locator('[data-aviso="saindo"]')).toContainText("Você está saindo de Manaus")
   })
 })

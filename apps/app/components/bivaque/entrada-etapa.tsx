@@ -51,13 +51,7 @@ export function EntradaEtapa({
   return (
     <section data-tela="entrar" data-composicao="etapa" className="entrada-etapa">
       <header className="entrada-etapa-barra">
-        <picture>
-          <source
-            media="(prefers-color-scheme: dark)"
-            srcSet={`${base}brand/bivaque-logo-horizontal-white.svg`}
-          />
-          <img src={`${base}brand/bivaque-logo-horizontal.svg`} alt="Bivaque" />
-        </picture>
+        <img src={`${base}brand/bivaque-logo-horizontal.svg`} alt="Bivaque" />
         {aoSair === undefined ? null : (
           <button type="button" className="entrada-etapa-sair" onClick={aoSair}>
             Sair

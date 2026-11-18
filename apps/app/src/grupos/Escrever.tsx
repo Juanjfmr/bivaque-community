@@ -1,25 +1,79 @@
 import { useEffect, useRef, useState } from "react"
 import { Botao } from "@/components/bivaque/botao"
-import { Campo } from "@/components/bivaque/campos"
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog"
+import { Textarea } from "@/components/ui/textarea"
 import { FalhaDaApi } from "@/lib/api/cliente"
-import { anexarFotoAoGrupo, type GrupoReal, publicarNoGrupo } from "@/lib/dados/grupos"
+import {
+  anexarFotoAoGrupo,
+  type GrupoReal,
+  type PerguntaDoGrupo,
+  type PublicacaoCriada,
+  perguntarNoGrupo,
+  publicarNoGrupo,
+} from "@/lib/dados/grupos"
 import {
   excluirRascunhoDoGrupo,
   guardarRascunhoDoGrupo,
   lerRascunhosDoGrupo,
 } from "@/lib/grupos-locais"
-import { useNavegacao, useSobreposicaoDaEntrada } from "@/lib/navegacao/react"
+import { useSobreposicaoDaEntrada } from "@/lib/navegacao/react"
+import {
+  AVISO_DA_CIDADE,
+  corpoDaPergunta,
+  errosDaPerguntaDoGrupo,
+  perguntaValida,
+  podePerguntar,
+} from "./pergunta"
+import { type Recusa, recusaAoPublicar } from "./publicacao"
 
 type Foto = { caminho: string; previa: string }
-export function Escrever({ grupo, cidade }: { grupo: GrupoReal; cidade: string }) {
-  const navegacao = useNavegacao()
+
+/** Limite de caracteres da publicação; o servidor recusa fora dele. */
+export const LIMITE_DO_TEXTO = 2000
+
+/**
+ * O compositor de publicação do grupo.
+ *
+ * O envio não sai da tela: a publicação entra na lista do grupo e recebe o
+ * foco (`aoPublicar`), sem passar pela página da publicação. A recusa do
+ * servidor é traduzida em frase com próximo passo (`recusaAoPublicar`) — o
+ * texto e as fotos continuam no compositor, aberto, para a pessoa corrigir ou
+ * tentar de novo.
+ *
+ * Em grupo Aberto o compositor também pergunta (RUN-178): a pergunta é uma
+ * linha de origem dupla no banco — nasce no grupo e aparece nas Indicações da
+ * cidade com o nome dele — e por isso não tem foto.
+ */
+export function Escrever({
+  grupo,
+  cidade,
+  aoPublicar,
+  aoPerguntar,
+}: {
+  grupo: GrupoReal
+  cidade: string
+  aoPublicar: (criada: PublicacaoCriada) => void
+  aoPerguntar: (pergunta: PerguntaDoGrupo) => void
+}) {
   const { aberto, aoMudarAberto: setAberto } = useSobreposicaoDaEntrada("grupo-escrever")
   const [texto, setTexto] = useState("")
+  const [tipo, setTipo] = useState<"publicacao" | "pergunta">("publicacao")
+  const [titulo, setTitulo] = useState("")
+  const [assunto, setAssunto] = useState("")
   const [fotos, setFotos] = useState<readonly Foto[]>([])
   const [rascunhos, setRascunhos] = useState<readonly string[]>([])
   const [erro, setErro] = useState("")
+  // O erro do texto e o da foto ficam no campo que os originou, não no rodapé.
+  const [erroDoTexto, setErroDoTexto] = useState("")
+  const [erroDaFoto, setErroDaFoto] = useState("")
+  const [erroDaPergunta, setErroDaPergunta] = useState("")
+  const [recusa, setRecusa] = useState<Recusa | null>(null)
+  // Depois de publicar, quem decide o foco é a tela do grupo (a publicação nova
+  // ou este botão): o diálogo não devolve o foco por conta própria.
+  const publicou = useRef(false)
   const [ocupado, setOcupado] = useState(false)
+  // O limite é dito antes do envio: texto que o servidor recusaria não sai.
+  const [avisoDoLimite, setAvisoDoLimite] = useState(false)
   const [enviandoFoto, setEnviandoFoto] = useState(false)
   const leitor = useRef<FileReader | null>(null)
   const [controle] = useState(() => new AbortController())
@@ -36,8 +90,9 @@ export function Escrever({ grupo, cidade }: { grupo: GrupoReal; cidade: string }
   async function anexar(arquivos: readonly File[]) {
     if (enviandoFoto || ocupado) return
     setErro("")
+    setErroDaFoto("")
     if (fotos.length + arquivos.length > 4) {
-      setErro("Escolha até quatro fotos por publicação.")
+      setErroDaFoto("Escolha até quatro fotos por publicação.")
       return
     }
     setEnviandoFoto(true)
@@ -65,7 +120,7 @@ export function Escrever({ grupo, cidade }: { grupo: GrupoReal; cidade: string }
       }
     } catch (falha: unknown) {
       if (!controle.signal.aborted)
-        setErro(
+        setErroDaFoto(
           falha instanceof FalhaDaApi
             ? "Não foi possível enviar a foto. Escolha uma imagem válida e tente de novo."
             : falha instanceof Error
@@ -78,29 +133,69 @@ export function Escrever({ grupo, cidade }: { grupo: GrupoReal; cidade: string }
   }
   async function publicar() {
     if (ocupado || enviandoFoto) return
+    setAvisoDoLimite(false)
+    setErroDoTexto("")
+    if (tipo === "pergunta") {
+      const escrita = corpoDaPergunta({ titulo, assunto })
+      const erros = errosDaPerguntaDoGrupo(escrita)
+      if (!perguntaValida(escrita)) {
+        setRecusa(null)
+        setErroDaPergunta(erros.titulo ?? erros.assunto ?? "Revise a pergunta antes de publicar.")
+        return
+      }
+      setOcupado(true)
+      setErro("")
+      setErroDaPergunta("")
+      setRecusa(null)
+      try {
+        const criada = await perguntarNoGrupo(grupo.id, escrita, { signal: controle.signal })
+        if (controle.signal.aborted) return
+        setTitulo("")
+        setAssunto("")
+        setAberto(false)
+        aoPerguntar(criada)
+      } catch (falha: unknown) {
+        if (!controle.signal.aborted) setRecusa(recusaAoPublicar(falha))
+      } finally {
+        if (!controle.signal.aborted) setOcupado(false)
+      }
+      return
+    }
+    const escrito = texto.trim()
+    if (escrito.length < 1) {
+      setRecusa(null)
+      setErroDoTexto("Escreva alguma coisa antes de publicar.")
+      return
+    }
+    if (escrito.length > LIMITE_DO_TEXTO) {
+      setRecusa(null)
+      setAvisoDoLimite(true)
+      return
+    }
     setOcupado(true)
     setErro("")
+    setRecusa(null)
     try {
-      const id = await publicarNoGrupo(
+      const criada = await publicarNoGrupo(
         grupo.id,
         { texto, fotos: fotos.map((foto) => foto.caminho) },
         { signal: controle.signal },
       )
       if (controle.signal.aborted) return
-      const indice = rascunhos.indexOf(texto.trim())
-      if (indice >= 0) excluirRascunhoDoGrupo(cidade, grupo.id, indice)
+      const indice = rascunhos.indexOf(texto)
+      if (indice >= 0) {
+        const lista = excluirRascunhoDoGrupo(cidade, grupo.id, indice)
+        if (lista) setRascunhos(lista)
+      }
       setTexto("")
       setFotos([])
-      // A publicação em tela aberta se fecha na própria navegação: fechar a
-      // sobreposição aqui daria um `history.back()` que desfaz a ida à publicação.
-      void navegacao.irPara("publicacao", { parametros: { id } })
+      // A sobreposição se fecha sem `history.back()`: o compositor é o que
+      // abriu esta entrada, e voltar demais tiraria a pessoa do grupo.
+      publicou.current = true
+      setAberto(false)
+      aoPublicar(criada)
     } catch (falha: unknown) {
-      if (!controle.signal.aborted)
-        setErro(
-          falha instanceof FalhaDaApi && falha.mensagem
-            ? falha.mensagem
-            : "Não foi possível publicar. Seu texto e suas fotos foram mantidos. Tente de novo.",
-        )
+      if (!controle.signal.aborted) setRecusa(recusaAoPublicar(falha))
     } finally {
       if (!controle.signal.aborted) setOcupado(false)
     }
@@ -121,6 +216,11 @@ export function Escrever({ grupo, cidade }: { grupo: GrupoReal; cidade: string }
     setErro("")
     setAberto(false)
   }
+  function tentarDeNovo() {
+    setRecusa(null)
+    void publicar()
+  }
+  const passouDoLimite = texto.length > LIMITE_DO_TEXTO || avisoDoLimite
   return (
     <section
       data-compositor-grupo="sim"
@@ -156,6 +256,7 @@ export function Escrever({ grupo, cidade }: { grupo: GrupoReal; cidade: string }
                   tom="texto"
                   onClick={() => {
                     setTexto(rascunho)
+                    setRecusa(null)
                     setAberto(true)
                   }}
                 >
@@ -177,65 +278,201 @@ export function Escrever({ grupo, cidade }: { grupo: GrupoReal; cidade: string }
           ))}
         </div>
       )}
-      {erro && !aberto ? (
+      {recusa !== null && !aberto ? (
         <p role="alert" className="text-sm text-(--destructive)">
-          {erro}
+          {recusa.frase}
         </p>
       ) : null}
       <Dialog open={aberto} onOpenChange={setAberto}>
-        <DialogContent data-dialogo="escrever-grupo" className="max-h-[90dvh] overflow-y-auto">
+        <DialogContent
+          data-dialogo="escrever-grupo"
+          className="max-h-[90dvh] overflow-y-auto"
+          onCloseAutoFocus={(evento) => {
+            if (!publicou.current) return
+            publicou.current = false
+            evento.preventDefault()
+          }}
+        >
           <DialogTitle>Escrever no grupo</DialogTitle>
           <DialogDescription>
             A publicação será lida por quem tem acesso a {grupo.nome}. As fotos são tratadas para
             remover a localização.
           </DialogDescription>
-          <Campo
-            id="texto-grupo"
-            rotulo="Sua publicação"
-            valor={texto}
-            aoMudar={setTexto}
-            area
-            nota={`${texto.length}/2000 caracteres`}
-          />
+          {podePerguntar(grupo) ? (
+            <fieldset data-tipo-grupo="sim" className="grid gap-2">
+              <legend className="text-sm font-medium">O que você quer escrever?</legend>
+              <div className="flex flex-wrap gap-2">
+                <Botao
+                  tom={tipo === "publicacao" ? "tonal" : "contornado"}
+                  aria-pressed={tipo === "publicacao"}
+                  disabled={ocupado}
+                  onClick={() => setTipo("publicacao")}
+                >
+                  Publicação
+                </Botao>
+                <Botao
+                  tom={tipo === "pergunta" ? "tonal" : "contornado"}
+                  aria-pressed={tipo === "pergunta"}
+                  disabled={ocupado}
+                  onClick={() => setTipo("pergunta")}
+                >
+                  Pergunta
+                </Botao>
+              </div>
+            </fieldset>
+          ) : null}
+          {tipo === "pergunta" ? (
+            <div className="grid gap-2">
+              <div className="grid gap-1.5">
+                <label htmlFor="titulo-pergunta-grupo" className="text-sm font-medium">
+                  Sua pergunta
+                </label>
+                <Textarea
+                  id="titulo-pergunta-grupo"
+                  value={titulo}
+                  onChange={(evento) => {
+                    setTitulo(evento.target.value)
+                    setErroDaPergunta("")
+                  }}
+                  aria-invalid={erroDaPergunta === "" ? undefined : true}
+                  aria-describedby="titulo-pergunta-grupo-contagem titulo-pergunta-grupo-erro"
+                  className="min-h-24 rounded-xl"
+                />
+                <p
+                  id="titulo-pergunta-grupo-contagem"
+                  className="text-xs text-(--muted-foreground)"
+                >
+                  {titulo.trim().length}/300 caracteres
+                </p>
+                <p
+                  id="titulo-pergunta-grupo-erro"
+                  aria-live="polite"
+                  className="text-sm text-(--destructive)"
+                >
+                  {erroDaPergunta}
+                </p>
+              </div>
+              <div className="grid gap-1.5">
+                <label htmlFor="assunto-pergunta-grupo" className="text-sm font-medium">
+                  Assunto (opcional)
+                </label>
+                <input
+                  id="assunto-pergunta-grupo"
+                  value={assunto}
+                  maxLength={60}
+                  onChange={(evento) => setAssunto(evento.target.value)}
+                  className="min-h-11 rounded-xl border border-(--outline-variant) bg-(--surface-lowest) px-3 text-sm"
+                />
+              </div>
+              <p
+                data-aviso-cidade="sim"
+                className="rounded-xl bg-(--secondary-container) px-3 py-2 text-sm"
+              >
+                {AVISO_DA_CIDADE}
+              </p>
+            </div>
+          ) : (
+            <div className="grid gap-1.5">
+              <label htmlFor="texto-grupo" className="text-sm font-medium">
+                Sua publicação
+              </label>
+              <Textarea
+                id="texto-grupo"
+                value={texto}
+                onChange={(evento) => {
+                  const valor = evento.target.value
+                  setTexto(valor)
+                  setErroDoTexto("")
+                  if (valor.trim().length <= LIMITE_DO_TEXTO) setAvisoDoLimite(false)
+                }}
+                aria-invalid={passouDoLimite || erroDoTexto !== "" ? true : undefined}
+                aria-describedby="texto-grupo-contagem texto-grupo-erro"
+                className="min-h-24 rounded-xl"
+              />
+              <p id="texto-grupo-contagem" className="text-xs text-(--muted-foreground)">
+                {texto.length}/{LIMITE_DO_TEXTO} caracteres
+              </p>
+              <p id="texto-grupo-erro" aria-live="polite" className="text-sm text-(--destructive)">
+                {passouDoLimite
+                  ? `Sua publicação tem ${texto.length} caracteres; o limite é ${LIMITE_DO_TEXTO}. Encurte o texto para publicar — ele continua aqui.`
+                  : erroDoTexto}
+              </p>
+            </div>
+          )}
           <p className="text-sm">
             {grupo.regras || "O grupo ainda não informou regras sobre fotos."}
           </p>
-          <label className="grid gap-2 text-sm">
-            Adicionar fotos (até 4, de até 5 MB)
-            <input
-              type="file"
-              accept="image/jpeg,image/png,image/webp"
-              multiple
-              disabled={ocupado || enviandoFoto || fotos.length >= 4}
-              onChange={(evento) => {
-                const arquivos = Array.from(evento.currentTarget.files ?? [])
-                evento.currentTarget.value = ""
-                void anexar(arquivos)
-              }}
-              className="min-h-11 max-w-full"
-            />
-          </label>
-          {enviandoFoto ? <p role="status">Enviando foto…</p> : null}
-          <div className="grid grid-cols-2 gap-2">
-            {fotos.map((foto, indice) => (
-              <div key={foto.caminho} className="grid gap-1">
-                <img
-                  src={foto.previa}
-                  alt={`Foto ${indice + 1} escolhida para a publicação`}
-                  className="h-28 w-full rounded-xl object-cover"
+          {tipo === "pergunta" ? null : (
+            <>
+              <label className="grid gap-2 text-sm" htmlFor="texto-grupo-fotos">
+                Adicionar fotos (até 4, de até 5 MB)
+                <input
+                  id="texto-grupo-fotos"
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  multiple
+                  disabled={ocupado || enviandoFoto || fotos.length >= 4}
+                  aria-describedby="texto-grupo-fotos-erro"
+                  aria-invalid={erroDaFoto === "" ? undefined : true}
+                  onChange={(evento) => {
+                    const arquivos = Array.from(evento.currentTarget.files ?? [])
+                    evento.currentTarget.value = ""
+                    void anexar(arquivos)
+                  }}
+                  className="min-h-11 max-w-full"
                 />
-                <Botao
-                  tom="texto"
-                  disabled={ocupado}
-                  onClick={() =>
-                    setFotos((atuais) => atuais.filter((item) => item.caminho !== foto.caminho))
-                  }
-                >
-                  Remover foto {indice + 1}
-                </Botao>
+              </label>
+              <p
+                id="texto-grupo-fotos-erro"
+                aria-live="polite"
+                className="text-sm text-(--destructive)"
+              >
+                {erroDaFoto}
+              </p>
+              {enviandoFoto ? <p role="status">Enviando foto…</p> : null}
+              <div className="grid grid-cols-2 gap-2">
+                {fotos.map((foto, indice) => (
+                  <div key={foto.caminho} className="grid gap-1">
+                    <img
+                      src={foto.previa}
+                      alt={`Foto ${indice + 1} escolhida para a publicação`}
+                      className="h-28 w-full rounded-xl object-cover"
+                    />
+                    <Botao
+                      tom="texto"
+                      disabled={ocupado}
+                      onClick={() =>
+                        setFotos((atuais) => atuais.filter((item) => item.caminho !== foto.caminho))
+                      }
+                    >
+                      Remover foto {indice + 1}
+                    </Botao>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
+            </>
+          )}
+          {recusa !== null ? (
+            <div
+              role="alert"
+              data-recusa={recusa.tipo}
+              className="grid gap-2 rounded-xl bg-(--surface-low) p-3 text-sm"
+            >
+              <p>{recusa.frase}</p>
+              {recusa.tipo === "recuperavel" ? (
+                <Botao tom="tonal" icone="refresh" disabled={ocupado} onClick={tentarDeNovo}>
+                  Tentar de novo
+                </Botao>
+              ) : null}
+              {recusa.tipo === "recusa" && recusa.tentavel ? (
+                <small className="text-(--on-surface-variant)">
+                  {tipo === "pergunta"
+                    ? "Sua pergunta continua aqui."
+                    : "Seu texto e suas fotos continuam aqui."}
+                </small>
+              ) : null}
+            </div>
+          ) : null}
           {erro ? (
             <p role="alert" className="text-sm text-(--destructive)">
               {erro}
@@ -245,21 +482,27 @@ export function Escrever({ grupo, cidade }: { grupo: GrupoReal; cidade: string }
             <Botao tom="texto" onClick={() => setAberto(false)}>
               Cancelar
             </Botao>
-            <Botao
-              tom="contornado"
-              data-acao="salvar-rascunho-grupo"
-              disabled={ocupado || enviandoFoto}
-              onClick={salvar}
-            >
-              Salvar rascunho
-            </Botao>
+            {tipo === "pergunta" ? null : (
+              <Botao
+                tom="contornado"
+                data-acao="salvar-rascunho-grupo"
+                disabled={ocupado || enviandoFoto}
+                onClick={salvar}
+              >
+                Salvar rascunho
+              </Botao>
+            )}
             <Botao
               disabled={
-                ocupado || enviandoFoto || texto.trim().length < 1 || texto.trim().length > 2000
+                ocupado ||
+                enviandoFoto ||
+                (tipo === "pergunta"
+                  ? !perguntaValida(corpoDaPergunta({ titulo, assunto }))
+                  : texto.trim().length < 1 || texto.trim().length > LIMITE_DO_TEXTO)
               }
               onClick={() => void publicar()}
             >
-              {ocupado ? "Publicando…" : "Publicar"}
+              {ocupado ? "Publicando…" : tipo === "pergunta" ? "Perguntar à cidade" : "Publicar"}
             </Botao>
           </div>
         </DialogContent>

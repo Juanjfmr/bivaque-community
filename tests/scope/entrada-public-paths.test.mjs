@@ -69,7 +69,7 @@ test("as três fronteiras e os dois allowlists internos são os exportados", () 
 
 test("toda entrada declara um modo dos três e um motivo", () => {
   const entradas = entradasPublicas()
-  assert.ok(entradas.length >= 19, `esperava ao menos 19 entradas, achei ${entradas.length}`)
+  assert.ok(entradas.length >= 18, `esperava ao menos 18 entradas, achei ${entradas.length}`)
   for (const entrada of entradas) {
     assert.ok(["exata", "pasta", "ativos"].includes(entrada.modo), entrada.caminho)
   }
@@ -81,9 +81,10 @@ test("a conta apagada é pública sem sessão", () => {
   assert.equal(isPublic("/conta-apagada"), true)
 })
 
-test("o convite de familiar é exato: a subrota não é pública", () => {
-  assert.equal(isPublic("/convite"), true)
-  assert.equal(isPublic("/convite/"), true)
+// SEC-017: a tela antiga do convite de familiar saiu; o next.config manda
+// `/convite` para a porta do app antes do proxy, então o caminho não é público.
+test("o convite antigo de familiar não é caminho público do proxy", () => {
+  assert.equal(isPublic("/convite"), false)
   assert.equal(isPublic("/convite/ABCD1234"), false)
 })
 

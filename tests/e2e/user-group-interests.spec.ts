@@ -1,70 +1,38 @@
-// Onda E Task 11 — group interests + suggestion feed.
+// Interesses: a tela `/profile/interests` da web saiu (RUN-163, SPA ADR §8).
 //
-// Committed without running per README: "E2E precisa do dono" — needs the
-// seeded database. The asserts below encode §3.2 (interests map to
-// groups, no parallel taxonomy) and §3.3 (private groups only suggest to
-// members of their container).
+// O que este spec prova agora é a troca em si: as URLs antigas — favorito,
+// histórico, link de e-mail, e a edição inteira (RUN-172) — respondem 307 para
+// `/app/voce` com a query preservada. A cobertura funcional da folha (marcar,
+// recarregar, persistir, limpar) mora no E2E do app:
+// tests/e2e/f10-voce-real.spec.ts — "os interesses vêm do banco: marcar,
+// recarregar, persistir e limpar".
 
 import { expect, test } from "@playwright/test"
-import { seedSession } from "./helpers/session"
 
-test.describe("group interests", () => {
-  test("the interests page renders the locality groups and lets the user save", async ({
-    page,
-  }) => {
-    // Given a verified approved member of the seeded locality
-    await seedSession(page.context())
-    await page.setViewportSize({ width: 1280, height: 800 })
+test.describe("interesses", () => {
+  test("a URL antiga leva ao app com a query preservada, sem sessão", async ({ page }) => {
+    // Config redirect roda antes do proxy: nem sessão é preciso para cair no app.
+    const resposta = await page.request.get("/profile/interests?origem=email", {
+      maxRedirects: 0,
+    })
 
-    // When they open the interests page
-    await page.goto("/profile/interests")
-
-    // Then the heading and the locality copy are visible. The real copy
-    // (interests-section.tsx) reads "usados para sugerir grupos da sua
-    // cidade" — "sugerir" (infinitive), not "sugerem" — found running the
-    // E2E realignment.
-    await expect(page.getByRole("heading", { name: "Assuntos de interesse" })).toBeVisible()
-    await expect(page.getByText(/sugerir grupos da sua cidade/i)).toBeVisible()
-
-    // And the save button is enabled
-    const saveButton = page.getByRole("button", { name: /Salvar interesses/ })
-    await expect(saveButton).toBeEnabled()
+    expect(resposta.status()).toBe(307)
+    const destino = new URL(resposta.headers()["location"] ?? "/", "http://127.0.0.1:3000")
+    expect(destino.pathname).toBe("/app/voce")
+    expect(destino.searchParams.get("origem")).toBe("email")
   })
 
-  test("the profile links to the interests page", async ({ page }) => {
-    // Given the authenticated member
-    await seedSession(page.context())
+  // RUN-172: o bloco "Assuntos de interesse" era da edição web, que morreu. A
+  // garantia (a folha sair do armazenamento da pessoa) foi MIGRADA para o e2e
+  // do app, que abre a folha pela linha do Você e prova marcar, recarregar,
+  // persistir e limpar: tests/e2e/f10-voce-real.spec.ts — "os interesses vêm do
+  // banco: marcar, recarregar, persistir e limpar".
+  test("a edição web não existe mais: a folha é a do app", async ({ page }) => {
+    const resposta = await page.request.get("/profile/editar", { maxRedirects: 0 })
 
-    // When they open the profile editor. Desde 25/09/2026 o perfil mostra e a
-    // edição fica em /profile/editar, junto dos assuntos de interesse.
-    await page.goto("/profile/editar")
-
-    // Then a link to the interests page is rendered
-    await expect(page.getByRole("link", { name: /Assuntos de interesse/ })).toBeVisible()
-  })
-
-  test("when the locality has no groups, the empty state offers a creation path", async ({
-    page,
-  }) => {
-    // Given a user whose locality has no groups yet (depends on seed state)
-    await seedSession(page.context())
-
-    // When they open the interests page
-    await page.goto("/profile/interests")
-
-    // The section fetches its data client-side and renders null until it
-    // resolves (interests-section.tsx: `if (!loaded) return null`) — wait
-    // for the heading first, so the isVisible() snapshots below don't race
-    // an unloaded page and read both as false.
-    await expect(page.getByRole("heading", { name: "Assuntos de interesse" })).toBeVisible()
-
-    // Then either the empty-state offer is rendered OR the group list is
-    // rendered (the test passes when one or the other is visible).
-    const empty = page.getByRole("link", { name: /Criar o primeiro grupo/ })
-    const groups = page.getByRole("button", { name: /Salvar interesses/ })
-
-    const emptyVisible = await empty.isVisible().catch(() => false)
-    const groupsVisible = await groups.isVisible().catch(() => false)
-    expect(emptyVisible || groupsVisible).toBe(true)
+    expect(resposta.status()).toBe(307)
+    expect(new URL(resposta.headers()["location"] ?? "/", "http://127.0.0.1:3000").pathname).toBe(
+      "/app/voce",
+    )
   })
 })

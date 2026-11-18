@@ -93,8 +93,17 @@ test.describe("RSVP with not_going", () => {
     // (the seed creates events organized by seeded users; this spec
     // documents the expected notification type)
     // Then the organizer's notification inbox includes 'event_rsvp' with action=not_going
-    await page.goto("/notifications")
-    // The exact assertion depends on seed wiring; left as a smoke test.
-    await expect(page.getByRole("heading", { name: /Notifica/i }).first()).toBeVisible()
+    const response = await fetch(
+      `${process.env["APP_URL"] ?? "http://127.0.0.1:3000"}/notifications`,
+      {
+        redirect: "manual",
+      },
+    )
+    expect(response.status).toBe(307)
+    expect(new URL(response.headers.get("location") ?? "", "http://127.0.0.1:3000").pathname).toBe(
+      "/app/avisos",
+    )
+    await page.goto("/app/avisos")
+    await expect(page.getByRole("heading", { name: "Avisos" })).toBeVisible()
   })
 })

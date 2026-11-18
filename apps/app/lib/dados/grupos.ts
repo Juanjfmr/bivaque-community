@@ -18,6 +18,8 @@ export type PublicacaoReal = Readonly<{
   texto: string
   criadaEm: string
   autor: string
+  /** Id de quem publicou, para abrir o perfil. */
+  autorId: string
   propria: boolean
   comentarios: number
   uteis: number
@@ -33,6 +35,7 @@ export type ListaDeGrupos = Readonly<{
 }>
 export type DetalheDoGrupo = Readonly<{
   grupo: GrupoReal
+  cidade: string
   publicacoes: readonly PublicacaoReal[]
   proximo: string | null
 }>
@@ -84,6 +87,7 @@ function publicacao(valor: unknown): PublicacaoReal {
     texto: texto(p["texto"]),
     criadaEm: texto(p["criadaEm"]),
     autor: texto(p["autor"]),
+    autorId: texto(p["autorId"]),
     propria: booleano(p["propria"]),
     comentarios: numero(p["comentarios"]),
     uteis: numero(p["uteis"]),
@@ -102,6 +106,22 @@ export async function lerGrupos(opcoes: Opcoes & { depois?: string } = {}): Prom
     proximo: cursor(corpo["proximo"]),
   }
 }
+export type DadosDoNovoGrupo = Readonly<{
+  nome: string
+  descricao: string
+  regras: string
+  fechado: boolean
+}>
+
+/**
+ * Cria o grupo pela rota do app. O servidor resolve a cidade do vínculo
+ * `current` e a RPC `create_group` cria o vínculo `owner`: o grupo volta como a
+ * sessão o vê, já participando e administrando.
+ */
+export async function criarGrupo(dados: DadosDoNovoGrupo, opcoes: Opcoes = {}): Promise<GrupoReal> {
+  const corpo = await enviar("POST", "/api/app/grupos", dados, opcoes)
+  return grupo(corpo["grupo"])
+}
 export async function buscarGrupo(
   id: string,
   opcoes: Opcoes & { depois?: string; ordem?: OrdemDoGrupo } = {},
@@ -111,9 +131,22 @@ export async function buscarGrupo(
   const corpo = await ler(`/api/app/grupos/${encodeURIComponent(id)}?${busca}`, opcoes)
   return {
     grupo: grupo(corpo["grupo"]),
+    cidade: texto(corpo["cidade"]),
     publicacoes: lista(corpo["publicacoes"], publicacao),
     proximo: cursor(corpo["proximo"]),
   }
+}
+
+/** Só a quantidade da primeira página, para saber se há uma segunda. */
+export async function contarPublicacoes(
+  id: string,
+  opcoes: Opcoes & { ordem?: OrdemDoGrupo } = {},
+): Promise<number> {
+  const corpo = await ler(
+    `/api/app/grupos/${encodeURIComponent(id)}?${new URLSearchParams({ ordem: opcoes.ordem ?? "recentes" })}`,
+    opcoes,
+  )
+  return lista(corpo["publicacoes"], publicacao).length
 }
 
 export async function mudarParticipacao(
@@ -136,6 +169,8 @@ export type ComentarioReal = Readonly<{
   texto: string
   criadaEm: string
   autor: string
+  /** Id de quem comentou, para abrir o perfil. */
+  autorId: string
   propria: boolean
   parentId: string | null
   respondeA: string | null
@@ -146,6 +181,7 @@ export type ComentarioReal = Readonly<{
 export type DetalheDaPublicacao = Readonly<{
   publicacao: PublicacaoReal
   grupo: GrupoReal
+  cidade: string
   comentarios: readonly ComentarioReal[]
   proximo: string | null
 }>
@@ -156,6 +192,7 @@ function comentario(valor: unknown): ComentarioReal {
     texto: texto(c["texto"]),
     criadaEm: texto(c["criadaEm"]),
     autor: texto(c["autor"]),
+    autorId: texto(c["autorId"]),
     propria: booleano(c["propria"]),
     parentId: cursor(c["parentId"]),
     respondeA: cursor(c["respondeA"]),
@@ -173,23 +210,96 @@ export async function buscarPublicacao(
   return {
     publicacao: publicacao(corpo["publicacao"]),
     grupo: grupo(corpo["grupo"]),
+    cidade: texto(corpo["cidade"]),
     comentarios: lista(corpo["comentarios"], comentario),
     proximo: cursor(corpo["proximo"]),
   }
 }
+/**
+ * A publicação recém-criada volta com `publicacao` — a linha lida do banco e
+ * apresentada como as demais — e com `proximo`, o cursor que a tela usa para
+ * conferir se a publicação abriu uma página nova na lista do grupo.
+ */
+export type PublicacaoCriada = Readonly<{
+  publicacao: PublicacaoReal
+  proximo: string | null
+}>
+
 export async function publicarNoGrupo(
   id: string,
   dados: { texto: string; fotos: readonly string[] },
   opcoes: Opcoes = {},
-): Promise<string> {
+): Promise<PublicacaoCriada> {
   const corpo = await enviar(
     "POST",
     `/api/app/grupos/${encodeURIComponent(id)}/publicacoes`,
     dados,
     opcoes,
   )
-  return texto(registro(corpo["publicacao"])["id"])
+  const criada = publicacao(corpo["publicacao"])
+  if (criada.grupoId !== id) falha()
+  return { publicacao: criada, proximo: cursor(corpo["proximo"]) }
 }
+/** Uma pergunta de origem dupla: vive no grupo e aparece na cidade com o nome dele. */
+export type PerguntaDoGrupo = Readonly<{
+  id: string
+  titulo: string
+  criadaEm: string
+  autor: string
+  autorId: string
+  propria: boolean
+  respostas: number
+  resolvida: boolean
+  /** A origem da linha: o grupo em que ela foi perguntada. */
+  grupo: Readonly<{ id: string; nome: string }> | null
+}>
+
+function perguntaDoGrupo(valor: unknown): PerguntaDoGrupo {
+  const p = registro(valor)
+  const grupo = p["grupo"]
+  const g = grupo === null || grupo === undefined ? null : registro(grupo)
+  return {
+    id: texto(p["id"]),
+    titulo: texto(p["titulo"]),
+    criadaEm: texto(p["criadaEm"]),
+    autor: texto(p["autor"]),
+    autorId: texto(p["autorId"]),
+    propria: booleano(p["propria"]),
+    respostas: numero(p["respostas"]),
+    resolvida: booleano(p["resolvida"]),
+    grupo: g === null ? null : { id: texto(g["id"]), nome: texto(g["nome"]) },
+  }
+}
+
+/**
+ * Perguntar à cidade de dentro do grupo (RUN-178). O corpo leva SÓ o texto: a
+ * cidade e o grupo saem do grupo lido no servidor, nunca do navegador.
+ */
+export async function perguntarNoGrupo(
+  id: string,
+  dados: { titulo: string; assunto: string },
+  opcoes: Opcoes = {},
+): Promise<PerguntaDoGrupo> {
+  const corpo = await enviar(
+    "POST",
+    `/api/app/grupos/${encodeURIComponent(id)}/perguntas`,
+    dados,
+    opcoes,
+  )
+  const criada = perguntaDoGrupo(corpo["pergunta"])
+  if (criada.grupo?.id !== id) falha()
+  return criada
+}
+
+/** As perguntas do grupo, o bloco de cima do feed. Leitura separada dos posts. */
+export async function lerPerguntasDoGrupo(
+  id: string,
+  opcoes: Opcoes = {},
+): Promise<readonly PerguntaDoGrupo[]> {
+  const corpo = await ler(`/api/app/grupos/${encodeURIComponent(id)}/perguntas`, opcoes)
+  return lista(corpo["perguntas"], perguntaDoGrupo)
+}
+
 export async function anexarFotoAoGrupo(
   id: string,
   foto: string,

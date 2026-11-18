@@ -16,7 +16,7 @@ import { BotaoDeIcone } from "./botao"
  * acionador — e o Escape e o clique fora fecham pelo mesmo caminho.
  *
  * Duas coisas do protótipo vivem aqui: a página de trás encolhe com a folha
- * aberta abaixo de 720 px (`shell/sheet-depth.js`) e o puxador da folha fecha
+ * aberta abaixo de 1024 px (`shell/sheet-depth.js`) e o puxador da folha fecha
  * ao arrastar mais de 110 px, ou 30 px com gesto rápido (`shell/dialogs.js:35`).
  * Quem empilha histórico é o roteador, na camada de navegação: isto é só a
  * caixa.

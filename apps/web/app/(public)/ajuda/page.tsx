@@ -29,17 +29,22 @@ export const metadata: Metadata = {
   title: "Ajuda · Bivaque",
 }
 
-type DestinationLink = Readonly<{ href: Route; label: string }>
+type DestinationLink = Readonly<{
+  href: Route | "/app/avisos" | "/app/voce" | "/app/salvos"
+  label: string
+}>
 
 const ACCOUNT_LINKS: DestinationLink[] = [
   { href: "/login", label: "Entrar" },
-  { href: "/configuracoes", label: "Configurações" },
+  // F10 (RUN-184): a tela de conta saiu da web; a seção vive no Você do app.
+  { href: "/app/voce", label: "Configurações" },
 ]
 
 const USAGE_LINKS: DestinationLink[] = [
   { href: "/explorar", label: "Explorar" },
-  { href: "/salvos", label: "Salvos" },
-  { href: "/notifications", label: "Notificações" },
+  // RUN-186: Salvos é tela do app; o atalho leva direto para lá.
+  { href: "/app/salvos", label: "Salvos" },
+  { href: "/app/avisos", label: "Notificações" },
   { href: "/denuncias", label: "Minhas denúncias" },
 ]
 
@@ -121,7 +126,7 @@ function DestinationList({ links }: Readonly<{ links: DestinationLink[] }>) {
     <ul className="help-links">
       {links.map((link) => (
         <li key={link.href}>
-          <Link href={link.href}>
+          <Link href={link.href as Route}>
             {link.label}
             <MaterialIcon name="chevron_right" />
           </Link>

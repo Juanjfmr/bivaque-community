@@ -190,10 +190,7 @@ select set_config(
 select set_config('request.jwt.claim.role', 'authenticated', true);
 
 -- Send a message in the existing conversation
-insert into public.dm_messages (conversation_id, sender_id, content)
-select c.id,
-       '10000000-0000-4000-8000-000000000008',
-       'Mensagem privada'
+select public.send_conversation_message(c.id, 'Mensagem privada')
 from public.dm_conversations c
 where c.participant_a = '10000000-0000-4000-8000-000000000008'
   and c.participant_b = '10000000-0000-4000-8000-000000000009'
@@ -256,14 +253,12 @@ select set_config('request.jwt.claim.role', 'authenticated', true);
 
 select throws_ok(
   format(
-    'insert into public.dm_messages (conversation_id, sender_id, content)
-     values (%L, %L, %L)',
+    'select public.send_conversation_message(%L, %L)',
     :'dm_conv_id',
-    '10000000-0000-4000-8000-000000000005',
     'Mensagem intrusa'
   ),
   42501,
-  null,
+  'not a participant',
   'non-participant cannot insert message into conversation'
 );
 
@@ -278,10 +273,7 @@ select set_config('request.jwt.claim.role', 'authenticated', true);
 
 select lives_ok(
   $$
-    insert into public.dm_messages (conversation_id, sender_id, content)
-    select c.id,
-           '10000000-0000-4000-8000-000000000009',
-           'Resposta legitima'
+    select public.send_conversation_message(c.id, 'Resposta legitima')
     from public.dm_conversations c
     where c.participant_a = '10000000-0000-4000-8000-000000000008'
       and c.participant_b = '10000000-0000-4000-8000-000000000009'
@@ -463,34 +455,28 @@ select set_config('request.jwt.claim.role', 'authenticated', true);
 
 select throws_ok(
   $$
-    insert into public.dm_messages (conversation_id, sender_id, content)
-    select c.id,
-           '10000000-0000-4000-8000-000000000008',
-           'Mensagem apos bloqueio'
+    select public.send_conversation_message(c.id, 'Mensagem apos bloqueio')
     from public.dm_conversations c
     where c.participant_a = '10000000-0000-4000-8000-000000000008'
       and c.participant_b = '10000000-0000-4000-8000-000000000009'
     limit 1
   $$,
   42501,
-  null,
+  'blocked',
   'blocked user cannot send message in existing conversation'
 );
 
 -- O defeito 2 morre aqui: o BLOQUEADOR também perde o envio nesta conversa.
 select throws_ok(
   $$
-    insert into public.dm_messages (conversation_id, sender_id, content)
-    select c.id,
-           '10000000-0000-4000-8000-000000000009',
-           'Mensagem do bloqueador'
+    select public.send_conversation_message(c.id, 'Mensagem do bloqueador')
     from public.dm_conversations c
     where c.participant_a = '10000000-0000-4000-8000-000000000008'
       and c.participant_b = '10000000-0000-4000-8000-000000000009'
     limit 1
   $$,
   '42501',
-  null,
+  'blocked',
   'blocker can no longer send either — block protects both ways'
 );
 
@@ -585,15 +571,14 @@ select set_config('request.jwt.claim.role', 'authenticated', true);
 
 select throws_ok(
   $$
-    insert into public.dm_messages (conversation_id, sender_id, content)
-    select c.id, '10000000-0000-4000-8000-000000000010', 'tentativa do bloqueado'
+    select public.send_conversation_message(c.id, 'tentativa do bloqueado')
       from public.dm_conversations c
      where c.participant_a = '10000000-0000-4000-8000-000000000008'
        and c.participant_b = '10000000-0000-4000-8000-000000000010'
      limit 1
   $$,
   '42501',
-  null,
+  'blocked',
   'blocked member still cannot send'
 );
 
@@ -607,15 +592,14 @@ select set_config('request.jwt.claim.role', 'authenticated', true);
 
 select throws_ok(
   $$
-    insert into public.dm_messages (conversation_id, sender_id, content)
-    select c.id, '10000000-0000-4000-8000-000000000008', 'tentativa da bloqueadora'
+    select public.send_conversation_message(c.id, 'tentativa da bloqueadora')
       from public.dm_conversations c
      where c.participant_a = '10000000-0000-4000-8000-000000000008'
        and c.participant_b = '10000000-0000-4000-8000-000000000010'
      limit 1
   $$,
   '42501',
-  null,
+  'blocked',
   'blocker also cannot send — block now protects both ways'
 );
 

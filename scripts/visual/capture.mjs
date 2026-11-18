@@ -106,15 +106,16 @@ export const HEADINGS = {
   "/reports": "^Fila de denúncias$",
   "/arrivals": "^Chegadas declaradas$",
   "/guide-queue": "Guia|Referências",
-  "/inicio": "Bom dia|Boa tarde|Boa noite|Olá",
-  "/explorar": "Explorar",
-  // h1 medido no arquivo que renderiza a rota (servicos/page.tsx:520): sem
-  // termo a tela é "Prestadores de serviço"; com termo, "Resultados para …" —
-  // e a variante com termo é chave própria logo abaixo.
-  "/explorar/servicos": "^Prestadores de serviço$",
-  // /configuracoes/page.tsx:6 redireciona para a subrota de notificações, e é
-  // isso que a captura registra; a rota declara expectedPath para o destino.
-  "/configuracoes": "^Configurações · Notificações$",
+  // F02-001: a tela antiga /inicio saiu do apps/web (307 para /app/inicio).
+  // RUN-181: a pasta `(shell)/explorar` saiu inteira — o hub e o painel de
+  // serviços são 307 para /app/busca (LT-002 desde o RUN-181; a busca já era
+  // desde o LT-002). Capturar qualquer um deles mediria o redirect, e as 4
+  // entradas de /explorar/busca que ainda estavam aqui já tinham morrido no
+  // LT-002 — saem junto por serem do mesmo arquivo, não por serem reclamadas
+  // pelo EVENTOS-RESIDUOS.
+  // RUN-184: as capturas de /configuracoes (índice, conta e bloqueados) saíram
+  // com a árvore — a tela de conta é do app agora (/app/voce e /app/apagar-conta,
+  // medidas em apps/app/tests/e2e). Capturá-las aqui mediria o 307.
   "/groups": "Grupos",
   "/communities": "Comunidades",
   // O h1 desta rota é o NOME da comunidade principal de quem lê ("Vila
@@ -122,13 +123,12 @@ export const HEADINGS = {
   // há vila — dado, não contrato. Com "Comunidade|Manaus" fixo a captura saía
   // INVALID em três viewports mesmo com a tela certa na frente.
   "/community": DYNAMIC_HEADING,
-  "/guide": "Guia",
   "/events": "^Explorar eventos$",
-  "/notifications": "^Notificações$",
-  "/messages": "^Mensagens$",
+  // RUN-166: a caixa e a conversa saíram da web para o app (/app/conversas,
+  // /app/conversa/[id]); capturá-las aqui mediria o redirect.
   // A vista Indicações da Comunidade: o h1 é o nome da comunidade do ator.
   "/community?vista=indicacoes": DYNAMIC_HEADING,
-  "/indicacoes/80000000-0000-4000-8000-000000000f01":
+  "/app/pergunta/80000000-0000-4000-8000-000000000f01":
     "^Alguém indica pediatra que atenda pelo FuSEx\\?$",
   "/prestador": "^Orçamentos para você$",
   "/prestador/ficha": "^Minha ficha$",
@@ -150,20 +150,18 @@ export const HEADINGS = {
   // o id antigo capturava o não-encontrado e a rota declarava "sem h1".
   "/groups/60000000-0000-4000-8000-000000000001": DYNAMIC_HEADING,
   "/communities/71000000-0000-4000-8000-000000000001/indicar-prestador": DYNAMIC_HEADING,
-  "/prestadores/30000000-0000-4000-8000-000000000010": DYNAMIC_HEADING,
-  "/profile": DYNAMIC_HEADING,
-  "/profile/editar": "^Editar perfil$",
-  // Perfil de TERCEIRO (prancha 51): a visão que lê a afiliação declarada. Nunca
-  // foi capturada, e é justamente a tela que a leitura por alvo serve — depois
-  // do achado de enumeração em lote, quem lê deixa de ser a tabela (não
-  // listável) e passa a ser public.profile_affiliations_for().
-  "/profile/20000000-0000-4000-8000-000000000001": DYNAMIC_HEADING,
-  "/localidade": DYNAMIC_HEADING,
+  // RUN-177 (F07): a ficha pública, o catálogo e o painel do negócio próprio
+  // saíram da web (307 para `/app/negocio/:id` e `/app/meu-negocio`).
+  // RUN-172: `/profile`, `/profile/editar` e o perfil alheio na web saíram —
+  // os três são 307 para o app (`/app/voce` e `/app/perfil/:id`), então
+  // capturá-los mediria o redirect.
+  // CIDADE-169: `/localidade` não tem mais tela na web — 307 para
+  // `/app/cidade/atual`, provada no rastreador de links (tests/e2e/link-crawl).
   // RECON-040 — as 37 rotas entregues depois que o guard-rail ficou parado na
   // branch lateral. Cada valor abaixo veio do h1 que o arquivo que renderiza a
   // rota realmente escreve; a rota cujo título é o próprio dado usa
-  // DYNAMIC_HEADING. Query string é chave própria: /guide e /guide?q=escola são
-  // duas entradas, como /explorar/servicos e a variante com termo.
+  // DYNAMIC_HEADING. Query string é chave própria: a variante com termo é
+  // entrada distinta da rota sem query.
   "/recuperar-senha": "^Esqueceu sua senha\\?$",
   "/nova-senha": "^Este link não vale mais$",
   // O mesmo caminho serve dois painéis legítimos: o pendente (sessionStorage)
@@ -173,13 +171,9 @@ export const HEADINGS = {
   // Lote 4 (PORT-004): o documento do protótipo.
   "/onboarding/documento": "^(Envie um documento\\.|A equipe pediu outro documento\\.)$",
   "/onboarding/perfil": "^Deixe com a sua cara\\.$",
-  "/mercado": "^O que você precisa pode estar por perto$",
-  "/mercado/novo": "^Novo anúncio$",
-  "/negocio": "^(Seu negócio|Crie a página do seu negócio)$",
-  "/negocio/catalogo": "^Catálogo e portfólio$",
-  "/prestadores/<member-business>": DYNAMIC_HEADING,
-  "/meus-anuncios": "^Meus anúncios$",
-  "/mercado/a0000000-0000-4000-8000-000000000001/editar": "^Editar anúncio$",
+  // Mercado: criar e editar desapego saíram da web na F06 resíduo (RUN-156).
+  // `/mercado/novo` e `/mercado/[id]/editar` agora redirecionam para o app
+  // (/app/mercado e /app/anuncio/[id]); capturá-los mediria o redirect.
   // O h1 do detalhe é o título do próprio evento.
   "/events/70000000-0000-4000-8000-000000000005": DYNAMIC_HEADING,
   // Evento da conta de captura (RECON-051): a única rota de EDIÇÃO de evento
@@ -191,57 +185,22 @@ export const HEADINGS = {
   "/communities/71000000-0000-4000-8000-000000000001/admin/media": "^Imagens da comunidade$",
   "/communities/71000000-0000-4000-8000-000000000001/admin/pending": "^Pedidos de entrada$",
   "/auth/callback-error": "^Não foi possível entrar$",
-  // O h1 é "Seu guia de {cidade}": prefixo fixo, a cidade é dado.
-  "/guide?q=escola": "^Seu guia de ",
   "/guide/a0000000-0000-4000-8000-000000000001/correcao": "^Sugerir atualização$",
-  "/explorar/servicos?q=climatiza": "^Resultados para “climatiza”$",
-  "/explorar/busca?q=escola": "^Resultados para “escola”$",
-  // Prancha 84 painel 2: o estado vazio da busca agrupada. Termo que não casa
-  // com nada no seed — a captura prova o estado real, não um card inventado.
-  "/explorar/busca?q=translado": "^Resultados para “translado”$",
-  // RECON-049 (par 84): o termo que casa com um PRESTADOR e com o evento
-  // semeado prova as seções "Serviços" e "Eventos" do agrupamento — sem ele, a
-  // captura só mostrava o Guia e a ausência das outras seções parecia defeito.
-  "/explorar/busca?q=manaus": "^Resultados para “manaus”$",
-  "/explorar/busca?q=piquenique": "^Resultados para “piquenique”$",
-  "/imoveis": "^Explorar moradia$",
-  "/imoveis/novo": "^Novo anúncio de moradia$",
-  // A ficha do imóvel é nomeada pelo título do anúncio.
+  // A ficha do imóvel é nomeada pelo título do anúncio. Criar imóvel saiu da
+  // web (RUN-164) e a gestão dos alertas também (RUN-169): as duas são do app.
   "/imoveis/b2000000-0000-4000-8000-000000000001": DYNAMIC_HEADING,
-  "/imoveis/alertas": "^Meus alertas$",
-  "/pedidos/novo?prestador=30000000-0000-4000-8000-000000000010": "^Do que você precisa\\?$",
   // Prancha 79, painel 2: o H1 da tela que o prestador convidado abre.
   [`/prestador-convite/${PROVIDER_INVITE_TOKEN}`]: "^Ofereça seus serviços no Bivaque$",
-  "/pedidos": "^Meus orçamentos$",
-  // O título do pedido vem da primeira linha da própria descrição do pedido.
-  "/pedidos/40000000-0000-4000-8000-000000000023": DYNAMIC_HEADING,
   // A conversa do pedido semeado: o h1 é o título do pedido.
-  "/indicacoes/80000000-0000-4000-8000-000000000f00": "^Alguém conhece um bom encanador\\?$",
-  "/salvos": "^Salvos$",
-  // A aba chega pela URL: o atalho "Salvos" do topo do guia manda para cá com o
-  // tipo escolhido, então a variante é chave própria de contrato.
-  "/salvos?aba=guia": "^Salvos$",
-  // As abas Mercado e Imóveis (RECON-032): cada uma passou a ter produtor real
-  // (`listing_saves`) e conteúdo semeado, então viram contrato próprio em vez
-  // de aparecerem só no "Tudo".
-  "/salvos?aba=mercado": "^Salvos$",
-  "/salvos?aba=imoveis": "^Salvos$",
+  "/app/pergunta/80000000-0000-4000-8000-000000000f00": "^Alguém conhece um bom encanador\\?$",
+  // RUN-186: a tela web de Salvos saiu — as capturas dela (e as variantes de
+  // `?aba=`) saíram junto; a tela do app tem spec próprio.
   // Prancha 12/61: a rota de sugestão de referência nova (a correção de artigo
   // existente já tem contrato em /guide/[id]/correcao).
-  "/guide/sugerir": "^Sugerir referência$",
   "/ajuda": "^Ajuda$",
   "/denuncias": "^Confiança e privacidade$",
   "/denuncias/nova?tipo=post&id=80000000-0000-4000-8000-000000000f01": "^Denunciar publicação$",
   "/denuncias/<own-report>": "^Acompanhar denúncia$",
-  "/messages/<thread>": "^Mensagens$",
-  // As subrotas de Configurações têm título próprio no H1 da área: a área
-  // continua nomeada ("Configurações") e a subtela entra no mesmo H1. Assim uma
-  // captura que aterrissasse na subtela errada deixa de passar como válida
-  // (RECON-042, defeito 3). As duas pontas — título e mapa — andam juntas.
-  "/configuracoes/notificacoes": "^Configurações · Notificações$",
-  "/configuracoes/conta": "^Configurações · Conta$",
-  "/configuracoes/familia": "^Configurações · Família$",
-  "/configuracoes/bloqueados": "^Configurações · Privacidade$",
 }
 
 export const ROUTES = [
@@ -307,45 +266,16 @@ export const ROUTES = [
   { path: "/groups", name: "groups", auth: true },
   // Grupos do seed são 60000000-… (70000000-… é a faixa dos eventos).
   { path: "/groups/60000000-0000-4000-8000-000000000001", name: "group-detail", auth: true },
-  { path: "/profile", name: "profile", auth: true },
-  { path: "/profile/editar", name: "profile-editar", auth: true },
-  // Perfil de terceiro (prancha 51): a visão que consome a leitura por alvo.
-  // O alvo tem Força Armada declarada e visível no seed.
-  { path: "/profile/20000000-0000-4000-8000-000000000001", name: "profile-member", auth: true },
   { path: "/events", name: "events", auth: true },
   // O id antigo (80000000-…) é de POST no seed, não de evento: a rota de detalhe
   // capturava o 404 honesto há runs. Eventos são 70000000-… no seed.
   { path: "/events/70000000-0000-4000-8000-000000000005", name: "event-detail", auth: true },
-  // RECON-025: o Mercado. A rota de detalhe depende de um anúncio no seed,
-  // que este lote não pode criar (supabase/seed.sql fora dos allowed_paths);
-  // capture-a quando a fixture existir.
-  { path: "/mercado", name: "mercado", auth: true },
-  { path: "/mercado/novo", name: "mercado-novo", auth: true },
-  { path: "/negocio", name: "member-business", auth: true, account: "visual" },
-  {
-    path: "/negocio/catalogo",
-    name: "member-business-catalog",
-    auth: true,
-    account: "visual",
-  },
-  {
-    path: "/prestadores/<member-business>",
-    name: "member-business-public",
-    auth: true,
-    account: "visual",
-    fixture: "member-business",
-  },
-  // RECON-026: a gestão dos próprios anúncios. `/meus-anuncios` é rota fixa. A
-  // edição depende de um anúncio no seed; `supabase/seed.sql` está fora dos
-  // allowed_paths deste lote, então o caminho fica cadastrado com um id
-  // determinístico e a captura cai no estado honesto "indisponível" até existir
-  // a fixture — nunca em 404 silencioso nem em tela de login.
-  { path: "/meus-anuncios", name: "meus-anuncios", auth: true },
-  {
-    path: "/mercado/a0000000-0000-4000-8000-000000000001/editar",
-    name: "mercado-editar",
-    auth: true,
-  },
+  // F06 resíduo (RUN-156): as telas web de criar e editar desapego saíram; o app
+  // cria pela folha do Criar e edita dentro do anúncio. As rotas antigas agora
+  // são redirect, não tela — não entram na captura.
+  // RUN-177 (F07): a página do negócio, o catálogo, a ficha pública e todo o
+  // acompanhamento de pedido saíram da web (307 para o app); sem page.tsx não
+  // há o que capturar aqui.
   // RECON-029: o evento REAL do seed (organizador 30000000-...-001) — o id
   // acima é um post id, não um evento; esta fixture concreta sustenta a captura
   // do detalhe e do fio de pergunta.
@@ -412,10 +342,8 @@ export const ROUTES = [
     name: "provider-invite",
     auth: false,
   },
-  { path: "/guide", name: "arrival-guide", auth: true },
-  // RECON-021: prova que o Ver-todos do grupo Guia chega com o filtro `q`
-  // preenchido (hunk de uma linha no /guide).
-  { path: "/guide?q=escola", name: "arrival-guide-termo", auth: true },
+  // A lista do Guia saiu para o app (LT-007): /guide e /guide?q= não se capturam
+  // mais aqui; as subrotas que ficam na web seguem abaixo.
   // RECON-030: o artigo estruturado (prancha 25) estende a entrada curada.
   // Fixture concreta do seed: Escola Modelo do Centro (Manaus, aprovada).
   {
@@ -429,35 +357,19 @@ export const ROUTES = [
     auth: true,
   },
   // G0 (reconstrução visual 2026-09-06): containers novos da navegação.
-  { path: "/inicio", name: "inicio", auth: true },
-  { path: "/explorar", name: "explorar", auth: true },
-  { path: "/explorar/servicos", name: "explorar-servicos", auth: true },
-  // RECON-021: painel direito da prancha 61 com o fixture real do seed —
-  // capturar com BIVAQUE_VISUAL_EMAIL=membro-25@ (unico ator que ve o
-  // prestador pela RLS).
-  { path: "/explorar/servicos?q=climatiza", name: "explorar-servicos-termo", auth: true },
-  // RECON-021: fixture concreta do seed de Manaus — "escola" casa com a
-  // entrada aprovada "Escola Modelo do Centro" e NÃO pode casar com a
-  // pendente "Escola de Acolhimento Militar" (status pending, RLS).
-  { path: "/explorar/busca?q=escola", name: "explorar-busca", auth: true },
-  { path: "/explorar/busca?q=translado", name: "explorar-busca-vazio", auth: true },
-  { path: "/explorar/busca?q=manaus", name: "explorar-busca-servico", auth: true },
-  { path: "/explorar/busca?q=piquenique", name: "explorar-busca-evento", auth: true },
-  // Onda T Task 4: the "cidade" container's actual landing page — NAV_ITEMS
-  // pointed here since E10 (406d4f6), but the route did not exist until T4.
-  { path: "/localidade", name: "localidade", auth: true },
-  // RECON-027: Moradia. `/imoveis` e `/imoveis/novo` não dependem de fixture.
+  // RUN-181: as telas do explorar saíram da web (307 para /app/busca) e com
+  // elas as capturas — do hub e do painel de serviços. As 4 de /explorar/busca
+  // abaixo já mediam redirect desde o LT-002; saem agora por serem do mesmo
+  // arquivo, e não porque outra frente as reivindique.
+  // F02-001: `/inicio` saiu da web; o Início é capturado no app (/app/inicio).
+  // CIDADE-169: a tela antiga de localidade saiu (307 para /app/cidade/atual);
+  // a captura dela é a da consulta no app.
+  // RECON-027: Moradia. `/imoveis` não depende de fixture. Criar imóvel saiu da
+  // web (RUN-164): a folha do app publica de verdade — sem captura web de novo/editar.
   // O detalhe aponta para a fixture de anúncio que `supabase/seed.sql` precisa
   // criar (fora do allowed_paths deste lote) — sem ela a captura cai no 404
   // honesto, que NÃO conta como fidelidade comprovada.
-  { path: "/imoveis", name: "imoveis", auth: true },
-  { path: "/imoveis/novo", name: "imoveis-novo", auth: true },
   { path: `/imoveis/${IMOVEIS_FIXTURE_ID}`, name: "imoveis-detail", auth: true },
-  // RECON-028: gestão dos alertas (prancha 65, painel 2). A tela renderiza o
-  // estado vazio honesto enquanto `supabase/seed.sql` não tiver um alerta — o
-  // seed está fora do allowed_paths deste lote, então a captura prova o estado
-  // vazio real, não fidelidade de cartão populado.
-  { path: "/imoveis/alertas", name: "imoveis-alertas", auth: true },
   // Onda T Task 5: o console do fundador. Com a conta global (sem operador) ele
   // rende o estado vazio honesto; a captura da tela real usa operador@.
   { path: "/arrivals", name: "admin-arrivals", auth: true, account: "operador" },
@@ -477,29 +389,6 @@ export const ROUTES = [
   },
   { path: "/prestador/conta", name: "provider-conta", auth: true, account: "prestador" },
   {
-    path: "/prestadores/30000000-0000-4000-8000-000000000010",
-    name: "provider-public-ficha",
-    auth: true,
-  },
-  // RECON-022: o formulário de pedido com destinatário fixo na URL. A fixture
-  // concreta é a ficha semeada da vitrine G (Climatiza Manaus).
-  {
-    path: "/pedidos/novo?prestador=30000000-0000-4000-8000-000000000010",
-    name: "pedido-novo",
-    auth: true,
-  },
-  // RECON-023: a lista e o detalhe da prancha 17. A fixture concreta e o
-  // pedido semeado de membro-1@ para a Climatiza Manaus (seed.sql) — e o
-  // detalhe só existe para quem participa: sem `account`, o ator global
-  // (dono-vila@) não é parte e a rota capturava o não-encontrado.
-  { path: "/pedidos", name: "pedidos", auth: true },
-  {
-    path: "/pedidos/40000000-0000-4000-8000-000000000023",
-    name: "pedido-detalhe",
-    auth: true,
-    account: "membro1",
-  },
-  {
     path: "/communities/71000000-0000-4000-8000-000000000001/indicar-prestador",
     name: "provider-indicar",
     auth: true,
@@ -512,18 +401,16 @@ export const ROUTES = [
   // a marca e o destino; o pedido resolvido mostra a memória.
   { path: "/community?vista=indicacoes", name: "indicacoes", auth: true },
   {
-    path: "/indicacoes/80000000-0000-4000-8000-000000000f00",
+    path: "/app/pergunta/80000000-0000-4000-8000-000000000f00",
     name: "indicacao-conversa",
     auth: true,
   },
   {
-    path: "/indicacoes/80000000-0000-4000-8000-000000000f01",
+    path: "/app/pergunta/80000000-0000-4000-8000-000000000f01",
     name: "indicacao-resolvida",
     auth: true,
   },
-  { path: "/messages", name: "messages", auth: true },
-  { path: "/notifications", name: "notifications", auth: true },
-  { path: "/profile", name: "profile", auth: true },
+
   // RECON-032 (pranchas 54 e 56). Fixtures concretas, não templates:
   // - /denuncias/nova: alvo é um post do seed que o visual@ vê pela RLS e
   //   ainda não denunciou (medido em 10/09/2026 com o token dele via REST);
@@ -532,18 +419,7 @@ export const ROUTES = [
   // - /denuncias/<own-report>: o id da denúncia do próprio ator é resolvido na
   //   hora por REST (fixture "own-report"). O seed gera ids aleatórios, então
   //   id fixo aqui virava fixture morta a cada reset do banco compartilhado.
-  // - /messages/<thread>: idem, por REST (fixture "own-thread"): a conversa
-  //   do ator é lida com o token dele. Antes o id vinha de um arquivo escrito
-  //   por tests/e2e/recon-032-messages.spec.ts, e a captura só passava depois
-  //   de rodar a suíte e2e inteira — quem capturava primeiro via defeito.
   //   As duas usam a conta do seed que TEM denúncia e conversa (visual@).
-  { path: "/salvos", name: "salvos", auth: true },
-  // Prancha 12/61: a aba Guia da tela de salvos, populada pela referência que o
-  // seed grava para a conta de captura.
-  { path: "/salvos?aba=guia", name: "salvos-guia", auth: true },
-  { path: "/salvos?aba=mercado", name: "salvos-mercado", auth: true },
-  { path: "/salvos?aba=imoveis", name: "salvos-imoveis", auth: true },
-  { path: "/guide/sugerir", name: "guide-sugerir", auth: true },
   { path: "/ajuda", name: "ajuda", auth: true },
   { path: "/denuncias", name: "denuncias", auth: true },
   {
@@ -558,28 +434,9 @@ export const ROUTES = [
     account: "visual",
     fixture: "own-report",
   },
-  {
-    path: "/messages/<thread>",
-    name: "message-thread",
-    auth: true,
-    account: "visual",
-    fixture: "own-thread",
-  },
-  // RECON-031 — configurações (prancha 52) e confiança (prancha 56). A fixture
-  // é a conta do seed: membro verificado (default), com a coluna vertical de
-  // seções e as subrotas reais.
-  // /configuracoes redireciona para a subrota de notificações: o destino é
-  // contrato declarado, não surpresa (a tela é a mesma, o caminho muda).
-  {
-    path: "/configuracoes",
-    name: "configuracoes",
-    auth: true,
-    expectedPath: "/configuracoes/notificacoes",
-  },
-  { path: "/configuracoes/notificacoes", name: "configuracoes-notificacoes", auth: true },
-  { path: "/configuracoes/conta", name: "configuracoes-conta", auth: true },
-  { path: "/configuracoes/familia", name: "configuracoes-familia", auth: true },
-  { path: "/configuracoes/bloqueados", name: "configuracoes-bloqueados", auth: true },
+  // RECON-031 — confiança (prancha 56). A fixture é a conta do seed: membro
+  // verificado (default). As capturas de configurações (prancha 52) saíram no
+  // RUN-184 com a árvore: a conta é tela do app.
 ]
 
 // --------------------------------------------------------------------------
@@ -729,18 +586,6 @@ async function actorRow(route, auth, path, params) {
   return Array.isArray(rows) ? rows[0] : undefined
 }
 
-// O `sub` do JWT é o id do ator: a conversa é filtrada por participante.
-function actorId(auth) {
-  const token = auth?.session?.access_token
-  if (typeof token !== "string") return null
-  try {
-    const payload = JSON.parse(Buffer.from(token.split(".")[1], "base64url").toString("utf8"))
-    return typeof payload?.sub === "string" ? payload.sub : null
-  } catch {
-    return null
-  }
-}
-
 async function resolveRoutePath(route, auth) {
   if (!route.fixture) return route.path
 
@@ -754,21 +599,6 @@ async function resolveRoutePath(route, auth) {
       throw new Error(`rota ${route.name}: o ator não tem denúncia própria para a fixture`)
     }
     return `/denuncias/${row.id}`
-  }
-
-  if (route.fixture === "own-thread") {
-    const me = actorId(auth)
-    if (!me) throw new Error(`rota ${route.name}: sessão sem id de ator para a conversa`)
-    const row = await actorRow(route, auth, "dm_conversations", {
-      select: "id",
-      or: `(participant_a.eq.${me},participant_b.eq.${me})`,
-      order: "created_at.desc",
-      limit: "1",
-    })
-    if (typeof row?.id !== "string") {
-      throw new Error(`rota ${route.name}: o ator não participa de nenhuma conversa`)
-    }
-    return `/messages/${row.id}`
   }
 
   const file = join(OUT_ROOT, "fixtures", `${route.fixture}.json`)
@@ -1205,17 +1035,16 @@ export function auditPage({ nonTextPairs, minimumTextSize, readingMeasureMax }) 
 async function main() {
   const runDir = join(OUT_ROOT, RUN_ID)
   const shotsDir = join(runDir, "shots")
-  if (SCENARIO && !["publish", "edit", "offline"].includes(SCENARIO)) {
-    throw new Error(`Unknown visual scenario: ${SCENARIO}`)
-  }
-  if (SCENARIO && ROUTE_PATH && ROUTE_PATH !== "/inicio") {
-    throw new Error(`The ${SCENARIO} scenario starts at /inicio`)
+  // F02-001: os cenários publish/edit/offline abriam o compositor do Início
+  // antigo da web, que saiu inteiro. A publicação do app tem os próprios E2E.
+  if (SCENARIO) {
+    throw new Error(`The ${SCENARIO} scenario measured the old web /inicio, removed in F02-001`)
   }
   // BIVAQUE_VISUAL_ROUTE casa o caminho exato ou o nome da rota — o nome é a
   // única forma de pedir uma rota cujo caminho só existe em runtime (fixture).
   // Lista separada por vírgula roda várias rotas num único processo, para que o
   // report.json da run carregue a prova de todas elas de uma vez.
-  const requestedList = (SCENARIO ? "/inicio" : (ROUTE_PATH ?? ""))
+  const requestedList = (ROUTE_PATH ?? "")
     .split(",")
     .map((entry) => entry.trim())
     .filter(Boolean)
@@ -1453,6 +1282,21 @@ async function main() {
 
         // Two shots per route: the fold shot keeps first-impression detail legible for
         // visual review, the full-page shot carries scroll rhythm and the bottom states.
+        // Images below the fold use loading="lazy"; a scroll pass loads them before the
+        // full-page shot, which otherwise captures empty boxes.
+        await page.evaluate(async () => {
+          const step = Math.max(320, Math.floor(window.innerHeight * 0.8))
+          for (let y = 0; y < document.body.scrollHeight; y += step) {
+            window.scrollTo(0, y)
+            await new Promise((resolve) => setTimeout(resolve, 60))
+          }
+          // `decoding="async"` pode segurar a pintura de uma imagem já baixada;
+          // esperar o decode evita que o print de página inteira mostre o quadro
+          // vazio mesmo com a imagem carregada.
+          await Promise.all(Array.from(document.images).map((img) => img.decode().catch(() => {})))
+          window.scrollTo(0, 0)
+          await new Promise((resolve) => setTimeout(resolve, 150))
+        })
         const fold = join(shotsDir, `${label}--fold.png`)
         const full = join(shotsDir, `${label}--full.png`)
         await page.screenshot({ path: fold })

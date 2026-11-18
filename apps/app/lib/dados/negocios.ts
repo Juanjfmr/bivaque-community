@@ -1,4 +1,4 @@
-import { enviar, FalhaDaApi, ler } from "../api/cliente"
+import { enviar, enviarFormulario, FalhaDaApi, ler } from "../api/cliente"
 
 export type ResumoDoNegocio = Readonly<{
   id: string
@@ -22,6 +22,8 @@ export type ListaDeNegocios = Readonly<{
   proximo: string | null
 }>
 export type SituacaoDoPedido = "open" | "in_conversation" | "closed" | "cancelled"
+/** De que lado a pessoa está no pedido: quem pediu, ou quem recebeu. */
+export type LadoDoPedido = "solicitante" | "dono"
 export type PedidoDeServico = Readonly<{
   id: string
   negocioId: string
@@ -30,15 +32,41 @@ export type PedidoDeServico = Readonly<{
   descricao: string
   quando: string | null
   situacao: SituacaoDoPedido
+  /** O bairro que o prestador vê (derivado do CEP); `null` no pedido sem CEP. */
+  bairro: string | null
+  /** Distância em metros do ponto de vista de quem lê; `null` sem origem. */
+  distanciaMetros: number | null
   criadoEm: string
   atualizadoEm: string
   conversaId: string | null
+  lado: LadoDoPedido
 }>
 export type ListaDePedidos = Readonly<{
   pedidos: readonly PedidoDeServico[]
   proximo: string | null
 }>
-export type DadosDoPedido = Readonly<{ descricao: string; quando: string; chave: string }>
+export type DadosDoPedido = Readonly<{
+  descricao: string
+  quando: string
+  chave: string
+  /** CEP opcional, já em dígitos ou vazio — o servidor normaliza. */
+  cep: string
+}>
+
+/** Um serviço do catálogo da ficha, como o app o edita. */
+export type ServicoDaFicha = Readonly<{ id: string; titulo: string; descricao: string | null }>
+export type FotoDaFicha = Readonly<{ id: string; url: string; legenda: string | null }>
+/** A ficha do PRÓPRIO negócio (Meu negócio). `null` = ainda não criada. */
+export type MinhaFicha = Readonly<{
+  id: string
+  nome: string
+  categoria: string
+  categoriaNome: string
+  descricao: string | null
+  servicos: readonly ServicoDaFicha[]
+  fotos: readonly FotoDaFicha[]
+}>
+export type DadosDaFicha = Readonly<{ nome: string; categoria: string; descricao: string }>
 
 type Corpo = Record<string, unknown>
 
@@ -65,6 +93,13 @@ function lista(corpo: Corpo, chave: string): unknown[] {
   if (!Array.isArray(valor)) foraDoContrato()
   return valor
 }
+/** Número opcional do contrato: `null` é ausência, nunca zero. */
+function numeroOpcional(corpo: Corpo, chave: string): number | null {
+  const valor = corpo[chave]
+  if (valor === null) return null
+  if (typeof valor !== "number") foraDoContrato()
+  return valor
+}
 function resumo(valor: unknown): ResumoDoNegocio {
   const corpo = registro(valor)
   return {
@@ -85,6 +120,8 @@ function pedidoDe(valor: unknown): PedidoDeServico {
     situacao !== "cancelled"
   )
     foraDoContrato()
+  const lado = corpo["lado"]
+  if (lado !== "solicitante" && lado !== "dono") foraDoContrato()
   return {
     id: texto(corpo, "id"),
     negocioId: texto(corpo, "negocioId"),
@@ -93,10 +130,43 @@ function pedidoDe(valor: unknown): PedidoDeServico {
     descricao: texto(corpo, "descricao"),
     quando: opcional(corpo, "quando"),
     situacao,
+    bairro: opcional(corpo, "bairro"),
+    distanciaMetros: numeroOpcional(corpo, "distanciaMetros"),
     criadoEm: texto(corpo, "criadoEm"),
     atualizadoEm: texto(corpo, "atualizadoEm"),
     conversaId: opcional(corpo, "conversaId"),
+    lado,
   }
+}
+function servicoDe(valor: unknown): ServicoDaFicha {
+  const corpo = registro(valor)
+  return {
+    id: texto(corpo, "id"),
+    titulo: texto(corpo, "titulo"),
+    descricao: opcional(corpo, "descricao"),
+  }
+}
+function fotoDe(valor: unknown): FotoDaFicha {
+  const corpo = registro(valor)
+  return { id: texto(corpo, "id"), url: texto(corpo, "url"), legenda: opcional(corpo, "legenda") }
+}
+function minhaFichaDe(valor: unknown): MinhaFicha {
+  const corpo = registro(valor)
+  return {
+    id: texto(corpo, "id"),
+    nome: texto(corpo, "nome"),
+    categoria: texto(corpo, "categoria"),
+    categoriaNome: texto(corpo, "categoriaNome"),
+    descricao: opcional(corpo, "descricao"),
+    servicos: lista(corpo, "servicos").map(servicoDe),
+    fotos: lista(corpo, "fotos").map(fotoDe),
+  }
+}
+function servicosDe(corpo: Corpo): readonly ServicoDaFicha[] {
+  return lista(corpo, "servicos").map(servicoDe)
+}
+function fotosDe(corpo: Corpo): readonly FotoDaFicha[] {
+  return lista(corpo, "fotos").map(fotoDe)
 }
 
 export async function lerNegocios(
@@ -169,4 +239,129 @@ export async function buscarPedido(
   opcoes: { signal?: AbortSignal } = {},
 ): Promise<PedidoDeServico> {
   return pedidoDe((await ler(`/api/app/pedidos/${encodeURIComponent(id)}`, opcoes))["pedido"])
+}
+
+/** Cancelar (solicitante) ou encerrar (os dois lados). O estado final vem do banco. */
+export async function mudarPedido(
+  id: string,
+  acao: "cancelar" | "encerrar",
+  opcoes: { signal?: AbortSignal } = {},
+): Promise<PedidoDeServico> {
+  const corpo = await enviar(
+    "PATCH",
+    `/api/app/pedidos/${encodeURIComponent(id)}`,
+    { acao },
+    opcoes,
+  )
+  return pedidoDe(corpo["pedido"])
+}
+
+// ── Meu negócio (F07): a ficha, o catálogo e as fotos do PRÓPRIO membro ────
+
+export type MinhaFichaLida = Readonly<{
+  ficha: MinhaFicha | null
+  categorias: readonly Readonly<{ id: string; nome: string }>[]
+}>
+
+export async function lerMinhaFicha(
+  opcoes: { signal?: AbortSignal } = {},
+): Promise<MinhaFichaLida> {
+  const corpo = await ler("/api/app/negocio", opcoes)
+  return {
+    ficha: corpo["negocio"] === null ? null : minhaFichaDe(corpo["negocio"]),
+    categorias: lista(corpo, "categorias").map((valor) => {
+      const categoria = registro(valor)
+      return { id: texto(categoria, "id"), nome: texto(categoria, "nome") }
+    }),
+  }
+}
+
+export async function criarMinhaFicha(
+  dados: DadosDaFicha,
+  opcoes: { signal?: AbortSignal } = {},
+): Promise<MinhaFicha> {
+  return minhaFichaDe((await enviar("POST", "/api/app/negocio", dados, opcoes))["negocio"])
+}
+
+export async function salvarMinhaFicha(
+  dados: DadosDaFicha,
+  opcoes: { signal?: AbortSignal } = {},
+): Promise<MinhaFicha> {
+  return minhaFichaDe((await enviar("PATCH", "/api/app/negocio", dados, opcoes))["negocio"])
+}
+
+export async function publicarServico(
+  dados: Readonly<{ titulo: string; descricao: string }>,
+  opcoes: { signal?: AbortSignal } = {},
+): Promise<readonly ServicoDaFicha[]> {
+  return servicosDe(await enviar("POST", "/api/app/negocio/catalogo", dados, opcoes))
+}
+
+export async function moverServico(
+  id: string,
+  direcao: "cima" | "baixo",
+  opcoes: { signal?: AbortSignal } = {},
+): Promise<readonly ServicoDaFicha[]> {
+  return servicosDe(
+    await enviar(
+      "PATCH",
+      `/api/app/negocio/catalogo/${encodeURIComponent(id)}`,
+      { direcao },
+      opcoes,
+    ),
+  )
+}
+
+export async function removerServico(
+  id: string,
+  opcoes: { signal?: AbortSignal } = {},
+): Promise<readonly ServicoDaFicha[]> {
+  return servicosDe(
+    await enviar(
+      "DELETE",
+      `/api/app/negocio/catalogo/${encodeURIComponent(id)}`,
+      undefined,
+      opcoes,
+    ),
+  )
+}
+
+export async function publicarFoto(
+  arquivo: File,
+  legenda: string,
+  opcoes: { signal?: AbortSignal } = {},
+): Promise<readonly FotoDaFicha[]> {
+  const formulario = new FormData()
+  formulario.set("file", arquivo)
+  if (legenda.trim() !== "") formulario.set("legenda", legenda.trim())
+  return fotosDe(await enviarFormulario("/api/app/negocio/fotos", formulario, opcoes))
+}
+
+export async function legendarFoto(
+  id: string,
+  legenda: string,
+  opcoes: { signal?: AbortSignal } = {},
+): Promise<readonly FotoDaFicha[]> {
+  return fotosDe(
+    await enviar("PATCH", `/api/app/negocio/fotos/${encodeURIComponent(id)}`, { legenda }, opcoes),
+  )
+}
+
+export async function moverFoto(
+  id: string,
+  direcao: "cima" | "baixo",
+  opcoes: { signal?: AbortSignal } = {},
+): Promise<readonly FotoDaFicha[]> {
+  return fotosDe(
+    await enviar("PATCH", `/api/app/negocio/fotos/${encodeURIComponent(id)}`, { direcao }, opcoes),
+  )
+}
+
+export async function removerFoto(
+  id: string,
+  opcoes: { signal?: AbortSignal } = {},
+): Promise<readonly FotoDaFicha[]> {
+  return fotosDe(
+    await enviar("DELETE", `/api/app/negocio/fotos/${encodeURIComponent(id)}`, undefined, opcoes),
+  )
 }

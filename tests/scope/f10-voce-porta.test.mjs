@@ -61,10 +61,15 @@ test("as rotas da jornada usam a sessão sob RLS, nunca o cliente de serviço", 
   // (RUN-018), cujos wrappers públicos de convite só têm execute para
   // service_role, e a localização (RUN-029), que precisa do cache de CEP e da
   // função set_member_location — único caminho de escrita da coordenada.
+  //
+  // A terceira é os interesses (RUN-160), com teste próprio abaixo: a tabela
+  // user_group_interests é operacional e os três RPCs têm execute só para
+  // service_role, então a sessão sob RLS não lê nem grava interesse nenhum.
   const rotas = arquivos(ROTAS)
     .filter((caminho) => caminho.endsWith("route.ts"))
     .filter((caminho) => !relativo(caminho).includes("/familia/"))
     .filter((caminho) => !relativo(caminho).includes("/localizacao/"))
+    .filter((caminho) => !relativo(caminho).includes("/interesses/"))
   assert.ok(rotas.length >= 6, `esperava as rotas da jornada, achei ${rotas.length}`)
   for (const caminho of rotas) {
     const fonte = ler(caminho)
@@ -87,22 +92,44 @@ test("as rotas da jornada usam a sessão sob RLS, nunca o cliente de serviço", 
   }
 })
 
-test("a família usa o privilégio só depois da sessão e só nos wrappers de convite", () => {
-  const rotas = arquivos(join(ROTAS, "familia")).filter((caminho) => caminho.endsWith("route.ts"))
-  assert.ok(rotas.length >= 2, `esperava as rotas de família, achei ${rotas.length}`)
-  const doModulo = /lerFamilia|enviarConvite|revogarConvite/
-  for (const caminho of rotas) {
-    const fonte = ler(caminho)
-    const sessao = fonte.indexOf("exigirSessao(")
-    const privilegio = fonte.indexOf("clienteDeServicoOuNulo(")
-    assert.ok(sessao >= 0, `${relativo(caminho)} não resolve a sessão pelo encanamento`)
-    assert.ok(privilegio > sessao, `${relativo(caminho)} abre o privilégio antes da sessão`)
-    assert.match(fonte, doModulo, `${relativo(caminho)} usa o privilégio fora dos wrappers`)
-    assert.match(fonte, /opcoesDoApp/, `${relativo(caminho)} não responde ao preflight do contrato`)
+test("a família deriva a posse da sessão e só lê ou enfileira com privilégio", () => {
+  const envio = read(...ROTAS.split("/"), "familia", "route.ts")
+  const revogacao = read(...ROTAS.split("/"), "familia", "[id]", "route.ts")
+
+  // SEC-011 (auditoria de 16/11, A2-1 / A2-4): a criação e a revogação chamam
+  // as funções públicas que derivam o titular de auth.uid() (migration
+  // 20261116221048) com o cliente da SESSÃO. O id do titular não é parâmetro de
+  // nada e não existe mais assinatura pública que o aceite.
+  assert.match(
+    envio,
+    /enviarConvite\(\s*auth\.sessao\.cliente,/,
+    "o envio não chama a função de criação com o cliente da sessão",
+  )
+  assert.match(
+    revogacao,
+    /revogarConvite\(auth\.sessao\.cliente, id\)/,
+    "a revogação não chama a função de revogação com o cliente da sessão",
+  )
+  assert.doesNotMatch(
+    revogacao,
+    /clienteDeServicoOuNulo|service_role/,
+    "a revogação abre privilégio onde a posse derivada basta",
+  )
+
+  // O privilégio que resta na leitura e no outbox vem DEPOIS da sessão e não é
+  // escrita de posse.
+  const sessao = envio.indexOf("exigirSessao(")
+  const privilegio = envio.indexOf("clienteDeServicoOuNulo(")
+  assert.ok(sessao >= 0, "o envio não resolve a sessão pelo encanamento")
+  assert.ok(privilegio > sessao, "o envio abre o privilégio antes da sessão")
+
+  for (const fonte of [envio, revogacao]) {
+    assert.match(fonte, /lerFamilia|enviarConvite|revogarConvite/, "a rota foge do módulo")
+    assert.match(fonte, /opcoesDoApp/, "a rota não responde ao preflight do contrato")
     assert.doesNotMatch(
       fonte,
       /corpo\[(?:"|')((user_id|userId|usuario))(?:"|')\]|searchParams\.get\("(user_id|userId|usuario)"\)/,
-      `${relativo(caminho)} aceita o dono vindo do pedido`,
+      "a rota aceita o dono vindo do pedido",
     )
   }
 })
@@ -131,8 +158,8 @@ test("a localização usa o privilégio só para o cache e a escrita medida", ()
   )
   assert.match(
     rota,
-    /responder\(request, \{ localizacao \}, 200\)/,
-    "a resposta de sucesso não é só a localização lida pela RPC",
+    /responder\(request, \{ localizacao, distanciaDisponivel \}, 200\)/,
+    "a resposta de sucesso não é só a localização lida pela RPC e se há posição",
   )
 
   // O cache é o único lugar do privilégio que toca tabela, e só cep_geocodes.
@@ -159,17 +186,55 @@ test("a localização usa o privilégio só para o cache e a escrita medida", ()
   )
 })
 
-test("a extração do módulo de família mantém a tela antiga funcionando", () => {
-  const acao = read("apps", "web", "app", "(shell)", "profile", "family-invite-section-actions.ts")
-  assert.match(
-    acao,
-    /from "\.\.\/\.\.\/\.\.\/lib\/convite\/familia"/,
-    "a Server Action antiga não importa o módulo compartilhado",
-  )
-  for (const funcao of ["lerFamilia", "enviarConvite", "revogarConvite"]) {
-    assert.match(acao, new RegExp(funcao), `a Server Action antiga não usa ${funcao}`)
+test("os interesses usam o privilégio só depois da sessão e só nos RPCs de interesse", () => {
+  // RUN-160 / F10: `user_group_interests` é tabela operacional — não tem grant
+  // para anon/authenticated — e os três RPCs de interesse têm execute só para o
+  // papel de serviço. A sessão, sozinha, não lê nem grava interesse nenhum; a
+  // exceção é medida, e é esta a prova dela.
+  const rota = read(...ROTAS.split("/"), "interesses", "route.ts")
+  const sessao = rota.indexOf("exigirSessao(")
+  const privilegio = rota.indexOf("clienteDeServicoOuNulo(")
+  assert.ok(sessao >= 0, "a rota de interesses não resolve a sessão pelo encanamento")
+  assert.ok(privilegio > sessao, "a rota de interesses abre o privilégio antes da sessão")
+  for (const rpc of [
+    "list_available_groups_for_interests",
+    "list_user_group_interests",
+    "record_user_group_interests",
+  ]) {
+    assert.match(rota, new RegExp(rpc), `a rota de interesses não usa ${rpc}`)
   }
+  // Exatamente um cliente de privilégio por handler, e nenhum aberto à mão.
+  assert.strictEqual(
+    (rota.match(/clienteDeServicoOuNulo\(/g) ?? []).length,
+    2,
+    "a rota de interesses abre o cliente de serviço fora do encanamento",
+  )
+  assert.doesNotMatch(rota, /createServerClient/, "a rota de interesses monta cliente próprio")
+  assert.doesNotMatch(
+    rota,
+    /from\("user_group_interests"\)/,
+    "a rota de interesses toca a tabela operacional direto",
+  )
+  assert.match(rota, /conferirEscrita\(/, "a escrita de interesses não confere a porta")
+  assert.match(rota, /opcoesDoApp/, "a rota de interesses não responde ao preflight do contrato")
+  assert.match(
+    rota,
+    /from "\.\.\/\.\.\/eventos\/_comum"/,
+    "a rota de interesses não usa a cidade e o UUID do _comum",
+  )
+  assert.doesNotMatch(
+    rota,
+    /searchParams\.get\("(user_id|usuario|userId|dono|locality_id)"\)|corpo\[(?:"|')(user_id|userId|usuario|locality_id)(?:"|')\]/,
+    "a rota de interesses aceita dono ou cidade vindos do pedido",
+  )
 })
+
+// RUN-172 tirou as Server Actions de família de `(shell)/profile`; o SEC-011
+// (16/11) tirou as últimas, que já eram código morto: a tela
+// `(shell)/configuracoes/familia` é 307 para /app/voce (next.config.ts) e quem
+// convida é o app, pela porta `/api/app/voce/familia`. O teste acima prova que a
+// porta usa o cliente da sessão; aqui só resta o 307, provado em
+// tests/unit/infra/lan-troca-redirect.test.ts.
 
 test("toda escrita da jornada passa pela conferência de CSRF", () => {
   const escritas = arquivos(ROTAS).filter((caminho) =>

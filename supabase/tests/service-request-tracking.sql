@@ -1,7 +1,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select plan(31);
+select plan(45);
 
 \ir fixtures/foundation.inc
 \ir fixtures/communities.inc
@@ -42,6 +42,12 @@ values (
   'free'
 );
 
+-- SEC-013: o pedido do teste nasce COM localização, senão os negativos de
+-- payload abaixo não provariam nada (a chave existiria no jsonb antigo com
+-- valor nulo, e não com o CEP real da solicitante).
+insert into public.cep_geocodes (cep, latitude, longitude, source, neighborhood)
+values ('69000000', -3.10194, -60.025, 'brasilapi', 'Centro');
+
 -- ── positivo: o solicitante cria e envia a primeira mensagem ─────────────────
 
 set local role authenticated;
@@ -54,7 +60,8 @@ select lives_ok(
       '30000000-0000-4000-8000-000000000026',
       'Preciso instalar duas luminarias',
       'A combinar',
-      'k-1'
+      'k-1',
+      '69000000'
     )
   $$,
   'o solicitante cria o pedido'
@@ -293,6 +300,40 @@ select results_eq(
   'editar persiste o quando'
 );
 
+-- SEC-013/F1: o payload de editar não carrega as colunas cruas do pedido. O
+-- pedido TEM CEP e coordenada, então `to_jsonb(v_req)` os entregava ao
+-- solicitante — é o caminho que esta emenda fecha.
+select set_config(
+  'app.r023_payload',
+  public.update_service_request(
+    (select id from public.service_requests where idempotency_key = 'k-1'),
+    'Preciso instalar tres luminarias',
+    'Nesta semana'
+  )::text,
+  true
+);
+
+select is(
+  current_setting('app.r023_payload')::jsonb ? 'cep',
+  false,
+  'update nao devolve o cep do pedido'
+);
+select is(
+  current_setting('app.r023_payload')::jsonb ? 'latitude',
+  false,
+  'update nao devolve a latitude do pedido'
+);
+select is(
+  current_setting('app.r023_payload')::jsonb ? 'longitude',
+  false,
+  'update nao devolve a longitude do pedido'
+);
+select is(
+  current_setting('app.r023_payload')::jsonb ->> 'region',
+  'Centro',
+  'update continua devolvendo o bairro publicado'
+);
+
 -- ── encerrar: idempotente e com ator ─────────────────────────────────────────
 
 select results_eq(
@@ -313,6 +354,32 @@ select results_eq(
   $$,
   array['10000000-0000-4000-8000-000000000001'::text],
   'encerrar registra o ator'
+);
+
+-- SEC-013/F1: encerrar devolve o payload publicado, sem as colunas cruas — pela
+-- solicitante e, abaixo, pelo prestador.
+select set_config(
+  'app.r023_payload',
+  public.close_service_request(
+    (select id from public.service_requests where idempotency_key = 'k-1')
+  )::text,
+  true
+);
+
+select is(
+  current_setting('app.r023_payload')::jsonb ? 'cep',
+  false,
+  'close pela solicitante nao devolve o cep'
+);
+select is(
+  current_setting('app.r023_payload')::jsonb ? 'latitude',
+  false,
+  'close pela solicitante nao devolve a latitude'
+);
+select is(
+  current_setting('app.r023_payload')::jsonb ? 'longitude',
+  false,
+  'close pela solicitante nao devolve a longitude'
 );
 
 -- So agora `closed_at` existe: o segundo encerramento tem de devolver o MESMO
@@ -336,6 +403,89 @@ select results_eq(
   $$,
   array[true],
   'encerrar de novo nao reescreve o instante do primeiro encerramento'
+);
+
+-- O OUTRO lado: o prestador destinatário também encerra, e o payload dele
+-- também não carrega cep, latitude nem longitude (o achado F1 é exatamente o
+-- prestador lendo a localização da solicitante).
+set local role authenticated;
+select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000026', true);
+select set_config('request.jwt.claim.role', 'authenticated', true);
+
+select set_config(
+  'app.r023_payload',
+  public.close_service_request(
+    (select id from public.service_requests where idempotency_key = 'k-1')
+  )::text,
+  true
+);
+
+select is(
+  current_setting('app.r023_payload')::jsonb ? 'cep',
+  false,
+  'close pelo prestador nao devolve o cep da solicitante'
+);
+select is(
+  current_setting('app.r023_payload')::jsonb ? 'latitude',
+  false,
+  'close pelo prestador nao devolve a latitude da solicitante'
+);
+select is(
+  current_setting('app.r023_payload')::jsonb ? 'longitude',
+  false,
+  'close pelo prestador nao devolve a longitude da solicitante'
+);
+
+-- Cancelar é terminal: precisa de outro pedido. Ele nasce com CEP, e o payload
+-- do cancelamento também sai sem as colunas cruas.
+select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000001', true);
+select set_config('request.jwt.claim.role', 'authenticated', true);
+
+do $$
+begin
+  perform public.create_service_request(
+    '30000000-0000-4000-8000-000000000026',
+    'Pedido que sera cancelado',
+    null,
+    'k-2',
+    '69000000'
+  );
+end $$;
+
+select set_config(
+  'app.r023_payload',
+  public.cancel_service_request(
+    (select id from public.service_requests where idempotency_key = 'k-2')
+  )::text,
+  true
+);
+
+select is(
+  current_setting('app.r023_payload')::jsonb ? 'cep',
+  false,
+  'cancel nao devolve o cep'
+);
+select is(
+  current_setting('app.r023_payload')::jsonb ? 'latitude',
+  false,
+  'cancel nao devolve a latitude'
+);
+select is(
+  current_setting('app.r023_payload')::jsonb ? 'longitude',
+  false,
+  'cancel nao devolve a longitude'
+);
+-- Cancelar é terminal: a segunda chamada é recusada pela guarda de estado
+-- (`20261116220115:214-216`, 22023), não devolve sucesso.
+select throws_ok(
+  $$
+    select public.cancel_service_request(
+      (select id from public.service_requests where idempotency_key = 'k-2')
+    )
+  $$,
+  '22023',
+  null,
+  'cancelar de novo é recusado: o pedido já está no estado terminal'
 );
 
 -- ── negativo: terceiro nao le, nao escreve e nao encerra ─────────────────────

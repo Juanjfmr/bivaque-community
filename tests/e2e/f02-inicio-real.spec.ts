@@ -12,8 +12,8 @@ test.describe("F02 — início e busca reais", { tag: "@stateful" }, () => {
     expect((await resposta.json()) as { cidade: string }).toMatchObject({ cidade: "Manaus" })
     await expect(page.getByRole("heading", { name: "Sua rede em Manaus" })).toBeVisible()
     await expect(page.getByText("Piquenique das famílias")).toBeVisible({ timeout: 30_000 })
-    await page.getByRole("button", { name: "Buscar no Bivaque" }).click()
-    const campo = page.getByRole("searchbox", { name: "Buscar no Bivaque" })
+    await page.locator('[data-acao="busca"]').first().click()
+    const campo = page.locator('[data-campo="busca"]')
     await expect(page.getByText("Explorar em Manaus")).toBeVisible({ timeout: 30_000 })
     await campo.fill("a")
     await expect(page.getByText("Explorar em Manaus")).toBeVisible()
@@ -24,6 +24,22 @@ test.describe("F02 — início e busca reais", { tag: "@stateful" }, () => {
     await expect(resultado).toBeVisible({ timeout: 30_000 })
     await resultado.click()
     await expect(page).toHaveURL(/\/app\/pergunta\/80000000-0000-4000-8000-000000000f01/)
+  })
+
+  test("não mostra entrada pendente na busca", async ({ page, context }) => {
+    await semearSessaoDeMembro(context, MEMBRO_SEMEADO)
+    // O nome só existe na entrada `pending` do Guia (supabase/seed.sql, status na
+    // linha do item a0…005); outras fontes podem casar "Militar", então a tela
+    // pode mostrar resultados ou o vazio — em nenhum dos dois a entrada pendente.
+    const busca = page.waitForResponse((resposta) => resposta.url().includes("/api/app/busca?"))
+    await page.goto("/app/busca?q=Acolhimento%20Militar")
+    const resposta = await busca
+    expect(resposta.status()).toBe(200)
+    expect(await resposta.text()).not.toContain("Escola de Acolhimento Militar")
+    await expect(
+      page.getByText(/Nada sobre “Acolhimento Militar”|\d+ resultados? em Manaus/).first(),
+    ).toBeVisible({ timeout: 30_000 })
+    await expect(page.getByText("Escola de Acolhimento Militar")).toHaveCount(0)
   })
 
   test("nega leitura sem sessão", async ({ request }) => {
@@ -56,9 +72,9 @@ test.describe("F02 — início e busca reais", { tag: "@stateful" }, () => {
     await page.unroute("**/api/app/inicio")
     await page.getByRole("button", { name: "Tentar de novo" }).click()
     await expect(page.getByText("Piquenique das famílias")).toBeVisible({ timeout: 30_000 })
-    await page.getByRole("button", { name: "Buscar no Bivaque" }).click()
+    await page.locator('[data-acao="busca"]').first().click()
     await page.route("**/api/app/busca?*", (rota) => rota.abort())
-    await page.getByRole("searchbox", { name: "Buscar no Bivaque" }).fill("pediatra")
+    await page.locator('[data-campo="busca"]').fill("pediatra")
     await expect(page.locator('[data-estado="erro"]')).toBeVisible({ timeout: 30_000 })
     await page.unroute("**/api/app/busca?*")
     await page.getByRole("button", { name: "Tentar de novo" }).click()

@@ -22,11 +22,13 @@ import {
 const PAGINA_2_DOS_NEGOCIOS = NEGOCIOS_PAGINA_2.negocios[0]?.nome ?? ""
 const PAGINA_2_DO_GUIA = GUIA_PAGINA_2.entradas[0]?.nome ?? ""
 
+/**
+ * Leva a pessoa ao «Ver mais» da lista — o fim da lista, não o fim da página:
+ * o Guia tem uma seção depois das referências.
+ */
 async function irAoFimDaLista(page: Page): Promise<number> {
-  return page.locator("#conteudo").evaluate((elemento) => {
-    elemento.scrollTop = elemento.scrollHeight
-    return elemento.scrollTop
-  })
+  await page.getByRole("button", { name: /^Ver mais/ }).scrollIntoViewIfNeeded()
+  return page.locator("#conteudo").evaluate((elemento) => elemento.scrollTop)
 }
 
 async function alcancarComTab(page: Page, alvo: ReturnType<Page["locator"]>): Promise<boolean> {

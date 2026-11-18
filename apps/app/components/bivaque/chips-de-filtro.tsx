@@ -105,7 +105,7 @@ export function ChipsDeFiltro({
         variant="outline"
         spacing={2}
         aria-label={rotulo}
-        className="relative z-1 w-max min-w-full flex-nowrap"
+        className="relative z-1 w-max min-w-full flex-nowrap pr-4"
       >
         {itens.map((item) => (
           <ToggleGroupItem

@@ -1,0 +1,113 @@
+# RUN-169 — F06 Lote B: alertas de busca de imovel no app (troca de /imoveis/alertas).
+#
+# O banco esta pronto e provado: listing_alerts (20260911043053:174-196) com RLS
+# forcada + policies de dono (:267-268, :416-440) e a entrega por cron
+# (20260911051005: private.dispatch_listing_alerts casa criterios via
+# property_details e insere notifications tipo listing_alert + e-mail), pgTAP
+# listing-alerts.sql (plan 38, positivos e negativos). A RECEPCAO do aviso ja
+# cai no app (destino-do-app leva a /app/anuncio/:id). O que nao existe e a
+# gestao: a web serve (shell)/imoveis/alertas (page.tsx:15-53 + alert-manager.tsx)
+# por server actions (lib/listings/actions.ts: create :501, update :660,
+# setAtivo :705, delete :735) e o form de criacao vive na tela de detalhe ja
+# sombreada pelo 307 — hoje o membro nao tem porta funcional. Fase 6 nao fecha
+# com essa tela de membro servindo. SEM migration.
+#
+# A matriz R3 eleva este contrato (rotas novas de escrita sobre dado do membro:
+# criterios de busca que viram aviso periodico). A decisao que rege ja existe e
+# esta ratificavel: ADR-20261105 (porta de dados do app, aceite por delegacao,
+# na RATIFICACAO) — nenhuma fronteira nova: policies de dono pre-existentes e
+# provadas em pgTAP, sem migration, molde das rotas mercado/voce existentes.
+#
+# DESJUNTAO com RUN-168 (salvar, em curso): este lote NAO toca Mercado.tsx,
+# Inicio.tsx, Anuncio.tsx nem as rotas mercado/*. A criacao de alerta mora na
+# tela nova (form de criterios), nao no detalhe do anuncio — paridade com o que
+# o dispatch casa, nao com o layout da web morta.
+#
+# EMENDA 16/11 (execucao, aprovada pelo proprio contrato em acceptance): duas
+# provas de e2e afirmavam que /imoveis/alertas ficava na web
+# (mercado-redirects.spec.ts e portas-de-entrada.spec.ts). Elas entram em
+# allowed_paths porque a troca as inverte: viraram a prova do 307.
+
+task_id: RUN-169
+
+adr: docs/decisions/ADR-20261105-porta-de-dados-do-app.md
+
+objective: >
+  Gerenciar alertas de busca de imovel pelo app: rotas /api/app/imoveis/alertas
+  (GET+POST) e /api/app/imoveis/alertas/[id] (PATCH+DELETE) sobre a tabela sob
+  RLS de proprio; tela nova AlertasDeImovel (lista + criar + editar + ativar/
+  pausar + apagar) com entrada real; troca de /imoveis/alertas por 307 com a
+  saida das telas/actions web e provas migradas.
+
+authority:
+  - docs/LANCAMENTO.md fase 6 (:101) + criterio 6 (:47-48); a linha F06 (:59) nao exige alerta novo — isto e troca de tela de membro, nao feature
+  - Mapa do explorer 16/11 (F06 Lote B)
+  - ADR-20261105-porta-de-dados-do-app.md §5 (contrato de rota)
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    apps/web/app/(shell)/imoveis/alertas/page.tsx:15-53 + alert-manager.tsx
+    servem tela de membro; criacao so via imoveis/[id]/page.tsx:235 (alert-form),
+    tela 307-sombreada (next.config.ts:123 exclui novo|alertas); zero alertas em
+    apps/app (catalogo rotas.ts) e zero /api/app/*alert*; portas declaradas como
+    divida em tests/e2e/link-crawl.spec.ts:196-210.
+
+allowed_paths:
+  - docs/agents/tasks/F06-ALERTAS.task.yml
+  - apps/web/app/api/app/imoveis
+  - apps/web/lib/listings
+  - apps/web/app/(shell)/imoveis
+  - apps/web/next.config.ts
+  - apps/web/lib/security/api-surface.ts
+  - apps/app/lib/navegacao/rotas.ts
+  - apps/app/lib/navegacao/entrada.ts
+  - apps/app/src/roteador.tsx
+  - apps/app/src/telas
+  - apps/app/src/casca
+  - apps/app/lib/dados
+  - apps/app/tests
+  - tests/unit/app-api/imoveis
+  - tests/unit/listings
+  - tests/unit/security/api-surface.test.ts
+  - tests/unit/infra/lan-troca-redirect.test.ts
+  - tests/e2e/link-crawl.spec.ts
+  - tests/e2e/imoveis-alertas-real.spec.ts
+  - tests/e2e/mercado-redirects.spec.ts
+  - tests/e2e/portas-de-entrada.spec.ts
+  - scripts/visual/capture.mjs
+  - .visual/f06-alertas
+
+forbidden:
+  - criar migration, mexer em listing_alerts/RPCs/policies/cron (tudo pre-existe e provado)
+  - tocar Mercado.tsx, Inicio.tsx, Anuncio.tsx, Salvos.tsx ou apps/web/app/api/app/mercado (lane RUN-168 em curso)
+  - tocar filtros server-side do mercado (Lote C) nem geocode/mapa (LOC-IMPL)
+  - expor alertas de OUTRA pessoa (RLS decide; a rota nao reimplementa posse com check fraco que substitua o banco)
+  - usar skip/fixme novo ou afrouxar assercao; apagar prova sem realocar
+  - push, merge ou force-push; ler/criar/editar arquivos de ambiente; imprimir credenciais
+  - tocar em .work/main ou em outra worktree
+
+acceptance:
+  - "GET+POST /api/app/imoveis/alertas e PATCH+DELETE /api/app/imoveis/alertas/[id] (2 route.ts) no ADR §5: exigirSessao; escrita com conferirEscrita + OPTIONS no molde das rotas mercado existentes; dono SEMPRE da sessao (nunca corpo); posse da linha decidida no banco pelas policies de dono — PATCH/DELETE de linha alheia = 404 sem confirmar existencia; POST espelha EXATAMENTE o que createListingAlertAction gravava (actions.ts:501 e :528-538: kind property, criterios exatamente como a tabela os define — ler as colunas na migration 20260911043053:174-196 e o dispatch :138-148 para nao inventar campo); validacao compartilhada num modulo so (estender lib/listings/alerts.ts, casa de alertSearchHref); limites/duplicata da action preservados; 503 sem eco."
+  - "App: tela AlertasDeImovel no catalogo (path /imoveis/alertas, sem aba) — lista real, criar/editar (mesmos criterios do form web morto), ativar/pausar, apagar com Confirmacao da entrada (peca existente, sobreposicao por id; licao do menu: troca de sobreposicao, nao empilhamento). Estados honestos por linha (carregando/vazio real/erro/negado). O aviso listing_alert ja cai em /app/anuncio/:id (destino existente); a porta de entrada da tela segue o molde das irmas (linha no Voce ou aba que o app ja usa para salvos) — NAO abrir folha em Mercado.tsx nem toque em Anuncio.tsx."
+  - "Harmonizacao declarada: alertSearchHref (lib/listings/alerts.ts:58-69) gera bairro/tipo_negocio/sort que o app NAO le (filtros-url le so q/tipo/quartos/valor_max/preco_*). Gerar a URL no formato que o app consome quando o criterio tiver essas chaves, e registrar no RELATORIO a perda do resto (bairro/tipo_negocio/sort) — nao prometer filtro silenciosamente ignorado."
+  - "Troca: 307 /imoveis/alertas → /app/imoveis/alertas (query preservada; regra antes da generica /imoveis/:id que hoje exclui alertas pelo lookahead — conferir e manter as negativas de novo|alertas); remover (shell)/imoveis/alertas/ + alert-manager.tsx + alert-form.tsx; as 4 server actions de alerta morrem com as telas se sem importador vivo (grep). NAO limpar actions alem das de alerta (as de property ja morreram no RUN-164; o que sobrou em actions.ts nao e daqui)."
+  - "Provas: unit das rotas em tests/unit/app-api/imoveis (POST grava criterio igual a action morta — comparar payload nos testes; 401/CSRF 403/validacao/nao-dono 404/duplicata/503 sem eco); TROCADAS + ausencia da pasta + negativas (/imoveis/:id detalhe e /imoveis lista intactos); link-crawl: tirar as portas declaradas de alertas em :196-210 sem deixar entrada stale; capture.mjs: rota web fora; E2E real novo tests/e2e/imoveis-alertas-real.spec.ts (@stateful): persona cria alerta pelo app, aparece na lista, desliga, apaga, persiste apos recarga (3 larguras via CI — sem seed de alertas, criar pela UI); tests/unit/listings/alerts.test.ts continua valendo para o modulo compartilhado."
+  - "api-surface: duas rotas novas marcadas; TOTAL_DE_ROTAS recalculado CONTRA O DISCO apos git rebase origin/main no fim do lote (RUN-168 soma +2 na mesma janela — nao gravar numero no escuro; o teste do manifesto compara com a contagem real). Passam: gate --fast, tsc -p tests/e2e, pnpm test, test:scope, app test. Antes de tocar fora dos allowed_paths, EMENDAR este contrato primeiro."
+  - "Emenda 16/11: tests/e2e/mercado-redirects.spec.ts e tests/e2e/portas-de-entrada.spec.ts afirmavam que /imoveis/alertas ficava na web. As duas provas se invertem para o 307 em /app/imoveis/alertas, sem perder as negativas de subcaminho (denunciar, novo/editar)."
+
+proof:
+  - npx pnpm@11.18.0 gate --fast
+  - npx pnpm@11.18.0 test
+  - npx pnpm@11.18.0 test:scope
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/F06-ALERTAS.task.yml
+
+risk: rotas de escrita sobre tabela pronta com dispatch por cron ja ativo; criacao espelhada de action morta
+risk_level: R3
+
+reviewer_must_differ_from_executor: true
+retry_budget: 2
+on_budget_exhausted: HUMAN_DECISION
+
+closure:
+  requires_runtime_evidence: true

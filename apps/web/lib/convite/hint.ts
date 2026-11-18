@@ -3,10 +3,10 @@
 // a mask. The mask identifies a pending invite in the list without letting
 // anyone reconstruct the e-mail.
 //
-// Lives in `lib/convite` because both the old Server Action and
-// `/api/app/voce/familia` (RUN-018) must mask the same way: one rule, two
-// doors. The old path `app/(shell)/profile/family-invite-email-hint.ts`
-// re-exports it.
+// Lives in `lib/convite` because both the family Server Action
+// (`lib/convite/familia-acoes.ts`) and `/api/app/voce/familia` (RUN-018) must
+// mask the same way: one rule, two doors. O caminho antigo
+// `app/(shell)/profile/family-invite-email-hint.ts` morreu com a tela (RUN-172).
 export function emailHint(email: string): string {
   const trimmed = email.trim().toLowerCase()
   const at = trimmed.indexOf("@")

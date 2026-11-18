@@ -1,9 +1,10 @@
 // Resolução do item ativo da navegação da lateral a partir da ROTA.
 //
-// Bug que originou o RECON-038: `/salvos` era tratada como "destino pessoal" e
-// caía no fallback "perfil" — a lateral acendia **Perfil** enquanto a pessoa
-// estava em Salvos. Isso é defeito de navegação, não de estilo: o item ativo
-// tem que sair da rota, nunca de um fallback que escolhe um vizinho plausível.
+// Bug que originou o RECON-038: a tela de Salvos era tratada como "destino
+// pessoal" e caía no fallback "perfil" — a lateral acendia **Perfil** enquanto a
+// pessoa estava em Salvos. Isso é defeito de navegação, não de estilo: o item
+// ativo tem que sair da rota, nunca de um fallback que escolhe um vizinho
+// plausível. A tela saiu da web no RUN-186 e a regra fica.
 //
 // RECON-042, defeito 2: o último recurso elegia "inicio" para toda rota que não
 // fosse um container primário nem uma rota pessoal. Isso acendia Início em
@@ -36,10 +37,11 @@ export const PRIMARY_CONTAINERS = ["inicio", "explorar", "comunidades", "perfil"
 export type PrimaryContainer = (typeof PRIMARY_CONTAINERS)[number]
 
 // Destinos secundários que representam a si mesmos na lateral porque têm item
-// próprio desenhado em app-shell.tsx. `/notifications` fica DE FORA de
-// propósito: o contrato DS-011 (tests/e2e/nav-container-invariant.spec.ts)
-// exige que ela continue caindo em "perfil". Só `/salvos` acende a si mesma.
-export const SECONDARY_SELF_ROUTES = ["/salvos"] as const
+// próprio desenhado em app-shell.tsx. RUN-186: a lista está vazia — o único
+// item era `/salvos`, que virou tela do app e hoje é 307 para `/app/salvos`.
+// O formato fica: um destino secundário novo que a casca sirva volta aqui e
+// acende a si mesmo, sem fallback por vizinhança (RECON-038).
+export const SECONDARY_SELF_ROUTES = [] as const
 
 // A que container cada ÁREA pertence. É a regra de produto, não uma lista de
 // telas: o prefixo da área resolve, e a tela herda o container do pai
@@ -57,14 +59,6 @@ export const AREA_CONTAINERS: ReadonlyArray<readonly [string, PrimaryContainer]>
   ["/guide", "explorar"],
   ["/events", "explorar"],
   ["/mercado", "explorar"],
-  // Decisão do dono em 12/09/2026, contra o DESIGN_SYSTEM §7, que manda a
-  // gestão dos próprios anúncios para Perfil. Os cinco caminhos de entrada
-  // desta tela estão todos dentro do Mercado, e Perfil não tem nenhum. O §7
-  // não está errado, está não construído: no dia em que Perfil ganhar uma
-  // entrada para cá, esta linha muda junto com ela. Comparar com /salvos, que
-  // é igualmente "coisa da pessoa" e fica em Perfil — porque tem item próprio
-  // na lateral, isto é, é alcançável de lá.
-  ["/meus-anuncios", "explorar"],
   ["/imoveis", "explorar"],
   ["/recommendations", "explorar"],
   // Indicações é uma vista da comunidade (ADR-20260925-memoria-de-indicacoes).
@@ -73,23 +67,26 @@ export const AREA_CONTAINERS: ReadonlyArray<readonly [string, PrimaryContainer]>
   ["/communities", "comunidades"],
   ["/community", "comunidades"],
   ["/groups", "comunidades"],
-  ["/profile", "perfil"],
+  // Sem `/profile`: o perfil próprio é do app desde o RUN-172, e a tela web não
+  // existe mais. O perfil alheio (`/profile/:id`) também é redirect. O que ainda
+  // é da pessoa nesta casca: negócio e a conversa contextual. Sem
+  // `/configuracoes`: a árvore saiu inteira no RUN-184 e o endereço antigo é 307
+  // para o Você do app, que roda antes desta casca resolver o item ativo.
   ["/negocio", "perfil"],
-  ["/configuracoes", "perfil"],
   ["/messages", "perfil"],
-  ["/notifications", "perfil"],
   // A conversa contextual membro↔prestador vive em Perfil, e o pedido é o
   // workspace dessa conversa (DESIGN_SYSTEM §7.1).
   ["/pedidos", "perfil"],
   ["/denuncias", "perfil"],
   ["/ajuda", "perfil"],
   // Não existe container "cidade" nesta versão (PROCESSO §7), então a pergunta
-  // é de onde se chega aqui. Dentro do shell, os dois únicos links para
-  // /localidade estão em Explorar — `explorar/busca` e `explorar/servicos`. O
-  // terceiro é a tela de boas-vindas do onboarding, que roda fora do shell e
-  // não tem lateral para acender. A lateral responde "onde estou e como volto",
-  // não "de quem é o dado": acender Perfil aqui mandaria a pessoa para um
-  // container que não alcança esta tela.
+  // é de onde se chega aqui. Dentro do shell, o link vivo para /localidade está
+  // no detalhe da comunidade (community-detail-screen.tsx, "Trocar de cidade");
+  // `explorar/servicos` também tinha um e saiu com a tela (RUN-181 — o endereço
+  // agora é 307 para `/app/busca`). O terceiro é a tela de boas-vindas do
+  // onboarding, que roda fora do shell e não tem lateral para acender. A lateral
+  // responde "onde estou e como volto", não "de quem é o dado": acender Perfil
+  // aqui mandaria a pessoa para um container que não alcança esta tela.
   ["/localidade", "explorar"],
   // Consulta a outra cidade (25/09/2026): é descoberta — Guia, encontros e
   // anúncios de outro lugar —, e a volta é pelo mesmo caminho de /localidade.
@@ -120,6 +117,7 @@ export const OUTSIDE_SHELL_PREFIXES = [
   // inteiro ou o prefixo seguido de "/", e "prestador-convite" não é
   // "prestador/…".
   "/prestador-convite",
+  "/app",
 ] as const
 
 function matches(pathname: string, href: string): boolean {

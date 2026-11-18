@@ -33,7 +33,7 @@ import {
 /**
  * Preferências de aviso por tipo e por canal (F09), na área Você.
  *
- * A escolha é a mesma matriz que a web antiga usa: quatro tipos × três canais.
+ * A escolha é a mesma matriz que a web antiga usa: cinco tipos × três canais.
  * O push do aparelho tem um interruptor próprio: é ele que pede a permissão do
  * navegador e grava a inscrição do aparelho. O canal push por tipo continua na
  * matriz, mas só entrega quando o interruptor está ligado e a pessoa escolheu o
@@ -50,6 +50,7 @@ const TIPOS: ReadonlyArray<readonly [TipoVisivel, string, string]> = [
     "Pedidos de indicação",
     "Respostas ao seu pedido e o resumo de pedidos da cidade.",
   ],
+  ["messages", "Mensagens", "Quando alguém te manda uma mensagem direta."],
 ]
 
 const CANAIS: ReadonlyArray<readonly [CanalDoAviso, string]> = [

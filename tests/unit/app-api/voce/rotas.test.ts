@@ -5,7 +5,7 @@ vi.mock("web/lib/app-api/sessao-do-next", () => ({ resolverSessaoDaRequisicao: v
 
 import { POST as apagar } from "web/app/api/app/voce/apagar-conta/route"
 import { DELETE as desbloquear } from "web/app/api/app/voce/bloqueados/[id]/route"
-import { GET as bloqueados } from "web/app/api/app/voce/bloqueados/route"
+import { GET as bloqueados, POST as bloquear } from "web/app/api/app/voce/bloqueados/route"
 import { DELETE as desocultar } from "web/app/api/app/voce/ocultados/[id]/route"
 import { GET as ocultados } from "web/app/api/app/voce/ocultados/route"
 import { GET as publicacoes } from "web/app/api/app/voce/publicacoes/route"
@@ -32,8 +32,8 @@ const CONTAGENS: Record<string, number> = {
   group_memberships: 1,
 }
 
-/** O que `get_my_profile_location` devolve: o CEP cru do banco, sem coordenada. */
-const LOCALIZACAO = { cep: "69000000", definida: true }
+/** O que `get_my_profile_location` devolve: o CEP cru e se há posição, nunca a coordenada. */
+const LOCALIZACAO = { cep: "69000000", definida: true, com_coordenada: true }
 
 /**
  * O banco dos testes: uma tabela responde pelo que a rota pede — contagem,
@@ -46,15 +46,23 @@ function cliente(
     semPerfil?: boolean
     semLinhas?: boolean
     localizacaoFalha?: boolean
+    semCoordenada?: boolean
+    /** Pessoa em transferência: o vínculo `leaving` existe. */
+    comSaida?: boolean
   } = {},
 ) {
   const escritas: { tabela: string; metodo: string; valor: unknown }[] = []
   const chamadasRpc: string[] = []
+  // O que a rota atualizou: a leitura do estado gravado (`perfilDaSessao`) é uma
+  // segunda consulta a `profiles`, e ela precisa ver o valor novo.
+  let atualizacao: Record<string, unknown> | null = null
 
   const from = vi.fn((tabela: string) => {
     let contagem = false
-    let atualizacao: Record<string, unknown> | null = null
     let apagando = false
+    // O recorte que a rota pediu (`kind = 'current'` | `'leaving'`): a pessoa em
+    // transferência tem duas linhas, e é o filtro que diz qual é qual.
+    const filtros: Record<string, string> = {}
 
     const resolver = () => {
       if (opcoes.erro === tabela) {
@@ -79,8 +87,23 @@ function cliente(
         }
       }
       if (tabela === "locality_memberships") {
+        if (filtros["kind"] === "leaving") {
+          if (opcoes.comSaida !== true) return { data: null, error: null }
+          return {
+            data: {
+              locality_id: "l2",
+              leaving_at: "2026-12-05",
+              access: "active",
+              localities: { city_name: "Rio de Janeiro", state_code: "RJ" },
+            },
+            error: null,
+          }
+        }
         return {
-          data: { locality_id: "l1", localities: { city_name: "Manaus" } },
+          data: {
+            locality_id: "l1",
+            localities: { city_name: "Manaus", state_code: "AM" },
+          },
           error: null,
         }
       }
@@ -137,7 +160,13 @@ function cliente(
       if (opcoesDoSelect?.count === "exact") contagem = true
       return q
     }
-    for (const metodo of ["eq", "order", "limit", "in"]) q[metodo] = () => q
+    for (const metodo of ["eq", "order", "limit", "in"]) {
+      q[metodo] = (coluna?: string, valor?: unknown) => {
+        if (metodo === "eq" && typeof coluna === "string" && typeof valor === "string")
+          filtros[coluna] = valor
+        return q
+      }
+    }
     q["update"] = (valor: Record<string, unknown>) => {
       atualizacao = valor
       escritas.push({ tabela, metodo: "update", valor })
@@ -147,6 +176,10 @@ function cliente(
       apagando = true
       escritas.push({ tabela, metodo: "delete", valor: null })
       return q
+    }
+    q["insert"] = (valor: Record<string, unknown>) => {
+      escritas.push({ tabela, metodo: "insert", valor })
+      return Promise.resolve({ error: null })
     }
     q["maybeSingle"] = async () => resolver()
     q["single"] = async () => resolver()
@@ -164,7 +197,16 @@ function cliente(
     if (nome === "get_my_profile_location") {
       if (opcoes.localizacaoFalha)
         return { data: null, error: { code: "XX000", message: "segredo do banco" } }
-      return { data: [{ cep: LOCALIZACAO.cep, definida: LOCALIZACAO.definida }], error: null }
+      return {
+        data: [
+          {
+            cep: LOCALIZACAO.cep,
+            definida: LOCALIZACAO.definida,
+            com_coordenada: opcoes.semCoordenada ? false : LOCALIZACAO.com_coordenada,
+          },
+        ],
+        error: null,
+      }
     }
     if (nome === "request_account_deletion") {
       return {
@@ -235,11 +277,26 @@ describe("área Você do app", () => {
       perfil: {
         nome: "Ana Verificada",
         bio: null,
-        cidade: "Manaus",
+        cidade: { id: "l1", nome: "Manaus" },
+        outbound: null,
         localizacao: { cep: "69000-000", definida: true },
+        distanciaDisponivel: true,
       },
       contagens: { salvos: 2, anuncios: 3, perguntas: 2, grupos: 1 },
       conta: { exclusaoPendente: false },
+    })
+  })
+
+  it("devolve a cidade de saída com a data e a marca de só leitura", async () => {
+    autenticar({ comSaida: true })
+    const corpo = await (await perfil(req("GET"))).json()
+    expect(corpo.perfil.cidade).toEqual({ id: "l1", nome: "Manaus" })
+    expect(corpo.perfil.outbound).toEqual({
+      id: "l2",
+      nome: "Rio de Janeiro",
+      uf: "RJ",
+      endsAt: "2026-12-05",
+      readOnly: false,
     })
   })
 
@@ -247,6 +304,16 @@ describe("área Você do app", () => {
     autenticar()
     const corpo = await (await perfil(req("GET"))).json()
     expect(corpo.perfil.localizacao).toEqual({ cep: "69000-000", definida: true })
+    expect(corpo.perfil.distanciaDisponivel).toBe(true)
+    expect(JSON.stringify(corpo)).not.toContain("latitude")
+    expect(JSON.stringify(corpo)).not.toContain("longitude")
+  })
+
+  it("marca a localização sem coordenada e avisa que a distância não sai", async () => {
+    autenticar({ semCoordenada: true })
+    const corpo = await (await perfil(req("GET"))).json()
+    expect(corpo.perfil.localizacao).toEqual({ cep: "69000-000", definida: true })
+    expect(corpo.perfil.distanciaDisponivel).toBe(false)
     expect(JSON.stringify(corpo)).not.toContain("latitude")
     expect(JSON.stringify(corpo)).not.toContain("longitude")
   })
@@ -277,8 +344,10 @@ describe("área Você do app", () => {
       perfil: {
         nome: "Ana Editada",
         bio: null,
-        cidade: "Manaus",
+        cidade: { id: "l1", nome: "Manaus" },
+        outbound: null,
         localizacao: { cep: "69000-000", definida: true },
+        distanciaDisponivel: true,
       },
     })
   })
@@ -358,6 +427,24 @@ describe("área Você do app", () => {
     expect(await resposta.json()).toEqual({
       bloqueados: [{ id: OUTRO, nome: null, bloqueadoEm: "2026-11-03T12:00:00Z" }],
     })
+  })
+
+  it("deriva quem bloqueia da sessão e recusa auto-bloqueio", async () => {
+    const mock = autenticar()
+    const resposta = await bloquear(req("POST", "/bloqueados", JSON.stringify({ id: OUTRO })))
+    expect(resposta.status).toBe(201)
+    expect(await resposta.json()).toEqual({ bloqueado: { id: OUTRO } })
+    expect(mock.escritas).toEqual([
+      {
+        tabela: "dm_blocks",
+        metodo: "insert",
+        valor: { blocker_user_id: USER, blocked_user_id: OUTRO },
+      },
+    ])
+    mock.escritas.length = 0
+    const proprio = await bloquear(req("POST", "/bloqueados", JSON.stringify({ id: USER })))
+    expect(proprio.status).toBe(400)
+    expect(mock.escritas).toEqual([])
   })
 
   it("desfaz o bloqueio da própria lista", async () => {

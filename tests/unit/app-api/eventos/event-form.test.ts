@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest"
 import {
   buildEventUpdatePayload,
+  EVENTO_CANCELADO,
   eventInputFromBody,
+  intencaoDoPatch,
   validateEventForm,
 } from "web/lib/events/event-form"
 
@@ -33,6 +35,22 @@ describe("eventInputFromBody", () => {
     expect(corpo === null ? null : validateEventForm(corpo.input)).toBe(
       "O título precisa de pelo menos 2 caracteres.",
     )
+  })
+})
+
+describe("intencaoDoPatch", () => {
+  it("corpo sem status é edição; só 'cancelled' cancela", () => {
+    expect(intencaoDoPatch({ titulo: "Encontro", comecaEm: "2026-12-01T12:00:00Z" })).toBe("editar")
+    expect(intencaoDoPatch({ status: EVENTO_CANCELADO })).toBe("cancelar")
+  })
+
+  it.each([
+    ["concluído", "completed"],
+    ["futuro", "upcoming"],
+    ["nulo", null],
+    ["maiúsculo", "CANCELLED"],
+  ])("qualquer outro status (%s) é dado inválido", (_label, status) => {
+    expect(intencaoDoPatch({ status })).toBe("invalido")
   })
 })
 

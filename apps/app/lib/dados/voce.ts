@@ -1,11 +1,25 @@
 import { enviar, FalhaDaApi, ler } from "../api/cliente"
 
 export type LocalizacaoDoPerfil = Readonly<{ cep: string | null; definida: boolean }>
+/** A cidade atual, com o id que a mudança de cidade usa. */
+export type CidadeDoPerfil = Readonly<{ id: string; nome: string }>
+/** A cidade que a pessoa está deixando, até `endsAt` (ADR-20260816). */
+export type SaidaDoPerfil = Readonly<{
+  id: string
+  nome: string
+  uf: string
+  /** Data do fim da participação na origem; vazio quando não declarada. */
+  endsAt: string
+  readOnly: boolean
+}>
 export type PerfilDaPessoa = Readonly<{
   nome: string
   bio: string | null
-  cidade: string
+  cidade: CidadeDoPerfil
+  outbound: SaidaDoPerfil | null
   localizacao: LocalizacaoDoPerfil
+  /** false quando o CEP existe mas ainda não tem posição conhecida. */
+  distanciaDisponivel: boolean
 }>
 export type ContagensDoPerfil = Readonly<{
   salvos: number
@@ -93,12 +107,40 @@ function lerLocalizacao(valor: unknown): LocalizacaoDoPerfil {
   return { cep: textoOuNulo(item, "cep"), definida: booleano(item, "definida") }
 }
 
+function lerSaida(corpo: Corpo): SaidaDoPerfil | null {
+  const valor = corpo["outbound"]
+  // `outbound` ausente é resposta fora do contrato: quem está em transferência
+  // veria a tela sem o aviso, e a próxima mudança seria recusada pelo banco.
+  if (valor === undefined) throw foraDoContrato()
+  if (valor === null) return null
+  const item = registro(valor)
+  return {
+    id: texto(item, "id"),
+    nome: textoOuNulo(item, "nome") ?? "",
+    uf: textoOuNulo(item, "uf") ?? "",
+    endsAt: textoOuNulo(item, "endsAt") ?? "",
+    readOnly: booleano(item, "readOnly"),
+  }
+}
+
+function lerCidade(valor: unknown): CidadeDoPerfil {
+  const item = registro(valor)
+  // O campo precisa EXISTIR (contrato); vazio é "sessão sem cidade" — o
+  // servidor manda id "" quando não há vínculo `current`, e isso não pode virar
+  // a tela inteira em erro.
+  const id = item["id"]
+  if (typeof id !== "string") throw foraDoContrato()
+  return { id, nome: textoOuNulo(item, "nome") ?? "" }
+}
+
 function lerPerfilDaPessoa(corpo: Corpo): PerfilDaPessoa {
   return {
     nome: texto(corpo, "nome"),
     bio: textoOuNulo(corpo, "bio"),
-    cidade: textoOuNulo(corpo, "cidade") ?? "",
+    cidade: lerCidade(corpo["cidade"]),
+    outbound: lerSaida(corpo),
     localizacao: lerLocalizacao(corpo["localizacao"]),
+    distanciaDisponivel: booleano(corpo, "distanciaDisponivel"),
   }
 }
 
@@ -154,17 +196,79 @@ export async function salvarPerfil(
 }
 
 /**
+ * Declara a mudança de cidade (F10): o destino é id de cidade do catálogo e o
+ * prazo é a data até quando a cidade atual continua valendo. Devolve o estado
+ * novo — a cidade já é o destino e a anterior vem em `outbound`.
+ */
+export async function declararMudancaDeCidade(
+  destino: string,
+  prazo: string,
+  opcoes: Opcoes = {},
+): Promise<PerfilDaPessoa> {
+  const corpo = await enviar("POST", "/api/app/voce/cidade", { destino, prazo }, opcoes)
+  return lerPerfilDaPessoa(registro(corpo["perfil"]))
+}
+
+/** A cidade de um link (`?mudar=<id>`), com a UF que o formulário precisa. */
+export type CidadeDoCatalogo = Readonly<{ id: string; nome: string; uf: string }>
+
+/**
+ * Resolve a cidade que o endereço trouxe. `null` é "esse id não está no
+ * catálogo" — o formulário abre vazio, nunca com um destino inventado.
+ */
+export async function cidadeDoLink(
+  id: string,
+  opcoes: Opcoes = {},
+): Promise<CidadeDoCatalogo | null> {
+  const corpo = await ler(`/api/app/voce/cidade?destino=${encodeURIComponent(id)}`, opcoes)
+  const valor = corpo["destino"]
+  if (valor === null) return null
+  const item = registro(valor)
+  return {
+    id: texto(item, "id"),
+    nome: textoOuNulo(item, "nome") ?? "",
+    uf: textoOuNulo(item, "uf") ?? "",
+  }
+}
+
+/** Força Armada e OM da própria pessoa — privados por construção (ADR-20261116). */
+export type AfiliacaoDaPessoa = Readonly<{ armedForce: string | null; om: string | null }>
+
+function lerAfiliacao(corpo: Corpo): AfiliacaoDaPessoa {
+  const afiliacao = registro(corpo["afiliacao"])
+  return { armedForce: textoOuNulo(afiliacao, "armedForce"), om: textoOuNulo(afiliacao, "om") }
+}
+
+export async function lerAfilicao(opcoes: Opcoes = {}): Promise<AfiliacaoDaPessoa> {
+  return lerAfiliacao(await ler("/api/app/voce/afiliacao", opcoes))
+}
+
+/**
+ * Grava Força Armada e OM. Campo vazio (ou `null`) apaga a linha; a rota não
+ * aceita campo de visibilidade, e o que fica gravado é sempre privado.
+ */
+export async function salvarAfilicao(
+  dados: { armedForce?: string | null; om?: string | null },
+  opcoes: Opcoes = {},
+): Promise<AfiliacaoDaPessoa> {
+  return lerAfiliacao(await enviar("PUT", "/api/app/voce/afiliacao", dados, opcoes))
+}
+
+/**
  * Grava o CEP do perfil — ou apaga a localização, com `null`.
  *
- * O servidor geocodifica e devolve só o CEP e a marca de definida; latitude e
- * longitude não passam por esta camada.
+ * O servidor geocodifica e devolve o CEP, a marca de definida e se a distância
+ * pode ser calculada; latitude e longitude não passam por esta camada.
  */
 export async function salvarLocalizacao(
   cep: string | null,
   opcoes: Opcoes = {},
-): Promise<LocalizacaoDoPerfil> {
+): Promise<Readonly<{ localizacao: LocalizacaoDoPerfil; distanciaDisponivel: boolean }>> {
   const corpo = await enviar("PUT", "/api/app/voce/localizacao", { cep }, opcoes)
-  return lerLocalizacao(corpo["localizacao"])
+  return {
+    localizacao: lerLocalizacao(corpo["localizacao"]),
+    distanciaDisponivel: booleano(corpo, "distanciaDisponivel"),
+  }
 }
 
 export async function lerPublicacoes(opcoes: Opcoes = {}): Promise<PublicacoesDaPessoa> {
@@ -185,6 +289,16 @@ export async function lerBloqueados(opcoes: Opcoes = {}): Promise<readonly Pesso
       bloqueadoEm: texto(item, "bloqueadoEm"),
     }
   })
+}
+
+/**
+ * Bloqueia uma pessoa (F09-A). O efeito é o do banco: a conversa fica fechada
+ * nos dois sentidos, o histórico continua legível e a pessoa não é avisada.
+ * Repetir o bloqueio é idempotente e o servidor devolve o mesmo estado.
+ */
+export async function bloquear(id: string, opcoes: Opcoes = {}): Promise<void> {
+  const corpo = await enviar("POST", "/api/app/voce/bloqueados", { id }, opcoes)
+  if (texto(registro(corpo["bloqueado"]), "id") !== id) throw foraDoContrato()
 }
 
 export async function desbloquear(id: string, opcoes: Opcoes = {}): Promise<void> {
@@ -231,6 +345,15 @@ export async function pedirExclusao(opcoes: Opcoes = {}): Promise<PedidoDeExclus
   }
 }
 
+/**
+ * Sair da conta (F10), pela rota do servidor: o app não tem cliente Supabase
+ * (ADR-20261105), então quem revoga a sessão e apaga o cookie é o servidor.
+ */
+export async function sairDaConta(opcoes: Opcoes = {}): Promise<void> {
+  const corpo = await enviar("POST", "/api/app/voce/sair", undefined, opcoes)
+  if (corpo["ok"] !== true) throw foraDoContrato()
+}
+
 function lerConvite(valor: unknown): ConvitePendente {
   const item = registro(valor)
   return {
@@ -268,4 +391,44 @@ export async function revogarConvite(id: string, opcoes: Opcoes = {}): Promise<v
     opcoes,
   )
   if (corpo["removido"] !== true) throw foraDoContrato()
+}
+
+export type GrupoParaInteresse = Readonly<{ id: string; nome: string; jaMembro: boolean }>
+export type InteressesDaPessoa = Readonly<{
+  /** Grupos da cidade que podem ser marcados; `jaMembro` já participa. */
+  grupos: readonly GrupoParaInteresse[]
+  /** Os grupos marcados hoje, sempre entre os de `grupos` — a fonte é o banco, não o rascunho. */
+  interesses: readonly string[]
+}>
+
+function ids(valor: readonly unknown[]): readonly string[] {
+  return valor.map((item) => {
+    if (typeof item !== "string" || item === "") throw foraDoContrato()
+    return item
+  })
+}
+
+/** Os interesses da própria pessoa (F10): grupos da cidade e o que já está marcado. */
+export async function lerInteresses(opcoes: Opcoes = {}): Promise<InteressesDaPessoa> {
+  const corpo = await ler("/api/app/voce/interesses", opcoes)
+  return {
+    grupos: lista(corpo, "grupos").map((valor) => {
+      const item = registro(valor)
+      return {
+        id: texto(item, "id"),
+        nome: texto(item, "nome"),
+        jaMembro: booleano(item, "jaMembro"),
+      }
+    }),
+    interesses: ids(lista(corpo, "interesses")),
+  }
+}
+
+/** Grava o conjunto inteiro (replace-set) e devolve o que o servidor gravou. */
+export async function salvarInteresses(
+  grupos: readonly string[],
+  opcoes: Opcoes = {},
+): Promise<readonly string[]> {
+  const corpo = await enviar("POST", "/api/app/voce/interesses", { grupos }, opcoes)
+  return ids(lista(corpo, "interesses"))
 }

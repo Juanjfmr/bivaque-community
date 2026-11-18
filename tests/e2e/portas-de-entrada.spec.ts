@@ -7,6 +7,7 @@ import { signInAs } from "./helpers/session"
 
 const OTHER = "membro-1@bivaque.example.invalid"
 const PROPERTY = "b2000000-0000-4000-8000-000000000001"
+const GUIDE_ENTRY = "a0000000-0000-4000-8000-000000000003"
 
 test.describe("portas de entrada", () => {
   test.skip(({ viewport }) => (viewport?.width ?? 0) < 1440, "portas iguais nas três larguras")
@@ -17,31 +18,50 @@ test.describe("portas de entrada", () => {
     await expect(page).toHaveURL(new RegExp(`/app/anuncio/${PROPERTY}$`))
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible({ timeout: 20_000 })
     await expect(page.getByRole("link", { name: "Editar anúncio" })).toHaveCount(0)
-    // Com streaming, notFound() chega dentro de uma resposta 200: o que prova a negação é a
-    // tela de não encontrado no lugar do formulário.
+    // RUN-164: a edição web saiu (307 para o app). Quem não é dono aterrissa no
+    // anúncio, sem a porta de gestão — "Salvar alterações" só existe para o dono.
     await page.goto(`/imoveis/${PROPERTY}/editar`)
-    await expect(page.getByText("Imóvel não encontrado")).toBeVisible({ timeout: 20_000 })
-    await expect(page.getByRole("button", { name: /Salvar/ })).toHaveCount(0)
+    await expect(page).toHaveURL(new RegExp(`/app/anuncio/${PROPERTY}$`))
+    await expect(page.getByRole("button", { name: "Salvar alterações" })).toHaveCount(0)
   })
 
-  test("Imóveis leva a anunciar e a gerenciar alertas", async ({ page }) => {
+  test("a lista, o criar e os alertas migram para o app", async ({ page }) => {
     await signInAs(page.context(), OTHER)
     await page.goto("/imoveis")
-    await page.getByRole("link", { name: "Anunciar imóvel" }).click()
-    await expect(page).toHaveURL(/\/imoveis\/novo$/)
-    await page.goto("/imoveis")
-    await page.getByRole("link", { name: "Meus alertas" }).click()
-    await expect(page).toHaveURL(/\/imoveis\/alertas$/)
+    await expect(page).toHaveURL(/\/app\/imoveis$/)
+    // Mesmo molde do desapego (RUN-156): o criar mora na folha do app, e a URL
+    // antiga só leva à lista.
+    await page.goto("/imoveis/novo")
+    await expect(page).toHaveURL(/\/app\/imoveis$/)
+    await expect(page.getByRole("heading", { level: 1 })).toBeVisible({ timeout: 20_000 })
+    // RUN-169: a gestão dos alertas também é do app. A URL antiga aterrissa na
+    // tela nova, com o título real dela.
+    await page.goto("/imoveis/alertas")
+    await expect(page).toHaveURL(/\/app\/imoveis\/alertas$/)
+    await expect(
+      page.getByRole("heading", { level: 1, name: "Alertas de imóvel", exact: true }),
+    ).toBeVisible({ timeout: 20_000 })
   })
 
-  test("o cartão do Guia abre a referência completa", async ({ page }) => {
+  test("a lista e o verbete do Guia migram para o app", async ({ page }) => {
     await signInAs(page.context(), OTHER)
+    // A lista antiga agora responde 307 para o Guia do app.
     await page.goto("/guide")
-    const card = page.locator("#guia-referencias").getByRole("heading", { level: 3 }).first()
-    const name = (await card.innerText()).trim()
-    await card.getByRole("link").click()
-    await expect(page).toHaveURL(/\/guide\/[0-9a-f-]+$/)
-    await expect(page.getByRole("heading", { level: 1 })).toContainText(name)
+    await expect(page).toHaveURL(/\/app\/guia$/)
+    await expect(page.getByRole("heading", { level: 1, name: "Guia", exact: true })).toBeVisible({
+      timeout: 20_000,
+    })
+    // O verbete também: a URL direta aterrissa na tela da referência, com o
+    // nome no `h1` (o mesmo cabeçalho que a web mostrava) e a porta de correção.
+    await page.goto(`/guide/${GUIDE_ENTRY}`)
+    await expect(page).toHaveURL(new RegExp(`/app/guia/${GUIDE_ENTRY}$`))
+    await expect(page.getByRole("heading", { level: 1 })).toContainText(
+      "Transportadora Ajuricaba",
+      {
+        timeout: 20_000,
+      },
+    )
+    await expect(page.getByRole("heading", { name: "Sugerir atualização" })).toBeVisible()
   })
 })
 

@@ -1,4 +1,3 @@
-import { test as testeNormal } from "@playwright/test"
 import { expect, test } from "./apoio"
 
 test.describe("bancada de Mercado", () => {
@@ -65,12 +64,10 @@ test.describe("bancada de Mercado", () => {
     await expect(page.getByRole("heading", { name: "Sofá retrátil seminovo" })).toBeVisible()
   })
 
-  test("a bancada cabe nos dois temas e deixa capturas para avaliação", async ({
-    page,
-  }, informacoes) => {
+  test("a bancada cabe e deixa capturas para avaliação", async ({ page }, informacoes) => {
     const erros: string[] = []
     page.on("pageerror", (erro) => erros.push(erro.message))
-    for (const tema of ["light", "dark"] as const) {
+    for (const tema of ["light"] as const) {
       await page.emulateMedia({ colorScheme: tema, reducedMotion: "reduce" })
       await page.evaluate(() => document.fonts.ready)
       await expect
@@ -108,10 +105,4 @@ test.describe("bancada de Mercado", () => {
     await expect(detalhe).not.toBeVisible()
     await expect(abrir).toBeFocused()
   })
-})
-
-testeNormal("a bancada fica fora do build de uso normal", async ({ page }) => {
-  await page.goto("/app/galeria/mercado")
-  await expect(page.getByRole("heading", { name: "Página indisponível" })).toBeVisible()
-  await expect(page.locator('[data-tela="mercado-lab"]')).toHaveCount(0)
 })

@@ -1,0 +1,71 @@
+# CORRETA-F02-BREAKPOINT-JS (13/11/2026): alinhar o breakpoint JS da casca a 1024.
+# Ressalva B da revisão independente do RUN-139 (PR #209): o CSS da navegação passou
+# de rail para barra inferior até 1024, mas o JS ficou em 720. Processo enxuto:
+# uma rodada, uma revisão, no máximo uma correção.
+task_id: RUN-143
+
+objective: >
+  A casca do apps/app passa a usar 1024 px como corte entre a navegação de celular
+  (barra inferior) e a de desktop (rail), no JS e não só no CSS. Na faixa 720–1023 a
+  barra inferior volta a minimizar ao rolar, a sumir fora das rotas-raiz e o Criar abre
+  com a geometria de celular. Nada do desenho aprovado muda; só o limiar de comportamento.
+
+authority:
+  - tools/backend-kanban card CORRETA-F02-BREAKPOINT-JS
+  - docs/agents/regua-nextdoor/PADRAO-DE-TELA.md
+  - apps/app/AGENTS.md (prova de tela: 375/768/1440, claro e escuro, teclado)
+  - revisão independente do RUN-139 (.visual/run-139/revisao-qwen.md, ressalva B)
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    O CSS já usa 1024 (styles.css, media max-width 1023.98 para a barra inferior), mas
+    apps/app/lib/casca.ts:55,61 (navegacaoVisivel/criaVisivel), apps/app/lib/movimento.ts:57
+    (larguraDeDocagem), :146 e :186 (minimização/título) e apps/app/src/casca/MenuCriar.tsx:102
+    (central = innerWidth < 720) ainda usam 720. No 768 a barra inferior não minimiza, não
+    some fora das rotas-raiz e o Criar abre com geometria de desktop.
+
+allowed_paths:
+  - docs/agents/tasks/RUN-143.task.yml
+  - apps/app/lib/casca.ts
+  - apps/app/lib/movimento.ts
+  - apps/app/src/casca/MenuCriar.tsx
+  - apps/app/src/casca/**
+  - apps/app/src/styles.css
+  - apps/app/tests/**
+  - .visual/run-143/
+
+forbidden:
+  - alterar apps/web, supabase, migrations ou rotas de API
+  - editar tools/backend-kanban/public/board.json ou BOARD.md (o coordenador atualiza no merge)
+  - editar apps/app/tests/e2e/apoio.ts (compartilhado; crie apoio próprio do lote se precisar)
+  - mudar o desenho aprovado; quebrar outra tela; peça nova só aditiva
+  - usar skip/fixme novo, afrouxar asserção existente ou apagar teste
+  - rodar E2E fora da fila: sempre node scripts/agents/prova-fila.mjs -- <comando>
+  - push, merge ou force-push
+  - ler, criar ou editar arquivos .env
+
+acceptance:
+  - "lib/casca.ts: navegacaoVisivel/criaVisivel usam 1024 no lugar de 720."
+  - "lib/movimento.ts: larguraDeDocagem, minimização e título sob a barra usam 1024."
+  - "casca/MenuCriar.tsx: a geometria central usa 1024 no lugar de 720."
+  - "casca.spec.ts: guards de largura atualizados para 1024, com as asserções mantidas dos dois lados do corte; comentários que ainda dizem 720 corrigidos."
+  - "No 768 a barra inferior minimiza ao rolar, some fora das rotas-raiz e o Criar abre com geometria de celular; no 1440 o rail e o painel do Criar seguem como antes."
+  - "E2E da casca e vizinhos de navegação em 375/768/1440 verde nos dois temas, pela fila."
+
+proof:
+  - npx pnpm@11.18.0 --filter @bivaque/app typecheck
+  - npx pnpm@11.18.0 --filter @bivaque/app test
+  - npx pnpm@11.18.0 --filter @bivaque/app build
+  - npx pnpm@11.18.0 exec biome check apps/app/src apps/app/tests (sem erros nos tocados)
+  - node scripts/agents/prova-fila.mjs -- npx pnpm@11.18.0 exec playwright test --config playwright.config.ts tests/e2e/casca.spec.ts tests/e2e/r72-mobile-p0.spec.ts tests/e2e/r72-mobile-p1.spec.ts tests/e2e/mobile-first.spec.ts (a partir de apps/app)
+
+risk: comportamento de navegação da casca, sem dado novo
+risk_level: R2
+
+reviewer_must_differ_from_executor: true
+retry_budget: 1
+on_budget_exhausted: BLOCKED
+
+closure:
+  requires_runtime_evidence: true

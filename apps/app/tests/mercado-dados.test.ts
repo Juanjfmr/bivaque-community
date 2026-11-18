@@ -8,8 +8,12 @@ import {
   abrirInteresse,
   buscarAnuncio,
   editarDesapego,
+  editarImovel,
   lerMercado,
+  listarAnunciosSalvos,
+  marcarSalvoAnuncio,
   mudarSituacao,
+  publicarImovel,
 } from "@/lib/dados/mercado"
 
 /**
@@ -77,6 +81,27 @@ describe("lista do Mercado", () => {
     expect(lista.cidade).toBe("Manaus")
   })
 
+  // RUN-175: campo aditivo no shape — a tela mostra a escolha REAL. Resposta
+  // antiga (sem o campo) não é falha de contrato: vira "sem escolha".
+  it("lê a escolha publicada e trata ausência como anúncio antigo", async () => {
+    const comEscolha = responder({
+      anuncios: [
+        { ...ANUNCIO, localizacaoPublica: "exata" },
+        { ...ANUNCIO, localizacaoPublica: "aproximada" },
+        ANUNCIO,
+      ],
+      proximo: null,
+      cidade: null,
+    })
+    const lista = await lerMercado({ tipo: "property" })
+    expect(lista.anuncios.map((anuncio) => anuncio.localizacaoPublica)).toEqual([
+      "exata",
+      "aproximada",
+      null,
+    ])
+    expect(comEscolha).toHaveBeenCalledTimes(1)
+  })
+
   it("monta ordem e cursor na query string", async () => {
     const buscar = responder({ anuncios: [], proximo: null, cidade: null })
     await lerMercado({ tipo: "item", ordem: "price_asc", depois: "2026-11-01T12:00:00.000Z|a1" })
@@ -96,6 +121,27 @@ describe("lista do Mercado", () => {
     await lerMercado({ tipo: "item", quartos: 3, valorMax: 4_000, tipoImovel: "apartment" })
     // Filtro de imóvel com desapego seria 400 no servidor: não vai na query.
     expect(chamada(comItem).caminho).toBe("/api/app/mercado?tipo=item")
+  })
+
+  it("leva busca, bairro, negócio e a faixa de preço de cada aba", async () => {
+    const imovel = responder({ anuncios: [], proximo: null, cidade: null })
+    await lerMercado({
+      tipo: "property",
+      q: "casa",
+      bairro: "Centro",
+      tipoNegocio: "sale",
+      valorMax: 500_000,
+    })
+    expect(chamada(imovel).caminho).toBe(
+      "/api/app/mercado?tipo=property&q=casa&bairro=Centro&valor_max=500000&tipo_negocio=sale",
+    )
+
+    // A faixa do desapego é em centavos e só vai na aba de item.
+    const desapego = responder({ anuncios: [], proximo: null, cidade: null })
+    await lerMercado({ tipo: "item", q: "mesa", precoMinCents: 10_000, precoMaxCents: 99_900 })
+    expect(chamada(desapego).caminho).toBe(
+      "/api/app/mercado?tipo=item&q=mesa&preco_min=10000&preco_max=99900",
+    )
   })
 
   it("mantém os nulos do servidor sem virar zero", async () => {
@@ -189,6 +235,71 @@ describe("interesse", () => {
   })
 })
 
+describe("salvar anúncio (marcador persistido)", () => {
+  it("a lista diz o marcador que o servidor devolveu", async () => {
+    responder({ anuncios: [{ ...ANUNCIO, salvo: true }], proximo: null, cidade: "Manaus" })
+    const lista = await lerMercado({ tipo: "property" })
+    expect(lista.anuncios[0]?.salvo).toBe(true)
+  })
+
+  it("item sem o campo continua não salvo (campo aditivo, sem quebrar)", async () => {
+    responder({ anuncios: [ANUNCIO], proximo: null, cidade: "Manaus" })
+    const lista = await lerMercado({ tipo: "property" })
+    expect(lista.anuncios[0]?.salvo).toBe(false)
+  })
+
+  it("salvar é POST no caminho do marcador, sem corpo", async () => {
+    const buscar = responder({ salvo: true })
+    await marcarSalvoAnuncio("a1", true)
+    const { caminho, init } = chamada(buscar)
+    expect(caminho).toBe("/api/app/mercado/a1/salvo")
+    expect(init.method).toBe("POST")
+    expect(init.body).toBeUndefined()
+  })
+
+  it("dessalvar é DELETE no mesmo caminho", async () => {
+    const buscar = responder({ salvo: false })
+    await marcarSalvoAnuncio("a1", false)
+    const { caminho, init } = chamada(buscar)
+    expect(caminho).toBe("/api/app/mercado/a1/salvo")
+    expect(init.method).toBe("DELETE")
+  })
+
+  it("a recusa do marcador chega como falha tipada, com o texto do servidor", async () => {
+    responder({ erro: "recusado", mensagem: "Sua conta não pode salvar este anúncio." }, 403)
+    const falha = (await marcarSalvoAnuncio("a1", true).catch(
+      (erro: unknown) => erro,
+    )) as FalhaDaApi
+    expect(falha.codigo).toBe("recusado")
+    expect(falha.mensagem).toBe("Sua conta não pode salvar este anúncio.")
+  })
+
+  it("os salvos são pedidos pela aba e pelo cursor", async () => {
+    const buscar = responder({ anuncios: [], proximo: null })
+    await listarAnunciosSalvos({ tipo: "property", depois: "2026-11-01T12:00:00.000Z|a1" })
+    expect(chamada(buscar).caminho).toBe(
+      "/api/app/mercado/salvos?tipo=property&depois=2026-11-01T12%3A00%3A00.000Z%7Ca1",
+    )
+  })
+
+  it("a lista de salvos traz o shape completo e o cursor", async () => {
+    responder({ anuncios: [{ ...ANUNCIO, salvo: true }], proximo: "2026-11-01T12:00:00.000Z|a1" })
+    const lista = await listarAnunciosSalvos({ tipo: "property" })
+    expect(lista.anuncios[0]).toMatchObject({
+      id: "a1",
+      titulo: "Apartamento 3 quartos",
+      precoCents: 320_000,
+      salvo: true,
+    })
+    expect(lista.proximo).toBe("2026-11-01T12:00:00.000Z|a1")
+  })
+
+  it("lista de salvos fora do contrato falha alto, não vira lista vazia", async () => {
+    responder({ salvos: [] })
+    await expect(listarAnunciosSalvos({ tipo: "item" })).rejects.toBeInstanceOf(FalhaDaApi)
+  })
+})
+
 describe("gerenciar o próprio anúncio (editar e situação)", () => {
   const DADOS = {
     titulo: "Mesa de jantar",
@@ -266,6 +377,75 @@ describe("gerenciar o próprio anúncio (editar e situação)", () => {
   })
 })
 
+describe("anunciar e editar imóvel", () => {
+  const IMOVEL = {
+    title: "Apartamento 2 quartos no Centro",
+    deal: "rent" as const,
+    propertyType: "apartment" as const,
+    valor: "1800",
+    bedrooms: "2",
+    areaM2: "62",
+    description: "Próximo ao comércio.",
+    neighborhood: "Centro",
+  }
+
+  it("publica pelo POST com kind property e o valor no lado do negócio", async () => {
+    const buscar = responder({ anuncio: { id: "p9" } }, 201)
+    const id = await publicarImovel({ ...IMOVEL, vagas: "1", address: "" })
+    expect(id).toBe("p9")
+    const { caminho, init } = chamada(buscar)
+    expect(caminho).toBe("/api/app/mercado")
+    expect(init.method).toBe("POST")
+    expect(JSON.parse(String(init.body))).toEqual({
+      kind: "property",
+      title: IMOVEL.title,
+      deal: "rent",
+      propertyType: "apartment",
+      rent: "1800",
+      salePrice: "",
+      bedrooms: "2",
+      areaM2: "62",
+      description: "Próximo ao comércio.",
+      neighborhood: "Centro",
+      address: "",
+      parkingSpots: "1",
+    })
+  })
+
+  it("venda manda o preço em salePrice, e o aluguel vai vazio", async () => {
+    const buscar = responder({ anuncio: { id: "p9" } }, 201)
+    await publicarImovel({ ...IMOVEL, deal: "sale", valor: "450000", vagas: "1" })
+    const corpo = JSON.parse(String(chamada(buscar).init.body)) as Record<string, unknown>
+    expect(corpo["salePrice"]).toBe("450000")
+    expect(corpo["rent"]).toBe("")
+  })
+
+  it("a edição não manda endereço, vagas nem o que a lista não mostra", async () => {
+    const buscar = responder({ anuncio: { id: "p9" } })
+    await editarImovel("p9", IMOVEL)
+    const { caminho, init } = chamada(buscar)
+    expect(caminho).toBe("/api/app/mercado/p9")
+    expect(init.method).toBe("PATCH")
+    const corpo = JSON.parse(String(init.body)) as Record<string, unknown>
+    expect(corpo).not.toHaveProperty("address")
+    expect(corpo).not.toHaveProperty("parkingSpots")
+    expect(corpo).not.toHaveProperty("kind")
+    expect(corpo["rent"]).toBe("1800")
+  })
+
+  it("resposta sem id é falha de contrato, nunca publicação fingida", async () => {
+    responder({})
+    await expect(publicarImovel({ ...IMOVEL, vagas: "1" })).rejects.toBeInstanceOf(FalhaDaApi)
+  })
+
+  it("recusa do servidor chega com o texto para a pessoa", async () => {
+    responder({ erro: "dados-invalidos", mensagem: "Revise os dados do anúncio." }, 400)
+    const falha = (await editarImovel("p9", IMOVEL).catch((erro: unknown) => erro)) as FalhaDaApi
+    expect(falha.codigo).toBe("invalido")
+    expect(falha.mensagem).toBe("Revise os dados do anúncio.")
+  })
+})
+
 describe("página pedida pela URL", () => {
   it("persegue o cursor até a página e devolve aquela página", async () => {
     const buscar = vi
@@ -319,6 +499,12 @@ describe("escopo da jornada", () => {
   it("as telas do Mercado não importam mais a demonstração", () => {
     expect(fonte("src/telas/Mercado.tsx")).not.toContain("dadosDoApp")
     expect(fonte("src/telas/Anuncio.tsx")).not.toContain("dadosDoApp")
+  })
+
+  it("a seção de anúncios de Salvos vem da rota, não da demonstração", () => {
+    const tela = fonte("src/telas/Salvos.tsx")
+    expect(tela).not.toContain("dadosDoApp")
+    expect(tela).toContain("listarAnunciosSalvos")
   })
 
   it("a porta do Mercado não conhece o índice da demonstração", () => {

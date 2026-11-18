@@ -3,36 +3,34 @@ import { join } from "node:path"
 import { describe, expect, it } from "vitest"
 
 // Um pedido de indicação tem UM endereço (ADR-20260925-memoria-de-indicacoes):
-// /indicacoes/<id>. Antes, notificação, salvos, denúncia, Guia e Início abriam
+// /app/pergunta/<id>. Antes, notificação, salvos, denúncia, Guia e Início abriam
 // /recommendations?focus=…, uma lista longa onde o pedido tinha de ser achado
 // de novo. LIMITE: leitura de fonte; a navegação real é provada no navegador.
 
 const root = join(import.meta.dirname, "..", "..", "..")
 const web = (...segments: string[]) => readFileSync(join(root, "apps", "web", ...segments), "utf8")
 
-describe("toda porta de um pedido leva a /indicacoes/<id>", () => {
+describe("toda porta de um pedido leva a /app/pergunta/<id>", () => {
   it.each([
-    [
-      "notificação de resposta e alvo de denúncia",
-      ["app", "(shell)", "notifications", "deep-links.ts"],
-    ],
+    ["notificação de resposta e alvo de denúncia", ["lib", "notifications", "deep-links.ts"]],
     ["denúncia", ["lib", "reports", "reports.ts"]],
-    ["salvos", ["lib", "saves", "saved-items.ts"]],
-    ["origem de um item do Guia", ["app", "(shell)", "guide", "[id]", "page.tsx"]],
-    ["perguntas abertas do Início", ["app", "(shell)", "inicio", "questions-guide.tsx"]],
+    // RUN-186: a tela web de Salvos saiu com `lib/saves/saved-items.ts`; a tela
+    // do app lista anúncio, publicação, pergunta e guia. O pedido salvo continua
+    // com um endereço só (`/app/pergunta/<id>`), provado nos dois módulos acima.
+    // O verbete do Guia é do app desde o F08: a página web que abria um pedido
+    // de indicação saiu com a jornada, e a porta do pedido não mora mais ali.
+    // F02-001: as perguntas abertas do Início antigo saíram com a tela; o Início
+    // do app abre a pergunta em /app/pergunta/<id>.
   ])("%s", (_name, path) => {
     const source = web(...path)
-    expect(source).toContain("/indicacoes/")
+    expect(source).toContain("/app/pergunta/")
     expect(source).not.toContain("/recommendations?focus=")
   })
 })
 
 describe("pedir leva à caixa de pedir", () => {
-  it("o botão de criar e o atalho do Início usam o mesmo destino", () => {
-    for (const path of [
-      ["app", "components", "shell", "create-menu.tsx"],
-      ["app", "components", "bivaque", "intent-launcher.tsx"],
-    ]) {
+  it("o botão de criar usa o destino da caixa de pedir", () => {
+    for (const path of [["app", "components", "shell", "create-menu.tsx"]]) {
       expect(web(...path)).toContain(
         'import { ASK_INDICATION_HREF } from "../../../lib/indications/indications"',
       )
@@ -82,11 +80,5 @@ describe("menu de mais opções sem item morto", () => {
   it("ocultar e denunciar só existem quando alguém os executa", () => {
     expect(menu).toMatch(/\{onHide \? \(\s*<Dropdown\.Item key="hide"/)
     expect(menu).toMatch(/\{onReport \? \(\s*<Dropdown\.Item key="report"/)
-  })
-
-  it("no detalhe, quem escreveu não denuncia o próprio conteúdo", () => {
-    const detail = web("app", "components", "indications", "indication-detail.tsx")
-    expect(detail).toMatch(/onReport=\{\s*isAuthor\s*\?\s*undefined/)
-    expect(detail).toMatch(/onReport=\{\s*isOwnReply\s*\?\s*undefined/)
   })
 })

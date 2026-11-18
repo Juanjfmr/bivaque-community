@@ -1,0 +1,67 @@
+# LAN-TROCA — F02: a tela antiga de busca sai e o termo chega ao app
+#
+# Fecha o critério 6 (trocada) de F02 na parte que não exige transplante de
+# filtros: `/explorar/busca` já morre num 307, mas o `?q=` que a pessoa digitou
+# na tela antiga se perde no caminho, porque a busca do app não lê `q`.
+
+task_id: LT-001
+
+objective: >
+  Quem abre `/explorar/busca?q=<termo>` (link antigo, histórico ou busca
+  externa) cai na busca do app com o mesmo termo já digitado e a lista filtrada,
+  em vez de numa busca vazia — e a prova de navegador em 375/768/1440 confirma
+  que o aterrissamento não perde o parâmetro nem o foco.
+
+authority:
+  - docs/LANCAMENTO.md (critério 6 — trocada; LAN-TROCA no board)
+  - docs/decisions/ADR-20261024-front-react-spa.md §8 (ordem da troca e redirect)
+  - docs/agents/regua-nextdoor/PADRAO-DE-TELA.md
+  - tools/backend-kanban/public/board.json (LAN-TROCA, LAN-F02)
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    apps/web/next.config.ts já responde 307 de /explorar/busca para /app/busca,
+    mas apps/app/src/telas/Busca.tsx ignora o search param `q` (a matriz de
+    LAN-TROCA de 10/11 registrou: "Busca.tsx:84-121 não lê q"), então o termo
+    digitado na tela antiga se perde silenciosamente.
+
+allowed_paths:
+  - docs/agents/tasks/LT-001.task.yml
+  - apps/app/src/telas/Busca.tsx
+  - apps/app/src/busca/**
+  - apps/app/tests/busca-termo-url.test.ts
+  - apps/app/tests/e2e/busca-termo-url.spec.ts
+  - apps/app/tests/e2e/apoio.ts
+  - .visual/run-lan-troca-f02/
+
+forbidden:
+  - alterar apps/web (redirect, proxy ou tela antiga)
+  - alterar supabase ou migrations
+  - criar rota nova, tela nova ou peça nova
+  - redesenhar a busca ou mudar a navegação
+  - usar skip/fixme novo ou afrouxar asserção existente
+
+acceptance:
+  - `/app/busca?q=<termo>` abre com o termo digitado no campo, a lista filtrada e o estado de carregamento próprio, em 375/768/1440 e nos dois temas.
+  - Termo vazio, só espaços ou acima do limite do servidor não quebram a tela: cai no estado vazio da busca, nunca em erro cru.
+  - A busca ignora termo desconhecido sem apagar o que a pessoa digita depois.
+  - Um teste de navegador prova o aterrissamento com `q` em 375/768/1440 e outro prova `/app/busca` sem `q`.
+  - O resto da busca (campo, chips, salvar, estado vazio) continua verde na matriz de acessibilidade.
+
+proof:
+  - npx pnpm@11.18.0 lint
+  - npx pnpm@11.18.0 --filter @bivaque/app typecheck
+  - npx pnpm@11.18.0 --filter @bivaque/app test:e2e (CI; o sandbox local não sobe o Vite/Playwright)
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/LT-001.task.yml
+
+risk: interface e navegação
+risk_level: R2
+
+reviewer_must_differ_from_executor: true
+
+retry_budget: 2
+on_budget_exhausted: HUMAN_DECISION
+
+closure:
+  requires_runtime_evidence: true

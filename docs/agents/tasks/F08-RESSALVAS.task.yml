@@ -1,0 +1,71 @@
+# RUN-162 — F08-RESSALVAS: fechar os 2 itens LT-006 so com testes.
+#
+# A lacuna do LAN-TROCA filtros q/search e IDs do Guia/cidade/localidade esta
+# quase toda fechada (busca LT-002/003; guia LT-006/007 + RUN-154; verbete por
+# ID RUN-154). O explorer confirmou (15/11): sobram exatamente os 2 itens do
+# F08-RESSALVAS, que sao ressalvas de PROVA, nao de produto:
+# 1. o efeito de resemeadura do Guia por mudanca de endereco (Voltar para
+#    /app/guia?q=outro) nao tem teste — o molde existe na busca
+#    (trocarEndereco em apps/app/tests/e2e/busca-termo-url.spec.ts);
+# 2. a assercao de que a URL nao e reescrita enquanto se digita no Guia nunca
+#    foi feita no E2E (o teste digitar vence nao le page.url()).
+# /app/guia SEMEIA o filtro do URL na montagem (Guia.tsx:99-103,
+# filtros-da-url.ts) mas pode nao re-semear ao mudar o endereco dentro da mesma
+# tela; se o teste 1 pegar isso, o fix espelha o efeito de Busca.tsx:112-120.
+# A parte cidade/localidade da linha do board nao e perda de redirect: sao
+# telas de membro ainda na web (jornada propria, card novo no fechamento).
+
+task_id: RUN-162
+
+objective: >
+  Escrever os 2 testes E2E do F08-RESSALVAS (resemeadura do Guia por mudanca de
+  endereco; URL nao reescrita enquanto digita), no molde da busca. Se o teste de
+  resemeadura provar que o Guia nao re-le o URL, aplicar o fix minimo espelhando
+  o efeito de Busca.tsx.
+
+authority:
+  - tools/backend-kanban/public/board.json (F08-RESSALVAS, itens LT-006)
+  - Mapa do explorer 15/11 (lacuna F02/F08 reduzida a estes 2 itens)
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    apps/app/tests/e2e/guia-filtros-url.spec.ts nao tem o análogo do helper
+    trocarEndereco (existe em busca-termo-url.spec.ts:69,221,234) nem leitura de
+    page.url() no teste digitar vence (:162-174). Guia.tsx:99-103 le o filtro so
+    na montagem (verificar se re-semeia).
+
+allowed_paths:
+  - docs/agents/tasks/F08-RESSALVAS.task.yml
+  - apps/app/tests/e2e/guia-filtros-url.spec.ts
+  - apps/app/src/telas/Guia.tsx
+  - .visual/f08-ressalvas
+
+forbidden:
+  - tocar Busca, roteador, ROTAS_COM_BUSCA, filtros-da-url, catalogo de rotas, API, banco
+  - mudar comportamento do que ja passa; mudar copy da tela
+  - usar skip/fixme novo ou afrouxar assercao (exact:true e MAIS estrito, ok)
+  - push, merge ou force-push; ler/criar/editar arquivos de ambiente; imprimir credenciais
+  - tocar em .work/main ou em outra worktree
+
+acceptance:
+  - "Teste 1 (resemeadura): no molde trocarEndereco da busca — a partir de /app/guia?q=A (ou linha/filtro aberto), navegar para /app/guia?q=B pelo endereco ( nao por estado interno) e a lista re-semeia em B; recarregar mantem. Se FALHAR porque o Guia so le na montagem, aplicar o fix espelhando o efeito de Busca.tsx:112-120 (re-leitura por mudanca de endereco) e deixar o teste passar; NAO reconstruir a tela."
+  - "Teste 2 (URL estavel digitando): no teste digitar vence existente, apos o fill, asserir que page.url() ainda nao contem o termo digitado (ou contem o anterior) — a URL so e reescrita no debounce/submissao, espelhando a assercao equivalente da busca se houver; provar o contrario apos aguardar o reescrito."
+  - "Os 2 testes rodam de verdade no navegador local do app (vite preview, sem Next/Supabase): npx pnpm@11.18.0 --filter @bivaque/app test:e2e com filtro nos specs tocados, nas 3 larguras que o projeto usa hoje para esse spec. Passam."
+  - "Passam: app test, app typecheck, gate --fast, tsc -p tests/e2e. Sem migration; sem rotas novas (nada no manifesto)."
+
+proof:
+  - npx pnpm@11.18.0 --filter @bivaque/app test:e2e
+  - npx pnpm@11.18.0 --filter @bivaque/app test
+  - npx pnpm@11.18.0 gate --fast
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/F08-RESSALVAS.task.yml
+
+risk: testes E2E; possivel 1 efeito em Guia.tsx no molde da busca
+risk_level: R2
+
+reviewer_must_differ_from_executor: true
+retry_budget: 2
+on_budget_exhausted: HUMAN_DECISION
+
+closure:
+  requires_runtime_evidence: true

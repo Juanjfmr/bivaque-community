@@ -7,7 +7,7 @@
 // default seedSession() account (visual@bivaque.example.invalid); (2) the
 // "Ajudou a resolver" button lived inside the "Pedidos" tab of the old
 // /recommendations page. Since 25/09/2026 the request has its own page,
-// /indicacoes/<id> (ADR-20260925-memoria-de-indicacoes).
+// /app/pergunta/<id> (ADR-20260925-memoria-de-indicacoes).
 
 import type { Page } from "@playwright/test"
 import { expect, test } from "@playwright/test"
@@ -28,7 +28,7 @@ const REPLIER_EMAIL = "membro-3@bivaque.example.invalid"
 // resolvida pelo seed e vive no segundo teste.
 //   f06 'Onde fazer revisão do carro com preço honesto?' -> membro-46
 const OPEN_REQUEST_TITLE = "Onde fazer revisão do carro com preço honesto?"
-const OPEN_REQUEST_PATH = "/indicacoes/80000000-0000-4000-8000-000000000f06"
+const OPEN_REQUEST_PATH = "/app/pergunta/80000000-0000-4000-8000-000000000f06"
 const OPEN_REQUEST_AUTHOR_EMAIL = "membro-46@bivaque.example.invalid"
 // O autor do pedido resolvido do seed. NÃO usar seedSession() aqui: ele
 // autentica a dono-vila@ (ver apps/web/.env.local), enquanto o pedido do seed
@@ -36,7 +36,7 @@ const OPEN_REQUEST_AUTHOR_EMAIL = "membro-46@bivaque.example.invalid"
 // tela de quem não é autor.
 const AUTHOR_EMAIL = "visual@bivaque.example.invalid"
 const REQUEST_TITLE = "Alguém conhece um bom encanador?"
-const REQUEST_PATH = "/indicacoes/80000000-0000-4000-8000-000000000f00"
+const REQUEST_PATH = "/app/pergunta/80000000-0000-4000-8000-000000000f00"
 
 async function signInAs(page: Page, email: string): Promise<void> {
   const anonKey =
@@ -105,7 +105,7 @@ test.describe("recommendation ask-and-answer loop", { tag: "@stateful" }, () => 
     // O autor do pedido é o membro-46 (seed members 1..300); o seedSession()
     // aponta para a dono-vila@, que não receberia notificação deste pedido.
     await signInAs(authorPage, OPEN_REQUEST_AUTHOR_EMAIL)
-    await authorPage.goto("/notifications")
+    await authorPage.goto("/app/avisos")
     // A RECON-006 (prancha 54) trocou as abas por tema — Vizinhanca, Minha
     // atividade, Alertas — pelo filtro de leitura: Todas e Nao lidas. Nao ha
     // mais aba para clicar, e a pagina abre em "Todas", que inclui esta

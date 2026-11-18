@@ -9,6 +9,8 @@ const ler = (caminho) => readFileSync(join(raiz, caminho), "utf8")
 test("F07: telas ligadas usam a porta de negócios sem demonstração", () => {
   for (const caminho of [
     "apps/app/src/negocios/Negocios.tsx",
+    "apps/app/src/negocios/PedidoNovo.tsx",
+    "apps/app/src/meu-negocio/MeuNegocio.tsx",
     "apps/app/src/telas/Negocio.tsx",
     "apps/app/src/telas/Pedidos.tsx",
     "apps/app/src/telas/Pedido.tsx",
@@ -19,20 +21,44 @@ test("F07: telas ligadas usam a porta de negócios sem demonstração", () => {
   }
   const roteador = ler("apps/app/src/roteador.tsx")
   assert.match(roteador, /import \{ Negocios \} from "@\/src\/negocios\/Negocios"/)
+  assert.match(roteador, /import \{ MeuNegocio \} from "@\/src\/meu-negocio\/MeuNegocio"/)
+  assert.match(roteador, /import \{ PedidoNovo \} from "@\/src\/negocios\/PedidoNovo"/)
 })
 
 test("F07: todas as rotas usam sessão e preflight, escrita confere CSRF", () => {
-  for (const base of ["apps/web/app/api/app/negocios", "apps/web/app/api/app/pedidos"]) {
+  for (const base of [
+    "apps/web/app/api/app/negocios",
+    "apps/web/app/api/app/pedidos",
+    "apps/web/app/api/app/negocio",
+  ]) {
     const rotas = readdirSync(join(raiz, base), { recursive: true }).filter((nome) =>
       nome.endsWith("route.ts"),
     )
     assert.ok(rotas.length >= 2)
     for (const rota of rotas) {
       const fonte = ler(join(base, rota))
-      assert.doesNotMatch(fonte, /clienteDeServicoOuNulo|service_role/)
       assert.match(fonte, /exigirSessao/)
       assert.match(fonte, /opcoesDoApp/)
-      if (/export async function POST/.test(fonte)) assert.match(fonte, /conferirEscrita\(/)
+      if (/export async function (POST|PATCH|DELETE)/.test(fonte)) {
+        assert.match(fonte, /conferirEscrita\(/)
+      }
+      if (/clienteDeServicoOuNulo\(/.test(fonte)) {
+        if (/pedidos[/\\]route\.ts$/.test(join(base, rota))) {
+          // RUN-179: o CEP do pedido usa o MESMO módulo do anúncio, e o cache
+          // `cep_geocodes` é tabela de serviço (nenhuma sessão lê nem escreve).
+          // A coordenada vem do geocodificador do servidor (nunca do corpo) e a
+          // escrita do pedido continua no RPC, com o ator tirado de auth.uid().
+          assert.match(fonte, /localizarPedido/)
+          assert.match(fonte, /create_service_request/)
+        } else {
+          // A única escrita privilegiada é a FOTO: a SEC-006 tirou o INSERT de
+          // imagem do papel `authenticated`, então o servidor grava e reconfere a
+          // autorização e passa a imagem por sanitize-image.
+          assert.match(join(base, rota), /fotos/)
+          assert.match(fonte, /can_manage_provider_profile/)
+          assert.match(fonte, /sanitizeImage|provider-photos/)
+        }
+      }
     }
   }
 })

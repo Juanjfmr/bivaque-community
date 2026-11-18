@@ -1,0 +1,70 @@
+# F06 residuo — trocar as paginas web de criar/editar desapego.
+#
+# O app ja cria (Desapego.tsx → POST /api/app/mercado) e edita (gerenciar.tsx →
+# PATCH /api/app/mercado/[id]) desapego de verdade (E2E f03-criar-real:94,
+# f06-mercado-real:304). As paginas web /mercado/novo e /mercado/[id]/editar ainda
+# existem so por URL direta (card LAN-F06). Este lote as troca: redirect + remover.
+# O app cria pela folha do MenuCriar (sem rota /app/mercado/novo); edita inline no
+# anuncio. Por isso /mercado/novo → /app/mercado (lista, onde o Criar esta) e
+# /mercado/[id]/editar → /app/anuncio/[id] (edicao inline). SEM migration.
+
+task_id: RUN-156
+
+objective: >
+  Trocar as paginas web de criar/editar desapego: redirect /mercado/novo → /app/mercado
+  e /mercado/[id]/editar → /app/anuncio/[id], remover as paginas web, atualizar
+  mercado-redirects.spec.ts. O app ja cria/edita de verdade (provado em E2E).
+
+authority:
+  - docs/LANCAMENTO.md (F06: criar, revisar e gerenciar anuncio; criterio 6 trocada)
+  - ADR-20261024-front-react-spa.md §8 (ordem da troca)
+  - Mapa do explorer 14/11 (app cria/edita real; LAN-F06 registra so-URL-direta)
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    apps/web/app/(shell)/mercado/novo/page.tsx e mercado/[id]/editar/page.tsx existem
+    sem redirect (LAN-F06 proof 14/11: so por URL direta). O app cria (Desapego.tsx:75-102
+    → POST /api/app/mercado) e edita (gerenciar.tsx:136 → PATCH /api/app/mercado/[id]),
+    provado em f03-criar-real.spec.ts:94 e f06-mercado-real.spec.ts:304.
+
+allowed_paths:
+  - docs/agents/tasks/F06-RESIDUO.task.yml
+  - apps/web/next.config.ts
+  - apps/web/app/(shell)/mercado
+  - tests/e2e/mercado-redirects.spec.ts
+  - tests/e2e/link-crawl.spec.ts
+  - tests/e2e/provider-member-business.spec.ts
+  - tests/unit/listings/address.test.ts
+  - scripts/visual/capture.mjs
+  - .visual/f06-residuo
+
+forbidden:
+  - alterar o app (criar/editar ja prontos), API, banco, migration
+  - tocar outras jornadas (guia/grupos/perguntas), tema
+  - remover a edicao inline do app ou o criar do MenuCriar
+  - usar skip/fixme novo ou afrouxar assercao
+  - push, merge ou force-push; ler/criar/editar arquivos de ambiente; imprimir credenciais
+  - tocar em .work/main ou em outra worktree
+
+acceptance:
+  - "next.config.ts: redirect /mercado/novo → /app/mercado e /mercado/[id]/editar → /app/anuncio/[id] (307, query preservada; a regra de editar nao captura /mercado/novo nem a lista). Molde: os redirects /mercado/:id existentes."
+  - "Remover apps/web/app/(shell)/mercado/novo/page.tsx e mercado/[id]/editar/page.tsx (e arquivos orfaos da pasta editar). Sem imports orfaos."
+  - "mercado-redirects.spec.ts: provar os 2 redirects (307, sem sessao, 375/768/1440) + negativa (a lista /mercado e /mercado/[id] nao sao capturadas pelas regras novas). link-crawl: remover portas velhas de /mercado/novo e /mercado/[id]/editar se declaradas."
+  - "TROCADAS (lan-troca-redirect.test.ts) se aplicavel: os pares novos + ausencia das paginas. Guards verdes."
+  - "Passam: gate --fast, tsc -p tests/e2e, pnpm test (raiz). E2E navegador no CI."
+
+proof:
+  - npx pnpm@11.18.0 gate --fast
+  - npx pnpm@11.18.0 test
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/F06-RESIDUO.task.yml
+
+risk: troca de rota (redirect + remocao de paginas web); app ja pronto
+risk_level: R2
+
+reviewer_must_differ_from_executor: true
+retry_budget: 2
+on_budget_exhausted: HUMAN_DECISION
+
+closure:
+  requires_runtime_evidence: true

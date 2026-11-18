@@ -31,7 +31,6 @@ const componente = (arquivo: string) =>
 const TELAS = {
   pedir: componente("ask-indication.tsx"),
   painel: componente("indications-panel.tsx"),
-  detalhe: componente("indication-detail.tsx"),
   cartao: componente("indication-item.tsx"),
 }
 
@@ -135,7 +134,7 @@ describe("frase de produto para escrita e para leitura", () => {
 })
 
 describe("nenhum ponto do fluxo repassa erro cru ao usuário", () => {
-  const telas = ["pedir", "painel", "detalhe", "cartao"] as const
+  const telas = ["pedir", "painel", "cartao"] as const
 
   it("nenhuma tela passa mensagem de servidor direto para um setState", () => {
     for (const tela of telas) {
@@ -161,25 +160,8 @@ describe("nenhum ponto do fluxo repassa erro cru ao usuário", () => {
     }
     expect([...new Set(usadas.map((u) => u.operacao))].sort()).toEqual([
       "carregar_pedidos",
-      "carregar_respostas_e_salvos",
       "publicar_pedido",
     ])
-    // As escritas do detalhe entram pela chave, dentro de `run(...)`.
-    for (const operacao of [
-      "responder_pedido",
-      "salvar_pedido",
-      "remover_pedido_salvo",
-      "excluir_resposta",
-      "editar_resposta",
-      "editar_pergunta",
-      "excluir_pergunta",
-      "marcar_resposta",
-      "resolver_pergunta",
-      "reabrir_pedido",
-    ]) {
-      expect(CODIGO.detalhe).toContain(`"${operacao}"`)
-    }
-    expect(CODIGO.detalhe).toContain("setFeedback(writeFailure(operation, error.message))")
   })
 
   it("todo o vocabulário do módulo tem uso: nada de frase órfã", () => {

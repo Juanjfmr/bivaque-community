@@ -1,0 +1,122 @@
+# F09-TROCA-INDICACAO — terceiro lote do LAN-F09: a tela antiga de indicação sai e o INSERT
+# direto em dm_messages fecha (cartão F09-B3-INSERT-DIRETO-DM).
+#
+# Inventário do coordenador em 18/11 sobre origin/main 44bc2284 (disco e git), partindo de
+# .work/orq/relatorios/escopo-trocas.md §3 (17/11) e conferindo de novo:
+# - Paridade da tela Pergunta do app já na main: bloquear depois de denunciar (SEC-015, #270) e
+#   editar/excluir/resolver sem resposta/compartilhar/Guia/editada (RUN-185, #275).
+# - apps/web/app/(shell)/indicacoes/[id]/ ainda serve a tela antiga (IndicationDetail); o único
+#   chamador do ramo de bloqueio do ReportButton (blockUserId → dm_blocks.insert,
+#   report-button.tsx:167) é indication-detail.tsx:832.
+# - Produtores de INSERT direto em public.dm_messages: (a) a rota viva
+#   apps/web/app/api/app/eventos/[id]/perguntas/route.ts:60-67 (pergunta ao organizador do
+#   encontro; o relatório de 17/11 não a viu) e (b) apps/web/app/components/bivaque/chat-thread.tsx:116,
+#   órfão (nenhum importador; só tests/scope/design-system-contract.test.mjs:117 o lê). Todas as
+#   funções SQL que gravam em dm_messages são security definer e não dependem do grant.
+#
+# Decisões do coordenador (mandato 02/11; executa o que o ADR-20261116 e sua emenda já previam
+# para o lote 3, sem decisão nova de produto; R3 pelo grant):
+# - Revoga só o INSERT de public.dm_messages para authenticated (select fica). O INSERT de
+#   public.dm_blocks FICA: POST /api/app/voce/bloqueados grava com o cliente da sessão sob a
+#   policy dm_blocks_insert_self — revogá-lo quebraria o bloqueio do app (o relatório de 17/11
+#   recomendava revogar; está errado nesse ponto).
+# - A pergunta ao organizador passa a gravar pela RPC public.send_conversation_message(uuid, text,
+#   text) na conversa devolvida por open_event_question, com p_client_key nulo; as recusas da RPC
+#   (42501 blocked / not a participant / unavailable, 22023) viram as mesmas respostas que a rota
+#   já dá hoje.
+# - /indicacoes/:id passa a 307 para /app/pergunta/:id em next.config.ts; a lista /indicacoes
+#   (redirect interno para a Comunidade) fica até o F04.
+# - O ramo de bloqueio do ReportButton sai (fica sem chamador); o componente fica para grupos e
+#   publicações da web até o F04.
+# - Entra também a prova que falta do cartão F09-B2: pgTAP do caminho on conflict → reselect da
+#   RPC de envio.
+
+task_id: F09-003
+
+adr: docs/decisions/ADR-20261116-bloqueio-e-denuncia-pela-porta-do-app.md
+
+objective: >
+  A tela antiga /indicacoes/[id] sai da web com redirecionamento 307 para /app/pergunta/[id] e com
+  todos os links migrados; nenhum caminho do produto grava direto em dm_messages, e o banco recusa
+  o INSERT direto (42501), enquanto a RPC de envio e a pergunta ao organizador seguem funcionando;
+  tudo com prova de banco, de rota e de navegação.
+
+authority:
+  - docs/LANCAMENTO.md (fase 6 e linha F09)
+  - Cards LAN-F09, F09-B3-INSERT-DIRETO-DM e F09-B2-BLOQUEIO-E-CORRIDA
+  - ADR-20261116-bloqueio-e-denuncia-pela-porta-do-app.md (emenda de 17/11: revogação no lote 3)
+  - ADR-20261024-front-react-spa.md §5 e §8 (troca de tela com redirect, links e testes no mesmo PR)
+  - .work/orq/relatorios/escopo-trocas.md §3.4, §3.5 e §3.7 (inventário de links e testes; vale o que este contrato corrige)
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    apps/web/app/(shell)/indicacoes/[id]/page.tsx renderiza IndicationDetail;
+    supabase/migrations/20260802001500_contextual_dm_abuse_controls.sql:97 concede insert em
+    public.dm_messages a authenticated; apps/web/app/api/app/eventos/[id]/perguntas/route.ts:60-67
+    insere em dm_messages pelo cliente da sessão; apps/web/lib/indications/indications.ts:46,
+    lib/notifications/deep-links.ts:171,176,207 e lib/reports/reports.ts:242 apontam para
+    /indicacoes/:id.
+
+allowed_paths:
+  - docs/agents/tasks/F09-TROCA-INDICACAO.task.yml
+  - supabase/migrations
+  - supabase/tests
+  - apps/web/next.config.ts
+  - apps/web/app/(shell)/indicacoes/[id]
+  - apps/web/app/components/indications
+  - apps/web/app/components/bivaque/report-button.tsx
+  - apps/web/app/components/bivaque/chat-thread.tsx
+  - apps/web/app/components/bivaque/message-delivery.ts
+  - apps/web/app/components/shell/active-nav.ts
+  - apps/web/app/api/app/eventos/[id]/perguntas
+  - apps/web/lib/indications
+  - apps/web/lib/notifications/deep-links.ts
+  - apps/web/lib/reports/reports.ts
+  - apps/web/lib/recommendations/trigger-label.ts
+  - apps/web/lib/recommendations/write-failure-copy.ts
+  - apps/web/lib/recommendations/reply.ts
+  - scripts/port/compare-pergunta.mjs
+  - scripts/visual/capture.mjs
+  - tests/unit
+  - tests/scope
+  - tests/e2e
+  - .visual/f09-troca
+
+forbidden:
+  - editar migration já aplicada (só migration nova, criada com supabase migration new)
+  - revogar ou mudar o grant/policy de public.dm_blocks, public.reports ou qualquer outra tabela além do INSERT de public.dm_messages
+  - mudar o corpo de send_conversation_message, open_event_question ou qualquer função SQL
+  - remover a lista /indicacoes (redirect interno) ou mexer em INDICATIONS_HREF / ASK_INDICATION_HREF
+  - remover ReportButton ou o caminho de denúncia (reports.insert) usado por groups/page.tsx e feed-post-card.tsx
+  - mudar ou remover campos das respostas da rota de perguntas do encontro
+  - apagar teste sem nome e motivo no RELATORIO; skip/fixme novo; afrouxar asserção
+  - credencial inline, leitura de arquivo de ambiente pelo spec, dado pessoal real
+  - push, merge, force-push, editar o quadro (tools/backend-kanban), tocar outra worktree
+  - supabase start/reset ou escrita em banco (o coordenador roda as provas de banco e E2E real)
+
+acceptance:
+  - "Banco: migration nova revoga insert on public.dm_messages from authenticated (select continua). pgTAP novo em supabase/tests (identidades example.invalid, UUIDs fixos, transação com rollback): como authenticated participante, INSERT direto em dm_messages falha com 42501; send_conversation_message grava a mensagem; chamada repetida com o mesmo p_client_key devolve a mesma linha (um só registro); a corrida on conflict → reselect só é alcançável com duas transações simultâneas, então a prova é estrutural: o índice único parcial (conversation_id, sender_id, client_key) existe e um segundo INSERT com a mesma chave (como postgres) falha com 23505, garantindo que o on conflict da RPC nunca duplica; authenticated mantém select; anon sem insert nem select."
+  - "Pergunta ao organizador: POST /api/app/eventos/[id]/perguntas grava pela RPC send_conversation_message na conversa aberta por open_event_question (sem .from(\"dm_messages\").insert em apps/web); respostas e códigos atuais preservados (201 com o mesmo corpo; recusa da RPC por bloqueio ou indisponibilidade vira o 403 'recusado' com a mensagem amigável; 22023 vira 400 'corpo-invalido'; erro inesperado 503). Testes de rota atualizados com casos positivo e negativos, incluindo a recusa da RPC."
+  - "Troca: next.config.ts ganha [\"/indicacoes/:id\", \"/app/pergunta/:id\"] (307, query preservada) sem capturar a lista; a pasta apps/web/app/(shell)/indicacoes/[id]/ sai inteira, com indication-detail.tsx, conversation-menu.tsx e lib/recommendations/trigger-label.ts (conferir com git grep que não há outro importador antes de remover); tests/unit/infra/lan-troca-redirect.test.ts cobre a regra nova, a ausência da pasta e a ausência de ciclo."
+  - "Links: indicationHref, deep-links.ts (recommendation_reply, recommendation_request e resolveReportTargetHref), reports.ts TARGET_HREF.recommendation_request, legacy-routes ?focus, active-nav, scripts/port/compare-pergunta.mjs e scripts/visual/capture.mjs passam a /app/pergunta/:id (ou a captura sai, se já coberta pelo app). git grep \"/indicacoes/\" em apps/web, scripts e tests só pode sobrar em asserção de redirect ou de ausência."
+  - "Web morta: o ramo blockUserId/handleBlock do ReportButton sai (o componente e reports.insert ficam); chat-thread.tsx sai (órfão) e message-delivery.ts sai se ficar sem importador; tests/scope/design-system-contract.test.mjs deixa de ler os arquivos removidos sem afrouxar o que verifica nos que ficam."
+  - "Testes que liam os arquivos removidos são migrados ou removidos com nome e motivo no RELATORIO (portas.test.ts, indications.test.ts, aviso-de-pedido.test.ts, erro-cru-na-rota, erro-servidor-em-portugues, no-engagement-in-indications, gatilho-overflow-nome-acessivel, nome-acessivel-de-fechar, shell-active-nav, link-crawl, recommendation-reply-notify, indicacoes-ciclo-pergunta, indicacoes-memoria e o que mais git grep achar). E2E web que navegava a tela antiga passa a esperar /app/pergunta/:id."
+  - "RELATORIO em .visual/f09-troca/RELATORIO.md: arquivos tocados e removidos, testes novos, migrados e removidos com motivo, comandos rodados com resultado lido, e o que não rodou."
+
+proof:
+  - npx pnpm@11.18.0 gate --fast
+  - npx pnpm@11.18.0 test
+  - npx pnpm@11.18.0 test:db
+  - npx pnpm@11.18.0 db:lint
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/F09-TROCA-INDICACAO.task.yml
+
+risk: revogação de grant em public.dm_messages, troca de rota de envio da pergunta ao organizador e remoção da tela antiga de indicação
+risk_level: R3
+
+reviewer_must_differ_from_executor: true
+retry_budget: 2
+on_budget_exhausted: HUMAN_DECISION
+
+closure:
+  requires_runtime_evidence: true

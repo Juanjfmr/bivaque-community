@@ -21,8 +21,9 @@ export function indicacoesRedirect(params: Params): Route {
 
 /**
  * /recommendations tinha quatro abas. Pedido em foco vai ao próprio pedido;
- * "Pedir indicação" vai à caixa de pedir; "Salvas" vai aos salvos do tipo; o
- * resto (Explorar, Pedidos) vai à vista Indicações.
+ * "Pedir indicação" vai à caixa de pedir; "Salvas" vai aos salvos do app, que
+ * é onde a tela de conteúdo salvo vive desde o RUN-186; o resto (Explorar,
+ * Pedidos) vai à vista Indicações.
  */
 export function recommendationsRedirect(params: Params): Route {
   return recommendationsTarget(params) as Route
@@ -33,6 +34,6 @@ function recommendationsTarget(params: Params): string {
   if (focus && UUID.test(focus)) return indicationHref(focus)
   const tab = single(params["aba"])
   if (tab === "request") return ASK_INDICATION_HREF
-  if (tab === "saved") return "/salvos?aba=indicacao"
+  if (tab === "saved") return "/app/salvos"
   return INDICATIONS_HREF
 }

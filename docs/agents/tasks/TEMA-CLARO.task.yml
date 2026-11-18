@@ -1,0 +1,79 @@
+# TEMA-CLARO — lançamento apenas com tema claro (decisão do dono, 14/11).
+#
+# O app segue o prefers-color-scheme do sistema: bloco escuro em styles.css:126
+# (@media prefers-color-scheme: dark), tema.ts seta data-tema/meta, e <source
+# media=dark> nas telas de entrada. Os testes visuais percorrem claro+escuro via
+# emulateMedia. O dono decidiu: lançamento SÓ claro. Escuro fica dormente (não
+# deletar — reversível), gated por data-tema=escuro. LANCAMENTO já atualizado.
+#
+# Mecanismo: trocar o wrapper @media (prefers-color-scheme: dark) de styles.css
+# pelo seletor :root[data-tema=escuro] (sem media query); tema.ts força claro
+# (data-tema=claro + meta theme-color claro, sem seguir o sistema); remover os
+# <source media=dark> de entrada-acesso/entrada-etapa (só a imagem clara). Assim
+# o produção é sempre claro; o escuro só ativa se alguém setar data-tema=escuro.
+# Testes: claro-only (loop de temas vira [claro]; assertivas de escuro removidas
+# ou viram claro). NÃO deletar os tokens escuros (dormentes).
+
+task_id: RUN-152
+
+objective: >
+  Tornar o lançamento apenas tema claro (decisão do dono 14/11): forçar claro no
+  app em produção (data-tema sempre claro, meta claro, tokens escuros dormentes
+  gated por data-tema=escuro, sem seguir o sistema), remover as fontes de imagem
+  escura das telas de entrada, e tornar os testes visuais do app claro-only.
+  Manter o código escuro dormente (reversível), não deletar.
+
+authority:
+  - docs/LANCAMENTO.md (mudança de escopo 14/11: lançamento só tema claro)
+  - Instrução direta do dono (14/11)
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    styles.css:126 @media (prefers-color-scheme: dark) aplica tokens escuros;
+    tema.ts:17 segue matchMedia dark; entrada-acesso.tsx:196 e entrada-etapa.tsx:56
+    tem source media=dark; testes (cegas/capturas.spec.ts:240 emulateMedia colorScheme)
+    percorrem claro+escuro. O lançamento deve ser só claro.
+
+allowed_paths:
+  - docs/agents/tasks/TEMA-CLARO.task.yml
+  - docs/LANCAMENTO.md
+  - apps/app/src/casca/tema.ts
+  - apps/app/src/styles.css
+  - apps/app/components/bivaque/entrada-acesso.tsx
+  - apps/app/components/bivaque/entrada-etapa.tsx
+  - apps/app/src/previa-f01
+  - apps/app/tests
+  - tests/e2e
+  - .visual/tema-claro
+
+forbidden:
+  - deletar os tokens escuros (ficam dormentes, gated por data-tema=escuro)
+  - alterar lógica de jornada, API, banco, navegação, ou qualquer comportamento não-tema
+  - tocar apps/web (o tema da web antiga não é escopo deste lote; foco no app)
+  - usar skip/fixme novo ou afrouxar asserção não-tema
+  - push, merge ou force-push; ler/criar/editar arquivos de ambiente; imprimir credenciais
+  - tocar em .work/main ou em outra worktree
+
+acceptance:
+  - "styles.css: o bloco escuro passa a ser :root[data-tema='escuro'] (sem @media prefers-color-scheme); tokens escuros preservados. :root base segue claro (color-scheme: light)."
+  - "tema.ts: força data-tema='claro' + meta theme-color claro, sem seguir o sistema (remove o listener de matchMedia ou o torna no-op). Comentário explica o escopo claro-only 14/11."
+  - "entrada-acesso.tsx e entrada-etapa.tsx: removido o <source media=dark> (só imagem clara). previa-f01 (DEV) idem se aplicável."
+  - "Testes visuais do app claro-only: o loop de temas (cegas/capturas.spec.ts e onde mais houver) vira só claro; assertivas específicas de escuro (base-visual.spec.ts etc.) removidas ou convertidas para claro. grep por escuro/dark/colorScheme nos testes não deixa captura/assertiva de escuro ativa."
+  - "Passam: app test, app typecheck, gate --fast. E2E claro-only roda no CI. Nenhum teste não-tema quebrado."
+
+proof:
+  - npx pnpm@11.18.0 --filter @bivaque/app test
+  - npx pnpm@11.18.0 --filter @bivaque/app typecheck
+  - npx pnpm@11.18.0 gate --fast
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/TEMA-CLARO.task.yml
+
+risk: mudança de UX reversível (tema), dirigida pelo dono; mexe em testes visuais
+risk_level: R2
+
+reviewer_must_differ_from_executor: true
+retry_budget: 2
+on_budget_exhausted: HUMAN_DECISION
+
+closure:
+  requires_runtime_evidence: true

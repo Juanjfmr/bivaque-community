@@ -1,0 +1,102 @@
+# RUN-178 — F04-TAMBEM-PERGUNTAR: perguntar ao grupo com a cidade respondendo.
+#
+# Regra-matriz aceita pelo dono no ADR-20261024-redesenho §1 (R3, critic PASS):
+# pergunta feita em grupo Aberto aparece tambem nas Indicacoes da cidade, com o
+# nome do grupo; CHECK de origem + policy de INSERT + leituras numa migration
+# so. As escolhas de execugao (forma de linha unica; saves e contagens na
+# mesma migration; feed do grupo recebe as perguntas por leitura nova) estao no
+# ADR-20261116-execucao-pergunta-origem-dupla deste lote, por delegacao, com
+# linha na RATIFICACAO. Nada aqui e inventado: o cartao do app ja desenha
+# Tambem perguntada a cidade, o list_indications ja junta e devolve group_name,
+# os 4 negativos ja estao escritos no ADR. O que falta e exatamente: migration,
+# rota de criacao, modo pergunta no compositor, leitura do feed, fim dos
+# 403/atalhos de origem dupla.
+
+task_id: RUN-178
+
+adr: docs/decisions/ADR-20261116-execucao-pergunta-origem-dupla.md
+
+objective: >
+  Publicar pergunta de dentro de um grupo Aberto criando UMA linha
+  recommendation_requests de origem dupla (cidade do grupo + grupo), visivel
+  nas Indicacoes da cidade com o nome do grupo e intercalada no feed do grupo;
+  seguir/contagens coerentes com origem dupla; os 4 vetos por escrita direta
+  provados em pgTAP; E2E nas 3 larguras.
+
+authority:
+  - docs/LANCAMENTO.md linha F04 (:57, a frase exige a funcionalidade; fica-fora nao a lista)
+  - ADR-20261024-redesenho-da-comunidade §1 (regra do dono) e a critica :11-17 (o furo que a protocoloca fecha)
+  - ADR-20261023-comunidade-do-prototipo :149-150 (aviso obrigatorio ao publicar)
+  - ADR-20261116-execucao-pergunta-origem-dupla.md (delegacao; forma e knock-ons)
+  - Card F04-TAMBEM-PERGUNTAR (checklist 1-4) + mapa do explorer 16/11
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    CHECK recommendation_origin_scope ainda XOR (20260802001100:32-35, nenhuma
+    migration posterior o relaxou); policy de INSERT atual delega o 23514 ao
+    CHECK (20261106141329:14-38); seguir-pergunta recusa origem grupo com a
+    frase literal (perguntas/[id]/salvo/route.ts:58) e a policy
+    recommendation_saves_insert_own so aceita cidade; contagem ignora linhas de
+    grupo com shortcut declarado (perguntas/route.ts:95-97); o compositor de
+    grupo (Escrever.tsx) so publica post texto/foto; nada no repo escreve
+    group_id em recommendation_requests; seed nao tem linha dupla.
+
+allowed_paths:
+  - docs/agents/tasks/F04-PERGUNTA-CIDADE.task.yml
+  - supabase/migrations
+  - supabase/tests
+  - apps/web/app/api/app/grupos
+  - apps/web/app/api/app/perguntas
+  - apps/web/lib/recommendations
+  - apps/web/lib/composer
+  - apps/app/src/grupos
+  - apps/app/src/telas/Grupo.tsx
+  - apps/app/src/telas/Pergunta.tsx
+  - apps/app/src/telas/Comunidade.tsx
+  - apps/app/src/criar/Perguntar.tsx
+  - apps/app/lib/dados
+  - apps/app/tests
+  - tests/unit/app-api/grupos
+  - tests/unit/app-api/perguntas
+  - tests/unit/recommendations
+  - tests/e2e/f04-grupos-real.spec.ts
+  - tests/e2e/f04-comunidade-real.spec.ts
+  - scripts/visual/capture.mjs
+  - .visual/f04-pergunta-cidade
+
+forbidden:
+  - editar migration aplicada (nova via npx pnpm@11.18.0 exec supabase migration new; as faixas antigas 2026102413xxxx/2026102510xxxx nunca usadas ficam intocadas)
+  - relaxar o CHECK sem a policy de INSERT e os 4 vetos na MESMA migration (o furo que a critica do ADR nomeou)
+  - criar post espelho da pergunta ou vinculo post-request (forma escolhida e linha unica; ADR deste lote)
+  - permitir pergunta de origem dupla em grupo Fechado/Encerrado ou com cidade diferente do grupo
+  - expor perguntas de grupos Fechados em qualquer leitura da cidade
+  - rodar test:db/reset local enquanto outra lane usar a stack (decidir com o coordenador; pgTAP e provado no CI)
+  - usar skip/fixme novo ou afrouxar assercao; contagem de perguntas sem ajuste dos testes existentes no mesmo commit (precedente 6 para 7 do RUN-159)
+  - push, merge ou force-push; ler/criar/editar arquivos de ambiente; imprimir credenciais
+  - tocar em .work/main ou em outra worktree
+
+acceptance:
+  - "Migration unica: CHECK aceita origem dupla; policy de INSERT com os 4 vetos (membro ativo do grupo, grupo Aberto, nao Encerrado, cidade da pergunta = cidade do grupo) por escrita direta; policy de SELECT da linha dupla mantem o contrato vigente (autor, membros do grupo e cidade via list_indications — conferir a vigente antes e nao ampliar alem do ADR); recommendation_saves_insert_own revisada para aceitar linha dupla visivel (fim da frase de 403 para seguir); pgTAP positivo + os 4 negativos + seguir-pergunta-de-grupo (membro e nao membro) + reabrindo a cidade ve a linha com group_name."
+  - "Escrita: POST /api/app/grupos/[id]/perguntas no ADR §5 (sessao+CSRF, origem cidade derivada do grupo no banco, nunca do corpo; validacao compartilhada com lib/recommendations/create.ts estendida para grupo, modulo UNICO chamado pelo composer e por qualquer caminho futuro; 4 vetos da policy traduzidos sem eco; devolve a linha criada no mesmo shape do GET de perguntas). Compositor Escrever.tsx: modo Pergunta (segmento Perguntar/Publicar do proprio composer se ele ja tiver segmentos; senao um seletor de tipo com os dois valores existentes hoje — texto e pergunta — decidir pelo desenho da peca, nao por preferencia), visivel so em grupo Aberto, com a copy do ADR-20261023 antes de publicar; ao publicar sem foto; sucesso intercala no feed e toast honesto cidade incluida."
+  - "Leitura feed: GET /api/app/grupos/[id]/publicacoes (ou rota nova de perguntas do grupo — escolher a menor que nao mescle paginacoes de duas fontes de forma frágil; se intercalar quebrar o cursor atual, criar GET separado e combinar na tela com paginação da lista dominante e perguntas como bloco topo; registrar a escolha) — Grupo.tsx renderiza cartao tipo Pergunta com a linha Tambem perguntada a cidade ja existente (galeria DEV servia de referencia visual e sai do demo ao existir o dado real)."
+  - "Ficha: Pergunta.tsx mostra a origem (nome do grupo, link para o grupo) quando group_id presente; seguir passa a funcionar na linha dupla (a policy nova); resolver/reabrir/denuncia (RUN-153/155/158/159) funcionam sem mudanca — provar com testes que a linha dupla passa neles; contagem do GET perguntas deixa de ignorar grupo (remover o shortcut com os numeros dos testes ajustados no mesmo commit)."
+  - "Perguntar.tsx da cidade (criar/MenuCriar) permanece como esta (origem so cidade) — nao e para adicionar checkbox la; registrar que as duas portas convivem."
+  - "Provas: unit das rotas (criacao grupo Aberto ok; os 4 vetos com status/mensagem sem eco; seguir linha dupla ok e nao-membro recusado; contagem nova), unit da lib compartilhada (create estendido), app vitest do composer (modo pergunta aparece so em grupo Aberto, copy presente, publicar chama a rota nova), e2e stub do app (intercalar no feed com fetch mockado), E2E real @stateful estendendo f04-grupos-real/f04-comunidade-real: membro publica pergunta de dentro do grupo Aberto -> aparece nas Indicacoes da cidade para outro membro com o nome do grupo -> ele responde -> autor ve a resposta na ficha e no feed; negativos por UI (grupo Fechado sem a opcao). 3 larguras no CI; capture/rotas se algo novo precisar."
+  - "TOTAL_DE_ROTAS: +1 (a rota de criacao por grupo, e +1 se a leitura for rota separada) recalculado CONTRA O DISCO apos git rebase origin/main no fim (lanes CEP/F07/glyph somando na mesma janela — o teste do manifesto e a regula). Passam: gate --fast, tsc -p tests/e2e, pnpm test, test:scope, app test; test:db no CI (local exclusivo so com combinacao previa). Antes de tocar fora dos allowed_paths, EMENDAR o contrato primeiro (cada '- ' em UMA linha; SEM aspas em comentarios)."
+
+proof:
+  - npx pnpm@11.18.0 gate --fast
+  - npx pnpm@11.18.0 test
+  - npx pnpm@11.18.0 test:scope
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/F04-PERGUNTA-CIDADE.task.yml
+
+risk: R3 real (CHECK+policy+privacidade de origem dupla); knock-on de contagens; intercalacao do feed e o ponto fragil de design — decidir com evidencia, nao empilhar paginas
+risk_level: R3
+
+reviewer_must_differ_from_executor: true
+retry_budget: 2
+on_budget_exhausted: HUMAN_DECISION
+
+closure:
+  requires_runtime_evidence: true

@@ -100,10 +100,40 @@ prova de uso em produção. Proteção do projeto deve cobrir também `snapshot.
 node tools/backend-kanban/src/board.mjs --card LAN-F01
 node tools/backend-kanban/src/board.mjs --search termo
 node tools/backend-kanban/src/board.mjs --next
+node tools/backend-kanban/src/board.mjs --apply patch.json
+node tools/backend-kanban/src/board.mjs --apply patch.json --dry-run
 node tools/backend-kanban/src/board.mjs --write-summary
 node tools/backend-kanban/src/board.mjs --check
 node --test tests/scope/readiness.test.mjs tests/scope/readiness-publish.test.mjs
 ```
+
+Edite os cards só por `--apply`, nunca com script avulso no `board.json`: o comando aplica as
+operações em memória, valida com as mesmas regras do `--check`, grava o arquivo no formato que o
+biome aceita (UTF-8 sem BOM, fim de linha LF) e regenera o `BOARD.md` — tudo ou nada. Um patch:
+
+```json
+{
+  "operations": [
+    {
+      "op": "move",
+      "id": "LAN-F01",
+      "status": "done",
+      "completedAt": "2026-11-16"
+    },
+    { "op": "note", "id": "LAN-F01", "field": "proof", "text": "gate verde no SHA abc1234" },
+    { "op": "checklist", "id": "LAN-F01", "item": "Texto exato de um item do checklist" }
+  ]
+}
+```
+
+- `create` recebe o `card` inteiro; id já usado com conteúdo diferente é erro.
+- `update` recebe `set` com campos do esquema; `id` não muda e campo desconhecido é erro.
+- `move` recebe `status` (e `completedAt`/`updatedAt` quando a transição pedir).
+- `note` acrescenta em `notes` ou, com `field`, em `proof`/`tests`/`links`/`blockers`/`dependencies`.
+- `checklist` marca o item pelo texto exato e grava em `completedChecklist`.
+
+Qualquer operação inválida aborta o patch: o `board.json` no disco fica byte a byte igual ao de antes e
+a mensagem diz qual operação falhou. Aplicar o mesmo patch duas vezes não duplica cartão nem nota.
 
 Atualize os cards apenas em transições materiais, preservando revisão e evidências. Nunca edite
 `BOARD.md` manualmente. Novos itens precisam de fonte, checklist, dependências e revisão confrontada.

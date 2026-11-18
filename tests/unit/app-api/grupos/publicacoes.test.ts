@@ -19,6 +19,7 @@ import {
   COMMENT,
   comentario,
   context,
+  DATA,
   grupo,
   headers,
   ID,
@@ -122,7 +123,24 @@ describe("publicar, ler e comentar em grupo", () => {
       context,
     )
     expect(r.status).toBe(201)
-    expect(await r.json()).toEqual({ publicacao: { id: POST } })
+    // DS-021: a rota devolve o cartão montado, para a lista do grupo inseri-lo
+    // sem inventar autor nem hora. O que se prova aqui é a forma da resposta e
+    // que ela é o próprio banco: id, grupo, autor e texto vêm do insert.
+    const corpo = (await r.json()) as {
+      publicacao: Record<string, unknown>
+      proximo: unknown
+    }
+    expect(corpo.publicacao).toMatchObject({
+      id: POST,
+      grupoId: ID,
+      autor: "Ana",
+      autorId: USER,
+      texto: "Uma publicação real.",
+      criadaEm: DATA,
+      propria: true,
+      fotos: [],
+    })
+    expect(corpo).toHaveProperty("proximo")
     expect(mock.chamadas).toContainEqual({
       tabela: "posts",
       metodo: "insert",
@@ -173,7 +191,13 @@ describe("publicar, ler e comentar em grupo", () => {
       context,
     )
     expect(r.status).toBe(201)
-    expect(await r.json()).toEqual({ publicacao: { id: POST } })
+    // DS-021: o cartão vem do banco, com o texto e o grupo do insert.
+    const corpo = (await r.json()) as { publicacao: Record<string, unknown> }
+    expect(corpo.publicacao).toMatchObject({
+      id: POST,
+      grupoId: ID,
+      texto: "Conteúdo reservado",
+    })
     expect(mock.chamadas).toContainEqual({
       tabela: "posts",
       metodo: "insert",
@@ -294,6 +318,7 @@ describe("publicar, ler e comentar em grupo", () => {
     const r = await detalhe(req("GET", BASE + "/publicacoes/" + POST), postContext)
     expect(r.status).toBe(200)
     const corpo = await r.json()
+    expect(corpo.cidade).toBe("Manaus")
     expect(corpo.publicacao.fotos).toHaveLength(2)
     expect(corpo.comentarios[1]).toMatchObject({
       parentId: COMMENT,
@@ -322,11 +347,16 @@ describe("publicar, ler e comentar em grupo", () => {
       postContext,
     )
     expect(r.status).toBe(201)
-    expect((await r.json()).comentario).toMatchObject({
+    const corpo = (await r.json()) as { comentario: Record<string, unknown> }
+    expect(corpo.comentario).toMatchObject({
       texto: "Uma resposta",
       propria: true,
       parentId: null,
+      // O cliente exige o id do autor (para linkar o perfil): sem ele o fio
+      // recusa a resposta inteira. Quem comentou é a sessão, nunca o corpo.
+      autorId: USER,
     })
+    expect(corpo.comentario.autorId).not.toBe("outro")
     expect(mock.chamadas).toContainEqual({
       tabela: "comments",
       metodo: "insert",

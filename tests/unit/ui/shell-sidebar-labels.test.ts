@@ -13,10 +13,13 @@ const DESTINO_POR_ROTULO: Record<string, string> = {
   Início: "/inicio",
   Explorar: "/explorar",
   Comunidades: "/communities",
-  Perfil: "/profile",
-  Salvos: "/salvos",
-  Notificações: "/notifications",
-  Configurações: "/configuracoes",
+  // RUN-172: o perfil próprio é tela do app; a casca web linka o destino direto.
+  Perfil: "/app/voce",
+  // RUN-186: Salvos é tela do app; a casca web linka o destino direto.
+  Salvos: "/app/salvos",
+  Notificações: "/app/avisos",
+  // RUN-184: a tela de conta saiu da web e a seção vive no Você do app.
+  Configurações: "/app/voce",
 }
 
 function extractLabeledAnchors(source: string): Array<{ href: string; label: string }> {
@@ -51,25 +54,28 @@ describe("RECON-042, defeito 1 — o rótulo do item da lateral corresponde ao d
     }
   })
 
-  it("Configurações leva a /configuracoes", () => {
+  it("Configurações leva ao Você do app", () => {
     const source = readFileSync(appShell, "utf8")
     expect(extractLabeledAnchors(source)).toContainEqual({
-      href: "/configuracoes",
+      href: "/app/voce",
       label: "Configurações",
     })
   })
 
-  it("o ícone de conversas do cabeçalho leva a /messages", () => {
+  it("o ícone de conversas do cabeçalho leva a /app/conversas", () => {
     const source = readFileSync(appShell, "utf8")
-    const anchor = /<a\b[^>]*href="\/messages"[^>]*>/.exec(source)?.[0]
+    const anchor = /<a\b[^>]*href="\/app\/conversas"[^>]*>/.exec(source)?.[0]
     expect(anchor, "o cabeçalho precisa de uma porta para a caixa de conversas").toBeDefined()
     expect(anchor).toContain("aria-label={conversationsLabel(unreadConversations)}")
     expect(source).toMatch(/if \(unread === 0\) return "Conversas"/)
+    // RUN-166: a caixa saiu da web; a casca não pode voltar a apontar para a
+    // URL antiga, que hoje é só redirect.
+    expect(source).not.toContain('href="/messages"')
   })
 
-  it("o avatar do cabeçalho continua levando a /profile", () => {
+  it("o avatar do cabeçalho continua levando ao perfil próprio, agora no app", () => {
     const source = readFileSync(appShell, "utf8")
-    expect(source).toContain('href="/profile"')
+    expect(source).toContain('href="/app/voce"')
   })
 
   it("todo item de NAV_ITEMS tem rótulo que corresponde ao destino", () => {

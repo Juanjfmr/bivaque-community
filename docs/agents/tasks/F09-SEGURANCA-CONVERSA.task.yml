@@ -1,0 +1,98 @@
+# RUN-165 — F09-A seguranca na conversa: bloquear, denunciar mensagem, preferencia Mensagens.
+#
+# ADR-20261116-bloqueio-e-denuncia-pela-porta-do-app (delegacao) e a decisao.
+# Sem migration: dm_blocks (20260802001500, pgTAP dm-context-allowed/denials), reports
+# alvo message (20260802001600 + unificado) e a matriz de preferencias com a coluna
+# messages ja existem. O POST de bloqueio NAO existia: bloqueados/route.ts so tem GET,
+# bloqueados/[id] so DELETE; o gesto morreu na sombra do 307 de /messages
+# (conversation-inbox.tsx:278-298 era o unico produtor). Preferencias do app travam
+# em 4 tipos (preferencias-do-app.ts:18): falta messages na UI e no contrato.
+# Efeito vigente do bloqueio (nao inventar outro): escrita fechada nos dois sentidos
+# (is_dm_blocked_by_other veta insert), caixa mantem historico legivel, bloqueado nao
+# descobre. D1/D2 (esconder conteudo/cortar fila) e frente adiada — FORA deste lote.
+# RECONCILIACAO DO TEXTO (emenda 16/11, decisao do coordenador): a copia de
+# Bloqueados.tsx:80 prometia esconde-o-que-a-pessoa-publicou — o que vale HOJE e
+# fechar a conversa nos dois sentidos mantendo o historico legivel. O texto deve
+# dizer a regra vigente (sem prometer D1/D2).
+
+task_id: RUN-165
+
+adr: docs/decisions/ADR-20261116-bloqueio-e-denuncia-pela-porta-do-app.md
+
+objective: >
+  Bloquear pessoa pelo app (POST /api/app/voce/bloqueados + gesto com confirmacao na
+  Conversa, compositor vira estado bloqueado, caixa nao some), denunciar mensagem
+  (POST /api/app/mensagens/[id]/denuncia alvo message + gesto), preferencia Mensagens
+  na tela de avisos (tipo messages nos 3 canais) e prova E2E real do destino do aviso
+  de DM caindo em /app/conversa/[id]. Sem migration.
+
+authority:
+  - docs/LANCAMENTO.md:62 (F09) + criterios 1 e 5 (:38-48); F04 conduta (:57)
+  - ADR-20261116 (delegacao) + ADR-20261105 §5 (contrato de rota) + SPA ADR §5.5/§8
+  - Mapa do explorer 16/11 (F09-A)
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    apps/web/app/api/app/voce/bloqueados/route.ts exporta so GET/OPTIONS; nenhum POST
+    em apps/web/app/api (grep denuncia/mensagens); apps/app/src/telas/Conversa.tsx nao
+    tem menu de acoes; apps/web/lib/notifications/preferencias-do-app.ts:18 lista 4
+    tipos sem messages; lerPreferencias nao seleciona a coluna messages;
+    PreferenciasDeAvisos.tsx nao tem a linha. Destino do aviso ja esta certo
+    (destino-do-app.ts:90-91 + destinos-de-todos-os-tipos.test.ts:54) mas sem E2E real.
+
+allowed_paths:
+  - docs/agents/tasks/F09-SEGURANCA-CONVERSA.task.yml
+  - apps/web/app/api/app/voce/bloqueados
+  - apps/web/app/api/app/mensagens
+  - apps/web/lib/security/api-surface.ts
+  - apps/web/lib/notifications/preferencias-do-app.ts
+  - apps/app/lib/dados/voce.ts
+  - apps/app/lib/dados/avisos.ts
+  - apps/app/src/telas/Conversa.tsx
+  - apps/app/src/avisos/PreferenciasDeAvisos.tsx
+  - apps/app/tests
+  - tests/unit/app-api/voce
+  - tests/unit/app-api/mensagens
+  - tests/unit/app-api/avisos/rotas.test.ts
+  - apps/app/src/telas/Bloqueados.tsx
+  - tests/unit/notifications
+  - tests/unit/security/api-surface.test.ts
+  - tests/e2e/f09-conversas-real.spec.ts
+  - tests/e2e/f09-avisos-real.spec.ts
+  - .visual/f09-seguranca
+
+forbidden:
+  - criar migration, RPC novo, mudar permissoes do banco ou tabela alguma
+  - implementar D1/D2 (esconder conteudo do bloqueado, cortar fila de aviso, invisibilidade) — frente adiada por ADR-20261024, efeito vem depois
+  - remover/tocar apps/web/app/(shell)/messages (troca e lote RUN-166, DEPOIS deste)
+  - adicionar mentions a UI (pos-lancamento) nem qualquer push (LAN-PUSH)
+  - presenca/confirmação de leitura de mensagens (fora do lancamento, LANCAMENTO:62)
+  - revelar no cliente o estado de quem foi bloqueado; ecoar erro do banco
+  - usar skip/fixme novo ou afrouxar assercao
+  - push, merge ou force-push; ler/criar/editar arquivos de ambiente; imprimir credenciais
+  - tocar em .work/main ou em outra worktree
+
+acceptance:
+  - "POST /api/app/voce/bloqueados (e OPTIONS): exigirSessao + conferirEscrita; corpo { id } uuid (invalido->404/400 sem confirmar existencia); insert dm_blocks pelo cliente da sessao (blocker e a sessao, nunca o corpo); duplicata idempotente (200 mesmo estado), auto-bloqueio recusado; sem service_role; sem eco. Espelhar as negativas do DELETE existente ([id]/route.ts:14-18)."
+  - "POST /api/app/mensagens/[id]/denuncia (e OPTIONS): alvo message na tabela reports, validateReportInput/composeReason de lib/reports (molde perguntas/[id]/denuncia), visibilidade da mensagem pela leitura sob a sessao->404, mensagem propria->403, duplicata->409, 503 sem eco; devolve id. api-surface registra as DUAS rotas e TOTAL_DE_ROTAS 93->94 (contar em disco)."
+  - "Conversa.tsx: menu ⋯ com Bloquear [nome] (Confirmacao perigo; texto so o que vale hoje: a conversa fica fechada nos dois sentidos, historico fica legivel, a pessoa nao descobre) e Denunciar mensagem por bolha (dialog de motivos molde AcoesDaPublicacao). Estado: apos bloquear, compositor vira estado bloqueado honesto (sem campo de envio); a caixa nao sumiu — nao fingir. desbloquear/lerBloqueados ganham bloquear(id) no cliente de dados."
+  - "Preferencias: messages entra em TIPOS_DO_AVISO (preferencias-do-app.ts) e no espelho do app (lib/dados/avisos.ts); ler/salvar incluindo a coluna messages; linha Mensagens na UI com in_app/email (push nasce desligado como os outros). mentions NAO entra."
+  - "Testes: unit POST bloqueados (positivo; duplicata; self; uuid invalido; CSRF; sem sessao) e denuncia mensagem (alvo/autoria/proprio 403/visivel 404/duplicata 409/CSRF), unit da matriz de preferencias com messages, E2E real f09: bloquear pelo app→tentativa de escrita da outra persona recusada→desbloquear em Voce→volta a escrever; caixa mantem conversa; E2E destino do aviso (pergunta de evento→mensagem→aviso→toque→/app/conversa/[id] com @stateful de duas sessoes OU seed de notificacao direct_message — o mapeamento ja e unit-provado, aqui e a prova de runtime). Positivo E negativo em toda permissao."
+  - "Passam: app test, app typecheck, gate --fast, tsc -p tests/e2e, pnpm test (raiz), test:scope. E2E navegador no CI. R3: revisao independente R3 + parecer de seguranca serao registrados no card pelo coordenador no fechamento (nao e trabalho do executor)."
+
+proof:
+  - npx pnpm@11.18.0 --filter @bivaque/app test
+  - npx pnpm@11.18.0 gate --fast
+  - npx pnpm@11.18.0 test
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/F09-SEGURANCA-CONVERSA.task.yml
+
+risk: rotas de escrita novas em fronteira de abuso (bloqueio/denuncia); sem migration
+risk_level: R3
+
+reviewer_must_differ_from_executor: true
+retry_budget: 2
+on_budget_exhausted: HUMAN_DECISION
+
+closure:
+  requires_runtime_evidence: true

@@ -1,7 +1,14 @@
 import { afterEach, describe, expect, it, vi } from "vitest"
 
 import { FalhaDaApi } from "@/lib/api/cliente"
-import { lerGuia, lerVerbete, marcarNoGuia, sugerirAtualizacao } from "@/lib/dados/guia"
+import {
+  lerGuia,
+  lerMinhasCorrecoes,
+  lerVerbete,
+  marcarNoGuia,
+  sugerirAtualizacao,
+  sugerirLugar,
+} from "@/lib/dados/guia"
 
 /**
  * A porta do Guia (F08), no molde de `eventos-dados.test.ts`: caminho, método,
@@ -36,6 +43,30 @@ const ENTRADA = {
 }
 
 describe("diretório do guia", () => {
+  it("envia sugestão de lugar novo pela rota do app", async () => {
+    const buscar = responder({ enviada: true }, 201)
+    await sugerirLugar({ nome: "Escola Modelo", categoria: "school", descricao: "Boa referência" })
+    expect(chamada(buscar)).toMatchObject({
+      caminho: "/api/app/guia/sugestao",
+      init: { method: "POST" },
+    })
+  })
+  it("preserva a mensagem fixa de limite enviada pela rota", async () => {
+    const buscar = vi.fn(
+      async () =>
+        new Response(
+          JSON.stringify({
+            erro: "limite",
+            mensagem: "Você já tem cinco sugestões aguardando revisão.",
+          }),
+          { status: 429 },
+        ),
+    )
+    vi.stubGlobal("fetch", buscar)
+    await expect(
+      sugerirLugar({ nome: "Escola Modelo", categoria: "school", descricao: "" }),
+    ).rejects.toMatchObject({ mensagem: "Você já tem cinco sugestões aguardando revisão." })
+  })
   it("traduz a lista, a cidade e o cursor", async () => {
     const buscar = responder({
       entradas: [ENTRADA],
@@ -82,6 +113,45 @@ describe("verbete", () => {
   it("entrada ausente é falha de formato, não verbete vazio", async () => {
     responder({ podeSugerir: false })
     await expect(lerVerbete("a1")).rejects.toBeInstanceOf(FalhaDaApi)
+  })
+})
+
+describe("minhas sugestões", () => {
+  const SUGESTAO = {
+    id: "s1",
+    status: "Recebida",
+    descricao: "O telefone do balcão mudou.",
+    decisao: null,
+    criadaEm: "2026-11-14T10:00:00.000Z",
+  }
+
+  it("lê o acompanhamento do verbete no caminho dele", async () => {
+    const buscar = responder({ sugestoes: [SUGESTAO] })
+    const sugestoes = await lerMinhasCorrecoes("a1")
+    expect(chamada(buscar).caminho).toBe("/api/app/guia/a1/correcoes")
+    expect(sugestoes).toEqual([SUGESTAO])
+  })
+
+  it("lista vazia é resposta legítima, não falha", async () => {
+    responder({ sugestoes: [] })
+    expect(await lerMinhasCorrecoes("a1")).toEqual([])
+  })
+
+  it("status vazio é falha de formato, não etiqueta em branco", async () => {
+    responder({ sugestoes: [{ ...SUGESTAO, status: "" }] })
+    await expect(lerMinhasCorrecoes("a1")).rejects.toBeInstanceOf(FalhaDaApi)
+  })
+
+  it("mostra o rótulo que o servidor mandou, sem traduzir de novo", async () => {
+    // O vocabulário do banco é do servidor (`correctionStatusLabel`): um status
+    // novo chega aqui como "Status desconhecido", nunca como palavra crua.
+    responder({ sugestoes: [{ ...SUGESTAO, status: "Status desconhecido" }] })
+    expect((await lerMinhasCorrecoes("a1"))[0]?.status).toBe("Status desconhecido")
+  })
+
+  it("resposta sem a lista é falha de formato", async () => {
+    responder({ sugestoes: null })
+    await expect(lerMinhasCorrecoes("a1")).rejects.toBeInstanceOf(FalhaDaApi)
   })
 })
 

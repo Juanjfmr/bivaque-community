@@ -1,0 +1,64 @@
+# F10-FAMILIA (11/11/2026): prova pgTAP de titular e nao-titular no convite familiar,
+# recortada sobre a main atual (o commit antigo nao mergeia por causa do #196).
+# R3 por delegacao: o convite usa service_role no servidor. Lote de teste e relatorio,
+# sem migration e sem codigo de apps/. Cartao F10-FAMILIA.
+task_id: RUN-031
+
+objective: >
+  O convite familiar passa a ter prova, no banco, de que so o titular verificado
+  cria convite e le a propria familia, que outro usuario autenticado e o anon
+  recebem 42501 sem gravar linha, que os grants ficam so para service_role e que
+  nenhuma recusa devolve e-mail, digest, hash, token ou codigo.
+
+authority:
+  - docs/LANCAMENTO.md (F10)
+  - docs/decisions/ADR-20261105-porta-de-dados-do-app.md (molde da porta de dados)
+  - docs/decisions/ADR-20261105-entrada-enxuta-e-r3-sem-parada.md (processo de 05/11)
+  - docs/agents/AGENT_ARCHITECTURE.md (revisao e security-auditor no R3)
+  - supabase/AGENTS.md (pgTAP sem seed, fixtures sinteticas, RLS forcada, grants minimos)
+  - tools/backend-kanban (cartao F10-FAMILIA)
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    docs/agents/reviews/2026-11-11-revisao-r3-f10-familia.md registra o que faltava:
+    prova negativa de nao-titular com has_function_privilege e 42501, e registro do
+    passe R3. O commit 6f5b11aa nao entra na main porque rebase sobre o #196 conflita:
+    o teste usa a fixture canonica supabase/tests/fixtures/foundation.inc, que nao foi
+    alterada, e a promocao de member-two a verificado fica em transacao propria.
+
+allowed_paths:
+  - supabase/tests/family-invite-holder-only.sql
+  - docs/agents/reviews/2026-11-11-revisao-r3-f10-familia.md
+  - docs/agents/tasks/RUN-031.task.yml
+  - docs/decisions/ADR-20261111-convite-familiar-pela-sessao.md
+  - docs/decisions/RATIFICACAO.md
+
+forbidden:
+  - editar migration aplicada
+  - alterar supabase/seed.sql ou supabase/tests/fixtures/
+  - tocar apps/ ou rotas de convite
+
+acceptance:
+  - plan(20) com 20 assercoes no corpo, em begin/rollback com finish()
+  - member-two promovido a verificado em transacao propria com rollback, antes do plano
+  - titular verificado cria convite; member-two recebe 42501 em listar, criar e revogar
+  - anon recebe 42501 em criar; service_role tem execute nas assinaturas de convite
+  - nenhuma das dez recusas carrega @, 32 hex ou token/code/hash/digest
+  - a fixture foundation.inc e as migrations ficam intactas
+
+proof:
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/RUN-031.task.yml
+  - npx pnpm@11.18.0 test:db (no CI do PR)
+
+risk: privacidade
+risk_level: R3
+adr: docs/decisions/ADR-20261111-convite-familiar-pela-sessao.md
+
+reviewer_must_differ_from_executor: true
+
+retry_budget: 1
+on_budget_exhausted: HUMAN_DECISION
+
+closure:
+  requires_runtime_evidence: true

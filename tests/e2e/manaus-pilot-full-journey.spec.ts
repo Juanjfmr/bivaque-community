@@ -73,13 +73,17 @@ test.describe("holder onboarding journey", () => {
 // ---------------------------------------------------------------------------
 
 test.describe("family invite journey", () => {
-  test("the legacy invite screen asks for a new invite", async ({ page }) => {
+  test("the legacy invite link lands on the app entry", async ({ page }) => {
     // Given someone without a session who arrives from an old invite link
-    // When the forwarded address opens
+    // When the forwarded address opens (SEC-017: the old web screen is gone)
     await page.goto("/convite?legado=1")
 
-    // Then the screen explains that the invite now comes with a code
-    await expect(page.getByRole("status")).toContainText("Este link de convite mudou.")
+    // Then the app entry opens, without a password field
+    await expect(page).toHaveURL(/\/app\/entrar/)
+    await expect(
+      page.getByRole("heading", { level: 1, name: "A comunidade militar da sua cidade." }),
+    ).toBeVisible({ timeout: 20_000 })
+    await expect(page.locator('input[type="password"]')).toHaveCount(0)
   })
 })
 
@@ -201,7 +205,7 @@ test.describe("groups journey", () => {
       await expect(page.locator(BOTTOM_NAV)).toBeHidden()
       const sidebar = page.locator(SIDEBAR)
       await expect(sidebar).toBeVisible()
-      for (const href of ["/inicio", "/explorar", "/communities", "/profile"]) {
+      for (const href of ["/inicio", "/explorar", "/communities", "/app/voce"]) {
         await expect(sidebar.locator(`a[href="${href}"]`).first()).toBeVisible()
       }
     }
@@ -297,22 +301,16 @@ test.describe("events journey", () => {
 })
 
 // ---------------------------------------------------------------------------
-// Flow 7: Notifications
+// Flow 7: Avisos no app
 // ---------------------------------------------------------------------------
 
 test.describe("notifications journey", () => {
-  test("notifications page refuses an anonymous visitor into the app entry", async ({ page }) => {
-    // Given an unauthenticated browser
-    // When the user navigates to /notifications
+  test("the old notifications URL sends an anonymous visitor to app access state", async ({
+    page,
+  }) => {
     await page.goto("/notifications")
-
-    // Then the proxy refuses into the entry screen. ADR-20260907-consentimento-
-    // no-cadastro tirou o portão de consentimento do proxy; a recusa continua,
-    // o destino mudou.
-    await page.waitForURL(/\/app\/entrar/)
-    await expect(
-      page.getByRole("heading", { name: "A comunidade militar da sua cidade." }),
-    ).toBeVisible()
+    await expect(page).toHaveURL(/\/app\/avisos$/)
+    await expect(page.locator('[data-estado="sessao-vencida"]')).toBeVisible()
   })
 
   test("notifications page with consent cookie renders notifications UI", async ({
@@ -322,11 +320,11 @@ test.describe("notifications journey", () => {
     // Given a browser with consent cookie
     await seedSession(context)
 
-    // When the user navigates to the notifications page
-    await page.goto("/notifications")
+    // When the user navigates to the app notifications inbox
+    await page.goto("/app/avisos")
 
     // Then the notifications page renders
-    await expect(page.getByRole("heading", { name: "Notificações" })).toBeVisible()
+    await expect(page.getByRole("heading", { name: "Avisos" })).toBeVisible()
   })
 })
 

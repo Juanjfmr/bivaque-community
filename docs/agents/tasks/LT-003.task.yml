@@ -1,0 +1,88 @@
+# LAN-TROCA — F02 (lado app): a busca retém o termo q na URL.
+#
+# O LT-002 (PR #215, merge 94e5c870) trocou /explorar/busca por 307 para /app/busca
+# preservando q, e provou que o app USA o termo (pedido a /api/app/busca?q). Mas a
+# URL final perde o q: a casca materializa a entrada com um navigate SEM search, e
+# em rota sem middleware o TanStack Router cai no default {} e apaga o termo do
+# endereço. Este lote fecha a retenção (card BUSCA-RETENCAO-URL) e fortalece as
+# provas de navegador. Molde: o middleware BUSCA_PERSISTENTE já usado pelo Mercado.
+
+task_id: LT-003
+
+objective: >
+  Quem abre /app/busca?q=<termo> (link direto ou o 307 de /explorar/busca) vê o termo
+  permanecer na URL depois que o app carrega e depois das regravações de rolagem/foco —
+  o endereço é compartilhável e o Voltar/recarregar devolvem o termo. A retenção é
+  provada por E2E determinístico (espera a materialização da entrada, não timing frágil),
+  no app e no spec integrado da troca. O comportamento atual da busca (digitação vence o
+  q, limpar volta ao estado sem termo, primeiro pedido já é a consulta) não muda.
+
+authority:
+  - docs/LANCAMENTO.md (critério 6 — trocada; LAN-TROCA no board)
+  - tools/backend-kanban/public/board.json (card BUSCA-RETENCAO-URL)
+  - docs/agents/tasks/LT-002.task.yml (a troca que este lote completa)
+  - docs/decisions/ADR-20261024-front-react-spa.md §8
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    A rota busca está fora de ROTAS_COM_BUSCA (apps/app/src/roteador.tsx:76 — só
+    desapegos/imoveis/catalogo/mercado), então é criada sem search middleware
+    (roteador.tsx:138). A casca materializa a entrada logo após montar
+    (apps/app/src/casca/Casca.tsx:61-63 -> materializarEntrada -> gravar,
+    apps/app/lib/navegacao/react.tsx:217-223) e esse navigate NÃO passa search; em rota
+    sem middleware o TanStack Router usa o default {} (router-core dist/esm/router.js:332)
+    e o history.replace apaga o q da URL. O termo ainda é usado porque a semente é
+    capturada no primeiro render, antes do replace (apps/app/src/telas/Busca.tsx:102-110).
+    Prova atual: tests/e2e/busca-redirects.spec.ts prova o uso do termo pelo pedido
+    (consultas.some q==="escola"), não a retenção na URL; o acumulador não reinicia por
+    largura (ressalva 1 da revisão do LT-002). tests/e2e/global-search-flow.spec.ts:75
+    assevera toHaveURL(/\/app\/busca\?q=escola/) e passa hoje por assertar cedo demais,
+    antes do replace limpar o q (timing frágil, ressalva 2). Contraste: o Mercado retém o
+    filtro pelo mesmo middleware; apps/app/tests/e2e/inicio-busca-primeira-entrada.spec.ts:57-58
+    já prova retenção com search explícito. CHAVE_DA_ENTRADA="bivaqueEntrada" e versao:1
+    (apps/app/lib/navegacao/entrada.ts:10,43) dão o sinal determinístico da materialização.
+
+allowed_paths:
+  - docs/agents/tasks/LT-003.task.yml
+  - apps/app/src/roteador.tsx
+  - apps/app/tests/e2e/busca-termo-url.spec.ts
+  - tests/e2e/busca-redirects.spec.ts
+  - tests/e2e/global-search-flow.spec.ts
+  - .visual/lt-003
+
+forbidden:
+  - alterar apps/web (next.config.ts, proxy.ts), supabase, migrations ou a API de busca
+  - alterar apps/app/src/busca/termo-url.ts, seu teste unitário, ou Busca.tsx (o comportamento já está correto)
+  - usar zod, retainSearchParams ou reescrita ampla; o fix é o padrão da casa (ROTAS_COM_BUSCA + middleware existente)
+  - criar tela/rota/peça nova; trocar outras rotas além de reter o search da busca
+  - usar skip/fixme novo ou afrouxar asserção existente
+  - push, merge ou force-push; ler/criar/editar .env
+  - tocar em .work/main ou em outra worktree
+
+acceptance:
+  - "A rota busca passa a estar em ROTAS_COM_BUSCA (roteador.tsx:76); a materialização da entrada e as regravações de rolagem/foco preservam o q na URL. O comentário do middleware (roteador.tsx:54-61) é ajustado para refletir que é genérico, não só do Mercado."
+  - "E2E do app (busca-termo-url.spec.ts) prova a retenção do q na carga inicial: depois de goto(/app/busca?q=<termo>), espera a materialização (history.state.bivaqueEntrada.versao === 1) e então confere que a URL ainda tem o q. Determinístico: sem o fix falha, com o fix passa. Não usar toHaveURL logo após goto (frágil)."
+  - "O E2E atual do app segue passando: digitação vence o q, limpar volta ao estado sem termo, primeiro pedido já é a consulta, Voltar para outro termo, endereço não aceito não apaga o digitado."
+  - "tests/e2e/busca-redirects.spec.ts passa a provar a retenção do q na URL de aterrissagem nas três larguras (espera a materialização), mantendo o fetch manual do 307 e o estado de erro sem sessão; a prova por pedido é substituída pela retenção de URL (mais forte) ou mantida com acumulador reiniciado por largura."
+  - "tests/e2e/global-search-flow.spec.ts:75 fica robusta com o q retido (conferir após a materialização; ajustar se ainda frágil)."
+  - "Sem efeito colateral: troca de rota continua passando {} explícito (o q não vaza); search explícito continua vencendo; digitação não navega."
+  - "Passam: app test, app typecheck, gate --fast, test:scope, tsc -p tests/e2e; o E2E de navegador roda no CI."
+
+proof:
+  - npx pnpm@11.18.0 --filter @bivaque/app test
+  - npx pnpm@11.18.0 --filter @bivaque/app typecheck
+  - npx pnpm@11.18.0 gate --fast
+  - npx pnpm@11.18.0 test
+  - npx pnpm@11.18.0 exec tsc -p tests/e2e/tsconfig.json
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/LT-003.task.yml
+
+risk: mudança de roteamento no app (retenção de search)
+risk_level: R2
+
+reviewer_must_differ_from_executor: true
+retry_budget: 2
+on_budget_exhausted: HUMAN_DECISION
+
+closure:
+  requires_runtime_evidence: true

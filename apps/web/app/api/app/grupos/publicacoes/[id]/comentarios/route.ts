@@ -80,6 +80,7 @@ export async function POST(request: NextRequest, { params }: Context): Promise<N
           texto: c.content,
           criadaEm: c.created_at,
           autor: "",
+          autorId: userId,
           propria: true,
           parentId: c.parent_id,
           respondeA: c.reply_to_id,

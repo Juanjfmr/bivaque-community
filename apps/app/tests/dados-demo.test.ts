@@ -119,7 +119,7 @@ describe("dados de demonstração pela porta do app", () => {
       join(raiz, "prototypes/bivaque-html/src/data/demo/assets.js"),
       "utf8",
     )
-    const assets = runInNewContext(codigo + "; ASSETS") as Record<string, string>
+    const assets = runInNewContext(`${codigo}; ASSETS`) as Record<string, string>
     const dados = criarDadosDemo()
     expect(Object.keys(assets)).toHaveLength(24)
     for (const [chave, dataUrl] of Object.entries(assets)) {

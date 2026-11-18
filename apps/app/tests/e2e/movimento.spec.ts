@@ -110,7 +110,7 @@ test.describe("movimento normal", () => {
 
   test("a navegação transiciona ao minimizar, no celular", async ({ page }) => {
     const largura = page.viewportSize()?.width ?? 0
-    test.skip(largura >= 720, "a minimização é do celular")
+    test.skip(largura >= 1024, "a minimização é do celular")
     await abrir(page, "/app/inicio")
     const estilo = await estilosDe(page, SELETOR_NAVEGACAO)
     expect(estilo.duracaoDaTransicao).not.toBe("0s")

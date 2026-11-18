@@ -1,6 +1,42 @@
 import type { Page } from "@playwright/test"
 
-export async function simularGrupos(page: Page, opcoes: { membro?: boolean } = {}) {
+/**
+ * Como o grupo responde a cada tentativa de publicar, em ordem: um número é o
+ * status HTTP (a rota real já manda `erro` e `mensagem`, como em
+ * `apps/web/app/api/app/grupos/[id]/publicacoes/route.ts`), `"rede"` aborta
+ * sem resposta. Esgotada a lista, a publicação grava.
+ */
+export type RespostaDePublicacao =
+  | Readonly<{ status: number; erro?: string; mensagem?: string }>
+  | "rede"
+
+export type RecusasDaPublicacao = {
+  /** Respostas de recusa por tentativa: a lista é consumida em ordem. */
+  recusas?: readonly RespostaDePublicacao[]
+}
+
+/**
+ * O corpo chega cru e é lido aqui dentro de um try: `postDataJSON()` lança em
+ * JSON inválido e a rejeição assíncrona deixaria a rota sem resposta, fazendo a
+ * requisição vazar para a rede real. Um corpo que não é objeto vira objeto vazio.
+ */
+function corpoDaRequisicao(
+  request: { postData: () => string | null },
+  metodo: string,
+): Record<string, unknown> {
+  if (metodo === "GET" || metodo === "DELETE") return {}
+  try {
+    const lido: unknown = JSON.parse(request.postData() ?? "{}")
+    return typeof lido === "object" && lido !== null ? (lido as Record<string, unknown>) : {}
+  } catch {
+    return {}
+  }
+}
+
+export async function simularGrupos(
+  page: Page,
+  opcoes: { membro?: boolean } & RecusasDaPublicacao = {},
+) {
   const grupos = [
     {
       id: "g-pets",
@@ -50,6 +86,20 @@ export async function simularGrupos(page: Page, opcoes: { membro?: boolean } = {
       membros: 1,
       fixada: null as string | null,
     },
+    {
+      // Fechado COM participação: o compositor aparece, mas não oferece
+      // perguntar à cidade (RUN-178) — o banco também veta.
+      id: "g-biblio",
+      nome: "Clube do Livro",
+      descricao: "Leituras do mês.",
+      regras: "Respeite as opiniões.",
+      fechado: true,
+      membro: true,
+      pendente: false,
+      admin: false,
+      membros: 9,
+      fixada: null as string | null,
+    },
   ]
   const publicacoes = [
     {
@@ -58,6 +108,7 @@ export async function simularGrupos(page: Page, opcoes: { membro?: boolean } = {
       texto: "Uma conversa do grupo.",
       criadaEm: "2026-11-06T12:00:00Z",
       autor: "Ana",
+      autorId: "u-ana",
       propria: false,
       comentarios: 0,
       uteis: 0,
@@ -72,6 +123,7 @@ export async function simularGrupos(page: Page, opcoes: { membro?: boolean } = {
       texto: "Alguém indica um veterinário na cidade?",
       criadaEm: "2026-11-06T12:00:00Z",
       autor: "Ana",
+      autorId: "u-ana",
       propria: false,
       comentarios: 0,
       uteis: 1,
@@ -94,7 +146,19 @@ export async function simularGrupos(page: Page, opcoes: { membro?: boolean } = {
     uteis: number
     util: boolean
   }[] = []
+  const perguntas: {
+    id: string
+    titulo: string
+    criadaEm: string
+    autor: string
+    autorId: string
+    propria: boolean
+    respostas: number
+    resolvida: boolean
+    grupo: { id: string; nome: string } | null
+  }[] = []
   let sequencia = 1
+  const recusas: RespostaDePublicacao[] = [...(opcoes.recusas ?? [])]
   await page.route(/\/api\/app\/grupos(?:\/[^?]*)?(?:\?.*)?$/, async (rota) => {
     const request = rota.request()
     const url = new URL(request.url())
@@ -103,10 +167,7 @@ export async function simularGrupos(page: Page, opcoes: { membro?: boolean } = {
       .split("/")
       .filter(Boolean)
     const metodo = request.method()
-    const corpo =
-      metodo === "GET" || metodo === "DELETE"
-        ? {}
-        : (request.postDataJSON() as Record<string, unknown>)
+    const corpo = corpoDaRequisicao(request, metodo)
     if (partes.length === 0) {
       await rota.fulfill({ json: { grupos, cidade: "Manaus", proximo: null } })
       return
@@ -123,6 +184,7 @@ export async function simularGrupos(page: Page, opcoes: { membro?: boolean } = {
           json: {
             publicacao: post,
             grupo,
+            cidade: "Manaus",
             comentarios: comentarios.filter((c) => c.postId === post.id),
             proximo: null,
           },
@@ -137,6 +199,7 @@ export async function simularGrupos(page: Page, opcoes: { membro?: boolean } = {
           texto: String(corpo["texto"]).trim(),
           criadaEm: new Date().toISOString(),
           autor: "Você",
+          autorId: "u-eu",
           propria: true,
           parentId: alvo ? (alvo.parentId ?? alvo.id) : null,
           respondeA: alvo?.id ?? null,
@@ -209,13 +272,54 @@ export async function simularGrupos(page: Page, opcoes: { membro?: boolean } = {
       await rota.fulfill({ status: 201, json: { caminho: "u/grupos/foto.png" } })
       return
     }
+    if (partes[1] === "perguntas") {
+      // RUN-178: a pergunta do grupo é uma linha de origem dupla. O stub reflete
+      // o contrato real: GET devolve o bloco do feed, POST cria com a origem que
+      // o servidor deriva do grupo (o corpo só tem texto).
+      if (metodo === "GET") {
+        await rota.fulfill({
+          json: { perguntas: perguntas.filter((p) => p.grupo?.id === grupo.id) },
+        })
+        return
+      }
+      const pergunta = {
+        id: `q-real-${sequencia++}`,
+        titulo: String(corpo["titulo"] ?? "").trim(),
+        criadaEm: new Date().toISOString(),
+        autor: "Você",
+        autorId: "u-eu",
+        propria: true,
+        respostas: 0,
+        resolvida: false,
+        grupo: { id: grupo.id, nome: grupo.nome },
+      }
+      perguntas.unshift(pergunta)
+      await rota.fulfill({ status: 201, json: { pergunta } })
+      return
+    }
     if (partes[1] === "publicacoes" && metodo === "POST") {
+      const recusa = recusas.shift()
+      if (recusa === "rede") {
+        await rota.abort("failed")
+        return
+      }
+      if (recusa !== undefined) {
+        await rota.fulfill({
+          status: recusa.status,
+          json: {
+            ...(recusa.erro === undefined ? {} : { erro: recusa.erro }),
+            ...(recusa.mensagem === undefined ? {} : { mensagem: recusa.mensagem }),
+          },
+        })
+        return
+      }
       const publicacao = {
         id: `p-real-${sequencia++}`,
         grupoId: grupo.id,
         texto: String(corpo["texto"]).trim(),
         criadaEm: new Date().toISOString(),
         autor: "Você",
+        autorId: "u-eu",
         propria: true,
         comentarios: 0,
         uteis: 0,
@@ -225,13 +329,16 @@ export async function simularGrupos(page: Page, opcoes: { membro?: boolean } = {
         fotos: [] as string[],
       }
       publicacoes.unshift(publicacao)
-      await rota.fulfill({ status: 201, json: { publicacao: { id: publicacao.id } } })
+      // O contrato da rota: a publicação pronta para a lista e o cursor que a
+      // segunda página abriria (a publicação mais nova vem depois na ordem).
+      await rota.fulfill({ status: 201, json: { publicacao, proximo: publicacao.id } })
       return
     }
     const ocultadas = url.searchParams.get("ordem") === "ocultadas"
     await rota.fulfill({
       json: {
         grupo,
+        cidade: "Manaus",
         publicacoes:
           grupo.fechado && !grupo.membro
             ? []

@@ -26,22 +26,25 @@ test.describe("jornada simulada: pedir e responder um serviço", { tag: "@statef
     const provider = await providerContext.newPage()
 
     try {
-      // A criação endereçável com destinatário continua sendo uma tela da web.
-      await member.goto(`/pedidos/novo?prestador=${PROVIDER_ID}`)
-      await expect(
-        member.getByRole("heading", { level: 1, name: "Do que você precisa?" }),
-      ).toBeVisible()
-      await expect(member.getByLabel("Destinatário")).toHaveValue(PROVIDER_NAME)
-      await member.getByLabel("Descrição do que você precisa").fill(need)
-      await expect(member.getByRole("definition").filter({ hasText: need })).toBeVisible()
-      await member.getByRole("button", { name: "Enviar pedido" }).click()
-      await expect(member.getByText("Pedido enviado")).toBeVisible({ timeout: 20_000 })
-      const acompanhar = member.getByRole("link", { name: "Acompanhar pedido" })
-      await expect(acompanhar).toHaveAttribute("href", /\/pedidos\/[0-9a-f-]{36}$/)
-      const requestPath = await acompanhar.getAttribute("href")
-      if (!requestPath) throw new Error("Confirmação sem link para acompanhar o pedido")
-      const requestId = requestPath.split("/").at(-1)
-      if (!requestId) throw new Error("Confirmação sem ID de pedido no link")
+      // RUN-177: o pedido nasceu no app — a folha endereçável
+      // (/app/pedidos/novo?destino=) aberta pelo link da ficha. O painel do
+      // prestador (resposta) continua sendo a tela web.
+      await member.goto(`/app/negocio/${PROVIDER_ID}`)
+      await expect(member.getByRole("heading", { level: 1, name: PROVIDER_NAME })).toBeVisible({
+        timeout: 30_000,
+      })
+      await member.getByRole("link", { name: "Pedir orçamento", exact: true }).click()
+      await expect(member).toHaveURL(new RegExp(`/app/pedidos/novo\\?destino=${PROVIDER_ID}$`))
+      await expect(member.getByRole("dialog")).toBeVisible()
+      await member.getByLabel("O que você precisa?").fill(need)
+      await member.getByRole("button", { name: "Enviar pedido", exact: true }).click()
+      await expect(member).toHaveURL(/\/app\/pedido\/[0-9a-f-]{36}$/, { timeout: 20_000 })
+      const requestId = member.url().split("/").at(-1)
+      if (!requestId) throw new Error("A folha do pedido não devolveu o id do pedido")
+      await expect(member.locator("[data-descricao-do-pedido]")).toHaveText(need, {
+        timeout: 20_000,
+      })
+      await expect(member.getByText("Em aberto", { exact: true })).toBeVisible()
 
       // O mesmo pedido aparece para a outra persona, que responde pela web.
       await provider.goto("/prestador")
@@ -63,16 +66,16 @@ test.describe("jornada simulada: pedir e responder um serviço", { tag: "@statef
         },
       )
 
-      // O cabeçalho e os avisos continuam na web; o aviso abre o pedido no app.
+      // O cabeçalho continua na web (RUN-172: o host era /profile; RUN-186: /salvos
+      // virou 307 para o app, então o host é a Comunidade); a caixa de avisos abre
+      // o pedido no app.
       const glance = await memberContext.newPage()
-      await glance.goto("/profile")
+      await glance.goto("/community")
       await expect(
         glance.getByRole("link", { name: /^Conversas, \d+ com mensagem nova/ }),
       ).toBeVisible({ timeout: 20_000 })
-      await glance.goto("/notifications")
-      const notice = glance.getByRole("button", {
-        name: new RegExp(`${PROVIDER_NAME} respondeu seu pedido`),
-      })
+      await glance.goto("/app/avisos")
+      const notice = glance.getByText("Seu pedido recebeu uma resposta")
       await expect(notice.first()).toBeVisible({ timeout: 20_000 })
       await notice.first().click()
       await expect(glance).toHaveURL(new RegExp(`/app/pedido/${requestId}$`), {
@@ -83,8 +86,8 @@ test.describe("jornada simulada: pedir e responder um serviço", { tag: "@statef
       })
       await glance.close()
 
-      // A porta do sucesso também preserva o ID e mostra o pedido gravado no app.
-      await acompanhar.click()
+      // O pedido gravado é o mesmo que a ficha acabou de criar: a tela do
+      // acompanhamento já estava aberta nela (RUN-177: sem tela de confirmação).
       await expect(member).toHaveURL(new RegExp(`/app/pedido/${requestId}$`))
       await expect(
         member.getByRole("heading", { level: 1, name: "Pedido de serviço" }),
@@ -107,12 +110,9 @@ test.describe("jornada simulada: pedir e responder um serviço", { tag: "@statef
         timeout: 20_000,
       })
 
-      // A porta do Perfil continua viva e agora leva à lista do app.
-      await member.goto("/profile")
-      await member
-        .getByRole("region", { name: "Seu espaço" })
-        .getByRole("link", { name: /Meus orçamentos/ })
-        .click()
+      // A porta do Você (RUN-172: o perfil próprio é do app) leva à lista.
+      await member.goto("/app/voce")
+      await member.getByRole("button", { name: /Pedidos de serviço/ }).click()
       await expect(member).toHaveURL(/\/app\/pedidos$/)
       await expect(
         member.getByRole("heading", { level: 1, name: "Pedidos de serviço" }),

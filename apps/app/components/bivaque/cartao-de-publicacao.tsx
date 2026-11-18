@@ -4,6 +4,7 @@ import { MembroAvatar } from "./avatar"
 import { Botao } from "./botao"
 import { Etiqueta } from "./etiqueta"
 import { Icone } from "./icone"
+import { NomeDeMembro } from "./nome-de-membro"
 
 /**
  * Cartão de publicação (inventário §7: `gPostCard`).
@@ -47,25 +48,44 @@ export function CartaoDePublicacao({
   completo = true,
   aoMarcarUtil,
   aoComentar,
+  aoAbrirAutor,
+  alvoDeFoco,
 }: {
   publicacao: Publicacao
   completo?: boolean
   aoMarcarUtil?: () => void
   aoComentar?: () => void
+  /**
+   * Com ele, o nome de quem publicou vira o link para o perfil. Sem, é texto:
+   * nem todo cartão tem uma pessoa alcançável atrás do nome.
+   */
+  aoAbrirAutor?: (() => void) | undefined
+  /**
+   * O cartão pode receber foco por script: quem acabou de publicar chega nele
+   * depois do envio e o leitor de tela anuncia o que está lá. Como o título da
+   * página (`tabIndex={-1}`), ele não entra na ordem do Tab.
+   */
+  alvoDeFoco?: boolean
 }) {
   const { enquete, encontro } = publicacao
   const votos = enquete?.opcoes.reduce((soma, opcao) => soma + opcao.votos, 0) ?? 0
 
   return (
     <article
+      id={alvoDeFoco === true ? `publicacao-${publicacao.id}` : undefined}
+      tabIndex={alvoDeFoco === true ? -1 : undefined}
       data-cartao="publicacao"
       data-tipo={publicacao.tipo}
-      className="grid gap-3 rounded-2xl bg-(--surface-lowest) p-4 ring-1 ring-(--outline-variant)"
+      className="grid gap-3 rounded-2xl bg-(--surface-lowest) p-4 ring-1 ring-(--outline-variant) focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--primary)"
     >
       <header className="flex items-center gap-3">
         <MembroAvatar nome={publicacao.autor} tamanho="pequeno" />
         <div className="grid min-w-0 grow">
-          <b className="truncate text-[15px]">{publicacao.autor}</b>
+          <NomeDeMembro
+            nome={publicacao.autor}
+            aoAbrir={aoAbrirAutor}
+            className="truncate text-[15px]"
+          />
           <small className="text-[12px] text-(--on-surface-variant)">{publicacao.quando}</small>
         </div>
         <span className="flex shrink-0 items-center gap-1.5">

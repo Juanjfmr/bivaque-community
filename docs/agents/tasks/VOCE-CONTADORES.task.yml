@@ -1,0 +1,62 @@
+# RUN-174 — VOCE-CONTADORES-ERRO: leitura que falha nao vira zero.
+#
+# Voce.tsx:100 faz conta?.contagens ?? { salvos: 0, anuncios: 0, perguntas: 0,
+# grupos: 0 } — com o GET da conta em falha, os 4 contadores desenham 0 como
+# se fossem verdade (regra do apps/app: uma query que falhou e virou lista
+# vazia e um bug). Achado colateral declarado no fix do RUN-172; nobody o
+# consertou porque o lote nao tocou apps/app. Custo real baixo: um so arquivo
+# de tela + o dado do cliente; sem API, sem banco.
+
+task_id: RUN-174
+
+objective: >
+  Contadores do Voce (salvos, anuncios, perguntas, grupos) mostram estado
+  indisponivel quando a leitura da conta falha, e 0 apenas quando a leitura
+  REAL devolve zero.
+
+authority:
+  - apps/app/AGENTS.md (superficie async: loading, vazio real, negado, erro recuperavel e populado; falha como vazio e bug)
+  - docs/LANCAMENTO.md criterio 5 (acessibilidade/honestidade de estado)
+  - Card VOCE-CONTADORES-ERRO + achado do fix RUN-172 (RELATORIO Correcao do CI)
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    Voce.tsx:100 default ?? { salvos: 0, anuncios: 0, perguntas: 0, grupos: 0 }
+    — o mesmo padrao de painel de erro da tela (3 paineis EstadoDeErro sem
+    sessao, reproduzidos no RUN-172) coexiste com contadores que mentem 0.
+
+allowed_paths:
+  - docs/agents/tasks/VOCE-CONTADORES.task.yml
+  - apps/app/src/telas/Voce.tsx
+  - apps/app/tests
+
+forbidden:
+  - tocar rotas de API, banco ou o cliente de dados alem do necessario para distinguir null de zero
+  - mudar os numeros quando a leitura REALMENTE devolve zero (zero honesto permanece zero)
+  - rodar Playwright do app nesta lane (portas 3200/3201 ocupadas pela lane w-glyph; prova local e vitest)
+  - usar skip/fixme novo ou afrouxar assercao
+  - push, merge ou force-push; ler/criar/editar arquivos de ambiente; imprimir credenciais
+  - tocar em .work/main ou em outra worktree
+
+acceptance:
+  - "Estado da leitura distingue as tres situacoes: carregando (placeholders, como hoje), sucesso (numero real, 0 incluido), falha (o contador mostra '—' com aria-label/titulo 'Contagem indisponivel agora' — nada de numero inventado)."
+  - "O painel de erro existente do perfil (pergunta de 'perfil indisponivel agora') nao muda; os contadores seguem a MESMA fonte de falha da leitura da conta (sem segundo canal)."
+  - "Testes vitest no app (sem navegador): render do Voce com a leitura da conta em falha → nenhum dos 4 contadores mostra '0' e cada um expoe o estado indisponivel (nome acessivel incluido); com sucesso zerado → mostram 0; com sucesso populado → mostram os numeros. Molde dos testes atuais de Voce/voce-dados."
+  - "Passam: --filter @bivaque/app test; app typecheck; gate --fast. Nada de TOTAL/captura (nenhuma rota)."
+
+proof:
+  - npx pnpm@11.18.0 --filter @bivaque/app test
+  - npx pnpm@11.18.0 --filter @bivaque/app typecheck
+  - npx pnpm@11.18.0 gate --fast
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/VOCE-CONTADORES.task.yml
+
+risk: nada estrutural — estado de leitura em uma tela
+risk_level: R1
+
+reviewer_must_differ_from_executor: true
+retry_budget: 1
+on_budget_exhausted: HUMAN_DECISION
+
+closure:
+  requires_runtime_evidence: true

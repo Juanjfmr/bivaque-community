@@ -1,0 +1,120 @@
+# LAN-TROCA — F09: as telas antigas de avisos/notificações saem da web.
+#
+# Molde: RUN-133 (retirada de /events, PR #176) e LT-002 (retirada de /explorar/busca,
+# PR #215). O lado do app JÁ está pronto e provado: /app/avisos (Avisos.tsx, ligado a
+# /api/app/avisos, E2E f09-avisos-real.spec.ts) e preferências embutidas em Você
+# (PreferenciasDeAvisos em Voce.tsx:190). Este lote é só o lado web: 307 + remoção +
+# migração de specs. NÃO tocar apps/app nem a API.
+#
+# DECISÕES DE ESCOPO (registradas, do mapa F09 do explore):
+# (D1) /configuracoes/notificacoes -> /app/voce (é onde a matriz de preferências vive;
+#      precedente /configuracoes/familia -> /app/voce). /app/avisos é a caixa, não as prefs.
+# (D2) Índice /configuracoes (page.tsx faz redirect de página) passa a apontar para
+#      /configuracoes/conta (única seção que fica), evitando cadeia de 2 saltos. Continua
+#      página web (redirect de página é invisível ao resolver do TROCADAS).
+# (D3) A caixa antiga enriquecia a linha com o nome do prestador; o app mostra a frase
+#      neutra Seu pedido recebeu uma resposta (rotuloDoAviso não tem o caso do nome).
+#      journey-pedir-servico.spec.ts migra para a frase NEUTRA (não tocar app/API no lote
+#      de troca). O enriquecimento com o nome vira follow-up próprio (card a abrir).
+# (D4) nav-container-invariant.spec.ts (DS-011) testa a nav ANTIGA da web em /notifications;
+#      depois da troca não há nav web na rota (avisos é sem-aba no app). Converter em prova
+#      de 307 (ou aposentar com justificativa + cobertura substituta), nunca apagar sem substituir.
+# (D5) deep-links.ts é MOVIDO para apps/web/lib/notifications/deep-links.ts (não apagado):
+#      consumidor de produção vivo = lib/notifications/destino-do-app.ts (usado pela API avisos).
+
+task_id: LT-004
+
+objective: >
+  Nenhuma rota de membro do apps/web serve a tela antiga de avisos. /notifications responde
+  307 para /app/avisos e /configuracoes/notificacoes responde 307 para /app/voce; as páginas
+  antigas são removidas; deep-links.ts é movido para lib/notifications com imports atualizados;
+  os links do shell web (sidebar, sino, ajuda, nav de configurações) apontam para o app; o
+  teste TROCADAS e os specs que visitavam as rotas passam a provar o redirecionamento e o
+  comportamento no app. Sem sessão, o destino responde o estado de acesso do app, não a tela antiga.
+
+authority:
+  - docs/LANCAMENTO.md (critério 6 — trocada; LAN-TROCA no board)
+  - docs/decisions/ADR-20261024-front-react-spa.md §8 (ordem da troca e redirect, teste por perfil)
+  - docs/agents/tasks/RUN-133.task.yml e docs/agents/tasks/LT-002.task.yml (moldes)
+  - tools/backend-kanban/public/board.json (LAN-TROCA, LAN-F09; mapa F09 do explore 14/11)
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    apps/web/next.config.ts NÃO tem regra para /notifications nem /configuracoes/notificacoes
+    (só bloqueados/familia em :108-109). As telas antigas existem: (shell)/notifications/page.tsx
+    (675 linhas) + loading/error/not-found + deep-links.ts; (shell)/configuracoes/notificacoes/page.tsx
+    (426 linhas) + notification-channel-actions.ts (único importador). O índice configuracoes/page.tsx:6
+    faz redirect("/configuracoes/notificacoes"). TROCADAS (tests/unit/infra/lan-troca-redirect.test.ts)
+    não lista as duas rotas. Destinos no app existem e estão ligados: /app/avisos (rotas.ts:121,
+    Avisos.tsx -> /api/app/avisos, E2E f09-avisos-real.spec.ts:44) e preferências em /app/voce
+    (Voce.tsx:190, E2E f09-avisos-real.spec.ts:82). deep-links.ts tem consumidor de produção vivo
+    (lib/notifications/destino-do-app.ts:4 -> API avisos) e importadores de testes; precisa ser MOVIDO.
+
+allowed_paths:
+  - docs/agents/tasks/LT-004.task.yml
+  - apps/web/next.config.ts
+  - apps/web/app/(shell)/notifications
+  - apps/web/app/(shell)/configuracoes/notificacoes
+  - apps/web/app/(shell)/configuracoes/notification-channel-actions.ts
+  - apps/web/app/(shell)/configuracoes/page.tsx
+  - apps/web/app/(shell)/configuracoes/configuracoes-nav.tsx
+  - apps/web/app/(shell)/configuracoes/configuracoes-header.tsx
+  - apps/web/lib/notifications/deep-links.ts
+  - apps/web/lib/notifications/destino-do-app.ts
+  - apps/web/app/(shell)/inicio/return-strip.tsx
+  - apps/web/app/components/bivaque/app-shell.tsx
+  - apps/web/app/components/shell/active-nav.ts
+  - apps/web/app/(public)/ajuda/page.tsx
+  - tests/unit/infra/lan-troca-redirect.test.ts
+  - tests/unit/notifications
+  - tests/unit/indications/portas.test.ts
+  - tests/unit/ui/shell-sidebar-labels.test.ts
+  - tests/unit/ui/shell-active-nav.test.ts
+  - tests/unit/ui/configuracoes-subtitles.test.ts
+  - tests/unit/ui/recon-048-notifications-cabecalho.test.ts
+  - tests/e2e/event-rsvp.spec.ts
+  - tests/e2e/journey-pedir-servico.spec.ts
+  - tests/e2e/manaus-pilot-denials.spec.ts
+  - tests/e2e/manaus-pilot-full-journey.spec.ts
+  - tests/e2e/nav-container-invariant.spec.ts
+  - tests/e2e/recommendation-reply-notify.spec.ts
+  - tests/e2e/recon-032-messages.spec.ts
+  - tests/e2e/avisos-redirects.spec.ts
+  - scripts/visual/capture.mjs
+  - .visual/lt-004
+
+forbidden:
+  - alterar apps/app, a API /api/app/avisos, apps/web/proxy.ts, lib/security/route-surface.ts, supabase, migrations
+  - tocar lib/notifications/channel-preferences.ts (usada pelo outbox) ou as páginas bloqueados/familia/conta (ficam; remoção física de bloqueados/familia é do lote F10)
+  - apagar deep-links.ts sem mover (consumidor de produção vivo); apagar spec sem substituir a cobertura por asserção de 307 ou prova no app
+  - usar skip/fixme novo ou afrouxar asserção existente; criar rota/tela nova no app
+  - push, merge ou force-push; ler/criar/editar .env; imprimir secrets
+  - tocar em .work/main ou em outra worktree
+
+acceptance:
+  - "/notifications responde 307 para /app/avisos e /configuracoes/notificacoes responde 307 para /app/voce, sem ciclo; as páginas antigas (notifications/page+loading+error+not-found, configuracoes/notificacoes/page, notification-channel-actions.ts) são removidas."
+  - "deep-links.ts movido para apps/web/lib/notifications/deep-links.ts; imports atualizados em destino-do-app.ts, inicio/return-strip.tsx e nos testes (aviso-de-pedido, service-request-labels, portas.test.ts por segmentos). Nenhum importador órfão."
+  - "Índice /configuracoes aponta para /configuracoes/conta (D2); configuracoes-nav.tsx e app-shell.tsx (sidebar :119, sino :219), active-nav.ts e ajuda/page.tsx apontam para /app/avisos (link para o app tratado como nos moldes, sem quebrar o tipo Route)."
+  - "TROCADAS inclui as duas trocas, prova 307 + destino no catálogo ROTAS + ausência de segundo salto, e testes de ausência das pastas notifications/ e configuracoes/notificacoes/ (molde busca/events). Negativas seguem válidas."
+  - "Os 7 specs E2E que visitavam as rotas migram para asserção de 307 ou comportamento no app (sem sessão -> estado de acesso do app, não /app/entrar?redirect); nav-container-invariant vira prova de 307 (D4); journey-pedir-servico usa a frase neutra (D3); recon-032-messages divide badge (web) e caixa (app). Novo avisos-redirects.spec.ts prova 307 + aterrissagem em 375/768/1440 sem sessão."
+  - "Testes unitários que liam as páginas removidas por caminho são atualizados/aposentados com cobertura substituta (lição LT-002 do ENOENT); configuracoes-subtitles e capture.mjs HEADINGS atualizados; link-crawl não marca rota inexistente (links residuais atualizados no mesmo lote)."
+  - "Passam: gate --fast, test (suíte completa), test:scope, vitest do teste de troca, tsc -p tests/e2e. O E2E de navegador roda no CI."
+
+proof:
+  - npx pnpm@11.18.0 gate --fast
+  - npx pnpm@11.18.0 test
+  - npx pnpm@11.18.0 test:scope
+  - npx pnpm@11.18.0 exec vitest run tests/unit/infra/lan-troca-redirect.test.ts --maxWorkers=1
+  - npx pnpm@11.18.0 exec tsc -p tests/e2e/tsconfig.json
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/LT-004.task.yml
+
+risk: retirada de telas antigas e redirecionamento (F09)
+risk_level: R2
+
+reviewer_must_differ_from_executor: true
+retry_budget: 2
+on_budget_exhausted: HUMAN_DECISION
+
+closure:
+  requires_runtime_evidence: true

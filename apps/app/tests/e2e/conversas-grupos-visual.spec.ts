@@ -10,7 +10,7 @@ const CENAS = [
 ] as const
 
 for (const cena of CENAS) {
-  for (const tema of ["light", "dark"] as const) {
+  for (const tema of ["light"] as const) {
     test(`captura mobile ${cena.id} ${tema}`, async ({ page }, testInfo) => {
       await simularConversas(page)
       await simularGrupos(page)

@@ -8,7 +8,7 @@ test.beforeEach(async ({ page }) => simularCriar(page))
 async function capturar(page: Page, etapa: string) {
   const pasta = join(process.cwd(), "../..", ".visual", "run-015")
   mkdirSync(pasta, { recursive: true })
-  for (const tema of ["light", "dark"] as const) {
+  for (const tema of ["light"] as const) {
     await page.emulateMedia({ colorScheme: tema })
     await page.screenshot({ path: join(pasta, `mobile-375-${etapa}-${tema}.png`), fullPage: true })
     expect(
@@ -65,7 +65,7 @@ test("desapego: rascunho com foto, revisão, falha preservada e meus anúncios",
   const titulo = "Mesa com quatro cadeiras seminova"
   await form.locator("#criacao-titulo").fill(titulo)
   await form.locator("#criacao-complemento").fill("Flores")
-  await form.locator("#criacao-preco").fill("750.50")
+  await form.locator("#criacao-preco").fill("650,00")
   await form
     .locator("#criacao-descricao")
     .fill("Mesa de madeira em bom estado. Retirada a combinar.")
@@ -89,10 +89,11 @@ test("desapego: rascunho com foto, revisão, falha preservada e meus anúncios",
   )
   await form.getByRole("button", { name: "Revisar anúncio" }).click()
   await expect(form.locator('[data-revisao="desapego"]')).toContainText(titulo)
+  await expect(form.locator('[data-revisao="desapego"]')).toContainText("650,00")
   await capturar(page, "desapego-revisao")
   await form.getByRole("button", { name: "Publicar anúncio" }).click()
   await expect(form.getByRole("alert")).toContainText("campos e a foto foram mantidos")
-  await expect(form.locator("#criacao-preco")).toHaveValue("750.50")
+  await expect(form.locator("#criacao-preco")).toHaveValue("650,00")
   await expect(form.getByAltText("Foto escolhida para o anúncio")).toBeVisible()
   await page.unroute(falhar)
   await form.getByRole("button", { name: "Revisar anúncio" }).click()

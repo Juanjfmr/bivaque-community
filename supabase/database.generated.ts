@@ -120,6 +120,7 @@ export type Database = {
           fetched_at: string
           latitude: number
           longitude: number
+          neighborhood: string | null
           source: string
         }
         Insert: {
@@ -127,6 +128,7 @@ export type Database = {
           fetched_at?: string
           latitude: number
           longitude: number
+          neighborhood?: string | null
           source: string
         }
         Update: {
@@ -134,6 +136,7 @@ export type Database = {
           fetched_at?: string
           latitude?: number
           longitude?: number
+          neighborhood?: string | null
           source?: string
         }
         Relationships: []
@@ -1363,6 +1366,7 @@ export type Database = {
           address: string | null
           available_until: string | null
           category: string | null
+          cep: string | null
           closed_at: string | null
           community_id: string | null
           condition: Database["public"]["Enums"]["listing_condition"] | null
@@ -1370,7 +1374,10 @@ export type Database = {
           description: string | null
           id: string
           kind: Database["public"]["Enums"]["listing_kind"]
+          latitude: number | null
           locality_id: string | null
+          localizacao_publica: string | null
+          longitude: number | null
           neighborhood: string | null
           owner_user_id: string
           pickup_note: string | null
@@ -1384,6 +1391,7 @@ export type Database = {
           address?: string | null
           available_until?: string | null
           category?: string | null
+          cep?: string | null
           closed_at?: string | null
           community_id?: string | null
           condition?: Database["public"]["Enums"]["listing_condition"] | null
@@ -1391,7 +1399,10 @@ export type Database = {
           description?: string | null
           id?: string
           kind: Database["public"]["Enums"]["listing_kind"]
+          latitude?: number | null
           locality_id?: string | null
+          localizacao_publica?: string | null
+          longitude?: number | null
           neighborhood?: string | null
           owner_user_id: string
           pickup_note?: string | null
@@ -1405,6 +1416,7 @@ export type Database = {
           address?: string | null
           available_until?: string | null
           category?: string | null
+          cep?: string | null
           closed_at?: string | null
           community_id?: string | null
           condition?: Database["public"]["Enums"]["listing_condition"] | null
@@ -1412,7 +1424,10 @@ export type Database = {
           description?: string | null
           id?: string
           kind?: Database["public"]["Enums"]["listing_kind"]
+          latitude?: number | null
           locality_id?: string | null
+          localizacao_publica?: string | null
+          longitude?: number | null
           neighborhood?: string | null
           owner_user_id?: string
           pickup_note?: string | null
@@ -2625,6 +2640,7 @@ export type Database = {
           cancelled_at: string | null
           cancelled_by_user_id: string | null
           category: Database["public"]["Enums"]["provider_category"]
+          cep: string | null
           closed_at: string | null
           closed_by_user_id: string | null
           conversation_id: string | null
@@ -2633,6 +2649,8 @@ export type Database = {
           first_responded_at: string | null
           id: string
           idempotency_key: string | null
+          latitude: number | null
+          longitude: number | null
           provider_id: string
           provider_user_id: string
           region: string | null
@@ -2645,6 +2663,7 @@ export type Database = {
           cancelled_at?: string | null
           cancelled_by_user_id?: string | null
           category: Database["public"]["Enums"]["provider_category"]
+          cep?: string | null
           closed_at?: string | null
           closed_by_user_id?: string | null
           conversation_id?: string | null
@@ -2653,6 +2672,8 @@ export type Database = {
           first_responded_at?: string | null
           id?: string
           idempotency_key?: string | null
+          latitude?: number | null
+          longitude?: number | null
           provider_id: string
           provider_user_id: string
           region?: string | null
@@ -2665,6 +2686,7 @@ export type Database = {
           cancelled_at?: string | null
           cancelled_by_user_id?: string | null
           category?: Database["public"]["Enums"]["provider_category"]
+          cep?: string | null
           closed_at?: string | null
           closed_by_user_id?: string | null
           conversation_id?: string | null
@@ -2673,6 +2695,8 @@ export type Database = {
           first_responded_at?: string | null
           id?: string
           idempotency_key?: string | null
+          latitude?: number | null
+          longitude?: number | null
           provider_id?: string
           provider_user_id?: string
           region?: string | null
@@ -2918,6 +2942,7 @@ export type Database = {
         Args: { p_conversation_id: string }
         Returns: string
       }
+      count_indications: { Args: { p_locality_id: string }; Returns: number }
       create_community: {
         Args: {
           p_description: string
@@ -2936,34 +2961,15 @@ export type Database = {
         }
         Returns: string
       }
-      create_family_invitation:
-        | {
-            Args: {
-              p_invitee_email_digest: string
-              p_inviter_user_id: string
-              p_token_digest: string
-            }
-            Returns: string
-          }
-        | {
-            Args: {
-              p_invitee_email_digest: string
-              p_invitee_email_hint: string
-              p_inviter_user_id: string
-              p_token_digest: string
-            }
-            Returns: string
-          }
-        | {
-            Args: {
-              p_code_hash: string
-              p_invitee_email_digest: string
-              p_invitee_email_hint: string
-              p_inviter_user_id: string
-              p_token_digest: string
-            }
-            Returns: string
-          }
+      create_family_invitation: {
+        Args: {
+          p_code_hash: string
+          p_invitee_email_digest: string
+          p_invitee_email_hint: string
+          p_token_digest: string
+        }
+        Returns: string
+      }
       create_group: {
         Args: {
           p_description?: string
@@ -3005,9 +3011,13 @@ export type Database = {
       }
       create_service_request: {
         Args: {
+          p_cep?: string
           p_description: string
           p_idempotency_key?: string
+          p_latitude?: number
+          p_longitude?: number
           p_provider_id: string
+          p_region?: string
           p_when_text?: string
         }
         Returns: string
@@ -3183,10 +3193,19 @@ export type Database = {
         Args: { p_error?: string; p_user_id: string }
         Returns: string
       }
+      get_listing_location: {
+        Args: { p_listing_id?: string }
+        Returns: {
+          cep: string
+          listing_id: string
+          localizacao_publica: string
+        }[]
+      }
       get_my_profile_location: {
         Args: never
         Returns: {
           cep: string
+          com_coordenada: boolean
           definida: boolean
         }[]
       }
@@ -3724,26 +3743,15 @@ export type Database = {
         Args: { p_community_id: string; p_reason?: string }
         Returns: undefined
       }
-      resend_family_invitation:
-        | {
-            Args: {
-              p_invitation_id: string
-              p_invitee_email_digest: string
-              p_inviter_user_id: string
-              p_token_digest: string
-            }
-            Returns: string
-          }
-        | {
-            Args: {
-              p_code_hash: string
-              p_invitation_id: string
-              p_invitee_email_digest: string
-              p_inviter_user_id: string
-              p_token_digest: string
-            }
-            Returns: string
-          }
+      resend_family_invitation: {
+        Args: {
+          p_code_hash: string
+          p_invitation_id: string
+          p_invitee_email_digest: string
+          p_token_digest: string
+        }
+        Returns: string
+      }
       resolve_report: {
         Args: {
           p_action: string
@@ -3762,7 +3770,7 @@ export type Database = {
         Returns: undefined
       }
       revoke_family_invitation: {
-        Args: { p_invitation_id: string; p_inviter_user_id: string }
+        Args: { p_invitation_id: string }
         Returns: undefined
       }
       revoke_provider_account: {
@@ -3804,6 +3812,10 @@ export type Database = {
           p_conversation_id: string
         }
         Returns: Json
+      }
+      service_request_distance: {
+        Args: { p_request_id: string }
+        Returns: number
       }
       set_community_image: {
         Args: {
@@ -3886,6 +3898,7 @@ export type Database = {
         Returns: Database["public"]["Enums"]["listing_status"]
       }
       unpin_group_post: { Args: { p_group_id: string }; Returns: undefined }
+      unread_conversation_count: { Args: never; Returns: number }
       unsubscribe_city_digest: { Args: { p_token: string }; Returns: boolean }
       update_member_business_page: {
         Args: {

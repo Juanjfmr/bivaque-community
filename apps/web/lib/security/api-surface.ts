@@ -1,5 +1,5 @@
 /**
- * A postura de cada rota de `apps/web/app/api/**` — as 84 rotas, uma por linha,
+ * A postura de cada rota de `apps/web/app/api/**` — as 102 rotas, uma por linha,
  * com a guarda que a rota de fato usa e a prova negativa (ou o motivo explícito
  * de ser pública).
  *
@@ -86,7 +86,7 @@ export type RotaClassificada = Readonly<{
 }>
 
 /** Quantas rotas o manifesto cobre. Um rota nova exige classificação explícita. */
-export const TOTAL_DE_ROTAS = 86
+export const TOTAL_DE_ROTAS = 111
 
 function teste(arquivo: string, caso: string): ProvaDaRota {
   return { tipo: "teste", arquivo, caso }
@@ -114,8 +114,17 @@ const SESSAO: readonly Linha[] = [
   ["/api/app/avisos/lidos", "exigirSessao(", PORTA],
   ["/api/app/avisos/preferencias", "exigirSessao(", PORTA],
   ["/api/app/busca", "exigirSessao(", PORTA],
+  [
+    "/api/app/cidade/[id]",
+    "exigirSessao(",
+    teste(
+      "tests/unit/app-api/cidade/rotas.test.ts",
+      "GET /api/app/cidade/[id] recusa ausência de sessão",
+    ),
+  ],
   ["/api/app/conversas", "exigirSessao(", PORTA],
   ["/api/app/conversas/[id]", "exigirSessao(", PORTA],
+  ["/api/app/conversas/[id]/lida", "exigirSessao(", PORTA],
   ["/api/app/conversas/[id]/mensagens", "exigirSessao(", PORTA],
   ["/api/app/entry/combinado", "exigirSessao(", PORTA],
   ["/api/app/entry/consent", "exigirSessao(", PORTA],
@@ -137,6 +146,7 @@ const SESSAO: readonly Linha[] = [
   ["/api/app/grupos/[id]/fotos", "exigirSessao(", PORTA],
   ["/api/app/grupos/[id]/participacao", "exigirSessao(", PORTA],
   ["/api/app/grupos/[id]/pedidos", "exigirSessao(", PORTA],
+  ["/api/app/grupos/[id]/perguntas", "exigirSessao(", PORTA],
   ["/api/app/grupos/[id]/publicacoes", "exigirSessao(", PORTA],
   ["/api/app/grupos/publicacoes/[id]", "exigirSessao(", PORTA],
   ["/api/app/grupos/publicacoes/[id]/acoes", "exigirSessao(", PORTA],
@@ -145,34 +155,156 @@ const SESSAO: readonly Linha[] = [
   ["/api/app/grupos/salvas", "exigirSessao(", PORTA],
   ["/api/app/guia", "exigirSessao(", PORTA],
   ["/api/app/guia/[id]", "exigirSessao(", PORTA],
+  ["/api/app/guia/[id]/correcoes", "exigirSessao(", PORTA],
   ["/api/app/guia/[id]/salvo", "exigirSessao(", PORTA],
   ["/api/app/guia/[id]/sugestao", "exigirSessao(", PORTA],
   ["/api/app/guia/salvos", "exigirSessao(", PORTA],
+  ["/api/app/guia/sugestao", "exigirSessao(", PORTA],
+  [
+    "/api/app/imoveis/alertas",
+    "exigirSessao(",
+    teste(
+      "tests/unit/app-api/imoveis/rotas.test.ts",
+      "POST /api/app/imoveis/alertas: sessão, CSRF, critérios e 503 sem eco",
+    ),
+  ],
+  [
+    "/api/app/imoveis/alertas/[id]",
+    "exigirSessao(",
+    teste(
+      "tests/unit/app-api/imoveis/rotas.test.ts",
+      "PATCH e DELETE de alerta alheio respondem 404 sem confirmar existência",
+    ),
+  ],
   ["/api/app/inicio", "exigirSessao(", PORTA],
   ["/api/app/mercado", "exigirSessao(", PORTA],
   ["/api/app/mercado/[id]", "exigirSessao(", PORTA],
   ["/api/app/mercado/[id]/interesse", "exigirSessao(", PORTA],
+  [
+    "/api/app/mercado/[id]/salvo",
+    "exigirSessao(",
+    teste(
+      "tests/unit/app-api/mercado/rotas.test.ts",
+      "POST e DELETE salvo recusam ausência de sessão e origem fora da lista",
+    ),
+  ],
   ["/api/app/mercado/[id]/situacao", "exigirSessao(", PORTA],
   ["/api/app/mercado/meus", "exigirSessao(", PORTA],
+  [
+    "/api/app/mercado/salvos",
+    "exigirSessao(",
+    teste(
+      "tests/unit/app-api/mercado/rotas.test.ts",
+      "GET salvos recusa ausência de sessão e query inválida",
+    ),
+  ],
+  [
+    "/api/app/mensagens/[id]/denuncia",
+    "exigirSessao(",
+    teste(
+      "tests/unit/app-api/mensagens/denuncia.test.ts",
+      "denúncia de mensagem: visibilidade, autoria e duplicata",
+    ),
+  ],
+  [
+    "/api/app/membros/[id]",
+    "exigirSessao(",
+    teste(
+      "tests/unit/app-api/membros/rotas.test.ts",
+      "GET /api/app/membros/[id] recusa ausência de sessão",
+    ),
+  ],
   ["/api/app/negocios", "exigirSessao(", PORTA],
   ["/api/app/negocios/[id]", "exigirSessao(", PORTA],
   ["/api/app/negocios/[id]/pedidos", "exigirSessao(", PORTA],
-  ["/api/app/pedidos", "exigirSessao(", PORTA],
-  ["/api/app/pedidos/[id]", "exigirSessao(", PORTA],
+  // F07 (RUN-177): a ficha do próprio negócio. A gravação de foto reconfere a
+  // autorização e usa `service_role` porque a SEC-006 tirou o INSERT de imagem
+  // do papel `authenticated` — a prova é a do lote (tests/unit/app-api/negocio).
+  [
+    "/api/app/negocio",
+    "exigirSessao(",
+    teste(
+      "tests/unit/app-api/negocio/rotas.test.ts",
+      "cria pelo RPC da sessão e devolve a ficha relida",
+    ),
+  ],
+  [
+    "/api/app/negocio/catalogo",
+    "exigirSessao(",
+    teste(
+      "tests/unit/app-api/negocio/rotas.test.ts",
+      "publica serviço na posição do fim e devolve a lista ordenada",
+    ),
+  ],
+  [
+    "/api/app/negocio/catalogo/[id]",
+    "exigirSessao(",
+    teste("tests/unit/app-api/negocio/rotas.test.ts", "mover item de outra ficha é 404"),
+  ],
+  [
+    "/api/app/negocio/fotos",
+    "exigirSessao(",
+    teste(
+      "tests/unit/app-api/negocio/rotas.test.ts",
+      "envia a foto por multipart, sanitizada e no bucket da ficha",
+    ),
+  ],
+  [
+    "/api/app/negocio/fotos/[id]",
+    "exigirSessao(",
+    teste(
+      "tests/unit/app-api/negocio/rotas.test.ts",
+      "remover foto de outra ficha é 404 sem tocar o Storage",
+    ),
+  ],
+  [
+    "/api/app/pedidos",
+    "exigirSessao(",
+    teste(
+      "tests/unit/app-api/negocios/rotas.test.ts",
+      "lista os pedidos dos dois lados, com o lado de quem lê",
+    ),
+  ],
+  [
+    "/api/app/pedidos/[id]",
+    "exigirSessao(",
+    teste(
+      "tests/unit/app-api/negocios/rotas.test.ts",
+      "encerrar já encerrado é idempotente e não reescreve",
+    ),
+  ],
   ["/api/app/perguntas", "exigirSessao(", PORTA],
   ["/api/app/perguntas/[id]", "exigirSessao(", PORTA],
+  ["/api/app/perguntas/[id]/denuncia", "exigirSessao(", PORTA],
+  ["/api/app/perguntas/[id]/resolucao", "exigirSessao(", PORTA],
   ["/api/app/perguntas/[id]/respostas", "exigirSessao(", PORTA],
+  // F09 lote 2 (RUN-185): editar e excluir a própria resposta. Autoria no
+  // filtro e na policy; alheia e inexistente caem no mesmo 404.
+  [
+    "/api/app/perguntas/[id]/respostas/[respostaId]",
+    "exigirSessao(",
+    teste(
+      "tests/unit/app-api/perguntas/rotas.test.ts",
+      "PATCH e DELETE da resposta alheia respondem 404 sem confirmar existência",
+    ),
+  ],
+  ["/api/app/perguntas/[id]/salvo", "exigirSessao(", PORTA],
+  ["/api/app/perguntas/salvas", "exigirSessao(", PORTA],
   ["/api/app/push", "exigirSessao(", PORTA],
   ["/api/app/voce", "exigirSessao(", PORTA],
+  ["/api/app/voce/afiliacao", "exigirSessao(", PORTA],
   ["/api/app/voce/apagar-conta", "exigirSessao(", PORTA],
   ["/api/app/voce/bloqueados", "exigirSessao(", PORTA],
   ["/api/app/voce/bloqueados/[id]", "exigirSessao(", PORTA],
+  ["/api/app/voce/cidade", "exigirSessao(", PORTA],
   ["/api/app/voce/familia", "exigirSessao(", PORTA],
   ["/api/app/voce/familia/[id]", "exigirSessao(", PORTA],
+  ["/api/app/voce/interesses", "exigirSessao(", PORTA],
   ["/api/app/voce/localizacao", "exigirSessao(", PORTA],
   ["/api/app/voce/ocultados", "exigirSessao(", PORTA],
   ["/api/app/voce/ocultados/[id]", "exigirSessao(", PORTA],
   ["/api/app/voce/publicacoes", "exigirSessao(", PORTA],
+  ["/api/app/voce/sair", "exigirSessao(", PORTA],
   // Avatar resolve a sessão inline (cookie da web) e devolve 401 antes de ler o
   // perfil; a 404-not-403 vem depois, já sob a policy de `profiles`.
   ["/api/avatar/[userId]", "auth.getUser()", AQUI("GET /api/avatar sem cookie responde 401")],

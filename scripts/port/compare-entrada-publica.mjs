@@ -123,14 +123,6 @@ async function deletePrototypeAccount(page) {
 
 const SCREENS = [
   {
-    id: "convite",
-    next: "/convite",
-    prototype: async (page) => {
-      await signOut(page)
-      await go(page, "entrar/convite")
-    },
-  },
-  {
     id: "conta-apagada",
     next: "/conta-apagada",
     prototype: async (page) => {

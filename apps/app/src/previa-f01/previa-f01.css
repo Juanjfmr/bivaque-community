@@ -222,11 +222,10 @@
   color: #fff;
 }
 
-@media (prefers-color-scheme: dark) {
-  .f01-apple.pc-botao {
-    background: #fff;
-    color: #000;
-  }
+/* Escuro dormente (lançamento claro-only, dono 14/11). */
+:root[data-tema="escuro"] .f01-apple.pc-botao {
+  background: #fff;
+  color: #000;
 }
 
 .f01-convite {

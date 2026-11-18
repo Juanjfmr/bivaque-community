@@ -7,16 +7,20 @@ import { Casca } from "@/src/casca/Casca"
 import { TelaDeEntrada } from "@/src/entrada/TelaDeEntrada"
 import { MercadoLab } from "@/src/galeria/mercado/MercadoLab"
 import { TelaGaleria } from "@/src/galeria/TelaGaleria"
+import { MeuNegocio } from "@/src/meu-negocio/MeuNegocio"
 import { modoDeProvaAtivo } from "@/src/modo-de-prova"
 import { Negocios } from "@/src/negocios/Negocios"
+import { PedidoNovo } from "@/src/negocios/PedidoNovo"
 import { Agenda } from "@/src/telas/Agenda"
 import { Ajuda } from "@/src/telas/Ajuda"
+import { AlertasDeImovel } from "@/src/telas/AlertasDeImovel"
 import { Anuncio } from "@/src/telas/Anuncio"
 import { ApagarConta } from "@/src/telas/ApagarConta"
 import { Avisos } from "@/src/telas/Avisos"
 import { Bloqueados } from "@/src/telas/Bloqueados"
 import { Busca } from "@/src/telas/Busca"
 import { Chamados } from "@/src/telas/Chamados"
+import { CidadeConsulta } from "@/src/telas/CidadeConsulta"
 import { Comunidade } from "@/src/telas/Comunidade"
 import { Conduta } from "@/src/telas/Conduta"
 import { Contato } from "@/src/telas/Contato"
@@ -34,12 +38,14 @@ import { Negocio } from "@/src/telas/Negocio"
 import { Ocultados } from "@/src/telas/Ocultados"
 import { Pedido } from "@/src/telas/Pedido"
 import { Pedidos } from "@/src/telas/Pedidos"
+import { PerfilDeMembro } from "@/src/telas/PerfilDeMembro"
 import { Pergunta } from "@/src/telas/Pergunta"
 import { Privacidade } from "@/src/telas/Privacidade"
 import { Publicacao } from "@/src/telas/Publicacao"
 import { Salvos } from "@/src/telas/Salvos"
 import { TelaDeProva } from "@/src/telas/TelaDeProva"
 import { TelaIndisponivel } from "@/src/telas/TelaIndisponivel"
+import { VerbeteDoGuia } from "@/src/telas/VerbeteDoGuia"
 import { Voce } from "@/src/telas/Voce"
 
 /**
@@ -52,14 +58,14 @@ const raiz = createRootRoute({
 })
 
 /**
- * Nas rotas do Mercado, a busca (filtros na URL) sobrevive às navegações que
- * não mexem nela — inclusive as regravações de estado da entrada (rolagem,
- * foco) que a camada fina faz em `replace`. Quem passa `search` explícito
+ * Nas rotas que persistem busca (filtros na URL), o search sobrevive às
+ * navegações que não mexem nele — inclusive as regravações de estado da entrada
+ * (rolagem, foco) que a camada fina faz em `replace`. Quem passa `search` explícito
  * manda; sem ele, o filtro atual continua no endereço (LAN-F06). A troca de aba
  * passa `search: {}` explícito (`buscaAoTrocarDeRota`): o filtro da aba
  * anterior não segue para a nova.
  */
-const manterBuscaDoMercado: SearchMiddleware<Record<string, unknown>> = (ctx) => {
+const manterBusca: SearchMiddleware<Record<string, unknown>> = (ctx) => {
   const atual = ctx.search ?? {}
   // O tipo público não declara, mas o segundo argumento de `next` pede o meta:
   // ele diz se o pedido passou `search` explícito (o filtro da tela) ou não —
@@ -72,8 +78,21 @@ const manterBuscaDoMercado: SearchMiddleware<Record<string, unknown>> = (ctx) =>
   return resultado.meta && "explicit" in resultado.meta ? (resultado.search ?? atual) : atual
 }
 
-const BUSCA_PERSISTENTE = { middlewares: [manterBuscaDoMercado] }
-const ROTAS_COM_BUSCA = new Set(["desapegos", "imoveis", "catalogo", "mercado"])
+const BUSCA_PERSISTENTE = { middlewares: [manterBusca] }
+const ROTAS_COM_BUSCA = new Set([
+  "desapegos",
+  "imoveis",
+  "catalogo",
+  "mercado",
+  "busca",
+  "guia",
+  // RUN-170: `/app/voce?mudar=<id>` abre o formulário de mudança com o destino
+  // escolhido; sem a busca declarada, o roteador descarta o parâmetro.
+  "voce",
+  // F07 (RUN-177): `/app/pedidos/novo?destino=<negocio>` é a folha do pedido
+  // aberta por URL. Sem a busca declarada o destino se perderia na recarga.
+  "pedido-novo",
+])
 
 /**
  * As telas reais do produto entram aqui conforme cada onda. Fora do modo de
@@ -83,11 +102,13 @@ const ROTAS_COM_BUSCA = new Set(["desapegos", "imoveis", "catalogo", "mercado"])
  */
 const TELAS_REAIS: Readonly<Partial<Record<string, ComponentType>>> = {
   ajuda: Ajuda,
+  "alertas-de-imovel": AlertasDeImovel,
   anuncio: Anuncio,
   "apagar-conta": ApagarConta,
   avisos: Avisos,
   bloqueados: Bloqueados,
   chamados: Chamados,
+  cidade: CidadeConsulta,
   conduta: Conduta,
   contato: Contato,
   dono: Dono,
@@ -110,13 +131,17 @@ const TELAS_REAIS: Readonly<Partial<Record<string, ComponentType>>> = {
   inicio: Inicio,
   mercado: Mercado,
   "meus-anuncios": MeusAnuncios,
+  "meu-negocio": MeuNegocio,
   pedido: Pedido,
+  "pedido-novo": PedidoNovo,
   pedidos: Pedidos,
   minhas: Minhas,
   negocios: Negocios,
   pergunta: Pergunta,
+  perfil: PerfilDeMembro,
   publicacao: Publicacao,
   salvos: Salvos,
+  verbete: VerbeteDoGuia,
 }
 
 function TelaDaRota({ nome }: { nome: string }) {

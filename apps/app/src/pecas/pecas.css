@@ -50,6 +50,13 @@
   -webkit-tap-highlight-color: transparent;
 }
 
+/* Peças dentro de uma folha ou diálogo: o invólucro não é a tela inteira, então
+   não reserva a altura da janela nem pinta o fundo. */
+.pc.pc-embutido {
+  min-height: 0;
+  background: none;
+}
+
 .pc :where(h1, h2, h3, p, ul, ol, dl, dd, fieldset, figure) {
   margin: 0;
   padding: 0;
@@ -638,6 +645,11 @@
   box-shadow: 0 0 0 1px var(--pc-tinta);
 }
 
+.pc-area[data-erro="sim"] {
+  border-color: var(--pc-perigo);
+  box-shadow: 0 0 0 1px var(--pc-perigo);
+}
+
 .pc-busca {
   display: flex;
   align-items: center;
@@ -813,6 +825,11 @@
 .pc-arquivo[data-escolhido="sim"] {
   border-style: solid;
   border-color: var(--pc-feito);
+}
+
+.pc-arquivo[data-erro="sim"] {
+  border-color: var(--pc-perigo);
+  box-shadow: 0 0 0 1px var(--pc-perigo);
 }
 
 .pc-arquivo .bv-icone {

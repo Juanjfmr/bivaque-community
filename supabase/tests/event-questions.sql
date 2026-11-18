@@ -102,8 +102,7 @@ select set_config('request.jwt.claim.role', 'authenticated', true);
 
 select lives_ok(
   format(
-    $$ insert into public.dm_messages (conversation_id, sender_id, content)
-       values (%L, '10000000-0000-4000-8000-000000000008', 'Posso levar as criancas?') $$,
+    $$ select public.send_conversation_message(%L, 'Posso levar as criancas?') $$,
     :'q_conv_id'
   ),
   'autor da pergunta envia a mensagem na conversa'
@@ -130,8 +129,7 @@ select set_config('request.jwt.claim.role', 'authenticated', true);
 
 select lives_ok(
   format(
-    $$ insert into public.dm_messages (conversation_id, sender_id, content)
-       values (%L, '10000000-0000-4000-8000-000000000001', 'Pode trazer as criancas.') $$,
+    $$ select public.send_conversation_message(%L, 'Pode trazer as criancas.') $$,
     :'q_conv_id'
   ),
   'organizador responde na conversa de pergunta'
@@ -184,12 +182,11 @@ select is_empty(
 
 select throws_ok(
   format(
-    $$ insert into public.dm_messages (conversation_id, sender_id, content)
-       values (%L, '10000000-0000-4000-8000-000000000010', 'intrusa') $$,
+    $$ select public.send_conversation_message(%L, 'intrusa') $$,
     :'q_conv_id'
   ),
   42501,
-  null,
+  'not a participant',
   'terceiro não escreve na conversa de pergunta'
 );
 
@@ -216,8 +213,7 @@ set local role authenticated;
 select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000008', true);
 select set_config('request.jwt.claim.role', 'authenticated', true);
 
-insert into public.dm_messages (conversation_id, sender_id, content)
-values (:'q_conv_id'::uuid, '10000000-0000-4000-8000-000000000008', 'Segunda mensagem');
+select public.send_conversation_message(:'q_conv_id'::uuid, 'Segunda mensagem');
 
 reset role;
 select results_eq(

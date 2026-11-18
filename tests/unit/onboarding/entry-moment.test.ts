@@ -41,7 +41,7 @@ describe("welcomeBlocks", () => {
     expect(blocks.tiles).toEqual([
       {
         description: "O que a comunidade indica, por assunto.",
-        href: "/guide",
+        href: "/app/guia",
         icon: "map",
         title: "Conhecer Manaus",
       },
@@ -53,7 +53,7 @@ describe("welcomeBlocks", () => {
     // em que a cidade de destino não veio.
     const blocks = welcomeBlocks({ destinationCity: null, homeCity: "Manaus", moment: "leaving" })
     expect(blocks.lead).toBe("O que a comunidade de Manaus indica já está à sua espera.")
-    expect(blocks.tiles[0]?.href).toBe("/guide")
+    expect(blocks.tiles[0]?.href).toBe("/app/guia")
   })
 })
 

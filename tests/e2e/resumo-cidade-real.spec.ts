@@ -7,7 +7,7 @@ import { semearSessaoDeMembro } from "./entrada-real-ajuda"
 // 375/768/1440 em série. Cada caso devolve exatamente a preferência inicial.
 test.describe("RUN-026 resumo da cidade @stateful", () => {
   test.describe.configure({ mode: "serial" })
-  test("escolha grava pelo app e sobrevive ao recarregar nos dois temas", async ({
+  test("escolha grava pelo app e sobrevive ao recarregar no tema claro", async ({
     page,
     context,
   }, info) => {
@@ -36,17 +36,16 @@ test.describe("RUN-026 resumo da cidade @stateful", () => {
       expect((await persistida.json()).preferencias.resumoCidade).toBe(escolha)
       const destino = join(process.cwd(), ".visual", "run-026")
       mkdirSync(destino, { recursive: true })
-      for (const tema of ["light", "dark"] as const) {
-        await page.emulateMedia({ colorScheme: tema, reducedMotion: "reduce" })
-        await campo.scrollIntoViewIfNeeded()
-        expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
-          true,
-        )
-        await page.screenshot({
-          path: join(destino, `${info.project.name}-${tema}.png`),
-          fullPage: true,
-        })
-      }
+      // Tema claro: o lançamento (14/11) é claro-only.
+      await page.emulateMedia({ reducedMotion: "reduce" })
+      await campo.scrollIntoViewIfNeeded()
+      expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
+        true,
+      )
+      await page.screenshot({
+        path: join(destino, `${info.project.name}-claro.png`),
+        fullPage: true,
+      })
       await campo.click()
       await page.getByRole("option", { name: frequencias[antes], exact: true }).click()
       await page.getByRole("button", { name: "Gravar preferências de avisos" }).click()

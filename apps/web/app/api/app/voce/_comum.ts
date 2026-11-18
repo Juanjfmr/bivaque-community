@@ -17,11 +17,28 @@ import { cidadeDaSessao } from "../eventos/_comum"
 type Cliente = SupabaseClient<Database>
 
 export type LocalizacaoDoPerfil = Readonly<{ cep: string | null; definida: boolean }>
+/** A cidade do vínculo `current`, com o id que o formulário de mudança usa. */
+export type CidadeDoPerfil = Readonly<{ id: string; nome: string }>
+/**
+ * A cidade que a pessoa está deixando (`kind = 'leaving'`), no formato do
+ * `(shell)/layout.tsx:91-110` da web: quem está em transferência tem duas linhas
+ * e só esta diz até quando a origem continua valendo.
+ */
+export type SaidaDoPerfil = Readonly<{
+  id: string
+  nome: string
+  uf: string
+  endsAt: string
+  readOnly: boolean
+}>
 export type PerfilDaPessoa = Readonly<{
   nome: string
   bio: string | null
-  cidade: string
+  cidade: CidadeDoPerfil
+  outbound: SaidaDoPerfil | null
   localizacao: LocalizacaoDoPerfil
+  /** false quando o CEP existe mas nenhuma fonte o localiza (ADR-20261112). */
+  distanciaDisponivel: boolean
 }>
 export type ContagensDoPerfil = Readonly<{
   salvos: number
@@ -36,22 +53,58 @@ export type PerfilDaConta = Readonly<{
 }>
 
 /**
- * O CEP do dono da sessão e a marca de definida, nunca a coordenada.
+ * O CEP do dono da sessão, a marca de definida e se há posição — nunca a
+ * coordenada em si.
  *
  * A função do banco resolve o dono por `auth.uid()`; esta camada não aceita id
  * de fora. Falha sobe: perfil vazio não é "sem localização".
  */
-export async function localizacaoDaSessao(client: Cliente): Promise<LocalizacaoDoPerfil> {
+export async function localizacaoDaSessao(
+  client: Cliente,
+): Promise<Readonly<{ localizacao: LocalizacaoDoPerfil; distanciaDisponivel: boolean }>> {
   const { data, error } = await client.rpc("get_my_profile_location")
   if (error) throw error
   const linha = data[0]
-  if (linha === undefined) return { cep: null, definida: false }
+  if (linha === undefined)
+    return { localizacao: { cep: null, definida: false }, distanciaDisponivel: false }
   // O gerador de tipos trata colunas de `returns table` como não nulas; o CEP
   // do perfil é anulável de verdade, então quem decide é o valor em runtime.
   const cep: unknown = linha.cep
   return {
-    cep: typeof cep === "string" ? formatarCep(cep) : null,
-    definida: linha.definida === true,
+    localizacao: {
+      cep: typeof cep === "string" ? formatarCep(cep) : null,
+      definida: linha.definida === true,
+    },
+    distanciaDisponivel: linha.com_coordenada === true,
+  }
+}
+
+/**
+ * A cidade de saída da sessão, ou `null` para quem não está em transferência.
+ *
+ * Mesmo recorte do layout da web: o vínculo `leaving` é único por pessoa
+ * (índice `one_leaving_per_user`), então `maybeSingle` é a leitura certa.
+ * `endsAt` vazio quando a data não está declarada, como lá — a tela decide o
+ * que dizer sem inventar prazo. Erro sobe: falha de leitura não é "sem saída".
+ */
+export async function saidaDaSessao(
+  client: Cliente,
+  userId: string,
+): Promise<SaidaDoPerfil | null> {
+  const { data, error } = await client
+    .from("locality_memberships")
+    .select("locality_id, leaving_at, access, localities(city_name, state_code)")
+    .eq("user_id", userId)
+    .eq("kind", "leaving")
+    .maybeSingle()
+  if (error) throw error
+  if (data === null) return null
+  return {
+    id: data.locality_id,
+    nome: data.localities?.city_name ?? "",
+    uf: data.localities?.state_code ?? "",
+    endsAt: data.leaving_at ?? "",
+    readOnly: data.access === "read_only",
   }
 }
 
@@ -67,11 +120,19 @@ export async function perfilDaSessao(
     .maybeSingle()
   if (error) throw error
   if (data === null) return null
-  const [cidade, localizacao] = await Promise.all([
+  const [cidade, outbound, { localizacao, distanciaDisponivel }] = await Promise.all([
     cidadeDaSessao(client, userId),
+    saidaDaSessao(client, userId),
     localizacaoDaSessao(client),
   ])
-  return { nome: data.display_name, bio: data.bio, cidade: cidade?.nome ?? "", localizacao }
+  return {
+    nome: data.display_name,
+    bio: data.bio,
+    cidade: { id: cidade?.id ?? "", nome: cidade?.nome ?? "" },
+    outbound,
+    localizacao,
+    distanciaDisponivel,
+  }
 }
 
 async function contarSalvos(client: Cliente, userId: string): Promise<number> {

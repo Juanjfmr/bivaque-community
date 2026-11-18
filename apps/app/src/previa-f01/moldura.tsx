@@ -190,13 +190,9 @@ function PainelDasFases() {
   const cena = FASES[atual]?.cena ?? "conta"
   return (
     <aside className="f01-lado" aria-label="Fases do cadastro">
-      <picture className="f01-lado-logo">
-        <source
-          srcSet={`${base}brand/bivaque-logo-horizontal-white.svg`}
-          media="(prefers-color-scheme: dark)"
-        />
+      <div className="f01-lado-logo">
         <img src={`${base}brand/bivaque-logo-horizontal.svg`} alt="Bivaque" />
-      </picture>
+      </div>
       <span className="pc-ilustracao f01-lado-cena">
         <img key={cena} src={caminhoDaIlustracao(cena)} alt="" width={1200} height={800} />
       </span>

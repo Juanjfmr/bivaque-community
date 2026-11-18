@@ -20,7 +20,8 @@ test("production migrations run from CI only, after the gate", () => {
   assert.match(workflow, /migrate:\s*[\s\S]*needs:\s*gate/)
   assert.match(workflow, /environment:\s*production/)
   assert.match(workflow, /SUPABASE_ACCESS_TOKEN:\s*\${{ secrets\.SUPABASE_ACCESS_TOKEN }}/)
-  assert.match(workflow, /pnpm exec supabase db push/)
+  // --include-all é obrigatório: há migração fora de ordem entre as pendentes.
+  assert.match(workflow, /pnpm exec supabase db push --include-all/)
 })
 
 test("a merge on main never deploys the site", () => {

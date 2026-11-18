@@ -8,30 +8,93 @@ import { CartaoDePublicacao } from "@/components/bivaque/cartao-de-publicacao"
 import { EsqueletoDeLista } from "@/components/bivaque/esqueleto"
 import { EstadoVazio } from "@/components/bivaque/estado-vazio"
 import { Etiqueta } from "@/components/bivaque/etiqueta"
-import { buscarGrupo, type DetalheDoGrupo, type OrdemDoGrupo } from "@/lib/dados/grupos"
+import {
+  buscarGrupo,
+  type DetalheDoGrupo,
+  lerPerguntasDoGrupo,
+  type OrdemDoGrupo,
+  type PerguntaDoGrupo,
+  type PublicacaoCriada,
+} from "@/lib/dados/grupos"
 import { useNavegacao, useRolagemEFoco } from "@/lib/navegacao/react"
 import { CARGA_CONCLUIDA } from "@/lib/navegacao/restauracao"
-import { useCasca } from "@/src/contexto/casca"
 import { useAcoesDaPublicacao } from "@/src/grupos/AcoesDaPublicacao"
 import { Escrever } from "@/src/grupos/Escrever"
 import { EstadoDaLeitura } from "@/src/grupos/EstadoDaLeitura"
+import {
+  anuncioDaPublicacao,
+  colocarNaLista,
+  comPublicacaoRecente,
+  retemOTopo,
+} from "@/src/grupos/lista-do-grupo"
 import { Participacao } from "@/src/grupos/Participacao"
 import { Pedidos } from "@/src/grupos/Pedidos"
+import { semConfirmacao } from "@/src/grupos/publicacao"
 import { quandoDe } from "@/src/telas/comum"
+
+/**
+ * A primeira página como estava antes da primeira publicação desta visita; é
+ * o cursor que a releitura depois de publicar usa. Vira `null` assim que a
+ * lista deixa a página de cima, porque dali em diante o cursor não casa mais.
+ */
+type BaseParaPublicar = Readonly<{ ordem: OrdemDoGrupo; proximo: string | null }>
+
+/** O que cada ordem mostra quando não há nada: o vazio fala da ordem, não do grupo. */
+const VAZIO_DO_GRUPO: Readonly<Record<OrdemDoGrupo, { titulo: string; texto: string }>> = {
+  recentes: {
+    titulo: "Ainda sem publicações",
+    texto: "Quando alguém escrever no grupo, o que importa aparece aqui.",
+  },
+  discutidas: {
+    titulo: "Ainda sem publicações",
+    texto: "Quando alguém escrever no grupo, o que importa aparece aqui.",
+  },
+  salvas: {
+    titulo: "Nada salvo neste grupo",
+    texto: "Use Salvar numa publicação do grupo para encontrá-la aqui.",
+  },
+  ocultadas: {
+    titulo: "Nada oculto neste grupo",
+    texto: "Ocultar esconde uma publicação só de você; o que você ocultar aparece aqui.",
+  },
+}
+
+/**
+ * Depois de publicar, a tela do grupo é a única dona do foco: vai para a
+ * publicação nova quando ela está na página; senão volta ao botão que abriu a
+ * folha. O foco de chegada (useRolagemEFoco) só age ao entrar na tela.
+ */
+function focarQuemAbriu() {
+  document
+    .querySelector<HTMLElement>('[data-acao="escrever-grupo"]')
+    ?.focus({ preventScroll: true })
+}
 
 export function Grupo() {
   const { id = "" } = useParams({ strict: false }) as { id?: string }
   const navegacao = useNavegacao()
-  const casca = useCasca()
   const [dados, setDados] = useState<DetalheDoGrupo | null>(null)
   const [erro, setErro] = useState<unknown>(null)
   const [rodada, setRodada] = useState(0)
   const [ordem, setOrdem] = useState<OrdemDoGrupo>("recentes")
   const [mais, setMais] = useState(false)
   const [erroMais, setErroMais] = useState(false)
+  // As perguntas do grupo vivem na própria linha do banco e são lidas por rota
+  // separada: elas formam o bloco de cima do feed, sem mexer no cursor dos posts.
+  const [perguntas, setPerguntas] = useState<readonly PerguntaDoGrupo[]>([])
+  const [erroDasPerguntas, setErroDasPerguntas] = useState(false)
   const [controle] = useState(() => new AbortController())
   const paginaPendente = useRef<AbortController | null>(null)
   const geracaoDoGrupo = useRef(0)
+  // A publicação que acabou de entrar: recebe o foco uma vez, depois que a
+  // releitura termina. `carimbo` sobe a cada envio e reinicia o anúncio.
+  const [recemPublicada, setRecemPublicada] = useState<{ id: string; carimbo: number } | null>(null)
+  const [anuncio, setAnuncio] = useState("")
+  // A publicação que ficou com o foco continua focável depois que a marca de
+  // recém-publicada sai: sem isso o navegador tira o foco do cartão.
+  const [focada, setFocada] = useState<string | null>(null)
+  const baseParaPublicar = useRef<BaseParaPublicar | null>(null)
+  const envios = useRef(0)
   const acoes = useAcoesDaPublicacao({
     admin: dados?.grupo.admin ?? false,
     fixada: dados?.grupo.fixada ?? null,
@@ -52,6 +115,20 @@ export function Grupo() {
   })
   useRolagemEFoco(CARGA_CONCLUIDA)
   useEffect(() => () => controle.abort(), [controle])
+  useEffect(() => {
+    if (recemPublicada === null || dados === null) return
+    const alvo = document.getElementById(`publicacao-${recemPublicada.id}`)
+    setAnuncio(anuncioDaPublicacao(dados.publicacoes, recemPublicada.id))
+    setRecemPublicada(null)
+    if (alvo === null) {
+      focarQuemAbriu()
+      return
+    }
+    setFocada(recemPublicada.id)
+    // Rola e foca sem animação: é um deslocamento de contexto, não um gesto.
+    alvo.focus({ preventScroll: true })
+    alvo.scrollIntoView({ block: "nearest", behavior: "instant" })
+  }, [recemPublicada, dados])
   // biome-ignore lint/correctness/useExhaustiveDependencies: rodada repete a leitura
   useEffect(() => {
     geracaoDoGrupo.current += 1
@@ -62,12 +139,25 @@ export function Grupo() {
     const pedido = new AbortController()
     setDados(null)
     setErro(null)
+    setPerguntas([])
+    setErroDasPerguntas(false)
     void buscarGrupo(id, { ordem, signal: pedido.signal })
       .then((lidos) => {
-        if (!pedido.signal.aborted) setDados(lidos)
+        if (pedido.signal.aborted) return
+        baseParaPublicar.current = { ordem, proximo: lidos.proximo }
+        setDados(lidos)
       })
       .catch((falha: unknown) => {
         if (!pedido.signal.aborted) setErro(falha)
+      })
+    void lerPerguntasDoGrupo(id, { signal: pedido.signal })
+      .then((lidas) => {
+        if (!pedido.signal.aborted) setPerguntas(lidas)
+      })
+      .catch(() => {
+        // A falha das perguntas não derruba o feed dos posts: o bloco diz que
+        // não leu, em vez de aparecer vazio como se o grupo não perguntasse.
+        if (!pedido.signal.aborted) setErroDasPerguntas(true)
       })
     return () => {
       pedido.abort()
@@ -96,12 +186,68 @@ export function Grupo() {
         if (atual === null || atual.proximo !== cursor) return atual
         return { ...pagina, publicacoes: [...atual.publicacoes, ...pagina.publicacoes] }
       })
+      // A lista saiu da página de cima: o cursor guardado não faz mais sentido.
+      baseParaPublicar.current = null
     } catch {
       if (!pedido.signal.aborted && geracao === geracaoDoGrupo.current) setErroMais(true)
     } finally {
       if (paginaPendente.current === pedido) paginaPendente.current = null
       if (geracao === geracaoDoGrupo.current) setMais(false)
     }
+  }
+  /**
+   * A publicação saiu. A lista é atualizada por inteiro — sem tela de
+   * carregamento — para o cartão novo já trazer o nome de quem escreveu e ser
+   * o primeiro item; a publicação recebe o foco quando os dados chegam.
+   */
+  async function aoPublicar(criada: PublicacaoCriada) {
+    envios.current += 1
+    const envio = envios.current
+    const geracao = geracaoDoGrupo.current
+    const base = baseParaPublicar.current
+    const colocada = await colocarNaLista(id, criada, base, base?.ordem ?? ordem, {
+      signal: controle.signal,
+    }).catch(() => null)
+    if (controle.signal.aborted || geracao !== geracaoDoGrupo.current) return
+    if (colocada === null) {
+      // Nada foi conferido: o cartão entra no começo e a leitura diz o que houve.
+      setDados((atual) =>
+        atual === null
+          ? atual
+          : {
+              ...atual,
+              publicacoes: comPublicacaoRecente(atual.publicacoes, criada.publicacao, null),
+            },
+      )
+      setAnuncio(semConfirmacao({ primeiros: retemOTopo(ordem) }).frase)
+      focarQuemAbriu()
+      return
+    }
+    setDados((atual) => {
+      if (atual === null) return atual
+      return {
+        ...atual,
+        publicacoes: comPublicacaoRecente(atual.publicacoes, criada.publicacao, colocada.anterior),
+        proximo: colocada.proximo ?? atual.proximo,
+      }
+    })
+    if (colocada.entraNaLista) {
+      setRecemPublicada({ id: criada.publicacao.id, carimbo: envio })
+      return
+    }
+    setAnuncio(semConfirmacao({ primeiros: retemOTopo(base?.ordem ?? ordem) }).frase)
+    focarQuemAbriu()
+  }
+  /**
+   * A pergunta saiu: ela entra no bloco de cima do feed. O anúncio diz o que de
+   * fato aconteceu — a mesma linha aparece nas Indicações da cidade com o nome
+   * do grupo.
+   */
+  function aoPerguntar(criada: PerguntaDoGrupo) {
+    setPerguntas((atuais) => [criada, ...atuais.filter((p) => p.id !== criada.id)])
+    setAnuncio(
+      "Pergunta publicada. Ela também aparece nas Indicações da cidade com o nome do grupo.",
+    )
   }
   if (erro) return <EstadoDaLeitura erro={erro} aoTentar={() => setRodada((r) => r + 1)} />
   if (!dados)
@@ -111,13 +257,20 @@ export function Grupo() {
       </section>
     )
   const { grupo, publicacoes } = dados
+  const primeira = recemPublicada !== null && publicacoes[0]?.id === recemPublicada.id
+  const subtitulo = [
+    dados.cidade,
+    grupo.membros === null ? "" : `${grupo.membros} membros`,
+    grupo.fechado ? "Fechado" : "Aberto",
+  ]
+    .filter((parte) => parte !== "")
+    .join(" · ")
+  // O vazio diz o que existe de fato na ordem escolhida: "sem publicações" num
+  // filtro de salvas seria mentira sobre o grupo.
+  const vazio = VAZIO_DO_GRUPO[ordem]
   return (
     <section data-tela="grupo" className="grid gap-3">
-      <CabecaDePagina
-        titulo={grupo.nome}
-        subtitulo={`${grupo.membros === null ? "" : `${grupo.membros} membros · `}${grupo.fechado ? "Fechado" : "Aberto"}`}
-        acao={grupo.fechado ? <Etiqueta tom="neutro">Fechado</Etiqueta> : undefined}
-      />
+      <CabecaDePagina titulo={grupo.nome} subtitulo={subtitulo} />
       <Participacao
         key={grupo.id}
         grupo={grupo}
@@ -155,8 +308,59 @@ export function Grupo() {
           {grupo.regras || "Este grupo ainda não informou regras."}
         </p>
       </details>
-      {grupo.admin ? <Pedidos key={grupo.id} id={grupo.id} /> : null}
-      {grupo.membro ? <Escrever key={grupo.id} grupo={grupo} cidade={casca.cidade} /> : null}
+      {/* Chaves distintas de propósito: as duas peças são irmãs e o React recusa
+          duas com o mesmo key; o id remonta as duas quando o grupo troca. */}
+      {grupo.admin ? <Pedidos key={`pedidos-${grupo.id}`} id={grupo.id} /> : null}
+      {grupo.membro ? (
+        <Escrever
+          key={`escrever-${grupo.id}`}
+          grupo={grupo}
+          cidade={dados.cidade}
+          aoPublicar={aoPublicar}
+          aoPerguntar={aoPerguntar}
+        />
+      ) : null}
+      {perguntas.length === 0 && !erroDasPerguntas ? null : (
+        <section data-perguntas-do-grupo="sim" className="grid gap-2" aria-label="Perguntas">
+          <b className="text-sm">Perguntas do grupo</b>
+          <small className="text-xs text-(--on-surface-variant)">
+            As perguntas feitas aqui aparecem também nas Indicações da cidade.
+          </small>
+          {erroDasPerguntas ? (
+            <p role="alert" className="text-sm text-(--destructive)">
+              Não foi possível carregar as perguntas do grupo. As publicações abaixo continuam
+              disponíveis.
+            </p>
+          ) : null}
+          {perguntas.map((p) => (
+            <CartaoDePublicacao
+              key={p.id}
+              publicacao={{
+                id: p.id,
+                tipo: "pergunta",
+                autor: p.autor || "Membro do grupo",
+                quando: quandoDe(p.criadaEm),
+                texto: p.titulo,
+                resolvida: p.resolvida,
+                tambemNaCidade: p.grupo !== null,
+                comentarios: p.respostas,
+                uteis: 0,
+              }}
+              aoAbrirAutor={
+                p.propria || p.autorId === ""
+                  ? undefined
+                  : () => void navegacao.irPara("perfil", { parametros: { id: p.autorId } })
+              }
+              aoComentar={() => void navegacao.irPara("pergunta", { parametros: { id: p.id } })}
+            />
+          ))}
+        </section>
+      )}
+      {/* O foco já leva ao cartão; o anúncio garante que quem usa leitor de
+          tela saiba o que houve, inclusive quando a publicação não entrou. */}
+      <p aria-live="polite" data-anuncio-da-publicacao="sim" className="sr-only">
+        {anuncio}
+      </p>
       {grupo.fechado && !grupo.membro ? (
         <p className="rounded-xl bg-(--surface-low) px-3 py-3 text-sm">
           O conteúdo dos grupos fechados é reservado aos membros.
@@ -194,19 +398,27 @@ export function Grupo() {
           </fieldset>
           {publicacoes.length === 0 ? (
             <EstadoVazio
-              titulo="Ainda sem publicações"
-              texto="Quando alguém escrever no grupo, o que importa aparece aqui."
+              titulo={grupo.membro ? vazio.titulo : "Conversas de quem participa"}
+              texto={
+                grupo.membro ? vazio.texto : "Entre no grupo para ler e escrever com quem já está."
+              }
               icone="forum"
             />
           ) : (
-            publicacoes.map((p) => (
-              <div key={p.id} className="grid gap-2">
+            publicacoes.map((p, indice) => (
+              <div
+                key={p.id}
+                data-publicacao-na-lista="sim"
+                data-primeira-da-lista={indice === 0 ? "sim" : undefined}
+                className="grid gap-2"
+              >
                 {grupo.fixada === p.id ? (
                   <Etiqueta tom="neutro" icone="pin">
                     Publicação fixada
                   </Etiqueta>
                 ) : null}
                 <CartaoDePublicacao
+                  alvoDeFoco={(primeira && p.id === recemPublicada?.id) || p.id === focada}
                   publicacao={{
                     ...p,
                     tipo: "publicacao",

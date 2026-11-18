@@ -25,22 +25,28 @@ export type NomeDeRota =
   | "voce"
   | "busca"
   | "catalogo"
+  | "cidade"
   | "desapegos"
   | "imoveis"
   | "negocios"
   | "anuncio"
   | "negocio"
   | "pergunta"
+  | "perfil"
   | "grupo"
   | "publicacao"
   | "evento"
   | "agenda"
   | "salvos"
+  | "alertas-de-imovel"
   | "meus-anuncios"
   | "minhas"
   | "guia"
+  | "verbete"
   | "pedidos"
   | "pedido"
+  | "pedido-novo"
+  | "meu-negocio"
   | "dono"
   | "entrar"
   | "privacidade"
@@ -122,13 +128,21 @@ const LINHAS: readonly LinhaDoCatalogo[] = [
   ["voce", "/voce", "Você", "voce", { raiz: true }],
   ["busca", "/busca", "Buscar", "origem", { pai: "inicio" }],
   ["catalogo", "/catalogo", "Desapegos", "mercado", { pai: "inicio" }],
+  // A consulta de cidade (CIDADE-169): a tela da cidade da pessoa (`/cidade/atual`)
+  // e a de QUALQUER cidade do catálogo (`/cidade/<id>`). É leitura — a leitura de
+  // outra cidade é a regra aprovada em 25/09/2026. Não acende aba: chega-se pelo
+  // chip da casca.
+  ["cidade", "/cidade/$id", "Cidade", "origem", { parametro: "id", pai: "inicio" }],
   ["desapegos", "/desapegos", "Desapegos", "mercado", { pai: "inicio" }],
   ["imoveis", "/imoveis", "Imóveis", "mercado", { pai: "inicio" }],
-  ["negocios", "/negocios", "Negócios locais", "mercado", { pai: "inicio" }],
+  ["negocios", "/negocios", "Mercado da cidade", "mercado", { pai: "inicio" }],
   ["mercado", "/mercado", "Mercado", "mercado", { pai: "inicio" }],
   ["anuncio", "/anuncio/$id", "Anúncio", "mercado", { parametro: "id", pai: "desapegos" }],
   ["negocio", "/negocio/$id", "Negócio local", "mercado", { parametro: "id", pai: "negocios" }],
   ["pergunta", "/pergunta/$id", "Indicação", "comunidade", { parametro: "id", pai: "comunidade" }],
+  // O perfil de outra pessoa (F10): identidade e atividade que o LEITOR pode
+  // ver. Não acende aba: chega-se por um nome, de qualquer jornada.
+  ["perfil", "/perfil/$id", "Perfil", "origem", { parametro: "id", pai: "inicio" }],
   ["grupo", "/grupo/$id", "Grupo", "comunidade", { parametro: "id", pai: "comunidade" }],
   [
     "publicacao",
@@ -140,12 +154,27 @@ const LINHAS: readonly LinhaDoCatalogo[] = [
   ["evento", "/evento/$id", "Encontro", "origem", { parametro: "id", pai: "agenda" }],
   ["agenda", "/agenda", "Agenda da cidade", "origem", { pai: "inicio" }],
   ["salvos", "/salvos", "Salvos", "origem", { pai: "voce" }],
+  // Alertas de busca de imóvel (F06, RUN-169): a tela que a web servia em
+  // /imoveis/alertas. Entra por Você, como as irmãs, e não acende aba própria.
+  ["alertas-de-imovel", "/imoveis/alertas", "Alertas de imóvel", "origem", { pai: "voce" }],
   ["meus-anuncios", "/meus-anuncios", "Meus anúncios", "origem", { pai: "voce" }],
   ["minhas", "/minhas", "Minhas indicações", "comunidade", { pai: "comunidade" }],
   // Título dependente da cidade: o molde fica no catálogo e a cidade é dado.
   ["guia", "/guia", "Guia de {cidade}", "origem", { pai: "inicio" }],
+  // O verbete do Guia (F08) é a referência em tela própria, alcançável por
+  // endereço: `/app/guia/<id>` sobrevive à recarga e o Voltar do sistema volta
+  // para a lista.
+  ["verbete", "/guia/$id", "Referência", "origem", { parametro: "id", pai: "guia" }],
   ["pedidos", "/pedidos", "Pedidos de serviço", "voce", { pai: "voce" }],
   ["pedido", "/pedido/$id", "Pedido de serviço", "origem", { parametro: "id", pai: "pedidos" }],
+  // F07 (RUN-177): o pedido ganhou URL própria, com o negócio no `?destino=`.
+  // É a MESMA folha da ficha, agora endereçável — chega-se de dentro do app e
+  // de um link antigo do Criar.
+  ["pedido-novo", "/pedidos/novo", "Pedir orçamento", "origem", { pai: "negocios" }],
+  // Meu negócio: a gestão da ficha do próprio membro (ficha, catálogo e fotos).
+  // Não é detalhe de negócio nenhum (`/negocio/$id`), então tem endereço e
+  // nome próprios, e mora em Você como as outras telas da própria pessoa.
+  ["meu-negocio", "/meu-negocio", "Meu negócio", "voce", { pai: "voce" }],
   ["dono", "/dono", "Painel do Bivaque", "sem-aba", { casca: "painel", pai: "inicio" }],
   [
     "entrar",
@@ -185,7 +214,16 @@ export const ROTAS: readonly Rota[] = LINHAS.map(([nome, caminho, titulo, dono, 
 
 /** Os 33 nomes da seção 1 do inventário, sem as rotas internas do app. */
 export const NOMES_DAS_33: readonly NomeDeRota[] = ROTAS.filter(
-  (rota) => rota.nome !== "mercado" && rota.nome !== "indisponivel" && rota.nome !== "avisos",
+  (rota) =>
+    rota.nome !== "mercado" &&
+    rota.nome !== "indisponivel" &&
+    rota.nome !== "avisos" &&
+    rota.nome !== "verbete" &&
+    rota.nome !== "perfil" &&
+    rota.nome !== "cidade" &&
+    rota.nome !== "alertas-de-imovel" &&
+    rota.nome !== "pedido-novo" &&
+    rota.nome !== "meu-negocio",
 ).map((rota) => rota.nome)
 
 const POR_NOME: Readonly<Record<string, Rota | undefined>> = Object.fromEntries(

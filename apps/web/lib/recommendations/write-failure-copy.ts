@@ -34,16 +34,6 @@ export const WRITE_FAILURE_COPY = {
   // fluxo pode ficar sem próximo passo declarado.
   publicar_pedido:
     "Não foi possível publicar seu pedido. Seu texto continua aqui. Tente novamente.",
-  responder_pedido: "Não foi possível enviar sua resposta. Tente novamente.",
-  salvar_pedido: "Não foi possível salvar este pedido na sua lista. Tente novamente.",
-  remover_pedido_salvo: "Não foi possível remover este pedido da sua lista. Tente novamente.",
-  excluir_resposta: "Não foi possível excluir a resposta. Tente novamente.",
-  editar_resposta: "Não foi possível salvar a edição da resposta. Tente novamente.",
-  editar_pergunta: "Não foi possível salvar a edição da pergunta. Tente novamente.",
-  excluir_pergunta: "Não foi possível excluir a pergunta. Tente novamente.",
-  marcar_resposta: "Não foi possível marcar a resposta como resolvida. Tente novamente.",
-  resolver_pergunta: "Não foi possível marcar a pergunta como resolvida. Tente novamente.",
-  reabrir_pedido: "Não foi possível reabrir o pedido. Tente novamente.",
 } as const
 
 export type WriteOperation = keyof typeof WRITE_FAILURE_COPY
@@ -74,7 +64,6 @@ export const READ_FAILURE_COPY = {
   // ErrorState já desenha o botão "Tentar novamente" — repetir no texto seria
   // pedir duas vezes a mesma ação.
   carregar_pedidos: "Não foi possível carregar os pedidos de indicação.",
-  carregar_respostas_e_salvos: "Não foi possível carregar respostas e salvos.",
 } as const
 
 export type ReadOperation = keyof typeof READ_FAILURE_COPY

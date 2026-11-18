@@ -32,14 +32,15 @@ export const metadata: Metadata = {
 
 // ADR-20261022 (porte visual) e ADR-20261020 (identidade visual e tema escuro):
 // a barra do navegador da landing acompanha o tema do sistema. O par são as
-// superfícies dos dois temas declaradas em brand-tokens.css, e não o verde do
-// adapter nos dois — por isso a lista com `media` no lugar do valor único.
+// superfícies de `.bv-skin.ld` em landing.css — rgb(243 245 246) no claro e
+// rgb(16 20 23) no escuro —, e não o verde do adapter nem a pele Brasa de
+// brand-tokens.css; por isso a lista com `media` no lugar do valor único.
 // As outras telas continuam com o `themeColor` do layout raiz.
 export const viewport: Viewport = {
   colorScheme: "light dark",
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#F2F0EB" },
-    { media: "(prefers-color-scheme: dark)", color: "#171E20" },
+    { media: "(prefers-color-scheme: light)", color: "#F3F5F6" },
+    { media: "(prefers-color-scheme: dark)", color: "#101417" },
   ],
 }
 

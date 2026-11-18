@@ -12,6 +12,7 @@ import {
 
 import { dadosDoApp } from "@/lib/dados"
 import { lerAvisos } from "@/lib/dados/avisos"
+import { lerConversas } from "@/lib/dados/conversas"
 import { lerProgresso } from "@/src/entrada/servidor"
 import { modoDeProvaAtivo } from "@/src/modo-de-prova"
 
@@ -75,7 +76,7 @@ export function ProvedorDaCasca({ children }: { children: ReactNode }) {
       cidade: semente.cidade ?? resumo?.cidade ?? CIDADE_PADRAO,
       cidadeDeCasa: semente.cidadeDeCasa ?? resumo?.cidadeDeCasa ?? CIDADE_PADRAO,
       avisos: semente.avisos ?? 0,
-      conversas: semente.conversas ?? resumo?.conversas ?? 0,
+      conversas: semente.conversas ?? 0,
       nomeDaPessoa: semente.nomeDaPessoa ?? resumo?.nomeDaPessoa ?? "",
     }
   })
@@ -96,6 +97,11 @@ export function ProvedorDaCasca({ children }: { children: ReactNode }) {
     void lerProgresso()
       .then((sessao) => {
         if (!sessao.autenticado || controle.signal.aborted) return
+        void lerConversas({ signal: controle.signal })
+          .then((lista) => {
+            if (!controle.signal.aborted) definir({ conversas: lista.porLer })
+          })
+          .catch(() => undefined)
         return lerAvisos({ limite: "1", signal: controle.signal }).then((lista) => {
           if (!controle.signal.aborted) definir({ avisos: lista.naoLidos })
         })

@@ -61,19 +61,7 @@ export interface GuideCorrectionQueueItem {
   requesterName: string
 }
 
-export const GUIDE_CORRECTION_STATUS_LABELS: Record<GuideCorrectionStatus, string> = {
-  received: "Recebida",
-  in_review: "Em análise",
-  applied: "Aplicada",
-  rejected: "Rejeitada",
-}
-
-export function correctionStatusLabel(status: string): string {
-  if (status in GUIDE_CORRECTION_STATUS_LABELS) {
-    return GUIDE_CORRECTION_STATUS_LABELS[status as GuideCorrectionStatus]
-  }
-  return "Status desconhecido"
-}
+export { correctionStatusLabel } from "./app-guia"
 
 // ── helpers puros ───────────────────────────────────────────────────────────
 

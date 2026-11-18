@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from "react"
-import { Botao } from "@/components/bivaque/botao"
-import { Campo } from "@/components/bivaque/campos"
 import { ChipsDeFiltro } from "@/components/bivaque/chips-de-filtro"
 import { FalhaDaApi } from "@/lib/api/cliente"
 import { publicarPergunta } from "@/lib/dados/criar"
 import { rotuloDoTopico, TOPICOS_DAS_PERGUNTAS } from "@/lib/dados/perguntas"
+import { Botao, Campo } from "@/src/pecas/pecas"
+import { errosDaPergunta, semErros } from "./formularios"
 import { excluirRascunho, guardarRascunho, lerRascunho } from "./rascunho"
 
 /** Chip inicial da escolha: "sem tópico" deixa a régua do texto decidir a categoria. */
@@ -27,6 +27,8 @@ export function Perguntar({
     lerRascunho(chave, { titulo: "", assunto: "", topico: "" }),
   )
   const [revisando, setRevisando] = useState(false)
+  // O erro nasce no campo que o originou, depois que a pessoa passou por ele.
+  const [tocados, setTocados] = useState<ReadonlySet<"titulo" | "assunto">>(new Set())
   const [erro, setErro] = useState("")
   const [aviso, setAviso] = useState("")
   const [salvando, setSalvando] = useState(false)
@@ -36,6 +38,11 @@ export function Perguntar({
   useEffect(() => {
     guardarRascunho(chave, dados)
   }, [chave, dados])
+
+  const erros = errosDaPergunta(dados)
+  const podeRevisar = semErros(erros)
+  const tocar = (campo: "titulo" | "assunto"): void =>
+    setTocados((atual) => (atual.has(campo) ? atual : new Set(atual).add(campo)))
 
   async function publicar() {
     if (controle.current) return
@@ -66,14 +73,16 @@ export function Perguntar({
 
   return (
     <form
-      className="mt-4 grid gap-4"
+      className="pc pc-embutido mt-4 grid gap-4"
       aria-busy={salvando}
+      noValidate
       onSubmit={(evento) => {
         evento.preventDefault()
         if (revisando) void publicar()
         else {
           setErro("")
-          setRevisando(true)
+          if (!podeRevisar) setTocados(new Set(["titulo", "assunto"]))
+          else setRevisando(true)
         }
       }}
     >
@@ -96,14 +105,15 @@ export function Perguntar({
           <Campo
             id="nova-pergunta"
             rotulo="O que você precisa saber?"
-            valor={dados.titulo}
-            aoMudar={(titulo) => setDados({ ...dados, titulo })}
-            minLength={8}
+            value={dados.titulo}
+            onChange={(evento) => setDados({ ...dados, titulo: evento.target.value })}
+            onBlur={() => tocar("titulo")}
+            erro={tocados.has("titulo") ? (erros.titulo ?? null) : null}
             maxLength={300}
+            autoComplete="off"
             required
-            placeholder="Ex.: alguém indica um pediatra no bairro?"
           />
-          <div data-topicos="pergunta">
+          <div data-topicos="pergunta" className="min-w-0">
             <ChipsDeFiltro
               rotulo="Tópico da pergunta"
               itens={ITENS_DO_TOPICO}
@@ -114,10 +124,13 @@ export function Perguntar({
           <Campo
             id="topico-pergunta"
             rotulo="Assunto (opcional)"
-            valor={dados.assunto}
-            aoMudar={(assunto) => setDados({ ...dados, assunto })}
+            value={dados.assunto}
+            onChange={(evento) => setDados({ ...dados, assunto: evento.target.value })}
+            onBlur={() => tocar("assunto")}
+            erro={tocados.has("assunto") ? (erros.assunto ?? null) : null}
+            ajuda="Saúde, escola, serviços…"
             maxLength={60}
-            placeholder="Saúde, escola, serviços..."
+            autoComplete="off"
           />
         </>
       )}
@@ -133,7 +146,6 @@ export function Perguntar({
       )}
       <div className="flex flex-wrap justify-end gap-2">
         <Botao
-          type="button"
           tom="texto"
           disabled={salvando}
           onClick={() => (revisando ? setRevisando(false) : aoCancelar())}
@@ -142,8 +154,7 @@ export function Perguntar({
         </Botao>
         {!revisando && (
           <Botao
-            type="button"
-            tom="contornado"
+            tom="contorno"
             onClick={() =>
               setAviso(
                 guardarRascunho(chave, dados)
@@ -155,7 +166,12 @@ export function Perguntar({
             Salvar rascunho
           </Botao>
         )}
-        <Botao type="submit" disabled={salvando || dados.titulo.trim().length < 8}>
+        <Botao
+          tom="principal"
+          type="submit"
+          disabled={salvando || (!revisando && !podeRevisar)}
+          carregando={salvando}
+        >
           {salvando ? "Publicando…" : revisando ? "Publicar pergunta" : "Revisar pergunta"}
         </Botao>
       </div>

@@ -1,0 +1,79 @@
+# LAN-TROCA — F08 (lado app): o Guia retém e consome q/categoria da URL.
+#
+# Prepara a troca parcial de /guide (LT-007, lado web). O núcleo do Guia já está ligado
+# e provado (f08-guia-real.spec.ts), mas q/categoria são estado local (Guia.tsx:90-92) e
+# guia não está em ROTAS_COM_BUSCA (roteador.tsx:76). Sem isso, /guide?q=... -> /app/guia
+# perderia o termo (mesmo bug que o LT-003 corrigiu na busca) e o link do Salvos web
+# (/guide?q=<nome>, lib/saves/saved-items.ts:122) quebraria. Molde: LT-003 (retenção) +
+# busca/termo-url.ts (leitura pura do endereço). Este lote é SÓ app; a troca web é o LT-007.
+#
+# ESCOPO LIMITADO: retenção + consumo de q/categoria. NÃO adicionar rota endereçável do
+# verbete, porta de sugestão de lugar novo, nem acompanhamento de correção — esses gaps
+# ficam para lotes próprios (F08-RESSALVAS / evolução do guia). NÃO tocar apps/web.
+
+task_id: LT-006
+
+objective: >
+  Quem abre /app/guia?q=<termo>&categoria=<cat> (link direto, ou o futuro 307 de /guide)
+  vê o Guia já com o termo no campo e a categoria filtrada, e o endereço mantém q/categoria
+  após a materialização da entrada e as regravações de rolagem/foco. A leitura do endereço
+  é pura e testada (molde busca/termo-url.ts); a digitação/filtro manual continuam vencendo
+  o valor de origem. O ?locality= do guia antigo NÃO é suportado (o app lista só a cidade
+  da sessão) — perda declarada, não implementada.
+
+authority:
+  - docs/LANCAMENTO.md (critério 6 — trocada; LAN-TROCA no board)
+  - docs/decisions/ADR-20261024-front-react-spa.md §8
+  - docs/agents/tasks/LT-003.task.yml (molde de retenção) e apps/app/src/busca/termo-url.ts (leitura pura)
+  - tools/backend-kanban/public/board.json (LAN-TROCA, LAN-F08; mapa F08 do explore 14/11)
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    Guia.tsx:90-92 usa estado local (termo/busca/categoria), sem leitura de useLocation/useSearch;
+    guia NÃO está em ROTAS_COM_BUSCA (roteador.tsx:76 — desapegos/imoveis/catalogo/mercado/busca),
+    então a materialização da entrada (Casca.tsx -> gravar -> navigate sem search) apaga q/categoria
+    da URL (mesmo mecanismo do bug da busca, LT-003). O guia antigo consome ?q= e ?locality=
+    (apps/web/app/(shell)/guide/page.tsx:96,106) e o Salvos web linka /guide?q=<nome>
+    (apps/web/lib/saves/saved-items.ts:122). Catálogo tem /guia (rotas.ts:146) mas sem search persistente.
+
+allowed_paths:
+  - docs/agents/tasks/LT-006.task.yml
+  - apps/app/src/roteador.tsx
+  - apps/app/src/telas/Guia.tsx
+  - apps/app/src/guia
+  - apps/app/tests
+  - .visual/lt-006
+
+forbidden:
+  - alterar apps/web, a API /api/app/guia, proxy, supabase, migrations
+  - adicionar rota endereçável do verbete (/app/guia/$id), porta de sugestão de lugar novo, ou acompanhamento de correção (gaps de lotes próprios)
+  - suportar ?locality= (o app lista só a cidade da sessão; perda declarada)
+  - mudar o comportamento de digitação/filtro manual (continuam vencendo a origem), nem os estados carregando/vazio/negado/sessão/falha
+  - usar skip/fixme novo ou afrouxar asserção; tocar outra jornada
+  - push, merge ou force-push; ler/criar/editar .env; imprimir secrets
+  - tocar em .work/main ou em outra worktree
+
+acceptance:
+  - "guia adicionado a ROTAS_COM_BUSCA (roteador.tsx:76); a materialização e as regravações preservam q/categoria na URL de /app/guia."
+  - "Guia.tsx lê q/categoria do endereço na montagem e semeia o campo de busca e o filtro de categoria (leitura pura em apps/app/src/guia/, molde termo-url.ts, com teste unitário). Termo/categoria inválidos ou ausentes abrem o estado normal sem erro."
+  - "Digitação e filtro manual continuam vencendo o valor de origem; a URL não é reescrita enquanto a pessoa digita (mesmo contrato da busca)."
+  - "E2E do app (molde busca-termo-url.spec.ts) prova: /app/guia?q=<termo> abre com o termo no campo e a lista filtrada, q/categoria retidos na URL após a materialização, nos tamanhos e temas que o molde usa; caso sem q abre normal."
+  - "Perda do ?locality= declarada no relatório (não implementada). f08-guia-real.spec.ts e os unitários do guia seguem verdes."
+  - "Passam: app test, app typecheck, gate --fast, tsc -p tests/e2e (se aplicável). O E2E de navegador roda no CI."
+
+proof:
+  - npx pnpm@11.18.0 --filter @bivaque/app test
+  - npx pnpm@11.18.0 --filter @bivaque/app typecheck
+  - npx pnpm@11.18.0 gate --fast
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/LT-006.task.yml
+
+risk: mudança no app (retenção + consumo de search no Guia)
+risk_level: R2
+
+reviewer_must_differ_from_executor: true
+retry_budget: 2
+on_budget_exhausted: HUMAN_DECISION
+
+closure:
+  requires_runtime_evidence: true

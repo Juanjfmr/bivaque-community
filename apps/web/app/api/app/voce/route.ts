@@ -8,8 +8,8 @@ import {
 } from "../../../../lib/app-api/rota-do-app"
 import { normalizeBio, validateBio } from "../../../../lib/profile/bio"
 import { normalizarNome, validarNome } from "../../../../lib/profile/nome"
-import { cidadeDaSessao, interpretarErroDoBanco } from "../eventos/_comum"
-import { lerConta, localizacaoDaSessao } from "./_comum"
+import { interpretarErroDoBanco } from "../eventos/_comum"
+import { lerConta, perfilDaSessao } from "./_comum"
 
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
@@ -81,22 +81,11 @@ export async function PATCH(request: NextRequest): Promise<NextResponse> {
       throw error
     }
     if (data === null) return responder(request, { erro: "nao-encontrado" }, 404)
-    const [cidade, localizacao] = await Promise.all([
-      cidadeDaSessao(client, userId),
-      localizacaoDaSessao(client),
-    ])
-    return responder(
-      request,
-      {
-        perfil: {
-          nome: data.display_name,
-          bio: data.bio,
-          cidade: cidade?.nome ?? "",
-          localizacao,
-        },
-      },
-      200,
-    )
+    // O estado GRAVADO, com a mesma montagem do GET: cidade com id e a saída em
+    // transferência. Duas montagens divergiriam na primeira mudança de contrato.
+    const perfil = await perfilDaSessao(client, userId)
+    if (perfil === null) return responder(request, { erro: "nao-encontrado" }, 404)
+    return responder(request, { perfil }, 200)
   } catch {
     return responder(request, { erro: "escrita-indisponivel" }, 503)
   }

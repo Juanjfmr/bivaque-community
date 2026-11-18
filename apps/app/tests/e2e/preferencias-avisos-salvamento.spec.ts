@@ -5,6 +5,7 @@ const PREFERENCIAS = {
   events: false,
   productNews: false,
   indications: false,
+  messages: true,
   resumoCidade: "off",
   channels: [
     { notificationType: "comments", channel: "in_app", enabled: true },

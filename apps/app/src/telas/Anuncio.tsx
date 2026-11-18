@@ -10,9 +10,15 @@ import { EsqueletoDeLista } from "@/components/bivaque/esqueleto"
 import { EstadoDeErro } from "@/components/bivaque/estado-vazio"
 import { Etiqueta } from "@/components/bivaque/etiqueta"
 import { Icone } from "@/components/bivaque/icone"
+import { NomeDeMembro } from "@/components/bivaque/nome-de-membro"
 import { Secao } from "@/components/bivaque/secao"
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog"
-import { type AnuncioDetalhado, abrirInteresse, buscarAnuncio } from "@/lib/dados/mercado"
+import {
+  type AnuncioDetalhado,
+  abrirInteresse,
+  buscarAnuncio,
+  marcarSalvoAnuncio,
+} from "@/lib/dados/mercado"
 import { moeda } from "@/lib/formato"
 import { useNavegacao, useRolagemEFoco, useSobreposicaoDaEntrada } from "@/lib/navegacao/react"
 import { CARGA_CONCLUIDA } from "@/lib/navegacao/restauracao"
@@ -30,8 +36,9 @@ import { TelaIndisponivel } from "@/src/telas/TelaIndisponivel"
  * A tela é a mesma de sempre: capa, preço, bairro e cidade aproximados, "Sobre o
  * anúncio", quem anuncia, salvar, as duas ações e o rascunho local de contato.
  * Mudou a fonte: `lib/dados/mercado`, com carregando, vazio honesto por campo,
- * erro recuperável, sessão vencida, acesso negado e "sumiu". O endereço exato
- * nunca aparece: a localização mostrada é o bairro, por escolha de quem anuncia.
+ * erro recuperável, sessão vencida, acesso negado e "sumiu". A localização
+ * mostrada é a que o anunciante escolheu: endereço quando o local é exato,
+ * bairro · cidade quando é aproximado (RUN-175).
  *
  * Interesse sem otimismo: o botão só muda depois da resposta, e a falha deixa o
  * estado anterior com a mensagem do que aconteceu.
@@ -45,6 +52,8 @@ export function Anuncio() {
   const [erro, setErro] = useState<"falhou" | "sessao" | "negado" | "sumiu" | null>(null)
   const [rodada, setRodada] = useState(0)
   const [salvo, setSalvo] = useState(false)
+  const [gravandoSalvo, setGravandoSalvo] = useState(false)
+  const [avisoSalvo, setAvisoSalvo] = useState<string | null>(null)
   const interesse = useSobreposicaoDaEntrada("contato-interesse")
   const oferta = useSobreposicaoDaEntrada("contato-oferta")
   const tipoContato = interesse.aberto ? "interesse" : oferta.aberto ? "oferta" : null
@@ -74,6 +83,7 @@ export function Anuncio() {
     setErro(null)
     setConversaId(null)
     setAvisoInteresse(null)
+    setAvisoSalvo(null)
     void buscarAnuncio(id, { signal: controle.signal })
       .then((lido) => {
         if (controle.signal.aborted) return
@@ -155,6 +165,26 @@ export function Anuncio() {
     }
   }
 
+  /**
+   * O marcador grava de verdade (LAN-F06): a tela vira primeiro (é um toque
+   * rápido) e volta ao estado anterior se o servidor recusar, com o motivo.
+   */
+  async function alternarSalvo() {
+    if (gravandoSalvo) return
+    const alvo = !salvo
+    setSalvo(alvo)
+    setAvisoSalvo(null)
+    setGravandoSalvo(true)
+    try {
+      await marcarSalvoAnuncio(id, alvo, { signal: controle.signal })
+    } catch (falha: unknown) {
+      setSalvo(!alvo)
+      if (!foiAbortada(falha)) setAvisoSalvo(mensagemDaFalha(falha, "salvar"))
+    } finally {
+      setGravandoSalvo(false)
+    }
+  }
+
   const validacao = validarParametros("anuncio", { id })
   if (!validacao.ok) return <TelaIndisponivel motivo={validacao.motivo} />
 
@@ -198,6 +228,8 @@ export function Anuncio() {
   const localizacaoAproximada =
     anuncio.bairro === null ? cidadeDoAnuncio : `${anuncio.bairro}, ${cidadeDoAnuncio}`
   const vendedor = anuncio.donoNome ?? "Membro da comunidade"
+  // Sem nome legível não há perfil a abrir: o link não promete o que não existe.
+  const donoId = anuncio.meu || anuncio.donoNome === null ? null : anuncio.donoId
 
   return (
     <section data-tela="anuncio" className="grid gap-2">
@@ -217,11 +249,17 @@ export function Anuncio() {
             rotulo={salvo ? "Remover dos salvos" : "Salvar anúncio"}
             nome={salvo ? "bookmark" : "bookmark_border"}
             aria-pressed={salvo}
-            onClick={() => setSalvo((atual) => !atual)}
+            onClick={() => void alternarSalvo()}
             className="bg-(--surface-lowest)/85 backdrop-blur"
           />
         </span>
       </div>
+
+      {avisoSalvo === null ? null : (
+        <p role="alert" className="px-1 text-sm text-(--destructive)">
+          {avisoSalvo}
+        </p>
+      )}
 
       <div className="grid gap-1 px-1">
         {preco === null ? null : <b className="text-[22px]">{moeda(preco)}</b>}
@@ -241,13 +279,21 @@ export function Anuncio() {
         )}
       </Secao>
 
-      <Secao titulo="Localização aproximada">
+      <Secao
+        titulo={anuncio.localizacaoPublica === "exata" ? "Localização" : "Localização aproximada"}
+      >
         <div className="flex items-center gap-3 rounded-2xl bg-(--surface-lowest) px-4 py-3 ring-1 ring-(--outline-variant)">
           <Icone nome="location_on" className="size-6 shrink-0 text-(--primary)" />
           <span className="grid gap-0.5">
-            <b className="text-[15px]">{localizacaoAproximada}</b>
+            <b className="text-[15px]">
+              {anuncio.localizacaoPublica === "exata" && anuncio.endereco !== null
+                ? anuncio.endereco
+                : localizacaoAproximada}
+            </b>
             <small className="text-(--on-surface-variant)">
-              O endereço exato pode ser combinado na conversa.
+              {anuncio.localizacaoPublica === "exata" && anuncio.endereco !== null
+                ? localizacaoAproximada
+                : "Local aproximado, sem o endereço exato."}
             </small>
           </span>
         </div>
@@ -259,7 +305,15 @@ export function Anuncio() {
             {iniciais(vendedor)}
           </span>
           <span className="grid gap-0.5">
-            <b className="text-[15px]">{vendedor}</b>
+            <NomeDeMembro
+              nome={vendedor}
+              aoAbrir={
+                donoId === null
+                  ? undefined
+                  : () => void navegacao.irPara("perfil", { parametros: { id: donoId } })
+              }
+              className="text-[15px]"
+            />
             {anuncio.donoNome === null ? null : (
               <small className="text-(--on-surface-variant)">Membro da comunidade</small>
             )}

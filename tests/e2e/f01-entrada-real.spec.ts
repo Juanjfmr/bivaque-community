@@ -3,8 +3,8 @@ import {
   alvosMenoresQue,
   ContaIndisponivel,
   CPF_SINTETICO,
-  capturarEmDoisTemas,
   capturarFinais,
+  capturarNoClaro,
   contarRascunhosDaEntrada,
   criarContaConfirmada,
   criarContaVerificada,
@@ -96,19 +96,19 @@ test.describe("F01 — entrada real no app", { tag: "@stateful" }, () => {
       "O build servido em /app/entrar não é a entrada real (TelaDeEntrada): " +
         "rode `npx pnpm@11.18.0 app:export` e suba o Next antes do E2E.",
     ).toBeVisible({ timeout: 20_000 })
-    await capturarEmDoisTemas(page, projeto, "porta")
+    await capturarNoClaro(page, projeto, "porta")
 
     // ── e-mail e código de verdade ────────────────────────────────────────
     await page.getByRole("button", { name: "Continuar com e-mail" }).click()
     await esperarEtapaDaEntrada(page, "Qual é o seu e-mail?")
     await page.getByLabel("E-mail").fill(email)
-    await capturarEmDoisTemas(page, projeto, "email")
+    await capturarNoClaro(page, projeto, "email")
 
     const desde = new Date()
     await page.getByRole("button", { name: "Enviar código" }).click()
     await esperarEtapaDaEntrada(page, "Digite o código")
     const lido = await lerCodigoDoEmail(email, { desde })
-    await capturarEmDoisTemas(page, projeto, "codigo")
+    await capturarNoClaro(page, projeto, "codigo")
     await preencherCodigoDeEntrada(page, lido.codigo)
 
     // ── aceite antes do CPF ───────────────────────────────────────────────
@@ -119,20 +119,20 @@ test.describe("F01 — entrada real no app", { tag: "@stateful" }, () => {
     expect(userId, "a conta nova precisa existir no Auth local").toMatch(
       /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/,
     )
-    await capturarEmDoisTemas(page, projeto, "aceite")
+    await capturarNoClaro(page, projeto, "aceite")
     await page.getByRole("button", { name: "Aceito e continuo" }).click()
 
     // ── CPF: o vínculo verificado volta do servidor, sem Portal ───────────
     await esperarEtapaDaEntrada(page, "Qual é o seu CPF?")
     await page.getByLabel("CPF").fill(CPF_SINTETICO)
-    await capturarEmDoisTemas(page, projeto, "cpf")
+    await capturarNoClaro(page, projeto, "cpf")
     await page.getByRole("button", { name: "Confirmar vínculo" }).click()
 
     // ── nome ──────────────────────────────────────────────────────────────
     await esperarEtapaDaEntrada(page, "Como você se chama?")
     await page.getByLabel("Nome", { exact: true }).fill("Pessoa")
     await page.getByLabel("Sobrenome").fill("Sintética")
-    await capturarEmDoisTemas(page, projeto, "nome")
+    await capturarNoClaro(page, projeto, "nome")
     await page.getByRole("button", { name: "Continuar", exact: true }).click()
 
     // ── cidade pelo catálogo (UF AM → Manaus) e momento "morando" ─────────
@@ -153,7 +153,7 @@ test.describe("F01 — entrada real no app", { tag: "@stateful" }, () => {
     await page.getByText("Moro aqui", { exact: true }).click()
     await expect(page.getByRole("radio", { name: "Moro aqui" })).toBeChecked()
     await expect(page.getByLabel(/Data da (chegada|saída)/)).toHaveCount(0)
-    await capturarEmDoisTemas(page, projeto, "cidade")
+    await capturarNoClaro(page, projeto, "cidade")
 
     // O provisionamento nasce sozinho ao concluir cidade e momento. Ele precisa
     // terminar antes da etapa de grupos: /groups lê o vínculo da sessão.
@@ -174,7 +174,7 @@ test.describe("F01 — entrada real no app", { tag: "@stateful" }, () => {
     await expect(page.getByText("Vínculo confirmado").first()).toBeVisible()
     // O provisionamento limpa a falha que a tela mostrou enquanto faltava dado.
     await expect(page.getByRole("alert")).toHaveCount(0, { timeout: 30_000 })
-    await capturarEmDoisTemas(page, projeto, "previa-cidade")
+    await capturarNoClaro(page, projeto, "previa-cidade")
 
     // Retomada: recarregar depois do provisionamento volta à etapa pendente
     // (a prévia), não ao Início. Sem o marcador no servidor, o combinado seria
@@ -210,7 +210,7 @@ test.describe("F01 — entrada real no app", { tag: "@stateful" }, () => {
       `o grupo "${nomeDoGrupo}" não é um dos grupos públicos semeados de Manaus`,
     ).toContain(nomeDoGrupo)
 
-    await capturarEmDoisTemas(page, projeto, "interesses")
+    await capturarNoClaro(page, projeto, "interesses")
     await primeiroGrupo.click()
     await expect(page.getByRole("button", { name: `Sair de ${nomeDoGrupo}` })).toHaveAttribute(
       "aria-pressed",
@@ -224,7 +224,7 @@ test.describe("F01 — entrada real no app", { tag: "@stateful" }, () => {
     // aqui, não a interesses.
     await page.reload()
     await esperarEtapaDaEntrada(page, "O combinado")
-    await capturarEmDoisTemas(page, projeto, "combinado")
+    await capturarNoClaro(page, projeto, "combinado")
     await page.getByRole("button", { name: "Entendi" }).click()
 
     // ── avisos: escolher "agora não" também é escolher ────────────────────
@@ -232,7 +232,7 @@ test.describe("F01 — entrada real no app", { tag: "@stateful" }, () => {
     // Depois do combinado, a etapa pendente é avisos.
     await page.reload()
     await esperarEtapaDaEntrada(page, "Saiba quando responderem")
-    await capturarEmDoisTemas(page, projeto, "avisos")
+    await capturarNoClaro(page, projeto, "avisos")
     await page.getByRole("button", { name: "Agora não" }).click()
 
     // ── o Início do app ───────────────────────────────────────────────────
@@ -241,24 +241,19 @@ test.describe("F01 — entrada real no app", { tag: "@stateful" }, () => {
       page.getByRole("heading", { level: 1, name: /Sua rede em/ }),
       "o Início do app não abriu depois do fim da entrada",
     ).toBeVisible({ timeout: 30_000 })
-    await capturarEmDoisTemas(page, projeto, "inicio")
+    await capturarNoClaro(page, projeto, "inicio")
     await capturarFinais(page, projeto)
 
-    // O tema escuro não é só captura: a cor computada muda de fato entre os
-    // temas. Uma captura pode sair igual sem ninguém notar; a cor não.
-    const corDoTexto = async () =>
-      page.evaluate(() => {
-        const alvo = document.querySelector("main h1") ?? document.querySelector("main")
-        return alvo === null ? "" : getComputedStyle(alvo).color
-      })
-    await page.emulateMedia({ colorScheme: "light" })
-    const corNoClaro = await corDoTexto()
-    await page.emulateMedia({ colorScheme: "dark" })
-    const corNoEscuro = await corDoTexto()
-    expect(corNoClaro, "a cor do texto precisa ser computável no tema claro").not.toBe("")
-    expect(corNoEscuro, "a cor do texto precisa ser computável no tema escuro").not.toBe("")
-    expect(corNoEscuro, "o tema escuro muda a cor computada do texto").not.toBe(corNoClaro)
-    await page.emulateMedia({ colorScheme: "light" })
+    // O tema claro não é só captura: a cor computada do título é a dos tokens
+    // claros (texto escuro). Uma captura pode sair igual sem ninguém notar; a
+    // cor não.
+    const corNoClaro = await page.evaluate(() => {
+      const alvo = document.querySelector("main h1") ?? document.querySelector("main")
+      return alvo === null ? "" : getComputedStyle(alvo).color
+    })
+    const canaisDoTitulo = (corNoClaro.match(/[\d.]+/g) ?? []).map(Number).slice(0, 3)
+    expect(canaisDoTitulo, "a cor do texto precisa ser computável no tema claro").toHaveLength(3)
+    for (const canal of canaisDoTitulo) expect(canal).toBeLessThan(128)
 
     // Prova de que a entrada termina sem rascunho: a última etapa apaga a linha.
     expect(
@@ -395,7 +390,7 @@ test.describe("F01 — entrada real no app", { tag: "@stateful" }, () => {
     await expect(page.getByRole("alert")).toContainText(
       "Não foi possível entrar com o provedor agora. Tente de novo.",
     )
-    await capturarEmDoisTemas(page, projeto, "porta-erro-provedor")
+    await capturarNoClaro(page, projeto, "porta-erro-provedor")
   })
 
   test("rede cai na prévia do convite: mensagem fixa e botão volta ao normal", async ({
@@ -437,7 +432,7 @@ test.describe("F01 — entrada real no app", { tag: "@stateful" }, () => {
     ).toBeVisible({ timeout: 20_000 })
     const campoDoConvite = page.getByLabel("Código do convite")
     await expect(campoDoConvite).toHaveValue(codigo, { timeout: 20_000 })
-    await capturarEmDoisTemas(page, projeto, "convite-porta")
+    await capturarNoClaro(page, projeto, "convite-porta")
     await page.getByRole("button", { name: "Usar", exact: true }).click()
 
     // ── e-mail e código de verdade ────────────────────────────────────────
@@ -462,7 +457,7 @@ test.describe("F01 — entrada real no app", { tag: "@stateful" }, () => {
     await expect(page.getByLabel("CPF"), "o convite não pede CPF").toHaveCount(0)
     await page.getByLabel("Nome", { exact: true }).fill("Familiar")
     await page.getByLabel("Sobrenome").fill("Convidada")
-    await capturarEmDoisTemas(page, projeto, "convite-nome")
+    await capturarNoClaro(page, projeto, "convite-nome")
 
     const aceiteDoConvite = page.waitForResponse(
       (resposta) =>
@@ -495,7 +490,7 @@ test.describe("F01 — entrada real no app", { tag: "@stateful" }, () => {
     await expect(page.getByRole("heading", { level: 1, name: /Sua rede em/ })).toBeVisible({
       timeout: 30_000,
     })
-    await capturarEmDoisTemas(page, projeto, "convite-inicio")
+    await capturarNoClaro(page, projeto, "convite-inicio")
 
     // O aceite do convite criou o vínculo com a cidade de quem convidou: a
     // sonda sob RLS confere o fato no banco, não só a tela.
@@ -508,6 +503,10 @@ test.describe("F01 — entrada real no app", { tag: "@stateful" }, () => {
     })
     expect(sonda.status, "GET /api/app/entry/verification").toBe(200)
     expect(sonda.corpo?.membroDaCidade, "o convite precisa ter criado o vínculo").toBe(true)
+    expect(
+      await contarRascunhosDaEntrada(email),
+      "entry_progress não pode manter rascunho pessoal após o aceite do convite",
+    ).toBe(0)
   })
 
   test("código errado mostra a mensagem única de erro e o código certo ainda entra", async ({
@@ -552,7 +551,7 @@ test.describe("F01 — entrada real no app", { tag: "@stateful" }, () => {
       page.getByRole("heading", { level: 1, name: "Digite o código" }),
       "a tela não pode avançar com código errado",
     ).toBeVisible()
-    await capturarEmDoisTemas(page, projeto, "codigo-invalido")
+    await capturarNoClaro(page, projeto, "codigo-invalido")
 
     // Uma tentativa errada não queima o código: o certo ainda entra (o teto é 6).
     await preencherCodigoDeEntrada(page, lido.codigo)
@@ -659,28 +658,28 @@ test.describe("F01 — entrada real no app", { tag: "@stateful" }, () => {
       page.getByRole("heading", { level: 1, name: /Sua rede em/ }),
       "membro autenticado em /app/entrar deveria terminar no Início",
     ).toBeVisible({ timeout: 30_000 })
-    await capturarEmDoisTemas(page, projeto, "membro-inicio")
+    await capturarNoClaro(page, projeto, "membro-inicio")
   })
 
   // Fecha o achado (b) da revisão de 10/11: o caso antigo só comparava "a cor
   // escura é diferente da clara", e captura sozinha não prova acessibilidade.
-  // Aqui o tema escuro é medido no navegador: contraste WCAG por texto, ordem
-  // de tabulação com foco visível e alvo de toque de 44 px — e a captura dos
-  // dois temas continua, como evidência visual do mesmo ponto.
-  test("porta no tema escuro: contraste, foco de teclado e alvos de 44 px", async ({
+  // Aqui a porta é medida no navegador: contraste WCAG por texto, ordem de
+  // tabulação com foco visível e alvo de toque de 44 px — e a captura do tema
+  // claro continua, como evidência visual do mesmo ponto.
+  test("porta no tema claro: contraste, foco de teclado e alvos de 44 px", async ({
     page,
   }, testInfo) => {
     test.setTimeout(90_000)
     const projeto = testInfo.project.name
 
-    await page.emulateMedia({ colorScheme: "dark" })
+    await page.emulateMedia({ colorScheme: "light" })
     await page.goto(ROTA_DA_ENTRADA)
     await expect(
       page.getByRole("heading", { level: 1, name: "A comunidade militar da sua cidade." }),
       "O build servido em /app/entrar não é a entrada real (TelaDeEntrada).",
     ).toBeVisible({ timeout: 20_000 })
 
-    // Contraste no estilo COMPUTADO, com os tokens do tema escuro: 4,5:1 no
+    // Contraste no estilo COMPUTADO, com os tokens do tema claro: 4,5:1 no
     // texto comum e 3:1 no texto grande. O logo é logotipo (isento) e fica fora.
     const medidas = await medirContrastes(
       page,
@@ -688,12 +687,12 @@ test.describe("F01 — entrada real no app", { tag: "@stateful" }, () => {
     )
     expect(
       medidas.length,
-      "a porta precisa ter texto medível no tema escuro",
+      "a porta precisa ter texto medível no tema claro",
     ).toBeGreaterThanOrEqual(6)
     const abaixoDoMinimo = medidas.filter((medida) => medida.razao < medida.minimo)
     expect(
       abaixoDoMinimo,
-      `contraste abaixo do mínimo no tema escuro: ${JSON.stringify(abaixoDoMinimo)}`,
+      `contraste abaixo do mínimo no tema claro: ${JSON.stringify(abaixoDoMinimo)}`,
     ).toEqual([])
 
     // Tab de verdade: a porta tem cinco controles (três provedores, o código do
@@ -716,7 +715,7 @@ test.describe("F01 — entrada real no app", { tag: "@stateful" }, () => {
     )
     expect(pequenos, `alvos menores que 44 px: ${JSON.stringify(pequenos)}`).toEqual([])
 
-    // A prova visual do mesmo ponto nos dois temas, no diretório de capturas.
-    await capturarEmDoisTemas(page, projeto, "porta-acessibilidade")
+    // A prova visual do mesmo ponto no tema claro, no diretório de capturas.
+    await capturarNoClaro(page, projeto, "porta-acessibilidade")
   })
 })

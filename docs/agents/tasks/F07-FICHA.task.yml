@@ -1,0 +1,121 @@
+# RUN-177 — F07 L1: gestao do negocio proprio, acompanhamento dos dois lados,
+# troca das telas web restantes da jornada.
+#
+# O lado do membro que pede ja vive no app com banco real (RUN-010; negocios,
+# ficha, criar pedido sobre a ficha, meus pedidos). O mapa F07 de 16/11 fecha o
+# gap: (a) o dono NAO gere a propria ficha nem o catalogo pelo app — as telas
+# web (shell)/negocio e (shell)/negocio/cataloga vivem de porta morta (a antiga
+# era Meu negocio no /profile, morto no RUN-172; o form web escreve direto no
+# browser, fora da porta ADR §5); (b) o anunciante nao ve os pedidos RECEBIDOS
+# (app-pedidos.ts:13 so solicitante) e o app nao pode cancelar/encerrar nem ir
+# a conversa do pedido — os RPCs cancel_/close_service_request existem desde
+# 20260912063553/20260911105119 e a web usa via server actions; (c) a coluna
+# region do pedido esta viva-orfa (nenhum form escreve) — bairro de texto
+# simples, NAO CEP: CEP do pedido e item do LOC-IMPL, nao duplicar aqui;
+# (d) /pedidos/novo, /pedidos, /pedidos/[id], /negocio, /negocio/catalogo,
+# /explorar/servicos e /prestadores/[id] ainda servem tela ou estao atras de
+# redirect com pasta viva — fase 6 nao fecha assim.
+# PAINEL DO PRESTADOR CIVIL (provider)/prestador: DECIDIDO FORA — excecao
+# documentada no fechamento (convite e aceite funcionam na web, que nao e rota
+# de membro); portar o shell e card pos-lancamento. NAO e daqui.
+
+task_id: RUN-177
+
+adr: docs/decisions/ADR-20261105-porta-de-dados-do-app.md
+
+objective: >
+  Fechar a gestao do negocio e o acompanhamento do pedido no app pela porta
+  ADR §5, dar URL enderecavel a criacao de pedido, e trocar de vez as rotas web
+  da jornada, migrando as portas do rastreador e o provider-member-business.
+
+authority:
+  - docs/LANCAMENTO.md linha F07 (:60) + criterios 1-6
+  - ADR-20260909-pedidos-e-conversa-contextual.md (D1: descricao, quando, regiao, anexos, situacao; D5: sem intermediacao)
+  - ADR-20261105 §5 (porta de dados; escopo deste lote)
+  - Mapa do explorer F07 16/11 (tabela de rotas web, RPCs, pins, personas do seed)
+  - Card LAN-F07 + F07-RESSALVAS-REVISAO (fechar pelo caminho)
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    (shell)/negocio/page.tsx:24-31 e business-form.tsx:62,81 escrevem via
+    browser direto nos RPCs create_/update_member_business_page;
+    (shell)/negocio/cataloga reusa o modo businessPage das actions do prestador;
+    app-pedidos.ts:13 filtra requester_user_id; Pedido.tsx nao linka
+    conversaId nem cancela/encerra; MenuCriar.tsx:159-161 so navega para a
+    lista; nada de prestador/gestao em apps/app; /pedidos/novo serve tela
+    (lookahead next.config.ts:133); provider-member-business.spec.ts ancora a
+    jornada inteira na web e PASSA no CI — e o contrato funcional a reproduzir.
+
+allowed_paths:
+  - docs/agents/tasks/F07-FICHA.task.yml
+  - apps/web/app/api/app/negocio
+  - apps/web/app/api/app/negocios
+  - apps/web/app/api/app/pedidos
+  - apps/web/lib/service-requests
+  - apps/web/lib/providers
+  - apps/web/app/(shell)/negocio
+  - apps/web/app/(shell)/pedidos
+  - apps/web/app/(shell)/prestadores
+  - apps/web/app/(shell)/explorar
+  - apps/web/next.config.ts
+  - apps/web/lib/security/api-surface.ts
+  - apps/app/lib/dados/negocios.ts
+  - apps/app/lib/navegacao/rotas.ts
+  - apps/app/src/roteador.tsx
+  - apps/app/src/negocios
+  - apps/app/src/telas
+  - apps/app/src/casca/MenuCriar.tsx
+  - apps/app/tests
+  - tests/unit/app-api/negocios
+  - tests/unit/app-api/pedidos
+  - tests/unit/app-api/negocio
+  - tests/unit/security/api-surface.test.ts
+  - tests/unit/security/image-write-authorization.test.ts
+  - tests/unit/security/photo-upload-action.test.ts
+  - tests/unit/security/photo-upload-per-call.test.ts
+  - tests/unit/service-requests/open-cap-message.test.ts
+  - tests/unit/service-requests/photo-registration.test.ts
+  - tests/unit/ui/rail-unico-alcancavel-no-telefone.test.ts
+  - tests/e2e/link-crawl.spec.ts
+  - tests/e2e/helpers/pedidos.ts
+  - tests/e2e/provider-member-business.spec.ts
+  - tests/e2e/f07-negocios-real.spec.ts
+  - tests/scope/f07-porta-de-dados.test.mjs
+  - scripts/visual/capture.mjs
+  - .visual/f07-ficha
+
+forbidden:
+  - criar migration ou mexer em RPCs/polices/tabelas (RPCs de cancel/close ja existem; region ja e coluna)
+  - CEP/coordenada/geocodificacao no pedido ou no negocio (LOC-IMPL; bairro/regiao e texto simples)
+  - portar (provider)/prestador ou o fluxo de convite civil (decisao registrada no fechamento; nao reabrir shell civil no app)
+  - contagem por categoria ou Mais proximos (F07-CONTAGEM-ORDENACAO)
+  - escrever no browser contra o Supabase direto (tudo pela porta /api/app; regra ADR §5 e scope test)
+  - expor dados de terceiros; foto so URL assinada; upload passa sanitize-image
+  - usar skip/fixme novo ou afrouxar assercao; apagar prova sem realocar (tabela garantia→lar no RELATORIO)
+  - push, merge ou force-push; ler/criar/editar arquivos de ambiente; imprimir credenciais
+  - tocar em .work/main ou em outra worktree (lanes: CEP em apps/app/src/criar/mercado, glyph em fonts/tests)
+
+acceptance:
+  - "Porta do negocio proprio: POST /api/app/negocio (criar ficha) e PATCH /api/app/negocio (editar) — validacao UNICA no modulo que a web ja usa (lib/providers/showcase.ts), RPCs create_/update_member_business_page pelo cliente da sessao, sem service_role, CSRF no molde, negativos (sem sessao, dupla ficha 409-equivalente da RPC, validacao, 503 sem eco). Catalogo/portfolios: POST/PATCH/DELETE /api/app/negocio/cataloga/[id?] espelhando as Server Actions do web (saveCatalogItem/delete/move/portfolio add-remove de (provider)/prestador/actions.ts:117-311 — o lado businessPage dessas actions, NAO tocar o arquivo do prestador civil; copiar a SEMANTICA para a rota, com as mesmas validacoes e limites; foto: upload pela porta com sanitize-image e bucket atual, leitura assinada)."
+  - "Acompanhamento dos dois lados: GET /api/app/pedidos passa a listar os DOIS lados para quem os participa (solicitante e dono do negocio — or com RLS decidindo o que cada um ve; status legivel); PATCH /api/app/pedidos/[id] com acao=cancelar|encerrar chamando os RPCs existentes (cancel_/close_service_request; posse decide no banco; idempotencia do estado; negativos completos). Pedido.tsx: botoes honestos por lado e estado, cada um com Confirmacao da entrada (troca de sobreposicao, nao empilhamento — licao 16/11), link para a conversa do pedido (conversaId ja vem no payload; rota conversa existe), e a situacao revalida apos acao. Pedidos.tsx ganha o lado recebidos (abste-se de aba nova se a lista atual ja segrega; decidir e registrar)."
+  - "Pedido enderecavel: rota no catalogo (path /pedidos/novo, com ?destino= de negocio, search lido, molde das telas de overlay enderecavel existentes) — o form da ficha vira a MESMA folha aberta por URL; menu Criar create-request aponta para a rota real; bairro/regiao: campo opcional de texto no form gravando na coluna region via create_service_request (se o RPC nao tem par de region hoje, NAO mudar RPC: gravar no texto da descricao com prefixo? NAO — leia create_service_request: se region e inalcancavel pelo RPC sem migration, DEIXAR region de fora e registrar como limitacao declarada no RELATORIO (coluna morta da web tambem); sem migration, sem chuto)."
+  - "Troca em cadeia (pos-CI 1: TRES rotas; /explorar/servicos ADIADA): 307 /negocio e /negocio/cataloga → destinos do app (rota de gestao — definir path no catalogo: ex. /app/negocio-meu ou reuso da rota de negocio com modo proprio; decidir e registrar), /pedidos/novo → /app/pedidos/novo, /pedidos e /pedidos/[id] (pastas residuais atras do 307) REMOVIDAS junto com (shell)/negocio e (shell)/prestadores quando o grep provar zero importador vivo; /explorar/servicos NAO se troca neste lote — tem importador vivo (lib/search/groups.ts e o atalho do Inicio a linkam, e global-search-flow exercita a tela); a troca vai para o card da jornada da busca web, quando o importador vivo morrer primeiro; (provider)/prestador NAO se toca. TROCADAS + ausencia no molde, negativas do prestador civil intactas (proxy.ts:158-167 fica), link-crawl: portas de F07 repontadas (as 3 do mapa + as seeds do RUN-176 ajustadas ao que morreu — rebase em origin/main e reconciliar a lista com a realidade nova) e /explorar/servicos de volta em PORTAS_FORA_DO_LINK como estava, capture.mjs sem as rotas web mortas (as de explorar ficam), provider-member-business.spec.ts migra para o E2E real do app (criar ficha, editar, publicar item de catalogo, foto, abrir ficha publica, fazer pedido, cancelar) preservando cada garantia do spec morto — tabela item-a-item no RELATORIO."
+  - "Provas: unit das rotas novas (positivos + negativos por permissao; payload do PATCH negocio igual ao da action web que morre; cancel/encerrar idempotentes e por lado), api-surface com TOTAL recalculado CONTRA O DISCO apos rebase (somando as rotas novas + as lanes em voo), scope f07-porta-de-dados atualizado (telas novas ligadas, nenhuma escrita no browser), app e2E stub do fluxo novo (MenuCriar→pedido-novo; gestao da ficha com fetch mockado) rodado LOCAL com as portas livres apos as lanes voltarem, e2e real @stateful estendido para os dois lados do pedido (persona dona recebe e encerra; persona solicitante ve encerrado; conversa linkada) — CI."
+  - "Passam: gate --fast, tsc -p tests/e2e, pnpm test, test:scope, app test. R3 pela matriz (upload de foto, dados de negocio): revisao de seguranca por modelo distinto ANTES do merge; sob o guarda-chuva do ADR-20261105 (nenhuma fronteira nova de permissao — RPCs e RLS preexistentes). Antes de tocar fora dos allowed_paths, EMENDAR este contrato primeiro (cada '- ' em UMA linha; SEM aspas em comentarios de cabecalho)."
+
+proof:
+  - npx pnpm@11.18.0 gate --fast
+  - npx pnpm@11.18.0 test
+  - npx pnpm@11.18.0 test:scope
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/F07-FICHA.task.yml
+
+risk: lote largo (porta nova + troca de 4 rotas web + migracao do spec funcional da jornada); region fica declarada como possivel limitacao; painel civil fica como excecao documentada
+risk_level: R3
+
+reviewer_must_differ_from_executor: true
+retry_budget: 2
+on_budget_exhausted: HUMAN_DECISION
+
+closure:
+  requires_runtime_evidence: true

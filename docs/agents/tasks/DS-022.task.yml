@@ -1,0 +1,66 @@
+# Capturas das jornadas para a revisão às cegas pela régua Nextdoor.
+#
+# Autoridade: critério 2 de docs/LANCAMENTO.md (revisão às cegas contra a régua Nextdoor) está
+# FALTANDO em F02, F03, F06, F08, F09 e F10, e precisa ser refeito no F07 depois do RUN-180
+# (inventário de 16/11, .work/orq/relatorios/inventario-lan.md). O parecer cego de 12/11 julgou
+# telas de prova com dados de demonstração e não vale. O revisor externo trabalha só com imagens;
+# esta orquestração não tem banco local, então as imagens precisam sair do CI completo, que já
+# publica .visual/ no artefato visual-evidence. Hoje esse artefato vem quase vazio: F02, F06 e
+# F09-rpc não capturam nada, e os outros capturam um ponto só.
+
+task_id: DS-022
+
+objective: >
+  Cada CI completo passa a publicar, no artefato visual-evidence, as telas principais de cada
+  jornada do lançamento com dados reais do seed, nas três larguras e no tema claro, com nomes
+  estáveis, para que um revisor que só vê imagens consiga julgar cada jornada contra a régua.
+
+authority:
+  - docs/LANCAMENTO.md (critério 2 de cada jornada, revisão às cegas pela régua Nextdoor)
+  - .work/orq/relatorios/inventario-lan.md (critério 2 FALTA em F02, F03, F06, F08, F09 e F10)
+  - docs/agents/regua-nextdoor/PADRAO-DE-TELA.md
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    artefato visual-evidence do run 43969006143 da main com menos de 1 MB; contagem de capturas
+    por spec: f02-inicio-real 0, f06-mercado-real 0, f09-rpc-real 0, os demais 1.
+
+allowed_paths:
+  - tests/e2e/cega-capturas.spec.ts
+  - tests/e2e/cega-capturas-roteiro.ts
+  - tests/scope/cega-capturas.test.mjs
+  - docs/agents/regua-nextdoor/ROTEIRO-CEGO.md
+  - docs/agents/tasks/DS-022.task.yml
+
+forbidden:
+  - mudar código de produto, seed, migrations ou os specs de jornada existentes
+  - mudar a configuração do Playwright, os workflows ou o tema
+  - gravar dados no banco além do que o seed já tem (o spec só lê e navega; ações que gravam ficam de fora)
+  - capturar tela com dado de terceiro que a régua de privacidade proíbe exibir
+  - push, merge, abrir PR, force-push; ler, criar ou imprimir arquivos de ambiente
+
+acceptance:
+  - "tests/e2e/cega-capturas-roteiro.ts declara, em dados, o roteiro de telas por jornada: F02 início e busca com resultado; F03 menu Criar e os formulários de pergunta, desapego e evento vazios; F06 lista do Mercado, detalhe de anúncio, Meus anúncios e lista de Imóveis; F07 lista de negócios, página de negócio, Meu negócio e um pedido; F08 Guia e um verbete; F09 lista de conversas, uma conversa e Avisos; F10 Você, edição de perfil e Família. Cada tela tem rota, persona do seed, um seletor que prova que a tela carregou com dado real e o nome do arquivo."
+  - "tests/e2e/cega-capturas.spec.ts percorre o roteiro em cada projeto (375, 768, 1440), entra com a persona usando os ajudantes existentes, espera o seletor de dado real e as fontes, e grava em .visual/cega/<jornada>/<tela>-<largura>-claro.png com página inteira. Tela que não carregar falha o teste com o nome da tela."
+  - "O spec não grava nada no banco e roda no grupo paralelo (sem a tag @stateful), salvo se uma tela exigir estado que só o seed stateful tem; nesse caso, essa tela fica marcada e explicada no roteiro."
+  - "tests/scope/cega-capturas.test.mjs garante que o roteiro cobre as sete jornadas, que os nomes de arquivo são únicos e que cada tela tem seletor de prova."
+  - "docs/agents/regua-nextdoor/ROTEIRO-CEGO.md explica, em até 30 linhas, como baixar o artefato visual-evidence de um run e montar o pedido de revisão às cegas, sem contar ao revisor nada além das imagens e da régua."
+
+proof:
+  - node --test tests/scope/cega-capturas.test.mjs
+  - "node scripts/agents/prova-fila.mjs -- npx pnpm@11.18.0 test"
+  - npx pnpm@11.18.0 lint
+  - "npx pnpm@11.18.0 typecheck:e2e (ou o comando equivalente do package.json)"
+  - "prova de execução: o completo do CI deste PR publica visual-evidence com uma imagem por tela e largura do roteiro"
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/DS-022.task.yml
+
+risk: teste e evidência visual
+risk_level: R1
+
+reviewer_must_differ_from_executor: true
+retry_budget: 2
+on_budget_exhausted: HUMAN_DECISION
+
+closure:
+  requires_runtime_evidence: true

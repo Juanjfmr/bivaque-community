@@ -1,0 +1,75 @@
+task_id: REGUA-002
+objective: >
+  Você, perfil de membro, bloqueados e salvos ficam no nível da régua Nextdoor em 375/768/1440: a
+  identidade mostrada na barra é a mesma da página Você; o hub Você abre no perfil e na lista "Seu
+  Bivaque", não num formulário; o perfil de membro tem saída (mensagem quando existe rota, e ⋯ com
+  bloquear e denunciar); nenhum texto perde o sentido por corte; sucesso e falha têm a mesma estrutura.
+authority:
+  - docs/LANCAMENTO.md (F10, critério 2)
+  - tools/backend-kanban/public/board.json (LAN-F10, nota de 18/11 da revisão às cegas)
+  - docs/decisions/ADR-20261118-brasa-so-no-criar.md
+  - docs/decisions/ADR-20261116-bloqueio-e-denuncia-pela-porta-do-app.md
+  - docs/agents/regua-nextdoor/PADRAO-DE-TELA.md
+  - docs/agents/regua-nextdoor/IDENTIDADE-DAS-PECAS.md
+  - "Mobbin, Nextdoor web, perfil de vizinho (capa ilustrada, avatar com iniciais, nome, bairro, botão Message escuro, ⋯ no canto, publicações abaixo): https://mobbin.com/screens/041fb7de-0cfe-46de-9d78-37448e7f0493"
+  - "Mobbin, Nextdoor iOS, Edit Profile (capa, avatar, bio em campo com contador, Save): https://mobbin.com/screens/f883ef61-4ac7-47ee-a80e-4d38eb50f5f7"
+  - "Mobbin, Nextdoor iOS, Settings com abas Account/Notifications/Privacy (formulário fica atrás de Configurações, não no hub): https://mobbin.com/screens/f187554e-5407-47cd-b1a9-9f80aa3200aa"
+  - "Mobbin, Nextdoor iOS, menu ⋯ como folha de baixo: https://mobbin.com/screens/f23df80d-4b7d-4a7a-8abc-fdeadbc0bedd"
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    Revisão às cegas de 18/11 (capturas do #295, head edca972e), cartão LAN-F10. Defeitos deste lote:
+    (1) barra de baixo com avatar "RS" e página Você com "Ana Beatriz Ferreira" — descobrir se é o
+    ajudante de teste ou o app que lê duas fontes, e fazer as duas lerem a mesma; (2) "+" encosta em
+    "Mudar de cidade" em 375; (3) cortes: "Bloqueado em 03/11/2…" e subtítulos de "Seu Bivaque";
+    (4) perfil de membro sem mensagem, bloquear ou denunciar, cabeçalho colado na barra, bio
+    desalinhada; (5) hub Você abre direto no formulário de mudar de cidade, com parágrafo de mecanismo
+    e regra de privacidade na tela; na falha o erro aparece três vezes e a estrutura muda; (6)
+    bloqueados sem iniciais, "Bloqueado" sem concordância neutra, "Desbloquear" sem forma de pílula,
+    apoio de 4 linhas no vazio; (7) salvos: quatro vazios empilhados, busca sem forma de campo,
+    filtros de anúncio acima de tudo, chip selecionado em Brasa; (8) desktop em coluna solta.
+allowed_paths:
+  - apps/app/src/telas/Voce.tsx
+  - apps/app/src/telas/PerfilDeMembro.tsx
+  - apps/app/src/telas/Bloqueados.tsx
+  - apps/app/src/telas/Salvos.tsx
+  - apps/app/src/telas/CidadeConsulta.tsx
+  - apps/app/tests/e2e/voce.spec.ts
+  - apps/app/tests/e2e/voce-ajuda.ts
+  - apps/app/tests/e2e/voce-cidade.spec.ts
+  - apps/app/tests/e2e/voce-cep-sem-coordenada.spec.ts
+  - apps/app/tests/e2e/salvos.spec.ts
+  - apps/app/tests/e2e/mercado-salvos.spec.ts
+  - apps/app/tests/e2e/cegas/capturas-f09-f10.spec.ts
+  - apps/app/tests/voce*.test.ts
+  - apps/app/tests/voce*.test.tsx
+  - apps/app/tests/perfil*.test.tsx
+  - apps/app/tests/salvos*.test.tsx
+forbidden:
+  - tocar em Conversas.tsx, Conversa.tsx, Avisos.tsx, na casca ou nas peças (são do lote REGUA-001)
+  - criar rota de API, mudar banco, migrations ou contrato de dados; se "Mandar mensagem" não tiver rota existente, não crie — registre no relatório
+  - mostrar Força, OM, posto ou selo de verificação de outro membro (BLOCK-AFFILIATION)
+  - mostrar a origem de CEP ou coordenada de outra pessoa
+  - afrouxar ou apagar teste existente para ficar verde
+acceptance:
+  - o avatar e o nome da barra e os da página Você vêm da mesma fonte; na captura os dois mostram a mesma pessoa
+  - o hub Você mostra perfil (avatar, nome, cidade) e a lista "Seu Bivaque"; mudar de cidade fica atrás de uma linha da lista ou de "Editar perfil", sem texto de mecanismo ou de privacidade na tela
+  - a falha ao carregar mostra um único aviso com "Tentar de novo" e mantém a mesma estrutura da tela de sucesso
+  - o perfil de membro tem ⋯ com Bloquear e Denunciar pelas rotas existentes (com confirmação), e "Mandar mensagem" se houver rota existente; respiro de 16 px sob a barra; bio alinhada
+  - bloqueados mostram iniciais num dos quatro tons, data completa, texto neutro ("Bloqueio desde 03/11/2026"), "Desbloquear" em pílula; vazio com apoio de uma linha
+  - salvos têm um único estado vazio quando nada foi salvo, busca em forma de campo, filtros só junto da seção de anúncios, chip selecionado em tinta
+  - nenhum texto destas telas é cortado em 375; o "+" não encosta em controle algum
+  - em 1440 as telas respeitam a largura de leitura e não esticam campos a ~1290 px
+  - capturas cegas regeradas em claro E escuro (375/768/1440)
+proof:
+  - npx pnpm@11.18.0 gate --fast
+  - npx pnpm@11.18.0 --filter @bivaque/app test
+  - npx pnpm@11.18.0 --filter @bivaque/app exec vite build
+  - npx pnpm@11.18.0 --filter @bivaque/app test:e2e -- voce salvos cegas/capturas-f09-f10
+risk: interface
+risk_level: R2
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: HUMAN_DECISION
+closure:
+  requires_runtime_evidence: true

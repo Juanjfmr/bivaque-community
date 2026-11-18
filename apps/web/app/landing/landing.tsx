@@ -18,8 +18,9 @@ import "./landing.css"
 //
 // As fotos são <img> e não <Image /> de propósito: o topo usa <picture> para a
 // versão retrato (art direction que o next/image não faz sem getImageProps) e
-// todas as imagens precisam carregar antes da captura de comparação, sem
-// lazy-load. Os arquivos já são WebP no tamanho final.
+// os arquivos já são WebP no tamanho final. A hero carrega junto com o primeiro
+// paint; as capturas abaixo da dobra são `loading="lazy"`, e a captura de
+// comparação rola a página antes do print (scripts/visual/capture.mjs).
 //
 // O que saiu do protótipo, e por quê: nada de conteúdo. "Ajuda" e "Fale com a
 // gente" voltaram na PORT-006, quando /ajuda passou a ser pública
@@ -173,6 +174,14 @@ export function LandingPage() {
       className={`ld bv-skin ${notoSans.variable} ${notoSerif.variable} ${materialSymbols.variable}`}
       id="landing"
     >
+      {/* Sem JavaScript a folha do menu não abre: em vez de sumir a navegação
+          do celular, a folha vira a última seção do documento (regras
+          `html:not(.ld-js)` em landing.css). A classe entra antes da primeira
+          pintura, então quem tem JS vê a landing como sempre. */}
+      <script
+        // biome-ignore lint/security/noDangerouslySetInnerHtml: uma classe no <html>, sem dado de usuário
+        dangerouslySetInnerHTML={{ __html: "document.documentElement.classList.add('ld-js')" }}
+      />
       <a className="ld-skip" href="#ld-main" data-landing-anchor="ld-main">
         Pular para o conteúdo
       </a>
@@ -226,6 +235,7 @@ export function LandingPage() {
               alt="Famílias reunidas num fim de tarde, conversando em volta de uma mesa ao ar livre"
               width={1536}
               height={864}
+              fetchPriority="high"
             />
           </picture>
           <div className="ld-wrap ld-hero-in">
@@ -266,9 +276,9 @@ export function LandingPage() {
               <ul className="ld-list">
                 {FEATURES.map(([icon, title, text]) => (
                   <li key={title}>
-                    <i>
+                    <span className="ld-ico">
                       <MaterialIcon name={icon} />
-                    </i>
+                    </span>
                     <div>
                       <b>{title}</b>
                       <span>{text}</span>
@@ -283,6 +293,8 @@ export function LandingPage() {
                 alt="Tela Comunidade do Bivaque com perguntas resolvidas"
                 width={780}
                 height={1400}
+                loading="lazy"
+                decoding="async"
               />
               <figcaption>Tela da Comunidade no app · dados de exemplo</figcaption>
             </figure>
@@ -297,6 +309,8 @@ export function LandingPage() {
                 alt="Tela Início do Bivaque com o plano de chegada"
                 width={780}
                 height={1688}
+                loading="lazy"
+                decoding="async"
               />
               <figcaption>Plano de chegada no app · dados de exemplo</figcaption>
             </figure>
@@ -362,7 +376,14 @@ export function LandingPage() {
         </section>
 
         <section className="ld-final" id="fim">
-          <img src="/landing/v8/encontro.webp" alt="" width={1024} height={768} />
+          <img
+            src="/landing/v8/encontro.webp"
+            alt=""
+            width={1024}
+            height={768}
+            loading="lazy"
+            decoding="async"
+          />
           <div className="ld-wrap">
             <h2>Entre na comunidade da sua cidade.</h2>
             <p>Juntos somos mais fortes.</p>
@@ -399,7 +420,10 @@ export function LandingPage() {
         <Cta />
       </div>
 
-      <div className="ld-sheet" id="ld-sheet" role="dialog" aria-modal="true" aria-label="Menu">
+      {/* O papel de diálogo entra pelo comportamento, quando há JS: sem ele a
+          folha é uma seção comum no fim da página e não deve ser anunciada
+          como modal. */}
+      <div className="ld-sheet" id="ld-sheet">
         <div className="ld-sheet-head">
           <a
             className="ld-home"

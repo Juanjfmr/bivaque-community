@@ -1,5 +1,8 @@
 import type { SupabaseClient } from "@supabase/supabase-js"
+import type { NextRequest, NextResponse } from "next/server"
 import type { Database } from "supabase/database.generated"
+import { responder } from "../../../../lib/app-api/rota-do-app"
+import type { ResultadoDALocalizacao } from "../../../../lib/geo/anuncio"
 import { MAX_PHOTO_BYTES } from "../../../../lib/listings/types"
 
 /**
@@ -14,6 +17,91 @@ export const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}
 /** Id no formato que as rotas aceitam. Não é prova de existência. */
 export function ehUuid(valor: string | undefined): valor is string {
   return typeof valor === "string" && UUID.test(valor)
+}
+
+/**
+ * O que o `limite` da query pode ser; `null` é inválido (a rota responde 400).
+ * As duas listas do Mercado (a da cidade e a dos salvos) usam a mesma faixa.
+ */
+export function inteiroNaFaixa(bruto: string | null, min: number, max: number): number | null {
+  if (bruto === null || !/^\d+$/.test(bruto)) return null
+  const valor = Number(bruto)
+  return valor >= min && valor <= max ? valor : null
+}
+
+/**
+ * Instante do cursor, reescrito antes de entrar no filtro — o mesmo formato para
+ * a lista da cidade e para a dos salvos, com os microssegundos preservados.
+ */
+export function instanteDoCursor(valor: string): string | null {
+  const casado = /^(\d{4}-\d{2}-\d{2})T(\d{2}:\d{2}:\d{2})(\.\d{1,6})?(Z|[+-]00:00)$/.exec(valor)
+  if (!casado) return null
+  const [, dia, hora, fracao = ""] = casado
+  const canonico = `${dia}T${hora}${fracao}Z`
+  return Number.isFinite(Date.parse(canonico)) ? canonico : null
+}
+
+/**
+ * A frase da primeira edição de imóvel publicado antes do CEP (ADR-20261116 §1):
+ * o avô continua válido até a pessoa editar, e aí o CEP passa a ser exigido.
+ * É a mesma frase na rota e na tela.
+ */
+export const MENSAGEM_DO_AVO =
+  "Este imóvel foi publicado antes do CEP. Informe o CEP para salvar a edição."
+
+/**
+ * O que a recusa da localização do anúncio vira na resposta. 429 é o limitador
+ * por pessoa com o tempo de espera honesto; o 503 é o provedor fora; o 422 é o
+ * CEP que nenhuma fonte conhece. Nenhuma mensagem cita CEP, coordenada ou
+ * provedor em log.
+ */
+export function respostaDaLocalizacao(
+  request: NextRequest,
+  resultado: Extract<ResultadoDALocalizacao, { ok: false }>,
+): NextResponse {
+  if (resultado.erro === "cep-invalido") {
+    return responder(
+      request,
+      { erro: "dados-invalidos", campo: "cep", mensagem: "Informe um CEP com oito dígitos." },
+      400,
+    )
+  }
+  if (resultado.erro === "cep-nao-encontrado") {
+    return responder(
+      request,
+      { erro: "cep-nao-encontrado", mensagem: "Não encontramos esse CEP. Confira os números." },
+      422,
+    )
+  }
+  if (resultado.erro === "limite-de-consultas") {
+    const segundos = Math.max(1, Math.ceil((resultado.esperarMs ?? 60_000) / 1000))
+    return responder(
+      request,
+      {
+        erro: "limite-de-consultas",
+        mensagem: `Muitas consultas de CEP em pouco tempo. Tente de novo em ${Math.ceil(segundos / 60)} min.`,
+      },
+      429,
+      { "retry-after": String(segundos) },
+    )
+  }
+  return responder(
+    request,
+    {
+      erro: "geocodificador-indisponivel",
+      mensagem: "Não foi possível localizar o CEP agora. Tente de novo em instantes.",
+    },
+    503,
+  )
+}
+
+/**
+ * O CEP do corpo: ausente, vazio ou não-texto é `null` (o chamador decide se é
+ * erro); texto vale como veio e a normalização é do módulo de localização.
+ */
+export function cepDoCorpo(valor: unknown): string | null {
+  if (typeof valor !== "string") return null
+  return valor.trim() === "" ? null : valor
 }
 
 export type CidadeDaSessao = Readonly<{ id: string; nome: string }>
@@ -97,9 +185,14 @@ export function interpretarErroDoBanco(
 // satélite — o embed é left join e a ausência vira `null`, nunca um erro.
 export const SELECT_ANUNCIO =
   "id, kind, title, description, price_cents, neighborhood, condition, category, " +
-  "status, created_at, owner_user_id, address, localities(city_name), " +
+  "status, created_at, owner_user_id, address, localizacao_publica, localities(city_name), " +
   "property_details(deal, property_type, bedrooms, area_m2, condo_fee_cents, rent_cents, sale_price_cents), " +
   "listing_photos(id, path, position)"
+
+// A lista de IMÓVEIS (RUN-171): `!inner` porque filtro no satélite tem que
+// restringir o pai. Sem ele o PostgREST filtra só o embed e a lista devolve
+// imóvel fora do critério — a mesma razão do `SELECT` de `queries.ts` na web.
+export const SELECT_IMOVEL = SELECT_ANUNCIO.replace("property_details(", "property_details!inner(")
 
 export interface AnuncioBruto {
   id: string
@@ -114,6 +207,8 @@ export interface AnuncioBruto {
   created_at: string
   owner_user_id: string
   address: string | null
+  /** A escolha do anunciante (RUN-175); nulo no anúncio sem CEP. */
+  localizacao_publica: string | null
   localities: { city_name: string } | null
   property_details: {
     deal: "rent" | "sale"
@@ -136,6 +231,8 @@ export interface AnuncioDaLista {
   deal: "rent" | "sale" | null
   bairro: string | null
   cidade: string
+  /** `exata` mostra o endereço publicado; `aproximada` (ou nulo) mostra bairro · cidade. */
+  localizacaoPublica: "exata" | "aproximada" | null
   status: string
   condicao: string | null
   categoria: string | null
@@ -173,6 +270,10 @@ export function baseDoAnuncio(row: AnuncioBruto): AnuncioDaLista {
     deal: detalhes?.deal ?? null,
     bairro: row.neighborhood,
     cidade: row.localities?.city_name ?? "",
+    localizacaoPublica:
+      row.localizacao_publica === "exata" || row.localizacao_publica === "aproximada"
+        ? row.localizacao_publica
+        : null,
     status: row.status,
     condicao: row.condition,
     categoria: row.category,

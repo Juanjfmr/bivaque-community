@@ -11,15 +11,8 @@ import {
   respostaIndisponivel,
 } from "../../../../../lib/app-api/rota-do-app"
 import { isInviteCodeShape, normalizeInviteCode } from "../../../../../lib/convite/code"
-import {
-  inviteCodeHash,
-  inviteEmailDigest,
-  inviteOriginDigest,
-} from "../../../../../lib/convite/digest"
-import {
-  acceptFamilyInviteCode,
-  previewFamilyInviteCode,
-} from "../../../../../lib/convite/provision"
+import { inviteCodeHash, inviteOriginDigest } from "../../../../../lib/convite/digest"
+import { acceptFamilyInviteCode } from "../../../../../lib/convite/provision"
 import { log } from "../../../../../lib/logger"
 
 export const runtime = "nodejs"
@@ -32,10 +25,10 @@ export const dynamic = "force-dynamic"
 // e-mail é o da sessão, e o banco confere o vínculo do convite com ele. O
 // código é credencial — nunca vai para o rascunho, para log ou para a URL.
 //
-// O trabalho pesado é do banco: `family_invite_code_preview` valida forma,
-// e-mail, prazo e limite; `family_invite_code_accept` consome o código e
-// provisiona o vínculo com a cidade de quem convidou, na mesma transação. As
-// duas respondem status, não exceção, para a tentativa falha contar no limite.
+// O trabalho pesado é do banco: `family_invite_code_accept` valida forma,
+// e-mail, prazo e limite, consome o código e provisiona o vínculo com a cidade
+// de quem convidou, na mesma transação. Ele responde status, não exceção, para
+// a tentativa falha contar no limite.
 
 const NOME_MAXIMO = 80
 
@@ -107,18 +100,16 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   }
 
   const codeHash = inviteCodeHash(codigo)
-  const emailDigest = inviteEmailDigest(email)
   const originDigest = inviteOriginDigest(ipConfiavel(request.headers))
 
   try {
-    const preview = await previewFamilyInviteCode(servico, { codeHash, emailDigest, originDigest })
-    if (preview.status === "rate_limited") {
-      return responder(request, { erro: "convite-limite" }, 429)
-    }
-    if (preview.status !== "ok") {
-      return responder(request, { erro: "convite-invalido" }, 400)
-    }
-
+    // Sem preview aqui. `family_invite_code_preview` só casa convite `pending`,
+    // e depois que o aceite consumiu o código — inclusive no retry de um 503 da
+    // gravação do marcador — ele responde `unavailable` e travaria a retomada.
+    // O aceite já é a verificação: é ele que conta a tentativa, devolve o
+    // `rate_limited` e, para quem já aceitou ESTE convite, retoma o vínculo sem
+    // consumir o limite (20261023120000, bloco "Retomada"). Código de outra
+    // pessoa continua caindo na mesma resposta genérica.
     const aceite = await acceptFamilyInviteCode(servico, {
       codeHash,
       displayName: nome,
@@ -147,7 +138,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       { onConflict: "user_id" },
     )
     if (marcadorError) {
-      log.error("entry invite: draft marker write failed", { message: marcadorError.message })
+      log.error("entry invite: draft marker write failed")
+      return responder(request, { erro: "gravacao-indisponivel" }, 503, sessao.sessao.cabecalhos)
     }
 
     return responder(request, { localityMember: true }, 200, sessao.sessao.cabecalhos)

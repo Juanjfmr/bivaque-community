@@ -2,6 +2,8 @@ name: Bivaque R72 Mobile Parity
 
 on:
   pull_request:
+    # `labeled` faz aplicar a label ci:full disparar o run completo neste PR.
+    types: [opened, synchronize, reopened, labeled]
     paths:
       - 'apps/app/**'
       - 'scripts/app/capturar.mjs'
@@ -9,14 +11,24 @@ on:
       - 'pnpm-lock.yaml'
   workflow_dispatch:
 
+# Cada push novo no mesmo PR cancela o run anterior (ver pull-request-ci.yml e a
+# emenda de 16/11 do ADR-20261114). Push na main nunca é cancelado.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 permissions:
   contents: read
 
 jobs:
   reference-comparison:
     name: HTML R72 vs React / 320-375-430 / light-dark
-    runs-on: ubuntu-latest
+    # ubuntu-latest migrou para 26.04, que o Playwright 1.51.1 não suporta (pin intencional).
+    runs-on: ubuntu-24.04
     timeout-minutes: 25
+    # Completo só no fechamento do lote (label ci:full), push na main ou dispatch;
+    # ver ADR-20261114.
+    if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'ci:full')
 
     steps:
       - name: Checkout with R72 history

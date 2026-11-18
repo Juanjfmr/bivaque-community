@@ -4,8 +4,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest"
 vi.mock("web/lib/app-api/sessao-do-next", () => ({ resolverSessaoDaRequisicao: vi.fn() }))
 vi.mock("web/lib/supabase/server", () => ({ createServerClient: vi.fn() }))
 
-// RUN-020, correção: a janela deslizante é a primeira barreira do limite. Aqui
-// ela é simulada; o teste prova que a recusa vira 429 antes de criar.
+// O limite do banco vale mesmo quando Upstash não está configurado.
 const janela = vi.hoisted(() => ({ recusando: false }))
 
 vi.mock("web/lib/limits", () => ({
@@ -37,49 +36,33 @@ type Linha = {
 }
 
 /**
- * O banco dos testes: responde só as quatro funções de família e o outbox.
- * `erro` derruba a função escolhida para provar que falha de banco vira 503
+ * Dois bancos, de propósito: o cliente da SESSÃO (JWT do usuário) é quem chama
+ * as funções de posse derivada — criar e revogar —, e o cliente de SERVIÇO só
+ * lê as pendências e enfileira o e-mail. Os dois são espiões separados para que
+ * a prova seja de qual cliente fez o quê, não de "alguém chamou".
+ *
+ * `erro` derruba a chamada escolhida para provar que falha de banco vira 503
  * sem ecoar a mensagem do Postgres.
  */
 function banco(
   opcoes: {
     verificado?: boolean
     pendentes?: Linha[]
-    enviadosRecentes?: number
     erro?: "is_verified_holder" | "list_pending_invites_with_hint" | "create" | "revoke"
     mensagem?: string
     outboxFalha?: boolean
   } = {},
 ) {
-  const chamadas: { nome: string; args: Record<string, unknown> }[] = []
+  const daSessao: { nome: string; args: Record<string, unknown> }[] = []
+  const doServico: string[] = []
   const enfileirados: Record<string, unknown>[] = []
   const linhas: Linha[] = [...(opcoes.pendentes ?? [])]
 
-  type Consulta = {
-    eq: () => Consulta
-    contains: () => Consulta
-    gte: () => Promise<{ count: number; error: null }>
-  }
-  // O limite de ritmo do módulo conta as linhas de `family_invite` no outbox.
-  const consulta: Consulta = {
-    eq: () => consulta,
-    contains: () => consulta,
-    gte: async () => ({ count: opcoes.enviadosRecentes ?? 0, error: null }),
-  }
-
-  const rpc = vi.fn(async (nome: string, args: Record<string, unknown> = {}) => {
-    chamadas.push({ nome, args })
-    if (nome === "is_verified_holder") {
-      if (opcoes.erro === nome) return { data: null, error: { code: "XX000", message: "segredo" } }
-      return { data: opcoes.verificado ?? true, error: null }
-    }
-    if (nome === "list_pending_invites_with_hint") {
-      if (opcoes.erro === nome) return { data: null, error: { code: "XX000", message: "segredo" } }
-      return { data: linhas, error: null }
-    }
+  const rpcDaSessao = vi.fn(async (nome: string, args: Record<string, unknown> = {}) => {
+    daSessao.push({ nome, args })
     if (nome === "create_family_invitation") {
       if (opcoes.erro === "create") {
-        return { data: null, error: { code: "XX000", message: opcoes.mensagem ?? "segredo" } }
+        return { data: null, error: { code: "P0001", message: opcoes.mensagem ?? "segredo" } }
       }
       linhas.push({
         id: NOVO,
@@ -91,17 +74,29 @@ function banco(
     }
     if (nome === "revoke_family_invitation") {
       if (opcoes.erro === "revoke") {
-        return { data: null, error: { code: "XX000", message: opcoes.mensagem ?? "segredo" } }
+        return { data: null, error: { code: "P0001", message: opcoes.mensagem ?? "segredo" } }
       }
       return { data: null, error: null }
     }
-    throw new Error(`rpc inesperado: ${nome}`)
+    throw new Error(`rpc de sessão inesperado: ${nome}`)
+  })
+
+  const rpcDoServico = vi.fn(async (nome: string) => {
+    doServico.push(nome)
+    if (nome === "is_verified_holder") {
+      if (opcoes.erro === nome) return { data: null, error: { code: "XX000", message: "segredo" } }
+      return { data: opcoes.verificado ?? true, error: null }
+    }
+    if (nome === "list_pending_invites_with_hint") {
+      if (opcoes.erro === nome) return { data: null, error: { code: "XX000", message: "segredo" } }
+      return { data: linhas, error: null }
+    }
+    throw new Error(`rpc de serviço inesperado: ${nome}`)
   })
 
   const from = vi.fn((tabela: string) => {
     if (tabela !== "outbox") throw new Error(`tabela inesperada: ${tabela}`)
     return {
-      select: vi.fn(() => consulta),
       insert: vi.fn(async (valor: Record<string, unknown>) => {
         enfileirados.push(valor)
         return opcoes.outboxFalha
@@ -111,12 +106,18 @@ function banco(
     }
   })
 
-  return { client: { rpc, from } as never, chamadas, enfileirados }
+  return {
+    client: { rpc: rpcDaSessao, from } as never,
+    servico: { rpc: rpcDoServico, from } as never,
+    daSessao,
+    doServico,
+    enfileirados,
+  }
 }
 
 function autenticar(opcoes: Parameters<typeof banco>[0] = {}) {
   const mock = banco(opcoes)
-  vi.mocked(createServerClient).mockReturnValue(mock.client)
+  vi.mocked(createServerClient).mockReturnValue(mock.servico)
   vi.mocked(resolverSessaoDaRequisicao).mockResolvedValue({
     estado: "autenticada",
     via: "cookie",
@@ -152,6 +153,8 @@ describe("família do titular no app", () => {
     vi.clearAllMocks()
     vi.unstubAllEnvs()
     vi.stubEnv("BIVAQUE_APP_ORIGINS", "")
+    vi.stubEnv("UPSTASH_REDIS_REST_URL", "https://example.invalid")
+    vi.stubEnv("UPSTASH_REDIS_REST_TOKEN", "token-de-teste")
     janela.recusando = false
     vi.mocked(resolverSessaoDaRequisicao).mockResolvedValue({
       estado: "recusada",
@@ -212,7 +215,7 @@ describe("família do titular no app", () => {
     })
   })
 
-  it("envia pelo módulo compartilhado e devolve o convite gravado", async () => {
+  it("envia pelo cliente da SESSÃO e devolve só o convite gravado", async () => {
     const mock = autenticar()
     const resposta = await convidar(
       req("POST", "", `{"email":"  Joao.Silva@gmail.com ","user_id":"${OUTRO}"}`),
@@ -230,10 +233,14 @@ describe("família do titular no app", () => {
     expect(texto).not.toContain("token")
     expect(texto).not.toContain("codigo")
     expect(texto).not.toContain("joao.silva@gmail.com")
-    // O dono é a sessão, mesmo com `user_id` no corpo.
-    const criacao = mock.chamadas.find((chamada) => chamada.nome === "create_family_invitation")
-    expect(criacao?.args["p_inviter_user_id"]).toBe(USER)
+    // A criação foi feita pelo cliente da sessão, e o corpo da chamada NÃO leva
+    // id de titular: o dono é derivado de auth.uid() dentro da função.
+    const criacao = mock.daSessao.find((chamada) => chamada.nome === "create_family_invitation")
+    expect(criacao).toBeDefined()
+    expect(Object.keys(criacao?.args ?? {})).not.toContain("p_inviter_user_id")
     expect(criacao?.args["p_invitee_email_hint"]).toBe("jo***@gm***.com")
+    // O cliente de serviço só leu a lista e enfileirou: nenhuma escrita de posse.
+    expect(mock.doServico).toEqual(["is_verified_holder", "list_pending_invites_with_hint"])
     expect(mock.enfileirados).toHaveLength(1)
     expect(mock.enfileirados[0]).toMatchObject({
       recipient: "joao.silva@gmail.com",
@@ -249,39 +256,54 @@ describe("família do titular no app", () => {
     },
   )
 
-  it("recusa quem não é titular verificado", async () => {
-    autenticar({ verificado: false })
+  it("recusa quem não é titular verificado, pela guarda do banco", async () => {
+    autenticar({ erro: "create", mensagem: "only verified holders can create invitations" })
     const resposta = await convidar(req("POST", "", '{"email":"familiar@example.invalid"}'))
     expect(resposta.status).toBe(403)
     expect(await resposta.json()).toMatchObject({ erro: "nao-titular" })
   })
 
-  it("teto de convites é conflito, não erro de banco", async () => {
-    autenticar({ erro: "create", mensagem: "maximum 5 pending invitations per holder" })
+  it("teto de convites ativos é conflito, não erro de banco", async () => {
+    autenticar({ erro: "create", mensagem: "maximum 5 active invitations per holder" })
     const resposta = await convidar(req("POST", "", '{"email":"familiar@example.invalid"}'))
     expect(resposta.status).toBe(409)
     expect(await resposta.json()).toMatchObject({ erro: "teto-de-convites" })
   })
 
-  it("décimo primeiro envio na hora é 429 de limite", async () => {
-    const mock = autenticar({ enviadosRecentes: 10 })
+  it("teto de envios do banco é 429 e não enfileira", async () => {
+    const mock = autenticar({
+      erro: "create",
+      mensagem: "maximum 10 invitations per holder per hour",
+    })
     const resposta = await convidar(req("POST", "", '{"email":"familiar@example.invalid"}'))
     expect(resposta.status).toBe(429)
     expect(await resposta.json()).toMatchObject({ erro: "limite" })
-    // Recusa antes de criar: nada foi gravado nem enfileirado.
-    expect(mock.chamadas.some((chamada) => chamada.nome === "create_family_invitation")).toBe(false)
     expect(mock.enfileirados).toHaveLength(0)
   })
 
-  it("janela atômica cheia é 429 mesmo com o outbox vazio", async () => {
-    vi.stubEnv("UPSTASH_REDIS_REST_URL", "https://example.invalid")
-    vi.stubEnv("UPSTASH_REDIS_REST_TOKEN", "token-de-teste")
+  it("sem Upstash a rota consulta o banco e repassa a recusa fixa do teto", async () => {
+    vi.stubEnv("UPSTASH_REDIS_REST_URL", "")
+    vi.stubEnv("UPSTASH_REDIS_REST_TOKEN", "")
+    const mock = autenticar({
+      erro: "create",
+      mensagem: "maximum 10 invitations per holder per hour",
+    })
+    const resposta = await convidar(req("POST", "", '{"email":"familiar@example.invalid"}'))
+    expect(resposta.status).toBe(429)
+    expect(await resposta.json()).toMatchObject({
+      erro: "limite",
+      mensagem: "Muitos convites em pouco tempo. Tente novamente mais tarde.",
+    })
+    expect(mock.daSessao.map((chamada) => chamada.nome)).toEqual(["create_family_invitation"])
+    expect(mock.enfileirados).toHaveLength(0)
+  })
+  it("janela atômica cheia é 429 antes de criar", async () => {
     janela.recusando = true
-    const mock = autenticar({ enviadosRecentes: 0 })
+    const mock = autenticar()
     const resposta = await convidar(req("POST", "", '{"email":"familiar@example.invalid"}'))
     expect(resposta.status).toBe(429)
     expect(await resposta.json()).toMatchObject({ erro: "limite" })
-    expect(mock.chamadas.some((chamada) => chamada.nome === "create_family_invitation")).toBe(false)
+    expect(mock.daSessao).toHaveLength(0)
     expect(mock.enfileirados).toHaveLength(0)
   })
 
@@ -295,6 +317,15 @@ describe("família do titular no app", () => {
     expect(await resposta.text()).not.toContain("segredo")
   })
 
+  it("falha ao criar não ecoa a mensagem do Postgres", async () => {
+    autenticar({ erro: "create", mensagem: "segredo do banco" })
+    const resposta = await convidar(req("POST", "", '{"email":"familiar@example.invalid"}'))
+    expect(resposta.status).toBe(503)
+    const texto = await resposta.text()
+    expect(texto).not.toContain("segredo")
+    expect(texto).not.toContain("P0001")
+  })
+
   it("falha ao enfileirar o convite não vira convite criado", async () => {
     autenticar({ outboxFalha: true })
     const resposta = await convidar(req("POST", "", '{"email":"familiar@example.invalid"}'))
@@ -302,13 +333,17 @@ describe("família do titular no app", () => {
     expect(await resposta.text()).not.toContain("segredo")
   })
 
-  it("revoga o próprio convite pendente", async () => {
+  it("revoga o próprio convite pendente pelo cliente da sessão", async () => {
     const mock = autenticar({ pendentes: [PENDENTE] })
     const resposta = await revogar(req("DELETE", `/${CONVITE}`), context(CONVITE))
     expect(resposta.status).toBe(200)
     expect(await resposta.json()).toEqual({ removido: true })
-    const revogacao = mock.chamadas.find((chamada) => chamada.nome === "revoke_family_invitation")
-    expect(revogacao?.args).toEqual({ p_invitation_id: CONVITE, p_inviter_user_id: USER })
+    // Só o id do convite viaja: o titular é derivado de auth.uid().
+    expect(mock.daSessao).toEqual([
+      { nome: "revoke_family_invitation", args: { p_invitation_id: CONVITE } },
+    ])
+    // A rota de revogação não abre privilégio nenhum.
+    expect(createServerClient).not.toHaveBeenCalled()
   })
 
   it("convite de outro titular é 404", async () => {
@@ -321,11 +356,11 @@ describe("família do titular no app", () => {
   it("id que não é uuid é 404 sem chamar o banco", async () => {
     const mock = autenticar()
     expect((await revogar(req("DELETE", "/nao-e-uuid"), context("nao-e-uuid"))).status).toBe(404)
-    expect(mock.chamadas).toHaveLength(0)
+    expect(mock.daSessao).toHaveLength(0)
   })
 
   it("revogação com banco fora é 503 sem eco", async () => {
-    autenticar({ erro: "revoke" })
+    autenticar({ erro: "revoke", mensagem: "segredo" })
     const resposta = await revogar(req("DELETE", `/${CONVITE}`), context(CONVITE))
     expect(resposta.status).toBe(503)
     expect(await resposta.text()).not.toContain("segredo")
