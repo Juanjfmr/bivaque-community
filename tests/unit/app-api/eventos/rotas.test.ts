@@ -44,6 +44,7 @@ type Options = {
   count?: number | null
   errorTable?: string
   rpcError?: string
+  mensagemError?: { code: string; message: string }
   updateError?: { code: string; message: string } | null
   insertError?: { code: string; message: string } | null
   upsertError?: { code: string; message: string } | null
@@ -58,8 +59,16 @@ function mockClient(options: Options = {}) {
   const orCalls: string[] = []
   const neqCalls: Array<{ column: string; value: unknown }> = []
   const donosDoRpc: unknown[] = []
-  const rpc = function (this: unknown) {
+  const chamadasRpc: Array<{ nome: string; args: unknown }> = []
+  const rpc = function (this: unknown, nome: string, args: unknown) {
     donosDoRpc.push(this)
+    chamadasRpc.push({ nome, args })
+    if (nome === "send_conversation_message") {
+      return Promise.resolve({
+        data: options.mensagemError ? null : { id: "message-1" },
+        error: options.mensagemError ?? null,
+      })
+    }
     return Promise.resolve({
       data: options.rpcError === undefined ? "conversation-1" : null,
       error: options.rpcError === undefined ? null : { message: options.rpcError },
@@ -176,6 +185,7 @@ function mockClient(options: Options = {}) {
     orCalls,
     neqCalls,
     donosDoRpc,
+    chamadasRpc,
   }
 }
 
@@ -732,9 +742,9 @@ describe("rotas de eventos do app", () => {
       })
       // Regressão de 05/11: chamar a função solta perdia o `this` e virava 503.
       expect(mock.donosDoRpc[0]).toBe(mock.client)
-      expect(mock.inserts).toContainEqual({
-        table: "dm_messages",
-        value: { conversation_id: "conversation-1", sender_id: USER, content: "Olá" },
+      expect(mock.chamadasRpc).toContainEqual({
+        nome: "send_conversation_message",
+        args: { p_conversation_id: "conversation-1", p_content: "Ol\u00e1" },
       })
     })
 
@@ -789,6 +799,24 @@ describe("rotas de eventos do app", () => {
       })
     })
 
+    it.each([
+      [
+        { code: "42501", message: "blocked" },
+        403,
+        { erro: "recusado", mensagem: "N\u00e3o \u00e9 poss\u00edvel enviar a esta pessoa." },
+      ],
+      [{ code: "22023", message: "message required" }, 400, { erro: "corpo-invalido" }],
+    ])("traduz recusa da RPC de envio", async (mensagemError, status, corpo) => {
+      const mock = mockClient({ event: foraDoProprio, mensagemError })
+      authenticate(mock)
+      const resposta = await perguntar(
+        req("POST", `${BASE}/${ID}/perguntas`, JSON.stringify({ texto: "Oi" })),
+        context,
+      )
+      expect(resposta.status).toBe(status)
+      expect(await json(resposta)).toEqual(corpo)
+    })
+
     it("encontro inexistente é 404", async () => {
       const mock = mockClient({ event: null })
       authenticate(mock)
@@ -803,7 +831,10 @@ describe("rotas de eventos do app", () => {
     })
 
     it("falha de banco na mensagem é 503", async () => {
-      const mock = mockClient({ event: foraDoProprio, errorTable: "dm_messages" })
+      const mock = mockClient({
+        event: foraDoProprio,
+        mensagemError: { code: "XX000", message: "boom" },
+      })
       authenticate(mock)
       const resposta = await perguntar(
         req("POST", `${BASE}/${ID}/perguntas`, JSON.stringify({ texto: "Oi" })),

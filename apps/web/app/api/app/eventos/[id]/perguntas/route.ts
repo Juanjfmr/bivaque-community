@@ -57,19 +57,31 @@ export async function POST(request: NextRequest, { params }: Context): Promise<N
       }
       throw aberta.error ?? new Error("question RPC returned no conversation")
     }
-    const inserida = await client
-      .from("dm_messages")
-      .insert({
-        conversation_id: aberta.data,
-        sender_id: userId,
-        content: normalizeQuestion(texto),
-      })
-      .select("id")
-      .single()
-    if (inserida.error || !inserida.data) {
-      throw inserida.error ?? new Error("message insert returned no result")
+    const inserida = await client.rpc("send_conversation_message", {
+      p_conversation_id: aberta.data,
+      p_content: normalizeQuestion(texto),
+    })
+    if (inserida.error) {
+      if (inserida.error.code === "22023")
+        return responder(request, { erro: "corpo-invalido" }, 400)
+      if (inserida.error.code === "42501") {
+        return responder(
+          request,
+          { erro: "recusado", mensagem: friendlyQuestionError(inserida.error.message) },
+          403,
+        )
+      }
+      throw inserida.error
     }
-    return responder(request, { conversaId: aberta.data, mensagemId: inserida.data.id }, 201)
+    const mensagem = inserida.data
+    if (
+      !mensagem ||
+      typeof mensagem !== "object" ||
+      Array.isArray(mensagem) ||
+      typeof mensagem["id"] !== "string"
+    )
+      throw new Error("message RPC returned no result")
+    return responder(request, { conversaId: aberta.data, mensagemId: mensagem["id"] }, 201)
   } catch (error) {
     log.error("app evento question: write failed", {
       error: error instanceof Error ? error.message : "unknown",
