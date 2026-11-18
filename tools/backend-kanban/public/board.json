@@ -6152,8 +6152,8 @@
       "phase": "Lançamento",
       "tests": [],
       "blockers": [],
-      "updatedAt": "2026-11-16",
-      "sourceRevision": "954dd638",
+      "updatedAt": "2026-11-18",
+      "sourceRevision": "f980d8ac",
       "links": ["docs/LANCAMENTO.md"],
       "proof": [
         "02/11: aberto na definição do lançamento (docs/LANCAMENTO.md), por mandato do dono.",
@@ -6164,7 +6164,8 @@
         "16/11: RUN-166 (000cdd89) removeu a tela web de conversas — lado-troca das conversas fechado. O card ainda depende de LAN-PUSH (canal; chaves FCM sao ato do dono) para fechar.",
         "18/11: F09-001 (#290, 192159f9) — conversa lida e contador real: unread_conversation_count() security invoker + pgTAP, POST /api/app/conversas/[id]/lida (204/400/401/403/404/503), porLer na caixa e no corpo, contador da casca vindo do servidor e marcador 'Por ler' acessível. CI completo verde no head 1bb67c9d (test:db, db:lint, diff de tipos, stateful 375/768/1440 com f09-conversas-real, visual 7 shards). Revisão independente PASS (MEDIUM de casos negativos corrigido) e security-auditor PASS.",
         "18/11: F09-002 (#291, 09e5f442) — bloqueio corta avisos e e-mails nos dois sentidos (frente D1 do ADR-20261023): trigger BEFORE INSERT em notifications, e-mail de resposta de recomendação/seguidores e alerta de anúncio filtrados, GET /api/app/avisos esconde avisos antigos de ator bloqueado. CI completo verde no head c86304d6 (test:db, db:lint). security-auditor PASS; LOW restantes no card BLOQUEIO-AVISOS-RESTOS.",
-        "18/11: falta para fechar — LAN-PUSH (ADR R3 + tabela de token; chaves FCM/APNs são do dono), F09-B2 (pgTAP da corrida), F09-B3 (lote 3: 307 de /indicacoes/[id] e revogação do INSERT direto em dm_messages), capturas 375/768/1440 claro e revisão cega."
+        "18/11: falta para fechar — LAN-PUSH (ADR R3 + tabela de token; chaves FCM/APNs são do dono), F09-B2 (pgTAP da corrida), F09-B3 (lote 3: 307 de /indicacoes/[id] e revogação do INSERT direto em dm_messages), capturas 375/768/1440 claro e revisão cega.",
+        "18/11: lote 3 (#293, f980d8ac) — /indicacoes/:id passa a 307 para /app/pergunta/:id e a tela antiga sai inteira (indication-detail, conversation-menu, trigger-label, chat-thread e o ramo de bloqueio do ReportButton); links de aviso, denúncia e captura apontam para o app. Migration 20261118140000 revoga INSERT direto em dm_messages de authenticated: toda escrita passa por send_conversation_message (pergunta ao organizador inclusive, 42501→403, 22023→400). pgTAP dm-revogacao-insert prova veto do INSERT direto, idempotência por client_key, índice único parcial (23505), privilégios só de leitura e o gatilho de indisponibilidade em escrita direta; recusas fixadas por mensagem (blocked, not a participant). CI completo verde no head 740abeb4 (test:db, db:lint, stateful 375/768/1440). Revisão independente FAIL corrigível → corrigida em uma rodada; security-auditor LIBERA. Isto fecha os itens F09-B2 (corrida) e F09-B3 (troca e revogação). Falta para fechar: LAN-PUSH, capturas 375/768/1440 e revisão cega."
       ],
       "id": "LAN-F09",
       "title": "F09 Conversas e avisos ligados ao banco",
@@ -6218,9 +6219,11 @@
       "phase": "Lançamento",
       "tests": [],
       "blockers": [],
-      "proof": [],
-      "updatedAt": "2026-11-05",
-      "sourceRevision": "19e5ef5a",
+      "proof": [
+        "18/11: item 1 atendido — POST /api/app/conversas/[id]/mensagens já chama send_conversation_message, e desde #293 (f980d8ac) o INSERT direto em dm_messages está revogado para authenticated, então nenhuma rota escreve cru. Item 2 perdeu o objeto: chat-thread.tsx saiu no #293, a validação vive só na RPC e na rota. Restam o N+1 da caixa, o teste encostado abaixo de 720 px, o BOM e o 'Ver origem'."
+      ],
+      "updatedAt": "2026-11-18",
+      "sourceRevision": "f980d8ac",
       "status": "repo",
       "dependencies": [],
       "id": "F09-ENVIO-PELA-RPC",
