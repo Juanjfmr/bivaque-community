@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 
 import { Sobreposicao } from "@/components/bivaque/sobreposicao"
 import { criarEncontro, type Encontro, editarEncontro } from "@/lib/dados/eventos"
@@ -51,6 +51,12 @@ export function FormularioDeEncontro({
   const chave = `bivaque:f03:encontro:${cidadeDeCasa}`
   const [revisando, setRevisando] = useState(false)
   const [aviso, setAviso] = useState("")
+  // Entrar na revisão leva o foco ao título dela: quem usa teclado ou leitor
+  // de tela ouve o que vai ser criado antes de confirmar.
+  const tituloDaRevisao = useRef<HTMLHeadingElement>(null)
+  useEffect(() => {
+    if (revisando) tituloDaRevisao.current?.focus()
+  }, [revisando])
   const [rascunho, setRascunho] = useState<RascunhoDoEncontro>(() => {
     const quando =
       encontro === undefined ? { data: "", hora: "" } : paraDataEHora(encontro.comecaEm)
@@ -128,7 +134,14 @@ export function FormularioDeEncontro({
         <div className="pc pc-embutido grid gap-4">
           {revisando ? (
             <div data-revisao="encontro" className="grid gap-3">
-              <b>Revise seu encontro</b>
+              <h3
+                ref={tituloDaRevisao}
+                tabIndex={-1}
+                className="font-semibold outline-none"
+                data-titulo-da-revisao="encontro"
+              >
+                Revise seu encontro
+              </h3>
               <p>{rascunho.titulo}</p>
               <p>{quando === null ? "" : rotuloDeDataHora(quando)}</p>
               <p>{rascunho.local || "Local não informado"}</p>

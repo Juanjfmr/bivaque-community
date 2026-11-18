@@ -37,9 +37,7 @@ test("publica no próprio grupo: a publicação é o primeiro item, com foco nel
   await expect(dialogo(page)).toHaveCount(0)
 })
 
-test("publicação fora da página lida: o anúncio diz isso e o foco volta ao botão", async ({
-  page,
-}) => {
+test("releitura sem confirmação: o anúncio diz isso e o foco volta ao botão", async ({ page }) => {
   await simularGrupos(page, { membro: true })
   await page.goto("/app/grupo/g-pets")
   const abrir = page.locator('[data-acao="escrever-grupo"]')
@@ -53,7 +51,11 @@ test("publicação fora da página lida: o anúncio diz isso e o foco volta ao b
   await dialogo(page).getByRole("button", { name: "Publicar", exact: true }).click()
 
   await expect(dialogo(page)).toHaveCount(0)
-  await expect(page.locator('[data-anuncio-da-publicacao="sim"]')).not.toBeEmpty()
+  // O mesmo caminho da publicação que não está na página carregada
+  // (Grupo.tsx, aoPublicar): anúncio de "não apareceu na lista" e foco no botão.
+  await expect(page.locator('[data-anuncio-da-publicacao="sim"]')).toContainText(
+    "A publicação foi enviada, mas não apareceu na lista.",
+  )
   await expect(abrir).toBeFocused()
 })
 
