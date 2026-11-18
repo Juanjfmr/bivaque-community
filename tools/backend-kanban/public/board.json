@@ -7812,12 +7812,13 @@
         "Confirmar e remover apps/web/lib/user-group-interests-rpcs.ts (órfão após RUN-163)",
         "Cosmético CIDADE-169: links /localidade residuais (explorar/servicos:466, communities/[id]:544 — caem no 307) e active-nav.ts:82 mapeia tela morta; repontar quando essas telas forem editadas",
         "chat-thread.tsx ficou sem importador vivo apos RUN-166 — confirmar e remover (limpeza, nao conducta)",
-        "Cosmetico pos-RUN-172: configuracoes-nav com dois itens para /app/voce (nenhum acende), exports de visibilidade sem chamador em lib/profile/affiliation.ts, comentario do voce-cidade.spec ancora linhas de arquivo morto — faxina quando essas areas forem editadas"
+        "Cosmetico pos-RUN-172: configuracoes-nav com dois itens para /app/voce (nenhum acende), exports de visibilidade sem chamador em lib/profile/affiliation.ts, comentario do voce-cidade.spec ancora linhas de arquivo morto — faxina quando essas areas forem editadas",
+        "Pós-SEC-017: a tela morta de onboarding ainda cita /convite, e lib/convite/code.ts exporta INVITE_CODE_FORMAT e inviteMessageForStatus sem chamador vivo — remover"
       ],
       "dependencies": [],
       "tests": [],
       "blockers": [],
-      "updatedAt": "2026-11-16",
+      "updatedAt": "2026-11-18",
       "sourceRevision": "03ace7a4",
       "links": ["docs/agents/tasks/F08-VERBETE.task.yml", "docs/agents/tasks/F06-RESIDUO.task.yml"],
       "proof": [
@@ -7825,7 +7826,8 @@
         "16/11: RUN-163 deixou o modulo de RPCs de interesses 6rfao com a morte da action web (declarado no relatorio do lote, fora do allowed_paths dele).",
         "16/11: aberto pela condicao 3 da revisao do CIDADE-169.",
         "16/11: achado da revisao do RUN-166.",
-        "16/11: ressalva 4 da revisao do RUN-172."
+        "16/11: ressalva 4 da revisao do RUN-172.",
+        "18/11: consequência registrada no ADR-20261118-convite-familiar-so-no-app ao fechar o SEC-017."
       ]
     },
     {
@@ -9896,19 +9898,29 @@
       "phase": "Lançamento",
       "priority": "P1",
       "category": "backend",
-      "status": "repo",
+      "status": "done",
       "updatedAt": "2026-11-18",
-      "sourceRevision": "2c9b2bb3",
+      "sourceRevision": "69ad6a6",
       "description": "Achado do RUN-187 (PR #278): a tela antiga /convite de convite de familiar continua servindo na web, pede senha (contra o ADR-20261101 de entrada por código) e usa cliente de serviço. Lote R3 próprio: exige ADR por delegação, security-auditor e revisor independente antes de implementar; relação direta com F10-FAMILIA.",
       "dependencies": [],
       "checklist": [
-        "[ ] Inventário da rota /convite e do uso de service_role",
-        "[ ] ADR R3 por delegação + RATIFICACAO.md",
-        "[ ] Troca ou retirada da tela com redirect e testes positivos e negativos"
+        "[x] Inventário da rota /convite e do uso de service_role (só a tela e suas Server Actions; provision.ts e hint.ts ficam, usados pelas rotas do app)",
+        "[x] ADR R3 por delegação (ADR-20261118-convite-familiar-so-no-app) + RATIFICACAO.md",
+        "[x] Retirada da tela com redirect 307 para /app/entrar?convite= e testes positivos e negativos"
       ],
-      "proof": ["Fonte: descrição do PR #278, seção 'Achados fora da cerca' (17/11)."],
-      "tests": [],
-      "notes": []
+      "proof": [
+        "Fonte: descrição do PR #278, seção 'Achados fora da cerca' (17/11).",
+        "18/11: pasta apps/web/app/(preauth)/convite e lib/convite/form-error.ts removidas; next.config.ts redireciona /convite?codigo=X para /app/entrar?convite=X e /convite (inclusive ?legado=1) para /app/entrar; /convite sai da superfície pública do proxy.",
+        "18/11: tests/unit/infra/convite-redirect.test.ts (matchers do Next: código vai em ?convite=, valores hostis não mudam host nem caminho, sem código cai na porta, sem ciclo, /convite/x não casa nem é público); vitest infra/security/onboarding/convite 731 verdes; biome limpo; test:scope verde. E2E entrada-convite-publica.spec.ts e manaus-pilot-full-journey.spec.ts atualizados; a prova E2E é a do CI completo do PR.",
+        "18/11: reviewer FAIL só por lint (corrigido); security-auditor LIBERA COM RESSALVAS, só LOW (corrigidas em 69ad6a6)."
+      ],
+      "tests": [
+        "tests/unit/infra/convite-redirect.test.ts",
+        "tests/e2e/entrada-convite-publica.spec.ts",
+        "tests/e2e/manaus-pilot-full-journey.spec.ts"
+      ],
+      "notes": [],
+      "completedAt": "2026-11-18"
     },
     {
       "id": "AUTHZ-001",
