@@ -28,10 +28,17 @@ test.describe("F02 — início e busca reais", { tag: "@stateful" }, () => {
 
   test("não mostra entrada pendente na busca", async ({ page, context }) => {
     await semearSessaoDeMembro(context, MEMBRO_SEMEADO)
+    // O nome só existe na entrada `pending` do Guia (supabase/seed.sql, status na
+    // linha do item a0…005); outras fontes podem casar "Militar", então a tela
+    // pode mostrar resultados ou o vazio — em nenhum dos dois a entrada pendente.
+    const busca = page.waitForResponse((resposta) => resposta.url().includes("/api/app/busca?"))
     await page.goto("/app/busca?q=Acolhimento%20Militar")
-    await expect(page.getByText("Nada sobre “Acolhimento Militar”")).toBeVisible({
-      timeout: 30_000,
-    })
+    const resposta = await busca
+    expect(resposta.status()).toBe(200)
+    expect(await resposta.text()).not.toContain("Escola de Acolhimento Militar")
+    await expect(
+      page.getByText(/Nada sobre “Acolhimento Militar”|\d+ resultados? em Manaus/).first(),
+    ).toBeVisible({ timeout: 30_000 })
     await expect(page.getByText("Escola de Acolhimento Militar")).toHaveCount(0)
   })
 
