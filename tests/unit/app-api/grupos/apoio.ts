@@ -217,6 +217,8 @@ export function mockClient(opcoes: Opcoes = {}) {
     // `create_group` devolve o id do grupo criado; a leitura que a rota faz
     // depois segue por `from("groups")`, como no caminho de detalhe.
     if (nome === "create_group") return Promise.resolve({ data: opcoes.criado ?? ID, error: null })
+    // AUTHZ-007: veto de conta da sessão, ativo por padrão.
+    if (nome === "can_account_write_content") return Promise.resolve({ data: true, error: null })
     return builder(nome)
   })
   const upload = vi.fn(async () => ({

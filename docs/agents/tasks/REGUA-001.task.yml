@@ -1,0 +1,84 @@
+task_id: REGUA-001
+objective: >
+  Conversas e Avisos ficam no nível da régua Nextdoor em 375/768/1440: no computador a caixa e a
+  conversa aparecem lado a lado (lista à esquerda, conversa ou vazio com saída à direita), nada de
+  coluna solta esticada; o "+" nunca cobre conteúdo nem botão; nenhum título de aviso ou resposta
+  rápida perde o sentido por corte; o título da tela não aparece duplicado na barra e no corpo; a
+  navegação lateral marca a seção certa; a Brasa só aparece no Criar.
+authority:
+  - docs/LANCAMENTO.md (F09, critério 2)
+  - tools/backend-kanban/public/board.json (LAN-F09, nota de 18/11 da revisão às cegas)
+  - docs/decisions/ADR-20261118-brasa-so-no-criar.md
+  - docs/agents/regua-nextdoor/PADRAO-DE-TELA.md
+  - docs/agents/regua-nextdoor/IDENTIDADE-DAS-PECAS.md
+  - "Mobbin, Nextdoor web, Chats com conversa aberta (duas colunas: lista com abas All/DMs/For Sale, conversa com cabeçalho nome+bairro, menu ⋯, compositor em pílula com envio redondo): https://mobbin.com/screens/fd834924-6a02-4fa0-a5e7-1c3d20f9c549"
+  - "Mobbin, Nextdoor web, Chats sem conversa aberta (lista à esquerda, ilustração + 'Send a message' à direita): https://mobbin.com/screens/ecb9d604-1ecb-4f55-b45a-8c9d4efec815"
+  - "Mobbin, Nextdoor iOS, menu ⋯ como folha que sobe de baixo (ícone + título + apoio de uma linha): https://mobbin.com/screens/f23df80d-4b7d-4a7a-8abc-fdeadbc0bedd"
+  - "Mobbin, Nextdoor iOS, Settings com abas Account/Notifications/Privacy: https://mobbin.com/screens/f187554e-5407-47cd-b1a9-9f80aa3200aa"
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    Revisão às cegas de 18/11 sobre as capturas de apps/app/tests/e2e/cegas/capturas-f09-f10.spec.ts
+    (head edca972e, #295), registrada no cartão LAN-F09. Defeitos a corrigir neste lote:
+    (1) 768 Avisos preferências: o "+" cobre o seletor "Semanal" e "Gravar preferências" fica sob a
+    barra de baixo; (2) 375 Avisos lista: títulos terminam em reticências e perdem o objeto; 375
+    Conversa: chip de resposta rápida cortado na borda; (3) 1440 em todas as telas: coluna solta de
+    ~1290 px; Conversas sem lista+conversa; (4) 1440: título duplicado na barra e no corpo
+    ("Conversas", "Avisos"); nome do interlocutor duplicado na barra e no cabeçalho da conversa;
+    (5) navegação lateral marca "Início" em telas fora da Início (Salvos, perfil de membro);
+    (6) Brasa em "Enviar", "Enviar denúncia", "Tentar de novo"; (7) envio que falhou é só uma linha
+    vermelha sob o campo, sem a mensagem como balão "Não enviada · Tentar de novo"; (8) caixa vazia
+    sem saída; (9) contexto da conversa diz só "Anúncio" sem título do item; (10) menu ⋯ da conversa
+    com uma opção suspensa no celular em vez de folha; (11) preferências: caixas de 18 px em dois
+    níveis, a palavra "Push", apoio de 3 linhas e botão de gravar sem barra fixa.
+allowed_paths:
+  - apps/app/src/telas/Conversas.tsx
+  - apps/app/src/telas/Conversa.tsx
+  - apps/app/src/telas/Avisos.tsx
+  - apps/app/src/casca/Casca.tsx
+  - apps/app/src/casca/BarraDoTopo.tsx
+  - apps/app/src/casca/NavegacaoPrincipal.tsx
+  - apps/app/src/pecas/pecas.css
+  - apps/app/src/pecas/pecas.tsx
+  - apps/app/src/pecas/GaleriaDePecas.tsx
+  - apps/app/src/styles.css
+  - apps/app/components/bivaque/botao.tsx
+  - apps/app/tests/brasa-so-no-criar.test.ts
+  - apps/app/tests/e2e/avisos.spec.ts
+  - apps/app/tests/e2e/conversas-leitura.spec.ts
+  - apps/app/tests/e2e/conversas-ajuda.ts
+  - apps/app/tests/e2e/preferencias-avisos-salvamento.spec.ts
+  - apps/app/tests/e2e/cegas/capturas-f09-f10.spec.ts
+  - apps/app/tests/*.test.ts
+  - apps/app/tests/*.test.tsx
+forbidden:
+  - tocar em Voce.tsx, PerfilDeMembro.tsx, Bloqueados.tsx ou Salvos.tsx (são do lote REGUA-002)
+  - mudar rotas de API, banco, migrations ou contratos de dados
+  - mudar a navegação (Início · Comunidade · Criar · Mercado · Você, Conversas no topo)
+  - inventar dado de demonstração novo fora dos ajudantes de teste existentes
+  - afrouxar ou apagar teste existente para ficar verde
+acceptance:
+  - em 1440 e 768 a rota de Conversas mostra lista e conversa lado a lado; sem conversa aberta, o lado direito tem ilustração e uma ação de saída; em 375 continua lista → conversa
+  - nenhuma tela deste lote passa de uma largura de leitura definida (sem linhas ou campos de ~1290 px em 1440)
+  - o "+" (FAB) não sobrepõe nenhum controle em 375/768/1440; o conteúdo rola acima dele e da barra de baixo; "Gravar preferências" fica visível numa barra fixa no rodapé
+  - títulos dos avisos e respostas rápidas quebram linha (até 2) em vez de cortar o objeto da frase
+  - o título da tela aparece uma vez só; o nome do interlocutor aparece uma vez só na conversa
+  - a navegação lateral marca a seção dona da rota (Salvos e perfil de membro não marcam Início)
+  - a variante brasa só é usada pelo Criar (FAB e Criar da barra); concluir usa ardósia; o teste apps/app/tests/brasa-so-no-criar.test.ts varre src e components e falha em qualquer outro uso; textos de pecas e galeria dizem a regra do ADR
+  - envio que falhou aparece como balão da própria mensagem marcado "Não enviada" com ação "Tentar de novo"; o texto não se perde
+  - contexto da conversa mostra o título do item (anúncio, pedido ou evento) quando a API o fornece, sem o rótulo "Contexto da conversa"
+  - menu ⋯ da conversa em 375/768 abre como folha de baixo com alça; denúncia em 375 abre como folha e cita a mensagem denunciada; rótulos dentro do campo
+  - preferências usam interruptores de 44 px por canal, termo "No celular" no lugar de "Push", apoio de no máximo uma linha
+  - capturas cegas regeradas em claro E escuro (375/768/1440) pela spec de capturas
+proof:
+  - npx pnpm@11.18.0 gate --fast
+  - npx pnpm@11.18.0 --filter @bivaque/app test
+  - npx pnpm@11.18.0 --filter @bivaque/app exec vite build
+  - npx pnpm@11.18.0 --filter @bivaque/app test:e2e -- avisos conversas preferencias-avisos cegas/capturas-f09-f10
+risk: interface
+risk_level: R1
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: HUMAN_DECISION
+closure:
+  requires_runtime_evidence: true

@@ -5,7 +5,8 @@
 // Um canal so desde 18/09/2026: o WhatsApp saiu do MVP por decisao do
 // responsavel (o adaptador ja era unavailableAdapter e o app nunca ofereceu o
 // controle). O tipo diz a verdade em vez de guardar um canal que ninguem entrega.
-export type OutboxChannel = "email"
+// `push` entra no RUN-029 (LAN-PUSH), entregue pelo adaptador de Web Push.
+export type OutboxChannel = "email" | "push"
 export type OutboxStatus = "pending" | "sent" | "failed" | "skipped"
 
 export interface OutboxMessage {

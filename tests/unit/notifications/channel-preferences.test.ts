@@ -128,17 +128,46 @@ describe("notification channel preference rule (RECON-031)", () => {
     ).toBe(false)
   })
 
-  it("has exactly one outbox channel, and the matrix gates it", () => {
+  it("gates every outbox channel by the matrix", () => {
     // Este teste provava que o WhatsApp NÃO era barrado pela matriz, porque o app
     // não oferecia controle para ele. O canal saiu do MVP em 18/09/2026, então o
-    // que importa garantir agora é o inverso: com um canal só, a matriz MANDA —
-    // nao existe caminho de entrega que escape da preferência da pessoa.
+    // que importa garantir agora é o inverso: cada canal de entrega obedece à
+    // matriz — nao existe caminho que escape da preferência da pessoa.
     expect(
       outboxDeliveryAllowed({
         type: "comment",
         outboxChannel: "email",
         preference: prefs(),
         matrix: matrix([{ channel: "email", enabled: false }]),
+      }),
+    ).toBe(false)
+  })
+
+  it("delivers push only when the matrix row is on", () => {
+    // RUN-188: o push é opt-in (ADR-20261107) — sem linha na matriz fica
+    // desligado, como private.push_channel_enabled e channelDefault.
+    expect(
+      outboxDeliveryAllowed({
+        type: "comment",
+        outboxChannel: "push",
+        preference: prefs(),
+        matrix: matrix([{ channel: "push", enabled: true }]),
+      }),
+    ).toBe(true)
+    expect(
+      outboxDeliveryAllowed({
+        type: "comment",
+        outboxChannel: "push",
+        preference: prefs(),
+        matrix: [],
+      }),
+    ).toBe(false)
+    expect(
+      outboxDeliveryAllowed({
+        type: "comment",
+        outboxChannel: "push",
+        preference: prefs(),
+        matrix: matrix([{ channel: "push", enabled: false }]),
       }),
     ).toBe(false)
   })

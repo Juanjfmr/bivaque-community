@@ -7,7 +7,9 @@ import {
   responder,
 } from "../../../../../lib/app-api/rota-do-app"
 import { fichaDoDono, fotosDaFicha } from "../../../../../lib/providers/app-negocio"
+import { isDefiniteSqlRejection } from "../../../../../lib/storage/rpc-outcome"
 import { sanitizeImage } from "../../../../../lib/storage/sanitize-image"
+import { conferirEscritaDaConta } from "../../../../../lib/storage/veto-de-conta"
 
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
@@ -64,6 +66,21 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     return responder(request, { erro: "dados-invalidos", mensagem: "A imagem passa de 5 MB." }, 400)
 
   const client = auth.sessao.cliente
+
+  // AUTHZ-007: veto de conta ANTES do upload com service_role. A linha é
+  // vetada pelas policies restritivas; sem esta conferência o objeto subiria
+  // e ficaria órfão quando a linha fosse recusada.
+  const conta = await conferirEscritaDaConta(client)
+  if (!conta.ok) {
+    return conta.motivo === "conta"
+      ? responder(
+          request,
+          { erro: "recusado", mensagem: "Sua conta não pode publicar fotos agora." },
+          403,
+        )
+      : responder(request, { erro: "escrita-indisponivel" }, 503)
+  }
+
   try {
     const ficha = await fichaDoDono(client, auth.sessao.usuario.id)
     if (ficha === null) return responder(request, { erro: "negocio-nao-encontrado" }, 404)
@@ -98,18 +115,50 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       .upload(caminho, imagem, { contentType: arquivo.type })
     if (erroDoUpload) throw erroDoUpload
 
+    // AUTHZ-007, rodada 2 — a compensação do objeto novo só é segura quando o
+    // INSERT não commitou: rejeição SQL definitiva (SQLSTATE) ou falha antes
+    // dele (a contagem). Resposta incerta (rede, timeout, HTTP sem código SQL)
+    // mantém o objeto, porque a linha pode ter sido gravada; só a categoria
+    // fixa vai pro log.
+    const removerObjetoSemLinha = async (): Promise<void> => {
+      const limpeza = await servico.storage.from("provider-photos").remove([caminho])
+      if (limpeza.error) {
+        console.error("[negocio] objeto sem linha ficou no bucket:", limpeza.error.message)
+      }
+    }
+
     const { count, error: erroDaContagem } = await client
       .from("provider_portfolio_photos")
       .select("*", { count: "exact", head: true })
       .eq("provider_id", ficha.id)
-    if (erroDaContagem) throw erroDaContagem
-    const { error: erroDaLinha } = await client.from("provider_portfolio_photos").insert({
-      provider_id: ficha.id,
-      photo_path: caminho,
-      caption: legenda,
-      position: count ?? 0,
-    })
-    if (erroDaLinha) throw erroDaLinha
+    if (erroDaContagem) {
+      // O INSERT nunca rodou: sem linha, o objeto ficaria órfão.
+      await removerObjetoSemLinha()
+      throw erroDaContagem
+    }
+
+    let erroDaLinha: { message: string; code?: string } | null = null
+    try {
+      const { error } = await client.from("provider_portfolio_photos").insert({
+        provider_id: ficha.id,
+        photo_path: caminho,
+        caption: legenda,
+        position: count ?? 0,
+      })
+      erroDaLinha = error
+    } catch {
+      erroDaLinha = { message: "sem resposta do banco" }
+    }
+    if (erroDaLinha !== null && !isDefiniteSqlRejection(erroDaLinha)) {
+      console.error("[negocio] resposta incerta ao gravar a linha da foto; objeto preservado")
+      return responder(request, { erro: "escrita-indisponivel" }, 503)
+    }
+    if (erroDaLinha !== null) {
+      // Rejeição definitiva: o INSERT não commitou, então sem a linha o objeto
+      // fica órfão. Com o veto de conta antes do upload, defesa extra (AUTHZ-007).
+      await removerObjetoSemLinha()
+      throw erroDaLinha
+    }
     return responder(request, { fotos: await fotosDaFicha(client, ficha.id) }, 201)
   } catch {
     return responder(request, { erro: "escrita-indisponivel" }, 503)

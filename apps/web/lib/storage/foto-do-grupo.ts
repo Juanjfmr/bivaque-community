@@ -3,6 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js"
 import type { Database } from "supabase/database.generated"
 import { createServerClient } from "../supabase/server"
 import { sanitizeImage } from "./sanitize-image"
+import { conferirEscritaDaConta } from "./veto-de-conta"
 
 export const FOTO_DO_GRUPO_MAX = 5 * 1024 * 1024
 const TIPOS = { "image/jpeg": "jpeg", "image/png": "png", "image/webp": "webp" } as const
@@ -29,7 +30,7 @@ export async function enviarFotoDoGrupo(
   userId: string,
   grupoId: string,
   file: File,
-): Promise<{ caminho: string } | { invalida: true }> {
+): Promise<{ caminho: string } | { invalida: true } | { recusada: true }> {
   const membro = await client
     .from("group_memberships")
     .select("group_id")
@@ -38,6 +39,15 @@ export async function enviarFotoDoGrupo(
     .eq("status", "approved")
     .maybeSingle()
   if (membro.error || !membro.data) throw new Error("membership unavailable")
+
+  // AUTHZ-007: veto de conta antes do upload privilegiado, pela sessão da
+  // pessoa — o objeto não sobe se a linha seria recusada.
+  const conta = await conferirEscritaDaConta(client)
+  if (!conta.ok) {
+    if (conta.motivo === "conta") return { recusada: true }
+    throw new Error("account check unavailable")
+  }
+
   let imagem: Buffer
   try {
     imagem = await sanitizeImage(file, FOTO_DO_GRUPO_MAX)

@@ -2342,6 +2342,42 @@ export type Database = {
           },
         ]
       }
+      push_subscriptions: {
+        Row: {
+          created_at: string
+          destination: string
+          id: string
+          key_auth: string | null
+          key_p256dh: string | null
+          kind: string
+          label: string | null
+          last_success_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          destination: string
+          id?: string
+          key_auth?: string | null
+          key_p256dh?: string | null
+          kind: string
+          label?: string | null
+          last_success_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          destination?: string
+          id?: string
+          key_auth?: string | null
+          key_p256dh?: string | null
+          kind?: string
+          label?: string | null
+          last_success_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       recommendation_replies: {
         Row: {
           author_id: string
@@ -2864,6 +2900,7 @@ export type Database = {
         Args: { p_group_id: string; p_user_id: string }
         Returns: undefined
       }
+      can_account_write_content: { Args: never; Returns: boolean }
       can_manage_provider_profile: {
         Args: { p_provider_id: string }
         Returns: boolean
@@ -3643,6 +3680,16 @@ export type Database = {
         }
         Returns: undefined
       }
+      register_push_subscription: {
+        Args: {
+          p_destination: string
+          p_key_auth: string
+          p_key_p256dh: string
+          p_kind: string
+          p_label: string
+        }
+        Returns: undefined
+      }
       register_service_request_photo: {
         Args: { p_path: string; p_position: number; p_request_id: string }
         Returns: string
@@ -3957,7 +4004,7 @@ export type Database = {
         | "verification_decision"
         | "moderation_decision"
         | "account_suspension"
-      outbox_channel: "email"
+      outbox_channel: "email" | "push"
       outbox_status: "pending" | "sent" | "failed" | "skipped"
       post_type: "text" | "photo" | "link" | "poll"
       profile_visibility: "locality_members"
@@ -4207,7 +4254,7 @@ export const Constants = {
         "moderation_decision",
         "account_suspension",
       ],
-      outbox_channel: ["email"],
+      outbox_channel: ["email", "push"],
       outbox_status: ["pending", "sent", "failed", "skipped"],
       post_type: ["text", "photo", "link", "poll"],
       profile_visibility: ["locality_members"],

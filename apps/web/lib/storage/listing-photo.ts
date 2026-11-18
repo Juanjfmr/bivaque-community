@@ -5,10 +5,11 @@ import { buildListingPhotoPath } from "../listings/catalog"
 import { MAX_LISTING_PHOTOS, MAX_PHOTO_BYTES } from "../listings/types"
 import { createServerClient } from "../supabase/server"
 import { sanitizeImage } from "./sanitize-image"
+import { conferirEscritaDaConta } from "./veto-de-conta"
 
 export class FalhaDaFoto extends Error {
   constructor(
-    readonly status: 400 | 404 | 503,
+    readonly status: 400 | 403 | 404 | 503,
     mensagem: string,
   ) {
     super(mensagem)
@@ -33,6 +34,19 @@ export async function enviarFotoDoAnuncio(
     .maybeSingle()
   if (dono.error) throw new FalhaDaFoto(503, "Não foi possível conferir o anúncio.")
   if (!dono.data) throw new FalhaDaFoto(404, "Este anúncio não existe ou não é seu.")
+
+  // AUTHZ-007: veto de conta antes do upload privilegiado, para a foto não
+  // subir como órfã de uma linha que o banco recusaria.
+  const conta = await conferirEscritaDaConta(client)
+  if (!conta.ok) {
+    throw new FalhaDaFoto(
+      conta.motivo === "conta" ? 403 : 503,
+      conta.motivo === "conta"
+        ? "Sua conta não pode publicar fotos agora."
+        : "Não foi possível conferir sua conta. Tente de novo em instantes.",
+    )
+  }
+
   let imagem: Buffer
   try {
     imagem = await sanitizeImage(file, MAX_PHOTO_BYTES)

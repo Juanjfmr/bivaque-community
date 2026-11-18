@@ -12,7 +12,9 @@ import {
   validatePriceCents,
   validateTitle,
 } from "../../../lib/providers/showcase"
+import { isDefiniteSqlRejection } from "../../../lib/storage/rpc-outcome"
 import { sanitizeImage } from "../../../lib/storage/sanitize-image"
+import { conferirEscritaDaConta } from "../../../lib/storage/veto-de-conta"
 import { createServerClient as createServiceClient } from "../../../lib/supabase/server"
 
 // Onda G Task 4 — Server Actions do painel do prestador.
@@ -259,6 +261,18 @@ export async function addPortfolioPhotoAction(
   if (canManageError) throw new Error(`Falha ao conferir a ficha: ${canManageError.message}`)
   if (canManage !== true) throw new Error("Só o dono da ficha pode publicar fotos.")
 
+  // AUTHZ-007: veto de conta antes do upload com service_role, pela sessão da
+  // pessoa — o objeto não sobe se a linha seria recusada.
+  const conta = await conferirEscritaDaConta(client)
+  if (!conta.ok) {
+    return {
+      error:
+        conta.motivo === "conta"
+          ? "Sua conta não pode publicar fotos agora."
+          : "Não foi possível conferir sua conta. Tente de novo em instantes.",
+    }
+  }
+
   const extension = file.type === "image/png" ? "png" : file.type === "image/webp" ? "webp" : "jpg"
   const path = `${profileId}/portfolio/${crypto.randomUUID()}.${extension}`
   let image: Buffer
@@ -273,19 +287,51 @@ export async function addPortfolioPhotoAction(
     .upload(path, image, { contentType: file.type })
   if (uploadError) throw new Error(`Falha no upload: ${uploadError.message}`)
 
+  // AUTHZ-007, rodada 2 — a compensação do objeto novo só é segura quando o
+  // INSERT não commitou: rejeição SQL definitiva (SQLSTATE) ou falha antes
+  // dele (a contagem). Resposta incerta (rede, timeout, HTTP sem código SQL)
+  // mantém o objeto, porque a linha pode ter sido gravada; só a categoria
+  // fixa vai pro log.
+  const removerObjetoSemLinha = async (): Promise<void> => {
+    const limpeza = await serviceClient.storage.from("provider-photos").remove([path])
+    if (limpeza.error) {
+      console.error("[prestador] objeto sem linha ficou no bucket:", limpeza.error.message)
+    }
+  }
+
   const { count, error: countError } = await client
     .from("provider_portfolio_photos")
     .select("*", { count: "exact", head: true })
     .eq("provider_id", profileId)
-  if (countError) throw new Error(`Falha a contar o portfólio: ${countError.message}`)
+  if (countError) {
+    // A contagem falha depois do upload e antes do INSERT: sem linha, o
+    // objeto ficaria órfão — mesma compensação da rota do app (AUTHZ-007).
+    await removerObjetoSemLinha()
+    throw new Error(`Falha a contar o portfólio: ${countError.message}`)
+  }
 
-  const { error } = await client.from("provider_portfolio_photos").insert({
-    provider_id: profileId,
-    photo_path: path,
-    caption,
-    position: count ?? 0,
-  })
-  if (error) throw new Error(`Falha ao registrar a foto: ${error.message}`)
+  let erroDaLinha: { message: string; code?: string } | null = null
+  try {
+    const { error } = await client.from("provider_portfolio_photos").insert({
+      provider_id: profileId,
+      photo_path: path,
+      caption,
+      position: count ?? 0,
+    })
+    erroDaLinha = error
+  } catch {
+    erroDaLinha = { message: "sem resposta do banco" }
+  }
+  if (erroDaLinha !== null && !isDefiniteSqlRejection(erroDaLinha)) {
+    console.error("[prestador] resposta incerta ao gravar a linha da foto; objeto preservado")
+    throw new Error("Não foi possível confirmar a foto. Recarregue antes de tentar de novo.")
+  }
+  if (erroDaLinha !== null) {
+    // Rejeição definitiva: o INSERT não commitou, então sem a linha o objeto
+    // fica órfão.
+    await removerObjetoSemLinha()
+    throw new Error(`Falha ao registrar a foto: ${erroDaLinha.message}`)
+  }
 
   revalidatePath("/prestador/catalogo")
   revalidatePath("/negocio/catalogo")
