@@ -91,7 +91,12 @@ vira regra neste lote, com o mesmo predicado e o mesmo erro:
    `private.can_write_own_content()` à sessão autenticada (como `is_account_suspended`, a
    identidade sai do JWT, nunca de parâmetro). Conta suspensa ou com exclusão pedida é recusada
    com a mesma frase da porta de escrita; a linha da tabela segue vetada pelas policies, e se a
-   linha for recusada depois do upload o objeto é apagado (defesa extra contra o órfão).
+   linha for recusada depois do upload o objeto é apagado só em rejeição SQL definitiva
+   (SQLSTATE: a instrução não commitou, então sem a linha o objeto ficaria órfão). Resultado
+   incerto — rede, timeout, HTTP sem código SQL — mantém o objeto, porque a linha pode ter sido
+   gravada e só a resposta se perdeu; apagá-lo quebraria a foto que o banco já referencia, e só
+   uma categoria fixa vai pro log (defesa extra contra o órfão, com o mesmo limite na falha da
+   contagem que precede o INSERT).
 4. Migration `20261118174716_authz_007_veto_prestador`; nenhuma migration aplicada é editada.
 
 Emenda de 18/11, rodada 1: a primeira versão desta emenda vetava a foto por um trigger
@@ -112,4 +117,5 @@ da ficha) e cancelar o pedido devolve; outra pessoa ativa não é afetada. O vet
 fora do banco, nos caminhos de upload: testes unitários em
 `tests/unit/security/uploads-authz.test.ts` (conta ativa passa; suspensa e com exclusão pedida
 recusam antes do upload, um trio por caminho; o portfólio apaga o objeto quando a linha é
-recusada depois do upload).
+recusada com SQLSTATE depois do upload e o preserva quando a resposta é incerta, com a categoria
+fixa no log; a contagem falhando depois do upload também apaga, na action antiga como na rota).

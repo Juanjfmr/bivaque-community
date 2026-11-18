@@ -10,7 +10,7 @@ const mock = vi.hoisted(() => ({
   ID: "10000000-0000-4000-8000-000000000001",
   FICHA: "30000000-0000-4000-8000-000000000001",
   LISTING: "98200000-0000-4000-8000-000000000001",
-  erroDaLinha: null as { code: string } | null,
+  erroDaLinha: null as { code?: string; message?: string } | null,
   ssrUser: vi.fn(),
   ssrFrom: vi.fn(),
   ssrRpc: vi.fn(),
@@ -313,6 +313,33 @@ describe("foto de portfólio pela porta do app (POST /api/app/negocio/fotos)", (
     expect(mock.remove).toHaveBeenCalledOnce()
     expect(mock.remove.mock.calls[0]?.[0]).toEqual([expect.stringContaining(`${FICHA}/portfolio/`)])
   })
+
+  it("resposta incerta da linha preserva o objeto subido, sem eco do erro", async () => {
+    const log = vi.spyOn(console, "error").mockImplementation(() => {})
+    mock.erroDaLinha = { message: "gateway sem SQLSTATE" }
+    const resposta = await POST(pedido())
+    expect(resposta).toMatchObject({ status: 503, corpo: { erro: "escrita-indisponivel" } })
+    expect(mock.remove).not.toHaveBeenCalled()
+    // Só a categoria fixa vai pro log; o erro incerto não é ecoado.
+    expect(log).toHaveBeenCalledOnce()
+    expect(log).toHaveBeenCalledWith(
+      "[negocio] resposta incerta ao gravar a linha da foto; objeto preservado",
+    )
+    log.mockRestore()
+  })
+
+  it("contagem falhando depois do upload apaga o objeto sem linha", async () => {
+    mock.appFrom.mockImplementation(() => ({
+      select: () => ({
+        eq: async () => ({ count: 0, error: { code: "XX000", message: "segredo" } }),
+      }),
+      insert: async () => ({ error: null }),
+    }))
+    const resposta = await POST(pedido())
+    expect(resposta).toMatchObject({ status: 503 })
+    expect(mock.remove).toHaveBeenCalledOnce()
+    expect(mock.remove.mock.calls[0]?.[0]).toEqual([expect.stringContaining(`${FICHA}/portfolio/`)])
+  })
 })
 
 describe("foto de portfólio pela tela web antiga (addPortfolioPhotoAction)", () => {
@@ -351,6 +378,41 @@ describe("foto de portfólio pela tela web antiga (addPortfolioPhotoAction)", ()
   it("linha recusada depois do upload apaga o objeto (defesa extra)", async () => {
     mock.erroDaLinha = { code: "42501" }
     await expect(addPortfolioPhotoAction(formulario())).rejects.toThrow("Falha ao registrar a foto")
+    expect(mock.remove).toHaveBeenCalledOnce()
+    expect(mock.remove.mock.calls[0]?.[0]).toEqual([expect.stringContaining(`${FICHA}/portfolio/`)])
+  })
+
+  it("resposta incerta da linha preserva o objeto subido, sem eco do erro", async () => {
+    const log = vi.spyOn(console, "error").mockImplementation(() => {})
+    mock.erroDaLinha = { message: "gateway sem SQLSTATE" }
+    await expect(addPortfolioPhotoAction(formulario())).rejects.toThrow(
+      "Não foi possível confirmar a foto",
+    )
+    expect(mock.remove).not.toHaveBeenCalled()
+    // Só a categoria fixa vai pro log; o erro incerto não é ecoado.
+    expect(log).toHaveBeenCalledOnce()
+    expect(log).toHaveBeenCalledWith(
+      "[prestador] resposta incerta ao gravar a linha da foto; objeto preservado",
+    )
+    log.mockRestore()
+  })
+
+  it("contagem falhando depois do upload apaga o objeto sem linha", async () => {
+    mock.ssrFrom.mockImplementation((tabela: string) => {
+      if (tabela === "locality_memberships") return consulta({ locality_id: "localidade" })
+      if (tabela === "provider_profiles") return consulta({ id: FICHA })
+      if (tabela === "provider_portfolio_photos")
+        return {
+          select: () => ({
+            eq: async () => ({ count: 0, error: { code: "XX000", message: "segredo" } }),
+          }),
+          insert: async () => ({ error: null }),
+        }
+      throw new Error(`tabela inesperada: ${tabela}`)
+    })
+    await expect(addPortfolioPhotoAction(formulario())).rejects.toThrow(
+      "Falha a contar o portfólio",
+    )
     expect(mock.remove).toHaveBeenCalledOnce()
     expect(mock.remove.mock.calls[0]?.[0]).toEqual([expect.stringContaining(`${FICHA}/portfolio/`)])
   })
