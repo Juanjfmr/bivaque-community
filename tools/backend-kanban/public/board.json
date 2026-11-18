@@ -9909,6 +9909,144 @@
       "proof": ["Fonte: descrição do PR #278, seção 'Achados fora da cerca' (17/11)."],
       "tests": [],
       "notes": []
+    },
+    {
+      "id": "AUTHZ-001",
+      "title": "AUTHZ-001: conta suspensa ou com exclusão pedida não edita nem apaga post e comentário",
+      "phase": "Segurança pré-lançamento",
+      "priority": "P0",
+      "category": "backend",
+      "status": "done",
+      "updatedAt": "2026-11-18",
+      "sourceRevision": "0ef76ed7",
+      "description": "As policies de UPDATE/DELETE de posts e comments (versão de 20261019222259) não vetavam conta suspensa nem pedido de exclusão, ao contrário do INSERT e do ADR-20260901. Reproduzido em Supabase local em 18/11 (4 asserções RED do PR #213). Corrigido pela migration 20261118030820 e pelo ADR-20261118-congelamento-de-escrita-e-colunas-de-grupo (R3 por delegação).",
+      "dependencies": [],
+      "checklist": [
+        "[x] RED reproduzido em banco local",
+        "[x] Migration nova pela CLI",
+        "[x] pgTAP: ativo, suspenso, suspensão vencida, pedido de exclusão",
+        "[x] ADR por delegação e RATIFICACAO",
+        "[x] PR com CI completo verde e merge"
+      ],
+      "proof": [
+        "18/11, main 0ef76ed7 + lote: supabase db reset --local --no-seed; test:db 184 arquivos/2.996 asserções PASS; db:lint sem achados; gate --fast verde.",
+        "Revisão independente (reviewer) PASS COM RESSALVAS; security-auditor LIBERA COM RESSALVAS com teste de mutação (testes ficam vermelhos com as policies e o grant antigos). Ressalvas de prova e ADR fechadas no lote.",
+        "PR #280 mergeado por squash (9626e1a3); CI completo verde no SHA 2a325ef3 (CI core, Stateful 375/768/1440, Fast checks, agregador); Visual ausente porque o diff não toca apps/app."
+      ],
+      "tests": ["supabase/tests/authz-suspension-write-freeze.sql"],
+      "notes": [
+        "Origem: auditoria de 13/11 no PR #213 (rascunho).",
+        "A tela antiga de edição (feed-post-edit.tsx) passa a tratar zero linhas como falha, para a conta congelada não ver 'Alterações salvas'."
+      ],
+      "completedAt": "2026-11-18"
+    },
+    {
+      "id": "AUTHZ-002",
+      "title": "AUTHZ-002: grupo não troca dono, autoria, cidade nem exclusão por UPDATE direto",
+      "phase": "Segurança pré-lançamento",
+      "priority": "P0",
+      "category": "backend",
+      "status": "done",
+      "updatedAt": "2026-11-18",
+      "sourceRevision": "0ef76ed7",
+      "description": "20261107093000 regranteou UPDATE em groups com owner_user_id, created_by, locality_id, community_id e is_deleted; groups_update_owner decide a linha, não a coluna. Reproduzido em Supabase local em 18/11 (2 asserções RED do PR #213). A migration 20261118030820 deixa o grant só em name, description, visibility, rules e pinned_post_id; titularidade, exclusão e padrão seguem pelas RPCs. reports-denials #11 passa a esperar 42501.",
+      "dependencies": [],
+      "checklist": [
+        "[x] RED reproduzido em banco local",
+        "[x] Migration nova pela CLI",
+        "[x] pgTAP: privilégios de coluna, dono edita nome, dono não troca dono/autoria/cidade, moderador não administra",
+        "[x] ADR por delegação e RATIFICACAO",
+        "[x] PR com CI completo verde e merge"
+      ],
+      "proof": [
+        "18/11, main 0ef76ed7 + lote: supabase db reset --local --no-seed; test:db 184 arquivos/2.996 asserções PASS; db:lint sem achados; gate --fast verde.",
+        "Revisão independente (reviewer) PASS COM RESSALVAS; security-auditor LIBERA COM RESSALVAS com teste de mutação (testes ficam vermelhos com as policies e o grant antigos). Ressalvas de prova e ADR fechadas no lote.",
+        "PR #280 mergeado por squash (9626e1a3); CI completo verde no SHA 2a325ef3 (CI core, Stateful 375/768/1440, Fast checks, agregador); Visual ausente porque o diff não toca apps/app."
+      ],
+      "tests": [
+        "supabase/tests/authz-group-sensitive-columns.sql",
+        "supabase/tests/reports-denials.sql"
+      ],
+      "notes": [
+        "Origem: auditoria de 13/11 no PR #213 (rascunho). AUTHZ-003 a 005 do mesmo relatório seguem fora deste lote."
+      ],
+      "completedAt": "2026-11-18"
+    },
+    {
+      "id": "AUTHZ-006",
+      "title": "AUTHZ-006: veto de suspensão e exclusão pedida no UPDATE/DELETE das demais tabelas de conteúdo",
+      "phase": "Segurança pré-lançamento",
+      "priority": "P1",
+      "category": "backend",
+      "status": "done",
+      "updatedAt": "2026-11-18",
+      "sourceRevision": "20c01128",
+      "description": "Achado F1 do security-auditor em 18/11 (lote AUTHZ-001/002): as policies de escrita de recommendation_requests, recommendation_replies, listings, property_details, listing_photos, events e groups, e as RPCs definer de conteúdo, checavam só autoria, sem o veto do ADR-20260901. Corrigido pela migration 20261118060000 (21 policies restritivas e veto em 13 RPCs definer) e pelo ADR-20261118-veto-de-escrita-nas-demais-tabelas-de-conteudo (R3 por delegação).",
+      "dependencies": ["AUTHZ-001"],
+      "checklist": [
+        "[x] Varredura de todas as policies de escrita de conteúdo (resíduo fora das sete tabelas no AUTHZ-007)",
+        "[x] Negativos em pgTAP por tabela (discriminam: falham sem a migration, segundo a auditoria; RED não rodado em banco local, sem Docker no ambiente)",
+        "[x] Migration nova com os vetos",
+        "[x] Telas e rotas tratam zero linhas como falha (rotas do app; tela antiga de indicação registrada como resíduo no ADR)",
+        "[x] ADR por delegação (novo, em vez de emenda) e RATIFICACAO",
+        "[x] PR com CI completo verde e merge"
+      ],
+      "proof": [
+        "Origem: auditoria do security-auditor de 18/11 sobre o lote AUTHZ-001/002 (policies de 20261019222259 e posteriores lidas no catálogo local).",
+        "PR #281: CI completo verde no SHA 20c01128 (CI core com test:db e db:lint, Stateful 375/768/1440, Fast checks, agregador). pgTAP novo authz-veto-escrita-conteudo.sql com 43 asserções; guard de contagem de rls-or-column-regression passa a contar só permissivas.",
+        "Revisão independente (reviewer) PASS COM RESSALVAS sobre c0cec15, ressalvas fechadas em f6eca95; security-auditor LIBERA COM RESSALVAS sobre f6eca95, M1 (create_group_in_community) fechado em 20c01128, M2 vira AUTHZ-007."
+      ],
+      "tests": [
+        "supabase/tests/authz-veto-escrita-conteudo.sql",
+        "supabase/tests/rls-or-column-regression.test.sql"
+      ],
+      "notes": [],
+      "completedAt": "2026-11-18"
+    },
+    {
+      "id": "SUSP-APAGAR-CONTEUDO",
+      "title": "Conta suspensa pede no app para apagar o próprio conteúdo e a moderação aprova",
+      "phase": "Segurança pré-lançamento",
+      "priority": "P2",
+      "category": "backend",
+      "status": "repo",
+      "updatedAt": "2026-11-18",
+      "sourceRevision": "9626e1a3",
+      "description": "Decisão do dono em 18/11 na ratificação do ADR-20261118: com a escrita congelada pelo AUTHZ-001, a pessoa suspensa sem prazo pode pedir no app a remoção do próprio conteúdo, e a moderação aprova. A remoção aprovada acontece por RPC/rota do operador (nunca reabrindo o DELETE da Data API para a conta suspensa). Implementação de código só com autorização explícita do dono.",
+      "dependencies": ["AUTHZ-001"],
+      "checklist": [
+        "[ ] Autorização do dono para implementar",
+        "[ ] Pedido no app (Você) para conteúdo próprio, com estado do pedido",
+        "[ ] Fila e aprovação na moderação, remoção pelo operador com registro em operator_actions",
+        "[ ] pgTAP e E2E: suspenso pede, operador aprova/recusa, ninguém mais apaga",
+        "[ ] Emenda do ADR-20261118"
+      ],
+      "proof": [
+        "Decisão do dono registrada em docs/decisions/RATIFICACAO.md (linha do ADR-20261118), 18/11/2026."
+      ],
+      "tests": [],
+      "notes": []
+    },
+    {
+      "id": "AUTHZ-007",
+      "title": "AUTHZ-007: veto de suspensão na página de negócio e no pedido de serviço",
+      "phase": "Segurança pré-lançamento",
+      "priority": "P2",
+      "category": "backend",
+      "status": "repo",
+      "updatedAt": "2026-11-18",
+      "sourceRevision": "20c01128",
+      "description": "Achado M2 do security-auditor no lote AUTHZ-006: create_member_business_page e update_member_business_page (definer) e as policies de provider_profiles, provider_catalog_items e provider_portfolio_photos não olham suspensão nem exclusão pedida; create_service_request só veta exclusão pedida. Os buckets de foto de anúncio e de evento também não olham suspensão (objeto órfão, sem linha). Preexistente; R3: entra por emenda do ADR-20261118-veto-de-escrita-nas-demais-tabelas-de-conteudo.",
+      "dependencies": ["AUTHZ-006"],
+      "checklist": [
+        "[ ] Emenda do ADR e linha na RATIFICACAO",
+        "[ ] Restritivas nas tabelas de prestador e veto nas RPCs definer",
+        "[ ] pgTAP ativo, suspenso e exclusão pedida",
+        "[ ] Revisão independente e security-auditor"
+      ],
+      "proof": ["Fonte: parecer do security-auditor de 18/11 sobre f6eca95 (PR #281)."],
+      "tests": [],
+      "notes": []
     }
   ],
   "launch": {

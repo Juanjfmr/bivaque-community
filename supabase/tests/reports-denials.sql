@@ -244,13 +244,16 @@ select set_config(
 );
 select set_config('request.jwt.claim.role', 'authenticated', true);
 
+-- AUTHZ-002: is_deleted saiu do grant de UPDATE de authenticated; a recusa vem
+-- do privilégio de coluna (42501) antes do trigger block_soft_delete_groups.
+-- A exclusão legítima continua pela RPC definer delete_group.
 select throws_ok(
   $$
     update public.groups
     set is_deleted = true
     where id = '80000000-0000-4000-8000-000000000001'
   $$,
-  'P0001',
+  '42501',
   null,
   'authenticated user cannot soft-delete a group'
 );
