@@ -28,9 +28,13 @@ link antigo copiado antes disso, e o link legado `?legado=1`, ainda chegavam à 
    convite os usam.
 2. `next.config.ts` redireciona com 307: `/convite?codigo=X` vai para `/app/entrar?convite=X`, e
    `/convite` sem código (inclusive `?legado=1`) vai para `/app/entrar`. A regra é exata: `/convite/x`
-   nunca existiu e segue o portão do proxy.
+   nunca existiu e segue o portão do proxy. O Next junta a query original ao destino, então o
+   Location fica `/app/entrar?codigo=X&convite=X`; o código já estava na URL pedida, a porta só lê
+   `convite` e apaga a query inteira quando o código é válido. O valor capturado só entra na query,
+   codificado; o caminho do destino é fixo.
 3. `/convite` sai da superfície pública do proxy (`lib/security/route-surface.ts`): o redirect roda
-   antes do proxy, então o caminho não precisa mais ser público.
+   antes do proxy, então o caminho não precisa mais ser público. Emenda a lista de entradas exatas
+   do [ADR-20261110-superficie-publica-do-proxy](ADR-20261110-superficie-publica-do-proxy.md).
 
 ## Consequências
 
@@ -39,7 +43,8 @@ link antigo copiado antes disso, e o link legado `?legado=1`, ainda chegavam à 
 - Quem chega pelo link legado sem código perde a frase "Este link de convite mudou" e cai na porta
   crua do app; esse link é de convites anteriores ao código e já não aceita nada.
 - A tela antiga de onboarding (`/onboarding`, já redirecionada para a porta) ainda cita `/convite` no
-  código morto; sai com os resíduos da troca (TROCA-RESIDUOS).
+  código morto, e `lib/convite/code.ts` ainda exporta `INVITE_CODE_FORMAT` e
+  `inviteMessageForStatus`, que só a tela usava; saem com os resíduos da troca (TROCA-RESIDUOS).
 
 ## Prova
 

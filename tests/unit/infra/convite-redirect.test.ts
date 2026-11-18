@@ -5,8 +5,8 @@ import { getPathMatch } from "next/dist/shared/lib/router/utils/path-match"
 import { matchHas, prepareDestination } from "next/dist/shared/lib/router/utils/prepare-destination"
 import { NextRequest } from "next/server"
 import { describe, expect, it } from "vitest"
-import nextConfig from "../../../apps/web/next.config"
 import { isPublicPath } from "../../../apps/web/lib/security/route-surface"
+import nextConfig from "../../../apps/web/next.config"
 
 // SEC-017 (ADR-20261118-convite-familiar-so-no-app): a tela antiga /convite saiu
 // da web. O link antigo leva o código para a porta do app, que aceita o convite
@@ -54,6 +54,22 @@ describe("o convite antigo de familiar vai para a porta do app", () => {
     const destino = await destinoDe("/convite?codigo=7K4M9QRT")
     expect(destino.pathname).toBe("/app/entrar")
     expect(destino.searchParams.get("convite")).toBe("7K4M9QRT")
+    // O Next junta a query original ao destino; a porta só lê `convite`.
+    expect(destino.searchParams.get("codigo")).toBe("7K4M9QRT")
+  })
+
+  it.each([
+    "//evil.example",
+    "https://evil.example/x",
+    "a@evil.example",
+    "a?b=c",
+    "a#frag",
+    "a&redirect=https://evil.example",
+    "..%2F..%2Fx",
+  ])("valor hostil %s só entra na query, sem mudar host nem caminho", async (valor) => {
+    const destino = await destinoDe(`/convite?codigo=${encodeURIComponent(valor)}`)
+    expect(destino.origin).toBe(ORIGEM)
+    expect(destino.pathname).toBe("/app/entrar")
   })
 
   it("o código com hífen e minúsculas chega intacto (a porta normaliza)", async () => {

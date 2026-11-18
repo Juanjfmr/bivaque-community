@@ -33,13 +33,20 @@ test.describe("entrada pública — sem sessão", () => {
 
     // Then a porta do app abre no caminho do convite, com o código do link
     await expect(page).toHaveURL(/\/app\/entrar/)
-    await expect(page.getByLabel("Código do convite")).toBeVisible({ timeout: 20_000 })
+    // O código passa pelo Next e chega normalizado pela porta (hífen e minúsculas).
+    await expect(page.getByLabel("Código do convite")).toHaveValue("7K4M9QRT", {
+      timeout: 20_000,
+    })
   })
 
   test("o link antigo sem código cai na porta do app, sem senha", async ({ page }) => {
     await page.goto("/convite?legado=1")
 
     await expect(page).toHaveURL(/\/app\/entrar/)
+    await expect(
+      page.getByRole("heading", { level: 1, name: "A comunidade militar da sua cidade." }),
+    ).toBeVisible({ timeout: 20_000 })
+    await expect(page.getByText("Tenho um código de convite")).toBeVisible()
     await expect(page.locator('input[type="password"]')).toHaveCount(0)
   })
 

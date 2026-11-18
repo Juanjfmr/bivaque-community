@@ -80,6 +80,9 @@ test.describe("family invite journey", () => {
 
     // Then the app entry opens, without a password field
     await expect(page).toHaveURL(/\/app\/entrar/)
+    await expect(
+      page.getByRole("heading", { level: 1, name: "A comunidade militar da sua cidade." }),
+    ).toBeVisible({ timeout: 20_000 })
     await expect(page.locator('input[type="password"]')).toHaveCount(0)
   })
 })
