@@ -332,7 +332,7 @@ export function Salvos() {
       ) : (
         <Lista>
           {perguntasVisiveis.map((pergunta) => (
-            <div key={pergunta.id} className="flex items-center gap-2 pr-2">
+            <div key={pergunta.id} className="flex items-center gap-2 pr-3">
               <LinhaDeLista
                 className="grow"
                 icone="forum"
@@ -507,7 +507,7 @@ export function Salvos() {
               ) : (
                 <Lista>
                   {publicacoesVisiveis.map((publicacao) => (
-                    <div key={publicacao.id} className="flex items-center gap-2 pr-2">
+                    <div key={publicacao.id} className="flex items-center gap-2 pr-3">
                       <LinhaDeLista
                         className="grow"
                         icone="forum"
@@ -518,8 +518,9 @@ export function Salvos() {
                           void navegacao.irPara("publicacao", { parametros: { id: publicacao.id } })
                         }
                       />
-                      {/* O alvo de remover ganha círculo e respiro do chevron
-                          (revisão às cegas, 9): dois glifos colados não se
+                      {/* O alvo de remover tem círculo, rótulo acessível e os 44 px do
+                          `BotaoDeIcone`, com respiro de 12 px da borda
+                          (revisão cega R1, M7): dois glifos colados não se
                           separam sob o dedo. */}
                       <BotaoDeIcone
                         rotulo={`Remover dos salvos: ${publicacao.texto}`}
@@ -562,7 +563,7 @@ export function Salvos() {
               ) : (
                 <Lista>
                   {guiaVisivel.map((entrada) => (
-                    <div key={entrada.id} className="flex items-center gap-2 pr-2">
+                    <div key={entrada.id} className="flex items-center gap-2 pr-3">
                       <LinhaDeLista
                         className="grow"
                         icone={ICONE_DA_CATEGORIA[entrada.categoria]}

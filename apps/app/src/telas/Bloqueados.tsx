@@ -131,8 +131,11 @@ export function Bloqueados() {
                       </small>
                     </span>
                   </span>
+                  {/* Desbloquear é a ação que conclui a tela: ardósia cheia
+                      (--acao), não o contorno pálido de um secundário
+                      (revisão cega R1, M10). */}
                   <BotaoDaPeca
-                    tom="contorno"
+                    tom="principal"
                     aria-label={`Desbloquear ${nome}`}
                     disabled={removendo !== null}
                     onClick={() => desfazer(pessoa.id)}
