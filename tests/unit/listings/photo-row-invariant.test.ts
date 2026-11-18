@@ -47,7 +47,12 @@ const mocks = vi.hoisted(() => {
     return builder
   }
 
-  const user = { auth: { getUser }, from: vi.fn((name: string) => chain(name)) }
+  const user = {
+    auth: { getUser },
+    from: vi.fn((name: string) => chain(name)),
+    // AUTHZ-007: veto de conta pela sessão antes do upload privilegiado.
+    rpc: vi.fn(async () => ({ data: true, error: null })),
+  }
   const service = {
     from: vi.fn((name: string) => chain(name)),
     storage: { from: vi.fn(() => ({ upload, remove })) },

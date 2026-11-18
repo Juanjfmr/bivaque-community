@@ -2900,6 +2900,7 @@ export type Database = {
         Args: { p_group_id: string; p_user_id: string }
         Returns: undefined
       }
+      can_account_write_content: { Args: never; Returns: boolean }
       can_manage_provider_profile: {
         Args: { p_provider_id: string }
         Returns: boolean

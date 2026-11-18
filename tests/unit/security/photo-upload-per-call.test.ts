@@ -77,7 +77,8 @@ beforeEach(() => {
   vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "http://127.0.0.1:55321")
   vi.stubEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY", "fixture-anon-key")
   mocks.getUser.mockResolvedValue({ data: { user: { id: "fixture-user" } }, error: null })
-  mocks.rpc.mockResolvedValue({ data: "fixture-request", error: null })
+  // AUTHZ-007: o RPC da sessão aqui é o veto de conta; ativo por padrão.
+  mocks.rpc.mockResolvedValue({ data: true, error: null })
   mocks.serviceUpload.mockResolvedValue({ error: null })
   mocks.serviceRemove.mockResolvedValue({ error: null })
 })

@@ -10,6 +10,7 @@ import { revalidatePath } from "next/cache"
 import { enviarFotoDoAnuncio, FalhaDaFoto } from "../storage/listing-photo"
 import { isDefiniteSqlRejection } from "../storage/rpc-outcome"
 import { sanitizeImage } from "../storage/sanitize-image"
+import { conferirEscritaDaConta } from "../storage/veto-de-conta"
 import { createServerClient as createServiceClient } from "../supabase/server"
 import type { ActionState } from "./action-state"
 import { buildListingPhotoPath } from "./catalog"
@@ -63,6 +64,18 @@ export async function uploadPropertyPhotoAction(
   } = await client.auth.getUser()
   if (!user) {
     return { error: "Sessão expirada. Entre novamente para enviar a foto." }
+  }
+
+  // AUTHZ-007: veto de conta antes do primeiro uso de service_role. O veto da
+  // linha é do banco; o do objeto é daqui, para a foto não subir como órfã.
+  const conta = await conferirEscritaDaConta(client)
+  if (!conta.ok) {
+    return {
+      error:
+        conta.motivo === "conta"
+          ? "Sua conta não pode publicar fotos agora."
+          : "Não foi possível conferir sua conta. Tente de novo em instantes.",
+    }
   }
 
   // Mesma autorização de listing_photos_storage_insert_owner: o anúncio existe
