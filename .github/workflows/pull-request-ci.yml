@@ -20,6 +20,44 @@ permissions:
   contents: read
 
 jobs:
+  # PR leve (só quadro, docs e regras de agente; lista em scripts/ci/pr-leve.mjs) não
+  # sobe a stack: fast + agregador bastam, mesmo com a label ci:full. Qualquer arquivo
+  # fora da lista devolve o PR ao CI completo. Fora de pull_request a saída fica vazia
+  # e nada muda: push na main roda o completo de sempre.
+  changes:
+    name: Classify PR (leve ou completo)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      pull-requests: read # lista de arquivos do PR
+    outputs:
+      leve: ${{ steps.classify.outputs.leve }}
+    steps:
+      # O classificador vem da BASE, nunca do PR: um PR que alargue a lista de
+      # caminhos leves não pode se classificar com a própria regra.
+      - name: Checkout the classifier from the base
+        if: github.event_name == 'pull_request'
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          sparse-checkout: scripts/ci
+
+      - name: Classify changed files
+        id: classify
+        if: github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR: ${{ github.event.pull_request.number }}
+        # Base sem classificador (o PR que o introduz): completo.
+        run: |
+          if [ -f scripts/ci/pr-leve.mjs ]; then
+            node scripts/ci/pr-leve.mjs "$PR"
+          else
+            echo "base sem scripts/ci/pr-leve.mjs: completo"
+            echo "leve=false" >> "$GITHUB_OUTPUT"
+          fi
+
   # Ciclo de implementação: feedback em <=5 min, sem Supabase/build/E2E (ADR-20261114).
   fast:
     name: Fast checks
@@ -68,7 +106,8 @@ jobs:
     runs-on: ubuntu-24.04
     # Completo só no fechamento do lote (label ci:full), push na main ou dispatch;
     # ver ADR-20261114.
-    if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'ci:full')
+    needs: changes
+    if: needs.changes.outputs.leve != 'true' && (github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'ci:full'))
 
     steps:
       - name: Checkout
@@ -401,7 +440,8 @@ jobs:
     # ubuntu-latest migrou para 26.04, que o Playwright 1.51.1 não suporta (pin intencional).
     runs-on: ubuntu-24.04
     timeout-minutes: 30
-    if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'ci:full')
+    needs: changes
+    if: needs.changes.outputs.leve != 'true' && (github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'ci:full'))
     strategy:
       fail-fast: false
       matrix:
@@ -591,22 +631,33 @@ jobs:
   # Agregador: preserva o nome de check "Install, test, and build" (gate de merge).
   # Verde se ci-core e os 3 stateful passaram (ou foram pulados sem a label); vermelho
   # se qualquer parte falhou. O if always() garante que roda mesmo se um need falhar.
+  # Em PR leve ele também roda e sai verde só com o fast verde: o check obrigatório
+  # nunca fica pendente num PR de quadro/docs.
   ci:
     name: Install, test, and build
-    needs: [fast, ci-core, e2e-stateful]
-    if: always() && (github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'ci:full'))
+    needs: [changes, fast, ci-core, e2e-stateful]
+    if: always() && (github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'ci:full') || needs.changes.outputs.leve == 'true')
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
       - name: Aggregate CI results
         run: |
+          ch="${{ needs.changes.result }}"
+          leve="${{ needs.changes.outputs.leve }}"
           fa="${{ needs.fast.result }}"
           core="${{ needs.ci-core.result }}"
           st="${{ needs.e2e-stateful.result }}"
-          echo "fast: $fa | ci-core: $core | e2e-stateful: $st"
-          for r in "$fa" "$core" "$st"; do
+          echo "changes: $ch (leve=$leve) | fast: $fa | ci-core: $core | e2e-stateful: $st"
+          if [ "$ch" != "success" ] || [ "$fa" != "success" ]; then
+            echo "::error::a classificação ou os Fast checks não passaram (changes=$ch, fast=$fa)"
+            exit 1
+          fi
+          for r in "$core" "$st"; do
             if [ "$r" = "failure" ] || [ "$r" = "cancelled" ]; then
               echo "::error::uma parte do CI falhou ($r)"
               exit 1
             fi
           done
+          if [ "$leve" = "true" ]; then
+            echo "PR leve: só quadro/docs; build, banco e E2E não se aplicam"
+          fi
