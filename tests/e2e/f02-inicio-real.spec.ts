@@ -26,6 +26,13 @@ test.describe("F02 — início e busca reais", { tag: "@stateful" }, () => {
     await expect(page).toHaveURL(/\/app\/pergunta\/80000000-0000-4000-8000-000000000f01/)
   })
 
+  test("não mostra entrada pendente na busca", async ({ page, context }) => {
+    await semearSessaoDeMembro(context, MEMBRO_SEMEADO)
+    await page.goto("/app/busca?q=Acolhimento%20Militar")
+    await expect(page.getByText("Nada sobre “Acolhimento Militar”")).toBeVisible({ timeout: 30_000 })
+    await expect(page.getByText("Escola de Acolhimento Militar")).toHaveCount(0)
+  })
+
   test("nega leitura sem sessão", async ({ request }) => {
     expect((await request.get("/api/app/inicio")).status()).toBe(401)
     expect((await request.get("/api/app/busca?q=escola")).status()).toBe(401)

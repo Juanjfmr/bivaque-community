@@ -89,7 +89,7 @@ export async function proxy(request: NextRequest) {
       // Sem aceite, a pessoa segue para o onboarding, não para a tela de
       // consentimento: só contas anteriores a esta mudança chegam aqui sem
       // aceite, e mandá-las ao portão seria a tela reaparecendo.
-      return NextResponse.redirect(new URL(hasConsent ? "/inicio" : "/onboarding", request.url))
+      return NextResponse.redirect(new URL(hasConsent ? "/app/inicio" : "/onboarding", request.url))
     }
     return supabaseResponse
   }

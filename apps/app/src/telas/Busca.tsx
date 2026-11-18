@@ -28,6 +28,8 @@ import { CARGA_CONCLUIDA } from "@/lib/navegacao/restauracao"
 import { lerRecentes } from "@/src/busca/recentes"
 import { termoDaUrl } from "@/src/busca/termo-url"
 import { useCasca } from "@/src/contexto/casca"
+import { EstadoDeSessaoVencida, EstadoNegado } from "@/src/eventos/EstadosDeAcesso"
+import { acessoNegado, sessaoVencida } from "@/src/eventos/formulario"
 import { EXPLORAR, negocioDoGrupo, rotuloDaCategoria } from "@/src/inicio/categorias"
 
 /**
@@ -85,7 +87,7 @@ export function Busca() {
   const navegacao = useNavegacao()
   const [dados, setDados] = useState<BuscaDaCidade | null>(null)
   const [explorar, setExplorar] = useState<InicioDaCidade | null>(null)
-  const [erro, setErro] = useState(false)
+  const [erro, setErro] = useState<"sessao" | "negado" | "falhou" | null>(null)
   const [rodada, setRodada] = useState(0)
   const [escopo, setEscopo] = useState("all")
   const [topico, setTopico] = useState("todos")
@@ -132,9 +134,10 @@ export function Busca() {
   // biome-ignore lint/correctness/useExhaustiveDependencies: rodada solicita nova leitura
   useEffect(() => {
     const controle = new AbortController()
-    setErro(false)
-    const falhou = () => {
-      if (!controle.signal.aborted) setErro(true)
+    setErro(null)
+    const falhou = (falha: unknown) => {
+      if (!controle.signal.aborted)
+        setErro(sessaoVencida(falha) ? "sessao" : acessoNegado(falha) ? "negado" : "falhou")
     }
     if (comTermo) {
       setDados(null)
@@ -253,7 +256,11 @@ export function Busca() {
         </div>
       ) : null}
 
-      {erro ? (
+      {erro === "sessao" ? (
+        <EstadoDeSessaoVencida />
+      ) : erro === "negado" ? (
+        <EstadoNegado texto="Sua conta não tem acesso à busca desta cidade." />
+      ) : erro === "falhou" ? (
         <EstadoDeErro aoTentar={() => setRodada((atual) => atual + 1)} />
       ) : carregando ? (
         <EsqueletoDeLista linhas={4} />

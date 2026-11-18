@@ -25,7 +25,8 @@ import { CARGA_CONCLUIDA } from "@/lib/navegacao/restauracao"
 import { registrarRecente } from "@/src/busca/recentes"
 import { termoAceito } from "@/src/busca/termo-url"
 import { useCasca } from "@/src/contexto/casca"
-import { foiAbortada } from "@/src/eventos/formulario"
+import { EstadoDeSessaoVencida, EstadoNegado } from "@/src/eventos/EstadosDeAcesso"
+import { acessoNegado, foiAbortada, sessaoVencida } from "@/src/eventos/formulario"
 import { CartaoDaPublicacao } from "@/src/inicio/CartaoDaPublicacao"
 import { rotuloDaCategoria } from "@/src/inicio/categorias"
 import { mensagemDaFalha } from "@/src/mercado/falha"
@@ -67,7 +68,7 @@ export function Inicio() {
   const navegacao = useNavegacao()
   const navegar = useNavigate()
   const [dados, setDados] = useState<InicioDaCidade | null>(null)
-  const [erro, setErro] = useState(false)
+  const [erro, setErro] = useState<"sessao" | "negado" | "falhou" | null>(null)
   const [rodada, setRodada] = useState(0)
   const [termo, setTermo] = useState("")
   const [termoCurto, setTermoCurto] = useState(false)
@@ -87,13 +88,14 @@ export function Inicio() {
   useEffect(() => {
     const controle = new AbortController()
     setDados(null)
-    setErro(false)
+    setErro(null)
     void lerInicio({ signal: controle.signal })
       .then((valor) => {
         if (!controle.signal.aborted) setDados(valor)
       })
-      .catch(() => {
-        if (!controle.signal.aborted) setErro(true)
+      .catch((falha: unknown) => {
+        if (!controle.signal.aborted)
+          setErro(sessaoVencida(falha) ? "sessao" : acessoNegado(falha) ? "negado" : "falhou")
       })
     return () => controle.abort()
   }, [rodada])
@@ -294,7 +296,15 @@ export function Inicio() {
         </div>
       </header>
 
-      {erro ? (
+      {erro === "sessao" ? (
+        <div className="mt-4">
+          <EstadoDeSessaoVencida />
+        </div>
+      ) : erro === "negado" ? (
+        <div className="mt-4">
+          <EstadoNegado texto="Sua conta não tem acesso ao início desta cidade." />
+        </div>
+      ) : erro === "falhou" ? (
         <div className="mt-4">
           <EstadoDeErro aoTentar={() => setRodada((valor) => valor + 1)} />
         </div>
@@ -309,7 +319,7 @@ export function Inicio() {
               <Secao titulo={`${cidade} está começando`} className="mt-4">
                 <EstadoVazio
                   titulo="A primeira publicação abre a cidade"
-                  texto="Ninguém publicou por aqui ainda. Quem publicar primeiro aparece para toda a cidade — e quem chegar depois encontra."
+                  texto="Seja a primeira pessoa a publicar na sua cidade."
                   icone="public"
                 >
                   <div className="flex flex-wrap justify-center gap-2">
