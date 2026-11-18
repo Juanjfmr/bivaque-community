@@ -1,7 +1,7 @@
 import type { ChannelAdapter, OutboxMessage } from "@bivaque/domain"
 import type { SupabaseClient } from "@supabase/supabase-js"
 import type { Database } from "supabase/database.generated"
-import webpush from "web-push"
+import * as webpush from "web-push"
 import { log } from "../logger"
 import { createServerClient } from "../supabase/server"
 import { type ConteudoDoPush, conteudoDoPush } from "./frases"
