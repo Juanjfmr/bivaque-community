@@ -15,7 +15,8 @@ const DESTINO_POR_ROTULO: Record<string, string> = {
   Comunidades: "/communities",
   // RUN-172: o perfil próprio é tela do app; a casca web linka o destino direto.
   Perfil: "/app/voce",
-  Salvos: "/salvos",
+  // RUN-186: Salvos é tela do app; a casca web linka o destino direto.
+  Salvos: "/app/salvos",
   Notificações: "/app/avisos",
   // RUN-184: a tela de conta saiu da web e a seção vive no Você do app.
   Configurações: "/app/voce",

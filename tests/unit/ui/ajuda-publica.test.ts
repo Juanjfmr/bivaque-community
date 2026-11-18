@@ -61,6 +61,11 @@ describe("Ajuda pública", () => {
     expect(page).toContain('{ href: "/app/voce", label: "Configurações" }')
     expect(page).not.toContain("/configuracoes")
   })
+
+  it("o atalho de Salvos leva à tela do app", () => {
+    // RUN-186: `/salvos` saiu da web (307 para /app/salvos).
+    expect(page).toContain('{ href: "/app/salvos", label: "Salvos" }')
+  })
 })
 
 describe("Conta apagada", () => {

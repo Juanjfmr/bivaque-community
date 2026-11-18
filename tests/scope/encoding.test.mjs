@@ -47,7 +47,6 @@ const excecoes = new Map([
   ["tests/scope/f02-dados.test.mjs", bomDeEditor],
   ["tests/scope/f02-inicio-real.test.mjs", bomDeEditor],
   ["tests/e2e/f09-conversas-real.spec.ts", bomDeEditor],
-  ["tests/e2e/recon-032-salvos.spec.ts", bomDeEditor],
   ["scripts/bivaque-html/round70-proof.mjs", bomDeEditor],
   ["docs/historico/superpowers/plans/2026-08-20-onda-g-vitrine.md", bomDeEditor],
   [
