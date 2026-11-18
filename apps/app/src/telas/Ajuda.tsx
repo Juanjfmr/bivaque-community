@@ -25,7 +25,10 @@ const PERGUNTAS: readonly (readonly [pergunta: string, resposta: string])[] = [
     "A fonte oficial não confirmou meu vínculo.",
     "Envie um documento que mostre o vínculo, como o contracheque ou a identidade militar. A equipe responde em até 2 dias úteis e, enquanto isso, o conteúdo fica fechado.",
   ],
-  ["Esqueci a senha.", "Na tela Entrar, toque em Esqueci minha senha e informe seu e-mail."],
+  [
+    "Preciso de senha para entrar?",
+    "Não, o Bivaque não usa senha. Em Entrar, toque em Continuar com e-mail; o código de 6 números chega na hora.",
+  ],
   ["Como apago minha conta?", "Em Você → Apagar a conta. Você confirma digitando APAGAR."],
 ]
 

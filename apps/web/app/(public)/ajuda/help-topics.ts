@@ -22,7 +22,7 @@ export const HELP_TOPICS: ReadonlyArray<HelpTopic> = [
   {
     id: "conta",
     icon: "badge",
-    subtitle: "CPF, convite, senha",
+    subtitle: "CPF, convite, código",
     title: "Conta e entrada",
     questions: [
       [
@@ -38,8 +38,8 @@ export const HELP_TOPICS: ReadonlyArray<HelpTopic> = [
         "Envie um documento que mostre o vínculo, como o contracheque ou a identidade militar. A equipe responde em até 2 dias úteis e, enquanto isso, o conteúdo fica fechado.",
       ],
       [
-        "Esqueci a senha.",
-        "Na tela Entrar, toque em Esqueci minha senha e informe seu e-mail. O link para criar uma senha nova chega na hora.",
+        "Preciso de senha para entrar?",
+        "Não, o Bivaque não usa senha. Em Entrar, toque em Continuar com e-mail; o código de 6 números chega na hora.",
       ],
       [
         "Como apago minha conta?",

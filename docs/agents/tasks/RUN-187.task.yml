@@ -1,0 +1,66 @@
+# Ajuda sem senha: textos vivos que ainda ensinam "Esqueci minha senha".
+#
+# Cartão AJUDA-SEM-SENHA (achado do RUN-184). A entrada é por código no e-mail desde o
+# ADR-20261101-entrada-unica-por-codigo (§2: e-mail e senha saem da tela, com "Esqueci minha senha"
+# e a troca de senha). A Ajuda do app e a ajuda pública da web ainda mandam tocar em "Esqueci minha
+# senha", que não existe para quem entra hoje.
+#
+# Decisão do coordenador, 17/11: corrigir o texto vivo para a entrada por código no e-mail (sem
+# prometer Google ou Apple, que dependem das contas do dono) e fazer o inventário do resto; código
+# morto de senha só sai se não tiver nenhum uso vivo.
+
+task_id: RUN-187
+
+objective: >
+  Nenhuma tela viva do app nem a ajuda pública da web ensina "Esqueci minha senha": as respostas
+  passam a explicar a entrada por código no e-mail, e o que sobrar de interface de senha fica
+  inventariado, removido quando não tiver uso vivo.
+
+authority:
+  - docs/decisions/ADR-20261101-entrada-unica-por-codigo.md (seção 2)
+  - tools/backend-kanban/public/board.json (cartão AJUDA-SEM-SENHA)
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    apps/app/src/telas/Ajuda.tsx:28 responde "Esqueci a senha." mandando tocar em Esqueci minha
+    senha; apps/web/app/(public)/ajuda/help-topics.ts:41-42 diz o mesmo na ajuda pública;
+    apps/app/components/bivaque/entrada-acesso.tsx:33,142 tem o link de senha.
+
+allowed_paths:
+  - apps/app/src/telas/Ajuda.tsx
+  - apps/app/components/bivaque/entrada-acesso.tsx
+  - apps/web/app/(public)/ajuda/help-topics.ts
+  - apps/app/tests
+  - tests/unit/ui/ajuda-publica.test.ts
+  - tests/unit/auth/password-login.test.ts
+  - docs/agents/tasks/RUN-187.task.yml
+
+forbidden:
+  - mexer nas telas de entrada antigas da web ((preauth)/login, recuperar-senha, nova-senha), que já redirecionam pelo next.config, ou nas rotas de auth
+  - prometer entrada por Google ou Apple no texto
+  - mudar migration, função de banco, grant ou policy
+  - editar docs/decisions/RATIFICACAO.md
+  - push, merge, abrir PR, force-push; ler, criar ou imprimir arquivos de ambiente
+
+acceptance:
+  - "Ajuda.tsx e help-topics.ts: a pergunta sobre senha passa a explicar que não há senha e que se entra pelo código que chega no e-mail (texto curto, no tom das outras respostas), com teste que prova o texto novo e a ausência de 'Esqueci minha senha' nas duas ajudas."
+  - "entrada-acesso.tsx: o relatório diz se o componente é usado por alguma tela viva (git grep dos imports). Se não for usado, sai com os testes dele; se for, o link de senha sai e o teste do componente é ajustado."
+  - "Inventário no relatório: git grep -n -i 'senha' em apps/app e apps/web (excluindo as telas antigas que já redirecionam e o servidor de auth), com o destino de cada ocorrência (corrigida, código morto removido, ou fora do escopo com motivo)."
+
+proof:
+  - "npx vitest run nos testes tocados, mostrando cada arquivo rodando"
+  - "npx tsc --noEmit -p apps/app"
+  - npx pnpm@11.18.0 lint
+  - "node scripts/agents/prova-fila.mjs -- npx pnpm@11.18.0 test"
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/RUN-187.task.yml
+
+risk: texto de ajuda e componente de entrada sem uso
+risk_level: R2
+
+reviewer_must_differ_from_executor: true
+retry_budget: 2
+on_budget_exhausted: HUMAN_DECISION
+
+closure:
+  requires_runtime_evidence: true
