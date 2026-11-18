@@ -5,9 +5,9 @@ import type { Route } from "next"
 import Link from "next/link"
 import { useEffect, useState } from "react"
 import { ASK_INDICATION_HREF } from "../../../lib/indications/indications"
+import { useAvatarSrc } from "../../../lib/inicio/use-avatar-src"
 import { useMemberContext } from "../../../lib/member-context"
 import { createBrowserClient } from "../../../lib/supabase/client"
-import { useAvatarSrc } from "../../../lib/inicio/use-avatar-src"
 import { MemberAvatar } from "./avatar"
 
 // O ponto de publicação da Home — reconstrução de 25/09/2026, com Threads,

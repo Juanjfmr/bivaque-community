@@ -4,9 +4,9 @@ import { CalendarDays, ChevronDown, ChevronRight, ShieldCheck, Users } from "luc
 import type { Route } from "next"
 import Link from "next/link"
 import { type ReactNode, useEffect, useState } from "react"
+import { eventDateChip } from "../../../lib/inicio/formatters"
 import { useLocalityContext } from "../../../lib/locality-context"
 import { createBrowserClient } from "../../../lib/supabase/client"
-import { eventDateChip } from "../../../lib/inicio/formatters"
 import { Skeleton } from "./skeleton"
 
 // O trilho da Comunidade (25/09/2026, sistema visual mínimo). Referências do

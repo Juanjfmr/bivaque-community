@@ -29,7 +29,9 @@ test.describe("F02 — início e busca reais", { tag: "@stateful" }, () => {
   test("não mostra entrada pendente na busca", async ({ page, context }) => {
     await semearSessaoDeMembro(context, MEMBRO_SEMEADO)
     await page.goto("/app/busca?q=Acolhimento%20Militar")
-    await expect(page.getByText("Nada sobre “Acolhimento Militar”")).toBeVisible({ timeout: 30_000 })
+    await expect(page.getByText("Nada sobre “Acolhimento Militar”")).toBeVisible({
+      timeout: 30_000,
+    })
     await expect(page.getByText("Escola de Acolhimento Militar")).toHaveCount(0)
   })
 
