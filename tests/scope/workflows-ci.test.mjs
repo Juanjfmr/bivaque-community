@@ -193,7 +193,10 @@ test("PR leve pula a stack, mas o agregador sempre reporta", () => {
   assert.match(workflow, /\n {2}changes:\n/)
   assert.match(workflow, /node scripts\/ci\/pr-leve\.mjs "\$PR"/)
   // And the classifier comes from the base, never from the PR itself
-  assert.match(workflow, /ref: \$\{\{ github\.event\.pull_request\.base\.sha \}\}\n {10}sparse-checkout: scripts\/ci/)
+  assert.match(
+    workflow,
+    /ref: \$\{\{ github\.event\.pull_request\.base\.sha \}\}\n {10}sparse-checkout: scripts\/ci/,
+  )
   assert.match(workflow, /pull-requests: read/)
   assert.doesNotMatch(workflow, /pull-requests: write/)
 
