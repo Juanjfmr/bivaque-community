@@ -105,11 +105,6 @@ export const PUBLIC_SURFACE: readonly EntradaDaSuperficie[] = [
     motivo: "destino pós-exclusão, quando a sessão já não existe",
   },
   {
-    caminho: "/convite",
-    modo: "exata",
-    motivo: "convite de familiar por query `?codigo=`; não há subrota",
-  },
-  {
     caminho: "/ajuda",
     modo: "exata",
     motivo: "Ajuda e páginas legais abrem para quem está fora",
@@ -137,8 +132,8 @@ function semBarraFinal(caminho: string): string {
 
 /**
  * Casa fronteira: o caminho é igual ao prefixo ou continua a partir de `/`.
- * `/api` casa `/api` e `/api/x`; não casa `/apiario`. `/convite` casa
- * `/convite/`; não casa `/convite/ABCD1234` porque essa entrada é `exata`.
+ * `/api` casa `/api` e `/api/x`; não casa `/apiario`. `/conta-apagada` casa
+ * `/conta-apagada/`; não casa `/conta-apagada/x` porque essa entrada é `exata`.
  */
 export function casaFronteira(caminho: string, prefixo: string): boolean {
   const alvo = semBarraFinal(caminho)

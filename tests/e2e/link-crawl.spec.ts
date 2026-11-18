@@ -136,12 +136,6 @@ const PORTAS_FORA_DO_LINK: readonly PortaDeclarada[] = [
     dono: "visitante",
   },
   {
-    route: "/convite",
-    porta:
-      "CONDICIONAL: link do e-mail do convite e 'É cônjuge ou dependente?' na elegibilidade, que a persona do rastreador não vê (lote 4, PORT-006)",
-    dono: "visitante",
-  },
-  {
     route: "/groups",
     porta:
       "CONDICIONAL: 'Veja os grupos' no compositor, que só aparece para quem ainda não participa de nenhum; o 'Criar o primeiro grupo' de Interesses saiu com a tela web (RUN-163) e o app não oferece criar grupo",

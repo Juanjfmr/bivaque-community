@@ -3,8 +3,9 @@ import type { NextConfig } from "next"
 
 // Telas antigas de entrada da web (ENTRADA-WEB-ANTIGA). Os caminhos são exatos,
 // salvo a subárvore de onboarding. A lista não inclui `/conta-apagada`,
-// `/convite`, `/prestador-convite`, `/privacidade`, `/ajuda` nem `/consent`:
-// esses seguem públicos ou têm fluxo próprio (ADR-20261022-entrada-do-prototipo).
+// `/prestador-convite`, `/privacidade`, `/ajuda` nem `/consent`: esses seguem
+// públicos ou têm fluxo próprio (ADR-20261022-entrada-do-prototipo). `/convite`
+// tem regra própria logo abaixo da lista, porque leva o código (SEC-017).
 // Também ficam de fora `/auth/confirmar-email` e `/auth/callback-error`: são o
 // caminho de falha dos links de e-mail e do OAuth (redirect-plan.ts) e têm tela
 // própria, com o painel de reenvio e a mensagem de falha.
@@ -80,6 +81,19 @@ const nextConfig: NextConfig = {
         destination: ENTRADA_DO_APP,
         permanent: false,
       })),
+      // SEC-017 (ADR-20261118-convite-familiar-so-no-app): a tela antiga do
+      // convite de familiar pedia senha e usava o cliente de serviço. O aceite é
+      // da porta do app, sem senha e sem CPF, e o link do e-mail já é
+      // `/app/entrar?convite=`. O link antigo `/convite?codigo=` leva o código
+      // para a porta; sem código (ou `?legado=1`) cai na porta crua. Exato:
+      // `/convite/x` nunca existiu e segue o portão do proxy.
+      {
+        source: "/convite",
+        has: [{ type: "query", key: "codigo", value: "(?<codigo>.+)" }],
+        destination: `${ENTRADA_DO_APP}?convite=:codigo`,
+        permanent: false,
+      },
+      { source: "/convite", destination: ENTRADA_DO_APP, permanent: false },
       // LAN-TROCA fase 1: só as jornadas autorizadas. A query segue pelo Next;
       // conversation UUID escolhe o detalhe antes da regra genérica da caixa.
       {
