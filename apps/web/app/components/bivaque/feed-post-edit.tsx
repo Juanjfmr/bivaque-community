@@ -84,17 +84,20 @@ export function EditPostModal({ post, onClose, onSaved }: EditPostModalProps) {
       update.photo_path = photoPath.trim() || null
     }
 
-    const { error } = await supabase
+    const { data: saved, error } = await supabase
       .from("posts")
       .update(update as Database["public"]["Tables"]["posts"]["Update"])
       .eq("id", post.id)
+      .select("id")
 
-    if (error) {
-      const view = classifyPublishError(error)
+    // Sob RLS, UPDATE recusado pelo USING (conta suspensa ou com exclusão
+    // pedida, AUTHZ-001) volta sem erro e com zero linhas: também é falha.
+    if (error || !saved || saved.length === 0) {
+      const view = error ? classifyPublishError(error) : null
       // Copy da prancha: o texto continua na tela e o botão volta a ficar
       // clicável. Falha de gravação nunca aparece como sucesso.
       setSaveError(
-        view.kind === "network"
+        view?.kind === "network"
           ? "Não foi possível salvar. Seu texto continua aqui. Verifique sua conexão e tente de novo."
           : "Não foi possível salvar. Seu texto continua aqui.",
       )
