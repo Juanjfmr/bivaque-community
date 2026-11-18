@@ -79,24 +79,37 @@ vira regra neste lote, com o mesmo predicado e o mesmo erro:
 2. `create_member_business_page`, `update_member_business_page` e `create_service_request`
    recebem o veto no corpo, logo depois da autenticação (42501, `account cannot write content`).
    Em `create_service_request` o veto substitui o `account_deletion_requested(v_me)` antigo, que
-   cobria só metade do estado e nunca mais era alcançado; o do prestador permanece, porque o
+   cobria só metade do estado (não via suspensão); o do prestador permanece, porque o
    prestador não é o chamador.
-3. Os buckets de foto de anúncio (`listing-photos`) e de evento (`event-photos`) não recebem policy:
-   desde o SEC-006 nenhum cliente tem INSERT em `storage.objects` e a prova do SEC-006 veta recriar.
-   O upload é da Server Action com `service_role`, que ignora RLS — então o veto é um TRIGGER
-   `before insert` em `storage.objects` que deriva a conta responsável do caminho (em
-   `listing-photos` a pasta é o id do anúncio e a conta é o dono; em `event-photos` a pasta é o id
-   de quem organiza, a convenção da capa) e recusa com o mesmo 42501. Caminho sem pasta uuid não
-   identifica conta e passa: o que o expõe é a linha da tabela, que já tem o veto do AUTHZ-006.
-   A recusa da foto de anúncio chega à pessoa como falha (503 da action), sem sucesso falso.
+3. Os buckets de foto de anúncio (`listing-photos`), de evento (`event-photos`) e de portfólio
+   (`provider-photos`) não recebem policy nem trigger: desde o SEC-006 nenhum cliente tem INSERT
+   em `storage.objects`, e o upload é da Server Action/rota com `service_role`, que ignora RLS.
+   O veto de FOTO é feito NO SERVIDOR, antes do uso de `service_role`, nos caminhos de upload
+   (foto de anúncio do Mercado e de Moradia, foto de grupo/post, foto de portfólio da página de
+   negócio — rota do app e tela web antiga): a conferência chama a RPC pública de
+   autoverificação `public.can_account_write_content()`, que expõe o predicado de
+   `private.can_write_own_content()` à sessão autenticada (como `is_account_suspended`, a
+   identidade sai do JWT, nunca de parâmetro). Conta suspensa ou com exclusão pedida é recusada
+   com a mesma frase da porta de escrita; a linha da tabela segue vetada pelas policies, e se a
+   linha for recusada depois do upload o objeto é apagado (defesa extra contra o órfão).
 4. Migration `20261118174716_authz_007_veto_prestador`; nenhuma migration aplicada é editada.
 
-Resíduo conhecido: criar trigger em `storage.objects` exige privilégio do dono do storage; o banco
-local do CI (superusuário) aplica sem problema, e se o push de produção reclamar, conceder o
-privilégio é ato do dono.
+Emenda de 18/11, rodada 1: a primeira versão desta emenda vetava a foto por um trigger
+`before insert` em `storage.objects`, derivando a conta responsável do caminho. Saiu: no Supabase
+hospedado o papel que roda a migration não é dono do schema storage, e a migration inteira
+abortaria no push de produção — conceder privilégio ao dono do projeto não resolve, porque o
+schema interno é tratado como somente leitura pela plataforma. O veto passou para o servidor,
+como descrito no item 3; nada da migration toca o schema storage.
 
-Prova: `supabase/tests/authz-007-veto-prestador.sql` (38 asserções): catálogo das 9 restritivas e do
-trigger; conta ativa cria, edita e apaga página pela RPC e diretamente, cria, edita e apaga item de
-catálogo e foto de portfólio, sobe foto nos dois buckets e pede serviço; suspensa lê a própria página
-mas não escreve nada disso, nem por RPC nem pelo upload de serviço; suspensão vencida devolve;
-exclusão pedida congela igual e cancelar o pedido devolve; outra pessoa ativa não é afetada.
+Prova: `supabase/tests/authz-007-veto-prestador.sql` (44 asserções): catálogo das 9 restritivas;
+conta ativa cria, edita e apaga página pela RPC e diretamente (inclusive INSERT e UPDATE
+diretos de prestador civil em `provider_profiles`), cria, edita e apaga item de catálogo e foto
+de portfólio, e pede serviço; a RPC de autoverificação responde true. Suspensa lê a própria página
+mas não escreve nada disso, nem por RPC nem diretamente — catálogo e portfólio nos três comandos,
+ficha de prestador civil por INSERT e UPDATE — e a RPC responde false; suspensão vencida devolve.
+Exclusão pedida congela igual (catálogo e portfólio nos três comandos, INSERT e UPDATE diretos
+da ficha) e cancelar o pedido devolve; outra pessoa ativa não é afetada. O veto de FOTO é provado
+fora do banco, nos caminhos de upload: testes unitários em
+`tests/unit/security/uploads-authz.test.ts` (conta ativa passa; suspensa e com exclusão pedida
+recusam antes do upload, um trio por caminho; o portfólio apaga o objeto quando a linha é
+recusada depois do upload).
