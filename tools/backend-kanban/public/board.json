@@ -5832,14 +5832,15 @@
       "phase": "Lançamento",
       "tests": [],
       "blockers": [],
-      "updatedAt": "2026-11-06",
-      "sourceRevision": "83470086",
+      "updatedAt": "2026-11-18",
+      "sourceRevision": "ec6e9fb8",
       "links": ["docs/LANCAMENTO.md"],
       "proof": [
         "02/11: aberto na definição do lançamento (docs/LANCAMENTO.md), por mandato do dono.",
         "04/11: direção do Início decidida com o dono depois de cinco direções desenhadas com referências do Mobbin: Painel da cidade (busca, quatro áreas com selo, faixas que somem sem conteúdo), mais a saudação em Noto Serif e a ordem das seções pelo momento da pessoa (saindo vê bazares de mudança primeiro; chegando vê indicações e imóveis). Motivo: aguenta cidade com pouco conteúdo.",
         "05/11: RUN-012 — implementação com GPT Terra 6.1 (rodadas 5005a5b0 a 8118f0fb). Revisão Qwen FAIL: desenho aprovado retirado sem motivo de dado; sem gravação. Auditoria security-auditor (Sonnet 5.5): LIBERA COM RESSALVAS. Rodada única de correção por Sonnet 5.5 (780480e8, 6ec43f62, 2dcdf54c, aecdba82, 25610401): desenho aprovado restaurado; perguntas ocultas respeitadas via list_indications; presença do próximo encontro pela rota do F05, gravada e relida; termo de busca validado e escapado; E2E sem sessão (401) e presença persistida. Provas no HEAD 25610401: gate --fast verde; gate completo verde com build pulado; vitest app 24/241, mobile 12/76, web 1/19, raiz 213/2123, scope 196; início e busca 46 testes. Não rodou: E2E com banco (Docker/supabase start indisponível nesta máquina; roda no CI), build do Next, prova visual 375/768/1440, revisão independente final.",
-        "06/11: integrado pelo PR #138 (83470086) depois de specs do app simularem as rotas reais e de três merges da main; CI verde (um teste instável de grupos passou na repetição)."
+        "06/11: integrado pelo PR #138 (83470086) depois de specs do app simularem as rotas reais e de três merges da main; CI verde (um teste instável de grupos passou na repetição).",
+        "18/11: F02-001 (PR #286, merge ec6e9fb8, contrato docs/agents/tasks/F02-FECHO.task.yml). apps/web/app/(shell)/inicio removida inteira (home-loaders -> apps/web/lib/inicio, join-community -> (shell)/community; órfãos intent-launcher, feed-right-rail e listings/highlights saíram com seus testes); /inicio segue 307 para /app/inicio; proxy manda '/' com sessão e aceite direto para /app/inicio (tests/unit/proxy/proxy-raiz-com-sessao.test.ts). Sessão vencida e acesso negado na Busca e no Início (BUSCA-SESSAO-VENCIDA). Gate verde; revisão independente Codex em duas rodadas (achados ALTA resolvidos; o MÉDIA restante, unidade por tela, ficou provado pelo E2E por tela e emendado no contrato); CI ci:full verde no head bee29f5d. Falta para done: revisão às cegas com capturas claro/escuro em 375/768/1440 e auditoria de acessibilidade da jornada."
       ],
       "id": "LAN-F02",
       "title": "F02 Início e busca ligados ao banco",
@@ -5855,7 +5856,8 @@
         "Acessibilidade: teclado, leitor de tela, contraste, alvos, movimento reduzido",
         "Tela antiga do apps/web retirada, com redirecionamento e portão do proxy"
       ],
-      "dependencies": ["LAN-F1-IDENTIDADE", "APP-001"]
+      "dependencies": ["LAN-F1-IDENTIDADE", "APP-001"],
+      "completedChecklist": [false, false, false, false, false, true]
     },
     {
       "id": "F02-RESSALVAS",
@@ -8320,7 +8322,7 @@
       "phase": "Lançamento",
       "priority": "P2",
       "category": "frontend",
-      "status": "next",
+      "status": "done",
       "description": "Lacuna descoberta na revisão independente do LT-002 (B1): Busca.tsx trata toda falha de consulta como EstadoDeErro — o 401 que a API devolve sem sessão (busca.test.ts:105) vira 'Confira a conexão', não estado de sessão vencida. O cliente já classifica 401 como sem-sessao (apps/app/lib/api/cliente.ts:27,37); falta a Busca consumir isso e renderizar o estado de acesso (molde: Agenda.tsx e EstadoDeSessaoVencida). Inclui a ressalva A4: a prova negativa 'entrada pendente não aparece na busca' saiu do e2e web na troca e ficou só em nível de rota (busca.test.ts:138); restaurar prova de navegador no app. Executar depois que o LT-002 estiver na main e atualizar tests/e2e/busca-redirects.spec.ts para o estado novo, sem afrouxar a prova do 307.",
       "checklist": [
         "Busca renderiza estado de sessão vencida quando a API responde 401, com porta para /app/entrar",
@@ -8329,15 +8331,17 @@
         "tests/e2e/busca-redirects.spec.ts atualizado para o estado novo (307 e q preservados)"
       ],
       "proof": [
-        "13/11: descoberto na revisão independente Qwen do LT-002; o retry 632e7bf8 corrigiu só o spec (asserção nasceu da fonte), a lacuna do app fica registrada aqui. Cadeia provada: rota-do-app.ts:177 (401 JSON) -> cliente.ts:110 (throw) -> Busca.tsx:148,256-257 (EstadoDeErro). A4: negativo removido do e2e web, resta busca.test.ts:138."
+        "13/11: descoberto na revisão independente Qwen do LT-002; o retry 632e7bf8 corrigiu só o spec (asserção nasceu da fonte), a lacuna do app fica registrada aqui. Cadeia provada: rota-do-app.ts:177 (401 JSON) -> cliente.ts:110 (throw) -> Busca.tsx:148,256-257 (EstadoDeErro). A4: negativo removido do e2e web, resta busca.test.ts:138.",
+        "18/11: F02-001 (PR #286, merge ec6e9fb8). Busca e Início usam tipoDeFalha() (apps/app/src/eventos/tipo-de-falha.ts): 401 -> EstadoDeSessaoVencida com porta para /app/entrar, 403 -> EstadoNegado, resto -> EstadoDeErro. Unidade em apps/app/tests/tipo-de-falha.test.ts; E2E simulado apps/app/tests/e2e/sessao-inicio-busca.spec.ts 18/18 em 375/768/1440; busca-redirects.spec.ts exige [data-estado=sessao-vencida] com 307 e q intactos; prova negativa A4 em tests/e2e/f02-inicio-real.spec.ts (entrada pending de supabase/seed.sql:1445). CI completo verde no head do PR."
       ],
       "tests": [],
       "links": ["docs/agents/tasks/LT-002.task.yml"],
       "dependencies": [],
-      "updatedAt": "2026-11-13",
+      "updatedAt": "2026-11-18",
       "sourceRevision": "bd69e091",
       "blockers": [],
-      "completedChecklist": [false, false, false, false]
+      "completedChecklist": [true, true, true, true],
+      "completedAt": "2026-11-18"
     },
     {
       "id": "BUSCA-RETENCAO-URL",
@@ -9652,7 +9656,7 @@
       "priority": "P2",
       "category": "frontend",
       "status": "next",
-      "updatedAt": "2026-11-17",
+      "updatedAt": "2026-11-18",
       "sourceRevision": "2f642eb2",
       "description": "Achados classificados como MELHORIA (D6 da orquestração: antes do lançamento só bloqueantes e correções baratas; redesenho vira cartão) na revisão às cegas das 66 capturas de 17/11. Fonte: .work/orq/relatorios/cega-revisao-jornadas.md.",
       "dependencies": ["DS-022"],
@@ -9668,10 +9672,12 @@
         "[ ] F03: painel do Criar alinhado à esquerda no desktop"
       ],
       "proof": [
-        "17/11: lista consolidada pelo coordenador a partir do parecer às cegas do GPT 6 Luna."
+        "17/11: lista consolidada pelo coordenador a partir do parecer às cegas do GPT 6 Luna.",
+        "18/11: itens F02 resolvidos no F02-001 (PR #286, merge ec6e9fb8): pr-4 no fim da faixa de chips (chips-de-filtro.tsx) e vazio do Início em uma frase curta."
       ],
       "tests": [],
-      "notes": []
+      "notes": [],
+      "completedChecklist": [true, true]
     },
     {
       "id": "SEC-016",
