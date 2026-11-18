@@ -9978,23 +9978,30 @@
       "phase": "Segurança pré-lançamento",
       "priority": "P1",
       "category": "backend",
-      "status": "next",
+      "status": "done",
       "updatedAt": "2026-11-18",
-      "sourceRevision": "0ef76ed7",
-      "description": "Achado F1 do security-auditor em 18/11 (lote AUTHZ-001/002): as policies de UPDATE/DELETE de recommendation_requests, recommendation_replies, listings, listing_photos e events, e o INSERT/UPDATE de groups (incluindo create_group), checam só autoria, sem o veto do ADR-20260901. Um anunciante suspenso ainda altera preço e descrição pelas rotas do app que usam o cliente da pessoa. Preexistente; não introduzido pelo lote AUTHZ-001/002.",
+      "sourceRevision": "20c01128",
+      "description": "Achado F1 do security-auditor em 18/11 (lote AUTHZ-001/002): as policies de escrita de recommendation_requests, recommendation_replies, listings, property_details, listing_photos, events e groups, e as RPCs definer de conteúdo, checavam só autoria, sem o veto do ADR-20260901. Corrigido pela migration 20261118060000 (21 policies restritivas e veto em 13 RPCs definer) e pelo ADR-20261118-veto-de-escrita-nas-demais-tabelas-de-conteudo (R3 por delegação).",
       "dependencies": ["AUTHZ-001"],
       "checklist": [
-        "[ ] Varredura de todas as policies de escrita de conteúdo",
-        "[ ] RED em pgTAP por tabela",
-        "[ ] Migration nova com os vetos",
-        "[ ] Telas e rotas tratam zero linhas como falha",
-        "[ ] Emenda do ADR-20261118 e RATIFICACAO"
+        "[x] Varredura de todas as policies de escrita de conteúdo (resíduo fora das sete tabelas no AUTHZ-007)",
+        "[x] Negativos em pgTAP por tabela (discriminam: falham sem a migration, segundo a auditoria; RED não rodado em banco local, sem Docker no ambiente)",
+        "[x] Migration nova com os vetos",
+        "[x] Telas e rotas tratam zero linhas como falha (rotas do app; tela antiga de indicação registrada como resíduo no ADR)",
+        "[x] ADR por delegação (novo, em vez de emenda) e RATIFICACAO",
+        "[x] PR com CI completo verde e merge"
       ],
       "proof": [
-        "Origem: auditoria do security-auditor de 18/11 sobre o lote AUTHZ-001/002 (policies de 20261019222259 e posteriores lidas no catálogo local)."
+        "Origem: auditoria do security-auditor de 18/11 sobre o lote AUTHZ-001/002 (policies de 20261019222259 e posteriores lidas no catálogo local).",
+        "PR #281: CI completo verde no SHA 20c01128 (CI core com test:db e db:lint, Stateful 375/768/1440, Fast checks, agregador). pgTAP novo authz-veto-escrita-conteudo.sql com 43 asserções; guard de contagem de rls-or-column-regression passa a contar só permissivas.",
+        "Revisão independente (reviewer) PASS COM RESSALVAS sobre c0cec15, ressalvas fechadas em f6eca95; security-auditor LIBERA COM RESSALVAS sobre f6eca95, M1 (create_group_in_community) fechado em 20c01128, M2 vira AUTHZ-007."
       ],
-      "tests": [],
-      "notes": []
+      "tests": [
+        "supabase/tests/authz-veto-escrita-conteudo.sql",
+        "supabase/tests/rls-or-column-regression.test.sql"
+      ],
+      "notes": [],
+      "completedAt": "2026-11-18"
     },
     {
       "id": "SUSP-APAGAR-CONTEUDO",
@@ -10049,6 +10056,27 @@
       ],
       "notes": [],
       "completedAt": "2026-11-18"
+    },
+    {
+      "id": "AUTHZ-007",
+      "title": "AUTHZ-007: veto de suspensão na página de negócio e no pedido de serviço",
+      "phase": "Segurança pré-lançamento",
+      "priority": "P2",
+      "category": "backend",
+      "status": "repo",
+      "updatedAt": "2026-11-18",
+      "sourceRevision": "20c01128",
+      "description": "Achado M2 do security-auditor no lote AUTHZ-006: create_member_business_page e update_member_business_page (definer) e as policies de provider_profiles, provider_catalog_items e provider_portfolio_photos não olham suspensão nem exclusão pedida; create_service_request só veta exclusão pedida. Os buckets de foto de anúncio e de evento também não olham suspensão (objeto órfão, sem linha). Preexistente; R3: entra por emenda do ADR-20261118-veto-de-escrita-nas-demais-tabelas-de-conteudo.",
+      "dependencies": ["AUTHZ-006"],
+      "checklist": [
+        "[ ] Emenda do ADR e linha na RATIFICACAO",
+        "[ ] Restritivas nas tabelas de prestador e veto nas RPCs definer",
+        "[ ] pgTAP ativo, suspenso e exclusão pedida",
+        "[ ] Revisão independente e security-auditor"
+      ],
+      "proof": ["Fonte: parecer do security-auditor de 18/11 sobre f6eca95 (PR #281)."],
+      "tests": [],
+      "notes": []
     }
   ],
   "launch": {

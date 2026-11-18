@@ -571,6 +571,8 @@ select results_eq(
     from pg_policies
     where schemaname = 'public'
       and tablename = 'groups'
+      -- AUTHZ-006: as restritivas de veto só estreitam; o guard conta as permissivas.
+      and permissive = 'PERMISSIVE'
   $$,
   array[4::bigint],
   'GUARD: groups has exactly 4 policies'
@@ -593,6 +595,8 @@ select results_eq(
     from pg_policies
     where schemaname = 'public'
       and tablename = 'events'
+      -- AUTHZ-006: as restritivas de veto só estreitam; o guard conta as permissivas.
+      and permissive = 'PERMISSIVE'
   $$,
   array[3::bigint],
   'GUARD: events has exactly 3 policies'
@@ -615,6 +619,8 @@ select results_eq(
     from pg_policies
     where schemaname = 'public'
       and tablename = 'recommendation_requests'
+      -- AUTHZ-006: as restritivas de veto só estreitam; o guard conta as permissivas.
+      and permissive = 'PERMISSIVE'
   $$,
   array[4::bigint],
   'GUARD: recommendation_requests has exactly 4 policies'
@@ -626,6 +632,8 @@ select results_eq(
     from pg_policies
     where schemaname = 'public'
       and tablename = 'recommendation_replies'
+      -- AUTHZ-006: as restritivas de veto só estreitam; o guard conta as permissivas.
+      and permissive = 'PERMISSIVE'
   $$,
   array[4::bigint],
   'GUARD: recommendation_replies has exactly 4 policies'
