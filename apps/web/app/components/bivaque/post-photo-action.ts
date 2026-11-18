@@ -5,6 +5,7 @@
 import { createServerClient } from "@supabase/ssr"
 import { cookies } from "next/headers"
 import { sanitizeImage } from "../../../lib/storage/sanitize-image"
+import { conferirEscritaDaConta } from "../../../lib/storage/veto-de-conta"
 import { createServerClient as createServiceClient } from "../../../lib/supabase/server"
 
 const MAX_SIZE = 5 * 1024 * 1024 // 5MB
@@ -38,6 +39,18 @@ export async function uploadPostPhotoAction(
     .limit(1)
     .maybeSingle()
   if (membershipError || !membership) throw new Error("vínculo com localidade necessário")
+
+  // AUTHZ-007: veto de conta antes do upload com service_role, para o objeto
+  // não subir órfão de uma linha que o banco recusaria.
+  const conta = await conferirEscritaDaConta(supabase)
+  if (!conta.ok) {
+    return {
+      error:
+        conta.motivo === "conta"
+          ? "Sua conta não pode publicar fotos agora."
+          : "Não foi possível conferir sua conta. Tente de novo em instantes.",
+    }
+  }
 
   let image: Buffer
   try {

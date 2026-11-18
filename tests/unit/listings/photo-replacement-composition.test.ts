@@ -84,7 +84,9 @@ beforeEach(() => {
   mocks.getUser.mockResolvedValue({ data: { user: { id: "fixture-user" } }, error: null })
   mocks.upload.mockResolvedValue({ error: null })
   mocks.remove.mockResolvedValue({ error: null })
-  mocks.rpc.mockImplementation(async (_name: string, args: { p_path: string }) => {
+  mocks.rpc.mockImplementation(async (name: string, args: { p_path?: string }) => {
+    // AUTHZ-007: o veto de conta da sessão passa antes de tudo.
+    if (name === "can_account_write_content") return { data: true, error: null }
     mocks.state.rpcCalls += 1
     if (mocks.state.rpcThrowsAfterCommit && mocks.state.rpcCalls === 1) {
       mocks.state.committedPath = args.p_path
