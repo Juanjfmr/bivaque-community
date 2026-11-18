@@ -90,18 +90,21 @@ select is(
   'outro membro não lê a inscrição alheia'
 );
 
+-- O delete do outro membro roda como comando no topo: CTE com escrita não pode
+-- ficar aninhada na asserção. O efeito só é visível para o dono, então é dele
+-- a contagem que prova que a linha sobreviveu ao delete alheio.
+delete from public.push_subscriptions
+ where destination = 'https://push.example.invalid/sub/one';
+
+select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000001', true);
+
 select is(
-  (
-    with apagadas as (
-      delete from public.push_subscriptions
-       where destination = 'https://push.example.invalid/sub/one'
-      returning 1
-    )
-    select count(*)::int from apagadas
-  ),
-  0,
+  (select count(*)::int from public.push_subscriptions),
+  1,
   'outro membro não apaga a inscrição alheia'
 );
+
+select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000002', true);
 
 -- Reinscrever o mesmo destino com as mesmas chaves troca o dono, sem duplicar:
 -- é o mesmo navegador em outra conta, provando posse das chaves da inscrição.
