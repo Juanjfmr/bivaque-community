@@ -88,7 +88,10 @@ export function PerfilDeMembro() {
 
   if (erro === "sessao") {
     return (
-      <section data-tela="perfil" className="grid gap-2 pt-4 md:mx-auto md:max-w-[720px]">
+      <section
+        data-tela="perfil"
+        className="grid gap-2 pt-4 md:mx-auto md:max-w-[640px] lg:max-w-[720px]"
+      >
         <EstadoDeSessaoVencida />
       </section>
     )
@@ -108,7 +111,10 @@ export function PerfilDeMembro() {
     perfil === null ? "" : perfil.nome.trim() === "" ? "Membro da comunidade" : perfil.nome
 
   return (
-    <section data-tela="perfil" className="grid gap-2 pt-4 md:mx-auto md:max-w-[720px]">
+    <section
+      data-tela="perfil"
+      className="grid gap-2 pt-4 md:mx-auto md:max-w-[640px] lg:max-w-[720px]"
+    >
       {erro === "falhou" ? (
         <div
           data-aviso="perfil"
@@ -147,16 +153,12 @@ export function PerfilDeMembro() {
 
           {/* A identidade mora na superfície, ABAIXO da capa, sem margem
               negativa: nome e menu nunca encostam na arte, nos dois temas e
-              nas três larguras (revisão cega R1, G3). */}
+              nas três larguras (revisão cega R1, G3). O nome é h1 na escala
+              de título da tela, acima das seções (R1, M12). */}
           <header className="flex items-center gap-3 px-1">
             <Avatar nome={nome} tamanho={56} />
             <span className="grid min-w-0 gap-0.5">
-              <h1
-                id="titulo-da-tela"
-                data-titulo-da-tela
-                tabIndex={-1}
-                className="truncate text-[22px] leading-7"
-              >
+              <h1 id="titulo-da-tela" data-titulo-da-tela tabIndex={-1} className="truncate">
                 {nome}
               </h1>
               <small className="text-(--on-surface-variant)">Membro da comunidade</small>

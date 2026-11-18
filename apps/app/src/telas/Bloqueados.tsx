@@ -8,17 +8,10 @@ import { EsqueletoDeLista } from "@/components/bivaque/esqueleto"
 import { EstadoVazio } from "@/components/bivaque/estado-vazio"
 import { Lista } from "@/components/bivaque/lista"
 import { desbloquear, lerBloqueados, type PessoaBloqueada } from "@/lib/dados/voce"
+import { rotuloDeData } from "@/lib/formato"
 import { useNavegacao, useRolagemEFoco } from "@/lib/navegacao/react"
 import { CARGA_CONCLUIDA } from "@/lib/navegacao/restauracao"
 import { Avatar, Botao as BotaoDaPeca } from "@/src/pecas/pecas"
-
-function quando(iso: string): string {
-  return new Date(iso).toLocaleDateString("pt-BR", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-  })
-}
 
 /**
  * Pessoas bloqueadas (onda 8, F10): a lista real da sessão, com o desfazer em
@@ -66,7 +59,10 @@ export function Bloqueados() {
   const linhas = lista ?? []
 
   return (
-    <section data-tela="bloqueados" className="grid gap-2 md:mx-auto md:max-w-[720px]">
+    <section
+      data-tela="bloqueados"
+      className="grid gap-2 md:mx-auto md:max-w-[640px] lg:max-w-[720px]"
+    >
       <CabecaDePagina titulo="Pessoas bloqueadas" subtitulo="Quem não aparece mais para você." />
 
       {mensagem === null ? null : (
@@ -123,11 +119,12 @@ export function Bloqueados() {
                     <Avatar nome={nome} tamanho={40} />
                     <span className="grid min-w-0 grow gap-0.5">
                       <b className="truncate text-[15px] font-semibold">{nome}</b>
-                      {/* A data inteira numa linha só (revisão às cegas, 4): em
-                          375 o botão desce para a linha de baixo em vez de
-                          quebrar "Bloqueio desde 03/11/2026" no meio. */}
+                      {/* Um formato só no fluxo: a data por extenso, pela
+                          MESMA função do perfil de membro (revisão cega R1,
+                          M13). A linha não quebra no meio — em 375 o botão
+                          desce para a linha de baixo (revisão às cegas, 4). */}
                       <small className="whitespace-nowrap text-[13px] text-(--on-surface-variant)">
-                        {`Bloqueio desde ${quando(pessoa.bloqueadoEm)}`}
+                        {`Bloqueio desde ${rotuloDeData(pessoa.bloqueadoEm.slice(0, 10))}`}
                       </small>
                     </span>
                   </span>

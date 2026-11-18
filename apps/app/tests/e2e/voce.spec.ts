@@ -39,7 +39,7 @@ test("o perfil vem da rota, a edição sobrevive ao recarregar e o desfazer some
   const linha = page.locator('[data-tela="bloqueados"] [data-linha="bloqueado"]')
   await expect(linha).toHaveCount(1)
   await expect(linha).toContainText("Maria Souza")
-  await expect(linha).toContainText("Bloqueio desde 03/11/2026")
+  await expect(linha).toContainText("Bloqueio desde 3 de novembro")
   const desbloquear = page.getByRole("button", { name: "Desbloquear Maria Souza" })
   // A ação que conclui a tela é ardósia (--acao), não o contorno pálido (M10).
   await expect(desbloquear).toHaveAttribute("data-tom", "principal")

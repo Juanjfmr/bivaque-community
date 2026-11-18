@@ -362,7 +362,7 @@ export function Salvos() {
   )
 
   return (
-    <section data-tela="salvos" className="grid gap-2 md:mx-auto md:max-w-[720px]">
+    <section data-tela="salvos" className="grid gap-2 md:mx-auto md:max-w-[640px] lg:max-w-[720px]">
       <CabecaDePagina
         titulo="Salvos"
         subtitulo="Anúncios, publicações, perguntas e referências do guia guardados para ver com calma."
@@ -370,23 +370,27 @@ export function Salvos() {
 
       {nadaSalvo ? (
         <>
-          <EstadoVazio
-            titulo="Nada salvo ainda"
-            texto="Toque no marcador para guardar por aqui."
-            icone="bookmark_border"
-          >
-            {/* A saída do vazio tem cara de ação (revisão às cegas, 5): a
-                ardósia preenchida de concluir, não o pálido de um secundário.
-                O escopo `.pc` traz as variáveis da peça. */}
-            <div className="pc pc-embutido">
-              <BotaoDaPeca
-                data-acao="acao-do-vazio"
-                onClick={() => void navegacao.irPara("mercado")}
-              >
-                Ver o Mercado
-              </BotaoDaPeca>
-            </div>
-          </EstadoVazio>
+          {/* O vazio é compacto (revisão cega R1, M9): largura máxima
+              própria, centrado na coluna — sem cartão de 720 px esticado. */}
+          <div className="mx-auto w-full max-w-[27rem]">
+            <EstadoVazio
+              titulo="Nada salvo ainda"
+              texto="Toque no marcador para guardar por aqui."
+              icone="bookmark_border"
+            >
+              {/* A saída do vazio tem cara de ação (revisão às cegas, 5): a
+                  ardósia preenchida de concluir, não o pálido de um secundário.
+                  O escopo `.pc` traz as variáveis da peça. */}
+              <div className="pc pc-embutido">
+                <BotaoDaPeca
+                  data-acao="acao-do-vazio"
+                  onClick={() => void navegacao.irPara("mercado")}
+                >
+                  Ver o Mercado
+                </BotaoDaPeca>
+              </div>
+            </EstadoVazio>
+          </div>
           {/* Seguidas existem sem marcador: a seção segue de pé sob o vazio,
               sem busca e sem chips — não há salvos para filtrar. */}
           {erroDasPerguntas || (perguntas !== null && perguntas.length > 0)

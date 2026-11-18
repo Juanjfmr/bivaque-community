@@ -42,7 +42,7 @@ export function CidadeConsulta() {
   if (!validacao.ok) return <TelaIndisponivel motivo={validacao.motivo} />
 
   return (
-    <section data-tela="cidade" className="grid gap-2 md:mx-auto md:max-w-[720px]">
+    <section data-tela="cidade" className="grid gap-2 md:mx-auto md:max-w-[640px] lg:max-w-[720px]">
       <Consulta id={id} />
     </section>
   )

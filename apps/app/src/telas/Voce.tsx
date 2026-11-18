@@ -7,7 +7,7 @@ import { Botao } from "@/components/bivaque/botao"
 import { CabecaDePagina } from "@/components/bivaque/cabeca-de-pagina"
 import { Confirmacao } from "@/components/bivaque/confirmacao"
 import { EsqueletoDeLista } from "@/components/bivaque/esqueleto"
-import { LinhaDeAjuste } from "@/components/bivaque/lista"
+import { LinhaDeAjuste, Lista } from "@/components/bivaque/lista"
 import { Secao } from "@/components/bivaque/secao"
 import { FalhaDaApi } from "@/lib/api/cliente"
 import {
@@ -226,7 +226,7 @@ export function Voce() {
   }
 
   return (
-    <section data-tela="voce" className="grid gap-2 md:mx-auto md:max-w-[720px]">
+    <section data-tela="voce" className="grid gap-2 md:mx-auto md:max-w-[640px] lg:max-w-[720px]">
       <CabecaDePagina titulo="Você" subtitulo="Sua conta, seus anúncios e seus ajustes." />
 
       {carregando ? (
@@ -300,7 +300,10 @@ export function Voce() {
       {carregando || erro ? null : <Contadores conta={conta} />}
 
       <Secao titulo="Seu Bivaque">
-        <div className="grid gap-2">
+        {/* As linhas viram cartão com divisória (revisão cega R1, M11): a
+            área clicável fica delimitada e o chevron mora no fim do cartão,
+            não da tela. */}
+        <Lista>
           <LinhaDeAjuste
             icone="bookmark"
             titulo="Salvos"
@@ -355,7 +358,7 @@ export function Voce() {
               />
             </>
           )}
-        </div>
+        </Lista>
       </Secao>
 
       {perfil === null ? null : (
@@ -388,7 +391,9 @@ export function Voce() {
       </Secao>
 
       <Secao titulo="Privacidade e ajuda">
-        <div className="grid gap-2">
+        {/* Mesmo cartão do "Seu Bivaque" (revisão cega R1, M11): linha
+            delimitada, chevron no fim do cartão. */}
+        <Lista>
           <LinhaDeAjuste
             icone="visibility_off"
             titulo="Ocultados"
@@ -432,12 +437,12 @@ export function Voce() {
             subtitulo="Remova seus dados do Bivaque"
             onClick={() => void navegacao.irPara("apagar-conta")}
           />
-          {falhaAoSair ? (
-            <p role="alert" className="text-sm text-(--destructive)">
-              Não foi possível sair agora. Você continua na sua conta — tente de novo.
-            </p>
-          ) : null}
-        </div>
+        </Lista>
+        {falhaAoSair ? (
+          <p role="alert" className="text-sm text-(--destructive)">
+            Não foi possível sair agora. Você continua na sua conta — tente de novo.
+          </p>
+        ) : null}
       </Secao>
 
       <Confirmacao
