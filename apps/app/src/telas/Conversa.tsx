@@ -422,7 +422,7 @@ export function Conversa() {
                     <BotaoDeIcone
                       nome="flag"
                       rotulo="Denunciar mensagem"
-                      className="size-8 shrink-0 text-(--on-surface-variant)"
+                      className="shrink-0"
                       onClick={() => abrirDenuncia(item)}
                     />
                   )}
@@ -436,13 +436,13 @@ export function Conversa() {
                   <p className="whitespace-pre-wrap break-words rounded-2xl rounded-br-sm bg-(--secondary-container) px-3 py-2.5 text-[14px] leading-5 opacity-80 ring-1 ring-(--outline-variant)">
                     {naoEnviada}
                   </p>
-                  <p className="flex min-h-9 items-center gap-1 text-xs text-(--destructive)">
+                  <p className="flex min-h-11 items-center gap-1 text-xs text-(--destructive)">
                     <Icone nome="error" className="size-4" />
                     Não enviada
                     <Botao
                       tom="texto"
                       data-acao="tentar-de-novo"
-                      className="min-h-9 px-2 text-xs font-semibold text-(--destructive) underline"
+                      className="min-h-11 px-2 text-xs font-semibold text-(--destructive) underline"
                       disabled={enviando}
                       onClick={() => void enviarTexto()}
                     >
@@ -554,22 +554,26 @@ export function Conversa() {
           descricao="Escolha o que fazer nesta conversa."
           aoFechar={() => menuDaLinha.aoMudarAberto(false)}
         >
-          <button
-            type="button"
-            role="menuitem"
-            className="flex min-h-12 w-full items-center gap-3 rounded-xl px-4 text-left font-medium text-(--destructive) hover:bg-(--surface-low)"
-            onClick={() =>
-              void navegacao.atualizarCom((atual) => ({ ...atual, sobreposicao: "confirmacao" }))
-            }
-          >
-            Bloquear {nome}
-          </button>
+          {/* O menuitem só é ARIA válida dentro de um menu; a casca faz assim
+              no Criar central (MenuCriar) e a folha segue o mesmo idioma. */}
+          <div role="menu" aria-label="Opções da conversa">
+            <button
+              type="button"
+              role="menuitem"
+              className="flex min-h-12 w-full items-center gap-3 rounded-xl px-4 text-left font-medium text-(--destructive) hover:bg-(--surface-low)"
+              onClick={() =>
+                void navegacao.atualizarCom((atual) => ({ ...atual, sobreposicao: "confirmacao" }))
+              }
+            >
+              Bloquear {nome}
+            </button>
+          </div>
         </Sobreposicao>
       ) : null}
       {denuncia.aberto && denunciando !== null ? (
         <Sobreposicao
           id="conversa-denuncia"
-          titulo="Denuncar mensagem"
+          titulo="Denunciar mensagem"
           descricao="O motivo vai para a moderação. Não inclua dados pessoais na explicação."
           aoFechar={() => denuncia.aoMudarAberto(false)}
         >
