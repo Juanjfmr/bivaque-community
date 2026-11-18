@@ -13,9 +13,12 @@
 -- permissiva futura nessas tabelas herda o veto sem precisar lembrar dele.
 --
 -- As restritivas são `to authenticated`: funções SECURITY DEFINER (rodam como
--- dono) e service_role não passam por elas. Por isso as duas RPCs definer que
--- criam ou mudam conteúdo a pedido do membro ganham o mesmo veto no corpo:
--- create_group e transition_listing.
+-- dono) e service_role não passam por elas. Por isso toda RPC definer que
+-- cria ou muda conteúdo a pedido do membro ganha o mesmo veto no corpo:
+-- create_group, transition_listing, set_group_rules, pin_group_post,
+-- unpin_group_post, transfer_group_ownership, delete_group, complete_event e as
+-- quatro de resolução de pergunta. Nenhuma delas é chamada por job ou por outra
+-- função: só pela sessão do membro.
 --
 -- Provado em supabase/tests/authz-veto-escrita-conteudo.sql.
 
@@ -52,20 +55,20 @@ begin
       if v_cmd = 'insert' then
         execute format(
           'create policy %I on public.%I as restrictive for insert to authenticated '
-          'with check (private.can_write_own_content())',
+          'with check ((select private.can_write_own_content()))',
           v_table || '_veto_conta_' || v_cmd, v_table
         );
       elsif v_cmd = 'update' then
         execute format(
           'create policy %I on public.%I as restrictive for update to authenticated '
-          'using (private.can_write_own_content()) '
-          'with check (private.can_write_own_content())',
+          'using ((select private.can_write_own_content())) '
+          'with check ((select private.can_write_own_content()))',
           v_table || '_veto_conta_' || v_cmd, v_table
         );
       else
         execute format(
           'create policy %I on public.%I as restrictive for delete to authenticated '
-          'using (private.can_write_own_content())',
+          'using ((select private.can_write_own_content()))',
           v_table || '_veto_conta_' || v_cmd, v_table
         );
       end if;
@@ -217,5 +220,352 @@ begin
   values (p_listing_id, v_uid, v_listing.status, v_target);
 
   return v_target;
+end;
+$$;
+
+-- set_group_rules: mesmo corpo de 20261024120000_group_base.sql, com o veto no início.
+create or replace function public.set_group_rules(
+  p_group_id uuid,
+  p_rules text
+)
+returns void
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  if not private.can_write_own_content() then
+    raise exception 'account cannot write content' using errcode = '42501';
+  end if;
+
+  if not private.is_group_owner(p_group_id) then
+    raise exception 'only the group owner can change the rules';
+  end if;
+
+  update public.groups
+  set rules = nullif(btrim(coalesce(p_rules, '')), '')
+  where id = p_group_id;
+
+  if not found then
+    raise exception 'group not found';
+  end if;
+end;
+$$;
+
+-- pin_group_post: mesmo corpo de 20261024120000_group_base.sql, com o veto no início.
+create or replace function public.pin_group_post(
+  p_group_id uuid,
+  p_post_id uuid
+)
+returns void
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  if not private.can_write_own_content() then
+    raise exception 'account cannot write content' using errcode = '42501';
+  end if;
+
+  if not private.is_group_owner(p_group_id) then
+    raise exception 'only the group owner can pin publications';
+  end if;
+
+  -- O gatilho guard_group_pinned_post confere que a publicação é do grupo e
+  -- não está removida; a checagem aqui é para devolver erro claro antes dele.
+  if not exists (
+    select 1
+    from public.posts
+    where id = p_post_id
+      and group_id = p_group_id
+      and is_deleted = false
+  ) then
+    raise exception 'publication is not an active publication of this group';
+  end if;
+
+  update public.groups
+  set pinned_post_id = p_post_id
+  where id = p_group_id;
+
+  if not found then
+    raise exception 'group not found';
+  end if;
+end;
+$$;
+
+-- unpin_group_post: mesmo corpo de 20261024120000_group_base.sql, com o veto no início.
+create or replace function public.unpin_group_post(p_group_id uuid)
+returns void
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  if not private.can_write_own_content() then
+    raise exception 'account cannot write content' using errcode = '42501';
+  end if;
+
+  if not private.is_group_owner(p_group_id) then
+    raise exception 'only the group owner can unpin publications';
+  end if;
+
+  update public.groups
+  set pinned_post_id = null
+  where id = p_group_id;
+
+  if not found then
+    raise exception 'group not found';
+  end if;
+end;
+$$;
+
+-- transfer_group_ownership: mesmo corpo de 20260802001000_groups_moderation.sql, com o veto no início.
+create or replace function public.transfer_group_ownership(
+  p_group_id uuid,
+  p_new_owner_user_id uuid
+)
+returns void
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  if not private.can_write_own_content() then
+    raise exception 'account cannot write content' using errcode = '42501';
+  end if;
+
+  if not private.is_group_owner(p_group_id) then
+    raise exception 'only the group owner can transfer ownership';
+  end if;
+
+  if not exists (
+    select 1
+    from public.group_memberships
+    where group_id = p_group_id
+      and user_id = p_new_owner_user_id
+      and status = 'approved'
+  ) then
+    raise exception 'new owner must be an approved member of this group';
+  end if;
+
+  -- Demote current owner to moderator.
+  update public.group_memberships
+  set role = 'moderator'
+  where group_id = p_group_id
+    and user_id = (select auth.uid());
+
+  -- Promote new owner.
+  update public.group_memberships
+  set role = 'owner'
+  where group_id = p_group_id
+    and user_id = p_new_owner_user_id;
+
+  -- Update the owner_user_id column on the group.
+  update public.groups
+  set owner_user_id = p_new_owner_user_id
+  where id = p_group_id;
+end;
+$$;
+
+-- delete_group: mesmo corpo de 20260821000018_delete_group_rpc.sql, com o veto no início.
+create or replace function public.delete_group(p_group_id uuid)
+returns void
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  if not private.can_write_own_content() then
+    raise exception 'account cannot write content' using errcode = '42501';
+  end if;
+
+  if not private.is_group_owner(p_group_id) then
+    raise exception 'only the group owner can delete the group';
+  end if;
+
+  update public.groups
+  set is_deleted = true
+  where id = p_group_id;
+end;
+$$;
+
+-- complete_event: mesmo corpo de 20261024090000_complete_event_session_identity.sql, com o veto no início.
+create or replace function public.complete_event(
+  p_event_id uuid,
+  p_caller_user_id uuid default auth.uid()
+)
+returns void
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v_caller uuid := (select auth.uid());
+begin
+  if not private.can_write_own_content() then
+    raise exception 'account cannot write content' using errcode = '42501';
+  end if;
+
+  if v_caller is null or p_caller_user_id is distinct from v_caller then
+    raise exception 'only the event organizer can complete the event';
+  end if;
+
+  if not exists (
+    select 1
+    from public.events e
+    where e.id = p_event_id
+      and e.organizer_id = v_caller
+  ) then
+    raise exception 'only the event organizer can complete the event';
+  end if;
+
+  update public.events
+  set status = 'completed', updated_at = now()
+  where id = p_event_id;
+end;
+$$;
+
+-- mark_recommendation_resolved: mesmo corpo de 20261024110000_lote5_pergunta.sql, com o veto no início.
+create or replace function public.mark_recommendation_resolved(p_request_id uuid)
+returns void
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v_uid uuid := (select auth.uid());
+begin
+  if not private.can_write_own_content() then
+    raise exception 'account cannot write content' using errcode = '42501';
+  end if;
+
+  if v_uid is null then
+    raise exception 'not authenticated' using errcode = '28000';
+  end if;
+
+  update public.recommendation_requests
+  set is_resolved = true,
+      -- Primeira resolucao guarda o instante; repetir preserva (idempotencia).
+      resolved_at = coalesce(resolved_at, now()),
+      resolved_by = v_uid,
+      resolved_reply_id = null
+  where id = p_request_id
+    and author_id = v_uid;
+
+  if not found then
+    raise exception 'request not found or you are not the author' using errcode = 'P0002';
+  end if;
+end;
+$$;
+
+-- mark_recommendation_reply_resolved: mesmo corpo de 20261024110000_lote5_pergunta.sql, com o veto no início.
+create or replace function public.mark_recommendation_reply_resolved(
+  p_request_id uuid,
+  p_reply_id uuid
+)
+returns void
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v_uid uuid := (select auth.uid());
+begin
+  if not private.can_write_own_content() then
+    raise exception 'account cannot write content' using errcode = '42501';
+  end if;
+
+  if v_uid is null then
+    raise exception 'not authenticated' using errcode = '28000';
+  end if;
+
+  if not exists (
+    select 1
+    from public.recommendation_requests request
+    join public.recommendation_replies reply
+      on reply.id = p_reply_id
+     and reply.request_id = request.id
+     and reply.is_deleted = false
+    where request.id = p_request_id
+      and request.author_id = v_uid
+  ) then
+    raise exception 'request not found, reply does not belong to it, or you are not the author'
+      using errcode = 'P0002';
+  end if;
+
+  update public.recommendation_requests
+  set is_resolved = true,
+      -- Trocar a resposta marcada atualiza o instante; repetir a mesma marca
+      -- preserva resolved_at (idempotencia).
+      resolved_at = case
+        when resolved_reply_id is distinct from p_reply_id then now()
+        else coalesce(resolved_at, now())
+      end,
+      resolved_by = v_uid,
+      resolved_reply_id = p_reply_id,
+      last_resolved_reply_id = p_reply_id
+  where id = p_request_id
+    and author_id = v_uid;
+end;
+$$;
+
+-- clear_recommendation_resolved_reply: mesmo corpo de 20261024110000_lote5_pergunta.sql, com o veto no início.
+create or replace function public.clear_recommendation_resolved_reply(p_request_id uuid)
+returns void
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v_uid uuid := (select auth.uid());
+begin
+  if not private.can_write_own_content() then
+    raise exception 'account cannot write content' using errcode = '42501';
+  end if;
+
+  if v_uid is null then
+    raise exception 'not authenticated' using errcode = '28000';
+  end if;
+
+  update public.recommendation_requests
+  set resolved_reply_id = null
+  where id = p_request_id
+    and author_id = v_uid;
+
+  if not found then
+    raise exception 'request not found or you are not the author' using errcode = 'P0002';
+  end if;
+end;
+$$;
+
+-- reopen_recommendation: mesmo corpo de 20261024110000_lote5_pergunta.sql, com o veto no início.
+create or replace function public.reopen_recommendation(p_request_id uuid)
+returns void
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v_uid uuid := (select auth.uid());
+begin
+  if not private.can_write_own_content() then
+    raise exception 'account cannot write content' using errcode = '42501';
+  end if;
+
+  if v_uid is null then
+    raise exception 'not authenticated' using errcode = '28000';
+  end if;
+
+  update public.recommendation_requests
+  set is_resolved = false,
+      resolved_at = null,
+      resolved_by = null,
+      resolved_reply_id = null
+  where id = p_request_id
+    and author_id = v_uid;
+
+  if not found then
+    raise exception 'request not found or you are not the author' using errcode = 'P0002';
+  end if;
 end;
 $$;

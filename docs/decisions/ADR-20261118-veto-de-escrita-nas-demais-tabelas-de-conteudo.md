@@ -15,8 +15,10 @@ cartão AUTHZ-006) encontrou a mesma brecha, preexistente, nas outras tabelas de
 - UPDATE/DELETE de `recommendation_requests`, `recommendation_replies`, `listings`,
   `property_details`, `listing_photos` e `events` checam só autoria. Um anunciante suspenso ainda
   muda preço e descrição pelas rotas do app, que usam o cliente da pessoa sob RLS.
-- `create_group` e `transition_listing` são SECURITY DEFINER e não olham suspensão nem exclusão
-  pedida.
+- As RPCs SECURITY DEFINER que criam ou mudam conteúdo a pedido do membro (`create_group`,
+  `transition_listing`, `set_group_rules`, `pin_group_post`, `unpin_group_post`,
+  `transfer_group_ownership`, `delete_group`, `complete_event` e as quatro de resolução de pergunta)
+  não olham suspensão nem exclusão pedida.
 
 ## Decisão
 
@@ -29,8 +31,10 @@ cartão AUTHZ-006) encontrou a mesma brecha, preexistente, nas outras tabelas de
    faz AND entre restritivas e o OR das permissivas: nada antes negado passa a ser permitido, as
    policies permissivas atuais ficam intactas (sem reescrever autoria nem escopo) e qualquer
    permissiva futura nessas tabelas herda o veto.
-3. `create_group` e `transition_listing` recebem o mesmo veto no corpo (42501), logo depois da
-   autenticação. O resto do corpo é idêntico à versão anterior.
+3. As doze RPCs definer listadas acima recebem o mesmo veto no corpo (42501): `transition_listing`
+   logo depois da autenticação, as outras na primeira linha. O resto de cada corpo é idêntico à
+   versão anterior. Nenhuma delas é chamada por job nem por outra função, só pela sessão do membro.
+   As restritivas usam `(select private.can_write_own_content())`, avaliado uma vez por comando.
 4. Migration nova `20261118060000_authz006_veto_escrita_conteudo`; nenhuma migration aplicada é
    editada.
 
@@ -42,14 +46,19 @@ cartão AUTHZ-006) encontrou a mesma brecha, preexistente, nas outras tabelas de
   melhoria, não brecha.
 - Service role e funções definer (operação, purga da conta, jobs) não passam pelas restritivas e
   continuam funcionando.
-- Resíduo conhecido, fora deste lote: outras RPCs definer que mudam estado de conteúdo do próprio
-  membro (`delete_group`, `mark_recommendation_resolved`, `mark_recommendation_reply_resolved`,
-  `clear_recommendation_resolved_reply`, `reopen_recommendation`) não olham suspensão. Nenhuma cria
-  texto novo nem muda preço; ficam registradas no cartão AUTHZ-006 como próximo passo.
+- `events` e `groups` não têm GRANT DELETE para `authenticated`; as restritivas de DELETE dessas
+  duas tabelas valem como proteção para um grant futuro.
+- Resíduo conhecido, fora deste lote: a tela antiga da web de indicação
+  (`apps/web/app/components/indications/indication-detail.tsx`) olha só o erro e trata zero linhas
+  como sucesso, então a conta suspensa vê o diálogo fechar como se tivesse editado. Nada é gravado;
+  a tela sai na troca da fase 6. As rotas do app que usam `.single()` respondem 503 em vez de "sua
+  conta não pode…" quando a linha some pela RLS: mensagem errada, sem sucesso falso.
 
 ## Prova
 
-`supabase/tests/authz-veto-escrita-conteudo.sql`: catálogo das 21 restritivas; conta ativa edita,
-apaga, cria evento, cria grupo e muda situação do anúncio; suspensa lê mas não escreve em nenhuma
-tabela nem pelas duas RPCs; exclusão pedida congela igual; cancelar o pedido devolve a escrita; outra
-pessoa ativa não é afetada.
+`supabase/tests/authz-veto-escrita-conteudo.sql` (43 asserções): catálogo das 21 restritivas; conta
+ativa edita, apaga, edita imóvel, cria evento, cria grupo e muda situação do anúncio; suspensa lê mas
+não escreve em nenhuma das sete tabelas (inclusive foto nova e detalhes do imóvel) nem por
+`create_group`, `transition_listing`, `set_group_rules`, `delete_group` e
+`mark_recommendation_resolved`; suspensão vencida devolve a escrita; exclusão pedida congela igual,
+inclusive responder pergunta; cancelar o pedido devolve a escrita; outra pessoa ativa não é afetada.

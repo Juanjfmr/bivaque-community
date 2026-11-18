@@ -4,7 +4,7 @@
 -- Execução somente em Supabase LOCAL: fixtures de exemplo e rollback.
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(35);
+select plan(43);
 
 \ir fixtures/foundation.inc
 \ir fixtures/groups.inc
@@ -34,6 +34,20 @@ values (
   'item', 'active', '00000000-0000-4000-8000-000000000001', null,
   'casa_moveis', 'Mesa de exemplo', 'Mesa usada.', 65000, 'used', 'Centro'
 );
+
+insert into public.listings (
+  id, owner_user_id, kind, status, title, description, locality_id, community_id,
+  neighborhood, category, price_cents, condition
+)
+values (
+  '98200000-0000-4000-8000-000000000002',
+  '10000000-0000-4000-8000-000000000001',
+  'property', 'active', 'Apartamento de exemplo', 'Sala integrada.',
+  '00000000-0000-4000-8000-000000000001', null, 'Centro', null, null, null
+);
+
+insert into public.property_details (listing_id, deal, property_type, rent_cents)
+values ('98200000-0000-4000-8000-000000000002', 'rent', 'apartment', 220000);
 
 insert into public.listing_photos (listing_id, path, position)
 values (
@@ -114,6 +128,10 @@ select is(pg_temp.authz_probe_mutation($q$
   where listing_id = '98200000-0000-4000-8000-000000000001'
 $q$), 1, 'ativo altera foto do proprio anuncio');
 select is(pg_temp.authz_probe_mutation($q$
+  update public.property_details set rent_cents = 210000
+  where listing_id = '98200000-0000-4000-8000-000000000002'
+$q$), 1, 'ativo edita detalhes do proprio imovel');
+select is(pg_temp.authz_probe_mutation($q$
   update public.events set title = 'Encontro editado'
   where id = '98300000-0000-4000-8000-000000000001'
 $q$), 1, 'ativo edita proprio evento');
@@ -172,6 +190,15 @@ select ok(pg_temp.authz_probe_mutation($q$
   update public.listing_photos set path = path
   where listing_id = '98200000-0000-4000-8000-000000000001'
 $q$) <= 0, 'suspenso nao altera foto do proprio anuncio');
+select is(pg_temp.authz_probe_mutation($q$
+  insert into public.listing_photos (listing_id, path, position)
+  values ('98200000-0000-4000-8000-000000000001',
+          '98200000-0000-4000-8000-000000000001/foto-1.jpg', 1)
+$q$), -1, 'suspenso nao adiciona foto ao proprio anuncio');
+select ok(pg_temp.authz_probe_mutation($q$
+  update public.property_details set rent_cents = 1
+  where listing_id = '98200000-0000-4000-8000-000000000002'
+$q$) <= 0, 'suspenso nao edita detalhes do proprio imovel');
 select ok(pg_temp.authz_probe_mutation($q$
   update public.events set title = 'Edicao indevida'
   where id = '98300000-0000-4000-8000-000000000001'
@@ -191,6 +218,30 @@ $$, '42501', null, 'suspenso nao cria grupo pela RPC');
 select throws_ok($$
   select public.transition_listing('98200000-0000-4000-8000-000000000001', 'reactivate')
 $$, '42501', null, 'suspenso nao reativa anuncio pela RPC');
+select throws_ok($$
+  select public.set_group_rules('40000000-0000-4000-8000-000000000001', 'Regra indevida')
+$$, '42501', null, 'suspenso nao muda regras do grupo pela RPC');
+select throws_ok($$
+  select public.delete_group('40000000-0000-4000-8000-000000000001')
+$$, '42501', null, 'suspenso nao apaga grupo pela RPC');
+select throws_ok($$
+  select public.mark_recommendation_resolved('98000000-0000-4000-8000-000000000001')
+$$, '42501', null, 'suspenso nao marca pergunta como resolvida pela RPC');
+
+-- Suspensão vencida não congela: is_account_suspended ignora expires_at passado.
+reset role;
+update public.profile_suspensions
+set expires_at = now() - interval '1 minute'
+where user_id = '10000000-0000-4000-8000-000000000001';
+
+set local role authenticated;
+select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000001', true);
+select set_config('request.jwt.claim.role', 'authenticated', true);
+
+select is(pg_temp.authz_probe_mutation($q$
+  update public.listings set price_cents = 45000
+  where id = '98200000-0000-4000-8000-000000000001'
+$q$), 1, 'suspensao vencida volta a permitir editar o anuncio');
 
 -- ── Pedido de exclusão de conta: mesmo congelamento.
 reset role;
@@ -219,6 +270,11 @@ select ok(pg_temp.authz_probe_mutation($q$
   update public.groups set description = 'Edicao com exclusao pedida'
   where id = '40000000-0000-4000-8000-000000000001'
 $q$) <= 0, 'pedido de exclusao impede editar grupo');
+select is(pg_temp.authz_probe_mutation($q$
+  insert into public.recommendation_replies (request_id, author_id, body)
+  values ('98000000-0000-4000-8000-000000000002', '10000000-0000-4000-8000-000000000001',
+          'Resposta com exclusao pedida.')
+$q$), -1, 'pedido de exclusao impede responder pergunta');
 select throws_ok($$
   select public.create_group('Grupo indevido', 'public', '00000000-0000-4000-8000-000000000001')
 $$, '42501', null, 'pedido de exclusao impede criar grupo pela RPC');
