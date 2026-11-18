@@ -14,7 +14,14 @@ function cliente(data: unknown, error: unknown = null) {
   const eq = vi.fn()
   const query = { select: () => query, eq, maybeSingle: async () => ({ data, error }) }
   eq.mockReturnValue(query)
-  return { valor: { from: () => query } as never, eq }
+  return {
+    valor: {
+      from: () => query,
+      // AUTHZ-007: o veto de conta pela sessão, antes do upload privilegiado.
+      rpc: async () => ({ data: true, error: null }),
+    } as never,
+    eq,
+  }
 }
 beforeEach(() => {
   vi.clearAllMocks()

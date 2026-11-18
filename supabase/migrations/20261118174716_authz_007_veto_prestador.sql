@@ -4,10 +4,13 @@
 --
 -- Fecha o achado M2 do security-auditor sobre o lote AUTHZ-006: a página de
 -- negócio do membro, o catálogo, as fotos de portfólio e o pedido de serviço não
--- olhavam suspensão nem exclusão pedida, e os buckets de foto de anúncio e de
--- evento aceitavam objeto de conta suspensa (o objeto ficava órfão, porque a
--- linha no banco era vetada). Mesmo predicado e mesmo erro do AUTHZ-006: o
--- helper private.can_write_own_content() e o SQLSTATE 42501.
+-- olhavam suspensão nem exclusão pedida, e o upload de foto de anúncio, de
+-- evento e de portfólio com service_role também não conferia a conta (o objeto
+-- ficava órfão, porque a linha no banco era vetada). Nas policies e RPCs abaixo,
+-- mesmo predicado e mesmo erro do AUTHZ-006: o helper
+-- private.can_write_own_content() e o SQLSTATE 42501. O veto de FOTO é do
+-- servidor, antes do service_role (seção abaixo); nada aqui toca o schema
+-- storage.
 --
 -- Provado em supabase/tests/authz-007-veto-prestador.sql.
 
@@ -47,73 +50,33 @@ begin
 end;
 $$;
 
--- Buckets de foto de anúncio e de evento: o upload não passa pela RLS. Desde
--- 20261019224723_remove_client_image_writes.sql (SEC-006) nenhum cliente tem
--- policy de INSERT em storage.objects, e o objeto é gravado pela Server Action
--- com service_role — que ignora RLS e não carrega o sub do usuário. Restringir
--- por policy, além de inútil aqui, quebraria a prova do SEC-006.
+-- Veto de FOTO (anúncio, evento e portfólio): no SERVIDOR, antes do upload
+-- privilegiado. O upload desses buckets é da Server Action/rota com
+-- service_role, que ignora RLS — desde o SEC-006 nenhum cliente tem INSERT em
+-- storage.objects, e uma policy de storage quebraria a prova do SEC-006. A
+-- primeira versão desta migration usava um trigger before insert em
+-- storage.objects; saiu porque no Supabase hospedado o papel que roda a
+-- migration não é dono do schema storage e o push inteiro falharia. A recusa é
+-- conferida agora no caminho de upload, pela sessão da pessoa, antes do
+-- service_role — e a linha da tabela continua vetada pelas policies acima.
 --
--- O ponto de recusa é um TRIGGER BEFORE INSERT em storage.objects, validando
--- com o dono derivado do caminho (mesma convenção da capa do evento,
--- 20260915160000): em listing-photos a pasta é o id do anúncio e a conta é o
--- dono dele; em event-photos a pasta é o id de quem organiza. A conta responsável
--- não depende do papel que escreve — exatamente por isso o veto vale para a
--- action de serviço. Mesmo erro das RPCs acima: 42501.
-create function private.can_write_content_as(p_user uuid)
+-- A conferência do servidor usa a RPC pública de autoverificação abaixo: o
+-- predicado de verdade continua sendo private.can_write_own_content(), mas o
+-- PostgREST só nomeia o schema public. Como is_account_suspended, a RPC
+-- resolve a identidade pelo JWT da sessão — nunca por parâmetro — então não
+-- vira oráculo do estado de outra pessoa.
+create function public.can_account_write_content()
 returns boolean
 language sql
 stable
 security definer
 set search_path = ''
 as $$
-  select p_user is not null
-    and not public.is_account_suspended(p_user)
-    and not private.account_deletion_requested(p_user);
+  select private.can_write_own_content();
 $$;
 
-revoke all on function private.can_write_content_as(uuid) from public, anon, authenticated;
-
-create function private.veto_conta_foto_conteudo()
-returns trigger
-language plpgsql
-security definer
-set search_path = ''
-as $$
-declare
-  v_folder text;
-  v_user uuid;
-begin
-  if new.bucket_id not in ('listing-photos', 'event-photos') then
-    return new;
-  end if;
-
-  v_folder := nullif((storage.foldername(new.name))[1], '');
-
-  if new.bucket_id = 'listing-photos' then
-    select l.owner_user_id
-      into v_user
-      from public.listings l
-     where l.id::text = v_folder;
-  elsif v_folder ~ '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$' then
-    -- event-photos: a pasta é o id de quem organiza. Caminho sem pasta uuid
-    -- (fixture legada, por exemplo) não identifica conta e não é vetado aqui:
-    -- o que o expõe é a linha da tabela, que já tem o veto do AUTHZ-006.
-    v_user := v_folder::uuid;
-  end if;
-
-  if v_user is not null and not private.can_write_content_as(v_user) then
-    raise exception 'account cannot write content' using errcode = '42501';
-  end if;
-
-  return new;
-end;
-$$;
-
-revoke all on function private.veto_conta_foto_conteudo() from public;
-
-create trigger veto_conta_foto_conteudo
-before insert on storage.objects
-for each row execute function private.veto_conta_foto_conteudo();
+revoke all on function public.can_account_write_content() from public, anon;
+grant execute on function public.can_account_write_content() to authenticated;
 
 -- create_member_business_page: mesmo corpo de 20260927005841_member_business_page_follows_owner.sql,
 -- com o veto logo depois da autenticação.
@@ -266,9 +229,9 @@ end;
 $$;
 
 -- create_service_request: mesmo corpo de 20261116220115_rpc_pedido_sem_cep_nem_coordenada.sql,
--- com o veto logo depois da autenticação. O veto cobre o que o
--- account_deletion_requested(v_me) antigo cobria (e a suspensão, que ele não
--- via); o do prestador permanece, porque o prestador não é o chamador.
+-- com o veto logo depois da autenticação. O veto substitui o
+-- account_deletion_requested(v_me) antigo, que cobria só metade do estado (não
+-- via suspensão); o do prestador permanece, porque o prestador não é o chamador.
 create or replace function public.create_service_request(
   p_provider_id uuid,
   p_description text,

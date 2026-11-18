@@ -1,11 +1,14 @@
 -- AUTHZ-007 (R3): conta suspensa ou com exclusão pedida não cria, edita nem
--- apaga página de negócio, item de catálogo, foto de portfólio, pedido de
--- serviço, nem sobe foto de anúncio ou de evento.
+-- apaga página de negócio, item de catálogo, foto de portfólio nem pedido de
+-- serviço. O veto de FOTO é do servidor, antes do upload com service_role: o
+-- que o banco prova aqui é a RPC de autoverificação que o servidor chama
+-- (public.can_account_write_content) em cada estado; os caminhos de upload
+-- têm testes unitários em tests/unit/security/uploads-authz.test.ts.
 -- Correção: 20261118174716_authz_007_veto_prestador.sql.
 -- Execução somente em Supabase LOCAL: fixtures de exemplo e rollback.
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(38);
+select plan(44);
 
 \ir fixtures/foundation.inc
 
@@ -57,6 +60,29 @@ values (
   'Prato do dia'
 );
 
+-- Prestador civil (fluxo de conta convidada): o INSERT e o UPDATE DIRETOS em
+-- provider_profiles são deste fluxo — o membro cria e edita a própria página
+-- pela RPC. Sem este fixture, as provas diretas de insert/update da tabela
+-- não passariam da policy permissiva, que só aceita prestador civil.
+reset role;
+insert into auth.users (id, email)
+values ('10000000-0000-4000-8000-000000000006', 'civil-provider@example.invalid');
+insert into public.communities (id, locality_id, name, created_by, owner_user_id)
+values (
+  '70000000-0000-4000-8000-000000000009',
+  '00000000-0000-4000-8000-000000000001',
+  'Comunidade do prestador civil',
+  '10000000-0000-4000-8000-000000000001',
+  '10000000-0000-4000-8000-000000000001'
+);
+insert into public.provider_accounts (auth_user_id, invited_by, community_id, locality_id)
+values (
+  '10000000-0000-4000-8000-000000000006',
+  '10000000-0000-4000-8000-000000000001',
+  '70000000-0000-4000-8000-000000000009',
+  '00000000-0000-4000-8000-000000000001'
+);
+
 -- Mesma probe do AUTHZ-006: executa como o chamador e desfaz sempre.
 -- 1 = alterou linha; 0 = RLS ocultou a linha; -1 = SQLSTATE 42501.
 create function pg_temp.authz_probe_mutation(p_sql text)
@@ -75,7 +101,7 @@ begin
 end;
 $probe$;
 
--- Catálogo: três restritivas por tabela do prestador e o trigger nos buckets.
+-- Catálogo: três restritivas por tabela do prestador.
 select is((
   select count(*)::integer
   from pg_policies
@@ -87,15 +113,6 @@ select is((
       'provider_profiles', 'provider_catalog_items', 'provider_portfolio_photos'
     )
 ), 9, 'tres tabelas do prestador com veto restritivo em insert, update e delete');
-select is((
-  select count(*)::integer
-  from information_schema.triggers
-  where trigger_schema = 'storage'
-    and event_object_table = 'objects'
-    and trigger_name = 'veto_conta_foto_conteudo'
-    and action_timing = 'BEFORE'
-    and event_manipulation = 'INSERT'
-), 1, 'trigger de veto antes do insert em storage.objects');
 
 -- ── Conta ativa: tudo continua funcionando.
 select is((
@@ -139,23 +156,30 @@ select is(pg_temp.authz_probe_mutation($q$
   delete from public.provider_profiles
   where id = current_setting('test.provider_a')::uuid
 $q$), 1, 'ativo apaga a propria pagina diretamente');
+select is(
+  public.can_account_write_content(),
+  true,
+  'ativo pode escrever (RPC de autoverificacao que o servidor chama no upload)'
+);
 
--- Buckets: o upload real é da Server Action com service_role, sem sub do usuário.
-reset role;
-set local role service_role;
-select lives_ok(
-  $$ insert into storage.objects (bucket_id, name, owner)
-     values ('listing-photos', '98200000-0000-4000-8000-000000000001/foto-0.jpg',
-             '10000000-0000-4000-8000-000000000001') $$,
-  'ativo sobe foto de anuncio'
-);
-select lives_ok(
-  $$ insert into storage.objects (bucket_id, name, owner)
-     values ('event-photos',
-             '10000000-0000-4000-8000-000000000001/grupos/98400000-0000-4000-8000-000000000001/capa.jpg',
-             '10000000-0000-4000-8000-000000000001') $$,
-  'ativo sobe foto de evento'
-);
+-- Prestador civil ativo: INSERT e UPDATE diretos em provider_profiles.
+set local role authenticated;
+select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000006', true);
+select set_config('request.jwt.claim.role', 'authenticated', true);
+insert into public.provider_profiles (owner_user_id, display_name, category)
+values ('10000000-0000-4000-8000-000000000006', 'Prestador civil', 'assistencia_tecnica');
+select is((
+  select count(*)::integer from public.provider_profiles
+  where owner_user_id = '10000000-0000-4000-8000-000000000006'
+), 1, 'prestador civil ativo cria a propria ficha diretamente');
+select is(pg_temp.authz_probe_mutation($q$
+  update public.provider_profiles set display_name = 'Prestador civil editado'
+  where owner_user_id = '10000000-0000-4000-8000-000000000006'
+$q$), 1, 'prestador civil ativo edita a propria ficha diretamente');
+
+-- O upload de foto não é provado no banco: é da Server Action com
+-- service_role, sem sub do usuário, e o veto é do servidor, que confere a RPC
+-- acima antes do upload (tests/unit/security/uploads-authz.test.ts).
 reset role;
 set local role authenticated;
 select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000002', true);
@@ -170,7 +194,8 @@ select lives_ok(
 -- ── Conta suspensa: leitura preservada, escrita congelada.
 reset role;
 insert into public.profile_suspensions (user_id)
-values ('10000000-0000-4000-8000-000000000001');
+values ('10000000-0000-4000-8000-000000000001'),
+       ('10000000-0000-4000-8000-000000000006');
 
 set local role authenticated;
 select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000001', true);
@@ -222,24 +247,26 @@ select ok(pg_temp.authz_probe_mutation($q$
   delete from public.provider_profiles
   where id = current_setting('test.provider_a')::uuid
 $q$) <= 0, 'suspenso nao apaga a propria pagina');
+select is(
+  public.can_account_write_content(),
+  false,
+  'suspenso nao pode escrever (RPC que o servidor chama antes do upload de foto)'
+);
 
-reset role;
-set local role service_role;
-select throws_ok(
-  $$ insert into storage.objects (bucket_id, name, owner)
-     values ('listing-photos', '98200000-0000-4000-8000-000000000001/foto-1.jpg',
-             '10000000-0000-4000-8000-000000000001') $$,
-  '42501', 'account cannot write content',
-  'suspenso nao sobe foto de anuncio'
-);
-select throws_ok(
-  $$ insert into storage.objects (bucket_id, name, owner)
-     values ('event-photos',
-             '10000000-0000-4000-8000-000000000001/grupos/98400000-0000-4000-8000-000000000002/capa.jpg',
-             '10000000-0000-4000-8000-000000000001') $$,
-  '42501', 'account cannot write content',
-  'suspenso nao sobe foto de evento'
-);
+-- Prestador civil suspenso: INSERT e UPDATE diretos recusados. A restritiva
+-- negando antes do unique de owner_user_id é a prova de que o veto decide, não
+-- a constraint.
+set local role authenticated;
+select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000006', true);
+select set_config('request.jwt.claim.role', 'authenticated', true);
+select is(pg_temp.authz_probe_mutation($q$
+  insert into public.provider_profiles (owner_user_id, display_name, category)
+  values ('10000000-0000-4000-8000-000000000006', 'Ficha indevida', 'alimentacao')
+$q$), -1, 'prestador civil suspenso nao cria ficha diretamente');
+select ok(pg_temp.authz_probe_mutation($q$
+  update public.provider_profiles set display_name = 'Edicao indevida'
+  where owner_user_id = '10000000-0000-4000-8000-000000000006'
+$q$) <= 0, 'prestador civil suspenso nao edita ficha diretamente');
 
 set local role authenticated;
 select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000001', true);
@@ -269,9 +296,11 @@ $q$), 1, 'suspensao vencida devolve a escrita do catalogo');
 -- ── Pedido de exclusão de conta: mesmo congelamento.
 reset role;
 delete from public.profile_suspensions
-where user_id = '10000000-0000-4000-8000-000000000001';
+where user_id in ('10000000-0000-4000-8000-000000000001',
+                  '10000000-0000-4000-8000-000000000006');
 insert into public.account_deletion_requests (user_id, due_at)
-values ('10000000-0000-4000-8000-000000000001', now() + interval '30 days');
+values ('10000000-0000-4000-8000-000000000001', now() + interval '30 days'),
+       ('10000000-0000-4000-8000-000000000006', now() + interval '30 days');
 
 set local role authenticated;
 select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000001', true);
@@ -299,27 +328,43 @@ select is(pg_temp.authz_probe_mutation($q$
           current_setting('test.provider_a') || '/portfolio/com-exclusao.webp')
 $q$), -1, 'pedido de exclusao impede criar foto de portfolio');
 select ok(pg_temp.authz_probe_mutation($q$
+  update public.provider_portfolio_photos set caption = 'Edicao com exclusao pedida'
+  where provider_id = current_setting('test.provider_a')::uuid
+$q$) <= 0, 'pedido de exclusao impede editar foto de portfolio');
+select ok(pg_temp.authz_probe_mutation($q$
+  delete from public.provider_portfolio_photos
+  where provider_id = current_setting('test.provider_a')::uuid
+$q$) <= 0, 'pedido de exclusao impede excluir foto de portfolio');
+select is(pg_temp.authz_probe_mutation($q$
+  insert into public.provider_catalog_items (provider_id, title)
+  values (current_setting('test.provider_a')::uuid, 'Item com exclusao pedida')
+$q$), -1, 'pedido de exclusao impede criar item de catalogo');
+select ok(pg_temp.authz_probe_mutation($q$
+  delete from public.provider_catalog_items
+  where provider_id = current_setting('test.provider_a')::uuid
+$q$) <= 0, 'pedido de exclusao impede excluir item de catalogo');
+select ok(pg_temp.authz_probe_mutation($q$
   delete from public.provider_profiles
   where id = current_setting('test.provider_a')::uuid
 $q$) <= 0, 'pedido de exclusao impede apagar a propria pagina');
+select is(
+  public.can_account_write_content(),
+  false,
+  'pedido de exclusao impede escrever (RPC que o servidor chama antes do upload)'
+);
 
-reset role;
-set local role service_role;
-select throws_ok(
-  $$ insert into storage.objects (bucket_id, name, owner)
-     values ('listing-photos', '98200000-0000-4000-8000-000000000001/foto-2.jpg',
-             '10000000-0000-4000-8000-000000000001') $$,
-  '42501', 'account cannot write content',
-  'pedido de exclusao impede subir foto de anuncio'
-);
-select throws_ok(
-  $$ insert into storage.objects (bucket_id, name, owner)
-     values ('event-photos',
-             '10000000-0000-4000-8000-000000000001/grupos/98400000-0000-4000-8000-000000000003/capa.jpg',
-             '10000000-0000-4000-8000-000000000001') $$,
-  '42501', 'account cannot write content',
-  'pedido de exclusao impede subir foto de evento'
-);
+-- Prestador civil com exclusão pedida: INSERT e UPDATE diretos recusados.
+set local role authenticated;
+select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000006', true);
+select set_config('request.jwt.claim.role', 'authenticated', true);
+select is(pg_temp.authz_probe_mutation($q$
+  insert into public.provider_profiles (owner_user_id, display_name, category)
+  values ('10000000-0000-4000-8000-000000000006', 'Ficha indevida', 'alimentacao')
+$q$), -1, 'prestador civil com exclusao pedida nao cria ficha diretamente');
+select ok(pg_temp.authz_probe_mutation($q$
+  update public.provider_profiles set display_name = 'Edicao indevida'
+  where owner_user_id = '10000000-0000-4000-8000-000000000006'
+$q$) <= 0, 'prestador civil com exclusao pedida nao edita ficha diretamente');
 
 set local role authenticated;
 select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000001', true);

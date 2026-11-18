@@ -8,6 +8,7 @@ import {
 } from "../../../../../lib/app-api/rota-do-app"
 import { fichaDoDono, fotosDaFicha } from "../../../../../lib/providers/app-negocio"
 import { sanitizeImage } from "../../../../../lib/storage/sanitize-image"
+import { conferirEscritaDaConta } from "../../../../../lib/storage/veto-de-conta"
 
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
@@ -64,6 +65,21 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     return responder(request, { erro: "dados-invalidos", mensagem: "A imagem passa de 5 MB." }, 400)
 
   const client = auth.sessao.cliente
+
+  // AUTHZ-007: veto de conta ANTES do upload com service_role. A linha é
+  // vetada pelas policies restritivas; sem esta conferência o objeto subiria
+  // e ficaria órfão quando a linha fosse recusada.
+  const conta = await conferirEscritaDaConta(client)
+  if (!conta.ok) {
+    return conta.motivo === "conta"
+      ? responder(
+          request,
+          { erro: "recusado", mensagem: "Sua conta não pode publicar fotos agora." },
+          403,
+        )
+      : responder(request, { erro: "escrita-indisponivel" }, 503)
+  }
+
   try {
     const ficha = await fichaDoDono(client, auth.sessao.usuario.id)
     if (ficha === null) return responder(request, { erro: "negocio-nao-encontrado" }, 404)
@@ -98,18 +114,28 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       .upload(caminho, imagem, { contentType: arquivo.type })
     if (erroDoUpload) throw erroDoUpload
 
-    const { count, error: erroDaContagem } = await client
-      .from("provider_portfolio_photos")
-      .select("*", { count: "exact", head: true })
-      .eq("provider_id", ficha.id)
-    if (erroDaContagem) throw erroDaContagem
-    const { error: erroDaLinha } = await client.from("provider_portfolio_photos").insert({
-      provider_id: ficha.id,
-      photo_path: caminho,
-      caption: legenda,
-      position: count ?? 0,
-    })
-    if (erroDaLinha) throw erroDaLinha
+    try {
+      const { count, error: erroDaContagem } = await client
+        .from("provider_portfolio_photos")
+        .select("*", { count: "exact", head: true })
+        .eq("provider_id", ficha.id)
+      if (erroDaContagem) throw erroDaContagem
+      const { error: erroDaLinha } = await client.from("provider_portfolio_photos").insert({
+        provider_id: ficha.id,
+        photo_path: caminho,
+        caption: legenda,
+        position: count ?? 0,
+      })
+      if (erroDaLinha) throw erroDaLinha
+    } catch (erroDaLinha) {
+      // A linha é o que torna a foto visível; sem ela o objeto fica órfão. Com
+      // o veto de conta antes do upload isto é defesa extra (AUTHZ-007).
+      const limpeza = await servico.storage.from("provider-photos").remove([caminho])
+      if (limpeza.error) {
+        console.error("[negocio] objeto sem linha ficou no bucket:", limpeza.error.message)
+      }
+      throw erroDaLinha
+    }
     return responder(request, { fotos: await fotosDaFicha(client, ficha.id) }, 201)
   } catch {
     return responder(request, { erro: "escrita-indisponivel" }, 503)

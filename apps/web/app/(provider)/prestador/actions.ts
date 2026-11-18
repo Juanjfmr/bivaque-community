@@ -13,6 +13,7 @@ import {
   validateTitle,
 } from "../../../lib/providers/showcase"
 import { sanitizeImage } from "../../../lib/storage/sanitize-image"
+import { conferirEscritaDaConta } from "../../../lib/storage/veto-de-conta"
 import { createServerClient as createServiceClient } from "../../../lib/supabase/server"
 
 // Onda G Task 4 — Server Actions do painel do prestador.
@@ -259,6 +260,18 @@ export async function addPortfolioPhotoAction(
   if (canManageError) throw new Error(`Falha ao conferir a ficha: ${canManageError.message}`)
   if (canManage !== true) throw new Error("Só o dono da ficha pode publicar fotos.")
 
+  // AUTHZ-007: veto de conta antes do upload com service_role, pela sessão da
+  // pessoa — o objeto não sobe se a linha seria recusada.
+  const conta = await conferirEscritaDaConta(client)
+  if (!conta.ok) {
+    return {
+      error:
+        conta.motivo === "conta"
+          ? "Sua conta não pode publicar fotos agora."
+          : "Não foi possível conferir sua conta. Tente de novo em instantes.",
+    }
+  }
+
   const extension = file.type === "image/png" ? "png" : file.type === "image/webp" ? "webp" : "jpg"
   const path = `${profileId}/portfolio/${crypto.randomUUID()}.${extension}`
   let image: Buffer
@@ -285,7 +298,15 @@ export async function addPortfolioPhotoAction(
     caption,
     position: count ?? 0,
   })
-  if (error) throw new Error(`Falha ao registrar a foto: ${error.message}`)
+  if (error) {
+    // A linha é o que torna a foto visível; sem ela o objeto fica órfão. Com
+    // o veto de conta antes do upload isto é defesa extra (AUTHZ-007).
+    const limpeza = await serviceClient.storage.from("provider-photos").remove([path])
+    if (limpeza.error) {
+      console.error("[prestador] objeto sem linha ficou no bucket:", limpeza.error.message)
+    }
+    throw new Error(`Falha ao registrar a foto: ${error.message}`)
+  }
 
   revalidatePath("/prestador/catalogo")
   revalidatePath("/negocio/catalogo")

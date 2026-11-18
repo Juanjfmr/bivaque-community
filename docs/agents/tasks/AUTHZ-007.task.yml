@@ -22,6 +22,27 @@ allowed_paths:
   - docs/decisions/RATIFICACAO.md
   - docs/agents/tasks/AUTHZ-007.task.yml
   - tests/unit/**/*authz*
+  # Ampliação de 18/11, rodada 1 (decisão do coordenador): o veto de foto saiu do
+  # trigger em storage.objects e foi para os caminhos de upload do servidor.
+  - apps/web/lib/storage/veto-de-conta.ts
+  - apps/web/lib/storage/listing-photo.ts
+  - apps/web/lib/storage/foto-do-grupo.ts
+  - apps/web/lib/listings/actions.ts
+  - apps/web/app/api/app/grupos/[id]/fotos/route.ts
+  - apps/web/app/components/bivaque/post-photo-action.ts
+  - apps/web/app/api/app/negocio/fotos/route.ts
+  - apps/web/app/(provider)/prestador/actions.ts
+  # Idem: a RPC pública nova precisa da entrada nos tipos gerados (o arquivo
+  # local do banco não roda migrations deste branch; o CI regenera).
+  - supabase/database.generated.ts
+  # Idem: stubs de testes existentes dos caminhos de upload agora respondem a
+  # RPC de veto; a intenção de cada teste segue a mesma.
+  - tests/unit/app-api/criar/foto.test.ts
+  - tests/unit/app-api/grupos/apoio.ts
+  - tests/unit/app-api/negocio/rotas.test.ts
+  - tests/unit/listings/photo-replacement-composition.test.ts
+  - tests/unit/listings/photo-row-invariant.test.ts
+  - tests/unit/security/photo-upload-per-call.test.ts
 forbidden:
   - editar migration já existente na main (só migration nova, criada com npx pnpm@11.18.0 exec supabase migration new authz_007_veto_prestador)
   - reiniciar, reconstruir ou escrever no banco local compartilhado (a prova de banco é do CI)
@@ -31,8 +52,9 @@ forbidden:
 acceptance:
   - policies restritivas (as restrictive) de insert/update/delete em provider_profiles, provider_catalog_items e provider_portfolio_photos com o mesmo predicado de suspensão e exclusão pedida usado no AUTHZ-006
   - create_member_business_page, update_member_business_page e create_service_request recusam conta suspensa e com exclusão pedida, com o mesmo erro que as RPCs do AUTHZ-006 usam; funções definer com search_path fixo
-  - insert nos buckets de foto de anúncio e de evento recusado para conta suspensa e com exclusão pedida
-  - pgTAP com conta ativa (permitido), suspensa (negado) e exclusão pedida (negado) para cada tabela, RPC e bucket; plan() exato
+  - o veto de foto de anúncio, de evento e de portfólio é do servidor, antes do service_role: RPC pública de autoverificação can_account_write_content (mesmo predicado de private.can_write_own_content, identidade pelo JWT) chamada em cada caminho de upload; teste unitário de conta ativa (passa), suspensa (recusa) e com exclusão pedida (recusa), um trio por caminho
+  - o portfólio apaga o objeto do bucket quando a linha é recusada depois do upload (defesa extra ao veto antes do upload), com teste unitário do cleanup
+  - pgTAP com conta ativa (permitido), suspensa (negado) e exclusão pedida (negado) para cada tabela e RPC, incluindo INSERT e UPDATE diretos em provider_profiles pelo fluxo de prestador civil; a RPC can_account_write_content provada em cada estado; plan() exato
   - emenda datada no ADR-20261118 do veto (seção "Emenda de 18/11, AUTHZ-007") e a linha do ADR na RATIFICACAO atualizada citando a emenda, no mesmo commit
 proof:
   - npx pnpm@11.18.0 gate --fast
