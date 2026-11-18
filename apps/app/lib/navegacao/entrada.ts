@@ -38,6 +38,8 @@ export type Sobreposicao =
   | "contato-oferta"
   | "grupo-escrever"
   | "grupo-sair"
+  | "grupo-pedir"
+  | "conversa-denuncia"
   | "grupo-novo"
   | "interesses"
 
@@ -116,6 +118,8 @@ export const SOBREPOSICOES: readonly Sobreposicao[] = [
   "contato-oferta",
   "grupo-escrever",
   "grupo-sair",
+  "grupo-pedir",
+  "conversa-denuncia",
   "grupo-novo",
   "interesses",
 ]

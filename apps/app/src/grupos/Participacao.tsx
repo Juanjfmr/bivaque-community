@@ -14,7 +14,7 @@ export function Participacao({
   grupo: GrupoReal
   aoMudar: (grupo: GrupoReal) => void
 }) {
-  const { aberto: pedindo, aoMudarAberto: setPedindo } = useSobreposicaoDaEntrada("dialogo")
+  const { aberto: pedindo, aoMudarAberto: setPedindo } = useSobreposicaoDaEntrada("grupo-pedir")
   const { aberto: saindo, aoMudarAberto: setSaindo } = useSobreposicaoDaEntrada("grupo-sair")
   const [motivo, setMotivo] = useState("")
   const [erro, setErro] = useState("")

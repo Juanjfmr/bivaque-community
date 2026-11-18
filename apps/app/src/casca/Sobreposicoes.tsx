@@ -19,6 +19,8 @@ import { PainelDeCidade } from "@/src/casca/PainelDeCidade"
  * | `confirmacao` | `Confirmacao` |
  * | `grupo-novo` | `Diretorio`, com a folha de criar grupo |
  * | `interesses` | `Voce`, com a folha de interesses |
+ * | `conversa-denuncia` | `Conversa`, com o diálogo de denúncia |
+ * | `grupo-pedir` | `Participacao`, com o pedido de entrada |
  *
  * Por isso a casca não desenha nada para `menu-criar`, `menu-de-linha`,
  * `confirmacao`, `grupo-novo` e `interesses`: desenhar duas vezes o mesmo id
@@ -42,7 +44,10 @@ export function Sobreposicoes() {
     // A folha de criar grupo é da tela do Diretório, que a desenha com o próprio id.
     aberta === "grupo-novo" ||
     // A folha de interesses é da tela Você.
-    aberta === "interesses"
+    aberta === "interesses" ||
+    // A denúncia de mensagem é da Conversa; o pedido de entrada, da Participação.
+    aberta === "conversa-denuncia" ||
+    aberta === "grupo-pedir"
   )
     return null
 
