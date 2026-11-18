@@ -132,21 +132,25 @@ export function PerfilDeMembro() {
       {perfil === null ? null : (
         <>
           {/* A capa em faixa (Mobbin 041fb7de): ilustrada, sem foto de pessoa
-              que não a enviou. O recorte é do contêiner — cantos arredondados
-              e janela da cena pela `Ilustracao`, nunca a borda do arquivo
-              (revisão às cegas, 20). O escopo `.pc` traz o raio da peça. */}
-          <div className="pc pc-embutido overflow-hidden rounded-2xl">
-            <Ilustracao nome="cidade" proporcao="21 / 9" enquadre="50% 30%" />
+              que não a enviou. Altura própria (21/9) e fundo neutro — a arte
+              falhar não deixa faixa vazia (revisão cega R1, G4). `prioridade`:
+              é o topo da tela, e o carregamento sob demanda perdia a arte na
+              captura do 1440 claro. O recorte é do contêiner — cantos
+              arredondados e janela da cena pela `Ilustracao`, nunca a borda do
+              arquivo (revisão às cegas, 20). O escopo `.pc` traz o raio da peça. */}
+          <div
+            data-capa="membro"
+            className="pc pc-embutido overflow-hidden rounded-2xl bg-(--muted)"
+          >
+            <Ilustracao nome="cidade" proporcao="21 / 9" enquadre="50% 30%" prioridade />
           </div>
 
-          {/* A identidade mora na superfície, abaixo da capa (revisão às cegas,
-              1): nenhum texto sobre a arte, legível nos dois temas. O avatar é
-              o único que atravessa a divisa, no máximo 24 px. */}
-          <header className="-mt-6 flex items-end gap-3 px-1">
-            <span className="rounded-full ring-4 ring-(--background)">
-              <Avatar nome={nome} tamanho={56} />
-            </span>
-            <span className="grid min-w-0 gap-0.5 pb-1">
+          {/* A identidade mora na superfície, ABAIXO da capa, sem margem
+              negativa: nome e menu nunca encostam na arte, nos dois temas e
+              nas três larguras (revisão cega R1, G3). */}
+          <header className="flex items-center gap-3 px-1">
+            <Avatar nome={nome} tamanho={56} />
+            <span className="grid min-w-0 gap-0.5">
               <h1
                 id="titulo-da-tela"
                 data-titulo-da-tela

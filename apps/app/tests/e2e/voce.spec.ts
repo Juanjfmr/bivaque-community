@@ -101,6 +101,17 @@ test("bloquear pelo perfil de membro: espera visível, menu fora e estado bloque
   await page.goto("/app/perfil/u-paulo")
   await expect(page.getByRole("heading", { name: "Paulo Roberto" })).toBeVisible()
 
+  // A capa do topo: se a arte falha, a faixa continua com fundo neutro — a
+  // área não fica vazia (revisão cega R1, G4).
+  await page.route(/\/ilustracoes\/cidade\.webp$/, (rota) => rota.abort())
+  const capa = page.locator('[data-tela="perfil"] [data-capa="membro"]')
+  await expect(capa).toBeVisible()
+  expect(
+    await capa.evaluate((elemento) => getComputedStyle(elemento).backgroundColor),
+    "capa sem arte continua com fundo neutro",
+  ).not.toBe("rgba(0, 0, 0, 0)")
+  await page.unroute(/\/ilustracoes\/cidade\.webp$/)
+
   await page.getByRole("button", { name: "Opções" }).click()
   await page.getByRole("menuitem", { name: "Bloquear Paulo Roberto" }).click()
 
