@@ -1,9 +1,10 @@
 // Resolução do item ativo da navegação da lateral a partir da ROTA.
 //
-// Bug que originou o RECON-038: `/salvos` era tratada como "destino pessoal" e
-// caía no fallback "perfil" — a lateral acendia **Perfil** enquanto a pessoa
-// estava em Salvos. Isso é defeito de navegação, não de estilo: o item ativo
-// tem que sair da rota, nunca de um fallback que escolhe um vizinho plausível.
+// Bug que originou o RECON-038: a tela de Salvos era tratada como "destino
+// pessoal" e caía no fallback "perfil" — a lateral acendia **Perfil** enquanto a
+// pessoa estava em Salvos. Isso é defeito de navegação, não de estilo: o item
+// ativo tem que sair da rota, nunca de um fallback que escolhe um vizinho
+// plausível. A tela saiu da web no RUN-186 e a regra fica.
 //
 // RECON-042, defeito 2: o último recurso elegia "inicio" para toda rota que não
 // fosse um container primário nem uma rota pessoal. Isso acendia Início em
@@ -36,8 +37,11 @@ export const PRIMARY_CONTAINERS = ["inicio", "explorar", "comunidades", "perfil"
 export type PrimaryContainer = (typeof PRIMARY_CONTAINERS)[number]
 
 // Destinos secundários que representam a si mesmos na lateral porque têm item
-// próprio desenhado em app-shell.tsx. Só `/salvos` acende a si mesma.
-export const SECONDARY_SELF_ROUTES = ["/salvos"] as const
+// próprio desenhado em app-shell.tsx. RUN-186: a lista está vazia — o único
+// item era `/salvos`, que virou tela do app e hoje é 307 para `/app/salvos`.
+// O formato fica: um destino secundário novo que a casca sirva volta aqui e
+// acende a si mesmo, sem fallback por vizinhança (RECON-038).
+export const SECONDARY_SELF_ROUTES = [] as const
 
 // A que container cada ÁREA pertence. É a regra de produto, não uma lista de
 // telas: o prefixo da área resolve, e a tela herda o container do pai

@@ -14,7 +14,9 @@ describe("toda porta de um pedido leva a /indicacoes/<id>", () => {
   it.each([
     ["notificação de resposta e alvo de denúncia", ["lib", "notifications", "deep-links.ts"]],
     ["denúncia", ["lib", "reports", "reports.ts"]],
-    ["salvos", ["lib", "saves", "saved-items.ts"]],
+    // RUN-186: a tela web de Salvos saiu com `lib/saves/saved-items.ts`; a tela
+    // do app lista anúncio, publicação, pergunta e guia. O pedido salvo continua
+    // com um endereço só (`/indicacoes/<id>`), provado nos dois módulos acima.
     // O verbete do Guia é do app desde o F08: a página web que abria um pedido
     // de indicação saiu com a jornada, e a porta do pedido não mora mais ali.
     ["perguntas abertas do Início", ["app", "(shell)", "inicio", "questions-guide.tsx"]],

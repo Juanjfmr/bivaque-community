@@ -50,14 +50,14 @@ describe("modelo do rastreador de links", () => {
   // A distinção do RUN-176, no modelo: entrar por semente visita, mas não torna a rota
   // alcançável por link.
   it("semente visita sem satisfazer o invariante de porta", () => {
-    const patterns = buildPatterns(["(shell)/salvos/page.tsx"], [])
-    const porta = { route: "/salvos", porta: "semente da persona dona" }
+    const patterns = buildPatterns(["(shell)/pedidos/page.tsx"], [])
+    const porta = { route: "/pedidos", porta: "semente da persona dona" }
     const frontier = new Frontier(patterns, 1)
-    frontier.enter({ target: "/salvos", from: "(porta declarada)", persona: "dono de vila" })
-    expect(frontier.next()?.target).toBe("/salvos")
-    expect(unreachedRoutes(patterns, new Set(), [])).toEqual(["/salvos"])
+    frontier.enter({ target: "/pedidos", from: "(porta declarada)", persona: "dono de vila" })
+    expect(frontier.next()?.target).toBe("/pedidos")
+    expect(unreachedRoutes(patterns, new Set(), [])).toEqual(["/pedidos"])
     expect(unreachedRoutes(patterns, new Set(), [porta])).toEqual([])
-    expect(staleAllowances(patterns, new Set(["/salvos"]), [porta])).toEqual(["/salvos"])
+    expect(staleAllowances(patterns, new Set(["/pedidos"]), [porta])).toEqual(["/pedidos"])
   })
   it("tira os grupos de rota da URL", () => {
     expect(routeFromFile("(shell)/pedidos/[id]/page.tsx")).toBe("/pedidos/[id]")

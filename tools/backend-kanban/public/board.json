@@ -6256,14 +6256,15 @@
       "phase": "Lançamento",
       "tests": [],
       "blockers": [],
-      "updatedAt": "2026-11-06",
-      "sourceRevision": "f9492a1d",
+      "updatedAt": "2026-11-18",
+      "sourceRevision": "2c9b2bb3",
       "links": ["docs/LANCAMENTO.md"],
       "proof": [
         "02/11: aberto na definição do lançamento (docs/LANCAMENTO.md), por mandato do dono.",
         "06/11: RUN-016 integrado pelo PR #143 (385d9850): perfil próprio (ler e editar nome e bio), minhas publicações, bloqueados e ocultados com desfazer, e pedido de exclusão pelo fluxo existente. Implementação DeepSeek V4.1 Flash; revisão Qwen 3.8 Flash PASS COM RESSALVAS; security-auditor (Sonnet 5.5) LIBERA COM RESSALVAS; CI verde com o E2E real. Família ficou fora (ver F10-FAMILIA).",
         "17/11: DECISÃO DO DONO — a troca de e-mail fica fora do lançamento; quem precisar trocar pede pelo canal de Ajuda (suporte). A troca de /configuracoes* para o app segue sem ela no RUN-184 (em curso), com ADR registrando a exclusão; /salvos vai no lote seguinte.",
-        "17/11: RUN-184 (#274) trocou /configuracoes para o app (sem troca de e-mail, decisão do dono). Em curso: RUN-186 (/salvos no app, PR #277)."
+        "17/11: RUN-184 (#274) trocou /configuracoes para o app (sem troca de e-mail, decisão do dono). Em curso: RUN-186 (/salvos no app, PR #277).",
+        "18/11: RUN-186 (PR #277, merge 80604fba) trocou /salvos: 307 para /app/salvos com query preservada (também /recommendations?aba=saved); página (shell)/salvos e lib/saves/saved-items.ts removidas; Salvos do app com busca local e remover em guia, pergunta, publicação e anúncio pelas rotas existentes, com volta em falha; ADR-20261117-f10-salvos-no-app. CI completo verde em 380a175 (15 checagens). Revisão independente (reviewer Claude) PASS, parecer no PR. Ressalvas em RUN-186-RESSALVAS."
       ],
       "id": "LAN-F10",
       "title": "F10 Você, família e conta ligados ao banco",
@@ -6285,8 +6286,8 @@
       "phase": "Lançamento",
       "tests": [],
       "blockers": [],
-      "updatedAt": "2026-11-16",
-      "sourceRevision": "076396aa",
+      "updatedAt": "2026-11-18",
+      "sourceRevision": "2c9b2bb3",
       "links": ["docs/LANCAMENTO.md"],
       "proof": [
         "02/11: aberto na definição do lançamento (docs/LANCAMENTO.md), por mandato do dono.",
@@ -6311,7 +6312,8 @@
         "16/11: RUN-166 mergeado. Do inventario de RUN-166, seguem servindo tela de membro na web: indicacoes/[id] (pre-condicao do F09-B3 migrar o report-button antes), /profile+/editar (RUN-172 em curso), negocio/pedidos/configuracoes-familia e o resto da casca — a fase 6 acompanha por jornada.",
         "16/11: RUN-172 mergeado — nenhuma tela de membro das linhas F02-F10 fora das trocadas; o que resta na web pertence a jornadas com card proprio. AVATAR-FOTO-APP e o item M-3 da familia estao registrados.",
         "17/11: /guide/sugerir trocada (RUN-182, #271). Em curso: /configuracoes* (RUN-184) e paridade da Pergunta antes de trocar /indicacoes/[id] (RUN-185). Depois: /salvos e o lote 3 do F09 (troca de /indicacoes/[id] e revogação do INSERT direto). Troca de e-mail fora do lançamento por decisão do dono.",
-        "17/11: /configuracoes trocada (RUN-184, #274); paridade da Pergunta pronta (RUN-185, #275) para a troca de /indicacoes/[id] no lote 3 do F09; /salvos em curso (RUN-186, #277)."
+        "17/11: /configuracoes trocada (RUN-184, #274); paridade da Pergunta pronta (RUN-185, #275) para a troca de /indicacoes/[id] no lote 3 do F09; /salvos em curso (RUN-186, #277).",
+        "18/11: /salvos trocada (RUN-186, #277, 80604fba). Próximo da fase: lote 3 do F09 (troca de /indicacoes/[id] e revogação do INSERT direto) e a tela antiga /convite (SEC-017)."
       ],
       "id": "LAN-TROCA",
       "title": "Fase 6: varredura da troca — nenhuma rota de membro no apps/web servindo tela",
@@ -9790,18 +9792,22 @@
       "phase": "Lançamento",
       "priority": "P2",
       "category": "frontend",
-      "status": "next",
-      "updatedAt": "2026-11-17",
-      "sourceRevision": "a096f327",
+      "status": "done",
+      "updatedAt": "2026-11-18",
+      "sourceRevision": "2c9b2bb3",
       "description": "apps/app/src/telas/Ajuda.tsx ainda responde 'Esqueci a senha.' com o fluxo de recuperação, que o ADR-20261101 §2 tirou (a entrada é por código no e-mail, Google ou Apple). Texto que engana quem lê. Achado do RUN-184 (fora da cerca).",
       "dependencies": [],
       "checklist": [
-        "[ ] Trocar a resposta pela entrada por código, sem senha",
-        "[ ] Teste do texto da Ajuda"
+        "[x] Trocar a resposta pela entrada por código, sem senha",
+        "[x] Teste do texto da Ajuda"
       ],
-      "proof": ["Fonte: .work/orq/relatorios/RUN-184-implementacao.md (riscos, item 4)."],
+      "proof": [
+        "Fonte: .work/orq/relatorios/RUN-184-implementacao.md (riscos, item 4).",
+        "18/11: RUN-187 (PR #278, merge 2c9b2bb3). Ajuda do app e ajuda pública respondem 'Preciso de senha para entrar?' pela entrada com código no e-mail, sem prometer Google/Apple; entrada-acesso.tsx (sem uso vivo) removido; testes do texto nas duas ajudas. CI completo verde em a1f79f2 (última rodada; a anterior foi cancelada por substituição). Revisão independente (reviewer Claude) PASS, parecer no PR. Ressalvas e achados fora da cerca em SENHA-RESIDUOS-WEB e SEC-017."
+      ],
       "tests": [],
-      "notes": []
+      "notes": [],
+      "completedAt": "2026-11-18"
     },
     {
       "id": "RUN-185-RESSALVAS",
@@ -9836,6 +9842,71 @@
       "dependencies": [],
       "checklist": ["[ ] Tirar ou marcar como históricos os quadros de configurações"],
       "proof": ["Fonte: .work/orq/relatorios/RUN-184-implementacao.md (riscos, item 3)."],
+      "tests": [],
+      "notes": []
+    },
+    {
+      "id": "RUN-186-RESSALVAS",
+      "title": "RUN-186-RESSALVAS: resíduos da troca de /salvos e vazio da busca",
+      "phase": "Lançamento",
+      "priority": "P3",
+      "category": "frontend",
+      "status": "next",
+      "updatedAt": "2026-11-18",
+      "sourceRevision": "80604fba",
+      "description": "Ressalvas não bloqueantes da revisão independente do PR #277: comentários que ainda citam a tela morta (apps/web/app/globals.css:145-147, apps/web/app/(shell)/recommendations/page.tsx:6, tests/e2e/helpers/recon032-fixtures.ts:12-15 com REQUEST_ID/REQUEST_TITLE sem consumidor); /salvos/<subcaminho> agora dá 404 (sem link vivo conhecido); durante a busca em Salvos.tsx:340-345 cada seção vazia mostra o texto de 'nada salvo' em vez de um aviso único de nenhum resultado; o estado removendo guarda um id só.",
+      "dependencies": [],
+      "checklist": [
+        "[ ] Limpar comentários e fixtures órfãos da tela antiga",
+        "[ ] Decidir se /salvos/:path* redireciona",
+        "[ ] Vazio de busca único em Salvos",
+        "[ ] removendo como conjunto de ids"
+      ],
+      "proof": ["Fonte: parecer da revisão independente no PR #277 (18/11)."],
+      "tests": [],
+      "notes": []
+    },
+    {
+      "id": "SENHA-RESIDUOS-WEB",
+      "title": "Textos e estilos que ainda falam de senha depois do RUN-187",
+      "phase": "Lançamento",
+      "priority": "P2",
+      "category": "frontend",
+      "status": "next",
+      "updatedAt": "2026-11-18",
+      "sourceRevision": "2c9b2bb3",
+      "description": "Achados fora da cerca do RUN-187 (PR #278) e da revisão independente: a landing pública diz 'Com e-mail e senha ou com o Google' (apps/web/app/landing/landing.tsx:68); confirmar-email oferece link para /recuperar-senha; ficaram ~104 regras CSS órfãs .entrada-acesso* em apps/app/src/styles.css; a resposta da Ajuda diz 'chega na hora' e não 'chega no seu e-mail'; falta confirmar que quem criou a conta por Google/Apple entra pelo e-mail na mesma conta (vínculo de identidades no Supabase).",
+      "dependencies": [],
+      "checklist": [
+        "[ ] Landing sem 'e-mail e senha'",
+        "[ ] confirmar-email sem link para /recuperar-senha",
+        "[ ] Remover CSS órfão .entrada-acesso*",
+        "[ ] Resposta da Ajuda: 'chega no seu e-mail'",
+        "[ ] Verificar vínculo de identidades Google/Apple com e-mail"
+      ],
+      "proof": [
+        "Fonte: descrição do PR #278 (achados fora da cerca) e parecer da revisão independente (18/11)."
+      ],
+      "tests": [],
+      "notes": []
+    },
+    {
+      "id": "SEC-017",
+      "title": "Tela antiga /convite (familiar) ainda viva na web, com senha e cliente de serviço",
+      "phase": "Lançamento",
+      "priority": "P1",
+      "category": "backend",
+      "status": "repo",
+      "updatedAt": "2026-11-18",
+      "sourceRevision": "2c9b2bb3",
+      "description": "Achado do RUN-187 (PR #278): a tela antiga /convite de convite de familiar continua servindo na web, pede senha (contra o ADR-20261101 de entrada por código) e usa cliente de serviço. Lote R3 próprio: exige ADR por delegação, security-auditor e revisor independente antes de implementar; relação direta com F10-FAMILIA.",
+      "dependencies": [],
+      "checklist": [
+        "[ ] Inventário da rota /convite e do uso de service_role",
+        "[ ] ADR R3 por delegação + RATIFICACAO.md",
+        "[ ] Troca ou retirada da tela com redirect e testes positivos e negativos"
+      ],
+      "proof": ["Fonte: descrição do PR #278, seção 'Achados fora da cerca' (17/11)."],
       "tests": [],
       "notes": []
     },

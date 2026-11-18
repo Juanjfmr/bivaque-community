@@ -29,7 +29,10 @@ export const metadata: Metadata = {
   title: "Ajuda · Bivaque",
 }
 
-type DestinationLink = Readonly<{ href: Route | "/app/avisos" | "/app/voce"; label: string }>
+type DestinationLink = Readonly<{
+  href: Route | "/app/avisos" | "/app/voce" | "/app/salvos"
+  label: string
+}>
 
 const ACCOUNT_LINKS: DestinationLink[] = [
   { href: "/login", label: "Entrar" },
@@ -39,7 +42,8 @@ const ACCOUNT_LINKS: DestinationLink[] = [
 
 const USAGE_LINKS: DestinationLink[] = [
   { href: "/explorar", label: "Explorar" },
-  { href: "/salvos", label: "Salvos" },
+  // RUN-186: Salvos é tela do app; o atalho leva direto para lá.
+  { href: "/app/salvos", label: "Salvos" },
   { href: "/app/avisos", label: "Notificações" },
   { href: "/denuncias", label: "Minhas denúncias" },
 ]

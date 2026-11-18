@@ -236,7 +236,8 @@ const PORTAS_FORA_DO_LINK: readonly PortaDeclarada[] = [
   // indicação. Entrar na casca por uma semente devolveu a medida, e estas voltaram a ter link
   // — por isso saíram da lista: declaração que virou link é dívida paga, e staleAllowances
   // acusaria a linha esquecida.
-  // - /salvos: coluna lateral de toda tela da casca (app-shell.tsx:113) — sai no lote de /salvos
+  // - /salvos: saiu inteira no RUN-186 — o endereço é 307 para /app/salvos e a lateral da
+  //   casca linka a tela do app diretamente; sem page.tsx, não é rota de página para medir.
   // - /configuracoes/bloqueados e /configuracoes/familia: saíram no RUN-184 junto com a árvore
   //   `(shell)/configuracoes`; o 307 é rede para URL antiga, e nenhuma tela web linka o endereço.
   // - /recuperar-senha: voltou a ser porta declarada no RUN-184 (ver a entrada logo abaixo de
@@ -253,7 +254,7 @@ const PORTAS_FORA_DO_LINK: readonly PortaDeclarada[] = [
   {
     route: "/indicacoes/[id]",
     porta:
-      "CONDICIONAL: lista de /salvos ou a vista Indicações da Comunidade, que só linka o pedido quando a cidade já tem pedidos (RUN-172/RUN-176)",
+      "CONDICIONAL: vista Indicações da Comunidade, que só linka o pedido quando a cidade já tem pedidos (RUN-172/RUN-176; a lista de /salvos saiu no RUN-186)",
     dependeDeDados: true,
     dono: "dono de vila",
   },
@@ -514,19 +515,19 @@ test.describe("rastreador de links", { tag: "@stateful" }, () => {
   test("semente não satisfaz o invariante de porta", () => {
     // Só a tela da semente no padrão: "/" é entrada, não semente, e no inventário do teste
     // ela entraria como rota sem porta por não ter link nenhum — ruído que esconde a regra.
-    const patterns = buildPatterns(["(shell)/salvos/page.tsx"], [])
+    const patterns = buildPatterns(["(shell)/pedidos/page.tsx"], [])
     const frontier = new Frontier(patterns, CAP_PER_ROUTE)
-    const porta = { route: "/salvos", porta: "semente da persona dona" }
+    const porta = { route: "/pedidos", porta: "semente da persona dona" }
 
-    frontier.enter({ target: "/salvos", from: "(porta declarada)", persona: "dono de vila" })
-    expect(frontier.next()?.target).toBe("/salvos")
+    frontier.enter({ target: "/pedidos", from: "(porta declarada)", persona: "dono de vila" })
+    expect(frontier.next()?.target).toBe("/pedidos")
 
     // Sem link e sem declaração, a tela da semente continua sendo rota que só se alcança
     // digitando a URL; declarada, passa; e no dia em que um link a alcançar, a declaração
     // vira dívida paga e staleAllowances a acusa.
-    expect(unreachedRoutes(patterns, new Set(), [])).toEqual(["/salvos"])
+    expect(unreachedRoutes(patterns, new Set(), [])).toEqual(["/pedidos"])
     expect(unreachedRoutes(patterns, new Set(), [porta])).toEqual([])
     expect(staleAllowances(patterns, new Set(), [porta])).toEqual([])
-    expect(staleAllowances(patterns, new Set(["/salvos"]), [porta])).toEqual(["/salvos"])
+    expect(staleAllowances(patterns, new Set(["/pedidos"]), [porta])).toEqual(["/pedidos"])
   })
 })

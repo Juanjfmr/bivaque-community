@@ -16,7 +16,6 @@ describe("onde o botão de criação aparece", () => {
     "/communities",
     "/communities/abc",
     "/community",
-    "/salvos",
     "/mercado",
     "/mercado/abc",
     "/events",

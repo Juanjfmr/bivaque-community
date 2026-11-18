@@ -66,10 +66,11 @@ test.describe("jornada simulada: pedir e responder um serviço", { tag: "@statef
         },
       )
 
-      // O cabeçalho continua na web (RUN-172: o host é /salvos, rota de membro na
-      // casca web); a caixa de avisos abre o pedido no app.
+      // O cabeçalho continua na web (RUN-172: o host era /profile; RUN-186: /salvos
+      // virou 307 para o app, então o host é a Comunidade); a caixa de avisos abre
+      // o pedido no app.
       const glance = await memberContext.newPage()
-      await glance.goto("/salvos")
+      await glance.goto("/community")
       await expect(
         glance.getByRole("link", { name: /^Conversas, \d+ com mensagem nova/ }),
       ).toBeVisible({ timeout: 20_000 })

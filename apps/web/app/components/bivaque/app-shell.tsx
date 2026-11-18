@@ -108,13 +108,10 @@ export function AppShell({ children }: AppShellProperties) {
           <hr className="my-2 border-ui-line" />
 
           {/* Salvos e Notificações são destinos secundários no MESMO landmark:
-              a auditoria exige um único aria-current por <nav> visível. */}
-          <SidebarSecondaryItem
-            href="/salvos"
-            label="Salvos"
-            Icon={Bookmark}
-            active={activeNav.kind === "secondary" && activeNav.href === "/salvos"}
-          />
+              a auditoria exige um único aria-current por <nav> visível.
+              RUN-186: Salvos é tela do app — o item leva direto para lá e nunca
+              acende nesta casca, porque o endereço antigo é um 307. */}
+          <SidebarSecondaryItem href="/app/salvos" label="Salvos" Icon={Bookmark} />
           <SidebarSecondaryItem
             href="/app/avisos"
             label="Notificações"

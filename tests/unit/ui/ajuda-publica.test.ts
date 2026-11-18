@@ -31,6 +31,21 @@ describe("conteúdo da Ajuda", () => {
       }
     }
   })
+
+  it("ensina a entrada por código no e-mail, não um fluxo de senha", () => {
+    // RUN-187: ADR-20261101-entrada-unica-por-codigo §2 tirou e-mail e senha da
+    // tela; a ajuda pública não pode vender o caminho que a entrada não tem.
+    const conta = HELP_TOPICS.find((topic) => topic.id === "conta")
+    expect(conta?.subtitle).toBe("CPF, convite, código")
+    const par = conta?.questions.find(([pergunta]) => pergunta === "Preciso de senha para entrar?")
+    expect(par).toBeDefined()
+    expect(par?.[1]).toContain("o Bivaque não usa senha")
+    expect(par?.[1]).toContain("Continuar com e-mail")
+    expect(par?.[1]).toContain("código de 6 números")
+
+    const respostas = HELP_TOPICS.flatMap((topic) => topic.questions.map(([, answer]) => answer))
+    expect(respostas.join(" ").toLowerCase()).not.toContain("esqueci minha senha")
+  })
 })
 
 describe("Ajuda pública", () => {
@@ -60,6 +75,11 @@ describe("Ajuda pública", () => {
     // pode voltar a apontar para o endereço que agora é só redirect.
     expect(page).toContain('{ href: "/app/voce", label: "Configurações" }')
     expect(page).not.toContain("/configuracoes")
+  })
+
+  it("o atalho de Salvos leva à tela do app", () => {
+    // RUN-186: `/salvos` saiu da web (307 para /app/salvos).
+    expect(page).toContain('{ href: "/app/salvos", label: "Salvos" }')
   })
 })
 

@@ -70,8 +70,9 @@ test.describe("busca global do cabecalho", () => {
     const page = await context.newPage()
 
     // RUN-172: o host era /profile; a casca web (e o mesmo campo) está em toda
-    // rota viva do grupo, e /salvos é a equivalência mais próxima.
-    await page.goto("/salvos")
+    // rota viva do grupo. RUN-186: /salvos virou 307 para o app, então o host é
+    // a Comunidade.
+    await page.goto("/community")
     // O shell monta dois campos (desktop e celular, um sempre escondido), cada
     // um com o próprio id desde 25/09/2026: o teste usa o que está à vista.
     const field = page.getByLabel("Buscar no Bivaque").locator("visible=true")
