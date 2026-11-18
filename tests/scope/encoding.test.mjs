@@ -42,7 +42,6 @@ const excecoes = new Map([
   ["apps/web/app/api/app/conversas/_comum.ts", bomDeEditor],
   ["apps/web/app/api/app/conversas/route.ts", bomDeEditor],
   ["apps/web/app/api/app/voce/localizacao/route.ts", bomDeEditor],
-  ["tests/unit/app-api/conversas/rotas.test.ts", bomDeEditor],
   ["tests/scope/conversas-porta.test.mjs", bomDeEditor],
   ["tests/scope/f02-dados.test.mjs", bomDeEditor],
   ["tests/scope/f02-inicio-real.test.mjs", bomDeEditor],
