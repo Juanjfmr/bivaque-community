@@ -28,10 +28,8 @@ select set_config('request.jwt.claim.role', 'authenticated', true);
 
 select lives_ok(
   $$
-    insert into public.dm_messages (conversation_id, sender_id, content)
-    values (
+    select public.send_conversation_message(
       'd0000000-0000-4000-8000-000000000001',
-      '10000000-0000-4000-8000-000000000008',
       'Oi, tudo bem?'
     )
   $$,
@@ -53,10 +51,8 @@ select set_config('request.jwt.claim.role', 'authenticated', true);
 
 select throws_ok(
   $$
-    insert into public.dm_messages (conversation_id, sender_id, content)
-    values (
+    select public.send_conversation_message(
       'd0000000-0000-4000-8000-000000000001',
-      '10000000-0000-4000-8000-000000000008',
       'Mensagem de conta suspensa.'
     )
   $$,
@@ -82,10 +78,8 @@ select set_config('request.jwt.claim.role', 'authenticated', true);
 
 select throws_ok(
   $$
-    insert into public.dm_messages (conversation_id, sender_id, content)
-    values (
+    select public.send_conversation_message(
       'd0000000-0000-4000-8000-000000000001',
-      '10000000-0000-4000-8000-000000000008',
       'Mensagem para conta suspensa.'
     )
   $$,
@@ -111,10 +105,11 @@ update public.profile_suspensions set expires_at = now()
  where user_id = '10000000-0000-4000-8000-000000000009';
 set local role authenticated;
 select lives_ok(
-  $$insert into public.dm_messages(conversation_id, sender_id, content) values (
-    'd0000000-0000-4000-8000-000000000001',
-    '10000000-0000-4000-8000-000000000008', 'Prazo do destinatário encerrado')$$,
-  'destinatário com prazo vencido recebe insert direto'
+  $$select public.send_conversation_message(
+      'd0000000-0000-4000-8000-000000000001',
+      'Prazo do destinatário encerrado'
+    )$$,
+  'destinatário com prazo vencido recebe a primeira mensagem pela RPC'
 );
 select lives_ok(
   $$select public.send_conversation_message(
@@ -137,10 +132,11 @@ update public.profile_suspensions set expires_at = now() - interval '1 second'
  where user_id = '10000000-0000-4000-8000-000000000008';
 set local role authenticated;
 select lives_ok(
-  $$insert into public.dm_messages(conversation_id, sender_id, content) values (
-    'd0000000-0000-4000-8000-000000000001',
-    '10000000-0000-4000-8000-000000000008', 'Prazo do remetente encerrado')$$,
-  'remetente com prazo vencido envia por insert direto'
+  $$select public.send_conversation_message(
+      'd0000000-0000-4000-8000-000000000001',
+      'Prazo do remetente encerrado'
+    )$$,
+  'remetente com prazo vencido envia a primeira mensagem pela RPC'
 );
 select lives_ok(
   $$select public.send_conversation_message(
@@ -169,15 +165,13 @@ select set_config('request.jwt.claim.role', 'authenticated', true);
 
 select throws_ok(
   $$
-    insert into public.dm_messages (conversation_id, sender_id, content)
-    values (
+    select public.send_conversation_message(
       'd0000000-0000-4000-8000-000000000001',
-      '10000000-0000-4000-8000-000000000008',
       'Mensagem de conta em exclusão.'
     )
   $$,
   '42501',
-  'conversation participant unavailable',
+  'account unavailable',
   'remetente com exclusão pedida não envia'
 );
 
@@ -201,15 +195,13 @@ select set_config('request.jwt.claim.role', 'authenticated', true);
 
 select throws_ok(
   $$
-    insert into public.dm_messages (conversation_id, sender_id, content)
-    values (
+    select public.send_conversation_message(
       'd0000000-0000-4000-8000-000000000001',
-      '10000000-0000-4000-8000-000000000008',
       'Mensagem para conta em exclusão.'
     )
   $$,
   '42501',
-  'conversation participant unavailable',
+  'recipient unavailable',
   'destinatário com exclusão pedida não recebe'
 );
 
