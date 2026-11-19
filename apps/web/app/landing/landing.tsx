@@ -169,7 +169,7 @@ function Thread() {
   )
 }
 
-export function LandingPage({ nonce }: { nonce?: string } = {}) {
+export function LandingPage({ nonce }: { nonce?: string | undefined } = {}) {
   return (
     <div
       className={`ld bv-skin ${notoSans.variable} ${notoSerif.variable} ${materialSymbols.variable}`}
