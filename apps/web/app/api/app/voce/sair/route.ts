@@ -35,10 +35,12 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
     const { error } = await auth.sessao.cliente.auth.signOut({ scope: "local" })
     if (error) throw error
-    return aplicarCookies(
+    const resposta = aplicarCookies(
       responder(request, { ok: true }, 200),
       auth.sessao.cookiesParaGravar ?? [],
     )
+    resposta.headers.set("Clear-Site-Data", '"cache", "storage"')
+    return resposta
   } catch (erro) {
     log.error("app voce: saída falhou", {
       error: erro instanceof Error ? erro.message : "unknown",

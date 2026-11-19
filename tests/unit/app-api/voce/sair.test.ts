@@ -70,6 +70,7 @@ describe("POST /api/app/voce/sair", () => {
     const resposta = await POST(requisicao())
 
     expect(resposta.status).toBe(200)
+    expect(resposta.headers.get("clear-site-data")).toBe('"cache", "storage"')
     expect(await resposta.json()).toEqual({ ok: true })
     expect(sessoesEncerradas).toHaveLength(1)
     const removidos = resposta.headers.get("set-cookie") ?? ""
@@ -103,6 +104,7 @@ describe("POST /api/app/voce/sair", () => {
     const resposta = await POST(requisicao(cabecalhos))
 
     expect(resposta.status).toBe(403)
+    expect(resposta.headers.get("clear-site-data")).toBeNull()
     expect(sessoesEncerradas).toHaveLength(0)
   })
 
@@ -112,6 +114,7 @@ describe("POST /api/app/voce/sair", () => {
 
     const corpo = await resposta.text()
     expect(resposta.status).toBe(503)
+    expect(resposta.headers.get("clear-site-data")).toBeNull()
     expect(JSON.parse(corpo)).toEqual({ erro: "saida-indisponivel" })
     expect(corpo).not.toContain("segredo do GoTrue")
   })
