@@ -3552,7 +3552,7 @@ body[data-profundidade="sim"] [data-casca="app"] {
 }
 
 /* Mantém as ações do encontro acessíveis enquanto os campos rolam. */
-[data-sobreposicao="folha"] form:has(#encontro-titulo) > .pc > div:last-child {
+[data-sobreposicao="folha"] [data-acoes-encontro="sim"] {
   position: sticky;
   bottom: -1rem;
   z-index: 1;
