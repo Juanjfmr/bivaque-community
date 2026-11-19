@@ -1,4 +1,4 @@
-﻿import { expect, test } from "@playwright/test"
+import { expect, test } from "@playwright/test"
 import { simularConversas } from "./conversas-ajuda"
 import { simularGrupos } from "./grupos-ajuda"
 import { simularVoce } from "./voce-ajuda"
