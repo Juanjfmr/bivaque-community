@@ -84,6 +84,18 @@ test.describe("anonymous visitor: protected route denial", () => {
 // Denial 2: Private group admission — unauthenticated user cannot interact
 // ---------------------------------------------------------------------------
 
+test.describe("private group admission: denial paths", () => {
+  test("an anonymous visitor cannot reach a private group directly", async ({ page }) => {
+    // Given an unauthenticated browser
+    // When the user navigates to a hypothetical private group URL
+    await page.goto("/groups/some-private-group-id")
+
+    // Then the proxy refuses antes de o Next tratar a rota — a recusa não
+    // depende de o grupo existir, e por isso não vaza existência
+    await page.waitForURL(/\/app\/entrar/)
+  })
+})
+
 test.describe("DM without context: denial paths", () => {
   test("messages sem sessão chega ao app e recusa a leitura", async ({ page }) => {
     // Given a browser with the consent cookie but no Supabase session

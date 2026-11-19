@@ -58,8 +58,6 @@ export const AREA_CONTAINERS: ReadonlyArray<readonly [string, PrimaryContainer]>
   ["/explorar", "explorar"],
   ["/guide", "explorar"],
   ["/events", "explorar"],
-  ["/mercado", "explorar"],
-  ["/imoveis", "explorar"],
   ["/prestadores", "explorar"],
   ["/communities", "comunidades"],
   ["/groups", "comunidades"],

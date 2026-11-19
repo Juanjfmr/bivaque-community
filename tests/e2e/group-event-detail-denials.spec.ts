@@ -20,8 +20,11 @@ const SUPABASE_URL = process.env["SUPABASE_URL"] ?? "http://127.0.0.1:55321"
 // an approved member of group 6; membro-3 is a Manaus member who is not;
 // rejected@ has a valid session but no locality membership. Event 6 is a
 // locality-level upcoming event every Manaus member can open.
+const PRIVATE_GROUP_ID = "60000000-0000-4000-8000-000000000006"
+const PUBLIC_GROUP_ID = "60000000-0000-4000-8000-000000000001"
 const UPCOMING_EVENT_ID = "70000000-0000-4000-8000-000000000006"
 
+const PRIVATE_GROUP_MEMBER_EMAIL = "membro-4@bivaque.example.invalid"
 const LOCALITY_MEMBER_EMAIL = "membro-3@bivaque.example.invalid"
 const OUTSIDER_EMAIL = "rejected@bivaque.example.invalid"
 
@@ -107,6 +110,59 @@ async function signInAs(page: Page, email: string): Promise<void> {
     { name: CONSENT_COOKIE, value: CURRENT_CONSENT, ...shared },
   ])
 }
+
+test.describe("group detail: RLS decides, not the page", () => {
+  test("approved member of the private group opens it and sees the member list", async ({
+    page,
+  }) => {
+    await signInAs(page, PRIVATE_GROUP_MEMBER_EMAIL)
+    const response = await page.goto(`/groups/${PRIVATE_GROUP_ID}`)
+
+    expect(response?.status()).toBe(200)
+    await expect(page.getByRole("heading", { name: "Mães da Cidade" })).toBeVisible()
+    await expect(page.getByRole("heading", { name: "Membros" })).toBeVisible()
+  })
+
+  test("locality member who is not in the private group sees metadata but no member names", async ({
+    page,
+  }) => {
+    await signInAs(page, LOCALITY_MEMBER_EMAIL)
+    const response = await page.goto(`/groups/${PRIVATE_GROUP_ID}`)
+
+    // Metadata stays readable on purpose — a group must be discoverable for
+    // someone to request to join. The leak was the member list, and the
+    // group_memberships_select policy hides it for non-members.
+    expect(response?.status()).toBe(200)
+    await expect(page.getByRole("heading", { name: "Mães da Cidade" })).toBeVisible()
+    await expect(page.getByRole("heading", { name: "Membros" })).toHaveCount(0)
+  })
+
+  test("authenticated outsider without locality membership gets the not-found page", async ({
+    page,
+  }) => {
+    await signInAs(page, OUTSIDER_EMAIL)
+    await page.goto(`/groups/${PRIVATE_GROUP_ID}`)
+
+    // The admission gate (middleware, wave D2 2026-08-15) intercepts the
+    // outsider before this segment ever resolves: no locality membership
+    // sends the person to the entry, never the group page. The gate's target
+    // is /onboarding/status, which the web now redirects to /app/entrar
+    // (ENTRADA-WEB-ANTIGA). The security property is unchanged - no group
+    // content can render - and the gate makes the boundary stronger, not
+    // weaker. The segment's own notFound() remains as defence in depth for
+    // anyone who reaches it without access.
+    await expect(page).toHaveURL(/\/app\/entrar/)
+    await expect(page.getByRole("heading", { name: "Mães da Cidade" })).toHaveCount(0)
+  })
+
+  test("public group opens for any locality member", async ({ page }) => {
+    await signInAs(page, LOCALITY_MEMBER_EMAIL)
+    const response = await page.goto(`/groups/${PUBLIC_GROUP_ID}`)
+
+    expect(response?.status()).toBe(200)
+    await expect(page.getByRole("heading", { name: "Caminhada no Mindu" })).toBeVisible()
+  })
+})
 
 test.describe("event detail: RLS decides, not the page", () => {
   test("locality member opens the event", async ({ page }) => {

@@ -101,7 +101,7 @@ describe("um pedido, um endereço", () => {
   it("o detalhe mora em /app/pergunta/<id>", () => {
     expect(indicationHref("abc")).toBe("/app/pergunta/abc")
   })
-  it("as indicações moram na Comunidade, e pedir abre a caixa focada", () => {
+  it("as indicações e o pedido levam à Comunidade do app", () => {
     expect(INDICATIONS_HREF).toBe("/app/comunidade")
     expect(ASK_INDICATION_HREF).toBe("/app/comunidade?pedir=1")
   })

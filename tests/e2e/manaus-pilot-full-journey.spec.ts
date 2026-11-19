@@ -106,7 +106,7 @@ test.describe("community feed", () => {
 })
 
 // ---------------------------------------------------------------------------
-// Flow 4: Groups — private group admission
+// Flow 4: Recommendations — anonymous access
 // ---------------------------------------------------------------------------
 
 test.describe("recommendations journey", () => {

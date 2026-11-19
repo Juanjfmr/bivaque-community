@@ -8,7 +8,7 @@
 
 import type { Page } from "@playwright/test"
 import { expect, test } from "@playwright/test"
-import { chooseTestGroup, openComposer } from "./helpers/composer"
+import { chooseTestGroup, openComposer, TEST_GROUP_FEED_URL } from "./helpers/composer"
 import { CURRENT_CONSENT, encodeAuthCookieValue, readEnvLocal } from "./helpers/session"
 
 const SUPABASE_URL = process.env["SUPABASE_URL"] ?? "http://127.0.0.1:55321"
@@ -71,5 +71,24 @@ test.describe("audience selector and reach chip", () => {
 
     // Then the audience section renders with the notice of the chosen group
     await expect(dialog.getByText(/aprovados deste grupo vão ler/i)).toBeVisible()
+  })
+
+  test("group post carries a chip with the group reach in the group feed", async ({ page }) => {
+    // Given a member of Manaus (any verified member reads a public group)
+    await signInAs(page, MEMBER_EMAIL)
+
+    // When the member opens the group feed — é o único feed de publicação que
+    // existe desde o lote 5 N2
+    await page.goto(TEST_GROUP_FEED_URL, { waitUntil: "load" })
+
+    // Then a post of the group carries the group chip. The chip
+    // (feed-post-card) is a static HeroUI Chip, not an interactive
+    // control — it carries no button role, so a byRole("button") locator
+    // never matched even though the chip renders.
+    await expect(page.locator("article").first()).toBeVisible({ timeout: 20000 })
+    await expect(page.locator('[aria-label="Alcance: só o grupo"]').first()).toBeVisible()
+    // And no city-reach chip is offered: publicar para a cidade inteira deixou
+    // de existir.
+    await expect(page.locator('[aria-label$="inteira"]')).toHaveCount(0)
   })
 })

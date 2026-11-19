@@ -8,7 +8,7 @@ test.describe("onboarding: denial paths", () => {
     for (const route of PROTECTED_ROUTES) {
       await page.goto(route)
       await page.waitForURL(/\/app\/entrar/)
-      // O destino pretendido sobrevive à recusa, senão a pessoa perde o caminho
+      // A rota antiga encaminha à entrada do app
     }
   })
 

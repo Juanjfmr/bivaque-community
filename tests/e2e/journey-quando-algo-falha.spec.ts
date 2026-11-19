@@ -4,9 +4,7 @@ import { signInAs } from "./helpers/session"
 
 // Jornada simulada — web-quando-algo-falha (prancha 60).
 //
-// 60#0, acesso indisponível: a membra de Manaus abre uma comunidade do Rio. A resposta certa não
-// é erro nem "tentar de novo" — recarregar não muda autorização —, é dizer o que aconteceu e o
-// caminho legítimo. O negativo de autorização vem junto: a área de operação não abre para ela.
+// O negativo de autorização garante que a área de operação não abre para membro comum.
 //
 const MEMBER = "membro-1@bivaque.example.invalid"
 

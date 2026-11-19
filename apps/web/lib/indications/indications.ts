@@ -52,7 +52,7 @@ export function indicationHref(requestId: string): string {
  */
 export const INDICATIONS_HREF = "/app/comunidade"
 
-/** Destino de "Pedir uma indicação": a caixa de pedir já aberta e focada. */
+/** Destino de "Pedir uma indicação": a Comunidade do app. */
 export const ASK_INDICATION_HREF = `${INDICATIONS_HREF}?pedir=1`
 
 // Palavras que denunciam a categoria. Sem acento e em minúsculas: o texto é

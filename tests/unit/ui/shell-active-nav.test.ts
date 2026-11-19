@@ -159,7 +159,6 @@ describe("barra inferior do celular usa a mesma regra da lateral", () => {
   it.each([
     ["/guide", "explorar"],
     ["/events/abc", "explorar"],
-    ["/mercado", "explorar"],
     ["/cidade/abc", "explorar"],
   ])("%s acende %s", (path, id) => {
     expect(resolveActiveNav(path, PRIMARY)).toEqual({ kind: "primary", id })
