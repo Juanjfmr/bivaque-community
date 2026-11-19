@@ -34,7 +34,7 @@ jobs:
       - run: pnpm --filter @bivaque/app exec cap sync android
       - name: Compilar APK sem gerar chave
         run: |
-          printf '%s\n' 'gradle.projectsEvaluated { gradle.rootProject.project(":app").android.buildTypes.debug.signingConfig = null }' > "$RUNNER_TEMP/sem-assinatura.gradle"
+          printf '%s\n' 'gradle.beforeProject { p -> if (p.path == ":app") p.afterEvaluate { p.android.buildTypes.debug.signingConfig = null } }' > "$RUNNER_TEMP/sem-assinatura.gradle"
           ./gradlew --init-script "$RUNNER_TEMP/sem-assinatura.gradle" assembleDebug
         working-directory: apps/app/android
       - name: Varrer o APK
