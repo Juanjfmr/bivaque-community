@@ -412,10 +412,19 @@ test.describe("capturas para a revisão cega", () => {
     await aplicarStubMercado(page)
     await simularMeusAnuncios(page)
 
+    const codigos = process.env["CEGAS_JORNADAS"]
+      ?.split(",")
+      .map((codigo) => codigo.trim().toLowerCase())
+    const jornadas = codigos
+      ? JORNADAS.filter((jornada) =>
+          codigos.some((codigo) => jornada.nome.startsWith(`${codigo}-`)),
+        )
+      : JORNADAS
+
     for (const largura of LARGURAS) {
       await page.setViewportSize({ width: largura, height: 900 })
       for (const tema of TEMAS) {
-        for (const jornada of JORNADAS) {
+        for (const jornada of jornadas) {
           for (const passo of jornada.passos) {
             try {
               await passo.ir(page)

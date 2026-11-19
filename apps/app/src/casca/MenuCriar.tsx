@@ -189,7 +189,7 @@ export function MenuCriar({ aoFechar }: { readonly aoFechar: () => void }) {
         </b>
         {(painel ? (SUBTITULOS_DO_PAINEL[escolha.id] ?? escolha.subtitulo) : escolha.subtitulo) ===
         undefined ? null : (
-          <small className="truncate text-[13px] text-(--on-surface-variant)">
+          <small className="text-[13px] text-(--on-surface-variant)">
             {painel ? (SUBTITULOS_DO_PAINEL[escolha.id] ?? escolha.subtitulo) : escolha.subtitulo}
           </small>
         )}

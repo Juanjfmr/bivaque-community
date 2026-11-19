@@ -14,7 +14,7 @@ export type TomDaEtiqueta = "neutro" | "ok" | "aviso" | "patrocinado" | "info"
 
 const TONS: Record<TomDaEtiqueta, string> = {
   neutro: "bg-(--muted) text-(--foreground)",
-  ok: "bg-(--tertiary-container) text-(--on-tertiary-container)",
+  ok: "bg-(--success) text-(--success-foreground)",
   aviso: "bg-(--secondary-container) text-(--on-secondary-container)",
   patrocinado: "bg-(--primary) text-(--primary-foreground)",
   info: "bg-(--surface-high) text-(--on-surface-variant)",
