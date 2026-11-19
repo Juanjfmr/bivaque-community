@@ -21,6 +21,13 @@ baseline:
     operador, pré-autenticação ou servidor, ou bloquear por não ter equivalente) e quem a usa
     (links, e-mails do outbox, push, testes).
 allowed_paths:
+  - apps/app/src/telas/Comunidade.tsx
+  - apps/app/src/telas/Voce.tsx
+  - apps/app/src/comunidade/**
+  - apps/app/lib/dados/*.ts
+  - apps/app/tests/*.test.ts
+  - apps/app/tests/*.test.tsx
+  - apps/app/tests/e2e/*.spec.ts
   - apps/web/app/(shell)/**
   - apps/web/app/(owner)/**
   - apps/web/app/(provider)/**
@@ -34,7 +41,7 @@ allowed_paths:
   - docs/agents/tasks/TROCA-002.task.yml
 forbidden:
   - apps/web/app/api/** (rotas de API ficam como estão), apps/web/app/(admin)/**, apps/web/app/(preauth)/**, a landing
-  - API, banco, migrations, apps/app
+  - API, banco, migrations; em apps/app, qualquer coisa além da porta de entrada para as telas mantidas na web (rodada 4)
   - remover rota sem equivalente comprovado no /app (essa vai para o inventário como bloqueada, com o próximo passo)
   - redirecionamento em ciclo ou que perca ID ou query
   - links de e-mail ou push do outbox apontando para rota removida (redirecionar ou atualizar o gerador no mesmo lote)
@@ -56,7 +63,7 @@ proof:
 risk: ui
 risk_level: R2
 reviewer_must_differ_from_executor: true
-retry_budget: 3
+retry_budget: 4  # rodada 4 aberta pelo coordenador em 19/11, só na branch, até a escolha do dono sobre o #309
 on_budget_exhausted: HUMAN_DECISION
 closure:
   requires_runtime_evidence: true
