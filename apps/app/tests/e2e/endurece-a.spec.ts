@@ -52,7 +52,10 @@ for (const caminho of [
   test(`ordem de títulos em ${caminho}`, async ({ page }) => {
     await page.goto(caminho)
     await expect(page.locator("[data-tela]").first()).toBeVisible()
-    await expect(page.locator('[aria-busy="true"]')).toHaveCount(0)
+    await expect(page.locator("[data-esqueleto]")).toHaveCount(0)
+    if (caminho.includes("zzzzsemresultado")) {
+      await expect(page.locator('[data-estado="vazio"]').first()).toBeVisible()
+    }
     const resultado = await new AxeBuilder({ page }).withRules("heading-order").analyze()
     expect(resultado.violations).toEqual([])
   })
