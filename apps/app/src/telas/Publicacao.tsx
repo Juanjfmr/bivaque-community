@@ -252,6 +252,7 @@ export function Publicacao() {
       <Secao titulo="Comentários">
         {comentarios.length === 0 ? (
           <EstadoVazio
+            nivel="h3"
             titulo="Ainda sem comentários"
             texto="Comente para ajudar quem escreveu a chegar mais longe."
             icone="forum"

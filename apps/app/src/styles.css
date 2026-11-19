@@ -3544,3 +3544,19 @@ body[data-profundidade="sim"] [data-casca="app"] {
     scroll-margin-bottom: 180px;
   }
 }
+
+.bv-pular-conteudo {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 10000;
+  transform: translateY(-150%);
+  padding: 12px;
+  background: Canvas;
+  color: CanvasText;
+}
+
+.bv-pular-conteudo:focus {
+  transform: none;
+  outline: 2px solid Highlight;
+}

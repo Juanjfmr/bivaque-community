@@ -1,7 +1,6 @@
 "use client"
 
 import { useCallback, useEffect } from "react"
-
 import { Icone } from "@/components/bivaque/icone"
 import {
   Command,
@@ -16,6 +15,7 @@ import type { NomeDeIcone } from "@/lib/icones"
 import { useEntradaDaTela, useNavegacao } from "@/lib/navegacao/react"
 import { tituloDaRota } from "@/lib/navegacao/rotas"
 import { normalizar } from "@/lib/texto"
+import { emComposicao } from "@/src/casca/teclado"
 
 /**
  * A paleta de comandos da onda 2 (protótipo: shell/command-palette.js), só no
@@ -148,7 +148,7 @@ export function Paleta() {
   useEffect(() => {
     if (typeof document === "undefined") return
     const aoTeclar = (evento: KeyboardEvent) => {
-      if (evento.defaultPrevented || evento.isComposing || evento.repeat) return
+      if (evento.defaultPrevented || emComposicao(evento) || evento.repeat) return
       const alvo = evento.target as HTMLElement | null
       const emCampo = alvo !== null && ["INPUT", "TEXTAREA", "SELECT"].includes(alvo.tagName)
       const tecla = evento.key.toLowerCase()
@@ -181,6 +181,9 @@ export function Paleta() {
       className="w-[calc(100%-32px)] max-w-xl"
     >
       <Command
+        onKeyDownCapture={(evento) => {
+          if (evento.key === "Enter" && emComposicao(evento.nativeEvent)) evento.stopPropagation()
+        }}
         // A busca ignora acento e caixa, como o resto do app (`normalizar`).
         filter={(valor, busca) => (normalizar(valor).includes(normalizar(busca).trim()) ? 1 : 0)}
         label="Buscar e ir para"

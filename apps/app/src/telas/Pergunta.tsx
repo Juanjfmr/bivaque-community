@@ -707,6 +707,7 @@ export function Pergunta() {
       <Secao titulo="Respostas">
         {respostas.length === 0 ? (
           <EstadoVazio
+            nivel="h3"
             titulo="A comunidade ainda não respondeu"
             texto="Sua pergunta já está disponível. Você pode acompanhar as respostas por aqui."
             icone="forum"

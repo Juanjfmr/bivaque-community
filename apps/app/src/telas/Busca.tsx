@@ -267,6 +267,7 @@ export function Busca() {
         cidadeSemConteudo ? (
           <Secao titulo={`${cidade} está começando`} className="mt-4">
             <EstadoVazio
+              nivel="h3"
               titulo="Nada publicado por aqui ainda"
               texto="A busca mostra o que a cidade publicar. Você pode abrir o caminho: peça uma indicação ou anuncie algo."
               icone="public"
