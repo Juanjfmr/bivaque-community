@@ -15,6 +15,25 @@ describe("cabeçalhos de segurança do Next", () => {
     )
     expect(porNome["content-security-policy"]).toBe("frame-ancestors 'none'")
     expect(porNome["x-frame-options"]).toBe("DENY")
+    expect(porNome["x-content-type-options"]).toBe("nosniff")
+    expect(porNome["referrer-policy"]).toBe("strict-origin-when-cross-origin")
+    expect(porNome["permissions-policy"]).toBe(
+      "camera=(), microphone=(), geolocation=(), payment=(), usb=()",
+    )
+    expect(porNome["cross-origin-opener-policy"]).toBe("same-origin")
+    expect(porNome["strict-transport-security"]).toBe("max-age=63072000; includeSubDomains")
+  })
+
+  it("aplica CSP est?tica ao app", async () => {
+    const regras = await nextConfig.headers?.()
+    const app = regras?.find((regra) => regra.source === "/app/:path*")
+    const csp = app?.headers.find((cabecalho) => cabecalho.key === "Content-Security-Policy")?.value
+    expect(csp).toContain("script-src 'self';")
+    expect(csp).toContain("object-src 'none'")
+    expect(csp).toContain("base-uri 'self'")
+    expect(csp).toContain("form-action 'self'")
+    expect(csp).toContain("frame-ancestors 'none'")
+    expect(csp).not.toContain("nonce-")
   })
 
   it("nenhuma regra afrouxa o enquadramento para um caminho específico", async () => {
