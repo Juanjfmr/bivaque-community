@@ -7,8 +7,7 @@ import { Botao } from "@/components/bivaque/botao"
 import { CabecaDePagina } from "@/components/bivaque/cabeca-de-pagina"
 import { Confirmacao } from "@/components/bivaque/confirmacao"
 import { EsqueletoDeLista } from "@/components/bivaque/esqueleto"
-import { EstadoDeErro } from "@/components/bivaque/estado-vazio"
-import { LinhaDeAjuste } from "@/components/bivaque/lista"
+import { LinhaDeAjuste, Lista } from "@/components/bivaque/lista"
 import { Secao } from "@/components/bivaque/secao"
 import { FalhaDaApi } from "@/lib/api/cliente"
 import { sairDoApp } from "@/lib/dados/push"
@@ -24,9 +23,10 @@ import {
 } from "@/lib/dados/voce"
 import { useNavegacao, useRolagemEFoco, useSobreposicaoDaEntrada } from "@/lib/navegacao/react"
 import { CARGA_CONCLUIDA } from "@/lib/navegacao/restauracao"
-import { iniciais } from "@/lib/texto"
 import { dataLegivel, destinoDoEndereco, mensagemDaMudanca } from "@/lib/voce/cidade"
 import { PreferenciasDeAvisos } from "@/src/avisos/PreferenciasDeAvisos"
+import { useCasca } from "@/src/contexto/casca"
+import { Avatar } from "@/src/pecas/pecas"
 import { Cidade, type PedidoDeMudanca } from "@/src/voce/Cidade"
 import { digitosDoCep, EdicaoDePerfil } from "@/src/voce/EdicaoDePerfil"
 import { Familia } from "@/src/voce/Familia"
@@ -40,12 +40,18 @@ type Pedido = { readonly tipo: "sair" } | ({ readonly tipo: "mudar" } & PedidoDe
 const INDISPONIVEL = "Contagem indisponível agora"
 
 /**
- * Você (onda 8, F10): identidade, contadores e os atalhos principais, agora
- * lidos da conta de verdade (`/api/app/voce`) em vez da demonstração. O desenho
- * é o aprovado; o que mudou foi a fonte do dado e a edição do próprio perfil.
+ * Você (onda 8, F10): o hub abre no perfil e na lista "Seu Bivaque". Os
+ * formulários — mudança de cidade e Força/OM — ficam atrás de linhas da lista,
+ * como as Configurações do Nextdoor (Mobbin f187554e): a tela de entrada é
+ * identidade e caminhos, não mecanismo.
+ *
+ * O nome lido aqui é a fonte única da identidade: a barra de baixo mostra o
+ * avatar desta leitura (`casca.definir`), então as duas superfícies dizem a
+ * mesma pessoa — a demonstração não inventa nome na barra (REGUA-002).
  */
 export function Voce() {
   const navegacao = useNavegacao()
+  const casca = useCasca()
   // A folha de interesses mora nesta tela: ela lê e grava os grupos da cidade
   // da sessão, e a porta natural é a linha abaixo.
   const { aberto: interessesAbertos, aoMudarAberto: setInteressesAbertos } =
@@ -62,6 +68,8 @@ export function Voce() {
   const [mensagemDaCidade, setMensagemDaCidade] = useState<string | null>(null)
   const [destinoDoLink, setDestinoDoLink] = useState<CidadeDoCatalogo | null>(null)
   const [pedido, setPedido] = useState<Pedido | null>(null)
+  const [cidadeAberta, setCidadeAberta] = useState(false)
+  const [forcaAberta, setForcaAberta] = useState(false)
   const busca = useLocation({ select: (linha) => linha.search as Record<string, unknown> })
   const destinoPedido = destinoDoEndereco(busca)
 
@@ -73,6 +81,7 @@ export function Voce() {
   useEffect(() => {
     if (destinoPedido === null) return
     const controle = new AbortController()
+    setCidadeAberta(true)
     void cidadeDoLink(destinoPedido, { signal: controle.signal })
       .then((cidade) => {
         if (!controle.signal.aborted) setDestinoDoLink(cidade)
@@ -90,17 +99,33 @@ export function Voce() {
     setErro(false)
     void lerPerfil({ signal: controle.signal })
       .then((lida) => {
-        if (!controle.signal.aborted) setConta(lida)
+        if (controle.signal.aborted) return
+        setConta(lida)
+        // A identidade da barra é a da leitura do perfil, não a da demonstração.
+        casca.definir({ nomeDaPessoa: lida.perfil.nome })
       })
       .catch(() => {
-        if (!controle.signal.aborted) setErro(true)
+        if (controle.signal.aborted) return
+        setErro(true)
+        // Sem leitura não há identidade: a barra cai no ícone, sem nome herdado.
+        casca.definir({ nomeDaPessoa: "" })
       })
     return () => controle.abort()
   }, [rodada])
 
   const perfil = conta?.perfil ?? null
   const carregando = conta === null && !erro
-  const nome = perfil?.nome ?? "Você"
+
+  // O rodapé do seletor de cidade da casca web traz `/app/voce#cidade` — o
+  // destino é o formulário, não a linha fechada (achado 4 da revisão de
+  // código). A âncora abre a linha sozinha, como o `?mudar=` já faz, e
+  // aterrissa no bloco quando o perfil já está na tela.
+  useEffect(() => {
+    if (window.location.hash !== "#cidade") return
+    setCidadeAberta(true)
+    if (perfil === null) return
+    document.getElementById("cidade")?.scrollIntoView({ block: "start" })
+  }, [perfil])
 
   const gravar = (dados: { nome: string; bio: string; cep: string | null }) => {
     setSalvando(true)
@@ -109,6 +134,7 @@ export function Voce() {
       try {
         const gravado = await salvarPerfil({ nome: dados.nome, bio: dados.bio })
         setConta((atual) => (atual === null ? atual : { ...atual, perfil: gravado }))
+        casca.definir({ nomeDaPessoa: gravado.nome })
         const cepAnterior = digitosDoCep(perfil?.localizacao.cep ?? "")
         if (dados.cep !== cepAnterior) {
           try {
@@ -165,10 +191,10 @@ export function Voce() {
   }
 
   /**
-   * A mudança de cidade (F10). A confirmação é a MESMA peça da saída — a
-   * sobreposição é da entrada, então uma confirmação de cada vez: o pedido
-   * pendente é quem decide a copy e a ação. O estado novo vem do servidor e a
-   * tela relê o resto (contagens e cidade) pelo GET.
+   * A mudança de cidade (F10), agora atrás da linha "Mudar de cidade". A
+   * confirmação é a MESMA peça da saída — a sobreposição é da entrada, então
+   * uma confirmação de cada vez: o pedido pendente é quem decide a copy e a
+   * ação. O estado novo vem do servidor e a tela relê o resto pelo GET.
    */
   const mudarCidade = (alvo: PedidoDeMudanca) => {
     if (mudando) return
@@ -193,43 +219,86 @@ export function Voce() {
     void navegacao.abrir("confirmacao")
   }
 
-  return (
-    <section data-tela="voce" className="grid gap-2">
-      <CabecaDePagina titulo="Você" subtitulo="Sua conta, seus anúncios e seus ajustes." />
+  const abrirCidade = () => {
+    setForcaAberta(false)
+    setCidadeAberta((aberto) => !aberto)
+  }
 
-      {erro ? <EstadoDeErro aoTentar={() => setRodada((atual) => atual + 1)} /> : null}
+  const abrirForca = () => {
+    setCidadeAberta(false)
+    setForcaAberta((aberto) => !aberto)
+  }
+
+  return (
+    <section data-tela="voce" className="grid gap-2 md:mx-auto md:max-w-[640px] lg:max-w-[720px]">
+      <CabecaDePagina titulo="Você" subtitulo="Sua conta, seus anúncios e seus ajustes." />
 
       {carregando ? (
         <EsqueletoDeLista linhas={1} />
-      ) : (
+      ) : erro ? (
+        // A falha mora no cartão do perfil (revisão às cegas, 2): a caixa é a
+        // mesma do estado de sucesso e a saída é um botão de verdade, ao lado
+        // da mensagem — não um texto solto no canto da tela.
+        <div
+          data-aviso="perfil"
+          className="flex flex-wrap items-center gap-2 rounded-2xl bg-(--surface-lowest) p-4 ring-1 ring-(--outline-variant)"
+        >
+          <p role="alert" className="min-w-0 grow text-sm text-(--destructive)">
+            Leitura do perfil indisponível agora.
+          </p>
+          <Botao
+            tom="contornado"
+            className="shrink-0"
+            onClick={() => setRodada((atual) => atual + 1)}
+          >
+            Tentar de novo
+          </Botao>
+        </div>
+      ) : perfil === null ? null : (
         <div className="flex items-center gap-3 rounded-2xl bg-(--surface-lowest) p-4 ring-1 ring-(--outline-variant)">
-          <span className="grid size-14 shrink-0 place-items-center rounded-full bg-(--secondary-container) text-lg font-semibold">
-            {iniciais(nome)}
-          </span>
-          <span className="grid min-w-0 grow gap-0.5">
-            <b className="text-[17px]">{nome}</b>
-            <small className="text-(--on-surface-variant)">
-              {perfil === null ? "perfil indisponível agora" : perfil.cidade.nome}
-            </small>
-            {perfil?.bio === null || perfil?.bio === undefined ? null : (
+          <Avatar nome={perfil.nome} tamanho={56} />
+          <div className="grid min-w-0 grow gap-0.5">
+            <b className="text-[17px]">{perfil.nome}</b>
+            {cidadeAberta ? null : (
+              <p className="text-sm text-(--on-surface-variant)">
+                Sua cidade é <b>{perfil.cidade.nome}</b>.
+              </p>
+            )}
+            {perfil.bio === null || perfil.bio === undefined ? null : (
               <small className="text-(--on-surface-variant)">{perfil.bio}</small>
             )}
-          </span>
-          {perfil === null ? null : (
-            <Botao
-              tom="texto"
-              icone="edit"
-              className="shrink-0"
-              onClick={() => {
-                setMensagem(null)
-                setEditando((aberto) => !aberto)
-              }}
-            >
-              Editar
-            </Botao>
-          )}
+          </div>
+          <Botao
+            tom="texto"
+            icone="edit"
+            className="shrink-0"
+            onClick={() => {
+              setMensagem(null)
+              setEditando((aberto) => !aberto)
+            }}
+          >
+            {/* Em telas estreitas o rótulo visual sai e sobra o lápis (revisão
+                às cegas, 12): nome e bio usam a largura; o nome acessível
+                continua "Editar". */}
+            <span className="max-md:sr-only">Editar</span>
+          </Botao>
         </div>
       )}
+
+      {perfil?.outbound && !cidadeAberta ? (
+        <p
+          data-aviso="saindo"
+          className="rounded-2xl bg-(--surface-lowest) px-4 py-3 text-sm ring-1 ring-(--outline-variant)"
+        >
+          {perfil.outbound.readOnly
+            ? `Você não participa mais de ${perfil.outbound.nome}. A sua cidade agora é ${perfil.cidade.nome}.`
+            : `Você está saindo de ${perfil.outbound.nome}${perfil.outbound.uf === "" ? "" : `, ${perfil.outbound.uf}`}${
+                perfil.outbound.endsAt === ""
+                  ? ""
+                  : ` — participa de lá até ${dataLegivel(perfil.outbound.endsAt)}`
+              }. Uma nova mudança fica disponível depois desse prazo.`}
+        </p>
+      ) : null}
 
       {perfil !== null && perfil.localizacao.cep !== null && !perfil.distanciaDisponivel ? (
         <p
@@ -241,23 +310,6 @@ export function Voce() {
         </p>
       ) : null}
 
-      {perfil === null ? null : (
-        <>
-          {/* Âncora de `/app/voce#cidade`: é o destino do rodapé do seletor de
-              cidade da casca web. */}
-          <div id="cidade">
-            <Cidade
-              perfil={perfil}
-              destinoInicial={destinoDoLink?.id === perfil.cidade.id ? null : destinoDoLink}
-              pendente={mudando}
-              mensagem={mensagemDaCidade}
-              aoPedirMudanca={(mudanca) => abrirConfirmacao({ tipo: "mudar", ...mudanca })}
-            />
-          </div>
-          <ForcaEOm />
-        </>
-      )}
-
       {editando && perfil !== null ? (
         <EdicaoDePerfil
           perfil={perfil}
@@ -268,48 +320,88 @@ export function Voce() {
         />
       ) : null}
 
-      {carregando ? null : <Contadores conta={conta} />}
+      {carregando || erro ? null : <Contadores conta={conta} />}
 
       <Secao titulo="Seu Bivaque">
-        <div className="grid gap-2">
+        {/* As linhas viram cartão com divisória (revisão cega R1, M11): a
+            área clicável fica delimitada e o chevron mora no fim do cartão,
+            não da tela. */}
+        <Lista>
           <LinhaDeAjuste
             icone="bookmark"
             titulo="Salvos"
-            subtitulo="Anúncios guardados para ver com calma"
+            subtitulo="Guardados para ver com calma"
             onClick={() => void navegacao.irPara("salvos")}
           />
           <LinhaDeAjuste
             icone="sell"
             titulo="Meus anúncios"
-            subtitulo="Seus anúncios e o estado de cada um"
+            subtitulo="Os seus e o estado de cada"
             onClick={() => void navegacao.irPara("meus-anuncios")}
           />
           <LinhaDeAjuste
             icone="notifications_active"
             titulo="Alertas de imóvel"
-            subtitulo="Avisos de imóveis novos com o que você procura"
+            subtitulo="Imóveis novos do seu interesse"
             onClick={() => void navegacao.irPara("alertas-de-imovel")}
           />
           <LinhaDeAjuste
             icone="forum"
             titulo="Minhas indicações"
-            subtitulo="Perguntas que você fez e as respostas"
+            subtitulo="Suas perguntas e as respostas"
             onClick={() => void navegacao.irPara("minhas")}
           />
           <LinhaDeAjuste
             icone="build"
             titulo="Pedidos de serviço"
-            subtitulo="Propostas e orçamentos combinados"
+            subtitulo="Propostas e orçamentos"
             onClick={() => void navegacao.irPara("pedidos")}
           />
           <LinhaDeAjuste
             icone="interests"
             titulo="Interesses"
-            subtitulo="Grupos da sua cidade que você quer ver"
+            subtitulo="Grupos que você quer ver"
             onClick={() => setInteressesAbertos(true)}
           />
-        </div>
+          {perfil === null ? null : (
+            <>
+              <LinhaDeAjuste
+                icone="location_on"
+                titulo="Mudar de cidade"
+                subtitulo="Levar sua conta para outra cidade"
+                aria-expanded={cidadeAberta || undefined}
+                onClick={abrirCidade}
+              />
+              <LinhaDeAjuste
+                icone="badge"
+                titulo="Força e OM"
+                subtitulo="Declarar é opcional"
+                aria-expanded={forcaAberta || undefined}
+                onClick={abrirForca}
+              />
+            </>
+          )}
+        </Lista>
       </Secao>
+
+      {perfil === null ? null : (
+        <>
+          {/* Âncora de `/app/voce#cidade`: é o destino do rodapé do seletor de
+              cidade da casca web. */}
+          <div id="cidade">
+            {cidadeAberta ? (
+              <Cidade
+                perfil={perfil}
+                destinoInicial={destinoDoLink?.id === perfil.cidade.id ? null : destinoDoLink}
+                pendente={mudando}
+                mensagem={mensagemDaCidade}
+                aoPedirMudanca={(mudanca) => abrirConfirmacao({ tipo: "mudar", ...mudanca })}
+              />
+            ) : null}
+          </div>
+          {forcaAberta ? <ForcaEOm /> : null}
+        </>
+      )}
 
       {interessesAbertos ? <Interesses aoFechar={() => setInteressesAbertos(false)} /> : null}
 
@@ -322,23 +414,25 @@ export function Voce() {
       </Secao>
 
       <Secao titulo="Privacidade e ajuda">
-        <div className="grid gap-2">
+        {/* Mesmo cartão do "Seu Bivaque" (revisão cega R1, M11): linha
+            delimitada, chevron no fim do cartão. */}
+        <Lista>
           <LinhaDeAjuste
             icone="visibility_off"
             titulo="Ocultados"
-            subtitulo="O que você ocultou das suas listas"
+            subtitulo="O que você ocultou"
             onClick={() => void navegacao.irPara("ocultados")}
           />
           <LinhaDeAjuste
             icone="person"
             titulo="Pessoas bloqueadas"
-            subtitulo="Quem não aparece mais para você"
+            subtitulo="Quem não aparece para você"
             onClick={() => void navegacao.irPara("bloqueados")}
           />
           <LinhaDeAjuste
             icone="support"
             titulo="Ajuda"
-            subtitulo="Perguntas frequentes, contato e chamados"
+            subtitulo="Perguntas frequentes e contato"
             onClick={() => void navegacao.irPara("ajuda")}
           />
           <LinhaDeAjuste
@@ -366,12 +460,12 @@ export function Voce() {
             subtitulo="Remova seus dados do Bivaque"
             onClick={() => void navegacao.irPara("apagar-conta")}
           />
-          {falhaAoSair ? (
-            <p role="alert" className="text-sm text-(--destructive)">
-              Não foi possível sair agora. Você continua na sua conta — tente de novo.
-            </p>
-          ) : null}
-        </div>
+        </Lista>
+        {falhaAoSair ? (
+          <p role="alert" className="text-sm text-(--destructive)">
+            Não foi possível sair agora. Você continua na sua conta — tente de novo.
+          </p>
+        ) : null}
       </Secao>
 
       <Confirmacao

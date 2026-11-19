@@ -144,7 +144,7 @@ test("busca filtra o que as seções já carregaram e não esconde os segmentos"
   await expect(page.locator('[data-salvos="publicacoes"]')).toHaveCount(0)
   // A seção de anúncios fica: é dela o controle Desapegos/Imóveis, e a busca
   // não pode trancar a pessoa no segmento em que ela estava.
-  await expect(anuncios.getByRole("navigation", { name: "Seções dos salvos" })).toBeVisible()
+  await expect(anuncios.getByRole("group", { name: "Seções dos salvos" })).toBeVisible()
   await expect(anuncios).toContainText("Nenhum anúncio salvo corresponde à busca.")
 
   await busca.fill("zzz-inexistente")
@@ -164,7 +164,8 @@ test("busca filtra o que as seções já carregaram e não esconde os segmentos"
   await expect(anuncios).toContainText("Nenhum anúncio salvo corresponde à busca.")
   const imoveis = anuncios.getByRole("button", { name: "Imóveis", exact: true })
   await imoveis.click()
-  await expect(imoveis).toHaveAttribute("aria-current", "page")
+  // O chip escolhido é a tinta da peça, não a Brasa do criar (REGUA-002).
+  await expect(imoveis).toHaveAttribute("aria-pressed", "true")
   await expect(
     anuncios.locator('[data-cartao="anuncio"]', { hasText: TITULO_DO_IMOVEL }),
   ).toBeVisible()
@@ -208,7 +209,17 @@ test("remover tira a linha de cada seção pela rota daquele tipo", async ({ pag
   await expect(cartao).toBeVisible()
   await cartao.getByRole("button", { name: "Remover dos salvos", exact: true }).click()
   await expect(cartao).toHaveCount(0)
-  await expect(anuncios.getByText("Nenhum anúncio salvo")).toBeVisible()
+
+  // Sobrou só o que é SEGUIDO, não salvo: o vazio único dos salvos não
+  // contradiz a seção de perguntas — ela segue listada abaixo dele
+  // (REGUA-002, rodada 1).
+  const vazio = page.locator('[data-tela="salvos"] [data-estado="vazio"]')
+  await expect(vazio).toHaveCount(1)
+  await expect(vazio).toContainText("Nada salvo ainda")
+  await expect(page.getByRole("searchbox", { name: "Buscar nos salvos" })).toHaveCount(0)
+  const perguntasAinda = page.locator('[data-salvos="perguntas"]')
+  await expect(perguntasAinda).toContainText(TITULO_DA_SEGUNDA_PERGUNTA)
+  await expect(perguntasAinda).toContainText(TITULO_DA_TERCEIRA_PERGUNTA)
 
   await expect
     .poll(() => escritas)
@@ -310,13 +321,13 @@ test("remover com o DELETE adiado, trocar de segmento e voltar: o anúncio não 
   )
   await anuncios.getByRole("button", { name: "Desapegos", exact: true }).click()
   expect((await releitura).ok(), "a releitura do segmento precisa ser aceita").toBe(true)
-  // A seção só mostra o vazio dela com a lista carregada — e ela chegou sem o
-  // anúncio, que o servidor ainda devolvia. O prazo é curto de propósito: com o
-  // DELETE adiado, o anúncio só poderia estar de volta se a releitura o tivesse
-  // reposto, e passar disso é o defeito que este caso mede.
-  const vazio = anuncios.locator('[data-estado="vazio"]', { hasText: "Nenhum anúncio salvo" })
+  // A seção só mostra o aviso de vazia com a lista carregada — e ela chegou sem
+  // o anúncio, que o servidor ainda devolvia. O prazo é curto de propósito:
+  // com o DELETE adiado, o anúncio só poderia estar de volta se a releitura o
+  // tivesse reposto, e passar disso é o defeito que este caso mede.
+  const vazioDaSecao = anuncios.getByText("Nenhum anúncio salvo ainda")
   await expect(
-    vazio,
+    vazioDaSecao,
     "a lista voltou vazia, mesmo com o anúncio ainda salvo no servidor",
   ).toBeVisible({ timeout: 3000 })
   expect(concluiu, "o DELETE precisa estar pendente na volta ao segmento").toBe(false)
@@ -326,7 +337,62 @@ test("remover com o DELETE adiado, trocar de segmento e voltar: o anúncio não 
   await expect(anuncios, "removido no servidor, o anúncio não pode reaparecer").not.toContainText(
     TITULO_DO_ANUNCIO,
   )
-  await expect(vazio).toBeVisible()
+  await expect(vazioDaSecao).toBeVisible()
+})
+
+test("nada salvo em nenhuma seção: um vazio só, da tela inteira", async ({ page }) => {
+  aplicarStubMercado(page)
+  await page.route(/\/api\/app\/grupos\/salvas(?:\?|$)/, (rota) =>
+    rota.fulfill({ json: { publicacoes: [] } }),
+  )
+  await page.route(/\/api\/app\/perguntas\/salvas(?:\?|$)/, (rota) =>
+    rota.fulfill({ json: { perguntas: [] } }),
+  )
+  await page.route(/\/api\/app\/guia\/salvos(?:\?|$)/, (rota) =>
+    rota.fulfill({ json: { entradas: [] } }),
+  )
+
+  await page.goto("/app/salvos")
+
+  // REGUA-002: sem nada guardado, a tela mostra um vazio único — não quatro
+  // vazios empilhados, nem busca e filtros para o que não existe.
+  const vazio = page.locator('[data-tela="salvos"] [data-estado="vazio"]')
+  await expect(vazio).toHaveCount(1)
+  await expect(vazio).toContainText("Nada salvo ainda")
+  await expect(page.getByRole("searchbox", { name: "Buscar nos salvos" })).toHaveCount(0)
+  await expect(page.locator('[data-salvos="anuncios"]')).toHaveCount(0)
+  await expect(page.locator('[data-salvos="guia"]')).toHaveCount(0)
+  await vazio.getByRole("button", { name: "Ver o Mercado" }).click()
+  await expect(page).toHaveURL(/\/app\/mercado$/)
+})
+
+test("só imóveis salvos: a tela não mente vazio e a lista está a um chip", async ({ page }) => {
+  aplicarStubMercado(page)
+  // As seções de lista vazias: o único conteúdo salvo é um imóvel.
+  await page.route(/\/api\/app\/grupos\/salvas(?:\?|$)/, (rota) =>
+    rota.fulfill({ json: { publicacoes: [] } }),
+  )
+  await page.route(/\/api\/app\/perguntas\/salvas(?:\?|$)/, (rota) =>
+    rota.fulfill({ json: { perguntas: [] } }),
+  )
+  await page.route(/\/api\/app\/guia\/salvos(?:\?|$)/, (rota) =>
+    rota.fulfill({ json: { entradas: [] } }),
+  )
+  await salvarAnuncio(page, IMOVEL)
+
+  await page.goto("/app/salvos")
+
+  // REGUA-002, achado 1 da revisão de código: quem só tem imóveis salvos abre
+  // a tela no segmento de desapegos vazio — a tela não pode dizer "Nada salvo
+  // ainda" com o imóvel existindo. Os chips ficam à mão e a lista aparece.
+  const vazio = page.locator('[data-tela="salvos"] [data-estado="vazio"]')
+  await expect(vazio).toHaveCount(0)
+  const anuncios = page.locator('[data-salvos="anuncios"]')
+  await expect(anuncios).toContainText("Nenhum anúncio salvo ainda")
+  await anuncios.getByRole("button", { name: "Imóveis", exact: true }).click()
+  await expect(
+    anuncios.locator('[data-cartao="anuncio"]', { hasText: TITULO_DO_IMOVEL }),
+  ).toBeVisible()
 })
 
 test("leitura que começou antes do sucesso e chega depois dele não repõe o anúncio removido", async ({
@@ -378,7 +444,7 @@ test("leitura que começou antes do sucesso e chega depois dele não repõe o an
   await volta
   expect(concluiu, "a resposta da volta só chega depois do sucesso do DELETE").toBe(true)
 
-  const vazio = anuncios.locator('[data-estado="vazio"]', { hasText: "Nenhum anúncio salvo" })
-  await expect(vazio, "a leitura velha não pode repor o anúncio removido").toBeVisible()
+  const vazioDaSecao = anuncios.getByText("Nenhum anúncio salvo ainda")
+  await expect(vazioDaSecao, "a leitura velha não pode repor o anúncio removido").toBeVisible()
   await expect(anuncios).not.toContainText(TITULO_DO_ANUNCIO)
 })

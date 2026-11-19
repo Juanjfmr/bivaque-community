@@ -737,7 +737,7 @@ const JORNADAS: ReadonlyArray<{ nome: string; passos: readonly Passo[] }> = [
         ir: async (page) => {
           await abrirDoZero(page, "/app/voce")
         },
-        pronto: '[data-estado="erro"]',
+        pronto: '[data-aviso="perfil"]',
       },
       {
         nome: "03-bloqueados",
@@ -775,8 +775,8 @@ const JORNADAS: ReadonlyArray<{ nome: string; passos: readonly Passo[] }> = [
         ir: async (page) => {
           await abrirDoZero(page, "/app/salvos")
         },
-        // O vazio dos anúncios é o único da tela que é o primeiro da lista.
-        pronto: '[data-salvos="anuncios"] [data-estado="vazio"]',
+        // REGUA-002: nada salvo é um vazio único, da tela inteira.
+        pronto: '[data-tela="salvos"] [data-estado="vazio"]',
       },
       {
         nome: "07-perfil-de-membro",
@@ -840,5 +840,6 @@ test.describe("capturas para a revisão cega de F09 e F10", () => {
 
     expect(erros).toEqual([])
     await page.setViewportSize({ width: 375, height: 900 })
+    await aplicarTema(page, "light")
   })
 })
