@@ -146,7 +146,10 @@ export function PerfilDeMembro() {
               arquivo (revisão às cegas, 20). O escopo `.pc` traz o raio da peça. */}
           <div
             data-capa="membro"
-            className="pc pc-embutido overflow-hidden rounded-2xl bg-(--muted)"
+            className="pc pc-embutido overflow-hidden rounded-2xl"
+            // Em linha: `.pc.pc-embutido` zera o fundo fora das camadas e
+            // venceria uma classe utilitária.
+            style={{ backgroundColor: "var(--muted)" }}
           >
             <Ilustracao nome="cidade" proporcao="21 / 9" enquadre="50% 30%" prioridade />
           </div>
