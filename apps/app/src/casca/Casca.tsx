@@ -47,7 +47,8 @@ export function Casca() {
   const estadoDaLocalizacao = localizacao.state
 
   useEffect(() => {
-    document.title = `${rota.nome === "inicio" ? "Início" : tituloDaTela(rota.nome, casca.cidade)} · Bivaque`
+    const tela = rota.nome === "inicio" ? "Início" : tituloDaTela(rota.nome, casca.cidade)
+    document.title = tela === "Bivaque" ? "Bivaque" : `${tela} · Bivaque`
   }, [rota.nome, casca.cidade])
 
   const [minimizada, definirMinimizada] = useState(false)

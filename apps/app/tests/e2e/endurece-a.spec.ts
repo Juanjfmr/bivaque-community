@@ -39,22 +39,26 @@ test("foco dos campos e botões das peças permanece visível em cores forçadas
   }
 })
 
-for (const tema of ["claro", "escuro"]) {
-  for (const caminho of [
-    "/app/inicio",
-    "/app/busca",
-    "/app/evento/e1",
-    "/app/conversa/nao-existe",
-    "/app/guia",
-  ]) {
-    test(`ordem de títulos em ${caminho}, tema ${tema}`, async ({ page }) => {
-      await page.goto(caminho)
-      await page.evaluate(
-        (valor) => document.documentElement.setAttribute("data-tema", valor),
-        tema,
-      )
-      const resultado = await new AxeBuilder({ page }).withRules("heading-order").analyze()
-      expect(resultado.violations).toEqual([])
-    })
-  }
+// A ordem de títulos não depende do tema: um passe por tela, depois que a
+// tela terminou de carregar. A busca sem resultado mostra o estado vazio.
+for (const caminho of [
+  "/app/inicio",
+  "/app/busca",
+  "/app/busca?q=zzzzsemresultado",
+  "/app/evento/e1",
+  "/app/conversa/nao-existe",
+  "/app/guia",
+]) {
+  test(`ordem de títulos em ${caminho}`, async ({ page }) => {
+    await page.goto(caminho)
+    await expect(page.locator("[data-tela]").first()).toBeVisible()
+    await expect(page.locator('[aria-busy="true"]')).toHaveCount(0)
+    const resultado = await new AxeBuilder({ page }).withRules("heading-order").analyze()
+    expect(resultado.violations).toEqual([])
+  })
 }
+
+test("a entrada não repete o nome na aba", async ({ page }) => {
+  await page.goto("/app/entrar")
+  await expect(page).toHaveTitle("Bivaque")
+})

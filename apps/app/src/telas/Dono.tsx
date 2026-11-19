@@ -82,6 +82,7 @@ export function Dono() {
           <Secao titulo="Negócios aguardando responsável">
             {aguardando.length === 0 ? (
               <EstadoVazio
+                nivel="h3"
                 titulo="Nenhuma página pendente"
                 texto="Páginas indicadas por membros aparecem aqui até o responsável confirmar."
                 icone="storefront"

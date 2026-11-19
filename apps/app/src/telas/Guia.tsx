@@ -229,6 +229,7 @@ export function Guia() {
                 <EsqueletoDeLista linhas={5} />
               ) : dados !== null && dados.entradas.length === 0 ? (
                 <EstadoVazio
+                  nivel="h3"
                   titulo={filtrando ? "Nada com esse filtro" : "O guia ainda está sendo montado"}
                   texto={
                     filtrando
