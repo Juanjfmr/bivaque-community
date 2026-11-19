@@ -1,6 +1,5 @@
 /* biome-ignore-all lint/performance/noImgElement: fotos finais em WebP com art direction, carregadas antes da captura da comparação (PORT-001) */
 
-import { headers } from "next/headers"
 import Link from "next/link"
 import { MaterialIcon } from "../components/material/material-icon"
 import { materialSymbols, notoSans, notoSerif } from "../fonts/landing-fonts"
@@ -170,8 +169,7 @@ function Thread() {
   )
 }
 
-export async function LandingPage() {
-  const nonce = (await headers()).get("x-nonce") ?? undefined
+export function LandingPage({ nonce }: { nonce?: string } = {}) {
   return (
     <div
       className={`ld bv-skin ${notoSans.variable} ${notoSerif.variable} ${materialSymbols.variable}`}
