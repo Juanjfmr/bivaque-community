@@ -1,0 +1,70 @@
+task_id: AUTHZ-007
+objective: >
+  Conta suspensa ou com exclusão pedida não cria, edita nem apaga página de negócio, item de catálogo,
+  foto de portfólio, pedido de serviço, nem sobe foto de anúncio ou de evento. Fecha o achado M2 do
+  security-auditor no lote AUTHZ-006, pela mesma regra já aceita no ADR-20261118 do veto de escrita.
+authority:
+  - docs/decisions/ADR-20261118-veto-de-escrita-nas-demais-tabelas-de-conteudo.md
+  - tools/backend-kanban/public/board.json (card AUTHZ-007)
+  - supabase/AGENTS.md
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    Parecer do security-auditor de 18/11 sobre f6eca95 (PR #281): create_member_business_page e
+    update_member_business_page (security definer) e as policies de provider_profiles,
+    provider_catalog_items e provider_portfolio_photos não olham suspensão nem exclusão pedida;
+    create_service_request só veta exclusão pedida; os buckets de foto de anúncio e de evento não olham
+    suspensão.
+allowed_paths:
+  - supabase/migrations/*_authz_007_*.sql
+  - supabase/tests/authz-007*.sql
+  - docs/decisions/ADR-20261118-veto-de-escrita-nas-demais-tabelas-de-conteudo.md
+  - docs/decisions/RATIFICACAO.md
+  - docs/agents/tasks/AUTHZ-007.task.yml
+  - tests/unit/**/*authz*
+  # Ampliação de 18/11, rodada 1 (decisão do coordenador): o veto de foto saiu do
+  # trigger em storage.objects e foi para os caminhos de upload do servidor.
+  - apps/web/lib/storage/veto-de-conta.ts
+  - apps/web/lib/storage/listing-photo.ts
+  - apps/web/lib/storage/foto-do-grupo.ts
+  - apps/web/lib/listings/actions.ts
+  - apps/web/app/api/app/grupos/[id]/fotos/route.ts
+  - apps/web/app/components/bivaque/post-photo-action.ts
+  - apps/web/app/api/app/negocio/fotos/route.ts
+  - apps/web/app/(provider)/prestador/actions.ts
+  # Idem: a RPC pública nova precisa da entrada nos tipos gerados (o arquivo
+  # local do banco não roda migrations deste branch; o CI regenera).
+  - supabase/database.generated.ts
+  # Idem: stubs de testes existentes dos caminhos de upload agora respondem a
+  # RPC de veto; a intenção de cada teste segue a mesma.
+  - tests/unit/app-api/criar/foto.test.ts
+  - tests/unit/app-api/grupos/apoio.ts
+  - tests/unit/app-api/negocio/rotas.test.ts
+  - tests/unit/listings/photo-replacement-composition.test.ts
+  - tests/unit/listings/photo-row-invariant.test.ts
+  - tests/unit/security/photo-upload-per-call.test.ts
+forbidden:
+  - editar migration já existente na main (só migration nova, criada com npx pnpm@11.18.0 exec supabase migration new authz_007_veto_prestador)
+  - reiniciar, reconstruir ou escrever no banco local compartilhado (a prova de banco é do CI)
+  - afrouxar policy existente, conceder privilégio novo a anon ou authenticated, expor o schema private
+  - dado pessoal real ou CPF real em fixture (só identidades sintéticas example.invalid e UUIDs fixos)
+  - afrouxar ou apagar teste existente
+acceptance:
+  - policies restritivas (as restrictive) de insert/update/delete em provider_profiles, provider_catalog_items e provider_portfolio_photos com o mesmo predicado de suspensão e exclusão pedida usado no AUTHZ-006
+  - create_member_business_page, update_member_business_page e create_service_request recusam conta suspensa e com exclusão pedida, com o mesmo erro que as RPCs do AUTHZ-006 usam; funções definer com search_path fixo
+  - o veto de foto de anúncio, de evento e de portfólio é do servidor, antes do service_role: RPC pública de autoverificação can_account_write_content (mesmo predicado de private.can_write_own_content, identidade pelo JWT) chamada em cada caminho de upload; teste unitário de conta ativa (passa), suspensa (recusa) e com exclusão pedida (recusa), um trio por caminho
+  - o portfólio apaga o objeto do bucket quando a linha é recusada depois do upload (defesa extra ao veto antes do upload), com teste unitário do cleanup
+  - pgTAP com conta ativa (permitido), suspensa (negado) e exclusão pedida (negado) para cada tabela e RPC, incluindo INSERT e UPDATE diretos em provider_profiles pelo fluxo de prestador civil; a RPC can_account_write_content provada em cada estado; plan() exato
+  - emenda datada no ADR-20261118 do veto (seção "Emenda de 18/11, AUTHZ-007") e a linha do ADR na RATIFICACAO atualizada citando a emenda, no mesmo commit
+proof:
+  - npx pnpm@11.18.0 gate --fast
+  - npx pnpm@11.18.0 test
+  - test:db e db:lint no CI (ci:full)
+risk: autorização e RLS
+risk_level: R3
+adr: docs/decisions/ADR-20261118-veto-de-escrita-nas-demais-tabelas-de-conteudo.md
+reviewer_must_differ_from_executor: true
+retry_budget: 2
+on_budget_exhausted: HUMAN_DECISION
+closure:
+  requires_runtime_evidence: true

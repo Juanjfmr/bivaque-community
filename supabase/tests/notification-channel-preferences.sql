@@ -166,14 +166,15 @@ select is(
 -- O canal whatsapp saiu do MVP em 18/09/2026 (decisao do responsavel): o valor
 -- deixou de existir em public.outbox_channel. O teste que provava "whatsapp nao e
 -- barrado pela matriz" perdeu objeto — com UM canal, nao existe caminho de
--- entrega que escape da preferencia da pessoa. O que se prova agora e o inverso:
--- o unico canal existente e email, e ele E governado pela matriz.
+-- entrega que escape da preferencia da pessoa. O que se prova agora e o conjunto
+-- exato: email e push (20261118140100), ambos governados pela matriz.
 select is(
-  (select count(*)::int from pg_enum e
-    join pg_type t on t.oid = e.enumtypid
-   where t.typname = 'outbox_channel'),
-  1,
-  'outbox_channel tem um valor so — o whatsapp saiu do schema'
+  (select array_agg(e.enumlabel::text order by e.enumlabel)
+     from pg_enum e
+     join pg_type t on t.oid = e.enumtypid
+    where t.typname = 'outbox_channel'),
+  array['email', 'push'],
+  'outbox_channel tem email e push — o whatsapp segue fora do schema'
 );
 
 select is(
@@ -184,7 +185,7 @@ select is(
     jsonb_build_object('user_id', '10000000-0000-4000-8000-000000000001')
   ),
   false,
-  'o unico canal existente e barrado quando a matriz o desliga'
+  'o canal email e barrado quando a matriz o desliga'
 );
 
 select * from finish();

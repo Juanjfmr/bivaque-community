@@ -94,6 +94,7 @@ function cliente(opcoes: Opcoes = {}) {
   let existe = opcoes.semFicha !== true
   const rpc = vi.fn(async (nome: string) => {
     if (opcoes.erroRpc) return { data: null, error: { code: opcoes.erroRpc, message: "segredo" } }
+    if (nome === "can_account_write_content") return { data: true, error: null }
     if (nome === "can_manage_provider_profile") return { data: true, error: null }
     if (nome === "create_member_business_page") {
       existe = true

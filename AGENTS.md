@@ -58,6 +58,9 @@ failure path work in the integrated app and are proven at 375/768/1440 in both t
    or a later explicit owner instruction wins over an older one.
 4. Visual and interaction bar: [docs/agents/regua-nextdoor/](docs/agents/regua-nextdoor/) — Nextdoor
    (via Mobbin) is the bar; every rebuilt screen starts from cited Mobbin references.
+   Motion follows [ANIMATION.md](ANIMATION.md): when asked to "follow the animation rule" ("siga a
+   regra animation"), every transition and micro-interaction in the task uses its timings, curves,
+   patterns and reduced-motion rules.
 5. [docs/historico/](docs/historico/) is history, never instruction. Do not restore anything from it
    without bringing it into a live source with a date and a reason.
 

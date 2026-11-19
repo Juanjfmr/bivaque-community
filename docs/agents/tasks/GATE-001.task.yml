@@ -1,0 +1,31 @@
+task_id: GATE-001
+objective: >
+  Devolver o lint do gate ao verde em todo o repositório: o biome recusa
+  tools/backend-kanban/public/board.json desde que ele passou de 1 MiB.
+authority:
+  - "Card GATE-LINT-BOARDJSON (quadro, branch feat/lan-push)"
+  - "biome check . falha com 'The size of the file is 1.0 MiB, which exceeds the configured maximum' na main"
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    Na main, board.json mede 1,04 MiB e biome check . falha por tamanho de arquivo antes de qualquer
+    regra; gate --fast fica vermelho em estado limpo.
+allowed_paths:
+  - biome.json
+  - docs/agents/tasks/GATE-001.task.yml
+forbidden:
+  - tirar board.json do lint ou ignorar arquivos para ficar verde
+  - afrouxar regra do biome
+  - editar board.json à mão
+acceptance:
+  - files.maxSize no biome.json acomoda o board.json com folga (4 MiB), sem ignorar nenhum arquivo
+  - biome check . sem o erro de tamanho na main
+proof:
+  - npx pnpm@11.18.0 gate --fast
+risk: tooling
+risk_level: R1
+reviewer_must_differ_from_executor: true
+retry_budget: 1
+on_budget_exhausted: HUMAN_DECISION
+closure:
+  requires_runtime_evidence: true

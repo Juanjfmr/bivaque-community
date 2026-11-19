@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { Botao } from "@/components/bivaque/botao"
 import { Campo } from "@/components/bivaque/campos"
 import { Etiqueta } from "@/components/bivaque/etiqueta"
@@ -19,11 +19,14 @@ export function Participacao({
   const [motivo, setMotivo] = useState("")
   const [erro, setErro] = useState("")
   const [ocupado, setOcupado] = useState(false)
+  // Guarda síncrona para dois cliques antes do próximo commit do React.
+  const mudancaPendente = useRef(false)
   const [boasVindas, setBoasVindas] = useState(false)
   const [controle] = useState(() => new AbortController())
   useEffect(() => () => controle.abort(), [controle])
   async function mudar(entrar: boolean) {
-    if (ocupado) return
+    if (mudancaPendente.current || controle.signal.aborted) return
+    mudancaPendente.current = true
     setOcupado(true)
     setErro("")
     try {
@@ -42,6 +45,7 @@ export function Participacao({
             : "Não foi possível mudar sua participação. Tente de novo.",
         )
     } finally {
+      mudancaPendente.current = false
       if (!controle.signal.aborted) setOcupado(false)
     }
   }
@@ -95,8 +99,13 @@ export function Participacao({
           </p>
         ) : null}
       </div>
-      <Dialog open={pedindo} onOpenChange={setPedindo}>
-        <DialogContent data-dialogo="pedir-grupo">
+      <Dialog
+        open={pedindo}
+        onOpenChange={(aberto) => {
+          if (!mudancaPendente.current) setPedindo(aberto)
+        }}
+      >
+        <DialogContent data-dialogo="pedir-grupo" aria-busy={ocupado}>
           <DialogTitle>Pedido de entrada</DialogTitle>
           <DialogDescription>
             O motivo é lido só por você e por quem aprova. Não inclua endereço, telefone, CPF ou
@@ -106,7 +115,9 @@ export function Participacao({
             id="motivo-grupo"
             rotulo="Por que você quer entrar? (opcional)"
             valor={motivo}
-            aoMudar={setMotivo}
+            aoMudar={(valor) => {
+              if (!mudancaPendente.current) setMotivo(valor)
+            }}
             area
             nota={`${motivo.length}/300 caracteres`}
           />
@@ -116,7 +127,7 @@ export function Participacao({
             </p>
           ) : null}
           <div className="flex justify-end gap-2">
-            <Botao tom="texto" onClick={() => setPedindo(false)}>
+            <Botao tom="texto" disabled={ocupado} onClick={() => setPedindo(false)}>
               Cancelar
             </Botao>
             <Botao
@@ -128,8 +139,13 @@ export function Participacao({
           </div>
         </DialogContent>
       </Dialog>
-      <Dialog open={saindo} onOpenChange={setSaindo}>
-        <DialogContent data-dialogo="sair-grupo">
+      <Dialog
+        open={saindo}
+        onOpenChange={(aberto) => {
+          if (!mudancaPendente.current) setSaindo(aberto)
+        }}
+      >
+        <DialogContent data-dialogo="sair-grupo" aria-busy={ocupado}>
           <DialogTitle>Sair deste grupo?</DialogTitle>
           <DialogDescription>
             Você deixará de participar. Para voltar a um grupo fechado, será preciso pedir entrada
@@ -141,7 +157,7 @@ export function Participacao({
             </p>
           ) : null}
           <div className="flex justify-end gap-2">
-            <Botao tom="texto" onClick={() => setSaindo(false)}>
+            <Botao tom="texto" disabled={ocupado} onClick={() => setSaindo(false)}>
               Cancelar
             </Botao>
             <Botao
