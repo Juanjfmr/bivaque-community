@@ -14,10 +14,8 @@
 //      escreveu essa frase no cabeçalho, mas o seletor de PÚBLICO ficou.
 //      Desde o lote 5 N2 o seletor lista só grupos ("Pais e Filhos", do seed);
 //      a ordem provada é a mesma.
-//   2. Pedir indicação, a 375. O formulário antigo (/recommendations) liderava
-//      por "Categoria" e "Para qual comunidade você está perguntando?". Desde
-//      25/09/2026 é a caixa de pedir das Indicações: a frase vem primeiro, e
-//      assunto e detalhes só aparecem depois dela.
+//   2. Pedir indicação no app: a pergunta vem antes do tópico e do assunto.
+//      O formulário atual não possui campo de detalhes.
 //   3. Sugerir referência (/guide/sugerir). Liderava por "Tipo de referência"
 //      antes de "Nome". A prancha 44 painel 3 desenha "Nome" primeiro.
 //      (AMPLIAÇÃO: esta terceira superfície não estava nomeada no brief; entrou
@@ -121,37 +119,26 @@ test.describe("a pergunta vem antes do resto", () => {
     expect(firstField).toContain("Pergunta")
   })
 
-  test("pedir indicação: a pergunta vem antes do assunto e dos detalhes", async ({ page }) => {
-    // Given — a sessão autenticada e a caixa de pedir (ADR-20260925-memoria-de-indicacoes)
+  test("pedir indicação: a pergunta vem antes do tópico e do assunto", async ({ page }) => {
     await seedSession(page.context())
-    await page.setViewportSize({ width: 375, height: 812 })
-    await page.goto("/community?vista=indicacoes&pedir=1")
-    const question = page.getByRole("textbox", { name: "O que você procura" })
-    await expect(question).toBeVisible({ timeout: 20000 })
+    await page.goto("/app/comunidade")
+    await page.locator('[data-acao="perguntar"]').click()
+    const form = page.locator('[data-fluxo="perguntar"]')
+    await expect(form.locator("#nova-pergunta")).toBeVisible()
+    await expect(form.locator('[data-topicos="pergunta"]')).toBeVisible()
+    await expect(form.locator("#topico-pergunta")).toBeVisible()
 
-    // When — a pessoa escreve e decide pedir à cidade
-    await question.fill(`Afinador de piano ${Date.now().toString(36)}`)
-    await page.getByRole("button", { name: "Pedir à cidade" }).click()
-    const askBox = page.getByRole("region", { name: "O que você procura?" })
-    const subject = askBox.getByRole("group", { name: "Assunto" })
-    const details = askBox.getByLabel(/Detalhes/)
-    await expect(subject).toBeVisible()
-
-    // Then — a pergunta precede o assunto e os detalhes no DOM
-    const input = await question.elementHandle()
-    for (const [name, field] of [
-      ["assunto", subject],
-      ["detalhes", details],
-    ] as const) {
-      const follows = await field.evaluate(
-        (element, first) =>
-          Boolean(
-            first && first.compareDocumentPosition(element) & Node.DOCUMENT_POSITION_FOLLOWING,
-          ),
-        input,
+    const topicoDepois = await form.locator('[data-topicos="pergunta"]').evaluate((topico) => {
+      const pergunta = document.getElementById("nova-pergunta")
+      return Boolean(
+        pergunta && pergunta.compareDocumentPosition(topico) & Node.DOCUMENT_POSITION_FOLLOWING,
       )
-      expect(follows, `a pergunta vem antes de ${name}`).toBe(true)
-    }
+    })
+    expect(topicoDepois, "a pergunta vem antes do tópico").toBe(true)
+    expect(
+      await precedes(page, "nova-pergunta", "topico-pergunta"),
+      "a pergunta vem antes do assunto",
+    ).toBe(true)
   })
 
   test("sugerir referência: nome antes do tipo", async ({ page }) => {
