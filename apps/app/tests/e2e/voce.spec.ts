@@ -66,7 +66,7 @@ test("falha de leitura mostra um único aviso e a tela segue de pé", async ({ p
 
   const aviso = page.locator('[data-aviso="perfil"]')
   await expect(aviso).toBeVisible()
-  await expect(aviso).toContainText("Não foi possível carregar o seu perfil agora.")
+  await expect(aviso).toContainText("Seu perfil indisponível agora.")
   await expect(page.getByRole("button", { name: "Tentar de novo" })).toBeVisible()
   await expect(page.locator('[data-estado="erro"]')).toHaveCount(0)
   // Sem leitura não há identidade: a barra cai no ícone, sem nome herdado.
