@@ -83,12 +83,27 @@ test("jornadas e saída mantém a CSP e o tema", async ({ page, context }) => {
   await expect(page.locator('meta[name="theme-color"]')).toHaveAttribute("content", "#F3F5F6")
 })
 
-test("comunidade, grupo, foto, conversa e perfil sob CSP", async ({ page, context }) => {
+test("comunidade, grupo, conversa e perfil sob CSP", async ({ page, context }) => {
   test.setTimeout(120_000)
   await semearSessaoDeMembro(context, MEMBRO_SEMEADO)
   await page.goto("/app/comunidade")
   await expect(page.getByRole("heading", { name: "Comunidade", exact: true })).toBeVisible()
 
+  await page.goto("/app/grupo/60000000-0000-4000-8000-000000000002")
+  await expect(page.getByText(/Manaus \u00b7 \d+ membros/)).toBeVisible({ timeout: 30_000 })
+  await page.goto("/app/conversa/41000000-0000-4000-8000-000000000051")
+  await expect(page.locator('[data-mensagens="historico"]')).toContainText("Confirmado, 9h", {
+    timeout: 30_000,
+  })
+  await page.goto("/app/perfil/30000000-0000-4000-8000-000000000002")
+  await expect(page.getByRole("heading", { level: 1, name: /Carla Almeida/ })).toBeVisible({
+    timeout: 30_000,
+  })
+})
+
+test("publica foto no grupo sob CSP", async ({ page, context }) => {
+  test.setTimeout(120_000)
+  await semearSessaoDeMembro(context, MEMBRO_SEMEADO)
   const grupo = "60000000-0000-4000-8000-000000000002"
   await page.goto(`/app/grupo/${grupo}`)
   await expect(page.getByText(/Manaus \u00b7 \d+ membros/)).toBeVisible({ timeout: 30_000 })
@@ -117,13 +132,4 @@ test("comunidade, grupo, foto, conversa e perfil sob CSP", async ({ page, contex
   expect((await upload).status()).toBe(201)
   await page.getByRole("button", { name: "Publicar", exact: true }).click()
   await expect(page.locator('[data-publicacao-na-lista="sim"]').first()).toContainText(texto)
-
-  await page.goto("/app/conversa/41000000-0000-4000-8000-000000000051")
-  await expect(page.locator('[data-mensagens="historico"]')).toContainText("Confirmado, 9h", {
-    timeout: 30_000,
-  })
-  await page.goto("/app/perfil/30000000-0000-4000-8000-000000000002")
-  await expect(page.getByRole("heading", { level: 1, name: /Carla Almeida/ })).toBeVisible({
-    timeout: 30_000,
-  })
 })
