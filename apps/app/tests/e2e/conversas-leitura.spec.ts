@@ -111,7 +111,10 @@ test("o envio que falha vira o balão Não enviada; Tentar de novo entrega e o t
   const balao = page.locator('[data-mensagem="nao-enviada"]')
   await expect(balao).toBeVisible()
   await expect(balao).toContainText("Consigo buscar na quinta às 15h.")
-  await expect(balao.getByRole("alert")).toContainText("Não enviada")
+  // O status é visível e não é alerta: quem anuncia é a região viva oculta,
+  // para o leitor de tela não ouvir a falha duas vezes.
+  await expect(balao).toContainText("Não enviada")
+  await expect(balao.getByRole("alert")).toHaveCount(0)
   await expect(page.getByRole("button", { name: "Tentar de novo" })).toBeVisible()
   const anuncioOculto = page.locator('[data-compositor-conversa] [role="alert"]')
   await expect(anuncioOculto).toHaveText("Não foi possível enviar. Seu texto foi mantido.")
