@@ -3553,3 +3553,33 @@ body[data-profundidade="sim"] [data-casca="app"] {
   background: var(--surface-lowest);
   padding: 0.75rem 0 calc(1rem + env(safe-area-inset-bottom));
 }
+
+/* Negócios: mantenha os cartões em uma coluna de leitura no computador. */
+@media (min-width: 1024px) {
+  [data-tela="anuncio"],
+  [data-tela="imoveis"],
+  [data-tela="negocios"] {
+    width: min(100%, 860px);
+    margin-inline: auto;
+  }
+
+  [data-tela="imoveis"] .bv-grade,
+  [data-tela="negocios"] .bv-grade {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+[data-tela="negocios"] [data-segmento="sim"] {
+  scrollbar-width: thin;
+}
+
+[data-tela="negocios"] > button {
+  justify-self: start;
+}
+
+[data-tela="negocios"] [data-chip] {
+  max-width: 7rem;
+  padding-inline: 0.5rem;
+  line-height: 1.2;
+  white-space: normal;
+}
