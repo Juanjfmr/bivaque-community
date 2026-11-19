@@ -286,13 +286,17 @@ describe("LAN-TROCA fase 1", () => {
 
   // F06 resíduo: criar e editar desapego e imóvel saíram sem deixar page.tsx
   // para trás (RUN-156 e RUN-164).
-  it.each(["mercado/novo", "mercado/[id]", "mercado/[id]/editar", "imoveis/novo", "imoveis/[id]", "imoveis/[id]/editar"])(
-    "a página trocada %s não deixa page.tsx para trás",
-    (relativa) => {
-      const arquivo = join(shell, relativa, "page.tsx")
-      expect(existsSync(arquivo), `arquivo de página que sobrou: ${arquivo}`).toBe(false)
-    },
-  )
+  it.each([
+    "mercado/novo",
+    "mercado/[id]",
+    "mercado/[id]/editar",
+    "imoveis/novo",
+    "imoveis/[id]",
+    "imoveis/[id]/editar",
+  ])("a página trocada %s não deixa page.tsx para trás", (relativa) => {
+    const arquivo = join(shell, relativa, "page.tsx")
+    expect(existsSync(arquivo), `arquivo de página que sobrou: ${arquivo}`).toBe(false)
+  })
 
   it("a pasta antiga de meus-anuncios não deixa arquivos para trás", () => {
     const pasta = join(shell, "meus-anuncios")

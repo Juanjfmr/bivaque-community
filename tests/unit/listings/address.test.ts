@@ -100,9 +100,4 @@ describe("o endereço nos três formulários de anúncio", () => {
       "address: enderecoDoRascunho(rascunho.address)",
     )
   })
-
-  it("as páginas do anúncio mostram o endereço quando ele existe", () => {
-    expect(web("app", "(shell)", "mercado", "[id]", "page.tsx")).toContain("{listing.address ? (")
-    expect(web("app", "(shell)", "imoveis", "[id]", "page.tsx")).toContain("{property.address ? (")
-  })
 })
