@@ -9241,7 +9241,8 @@
       "sourceRevision": "3d16ee7c",
       "links": ["docs/agents/tasks/SALVAR-GLYPH.task.yml"],
       "proof": [
-        "16/11: aberto pela falha 43932203007 shard 7 (✘ salvar-glyph.spec.ts:165, 1 failed | 297 passed) + job mobile-first sem ✘; rerun do MESMO tip verde (watcher confirmou 'conclusao final: success'). Codigo identico ao tip anterior verde (39597c24) — diff era docs/board."
+        "16/11: aberto pela falha 43932203007 shard 7 (✘ salvar-glyph.spec.ts:165, 1 failed | 297 passed) + job mobile-first sem ✘; rerun do MESMO tip verde (watcher confirmou 'conclusao final: success'). Codigo identico ao tip anterior verde (39597c24) — diff era docs/board.",
+        "19/11: medição endurecida no PR #299 (REGUA-001, cb3907da); o spec passou nos CIs completos de #304, #305, #306 e #307."
       ],
       "notes": [
         "17/11: nova ocorrência no PR #264 (salvar-glyph.spec.ts:165, escuro, desktop-1440), verde no rerun do mesmo SHA."
@@ -10284,6 +10285,31 @@
       ],
       "updatedAt": "2026-11-19",
       "sourceRevision": "912fd17e"
+    },
+    {
+      "id": "VISCEGA-RESSALVAS",
+      "title": "Ressalvas LOW da revisão às cegas de F02, F03 e F06–F08",
+      "phase": "Lançamento",
+      "priority": "P2",
+      "category": "frontend",
+      "status": "repo",
+      "description": "Achados LOW da revisão independente às cegas do PR #306 (VISCEGA-001, mesclado em 192e9f41), aceitos sem bloquear a integração. Nenhum é regressão de fluxo; dois são lacunas de cobertura de teste.",
+      "checklist": [
+        "Guia: teste que prove o scroll-margin-top da âncora sob o cabeçalho fixo em 375 (captura f08 375 guia rolado ainda corta 'categoria.')",
+        "Início em 768 e 1440: FAB central sobre o cartão no meio da rolagem; avaliar reserva lateral ou recuo condicionado à largura",
+        "Selo 'Resolvida' e 'Novo na cidade': ícone vaza da pílula em 375 (etiqueta.tsx)",
+        "Publicação: rotas.spec.ts espera 'Publicação', mas o h1 carregado é 'Conversa no grupo'; o teste não chega ao estado carregado",
+        "Busca: dica 'Deslize para ver todos os filtros.' aparece mesmo quando todos os chips cabem",
+        "Guia em 1440: rótulo 'Manaus' solto"
+      ],
+      "proof": [
+        "19/11: revisão às cegas em 08a0f38 deu PASS-COM-RESSALVA; o único MEDIUM ('1 grupos') foi corrigido em 7da2607 antes do merge do PR #306."
+      ],
+      "tests": [],
+      "links": ["docs/agents/tasks/VISCEGA-001.task.yml"],
+      "dependencies": [],
+      "updatedAt": "2026-11-19",
+      "sourceRevision": "192e9f41"
     }
   ],
   "launch": {
