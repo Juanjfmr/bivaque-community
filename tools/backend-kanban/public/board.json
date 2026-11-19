@@ -6410,7 +6410,13 @@
         "Ensaio de deploy e relatório final com a lista de ratificação",
         "Medir tempo até a primeira resposta e pedidos de indicação sem resposta em 24 h (herdado de INDICACOES-AVISO)"
       ],
-      "dependencies": ["LAN-TROCA", "LAN-LOJA", "OPS-CONCORRENCIA-LANCAMENTO"]
+      "dependencies": [
+        "LAN-TROCA",
+        "LAN-LOJA",
+        "OPS-CONCORRENCIA-LANCAMENTO",
+        "ENDURECE-A",
+        "ENDURECE-B"
+      ]
     },
     {
       "id": "LAN-OP",
@@ -10189,6 +10195,95 @@
       "dependencies": [],
       "updatedAt": "2026-11-18",
       "sourceRevision": "50d8039e1"
+    },
+    {
+      "id": "ENDURECE-A",
+      "title": "Endurecimento web A: IME, título, skip link, títulos, forced-colors e color-scheme no app",
+      "priority": "P1",
+      "category": "frontend",
+      "status": "next",
+      "phase": "Lançamento",
+      "description": "Parte A da auditoria Modern Web Guidance rodada no Antigravity em 18/11 (00:25–00:37, conversa 8a9dd2e5, step 150 de transcript_full.jsonl; só na conversa, sem arquivo). Lote pequeno no apps/app, conferido contra main 912fd17e.",
+      "checklist": [
+        "Enter com IME: Paleta.tsx:151 já checa isComposing; acrescentar keyCode 229 (Safari) e conferir que nenhum outro campo do app envia com Enter sem a guarda (MenuCriar.tsx:341/352)",
+        "document.title por tela a partir de titulos.ts/tituloDaRota, mudando na navegação (index.html:7 fixo em Bivaque)",
+        "Skip link 'Pular para o conteúdo' na Casca, visível no foco, levando ao conteúdo principal",
+        "Ordem de títulos sem salto: Guia.tsx:71 usa h3 sob o h1 da tela; conferir as demais telas com axe heading-order",
+        "Foco visível em forced-colors: anéis por box-shadow em pecas.css ganham outline de fallback (hoje só styles.css:1427 trata forced-colors)",
+        "meta color-scheme light dark em apps/app/index.html, coerente com o tema por data-tema",
+        "Telas novas que substituem as antigas: provar que o envio por Enter respeita IME e que Sair da conta (POST /api/app/voce/sair) limpa o aparelho (ver ENDURECE-B para Clear-Site-Data)",
+        "Prova em 375/768/1440, claro e escuro, sem regressão na casca-visual"
+      ],
+      "dependencies": [],
+      "links": [
+        "apps/app/src/casca/Casca.tsx",
+        "apps/app/src/casca/Paleta.tsx",
+        "apps/app/index.html",
+        "apps/app/src/telas/Guia.tsx",
+        "apps/app/src/pecas/pecas.css"
+      ],
+      "tests": [],
+      "blockers": [],
+      "proof": [
+        "19/11: aberto a partir da auditoria do Antigravity de 18/11; achados conferidos no código da main 912fd17e (Paleta já tem isComposing; título fixo, sem skip link, h3 no Guia, sem meta color-scheme)."
+      ],
+      "updatedAt": "2026-11-19",
+      "sourceRevision": "912fd17e"
+    },
+    {
+      "id": "ENDURECE-B",
+      "title": "Endurecimento web B (R3): cabeçalhos de segurança, CSP com nonce e Clear-Site-Data na saída",
+      "priority": "P1",
+      "category": "backend",
+      "status": "repo",
+      "phase": "Lançamento",
+      "description": "Parte B da auditoria Modern Web Guidance do Antigravity (18/11). R3: exige ADR por delegação, security-auditor, revisão independente e linha na RATIFICACAO. Vem antes do LAN-PROVA.",
+      "checklist": [
+        "ADR com a política: CSP com nonce/hash (script-src, object-src 'none', base-uri 'self', frame-ancestors 'none'), HSTS, nosniff, Referrer-Policy, Permissions-Policy, COOP/CORP; linha na RATIFICACAO",
+        "apps/web/next.config.ts:44-54 hoje só envia frame-ancestors e X-Frame-Options; aplicar a política a páginas, /api e /app",
+        "Script inline da landing (landing.tsx) com nonce ou hash; nada quebra no /app (Vite) nem no Sentry",
+        "Clear-Site-Data na rota POST /api/app/voce/sair, sem apagar o que o app precisa para entrar de novo",
+        "Testes positivos e negativos dos cabeçalhos; security-auditor sem HIGH+"
+      ],
+      "dependencies": ["ENDURECE-A"],
+      "links": [
+        "apps/web/next.config.ts",
+        "apps/web/app/api/app/voce/sair/route.ts",
+        "apps/web/app/landing/landing.tsx"
+      ],
+      "tests": [],
+      "blockers": [],
+      "proof": [
+        "19/11: aberto a partir da auditoria do Antigravity de 18/11; next.config.ts conferido na main 912fd17e (só frame-ancestors e X-Frame-Options)."
+      ],
+      "updatedAt": "2026-11-19",
+      "sourceRevision": "912fd17e"
+    },
+    {
+      "id": "ENDURECE-C",
+      "title": "Endurecimento web C (pós-lançamento): lazy das telas, service worker, manifest e ajustes baixos",
+      "priority": "P3",
+      "category": "frontend",
+      "status": "repo",
+      "phase": "Pós-lançamento",
+      "description": "Parte C da auditoria Modern Web Guidance do Antigravity (18/11): melhorias sem risco de lançamento.",
+      "checklist": [
+        "React.lazy nas telas do roteador.tsx com fallback e prova de navegação",
+        "sw.js com limite de cache; manifest com as cores atuais (#F3F5F6/#101417)",
+        "Imagens com width/height e content-visibility em listas longas",
+        "Tokens do escuro com light-dark() em vez de duplicar; 100dvh na entrada; fontes em rem onde couber",
+        "Subir lib do tsconfig para ES2023 e trocar [...arr].sort/reverse().find por toSorted/findLast",
+        "Menu móvel da landing em dialog; autoComplete do Local do encontro"
+      ],
+      "dependencies": ["ENDURECE-B"],
+      "links": [],
+      "tests": [],
+      "blockers": [],
+      "proof": [
+        "19/11: aberto a partir da auditoria do Antigravity de 18/11 (achados Médios e Baixos sem risco para o lançamento)."
+      ],
+      "updatedAt": "2026-11-19",
+      "sourceRevision": "912fd17e"
     }
   ],
   "launch": {
