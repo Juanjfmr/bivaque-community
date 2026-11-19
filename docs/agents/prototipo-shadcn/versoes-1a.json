@@ -1,5 +1,35 @@
 [
   {
+    "package": "@capacitor/ios",
+    "version": "8.5.3",
+    "publishedAt": "2026-10-07T14:19:29.006Z"
+  },
+  {
+    "package": "@capacitor/core",
+    "version": "8.5.3",
+    "publishedAt": "2026-10-07T14:20:18.325Z"
+  },
+  {
+    "package": "@capacitor/cli",
+    "version": "8.5.3",
+    "publishedAt": "2026-10-07T14:20:03.298Z"
+  },
+  {
+    "package": "@capacitor/camera",
+    "version": "8.2.5",
+    "publishedAt": "2026-10-02T16:41:39.953Z"
+  },
+  {
+    "package": "@capacitor/app",
+    "version": "8.1.2",
+    "publishedAt": "2026-10-02T16:09:03.927Z"
+  },
+  {
+    "package": "@capacitor/android",
+    "version": "8.5.3",
+    "publishedAt": "2026-10-07T14:19:06.334Z"
+  },
+  {
     "package": "@tanstack/react-query",
     "version": "5.104.1",
     "publishedAt": "2026-10-02T10:04:57.02Z"

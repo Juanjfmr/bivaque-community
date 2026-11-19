@@ -5,7 +5,7 @@ export const esquemaDeLink = "bivaque"
 const config: CapacitorConfig = {
   appId: "br.com.bivaque.app",
   appName: "Bivaque",
-  webDir: "dist",
+  webDir: "dist-nativo",
 }
 
 export default config

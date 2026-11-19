@@ -1,5 +1,6 @@
 import { type FormEvent, useEffect, useRef, useState } from "react"
 import { Icone } from "@/components/bivaque/icone"
+import { SeletorDeFoto } from "@/lib/nativo/SeletorDeFoto"
 import {
   AreaDeTexto,
   Avatar,
@@ -388,6 +389,7 @@ export function Escrever({
         ) : null}
         <div className="pg-escrever-ferramentas">
           <label
+            htmlFor="fotos-publicacao"
             className="pc-botao pg-anexar"
             data-tom="contorno"
             data-tamanho="compacto"
@@ -395,7 +397,8 @@ export function Escrever({
           >
             <Icone nome="add_photo_alternate" />
             {fotos.length >= LIMITE_DE_FOTOS ? "4 de 4 fotos" : `Fotos (${fotos.length} de 4)`}
-            <input
+            <SeletorDeFoto
+              id="fotos-publicacao"
               type="file"
               accept="image/*"
               multiple

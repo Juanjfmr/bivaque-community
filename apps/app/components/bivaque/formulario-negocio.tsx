@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import dadosBairros from "@/lib/demo/auxiliares.json"
+import { SeletorDeFoto } from "@/lib/nativo/SeletorDeFoto"
 import { SERVICE_GROUPS } from "@/lib/servicos-negocio"
 
 type Foto = { id: string; nome: string; imagem: string }
@@ -533,7 +534,7 @@ export function FormularioNegocio({
             <p className="entrada-etapa-nota">
               A primeira foto será a capa. JPG, PNG, WebP ou AVIF; até 12 MB por imagem.
             </p>
-            <input
+            <SeletorDeFoto
               ref={campoDeFotos}
               id="negocio-fotos"
               type="file"
