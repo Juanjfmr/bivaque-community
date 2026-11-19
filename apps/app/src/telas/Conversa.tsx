@@ -64,6 +64,9 @@ export function Conversa() {
   const menuSuspenso = largura >= 1024
   const [dados, setDados] = useState<DetalheDaConversa | null>(null)
   const [caixa, setCaixa] = useState<Caixa | null>(null)
+  const [erroCaixa, setErroCaixa] = useState(false)
+  const [rodadaCaixa, setRodadaCaixa] = useState(0)
+  const balaoFalho = useRef<HTMLDivElement>(null)
   const [erro, setErro] = useState<"falhou" | "sessao" | "negado" | "ausente" | null>(null)
   const [rodada, setRodada] = useState(0)
   const [rascunho, setRascunho] = useState("")
@@ -124,7 +127,9 @@ export function Conversa() {
       .then((lida) => {
         if (!pedido.signal.aborted) setCaixa(lida)
       })
-      .catch(() => undefined)
+      .catch(() => {
+        if (!pedido.signal.aborted) setErroCaixa(true)
+      })
     void buscarConversa(id, { signal: pedido.signal })
       .then((valor) => {
         if (!pedido.signal.aborted) {
@@ -153,7 +158,7 @@ export function Conversa() {
           )
       })
     return () => pedido.abort()
-  }, [id, rodada])
+  }, [id, rodada, rodadaCaixa])
   // biome-ignore lint/correctness/useExhaustiveDependencies: troca de conversa limpa o rascunho
   useEffect(() => {
     setRascunho("")
@@ -161,10 +166,12 @@ export function Conversa() {
   }, [id])
   const nome = dados?.conversa.nome ?? ""
   const outroId = dados?.conversa.outroId ?? ""
-  async function enviarTexto() {
+  useEffect(() => {
+    if (naoEnviada !== null) balaoFalho.current?.scrollIntoView({ block: "nearest" })
+  }, [naoEnviada])
+  async function enviarTexto(texto = rascunho, reenvio = false) {
     const pedido = controle.current
-    if (!pedido || pedido.signal.aborted || enviando || !rascunho.trim()) return
-    const texto = rascunho
+    if (!pedido || pedido.signal.aborted || enviando || !texto.trim()) return
     const anterior = ultimaChave.current
     const clientKey =
       anterior !== null && anterior.texto === texto ? anterior.chave : novaChaveDeEnvio()
@@ -178,8 +185,8 @@ export function Conversa() {
         setDados((atual) =>
           atual ? { ...atual, mensagens: [...atual.mensagens, mensagem] } : atual,
         )
-        setRascunho("")
-        setNaoEnviada(null)
+        if (!reenvio) setRascunho("")
+        setNaoEnviada((atual) => (atual === texto ? null : atual))
         setAnuncioDeEnvio("")
         ultimaChave.current = null
       }
@@ -297,7 +304,9 @@ export function Conversa() {
           className="hidden min-h-0 min-w-0 md:block"
           aria-label="Conversas"
         >
-          {caixa === null ? (
+          {erroCaixa && caixa === null ? (
+            <EstadoDeErro aoTentar={() => setRodadaCaixa((atual) => atual + 1)} />
+          ) : caixa === null ? (
             <EsqueletoDeLista linhas={4} />
           ) : (
             <ListaDeConversas
@@ -441,6 +450,7 @@ export function Conversa() {
               ))}
               {naoEnviada !== null && (
                 <div
+                  ref={balaoFalho}
                   data-mensagem="nao-enviada"
                   className="ml-auto grid max-w-[86%] justify-items-end gap-1"
                 >
@@ -462,7 +472,7 @@ export function Conversa() {
                       data-acao="tentar-de-novo"
                       className="min-h-11 px-2 text-xs font-semibold text-(--destructive) underline"
                       disabled={enviando}
-                      onClick={() => void enviarTexto()}
+                      onClick={() => void enviarTexto(naoEnviada, true)}
                     >
                       Tentar de novo
                     </Botao>

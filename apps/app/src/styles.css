@@ -1015,7 +1015,7 @@
    dela sem ficar escondido (D4) — cobre a barra (60 px) e o offset de 12 px
    do computador, com folga. */
 [data-preferencias-de-aviso="sim"] {
-  padding-bottom: 84px;
+  padding-bottom: 200px;
 }
 
 /* Apoio de no máximo uma linha, garantido por CSS (achado 7): a 375 px cabe;
@@ -3528,5 +3528,14 @@ body[data-profundidade="sim"] [data-casca="app"] {
 @media (min-width: 900px) {
   .entrada-etapa-conteudo:has(.entrada-etapa-grupos) {
     width: 816px;
+  }
+}
+
+@media (max-width: 1023.98px) {
+  [data-casca="app"]:has([data-preferencias-de-aviso]) [data-acao="criar"] {
+    visibility: hidden;
+  }
+  [data-preferencias-de-aviso="sim"] > ul {
+    scroll-margin-bottom: 180px;
   }
 }

@@ -17,6 +17,7 @@ import {
 import { FalhaDaApi } from "@/lib/api/cliente"
 import {
   type CanalDoAviso,
+  chaveDaPreferencia,
   lerPreferenciasDeAviso,
   type PreferenciasDeAviso,
   salvarPreferenciasDeAviso,
@@ -62,18 +63,19 @@ const CANAIS: ReadonlyArray<readonly [CanalDoAviso, string]> = [
 
 const ROTULO_DO_PUSH = "Avisos no aparelho"
 
-function canalDe(
+export function canalDe(
   preferencias: PreferenciasDeAviso,
   tipo: TipoDoAviso,
   canal: CanalDoAviso,
 ): boolean {
   return (
+    preferencias[chaveDaPreferencia(tipo)] &&
     preferencias.channels.find((item) => item.notificationType === tipo && item.channel === canal)
       ?.enabled === true
   )
 }
 
-function comCanal(
+export function comCanal(
   preferencias: PreferenciasDeAviso,
   tipo: TipoDoAviso,
   canal: CanalDoAviso,
@@ -82,9 +84,21 @@ function comCanal(
   const outros = preferencias.channels.filter(
     (item) => !(item.notificationType === tipo && item.channel === canal),
   )
+  const channels = [
+    ...outros.map((item) =>
+      item.notificationType === tipo && !preferencias[chaveDaPreferencia(tipo)]
+        ? { ...item, enabled: false }
+        : item,
+    ),
+    { notificationType: tipo, channel: canal, enabled: ativo },
+  ]
   return {
     ...preferencias,
-    channels: [...outros, { notificationType: tipo, channel: canal, enabled: ativo }],
+    [chaveDaPreferencia(tipo)]:
+      ativo ||
+      (preferencias[chaveDaPreferencia(tipo)] &&
+        outros.some((item) => item.notificationType === tipo && item.enabled)),
+    channels,
   }
 }
 
@@ -245,11 +259,12 @@ export function PreferenciasDeAvisos() {
             </small>
           </span>
           <Checkbox
+            role="switch"
             checked={push.ligado}
             disabled={alternandoPush}
             onCheckedChange={(valor) => void alterarPush(valor === true)}
             aria-label={ROTULO_DO_PUSH}
-            className="mt-1"
+            className="bv-interruptor mt-1 shrink-0"
           />
         </div>
       ) : null}
@@ -276,7 +291,7 @@ export function PreferenciasDeAvisos() {
                       checked={canalDe(preferencias, tipo, canal)}
                       disabled={salvando || (canal === "push" && !push.ligado)}
                       onCheckedChange={(valor) => alterarCanal(tipo, canal, valor === true)}
-                      aria-label={`Avisos de ${titulo.toLowerCase()} por ${rotulo.toLowerCase()}`}
+                      aria-label={`${titulo} ${canal === "email" ? "por e-mail" : canal === "push" ? "no celular" : "no app"}`}
                       className="bv-interruptor"
                     />
                     {rotulo}

@@ -600,6 +600,8 @@ const JORNADAS: ReadonlyArray<{ nome: string; passos: readonly Passo[] }> = [
           await page.locator("#mensagem-da-conversa").fill("Consigo buscar na quinta à tarde.")
           await page.locator('[data-acao="enviar-mensagem"]').click()
           // O balão da própria mensagem é a única mensagem do erro (D22).
+          await expect(page.locator('[data-mensagem="nao-enviada"] [role="alert"]')).toBeInViewport()
+          await expect(page.locator('[data-mensagem="nao-enviada"] button')).toBeInViewport()
           await expect(page.locator('[data-mensagem="nao-enviada"]')).toBeVisible()
           await expect(page.locator('[data-mensagem="nao-enviada"] [role="alert"]')).toContainText(
             "Não enviada",

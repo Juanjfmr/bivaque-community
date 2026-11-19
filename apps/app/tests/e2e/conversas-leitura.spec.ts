@@ -148,11 +148,12 @@ test("o envio que falha vira o balão Não enviada; Tentar de novo entrega e o t
   expect(geometria.fonteDoGlifo).toBe("16px")
 
   // Tentar de novo entrega: o balão sai, a mensagem entra e o campo limpa.
+  await campo.fill("Outro rascunho")
   falhar = false
   await page.getByRole("button", { name: "Tentar de novo" }).click()
   await expect(page.locator('[data-mensagem="nao-enviada"]')).toHaveCount(0)
   await expect(page.locator('[data-mensagens="historico"]')).toContainText(
     "Consigo buscar na quinta às 15h.",
   )
-  await expect(campo).toHaveValue("")
+  await expect(campo).toHaveValue("Outro rascunho")
 })
