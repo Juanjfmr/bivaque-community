@@ -12,3 +12,18 @@ export function origensDaCsp(): string {
     .filter((origem, indice, origens) => origens.indexOf(origem) === indice)
     .join(" ")
 }
+
+export function cspDasPaginas(nonce: string): string {
+  return [
+    "default-src 'self'",
+    `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'`,
+    "style-src 'self' 'unsafe-inline'",
+    `img-src 'self' data: blob: ${origensDaCsp()}`.trim(),
+    `connect-src 'self' ${origensDaCsp()}`.trim(),
+    "font-src 'self'",
+    "object-src 'none'",
+    "base-uri 'self'",
+    "form-action 'self'",
+    "frame-ancestors 'none'",
+  ].join("; ")
+}
