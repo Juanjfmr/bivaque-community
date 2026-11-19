@@ -92,6 +92,11 @@ test("comunidade, grupo, foto, conversa e perfil sob CSP", async ({ page, contex
   const grupo = "60000000-0000-4000-8000-000000000002"
   await page.goto(`/app/grupo/${grupo}`)
   await expect(page.getByText(/Manaus \u00b7 \d+ membros/)).toBeVisible({ timeout: 30_000 })
+  const participar = page.getByRole("button", { name: "Participar do grupo" })
+  if (await participar.isVisible()) {
+    await participar.click()
+    await expect(page.locator('[data-estado-participacao="membro"]')).toBeVisible()
+  }
   await page.getByRole("button", { name: "Escrever", exact: true }).click()
   const texto = `Publicação CSP ${Date.now()}`
   await page.getByLabel("Sua publicação").fill(texto)
