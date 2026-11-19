@@ -114,7 +114,7 @@ export function renderEmail(message: OutboxMessage): RenderedEmail {
           "",
           ...titles.map((title) => `• ${title}`),
           "",
-          `Se você conhece alguém, responda em ${siteOrigin()}/community?vista=indicacoes`,
+          `Se você conhece alguém, responda em ${siteOrigin()}/app/comunidade`,
           "",
           "Você recebe este resumo porque ligou os pedidos de indicação por e-mail. Para parar, desligue em Você > Avisos.",
         ].join("\n"),

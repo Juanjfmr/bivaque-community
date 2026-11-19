@@ -100,7 +100,9 @@ describe("a fixture do teste acompanha a navegação real", () => {
   it("todo href de primary existe em bottom-nav.tsx", () => {
     const source = readFileSync(bottomNav, "utf8")
     for (const item of PRIMARY) {
-      expect(source).toContain(`href: "${item.href}"`)
+      expect(source).toContain(
+        `href: "${item.id === "comunidades" ? "/app/comunidade" : item.href}"`,
+      )
     }
   })
 

@@ -133,8 +133,7 @@ const PORTAS_FORA_DO_LINK: readonly PortaDeclarada[] = [
   },
   {
     route: "/communities/[id]/invite",
-    porta:
-      "CONDICIONAL: 'Convidar membros' na aba Sobre; 'Mais opções' > 'Convidar' em /communities",
+    porta: "DIVIDA LAN-TROCA: convite ainda na web; falta uma porta no app",
     dependeDeDados: true,
     dono: "dono de vila",
   },

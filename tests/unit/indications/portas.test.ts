@@ -38,9 +38,7 @@ describe("pedir leva à caixa de pedir", () => {
   })
 
   it("o cabeçalho leva a Indicações", () => {
-    expect(web("app", "components", "bivaque", "app-shell.tsx")).toContain(
-      'href="/community?vista=indicacoes"',
-    )
+    expect(web("app", "components", "bivaque", "app-shell.tsx")).toContain('href="/app/comunidade"')
   })
 })
 
