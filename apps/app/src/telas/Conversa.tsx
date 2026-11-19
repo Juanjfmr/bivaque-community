@@ -110,6 +110,22 @@ export function Conversa() {
       })
     return () => pedido.abort()
   }, [rodada])
+  // biome-ignore lint/correctness/useExhaustiveDependencies: rodadaCaixa solicita nova leitura
+  useEffect(() => {
+    const pedido = new AbortController()
+    setErroCaixa(false)
+    setCaixa(null)
+    // A caixa da coluna da esquerda (≥768) lê junto com a conversa; se falhar,
+    // a conversa segue e a coluna fica como estava.
+    void lerConversas({ signal: pedido.signal })
+      .then((lida) => {
+        if (!pedido.signal.aborted) setCaixa(lida)
+      })
+      .catch(() => {
+        if (!pedido.signal.aborted) setErroCaixa(true)
+      })
+    return () => pedido.abort()
+  }, [id, rodadaCaixa])
   // biome-ignore lint/correctness/useExhaustiveDependencies: rodada solicita nova leitura
   useEffect(() => {
     const pedido = new AbortController()
@@ -121,15 +137,6 @@ export function Conversa() {
     setCarregandoMais(false)
     setNaoEnviada(null)
     setAnuncioDeEnvio("")
-    // A caixa da coluna da esquerda (≥768) lê junto com a conversa; se falhar,
-    // a conversa segue e a coluna fica como estava.
-    void lerConversas({ signal: pedido.signal })
-      .then((lida) => {
-        if (!pedido.signal.aborted) setCaixa(lida)
-      })
-      .catch(() => {
-        if (!pedido.signal.aborted) setErroCaixa(true)
-      })
     void buscarConversa(id, { signal: pedido.signal })
       .then((valor) => {
         if (!pedido.signal.aborted) {
@@ -158,7 +165,7 @@ export function Conversa() {
           )
       })
     return () => pedido.abort()
-  }, [id, rodada, rodadaCaixa])
+  }, [id, rodada])
   // biome-ignore lint/correctness/useExhaustiveDependencies: troca de conversa limpa o rascunho
   useEffect(() => {
     setRascunho("")

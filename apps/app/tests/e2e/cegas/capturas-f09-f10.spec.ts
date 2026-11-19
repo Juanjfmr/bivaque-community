@@ -678,7 +678,7 @@ const JORNADAS: ReadonlyArray<{ nome: string; passos: readonly Passo[] }> = [
             elemento.closest('[data-secao="sim"]')?.scrollIntoView({ block: "start" })
           })
           const ultimo = secao.locator('[data-preferencia="product_news"] [role="switch"]').last()
-          await ultimo.scrollIntoViewIfNeeded()
+          await ultimo.evaluate((elemento) => elemento.scrollIntoView({ block: "center" }))
           await page.waitForTimeout(400)
           await expect(ultimo).toBeInViewport()
           const livre = await ultimo.evaluate((elemento) => {
