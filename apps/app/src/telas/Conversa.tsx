@@ -173,11 +173,6 @@ export function Conversa() {
   }, [id])
   const nome = dados?.conversa.nome ?? ""
   const outroId = dados?.conversa.outroId ?? ""
-  const mostrarConversaNoTopo = casca.mostrarConversaNoTopo
-  useEffect(() => {
-    mostrarConversaNoTopo(nome ? { id, nome } : null)
-    return () => mostrarConversaNoTopo(null)
-  }, [id, nome, mostrarConversaNoTopo])
   useEffect(() => {
     if (naoEnviada !== null) balaoFalho.current?.scrollIntoView({ block: "nearest" })
   }, [naoEnviada])
@@ -340,6 +335,8 @@ export function Conversa() {
               </AvatarFallback>
             </Avatar>
             <span className="grid min-w-0 gap-0.5">
+              {/* O nome de quem conversa aparece uma vez só: aqui. A barra do
+                  topo diz a seção ("Conversas"). */}
               <h1
                 id="titulo-da-tela"
                 data-titulo-da-tela
