@@ -3544,3 +3544,12 @@ body[data-profundidade="sim"] [data-casca="app"] {
     scroll-margin-bottom: 180px;
   }
 }
+
+/* Mantém as ações do encontro acessíveis enquanto os campos rolam. */
+[data-sobreposicao="folha"] form:has(#encontro-titulo) > .pc > div:last-child {
+  position: sticky;
+  bottom: -1rem;
+  z-index: 1;
+  background: var(--surface-lowest);
+  padding: 0.75rem 0 calc(1rem + env(safe-area-inset-bottom));
+}

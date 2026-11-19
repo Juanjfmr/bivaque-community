@@ -207,14 +207,14 @@ export function Publicacao() {
     )
   }
   return (
-    <section data-tela="publicacao" className="grid gap-3">
+    <section data-tela="publicacao" className="mx-auto grid w-full max-w-3xl gap-3">
       <h1
         id="titulo-da-tela"
         data-titulo-da-tela
         tabIndex={-1}
         className="px-1 text-[22px] leading-7"
       >
-        Publicação
+        Conversa no grupo
       </h1>
       {/* O destino: de qual grupo e de qual cidade é o que está sendo lido. */}
       <div className="flex flex-wrap items-center gap-1 px-1">

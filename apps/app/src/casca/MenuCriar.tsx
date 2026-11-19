@@ -96,7 +96,7 @@ export function MenuCriar({ aoFechar }: { readonly aoFechar: () => void }) {
     const ancora = document.querySelector('[data-criar="botao"]')?.getBoundingClientRect()
     if (!menu || !ancora) return
     const largura = Math.min(
-      painel || tipo !== null || concluido ? 620 : 262,
+      painel || tipo !== null || concluido ? 620 : 310,
       window.innerWidth - 24,
     )
     const central = window.innerWidth < 1024
@@ -189,7 +189,7 @@ export function MenuCriar({ aoFechar }: { readonly aoFechar: () => void }) {
         </b>
         {(painel ? (SUBTITULOS_DO_PAINEL[escolha.id] ?? escolha.subtitulo) : escolha.subtitulo) ===
         undefined ? null : (
-          <small className="truncate text-[13px] text-(--on-surface-variant)">
+          <small className="text-[13px] text-(--on-surface-variant)">
             {painel ? (SUBTITULOS_DO_PAINEL[escolha.id] ?? escolha.subtitulo) : escolha.subtitulo}
           </small>
         )}
