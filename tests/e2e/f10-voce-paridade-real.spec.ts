@@ -57,6 +57,14 @@ function cabecalhosDaPorta(page: Page): Record<string, string> {
   return { origin: new URL(page.url()).origin, "x-bivaque-app": "bivaque-spa" }
 }
 
+// REGUA-002: a cidade e a Força/OM moram atrás das linhas de ajuste do Você e
+// abrem ao toque. O comportamento provado é o mesmo; só a entrada mudou.
+async function abrirLinha(page: Page, apoio: string): Promise<void> {
+  await page.getByRole("button").filter({ hasText: apoio }).click()
+}
+const CIDADE = "Levar sua conta para outra cidade"
+const FORCA = "Declarar é opcional"
+
 test.describe("F10 — paridade de cidade e afiliação no app", { tag: "@stateful" }, () => {
   test.afterEach(async () => {
     // Rede de segurança: se a tela falhar no meio, o banco volta ao seed antes
@@ -92,6 +100,7 @@ test.describe("F10 — paridade de cidade e afiliação no app", { tag: "@statef
     expect(voce.perfil.outbound?.endsAt).toMatch(/^\d{4}-\d{2}-\d{2}$/)
     expect(voce.perfil.outbound?.readOnly).toBe(false)
 
+    await abrirLinha(page, CIDADE)
     const cidade = page.locator('[data-secao="sim"]', { hasText: "Sua cidade" })
     const saida = cidade.locator('[data-aviso="saindo"]')
     await expect(saida).toContainText("Você está saindo de Manaus, AM")
@@ -139,6 +148,7 @@ test.describe("F10 — paridade de cidade e afiliação no app", { tag: "@statef
     })
     const rio = await idDoRio(page)
 
+    await abrirLinha(page, CIDADE)
     const cidade = page.locator('[data-secao="sim"]', { hasText: "Sua cidade" })
     await expect(cidade.getByText("Sua cidade é")).toContainText("Manaus")
     await expect(cidade.locator('[data-aviso="saindo"]')).toHaveCount(0)
@@ -179,6 +189,7 @@ test.describe("F10 — paridade de cidade e afiliação no app", { tag: "@statef
     await expect(page.getByRole("heading", { level: 1, name: "Você" })).toBeVisible({
       timeout: 30_000,
     })
+    await abrirLinha(page, CIDADE)
     const depois = page.locator('[data-secao="sim"]', { hasText: "Sua cidade" })
     await expect(depois.locator('[data-aviso="saindo"]')).toContainText("Manaus, AM")
     await expect(depois.getByRole("button", { name: "Mudar de cidade" })).toHaveCount(0)
@@ -200,6 +211,7 @@ test.describe("F10 — paridade de cidade e afiliação no app", { tag: "@statef
       timeout: 30_000,
     })
 
+    await abrirLinha(page, FORCA)
     const secao = page.locator('[data-secao="sim"]', { hasText: "Força Armada e OM" })
     await expect(secao).toContainText("Opcional e privado — outras pessoas não veem.")
     // O seed não declara nada para esta persona: o campo começa vazio.
@@ -233,6 +245,7 @@ test.describe("F10 — paridade de cidade e afiliação no app", { tag: "@statef
     expect(comVisibilidade.status(), "visibilidade no corpo é 400").toBe(400)
 
     await page.reload()
+    await abrirLinha(page, FORCA)
     const depois = page.locator('[data-secao="sim"]', { hasText: "Força Armada e OM" })
     await expect(depois.getByRole("combobox", { name: "Força Armada" })).toContainText("Marinha")
     await expect(depois.getByLabel("Organização Militar (OM)")).toHaveValue("12º BIS")
@@ -245,6 +258,7 @@ test.describe("F10 — paridade de cidade e afiliação no app", { tag: "@statef
     await expect(depois.getByRole("status")).toContainText("Salvo.")
 
     await page.reload()
+    await abrirLinha(page, FORCA)
     const limpo = page.locator('[data-secao="sim"]', { hasText: "Força Armada e OM" })
     await expect(limpo.getByRole("combobox", { name: "Força Armada" })).toContainText("Nenhuma")
     await expect(limpo.getByLabel("Organização Militar (OM)")).toHaveValue("")
