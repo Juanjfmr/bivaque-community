@@ -1,22 +1,18 @@
 export function origensDaCsp(): string {
-  return [process.env["NEXT_PUBLIC_SUPABASE_URL"], process.env["NEXT_PUBLIC_SENTRY_DSN"]]
-    .flatMap((valor) => {
-      if (!valor) return []
-      try {
-        const url = new URL(valor)
-        return url.protocol === "https:" || url.protocol === "http:" ? [url.origin] : []
-      } catch {
-        return []
-      }
-    })
-    .filter((origem, indice, origens) => origens.indexOf(origem) === indice)
-    .join(" ")
+  const valor = process.env["NEXT_PUBLIC_SUPABASE_URL"]
+  if (!valor) return ""
+  try {
+    const url = new URL(valor)
+    return url.protocol === "https:" || url.protocol === "http:" ? url.origin : ""
+  } catch {
+    return ""
+  }
 }
 
-export function cspDasPaginas(nonce: string): string {
+function csp(script: string): string {
   return [
     "default-src 'self'",
-    `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'`,
+    script,
     "style-src 'self' 'unsafe-inline'",
     `img-src 'self' data: blob: ${origensDaCsp()}`.trim(),
     `connect-src 'self' ${origensDaCsp()}`.trim(),
@@ -26,4 +22,12 @@ export function cspDasPaginas(nonce: string): string {
     "form-action 'self'",
     "frame-ancestors 'none'",
   ].join("; ")
+}
+
+export function cspDasPaginas(nonce: string): string {
+  return csp(`script-src 'self' 'nonce-${nonce}' 'strict-dynamic'`)
+}
+
+export function cspDoApp(): string {
+  return csp("script-src 'self'")
 }

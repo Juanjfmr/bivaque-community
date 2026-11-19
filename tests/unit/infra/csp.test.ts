@@ -1,5 +1,7 @@
-import { describe, expect, it, vi } from "vitest"
+import { afterEach, describe, expect, it, vi } from "vitest"
 import { cspDasPaginas, origensDaCsp } from "../../../apps/web/lib/security/csp"
+
+afterEach(() => vi.unstubAllEnvs())
 
 describe("CSP das p?ginas", () => {
   it("restringe scripts ao nonce e mant?m as diretivas de seguran?a", () => {
@@ -14,10 +16,8 @@ describe("CSP das p?ginas", () => {
 
   it("usa somente origens HTTP v?lidas configuradas", () => {
     vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "https://supabase.example.invalid/path")
-    vi.stubEnv("NEXT_PUBLIC_SENTRY_DSN", "https://public@example.invalid/123")
-    expect(origensDaCsp()).toBe("https://supabase.example.invalid https://example.invalid")
-    vi.stubEnv("NEXT_PUBLIC_SENTRY_DSN", "javascript:alert(1)")
     expect(origensDaCsp()).toBe("https://supabase.example.invalid")
-    vi.unstubAllEnvs()
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "javascript:alert(1)")
+    expect(origensDaCsp()).toBe("")
   })
 })

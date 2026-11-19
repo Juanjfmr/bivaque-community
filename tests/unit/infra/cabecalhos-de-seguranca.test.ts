@@ -36,6 +36,14 @@ describe("cabeçalhos de segurança do Next", () => {
     expect(csp).not.toContain("nonce-")
   })
 
+  it("restringe respostas da API", async () => {
+    const regras = await nextConfig.headers?.()
+    const api = regras?.find((regra) => regra.source === "/api/:path*")
+    expect(api?.headers.find((cabecalho) => cabecalho.key === "Content-Security-Policy")?.value).toBe(
+      "default-src 'none'; frame-ancestors 'none'",
+    )
+  })
+
   it("nenhuma regra afrouxa o enquadramento para um caminho específico", async () => {
     const regras = (await nextConfig.headers?.()) ?? []
     for (const regra of regras) {

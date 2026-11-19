@@ -49,9 +49,9 @@ type RootLayoutProperties = Readonly<{
 // navegador monta o provider no próprio layout: `(admin)`, `(owner)`,
 // `(preauth)`, `(provider)`, `(shell)` e `auth/`.
 export default async function RootLayout({ children }: RootLayoutProperties) {
-  const nonce = (await headers()).get("x-nonce") ?? undefined
+  await headers()
   return (
-    <html lang="pt-BR" data-theme="bivaque" className={publicSans.variable} nonce={nonce}>
+    <html lang="pt-BR" data-theme="bivaque" className={publicSans.variable}>
       <body className="bg-background text-foreground antialiased">
         {children}
         <ServiceWorkerRegistration />

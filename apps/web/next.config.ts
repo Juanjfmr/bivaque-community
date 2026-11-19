@@ -1,6 +1,6 @@
 import { withSentryConfig } from "@sentry/nextjs"
 import type { NextConfig } from "next"
-import { origensDaCsp } from "./lib/security/csp"
+import { cspDoApp } from "./lib/security/csp"
 
 // Telas antigas de entrada da web (ENTRADA-WEB-ANTIGA). Os caminhos são exatos,
 // salvo a subárvore de onboarding. A lista não inclui `/conta-apagada`,
@@ -61,22 +61,17 @@ const nextConfig: NextConfig = {
         ],
       },
       {
+        source: "/api/:path*",
+        headers: [
+          { key: "Content-Security-Policy", value: "default-src 'none'; frame-ancestors 'none'" },
+        ],
+      },
+      {
         source: "/app/:path*",
         headers: [
           {
             key: "Content-Security-Policy",
-            value: [
-              "default-src 'self'",
-              "script-src 'self'",
-              "style-src 'self' 'unsafe-inline'",
-              `img-src 'self' data: blob: ${origensDaCsp()}`,
-              `connect-src 'self' ${origensDaCsp()}`,
-              "font-src 'self'",
-              "object-src 'none'",
-              "base-uri 'self'",
-              "form-action 'self'",
-              "frame-ancestors 'none'",
-            ].join("; "),
+            value: cspDoApp(),
           },
         ],
       },
