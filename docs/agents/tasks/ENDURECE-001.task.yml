@@ -28,6 +28,8 @@ allowed_paths:
   - apps/app/src/pecas/pecas.css
   - apps/app/src/styles.css
   - apps/app/src/casca/teclado.ts
+  - apps/app/components/bivaque/estado-vazio.tsx
+  - apps/app/tests/estado-vazio*.test.tsx
   - apps/app/tests/teclado*.test.ts
   - apps/app/tests/titulo*.test.ts
   - apps/app/tests/titulo*.test.tsx
