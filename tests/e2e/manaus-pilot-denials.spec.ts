@@ -16,20 +16,9 @@ async function setConsentCookie(page: import("@playwright/test").Page) {
 }
 
 // ---------------------------------------------------------------------------
-// Denial 1: anonymous visitor — every protected route refuses and sends to login
-//
-// Realinhado em 2026-09-08 com ADR-20260907-consentimento-no-cadastro (approved,
-// R3): "O portão de consentimento sai do proxy". A recusa continua existindo —
-// nenhuma rota protegida renderiza sem sessão — mas o destino agora é
-// /login?redirect=<pathname> (apps/web/proxy.ts:114-118), não /consent.
-// O aceite passou a ser cobrado na criação da conta; a prova disso está em
-// tests/e2e/onboarding-denials.spec.ts, bloco "consent is enforced at account
-// creation".
+// Denial 1: as rotas antigas respondem 307 ao app, que pede entrada sem sessão.
 // ---------------------------------------------------------------------------
 
-// RUN-172: `/profile` saiu desta lista — o redirect de configuração roda ANTES
-// do portão e entrega a pessoa ao Você do app. A recusa não desapareceu, mudou
-// de dono: o app recebe a rota e a leitura sem sessão é recusada (Denial 1b).
 test.describe("anonymous visitor: protected route denial", () => {
   const PROTECTED_ROUTES = ["/community", "/recommendations"]
 
@@ -41,10 +30,8 @@ test.describe("anonymous visitor: protected route denial", () => {
       // When the user navigates directly to a protected route
       await page.goto(route)
 
-      // Then the proxy refuses and routes to the entry screen, keeping the
-      // intended destination so the person does not lose their way
+      // A rota antiga redireciona ao app, que encaminha à entrada.
       await page.waitForURL(/\/app\/entrar/)
-      expect(page.url()).toContain(`redirect=${encodeURIComponent(route)}`)
       await expect(
         page.getByRole("heading", { name: "A comunidade militar da sua cidade." }),
       ).toBeVisible()

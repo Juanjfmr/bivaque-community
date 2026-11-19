@@ -13,3 +13,15 @@ test("rotas antigas redirecionam para o app e preservam a consulta", async ({ re
     expect(resposta.headers()["location"]).toContain(destino)
   }
 })
+
+test("rotas antigas levam visitantes anônimos à entrada sem ciclo", async ({ page, request }) => {
+  for (const origem of ["/groups", "/community"]) {
+    const resposta = await request.get(origem, { maxRedirects: 0 })
+    expect(resposta.status()).toBe(307)
+    expect(new URL(resposta.headers()["location"] ?? "", "http://127.0.0.1:3000").pathname).toBe(
+      "/app/comunidade",
+    )
+    await page.goto(origem)
+    await expect(page).toHaveURL(/\/app\/entrar/)
+  }
+})

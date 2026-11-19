@@ -1,5 +1,4 @@
-// LAN-TROCA fase 1: a Home antiga saiu; Comunidade e compositor de grupos
-// permanecem na web. A recusa de publicação sem grupo segue no pgTAP.
+// O compositor de grupos permanece na casca web; a recusa sem grupo segue no pgTAP.
 
 import { expect, test } from "@playwright/test"
 import { openComposer } from "./helpers/composer"
@@ -12,30 +11,7 @@ const MANAUS_MEMBER = "membro-1@bivaque.example.invalid"
 // estado do item 4 (não há destino para escolher).
 const VILA_OWNER = "dono-vila@bivaque.example.invalid"
 
-const CITY_FEED = "#secao-cidade"
 const GROUP_NAME = "Pais e Filhos"
-
-test.describe("a Comunidade antiga preservada na fase 1", () => {
-  test("a Comunidade fica com as perguntas: sem feed, sem Conversa, sem publicar", async ({
-    page,
-    context,
-  }) => {
-    await signInAs(context, MANAUS_MEMBER)
-
-    await page.goto("/community", { waitUntil: "load" })
-
-    await expect(page).toHaveURL(/\/community/)
-    await expect(page.getByRole("tab", { name: "Conversa" })).toHaveCount(0)
-    await expect(page.locator(CITY_FEED)).toHaveCount(0)
-    // A linha de publicar saiu da Comunidade: o único "Publicar" da tela era
-    // dela (o botão de criação do shell se chama "Criar").
-    await expect(page.getByRole("button", { name: "Publicar" })).toHaveCount(0)
-
-    await expect(page.getByRole("region", { name: "O que você procura?" })).toBeVisible({
-      timeout: 20000,
-    })
-  })
-})
 
 test.describe("o compositor publica só em grupo", () => {
   test("quem participa escolhe o grupo — cidade e vila não são oferecidas", async ({

@@ -97,47 +97,11 @@ test.describe("community feed", () => {
     // When the user navigates directly to /community
     await page.goto("/community")
 
-    // Then the middleware redirects to the consent gate
+    // A rota antiga redireciona ao app, que encaminha o visitante à entrada.
     await page.waitForURL(/\/app\/entrar/)
     await expect(
       page.getByRole("heading", { name: "A comunidade militar da sua cidade." }),
     ).toBeVisible()
-  })
-
-  test("feed page with consent cookie renders the community heading", async ({ page, context }) => {
-    // Given a browser with the consent cookie set
-    await seedSession(context)
-
-    // When the user navigates to the community page
-    await page.goto("/community")
-
-    // Then the community page renders. A conta do seedSession() não tem
-    // comunidade: a Comunidade mostra o que ela é desde o lote 5 N2 — o painel
-    // de Indicações da cidade, com o convite a entrar numa comunidade acima.
-    // Não há feed da cidade aqui, e a linha de "Publicar" saiu com ele:
-    // publicar existe só dentro de um grupo.
-    await expect(
-      page.getByRole("heading", { level: 1, name: "Comunidade", exact: true }),
-    ).toBeVisible({
-      timeout: 15000,
-    })
-    await expect(page.getByRole("button", { name: "Publicar" })).toHaveCount(0)
-  })
-
-  test("feed page is reachable at all three viewport widths", async ({ page, context }) => {
-    // Given the consent cookie and the mobile-375 viewport
-    await seedSession(context)
-    await page.goto("/community")
-
-    // Then the community page renders without horizontal overflow
-    await expect(
-      page.getByRole("heading", { level: 1, name: "Comunidade", exact: true }),
-    ).toBeVisible({
-      timeout: 15000,
-    })
-    const bodyWidth = await page.evaluate(() => document.body.scrollWidth)
-    const viewportWidth = await page.evaluate(() => window.innerWidth)
-    expect(bodyWidth).toBeLessThanOrEqual(viewportWidth)
   })
 })
 
@@ -158,24 +122,6 @@ test.describe("recommendations journey", () => {
     await expect(
       page.getByRole("heading", { name: "A comunidade militar da sua cidade." }),
     ).toBeVisible()
-  })
-
-  // /recommendations foi aposentada em 25/09/2026 (ADR-20260925-memoria-de-indicacoes):
-  // o endereço antigo leva à vista Indicações da Comunidade. Desde o lote 5 N2 a
-  // Comunidade não tem mais a aba "Conversa": a Indicações é o que ela mostra, e
-  // o endereço canônico continua carregando o parâmetro.
-  test("recommendations leva à vista Indicações da Comunidade", async ({ page, context }) => {
-    await seedSession(context)
-    await page.goto("/recommendations")
-    await page.waitForURL(/\/community\?vista=indicacoes$/)
-    await expect(page.getByRole("heading", { name: "O que você procura?" })).toBeVisible()
-  })
-
-  test("a aba antiga de pedir chega à caixa de pedir focada", async ({ page, context }) => {
-    await seedSession(context)
-    await page.goto("/recommendations?aba=request")
-    await page.waitForURL(/\/community\?vista=indicacoes&pedir=1$/)
-    await expect(page.getByRole("textbox", { name: "O que você procura" })).toBeFocused()
   })
 })
 
@@ -334,22 +280,6 @@ test.describe("accessibility across journeys", () => {
       expect(bodyWidth).toBeLessThanOrEqual(viewportWidth)
     })
   }
-
-  test("no horizontal overflow on community page at 375px with consent cookie", async ({
-    page,
-    context,
-  }) => {
-    // Given the consent cookie
-    await seedSession(context)
-    // When the browser opens /community
-    await page.goto("/community")
-
-    // Then there is no horizontal overflow
-    await page.waitForSelector("body")
-    const bodyWidth = await page.evaluate(() => document.body.scrollWidth)
-    const viewportWidth = await page.evaluate(() => window.innerWidth)
-    expect(bodyWidth).toBeLessThanOrEqual(viewportWidth)
-  })
 
   // Touch-target coverage for the BottomNav tabs and the Indicações entry used
   // to live here against /login, where neither element exists. It now runs

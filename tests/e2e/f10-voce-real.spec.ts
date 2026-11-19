@@ -345,9 +345,7 @@ test.describe("F10 — Você real no app", { tag: "@stateful" }, () => {
     const restantes = (await context.cookies()).filter((cookie) => cookie.name.startsWith("sb-"))
     expect(restantes, "o cookie da sessão não pode sobreviver à saída").toHaveLength(0)
 
-    // Sem sessão, a tela protegida da web devolve à entrada — nunca à tela antiga.
-    // /community segue na web (LAN-TROCA) e é gateada por sessão. /configuracoes/familia
-    // não serve: tem redirect de troca para /app/voce (next.config.ts:128), que é público.
+    // A rota antiga leva ao app, que encaminha visitantes sem sessão à entrada.
     await page.goto("/community")
     await expect(page).toHaveURL(/\/app\/entrar/, { timeout: 30_000 })
   })

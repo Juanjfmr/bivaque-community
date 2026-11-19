@@ -1,7 +1,7 @@
 // Teste end-to-end do login persistente (Instagram-style) com Playwright.
 // Roda via `npx playwright test tests/e2e/persistent-login.spec.ts`.
 // Cobre 3 cenarios:
-// (1) cookie de sessao com Max-Age=34560000 (400 dias) + /community=200
+// (1) cookie de sessao com Max-Age=34560000 (400 dias) + /community -> /app/comunidade
 // (2) fechar e reabrir o browser -> sessao persiste
 // (3) logout via "Sair da conta" no /app/voce (RUN-172: o perfil próprio é do app)
 //
@@ -150,7 +150,7 @@ function buildSessionCookie(grant: Awaited<ReturnType<typeof getSessionViaPasswo
 }
 
 test.describe("Login persistente Instagram-style", { tag: "@stateful" }, () => {
-  test("Cenario 1: cookie de sessao com Max-Age=400d + /community=200", async () => {
+  test("Cenario 1: cookie de sessao com Max-Age=400d + /community -> /app/comunidade", async () => {
     const grant = await getSessionViaPasswordGrant()
     const cookie = buildSessionCookie(grant)
 

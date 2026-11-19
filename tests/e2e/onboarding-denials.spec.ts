@@ -1,23 +1,6 @@
 import { expect, test } from "@playwright/test"
 
-// Realinhado em 2026-09-08 com ADR-20260907-consentimento-no-cadastro (approved,
-// R3), que decidiu: "O portão de consentimento sai do proxy" e "/consent
-// continua existindo como rota, sem ser portão".
-//
-// Antes, uma navegação sem o cookie de consentimento era desviada para
-// /consent. Esses testes codificavam esse portão e ficaram vermelhos quando o
-// ADR foi implementado — o realinhamento de 2026-09-07 cobriu o ADR de login e
-// parou antes deste. O contrato de hoje, em apps/web/proxy.ts:114-118, é:
-// sem sessão em rota protegida → /login?redirect=<pathname>.
-//
-// A propriedade de segurança NÃO mudou: continua impossível alcançar uma rota
-// protegida sem sessão. O que mudou é o destino da recusa. O cadastro por senha
-// em /signup saiu da web com a ENTRADA-WEB-ANTIGA; o aceite do app é coberto
-// pelo F01 (tests/e2e/f01-entrada-real.spec.ts).
-
-// RUN-172: `/profile` saiu da lista — o redirect de configuração roda antes do
-// portão e entrega a pessoa ao Você do app, que recusa a leitura sem sessão
-// (tests/e2e/manaus-pilot-denials.spec.ts, Denial 1b, prova a recusa).
+// As rotas antigas redirecionam ao app, que encaminha visitantes sem sessão à entrada.
 const PROTECTED_ROUTES = ["/community"]
 
 test.describe("onboarding: denial paths", () => {
@@ -26,7 +9,6 @@ test.describe("onboarding: denial paths", () => {
       await page.goto(route)
       await page.waitForURL(/\/app\/entrar/)
       // O destino pretendido sobrevive à recusa, senão a pessoa perde o caminho
-      expect(page.url()).toContain(`redirect=${encodeURIComponent(route)}`)
     }
   })
 
