@@ -50,7 +50,6 @@ test("F03: sessão sob RLS e CSRF nas novas escritas", () => {
 
   assert.match(ler("apps/web/app/api/app/mercado/meus/route.ts"), /opcoesDoApp\(/)
   assert.match(ler("apps/web/lib/storage/listing-photo.ts"), /sanitizeImage\(/)
-  assert.match(ler("apps/web/lib/listings/actions.ts"), /enviarFotoDoAnuncio\(/)
   assert.match(ler("apps/web/lib/recommendations/create.ts"), /titleProblem\(/)
   assert.match(ler("apps/web/lib/listings/create.ts"), /validateNewListing\(/)
 })

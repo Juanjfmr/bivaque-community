@@ -42,25 +42,6 @@ describe("pedir leva à caixa de pedir", () => {
   })
 })
 
-describe("pedido em uma frase, sem trava nem aviso", () => {
-  const ask = web("app", "components", "indications", "ask-indication.tsx")
-
-  it("busca o que a cidade já perguntou antes de pedir", () => {
-    expect(ask).toContain('supabase.rpc("list_indications"')
-    expect(ask).toContain("Já perguntaram")
-  })
-
-  it("publica na cidade com detalhe opcional", () => {
-    expect(ask).toContain("locality_id: localityId")
-    expect(ask).toContain("body: details.trim()")
-  })
-
-  it("não avisa nem barra saúde", () => {
-    expect(ask).not.toMatch(/saude_bem_estar/)
-    expect(ask).not.toMatch(/todos os membros da cidade verão/i)
-  })
-})
-
 // O menu de mais opções é compartilhado com o feed: item sem ação não aparece.
 // Antes, "Ocultar" e "Denunciar" apareciam na própria resposta e não faziam nada.
 describe("menu de mais opções sem item morto", () => {

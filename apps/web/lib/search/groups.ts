@@ -161,7 +161,7 @@ export function buildSearchGroups({
     eventos: eventosItems,
   }
   const verTodos: Record<SearchGroupKey, string> = {
-    indicacoes: `${INDICATIONS_HREF}&q=${encoded}`,
+    indicacoes: `${INDICATIONS_HREF}?q=${encoded}`,
     guia: `/app/guia?q=${encoded}`,
     servicos: `/explorar/servicos?q=${encoded}`,
     // The events domain has no term filter (prancha 48 defines only the

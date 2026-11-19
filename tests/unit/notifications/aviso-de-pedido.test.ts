@@ -109,8 +109,8 @@ describe("o aviso no sino", () => {
   })
 })
 
-describe("destinos de publica??es e grupos", () => {
-  it("abre diretamente o conte?do no app, inclusive a partir de den?ncias", () => {
+describe("destinos de publicações e grupos", () => {
+  it("abre diretamente o conteúdo no app, inclusive a partir de denúncias", () => {
     const base = notification("created", "abc")
     expect(resolveNotificationHref({ ...base, type: "comment" }, null)).toBe("/app/publicacao/abc")
     for (const type of ["group_admission", "group_post"]) {

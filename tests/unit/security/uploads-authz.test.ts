@@ -74,7 +74,6 @@ vi.mock("web/lib/providers/app-negocio", () => ({
 import { addPortfolioPhotoAction } from "web/app/(provider)/prestador/actions"
 import { POST } from "web/app/api/app/negocio/fotos/route"
 import { uploadPostPhotoAction } from "web/app/components/bivaque/post-photo-action"
-import { uploadPropertyPhotoAction } from "web/lib/listings/actions"
 import { enviarFotoDoGrupo } from "web/lib/storage/foto-do-grupo"
 import { enviarFotoDoAnuncio } from "web/lib/storage/listing-photo"
 
@@ -169,37 +168,6 @@ describe("foto de anúncio do Mercado (enviarFotoDoAnuncio)", () => {
     await expect(
       enviarFotoDoAnuncio(clienteDaSessao("erro"), ID, LISTING, 0, arquivoFoto()),
     ).rejects.toThrow("Não foi possível conferir sua conta")
-    expect(mock.upload).not.toHaveBeenCalled()
-  })
-})
-
-describe("foto de anúncio de Moradia (uploadPropertyPhotoAction)", () => {
-  const formulario = () => {
-    const dados = new FormData()
-    dados.set("listingId", LISTING)
-    dados.set("position", "0")
-    dados.set("photo", arquivoFoto())
-    return dados
-  }
-
-  it("conta ativa passa e sobe a foto", async () => {
-    const resultado = await uploadPropertyPhotoAction(formulario())
-    expect("path" in resultado).toBe(true)
-    expect(mock.upload).toHaveBeenCalledOnce()
-  })
-
-  it("conta suspensa recusa antes do primeiro uso de service_role", async () => {
-    mock.moradiaRpc.mockResolvedValue({ data: false, error: null })
-    const resultado = await uploadPropertyPhotoAction(formulario())
-    expect(resultado).toEqual({ error: RECUSA })
-    expect(mock.upload).not.toHaveBeenCalled()
-    expect(mock.servicoFrom).not.toHaveBeenCalled()
-  })
-
-  it("conta com exclusão pedida recusa antes do upload", async () => {
-    mock.moradiaRpc.mockResolvedValue({ data: false, error: null })
-    const resultado = await uploadPropertyPhotoAction(formulario())
-    expect(resultado).toEqual({ error: RECUSA })
     expect(mock.upload).not.toHaveBeenCalled()
   })
 })

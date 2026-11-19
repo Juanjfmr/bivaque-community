@@ -1,3 +1,6 @@
+import { getPathMatch } from "next/dist/shared/lib/router/utils/path-match"
+import { matchHas } from "next/dist/shared/lib/router/utils/prepare-destination"
+import { NextRequest } from "next/server"
 import { describe, expect, it } from "vitest"
 import {
   ASK_INDICATION_HREF,
@@ -13,6 +16,7 @@ import {
   suggestCategory,
   titleProblem,
 } from "../../../apps/web/lib/indications/indications"
+import nextConfig from "../../../apps/web/next.config"
 
 describe("categoria sugerida pelo pedido", () => {
   it.each([
@@ -98,8 +102,8 @@ describe("um pedido, um endereço", () => {
     expect(indicationHref("abc")).toBe("/app/pergunta/abc")
   })
   it("as indicações moram na Comunidade, e pedir abre a caixa focada", () => {
-    expect(INDICATIONS_HREF).toBe("/community?vista=indicacoes")
-    expect(ASK_INDICATION_HREF).toBe("/community?vista=indicacoes&pedir=1")
+    expect(INDICATIONS_HREF).toBe("/app/comunidade")
+    expect(ASK_INDICATION_HREF).toBe("/app/comunidade?pedir=1")
   })
   it("rótulo de categoria desconhecida cai em Outros", () => {
     expect(categoryLabel("outros")).toBe("Outros")
@@ -145,3 +149,30 @@ describe("o Guia antes de pedir", () => {
 })
 
 // /indicacoes e /recommendations continuam só para link antigo chegar ao lugar.
+
+describe("endereços antigos de indicações", () => {
+  const id = "80000000-0000-4000-8000-000000000f01"
+
+  it.each([
+    [`focus=${id}`, "/app/pergunta/:pergunta"],
+    ["focus=inválido", "/app/comunidade"],
+    ["aba=saved", "/app/salvos"],
+    ["pedir=1", "/app/comunidade"],
+    ["aba=request", "/app/comunidade"],
+    ["", "/app/comunidade"],
+  ])("a query %s escolhe %s", async (query, destino) => {
+    const url = new URL(`/recommendations?${query}`, "https://example.invalid")
+    const regra = ((await nextConfig.redirects?.()) ?? []).find(
+      (item) =>
+        getPathMatch(item.source)(url.pathname) &&
+        matchHas(
+          new NextRequest(url),
+          Object.fromEntries(url.searchParams),
+          item.has,
+          item.missing,
+        ),
+    )
+    expect(regra?.destination).toBe(destino)
+    expect(regra?.permanent).toBe(false)
+  })
+})

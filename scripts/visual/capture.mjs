@@ -27,12 +27,6 @@ const RUN_ID = process.env["BIVAQUE_VISUAL_RUN"] ?? new Date().toISOString().rep
 const ROUTE_PATH = process.env["BIVAQUE_VISUAL_ROUTE"]
 const SCENARIO = process.env["BIVAQUE_VISUAL_SCENARIO"]
 
-// Fixture de captura de Moradia: o anúncio REAL de `supabase/seed.sql`
-// (`b2000000-…0001`, "Apartamento 2 quartos", ativo, com `property_details` e
-// foto da fixture de mídia). O id anterior (`d0000000-…0001`) nunca existiu no
-// seed — a ficha caía no não-encontrado e a captura declarava "sem h1".
-const IMOVEIS_FIXTURE_ID = "b2000000-0000-4000-8000-000000000001"
-
 // Token do convite de prestador semeado (seed.sql, bloco RECON-049): o token em
 // claro é descartável e o banco guarda só o digest dele. Sem esta fixture a tela
 // do convite não tem captura em estado nenhum — o token real existe apenas no
@@ -116,18 +110,9 @@ export const HEADINGS = {
   // RUN-184: as capturas de /configuracoes (índice, conta e bloqueados) saíram
   // com a árvore — a tela de conta é do app agora (/app/voce e /app/apagar-conta,
   // medidas em apps/app/tests/e2e). Capturá-las aqui mediria o 307.
-  "/groups": "Grupos",
-  "/communities": "Comunidades",
-  // O h1 desta rota é o NOME da comunidade principal de quem lê ("Vila
-  // Ajuricaba" para a conta de captura), caindo para "Cidade, UF" só quando não
-  // há vila — dado, não contrato. Com "Comunidade|Manaus" fixo a captura saía
-  // INVALID em três viewports mesmo com a tela certa na frente.
-  "/community": DYNAMIC_HEADING,
   "/events": "^Explorar eventos$",
   // RUN-166: a caixa e a conversa saíram da web para o app (/app/conversas,
   // /app/conversa/[id]); capturá-las aqui mediria o redirect.
-  // A vista Indicações da Comunidade: o h1 é o nome da comunidade do ator.
-  "/community?vista=indicacoes": DYNAMIC_HEADING,
   "/app/pergunta/80000000-0000-4000-8000-000000000f01":
     "^Alguém indica pediatra que atenda pelo FuSEx\\?$",
   "/prestador": "^Orçamentos para você$",
@@ -140,11 +125,6 @@ export const HEADINGS = {
   // Named by their own data: the community, the guide entry, the group, the
   // event, the member and the city carry the title. The fixture id pins WHICH
   // record; the h1 text belongs to the seed, not to this file.
-  "/communities/71000000-0000-4000-8000-000000000001": DYNAMIC_HEADING,
-  // Comunidade de OUTRA cidade vista por quem não é da cidade: é a instância da
-  // prancha 60 (estado de acesso negado). O título continua sendo o nome da
-  // comunidade — o h1 é o dado.
-  "/communities/71000000-0000-4000-8000-000000000002": DYNAMIC_HEADING,
   "/guide/a0000000-0000-4000-8000-000000000001": DYNAMIC_HEADING,
   // Grupos vivem em 60000000-… no seed; 70000000-… é a faixa dos EVENTOS, então
   // o id antigo capturava o não-encontrado e a rota declarava "sem h1".
@@ -188,7 +168,6 @@ export const HEADINGS = {
   "/guide/a0000000-0000-4000-8000-000000000001/correcao": "^Sugerir atualização$",
   // A ficha do imóvel é nomeada pelo título do anúncio. Criar imóvel saiu da
   // web (RUN-164) e a gestão dos alertas também (RUN-169): as duas são do app.
-  "/imoveis/b2000000-0000-4000-8000-000000000001": DYNAMIC_HEADING,
   // Prancha 79, painel 2: o H1 da tela que o prestador convidado abre.
   [`/prestador-convite/${PROVIDER_INVITE_TOKEN}`]: "^Ofereça seus serviços no Bivaque$",
   // A conversa do pedido semeado: o h1 é o título do pedido.
@@ -263,7 +242,6 @@ export const ROUTES = [
   { path: "/reports", name: "admin-reports", auth: true, account: "operador" },
   { path: "/admissions", name: "admin-admissions", auth: true, account: "operador" },
   { path: "/guide-queue", name: "admin-guide-queue", auth: true, account: "operador" },
-  { path: "/groups", name: "groups", auth: true },
   // Grupos do seed são 60000000-… (70000000-… é a faixa dos eventos).
   { path: "/groups/60000000-0000-4000-8000-000000000001", name: "group-detail", auth: true },
   { path: "/events", name: "events", auth: true },
@@ -300,24 +278,6 @@ export const ROUTES = [
     path: "/events/70000000-0000-4000-8000-0000000000a1/editar",
     name: "event-editar",
     auth: true,
-  },
-  { path: "/community", name: "community", auth: true },
-  { path: "/communities", name: "communities", auth: true },
-  // RECON-034 — apresentação com faixa/miniatura e o console de imagens do dono.
-  {
-    path: "/communities/71000000-0000-4000-8000-000000000001",
-    name: "community-detail",
-    auth: true,
-  },
-  // Prancha 60, painel 1: a comunidade de OUTRA cidade (Vila Petrópolis, Rio)
-  // aberta pela conta de captura (Manaus). A pessoa vê a apresentação e o estado
-  // de acesso negado — a cópia é declarada aqui, e só ela é tolerada; qualquer
-  // outra indisponibilidade (404, Application error) continua reprovando.
-  {
-    path: "/communities/71000000-0000-4000-8000-000000000002",
-    name: "community-outsider",
-    auth: true,
-    expectedFallback: "^Você ainda não tem acesso",
   },
   {
     path: "/communities/71000000-0000-4000-8000-000000000001/admin/media",
@@ -369,7 +329,6 @@ export const ROUTES = [
   // O detalhe aponta para a fixture de anúncio que `supabase/seed.sql` precisa
   // criar (fora do allowed_paths deste lote) — sem ela a captura cai no 404
   // honesto, que NÃO conta como fidelidade comprovada.
-  { path: `/imoveis/${IMOVEIS_FIXTURE_ID}`, name: "imoveis-detail", auth: true },
   // Onda T Task 5: o console do fundador. Com a conta global (sem operador) ele
   // rende o estado vazio honesto; a captura da tela real usa operador@.
   { path: "/arrivals", name: "admin-arrivals", auth: true, account: "operador" },
@@ -393,13 +352,11 @@ export const ROUTES = [
     name: "provider-indicar",
     auth: true,
   },
-  { path: "/groups", name: "groups", auth: true },
   { path: "/events", name: "events", auth: true },
   // Memória de indicações (ADR-20260925-memoria-de-indicacoes). /recommendations
   // e /indicacoes só redirecionam; a lista é a vista Indicações da Comunidade.
   // RECON-035: a conversa do pedido semeado (visual@ é a autora) mostra o ator,
   // a marca e o destino; o pedido resolvido mostra a memória.
-  { path: "/community?vista=indicacoes", name: "indicacoes", auth: true },
   {
     path: "/app/pergunta/80000000-0000-4000-8000-000000000f00",
     name: "indicacao-conversa",

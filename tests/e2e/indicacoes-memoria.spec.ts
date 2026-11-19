@@ -1,4 +1,4 @@
-﻿import { expect, test } from "@playwright/test"
+import { expect, test } from "@playwright/test"
 
 test("endereços antigos de indicações redirecionam ao app", async ({ request }) => {
   for (const origem of ["/indicacoes", "/community", "/recommendations"]) {

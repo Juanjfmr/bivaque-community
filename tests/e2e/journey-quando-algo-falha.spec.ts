@@ -14,7 +14,7 @@ test.describe("jornada simulada: quando algo falha", { tag: "@stateful" }, () =>
   test.skip(({ viewport }) => (viewport?.width ?? 0) < 1440, "jornada das pranchas web")
   test.setTimeout(180_000)
 
-  test("membro comum n?o acessa a ?rea de opera??o", async ({ browser }) => {
+  test("membro comum não acessa a área de operação", async ({ browser }) => {
     const context = await browser.newContext({ viewport: { width: 1440, height: 900 } })
     await signInAs(context, MEMBER)
     const page = await context.newPage()
