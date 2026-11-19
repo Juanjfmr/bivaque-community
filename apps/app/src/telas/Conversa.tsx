@@ -70,8 +70,14 @@ export function Conversa() {
   const [enviando, setEnviando] = useState(false)
   const [carregandoMais, setCarregandoMais] = useState(false)
   const [erroLocal, setErroLocal] = useState("")
-  /** O envio que falhou, como balão da própria mensagem (revisão cega 18/11). */
+  /**
+   * O envio que falhou, como balão da própria mensagem (revisão cega 18/11).
+   * O anúncio de leitor de tela ("Seu texto foi mantido") é região viva
+   * OCULTA no compositor: visível é só o balão — nada de rodapé duplicado
+   * (D22/D3).
+   */
   const [naoEnviada, setNaoEnviada] = useState<string | null>(null)
+  const [anuncioDeEnvio, setAnuncioDeEnvio] = useState("")
   const [aviso, setAviso] = useState("")
   const [mostrarSeguranca, setMostrarSeguranca] = useState(false)
   /** Quem EU bloqueei. O bloqueio da outra pessoa nunca chega ao cliente. */
@@ -111,6 +117,7 @@ export function Conversa() {
     setEnviando(false)
     setCarregandoMais(false)
     setNaoEnviada(null)
+    setAnuncioDeEnvio("")
     // A caixa da coluna da esquerda (≥768) lê junto com a conversa; se falhar,
     // a conversa segue e a coluna fica como estava.
     void lerConversas({ signal: pedido.signal })
@@ -164,6 +171,7 @@ export function Conversa() {
     ultimaChave.current = { texto, chave: clientKey }
     setEnviando(true)
     setErroLocal("")
+    setAnuncioDeEnvio("")
     try {
       const mensagem = await enviarMensagem(id, texto, { signal: pedido.signal, clientKey })
       if (!pedido.signal.aborted) {
@@ -172,14 +180,16 @@ export function Conversa() {
         )
         setRascunho("")
         setNaoEnviada(null)
+        setAnuncioDeEnvio("")
         ultimaChave.current = null
       }
     } catch {
       // A mensagem que não saiu fica visível como balão seu, marcada
       // "Não enviada", com a ação de tentar de novo; o texto continua no campo.
-      // A linha de status é a única mensagem do erro (D22): um rodapé no
-      // compositor dizia a mesma coisa duas vezes.
+      // O leitor de tela ouve o fato pelo anúncio oculto; o que se VÊ é só o
+      // balão (D22: um texto por erro).
       if (!pedido.signal.aborted) {
+        setAnuncioDeEnvio("Não foi possível enviar. Seu texto foi mantido.")
         setNaoEnviada(texto)
       }
     } finally {
@@ -545,6 +555,11 @@ export function Conversa() {
                   />
                 </div>
               </form>
+              {anuncioDeEnvio && (
+                <p role="alert" className="sr-only">
+                  {anuncioDeEnvio}
+                </p>
+              )}
               {erroLocal && (
                 <p role="alert" className="text-xs text-(--on-surface-variant)">
                   {erroLocal}

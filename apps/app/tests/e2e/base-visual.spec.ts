@@ -86,13 +86,14 @@ test("V15: o botão preenchido usa a ardósia de concluir", async ({ page }) => 
 test("V16: o perfil aberto pelo caminho interno não acende aba nenhuma", async ({ page }) => {
   await simularConversas(page)
   await page.goto("/app/conversa/t1")
-  await expect(page.locator('[data-mensagens="historico"]')).toBeVisible()
+  const abrirPerfil = page.locator('[data-cabeca="conversa"] [data-acao="abrir-perfil"]')
+  await expect(abrirPerfil).toBeVisible()
 
   // O nome do cabeçalho abre o perfil de quem conversa: caminho interno, com
   // origem "inicio" na entrada. O perfil é "sem aba" no catálogo (chega-se por
   // um nome, de qualquer jornada) — a navegação não marca o Início (critério 6
   // e achado 6 da revisão de código).
-  await page.locator('[data-cabeca="conversa"] [data-acao="abrir-perfil"]').click()
+  await abrirPerfil.click()
   await expect(page).toHaveURL(/\/app\/perfil\/u-paulo$/)
   await expect(page.locator('[data-nav="principal"]')).toBeAttached()
   await expect(page.locator('[data-nav="principal"] [aria-current="page"]')).toHaveCount(0)

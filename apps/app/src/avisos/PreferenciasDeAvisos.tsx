@@ -181,7 +181,7 @@ export function PreferenciasDeAvisos() {
                     checked={canalDe(preferencias, tipo, canal)}
                     disabled={salvando}
                     onCheckedChange={(valor) => alterarCanal(tipo, canal, valor === true)}
-                    aria-label={`${titulo} por ${rotulo.toLowerCase()}`}
+                    aria-label={`Avisos de ${titulo.toLowerCase()} por ${rotulo.toLowerCase()}`}
                     className="bv-interruptor"
                   />
                   {rotulo}

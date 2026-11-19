@@ -105,14 +105,17 @@ test("o envio que falha vira o balão Não enviada; Tentar de novo entrega e o t
   await expect(enviarMensagem).toBeEnabled()
   await enviarMensagem.click()
 
-  // O balão da própria mensagem (D24 esmaecido) com status e ação — e sem o
-  // rodapé que dizia a mesma coisa duas vezes (D22).
+  // O balão da própria mensagem (D24 esmaecido) com status e ação; o anúncio
+  // do leitor de tela é região viva OCULTA — sem rodapé visível duplicado
+  // (D22/D3).
   const balao = page.locator('[data-mensagem="nao-enviada"]')
   await expect(balao).toBeVisible()
   await expect(balao).toContainText("Consigo buscar na quinta às 15h.")
   await expect(balao.getByRole("alert")).toContainText("Não enviada")
   await expect(page.getByRole("button", { name: "Tentar de novo" })).toBeVisible()
-  await expect(page.locator('[data-compositor-conversa] [role="alert"]')).toHaveCount(0)
+  const anuncioOculto = page.locator('[data-compositor-conversa] [role="alert"]')
+  await expect(anuncioOculto).toHaveText("Não foi possível enviar. Seu texto foi mantido.")
+  await expect(anuncioOculto).toHaveCSS("width", "1px")
   // O texto continua no campo: a chave de idempotência reaproveita no reenvio.
   await expect(campo).toHaveValue("Consigo buscar na quinta às 15h.")
 
