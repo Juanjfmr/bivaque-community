@@ -1,0 +1,59 @@
+task_id: VISCEGA-001
+objective: >
+  Corrigir os achados do veredito às cegas do CAPT-001 em F02, F03, F06, F07 e F08 (o HIGH e os
+  MEDIUM; os LOW quando forem do mesmo ajuste), confirmando antes, por recaptura sobre a main com o
+  REGUA-001, quais achados ainda valem. Critério 2 de LANCAMENTO para essas jornadas.
+authority:
+  - docs/LANCAMENTO.md (F02, F03, F06, F07, F08)
+  - docs/agents/regua-nextdoor/IDENTIDADE-DAS-PECAS.md (Brasa só no Criar; ação principal em ardósia; seleção em Grafite)
+  - docs/agents/regua-nextdoor/PADRAO-DE-TELA.md
+  - .visual/visual-cegas/VEREDITO-CEGO.md (veredito às cegas de 18/11, cópia local)
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    O veredito às cegas sobre as capturas do CAPT-001 reprovou F03, F06, F07 e F08 e deu PASS com
+    ressalvas a F02: um HIGH (ação "Revisar encontro" abaixo da borda visível da folha em 375) e 16
+    MEDIUM (Brasa fora do Criar, colunas esticadas em 1440, FAB cobrindo conteúdo, rótulos
+    truncados, cabeçalho fixo cobrindo a âncora no Guia). As capturas são anteriores ao merge do
+    REGUA-001 (cb3907da), que mudou a cor de seleção.
+allowed_paths:
+  - apps/app/src/telas/*.tsx
+  - apps/app/src/casca/MenuCriar.tsx
+  - apps/app/src/pecas/*.tsx
+  - apps/app/src/pecas/pecas.css
+  - apps/app/src/styles.css
+  - apps/app/components/bivaque/*.tsx
+  - apps/app/playwright.config.ts
+  - apps/app/tests/*.test.ts
+  - apps/app/tests/*.test.tsx
+  - apps/app/tests/e2e/*.spec.ts
+  - apps/app/tests/e2e/cegas/capturas.spec.ts
+  - docs/agents/tasks/VISCEGA-001.task.yml
+forbidden:
+  - API, banco, migrations, apps/web
+  - dependência nova
+  - afrouxar ou apagar asserção de teste existente (ajustar seletor ao novo nível ou texto é permitido, mantendo a asserção)
+  - mudar o roteador, a casca (Casca.tsx, Paleta.tsx), index.html, titulos.ts ou components/bivaque/estado-vazio.tsx (lote ENDURECE-001 em paralelo)
+  - git stash, reiniciar ou reconstruir o banco local, delegar
+  - dado pessoal real ou CPF real em stub
+acceptance:
+  - playwright.config.ts lê as portas de variáveis de ambiente (padrão 3200 e 3201), e este lote roda com 3300 e 3301 para não colidir com outro executor
+  - recaptura das cinco jornadas sobre esta branch antes de corrigir; cada achado do veredito marcado como ainda vale ou já resolvido, em .visual/visual-cegas/TRIAGEM.md
+  - nenhum HIGH ou MEDIUM que ainda valia permanece; a ação principal da folha de Criar fica visível com o formulário preenchido em 320 e 375
+  - Brasa só no Criar; ação principal em ardósia; seleção em Grafite; selo de feito na cor de feito
+  - em 1440, leitura limitada (sem coluna esticada pela janela inteira) no detalhe do anúncio, publicação, Guia, imóveis e Negócios
+  - rótulos e nomes não truncam onde o veredito apontou (quebra em duas linhas ou pista de rolagem horizontal)
+  - recaptura final em .visual/blind/ nas três larguras e dois temas, sem regressão nas jornadas F09 e F10
+proof:
+  - npx pnpm@11.18.0 gate --fast
+  - npx pnpm@11.18.0 --filter @bivaque/app test
+  - npx pnpm@11.18.0 --filter @bivaque/app exec vite build
+  - npx pnpm@11.18.0 --filter @bivaque/app exec playwright test tests/e2e/cegas/capturas.spec.ts
+  - npx pnpm@11.18.0 --filter @bivaque/app test:e2e
+risk: ui
+risk_level: R1
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: HUMAN_DECISION
+closure:
+  requires_runtime_evidence: true
