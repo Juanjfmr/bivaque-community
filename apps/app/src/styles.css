@@ -996,12 +996,15 @@
   }
 }
 
-/* No celular a barra assenta acima da barra de baixo e do Criar, que levanta a
-   cabeça sobre ela (56 px + 42 px + folga). No computador, 12 px de respiro no
-   fim do scrollport. */
+/* Abaixo de 1024 px a barra de baixo e o Criar já flutuam no rodapé: uma
+   terceira camada fixa acima deles cobria o seletor "Semanal" a 768 px
+   (reauditoria do #299). Ali a barra de gravar volta ao fluxo, no fim da
+   seção, e nada cobre controle algum. */
 @media (max-width: 1023.98px) {
   [data-barra="gravar-preferencias"] {
-    bottom: calc(var(--altura-da-barra) + 76px + env(safe-area-inset-bottom));
+    position: static;
+    border-top: 0;
+    box-shadow: none;
   }
 }
 
@@ -1014,8 +1017,10 @@
 /* A barra é o fim da seção: o respiro deixa o último cartão rolar para cima
    dela sem ficar escondido (D4) — cobre a barra (60 px) e o offset de 12 px
    do computador, com folga. */
-[data-preferencias-de-aviso="sim"] {
-  padding-bottom: 200px;
+@media (min-width: 1024px) {
+  [data-preferencias-de-aviso="sim"] {
+    padding-bottom: 200px;
+  }
 }
 
 /* Apoio de no máximo uma linha, garantido por CSS (achado 7): a 375 px cabe;

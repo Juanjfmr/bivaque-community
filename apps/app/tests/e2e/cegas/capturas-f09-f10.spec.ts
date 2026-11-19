@@ -681,6 +681,22 @@ const JORNADAS: ReadonlyArray<{ nome: string; passos: readonly Passo[] }> = [
           await ultimo.evaluate((elemento) => elemento.scrollIntoView({ block: "center" }))
           await page.waitForTimeout(400)
           await expect(ultimo).toBeInViewport()
+          // O seletor do resumo é o último controle antes da barra: ele também
+          // precisa ficar livre (a reauditoria achou a barra sobre "Semanal").
+          const seletor = secao.getByRole("combobox")
+          await seletor.evaluate((elemento) => elemento.scrollIntoView({ block: "center" }))
+          await page.waitForTimeout(400)
+          await expect(seletor).toBeInViewport()
+          const seletorLivre = await seletor.evaluate((elemento) => {
+            const alvo = elemento.getBoundingClientRect()
+            const barra = document
+              .querySelector('[data-barra="gravar-preferencias"]')
+              ?.getBoundingClientRect()
+            return !barra || alvo.bottom <= barra.top || alvo.top >= barra.bottom
+          })
+          expect(seletorLivre).toBe(true)
+          await ultimo.evaluate((elemento) => elemento.scrollIntoView({ block: "center" }))
+          await page.waitForTimeout(400)
           const livre = await ultimo.evaluate((elemento) => {
             const alvo = elemento.getBoundingClientRect()
             const barra = document
