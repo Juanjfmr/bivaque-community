@@ -187,6 +187,22 @@ export function Busca() {
   const anunciosDaCidade = explorar?.anuncios ?? []
   const perguntasDaCidade = explorar?.perguntas ?? []
   const gruposDaCidade = explorar?.grupos ?? []
+  const resumoDaCidade = [
+    negociosDaCidade.length === 0
+      ? null
+      : `${negociosDaCidade.length} ${negociosDaCidade.length === 1 ? "negócio" : "negócios"}`,
+    anunciosDaCidade.length === 0
+      ? null
+      : `${anunciosDaCidade.length} ${anunciosDaCidade.length === 1 ? "anúncio" : "anúncios"}`,
+    perguntasDaCidade.length === 0
+      ? null
+      : `${perguntasDaCidade.length} ${perguntasDaCidade.length === 1 ? "indicação" : "indicações"}`,
+    gruposDaCidade.length === 0
+      ? null
+      : `${gruposDaCidade.length} ${gruposDaCidade.length === 1 ? "grupo" : "grupos"}`,
+  ]
+    .filter((parte): parte is string => parte !== null)
+    .join(" · ")
   const bairrosDaCidade = [
     ...new Set(
       anunciosDaCidade.flatMap((anuncio) => (anuncio.bairro === null ? [] : [anuncio.bairro])),
@@ -349,10 +365,11 @@ export function Busca() {
             </Secao>
 
             <Secao titulo={`O que existe em ${cidade}`}>
-              <p data-busca="resumo-da-cidade" className="text-sm text-(--on-surface-variant)">
-                {negociosDaCidade.length} negócios · {anunciosDaCidade.length} anúncios ·{" "}
-                {perguntasDaCidade.length} indicações · {gruposDaCidade.length} grupos
-              </p>
+              {resumoDaCidade ? (
+                <p data-busca="resumo-da-cidade" className="text-sm text-(--on-surface-variant)">
+                  {resumoDaCidade}
+                </p>
+              ) : null}
               {bairrosDaCidade.length === 0 ? null : (
                 <p className="text-sm text-(--on-surface-variant)">
                   {`Com anúncios em ${bairrosDaCidade.join(", ")}.`}
