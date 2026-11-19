@@ -19,13 +19,16 @@ export function EstadoVazio({
   icone = "search_off",
   acao,
   children,
+  nivel = "h2",
 }: {
   titulo: string
   texto: string
   icone?: NomeDeIcone
   acao?: { readonly rotulo: string; readonly aoAcionar: () => void }
   children?: ReactNode
+  nivel?: "h2" | "h3" | "h4" | "h5" | "h6"
 }) {
+  const Titulo = nivel
   return (
     <div
       data-estado="vazio"
@@ -40,7 +43,7 @@ export function EstadoVazio({
         <i className="bv-empty-twinkle absolute top-3 right-4 size-2 rounded-full bg-(--primary) [animation-delay:0.8s]" />
         <i className="bv-empty-twinkle absolute right-2 bottom-5 size-3 rounded-full bg-(--on-primary-container) [animation-delay:1.6s]" />
       </div>
-      <h3>{titulo}</h3>
+      <Titulo className="text-[17px] leading-6 font-semibold tracking-normal">{titulo}</Titulo>
       <p className={cn("max-w-md text-sm text-(--muted-foreground)")}>{texto}</p>
       {acao === undefined ? null : (
         <Botao tom="tonal" data-acao="acao-do-vazio" onClick={acao.aoAcionar}>
