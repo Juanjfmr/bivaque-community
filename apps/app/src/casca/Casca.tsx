@@ -21,6 +21,7 @@ import { usePortaDeCargas } from "@/src/contexto/cargas"
 import { useCasca } from "@/src/contexto/casca"
 import { lerProgresso } from "@/src/entrada/servidor"
 import { modoDeProvaAtivo } from "@/src/modo-de-prova"
+import { tituloDaTela } from "@/src/titulos"
 
 /**
  * A casca da onda 1c: barra do topo por rota, navegação principal, o conteúdo
@@ -44,6 +45,10 @@ export function Casca() {
   const localizacao = useLocation()
   const materializarEntrada = navegacao.materializarEntrada
   const estadoDaLocalizacao = localizacao.state
+
+  useEffect(() => {
+    document.title = `${rota.nome === "inicio" ? "Início" : tituloDaTela(rota.nome, casca.cidade)} · Bivaque`
+  }, [rota.nome, casca.cidade])
 
   const [minimizada, definirMinimizada] = useState(false)
   const [docada, definirDocada] = useState(false)
@@ -169,6 +174,9 @@ export function Casca() {
 
   return (
     <div data-casca={rota.casca}>
+      <a className="bv-pular-conteudo" href="#conteudo">
+        Pular para o conteúdo
+      </a>
       <BarraDoTopo docada={docada} podeSubir={tituloPodeSubir(rota.nome, largura)} />
 
       <div data-casca="corpo">
