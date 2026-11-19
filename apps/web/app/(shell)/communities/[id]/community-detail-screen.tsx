@@ -220,7 +220,7 @@ function GroupCardItem({ group }: { group: GroupCard }) {
         </span>
       )}
       <Link
-        href={`/groups/${group.id}` as Route}
+        href={`/app/grupo/${group.id}` as Route}
         className="mt-1 inline-flex min-h-11 w-fit items-center justify-center rounded-md border border-border px-4 text-sm font-medium transition-colors hover:bg-[var(--semantic-surface-sunken)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--semantic-action-context)]"
       >
         Ver grupo

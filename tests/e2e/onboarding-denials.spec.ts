@@ -18,7 +18,7 @@ import { expect, test } from "@playwright/test"
 // RUN-172: `/profile` saiu da lista — o redirect de configuração roda antes do
 // portão e entrega a pessoa ao Você do app, que recusa a leitura sem sessão
 // (tests/e2e/manaus-pilot-denials.spec.ts, Denial 1b, prova a recusa).
-const PROTECTED_ROUTES = ["/community", "/groups"]
+const PROTECTED_ROUTES = ["/community"]
 
 test.describe("onboarding: denial paths", () => {
   test("protected routes deny an anonymous visitor and send them to login", async ({ page }) => {

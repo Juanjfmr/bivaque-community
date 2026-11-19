@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test"
 import { stubVerificationStatus } from "./helpers/onboarding-status"
-import { BOTTOM_NAV, SIDEBAR, seedSession } from "./helpers/session"
+import { BOTTOM_NAV, seedSession } from "./helpers/session"
 
 // ---------------------------------------------------------------------------
 // helpers
@@ -143,77 +143,6 @@ test.describe("community feed", () => {
 
 // ---------------------------------------------------------------------------
 // Flow 4: Groups — private group admission
-// ---------------------------------------------------------------------------
-
-test.describe("groups journey", () => {
-  test("groups page refuses an anonymous visitor into the app entry", async ({ page }) => {
-    // Given an unauthenticated browser
-    // When the user navigates directly to /groups
-    await page.goto("/groups")
-
-    // Then the proxy refuses into the entry screen. ADR-20260907-consentimento-
-    // no-cadastro tirou o portão de consentimento do proxy; a recusa continua,
-    // o destino mudou.
-    await page.waitForURL(/\/app\/entrar/)
-    await expect(
-      page.getByRole("heading", { name: "A comunidade militar da sua cidade." }),
-    ).toBeVisible()
-  })
-
-  test("groups page with consent cookie renders groups UI", async ({ page, context }) => {
-    // Given a browser with consent cookie
-    await seedSession(context)
-
-    // When the user navigates to the groups page
-    await page.goto("/groups")
-
-    // Then the groups page renders (may show auth error or empty state)
-    await expect(page.locator("h1").first()).toBeVisible({ timeout: 15000 })
-  })
-
-  test("groups page shows primary navigation with correct item order", async ({
-    page,
-    context,
-  }) => {
-    // Given an authenticated member
-    await seedSession(context)
-    await page.goto("/groups")
-
-    // Then exactly one primary navigation is on screen: the BottomNav below
-    // md (4 tabs — the ADR-20260816-shells-e-navegacao containers), the
-    // sidebar from md up (rail or expanded, links).
-    const width = page.viewportSize()?.width ?? 0
-
-    if (width < 768) {
-      // Mobile: BottomNav with 4 tabs in NAV_ITEMS order
-      const nav = page.locator(BOTTOM_NAV)
-      await expect(nav).toBeVisible()
-      const tabs = nav.getByRole("tab")
-      await expect(tabs).toHaveCount(4)
-      // Containers de PROCESSO-DE-CONSTRUCAO §7, travados em
-      // tests/scope/navigation.test.mjs:42. Substituíram os quatro do
-      // ADR-20260816 em 2026-09-08.
-      await expect(tabs.nth(0)).toContainText("Início")
-      await expect(tabs.nth(1)).toContainText("Explorar")
-      await expect(tabs.nth(2)).toContainText("Comunidades")
-      await expect(tabs.nth(3)).toContainText("Perfil")
-    } else {
-      // Tablet rail / desktop sidebar: BottomNav hidden, sidebar links visible.
-      // A sidebar ganhou seções além da primária (secundária, comunidades,
-      // rodapé), então a contagem total de links não é mais 4: ancoramos nos
-      // quatro containers por href, na ordem de NAV_ITEMS.
-      await expect(page.locator(BOTTOM_NAV)).toBeHidden()
-      const sidebar = page.locator(SIDEBAR)
-      await expect(sidebar).toBeVisible()
-      for (const href of ["/inicio", "/explorar", "/communities", "/app/voce"]) {
-        await expect(sidebar.locator(`a[href="${href}"]`).first()).toBeVisible()
-      }
-    }
-  })
-})
-
-// ---------------------------------------------------------------------------
-// Flow 5: Recommendations
 // ---------------------------------------------------------------------------
 
 test.describe("recommendations journey", () => {

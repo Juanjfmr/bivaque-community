@@ -31,7 +31,7 @@ async function setConsentCookie(page: import("@playwright/test").Page) {
 // do portão e entrega a pessoa ao Você do app. A recusa não desapareceu, mudou
 // de dono: o app recebe a rota e a leitura sem sessão é recusada (Denial 1b).
 test.describe("anonymous visitor: protected route denial", () => {
-  const PROTECTED_ROUTES = ["/community", "/groups", "/recommendations"]
+  const PROTECTED_ROUTES = ["/community", "/recommendations"]
 
   for (const route of PROTECTED_ROUTES) {
     test(`${route} refuses an anonymous visitor and sends them to the app entry`, async ({
@@ -95,47 +95,6 @@ test.describe("anonymous visitor: protected route denial", () => {
 
 // ---------------------------------------------------------------------------
 // Denial 2: Private group admission — unauthenticated user cannot interact
-// ---------------------------------------------------------------------------
-
-test.describe("private group admission: denial paths", () => {
-  test("groups page without auth is refused into the app entry", async ({ page }) => {
-    // Given an unauthenticated browser
-    // When the user navigates to /groups
-    await page.goto("/groups")
-
-    // Then the proxy refuses into the entry screen (ADR-20260907: o portão de
-    // consentimento saiu; quem decide o acesso é a sessão)
-    await page.waitForURL(/\/app\/entrar/)
-    expect(page.url()).toContain("/app/entrar")
-  })
-
-  test("groups page with consent but no Supabase auth redirects to /app/entrar", async ({
-    page,
-  }) => {
-    // Given a browser with the consent cookie but no Supabase auth session
-    await setConsentCookie(page)
-
-    // When the user navigates to the groups page
-    await page.goto("/groups")
-
-    // Grupos continua na web até o F04: sem sessão, o portão do proxy manda para a
-    // entrada do app antes da página renderizar.
-    await page.waitForURL(/\/app\/entrar/, { timeout: 10000 })
-  })
-
-  test("an anonymous visitor cannot reach a private group directly", async ({ page }) => {
-    // Given an unauthenticated browser
-    // When the user navigates to a hypothetical private group URL
-    await page.goto("/groups/some-private-group-id")
-
-    // Then the proxy refuses antes de o Next tratar a rota — a recusa não
-    // depende de o grupo existir, e por isso não vaza existência
-    await page.waitForURL(/\/app\/entrar/)
-  })
-})
-
-// ---------------------------------------------------------------------------
-// Denial 3: DM without context — messages page requires auth
 // ---------------------------------------------------------------------------
 
 test.describe("DM without context: denial paths", () => {

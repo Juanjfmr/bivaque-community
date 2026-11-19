@@ -136,13 +136,6 @@ const PORTAS_FORA_DO_LINK: readonly PortaDeclarada[] = [
     dono: "visitante",
   },
   {
-    route: "/groups",
-    porta:
-      "CONDICIONAL: 'Veja os grupos' no compositor, que só aparece para quem ainda não participa de nenhum; o 'Criar o primeiro grupo' de Interesses saiu com a tela web (RUN-163) e o app não oferece criar grupo",
-    dependeDeDados: true,
-    dono: "membro",
-  },
-  {
     route: "/communities/[id]/admin",
     porta:
       "CONDICIONAL: menu do console, cuja entrada é 'Analisar pedidos de entrada' na aba Sobre (moderador)",
@@ -237,7 +230,6 @@ const PORTAS_FORA_DO_LINK: readonly PortaDeclarada[] = [
   // - /recuperar-senha: voltou a ser porta declarada no RUN-184 (ver a entrada logo abaixo de
   //   /nova-senha); o último link morreu com a tela de conta
   // - /communities/[id]: lista de comunidades (communities-screen.tsx:276) e a lateral (:328)
-  // - /groups/[id]: nome do grupo na lista de grupos (groups/page.tsx:448)
   // - /negocio: o painel do prestador (prestador/catalogo/page.tsx:82). Até o RUN-181 a
   //   porta era também 'Ofereça seus serviços' no painel de serviços (explorar/servicos/page.tsx:352);
   //   o painel morreu com a troca para /app/busca, e o link do prestador segue vivo — por isso

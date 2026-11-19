@@ -12,6 +12,8 @@ import { routeFromFile } from "../../e2e/helpers/crawl-model"
 const ID = "41000000-0000-4000-8000-000000000051"
 const ORIGEM = "https://bivaque.example.invalid"
 const TROCADAS = [
+  ["/groups", "/app/comunidade"],
+  [`/groups/${ID}`, `/app/grupo/${ID}`],
   [`/indicacoes/${ID}`, `/app/pergunta/${ID}`],
   [`/mercado/${ID}`, `/app/anuncio/${ID}`],
   [`/mercado/${ID}/editar`, `/app/anuncio/${ID}`],
@@ -265,7 +267,7 @@ describe("LAN-TROCA fase 1", () => {
   // de bloqueados/família e as actions (trust-actions.ts) morreram com a troca.
   // RUN-186: salvos saiu pelo mesmo molde. A prova é de ausência: o diretório não
   // existe mais no checkout.
-  it.each(["notifications", "configuracoes", "messages", "salvos"])(
+  it.each(["notifications", "configuracoes", "messages", "salvos", "groups"])(
     "a pasta antiga %s não deixa tela nem action para trás",
     (relativa) => {
       const pasta = join(shell, relativa)

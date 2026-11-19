@@ -110,23 +110,6 @@ async function signInAndVisit(page: Page, url: string) {
 }
 
 test.describe("DS-035 — Portuguese diacritics in segment fallbacks", () => {
-  test("/groups/<unknown> renders 'Página não encontrada' with full diacritics", async ({
-    page,
-  }) => {
-    await signInAndVisit(page, `/groups/${NOT_FOUND_GROUP_ID}`)
-
-    const body = page.locator("main")
-    await expect(body).toBeVisible({ timeout: 15000 })
-    await expect(body).toContainText("Página não encontrada")
-    await expect(body).toContainText("O endereço que você acessou não existe")
-
-    const text = (await body.textContent()) ?? ""
-    expect(text).not.toMatch(/Pagina nao/)
-    expect(text).not.toMatch(/endereco/)
-    expect(text).not.toMatch(/voce acessou/)
-    expect(text).not.toMatch(/nao existe/)
-  })
-
   test("/events/<unknown> also renders the diacritized fallback title", async ({ page }) => {
     // RUN-133/F05: a tela antiga de eventos saiu; /events/<id> passa a aterrar
     // no encontro do app. O id inexistente continua exercitando a mesma
