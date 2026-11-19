@@ -67,6 +67,15 @@ const nextConfig: NextConfig = {
         ],
       },
       {
+        source: "/api/app/resumo/descadastro",
+        headers: [
+          {
+            key: "Content-Security-Policy",
+            value: "default-src 'none'; frame-ancestors 'none'; base-uri 'none'",
+          },
+        ],
+      },
+      {
         source: "/app/:path*",
         headers: [
           {
