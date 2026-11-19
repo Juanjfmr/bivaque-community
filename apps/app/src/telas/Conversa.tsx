@@ -183,10 +183,10 @@ export function Conversa() {
   async function enviarTexto(texto = rascunho, reenvio = false) {
     const pedido = controle.current
     if (!pedido || pedido.signal.aborted || envioEmCurso.current || !texto.trim()) return
-    envioEmCurso.current = true
     const anterior = ultimaChave.current
     const clientKey =
       anterior !== null && anterior.texto === texto ? anterior.chave : novaChaveDeEnvio()
+    envioEmCurso.current = true
     ultimaChave.current = { texto, chave: clientKey }
     setEnviando(true)
     setErroLocal("")

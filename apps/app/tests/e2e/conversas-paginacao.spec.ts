@@ -53,7 +53,9 @@ test("a caixa impede pagina duplicada e permite tentar novamente sem perder o hi
     alvo.click()
   })
   await expect.poll(() => leiturasDaPagina).toBe(1)
-  await expect(page.getByRole("button", { name: "Carregando…" })).toBeDisabled()
+  const botaoPagina = page.getByRole("button", { name: /Carregando/ })
+  await expect(botaoPagina).toHaveAttribute("aria-busy", "true")
+  await expect(botaoPagina).toBeDisabled()
   liberar()
 
   await expect(page.getByRole("alert")).toContainText("Não foi possível carregar mais conversas.")

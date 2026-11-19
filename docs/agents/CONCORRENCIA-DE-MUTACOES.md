@@ -28,11 +28,11 @@ há atualização otimista dos fluxos aqui tratados.
 
 ## Limite de garantia
 
-A guarda local impede eventos concorrentes **na mesma montagem da tela**.
-Não é idempotência distribuída: duplicação entre abas, dispositivos ou após
-timeout em que o servidor gravou, mas a resposta não chegou, requer chave de
-idempotência verificada e aplicada no servidor e banco. **Não** adicionar
-essa garantia sem migração/contrato próprio e teste de respostas ambíguas.
+O envio de mensagem é idempotente quando o mesmo envio é repetido na mesma
+montagem: **Tentar de novo** reutiliza a chave clientKey da tentativa. Entre
+abas ou dispositivos, cada envio recebe uma chave nova. Participação em grupo
+e convite de família não têm chave de idempotência no servidor; a guarda local
+desses fluxos vale somente na mesma montagem da tela.
 
 ## Regressão exigida
 
