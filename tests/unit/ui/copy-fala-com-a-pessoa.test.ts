@@ -79,22 +79,3 @@ describe("a copy fala com a pessoa, não sobre o sistema", () => {
     expect(copy.some((text) => /comentário pode explicar/.test(text))).toBe(false)
   })
 })
-
-describe("Tenho interesse no imóvel abre a conversa", () => {
-  const button = readFileSync(
-    join(APP, "(shell)", "imoveis", "[id]", "interest-button.tsx"),
-    "utf8",
-  )
-  const page = readFileSync(join(APP, "(shell)", "imoveis", "[id]", "page.tsx"), "utf8")
-
-  it("usa a mesma conversa do Mercado, pelo contexto do anúncio", () => {
-    expect(button).toContain('rpc("open_conversation"')
-    expect(button).toContain('p_context_type: "listing"')
-    expect(button).toMatch(/router\.push\(`\/messages\?conversation=/)
-  })
-
-  it("a página não tem mais o botão desligado com promessa", () => {
-    expect(page).toContain("<PropertyInterestButton")
-    expect(page).not.toMatch(/<button[^>]*\sdisabled/)
-  })
-})

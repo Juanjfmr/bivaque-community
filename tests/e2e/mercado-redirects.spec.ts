@@ -20,6 +20,8 @@ const TROCAS = [
   ["/mercado?preco_min=10000&pagina=2", "/app/mercado"],
   ["/imoveis?q=centro&quartos=2&valor_max=4000", "/app/imoveis"],
   ["/meus-anuncios", "/app/meus-anuncios"],
+  [`/mercado/${ANUNCIO_ID}?origem=email`, `/app/anuncio/${ANUNCIO_ID}`],
+  [`/imoveis/${ANUNCIO_ID}?origem=push`, `/app/anuncio/${ANUNCIO_ID}`],
   ["/mercado/novo?categoria=eletronicos", "/app/mercado"],
   [`/mercado/${ANUNCIO_ID}/editar?aba=fotos`, `/app/anuncio/${ANUNCIO_ID}`],
   ["/imoveis/novo", "/app/imoveis"],
