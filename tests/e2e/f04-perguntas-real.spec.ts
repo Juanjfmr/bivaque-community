@@ -512,17 +512,24 @@ test.describe("F04 — perguntas reais no app", { tag: "@stateful" }, () => {
       true,
     )
 
-    // A seção só mostra o vazio dela depois de a lista ser lida: com o seed sem
-    // outros seguimentos, esse vazio prova que a linha saiu do banco — o
-    // `toHaveCount(0)` antes da leitura terminaria passando com o esqueleto.
+    // O vazio só aparece depois de a lista ser lida: com o seed sem outros
+    // seguimentos, ele prova que a linha saiu do banco — o `toHaveCount(0)`
+    // antes da leitura terminaria passando com o esqueleto. Desde o REGUA-002,
+    // quem não tem nenhum salvo vê o vazio único da tela ("Nada salvo ainda")
+    // e a seção de perguntas some; com outros salvos, a seção mostra o vazio
+    // dela. Qualquer dos dois só sai depois da leitura das perguntas.
     await page.reload()
-    const secao = page.locator('[data-tela="salvos"]:visible [data-salvos="perguntas"]:visible')
-    await expect(secao, "a seção de perguntas precisa terminar de carregar").toContainText(
-      "Nenhuma pergunta seguida ainda",
-      { timeout: 30_000 },
-    )
+    const tela = page.locator('[data-tela="salvos"]:visible')
+    const vazioDaSecao = tela.locator('[data-salvos="perguntas"]', {
+      hasText: "Nenhuma pergunta seguida ainda",
+    })
+    const vazioDaTela = tela.getByText("Nada salvo ainda", { exact: true })
     await expect(
-      secao.locator('[data-linha="lista"]', { hasText: TEXTO_SEMEADO }),
+      vazioDaSecao.or(vazioDaTela),
+      "a tela de Salvos precisa terminar de ler as perguntas seguidas",
+    ).toBeVisible({ timeout: 30_000 })
+    await expect(
+      tela.locator('[data-linha="lista"]', { hasText: TEXTO_SEMEADO }),
       "desseguir em Salvos precisa apagar a linha no banco",
     ).toHaveCount(0)
   })
