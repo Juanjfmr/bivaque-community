@@ -1221,3 +1221,11 @@
     animation: none;
   }
 }
+
+@media (forced-colors: active) {
+  .pc :where(.pc-campo, .pc-busca) :where(input, select):focus-visible,
+  .pc .pc-area:focus-visible {
+    outline: 2px solid Highlight;
+    outline-offset: 2px;
+  }
+}
