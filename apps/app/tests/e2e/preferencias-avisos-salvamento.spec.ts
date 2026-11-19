@@ -35,8 +35,8 @@ test("avisos: bloqueia edição enquanto salva e não envia PATCH duplicado", as
   await page.goto("/app/voce")
   const secao = page.locator('[data-preferencias-de-aviso="sim"]')
   // D15: um controle por decisão — o interruptor é do canal.
-  const respostasNoApp = secao.getByRole("switch", { name: "Avisos de respostas por no app" })
-  const respostasEmail = secao.getByRole("switch", { name: "Avisos de respostas por e-mail" })
+  const respostasNoApp = secao.getByRole("switch", { name: "Respostas no app" })
+  const respostasEmail = secao.getByRole("switch", { name: "Respostas por e-mail" })
   const gravar = secao.getByRole("button", { name: "Gravar preferências de avisos" })
 
   await expect(respostasNoApp).toBeChecked()
@@ -71,7 +71,7 @@ test("avisos: falha de gravação preserva escolha e permite nova tentativa", as
 
   await page.goto("/app/voce")
   const secao = page.locator('[data-preferencias-de-aviso="sim"]')
-  const respostasNoApp = secao.getByRole("switch", { name: "Avisos de respostas por no app" })
+  const respostasNoApp = secao.getByRole("switch", { name: "Respostas no app" })
   const gravar = secao.getByRole("button", { name: "Gravar preferências de avisos" })
   await respostasNoApp.click()
   await gravar.click()
