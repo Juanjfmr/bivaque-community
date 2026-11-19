@@ -1,4 +1,6 @@
 /* biome-ignore-all lint/performance/noImgElement: fotos finais em WebP com art direction, carregadas antes da captura da comparação (PORT-001) */
+
+import { headers } from "next/headers"
 import Link from "next/link"
 import { MaterialIcon } from "../components/material/material-icon"
 import { materialSymbols, notoSans, notoSerif } from "../fonts/landing-fonts"
@@ -168,7 +170,8 @@ function Thread() {
   )
 }
 
-export function LandingPage() {
+export async function LandingPage() {
+  const nonce = (await headers()).get("x-nonce") ?? undefined
   return (
     <div
       className={`ld bv-skin ${notoSans.variable} ${notoSerif.variable} ${materialSymbols.variable}`}
@@ -179,6 +182,7 @@ export function LandingPage() {
           `html:not(.ld-js)` em landing.css). A classe entra antes da primeira
           pintura, então quem tem JS vê a landing como sempre. */}
       <script
+        nonce={nonce}
         // biome-ignore lint/security/noDangerouslySetInnerHtml: uma classe no <html>, sem dado de usuário
         dangerouslySetInnerHTML={{ __html: "document.documentElement.classList.add('ld-js')" }}
       />

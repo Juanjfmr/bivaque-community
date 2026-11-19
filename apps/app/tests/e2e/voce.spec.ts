@@ -232,6 +232,8 @@ test("sair da conta volta para a entrada e o cache local do aparelho sai junto",
   await expect(
     page.getByRole("heading", { level: 1, name: "A comunidade militar da sua cidade." }),
   ).toBeVisible()
+  await expect(page.locator("html")).toHaveAttribute("data-tema", "claro")
+  await expect(page.locator('meta[name="theme-color"]')).toHaveAttribute("content", "#F3F5F6")
   const guardado = await page.evaluate(() => ({
     rascunhos: sessionStorage.getItem("bivaque:criacao-rascunhos:manaus"),
     recentes: localStorage.getItem("bivaque:buscas-recentes"),
