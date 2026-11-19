@@ -44,6 +44,14 @@ describe("cabeçalhos de segurança do Next", () => {
     ).toBe("default-src 'none'; frame-ancestors 'none'")
   })
 
+  it("permite ao service worker buscar recursos da propria origem", async () => {
+    const regras = await nextConfig.headers?.()
+    const worker = regras?.find((regra) => regra.source === "/api/sw")
+    expect(
+      worker?.headers.find((cabecalho) => cabecalho.key === "Content-Security-Policy")?.value,
+    ).toBe("default-src 'none'; connect-src 'self'; frame-ancestors 'none'")
+  })
+
   it("preserva a CSP do descadastro", async () => {
     const regras = await nextConfig.headers?.()
     const rota = regras?.find((regra) => regra.source === "/api/app/resumo/descadastro")
