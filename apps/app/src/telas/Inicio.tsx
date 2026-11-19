@@ -318,6 +318,7 @@ export function Inicio() {
             {cidadeVazia ? (
               <Secao titulo={`${cidade} está começando`} className="mt-4">
                 <EstadoVazio
+                  nivel="h3"
                   titulo="A primeira publicação abre a cidade"
                   texto="Seja a primeira pessoa a publicar na sua cidade."
                   icone="public"
@@ -355,6 +356,7 @@ export function Inicio() {
                   </p>
                   {negocios.length === 0 ? (
                     <EstadoVazio
+                      nivel="h3"
                       titulo="Ainda sem negócios cadastrados"
                       texto="As indicações da comunidade ajudarão a formar o guia de serviços."
                       icone="storefront"
@@ -407,6 +409,7 @@ export function Inicio() {
                   )}
                   {anuncios.length === 0 ? (
                     <EstadoVazio
+                      nivel="h3"
                       titulo="As primeiras oportunidades aparecem aqui"
                       texto="Quando alguém publicar nesta cidade, você poderá consultar e entrar em contato."
                       icone="sell"
@@ -449,6 +452,7 @@ export function Inicio() {
                 >
                   {perguntas.length === 0 ? (
                     <EstadoVazio
+                      nivel="h3"
                       titulo="Uma pergunta pode ajudar muita gente"
                       texto="Busque uma indicação ou compartilhe uma dúvida com sua cidade."
                       icone="forum"
