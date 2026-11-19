@@ -1,0 +1,72 @@
+task_id: LOJA-001
+objective: >
+  Primeiro item do LAN-LOJA (ADR-20261118 §8, passo 3): o mesmo build do apps/app empacotado em
+  Capacitor, com os projetos Android e iOS versionados no repositório. O app abre no emulador Android
+  na tela de entrada, conversa com a API por uma base absoluta configurável, tira foto pela câmera
+  nativa e responde a um link profundo do esquema do app. O CI gera o APK de depuração do Android e
+  compila o projeto iOS no executor macOS, sem assinatura de produção. A sessão nativa (como o app
+  obtém e guarda o token) NÃO muda neste lote: o executor registra um inventário dela para o ADR
+  seguinte.
+authority:
+  - docs/LANCAMENTO.md (App de loja; fase 7)
+  - docs/decisions/ADR-20261024-front-react-spa.md (§5 contrato de API, CORS com a origem do Capacitor; Capacitor sobre o mesmo build)
+  - docs/decisions/ADR-20261118-push-nativo-no-app-de-loja.md (§5 termo proibido, §6 segredos, §8 ordem e CI)
+  - "card LAN-LOJA em tools/backend-kanban/public/board.json"
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    Em origin/main 1bd9c7f8 não há nenhum arquivo do Capacitor (git ls-tree sem capacitor), apps/app
+    não tem android/ nem ios/, e apps/app/lib/api/cliente.ts chama /api/app por caminho relativo, que
+    não chega ao servidor quando o app roda na origem do Capacitor.
+allowed_paths:
+  - apps/app/capacitor.config.ts
+  - apps/app/android/**
+  - apps/app/ios/**
+  - apps/app/package.json
+  - pnpm-lock.yaml
+  - apps/app/vite.config.ts
+  - apps/app/lib/api/cliente.ts
+  - apps/app/lib/nativo/**
+  - apps/app/src/nativo/**
+  - apps/app/src/main.tsx
+  - apps/app/tests/*.test.ts
+  - apps/app/tests/*.test.tsx
+  - apps/app/tests/nativo/**
+  - .gitignore
+  - .github/workflows/app-loja.yml
+  - docs/agents/LOJA-SESSAO-INVENTARIO.md
+  - docs/agents/tasks/LOJA-001.task.yml
+forbidden:
+  - apps/web, supabase/, migrations, packages/
+  - mudar o login, a sessão, cookies ou o resolvedor de sessão; guardar token no aparelho (fica para o ADR de sessão)
+  - plugin de push, de login Google ou Apple (lotes seguintes)
+  - o termo da plataforma do Google no código ou nos templates (tire do template Android a aplicação condicional do plugin de serviços do Google; ela volta no lote de push, com a exceção do ADR-20261118 §5)
+  - mudar tests/privacy/product-boundaries-and-pii.test.ts ou afrouxar qualquer teste existente
+  - google-services.json, GoogleService-Info.plist, keystore, chave .p8, certificado ou qualquer segredo no repositório
+  - dependência que não seja do Capacitor oficial (@capacitor/*), com versões exatas fixadas
+  - mudar o comportamento do app na web (a base relativa continua sendo o padrão fora do Capacitor)
+  - git stash, reiniciar ou reconstruir o banco local, delegar
+  - dado pessoal real ou CPF real
+acceptance:
+  - "apps/app/android e apps/app/ios gerados pelo Capacitor sobre o build do apps/app, versionados sem artefatos de build (.gradle/, build/, Pods/, DerivedData no .gitignore)"
+  - "o id do app, o nome exibido e o esquema de link profundo ficam num só lugar (capacitor.config.ts), documentados no inventário"
+  - "cliente.ts usa a base absoluta só quando o app roda nativo (Capacitor.isNativePlatform) e a base relativa na web; teste unitário cobre os dois casos e a ausência da base configurada no nativo (falha clara, sem chamar a origem errada)"
+  - "um link profundo do esquema do app (ex.: <esquema>://app/pergunta/<id>) abre a rota correspondente do roteador; teste unitário da conversão de URL em rota, com caso inválido recusado (host ou caminho fora do app não navega)"
+  - "foto pela câmera nativa: o seletor de foto existente usa @capacitor/camera no nativo e o input de arquivo na web; o arquivo resultante segue pelo mesmo envio e pela mesma validação"
+  - "emulador Android: APK de depuração instalado, o app abre na tela de entrada, o link profundo abre a rota e a câmera abre; capturas em .visual/loja-001/"
+  - "workflow .github/workflows/app-loja.yml só na suíte completa (label ci:full): gera o APK de depuração no ubuntu e compila o projeto iOS sem assinatura no macos, e roda a varredura de segredos sobre os artefatos"
+  - "docs/agents/LOJA-SESSAO-INVENTARIO.md: como o app entra hoje (rotas, cookies, onde a sessão nasce), o que o servidor já aceita por Authorization, o que falta para a sessão nativa e 3 opções com uma recomendada, sem implementar"
+proof:
+  - npx pnpm@11.18.0 gate --fast
+  - npx pnpm@11.18.0 --filter @bivaque/app test
+  - npx pnpm@11.18.0 --filter @bivaque/app exec vite build
+  - npx pnpm@11.18.0 test:scope
+  - "npx pnpm@11.18.0 --filter @bivaque/app exec cap sync android, depois o assembleDebug do Gradle (em caminho curto se o Windows recusar o caminho longo) e a instalação no emulador com capturas"
+  - npx pnpm@11.18.0 --filter @bivaque/app test:e2e
+risk: infra
+risk_level: R2
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: HUMAN_DECISION
+closure:
+  requires_runtime_evidence: true
