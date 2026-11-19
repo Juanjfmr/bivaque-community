@@ -57,13 +57,13 @@ function cabecalhosDaPorta(page: Page): Record<string, string> {
   return { origin: new URL(page.url()).origin, "x-bivaque-app": "bivaque-spa" }
 }
 
-// REGUA-002: a cidade e a Força/OM moram atrás das linhas de ajuste do Você e
-// abrem ao toque. O comportamento provado é o mesmo; só a entrada mudou.
-async function abrirLinha(page: Page, apoio: string): Promise<void> {
-  await page.getByRole("button").filter({ hasText: apoio }).click()
+// REGUA-002: as linhas podem já estar abertas ao entrar ou voltar à tela.
+async function abrirLinha(page: Page, titulo: string): Promise<void> {
+  const linha = page.getByRole("button", { name: new RegExp(titulo) })
+  if ((await linha.getAttribute("aria-expanded")) !== "true") await linha.click()
 }
-const CIDADE = "Levar sua conta para outra cidade"
-const FORCA = "Declarar é opcional"
+const CIDADE = "Mudar de cidade"
+const FORCA = "Força e OM"
 
 test.describe("F10 — paridade de cidade e afiliação no app", { tag: "@stateful" }, () => {
   test.afterEach(async () => {
