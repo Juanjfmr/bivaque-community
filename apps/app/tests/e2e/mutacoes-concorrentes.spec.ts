@@ -1,8 +1,123 @@
-import { expect, test } from "@playwright/test"
+﻿import { expect, test } from "@playwright/test"
+import { simularConversas } from "./conversas-ajuda"
 import { simularGrupos } from "./grupos-ajuda"
 import { simularVoce } from "./voce-ajuda"
 
 /** Reproduz cliques duplos antes do próximo render, não apenas dois clicks do Playwright. */
+test("conversa: duas submissões no mesmo quadro geram uma mensagem", async ({ page }) => {
+  await simularConversas(page)
+  let liberar: () => void = () => {
+    throw new Error("Envio ainda não iniciado")
+  }
+  const pendente = new Promise<void>((resolve) => {
+    liberar = resolve
+  })
+  let envios = 0
+  await page.route(/\/api\/app\/conversas\/t1\/mensagens$/, async (rota) => {
+    const corpo = rota.request().postDataJSON() as { texto: string }
+    envios++
+    await pendente
+    await rota.fulfill({
+      status: 201,
+      json: {
+        mensagem: {
+          id: "mensagem-1",
+          conteudo: corpo.texto,
+          minha: true,
+          criadaEm: "2026-11-09T12:00:00.000Z",
+        },
+      },
+    })
+  })
+
+  await page.goto("/app/conversa/t1")
+  const compositor = page.locator('[data-compositor-conversa="sim"]')
+  const campo = compositor.locator("#mensagem-da-conversa")
+  await campo.fill("Posso buscar o item amanhã?")
+  await compositor.locator("form").evaluate((formulario) => {
+    formulario.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }))
+    formulario.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }))
+  })
+  await expect.poll(() => envios).toBe(1)
+  await expect(compositor.locator('[data-acao="enviar-mensagem"]')).toBeDisabled()
+  await expect(campo).toHaveValue("Posso buscar o item amanhã?")
+  liberar()
+  await expect(page.locator('[data-mensagens="historico"]')).toContainText(
+    "Posso buscar o item amanhã?",
+  )
+  await expect(campo).toHaveValue("")
+  expect(envios).toBe(1)
+})
+
+test("conversa: página anterior não é pedida duas vezes", async ({ page }) => {
+  await simularConversas(page)
+  let liberar = () => {}
+  const pendente = new Promise<void>((resolve) => {
+    liberar = resolve
+  })
+  let leituras = 0
+  await page.route(/\/api\/app\/conversas\/t1(?:\?.*)?$/, async (rota) => {
+    const cursor = new URL(rota.request().url()).searchParams.get("antes")
+    if (cursor) {
+      leituras++
+      await pendente
+    }
+    await rota.fulfill({
+      json: {
+        conversa: {
+          id: "t1",
+          nome: "Paulo R.",
+          outroId: "u-paulo",
+          tipo: "listing",
+          contextoId: "i3",
+          ultima: "",
+          porLer: false,
+        },
+        mensagens: [],
+        anterior: cursor ? null : "pagina-1",
+      },
+    })
+  })
+  await page.goto("/app/conversa/t1")
+  await page.getByRole("button", { name: "Ver mensagens anteriores" }).evaluate((botao) => {
+    ;(botao as HTMLButtonElement).click()
+    ;(botao as HTMLButtonElement).click()
+  })
+  await expect.poll(() => leituras).toBe(1)
+  liberar()
+  await expect(page.getByRole("button", { name: "Ver mensagens anteriores" })).toHaveCount(0)
+  expect(leituras).toBe(1)
+})
+
+test("conversa: falha preserva o rascunho e permite repetição", async ({ page }) => {
+  await simularConversas(page)
+  let envios = 0
+  await page.route(/\/api\/app\/conversas\/t1\/mensagens$/, async (rota) => {
+    envios++
+    if (envios === 1) return rota.fulfill({ status: 503, json: { erro: "indisponivel" } })
+    return rota.fulfill({
+      status: 201,
+      json: {
+        mensagem: {
+          id: "mensagem-1",
+          conteudo: "Teste sintético",
+          minha: true,
+          criadaEm: "2026-11-09T12:00:00.000Z",
+        },
+      },
+    })
+  })
+  await page.goto("/app/conversa/t1")
+  const campo = page.locator("#mensagem-da-conversa")
+  await campo.fill("Teste sintético")
+  await page.locator('[data-acao="enviar-mensagem"]').click()
+  await expect(page.locator('[data-mensagem="nao-enviada"]')).toBeVisible()
+  await expect(campo).toHaveValue("Teste sintético")
+  await page.getByRole("button", { name: "Tentar de novo" }).click()
+  await expect(page.locator('[data-mensagem="nao-enviada"]')).toHaveCount(0)
+  expect(envios).toBe(2)
+})
+
 test("grupo fechado: solicitação duplicada não envia dois PUTs nem fecha o diálogo", async ({
   page,
 }) => {
