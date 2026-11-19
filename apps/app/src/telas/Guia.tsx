@@ -91,6 +91,18 @@ function PassoDoGuia({ passo }: { passo: Passo }) {
 
 export function Guia() {
   const navegacao = useNavegacao()
+  const tela = useRef<HTMLElement>(null)
+  useEffect(() => {
+    const elemento = tela.current
+    const cabecalho = elemento?.querySelector<HTMLElement>('[data-guia="cabecalho"]')
+    if (!elemento || !cabecalho) return
+    const medir = () =>
+      elemento.style.setProperty("--altura-cabecalho-guia", `${cabecalho.offsetHeight}px`)
+    medir()
+    const observador = new ResizeObserver(medir)
+    observador.observe(cabecalho)
+    return () => observador.disconnect()
+  }, [])
   // O recorte do link (LAN-TROCA) vale já no primeiro desenho: o termo e a
   // categoria são lidos do endereço na montagem, então o primeiro pedido é o da
   // consulta. A URL é só a porta de entrada; a partir dela quem escreve é a
@@ -190,7 +202,7 @@ export function Guia() {
   const cidade = dados?.cidade ?? ""
 
   return (
-    <section data-tela="guia" className="grid gap-7 pb-6">
+    <section ref={tela} data-tela="guia" className="grid gap-7 pb-6">
       <CabecalhoDoGuia cidade={cidade} />
 
       {SECOES.map((secao) => (
@@ -256,6 +268,7 @@ export function Guia() {
                         key={entrada.id}
                         icone={ICONE_DA_CATEGORIA[entrada.categoria]}
                         titulo={entrada.nome}
+                        tituloMultilinha
                         subtitulo={entrada.descricao}
                         fim={
                           entrada.salvo ? (

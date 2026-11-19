@@ -819,7 +819,8 @@
       [data-tela="cidade"]
     ):not([data-tela="busca"]):not([data-tela="dono"]):not([data-tela="galeria"])
     [data-cabeca="pagina"]
-    h1 {
+    h1,
+  [data-tela="guia"] [data-guia="cabecalho"] h1 {
     position: absolute;
     width: 1px;
     height: 1px;
@@ -3594,4 +3595,15 @@ body[data-profundidade="sim"] [data-casca="app"] {
   padding-inline: 0.5rem;
   line-height: 1.2;
   white-space: normal;
+}
+
+[data-tela="guia"] [data-guia="secao"] {
+  scroll-margin-top: var(--altura-cabecalho-guia, 120px);
+}
+
+@media (min-width: 1024px) {
+  [data-tela="guia"] {
+    max-width: 720px;
+    margin-inline: auto;
+  }
 }
