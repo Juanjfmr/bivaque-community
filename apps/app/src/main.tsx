@@ -1,3 +1,4 @@
+import { Capacitor } from "@capacitor/core"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { RouterProvider } from "@tanstack/react-router"
 import { createRoot } from "react-dom/client"
@@ -8,6 +9,10 @@ import { ProvedorDeCargas } from "@/src/contexto/cargas"
 import { ProvedorDaCasca } from "@/src/contexto/casca"
 import { roteador } from "@/src/roteador"
 import "./styles.css"
+
+if (Capacitor.isNativePlatform()) {
+  void import("@/src/nativo/links").then(({ ouvirLinksNativos }) => ouvirLinksNativos())
+}
 
 const cliente = new QueryClient()
 const elemento = document.getElementById("root")
