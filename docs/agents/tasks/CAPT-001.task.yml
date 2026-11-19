@@ -1,0 +1,36 @@
+task_id: CAPT-001
+objective: >
+  Capturas cegas de F02, F03, F06, F07 e F08 nos temas claro e escuro, em 375/768/1440, mostrando a
+  tela real de cada passo, para a revisão às cegas contra a régua Nextdoor (critério 2 de LANCAMENTO).
+authority:
+  - docs/LANCAMENTO.md (F02, F03, F06, F07, F08)
+  - "apps/app/tests/e2e/cegas/capturas-f09-f10.spec.ts (padrão claro e escuro por data-tema no html)"
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    Na main 192934d4, capturas.spec.ts fotografa só o tema claro (TEMAS = ["light"], linha 35) e
+    não tem F06; a revisão cega precisa dos dois temas e da jornada de Mercado e moradia.
+allowed_paths:
+  - apps/app/tests/e2e/cegas/capturas.spec.ts
+  - apps/app/tests/e2e/*-ajuda.ts
+  - docs/agents/tasks/CAPT-001.task.yml
+forbidden:
+  - mudar código de produção (apps/app/src, apps/web)
+  - tocar capturas-f09-f10.spec.ts (lotes REGUA-001/002 em andamento)
+  - afrouxar ou apagar teste existente
+  - dado pessoal real ou CPF real em stub
+acceptance:
+  - TEMAS cobre light e dark, pelo mesmo mecanismo de capturas-f09-f10.spec.ts
+  - jornada f06-mercado-e-moradia com Mercado, desapegos, imóveis, detalhe de anúncio, criar anúncio e meus anúncios
+  - cada passo espera o seletor da tela real; nenhuma captura mostra a TelaDeProva nem andaime de prova
+  - capturas geradas em .visual/blind/<jornada>/ para as cinco jornadas, nos dois temas e três larguras
+proof:
+  - npx pnpm@11.18.0 gate --fast
+  - npx pnpm@11.18.0 --filter @bivaque/app test:e2e -- cegas/capturas.spec
+risk: tests
+risk_level: R1
+reviewer_must_differ_from_executor: true
+retry_budget: 2
+on_budget_exhausted: HUMAN_DECISION
+closure:
+  requires_runtime_evidence: true
