@@ -15,10 +15,10 @@ import { abrir as abrirRota, SELETOR_TITULO } from "../apoio"
  * `/api/app/*` simuladas no mesmo contrato do servidor — como `avisos.spec.ts` e
  * `salvos.spec.ts` já fazem para medir estas telas.
  *
- * O spec só tira fotos, nos DOIS temas (contrato REGUA-002, 18/11: capturas
- * cegas regeradas em claro E escuro): não afirma veredito, nota nem aparência. O
- * julgamento é de outro modelo, a partir destas imagens. O tema entra pelo
- * `data-tema` do documento — o app não segue o esquema do sistema — e as
+ * O spec só tira fotos, nos dois temas — claro e escuro, dormente até
+ * `data-tema="escuro"` (decisão do dono de 14/11: o escuro não segue o
+ * sistema; a captura liga o atributo no documento): não afirma veredito, nota
+ * nem aparência. O julgamento é de outro modelo, a partir destas imagens. As
  * capturas ficam em `.visual/blind/<jornada>/<largura>-<tema>-<passo>.png`,
  * nomeadas só pela jornada.
  */
@@ -424,11 +424,7 @@ async function assentar(page: Page): Promise<void> {
   })
 }
 
-/**
- * O tema do app entra por `data-tema` no `<html>`, nunca pelo esquema do
- * sistema (styles.css). Como cada passo abre documento novo, o tema é aplicado
- * depois de navegar, antes de fotografar.
- */
+/** O escuro é dormente (dono, 14/11): só acende com data-tema no documento. */
 async function aplicarTema(page: Page, tema: "light" | "dark"): Promise<void> {
   await page.emulateMedia({ colorScheme: tema })
   await page.evaluate((escuro) => {
@@ -583,7 +579,9 @@ const JORNADAS: ReadonlyArray<{ nome: string; passos: readonly Passo[] }> = [
         ir: async (page) => {
           await abrirDoZero(page, "/app/conversas")
         },
-        pronto: '[data-estado="vazio"]',
+        // D9/D20: um estado vazio só, o painel de saída com ilustração — em
+        // toda largura; à esquerda ficam só os filtros.
+        pronto: '[data-caixa="vazia"]:visible',
       },
       {
         nome: "03-conversa",
@@ -601,9 +599,14 @@ const JORNADAS: ReadonlyArray<{ nome: string; passos: readonly Passo[] }> = [
           await expect(page.locator('[data-mensagens="historico"]')).toBeVisible()
           await page.locator("#mensagem-da-conversa").fill("Consigo buscar na quinta à tarde.")
           await page.locator('[data-acao="enviar-mensagem"]').click()
-          await expect(page.getByRole("alert")).toContainText("Seu texto foi mantido")
+          // O balão da própria mensagem é a única mensagem visível do erro (D22);
+          // o alerta mora só na região viva oculta do compositor.
+          const balao = page.locator('[data-mensagem="nao-enviada"]')
+          await expect(balao.getByText("Não enviada")).toBeInViewport()
+          await expect(balao.locator("button")).toBeInViewport()
+          await expect(balao).toBeVisible()
         },
-        pronto: '[role="alert"]',
+        pronto: '[data-mensagem="nao-enviada"]',
       },
       {
         nome: "05-menu-de-bloqueio",
@@ -629,7 +632,7 @@ const JORNADAS: ReadonlyArray<{ nome: string; passos: readonly Passo[] }> = [
           await page.getByRole("button", { name: "Denunciar mensagem" }).first().click()
           await page.getByRole("radio", { name: "Spam" }).check()
         },
-        pronto: '[data-sobreposicao="denuncia-de-mensagem"]',
+        pronto: '[data-sobreposicao="conversa-denuncia"]',
       },
     ],
   },
@@ -671,7 +674,44 @@ const JORNADAS: ReadonlyArray<{ nome: string; passos: readonly Passo[] }> = [
           await secao.evaluate((elemento) => {
             elemento.closest('[data-secao="sim"]')?.scrollIntoView({ block: "start" })
           })
+          const ultimo = secao.locator('[data-preferencia="product_news"] [role="switch"]').last()
+          await ultimo.evaluate((elemento) => elemento.scrollIntoView({ block: "center" }))
           await page.waitForTimeout(400)
+          await expect(ultimo).toBeInViewport()
+          // O seletor do resumo é o último controle antes da barra: ele também
+          // precisa ficar livre (a reauditoria achou a barra sobre "Semanal").
+          const seletor = secao.getByRole("combobox")
+          await seletor.evaluate((elemento) => elemento.scrollIntoView({ block: "center" }))
+          await page.waitForTimeout(400)
+          await expect(seletor).toBeInViewport()
+          const seletorLivre = await seletor.evaluate((elemento) => {
+            const alvo = elemento.getBoundingClientRect()
+            const barra = document
+              .querySelector('[data-barra="gravar-preferencias"]')
+              ?.getBoundingClientRect()
+            return !barra || alvo.bottom <= barra.top || alvo.top >= barra.bottom
+          })
+          expect(seletorLivre).toBe(true)
+          await ultimo.evaluate((elemento) => elemento.scrollIntoView({ block: "center" }))
+          await page.waitForTimeout(400)
+          const livre = await ultimo.evaluate((elemento) => {
+            const alvo = elemento.getBoundingClientRect()
+            const barra = document
+              .querySelector('[data-barra="gravar-preferencias"]')
+              ?.getBoundingClientRect()
+            const criar = document.querySelector('[data-acao="criar"]')
+            const fab = criar?.getBoundingClientRect()
+            const sobrepoe = (outro: DOMRect) =>
+              alvo.left < outro.right &&
+              alvo.right > outro.left &&
+              alvo.top < outro.bottom &&
+              alvo.bottom > outro.top
+            return (
+              (!barra || !sobrepoe(barra)) &&
+              (!fab || !criar || getComputedStyle(criar).visibility === "hidden" || !sobrepoe(fab))
+            )
+          })
+          expect(livre).toBe(true)
         },
         pronto: '[data-preferencias-de-aviso="sim"]',
       },
@@ -751,7 +791,7 @@ async function fotografar(
   page: Page,
   jornada: string,
   largura: number,
-  tema: "light" | "dark",
+  tema: (typeof TEMAS)[number],
   passo: Passo,
 ) {
   const diretorio = join(RAIZ, jornada)
@@ -779,13 +819,15 @@ test.describe("capturas para a revisão cega de F09 e F10", () => {
     for (const largura of LARGURAS) {
       await page.setViewportSize({ width: largura, height: 900 })
       for (const tema of TEMAS) {
+        // Cada passo recarrega o documento (about:blank antes da rota): o tema
+        // escuro, que é dormente, se aplica depois de chegar.
         for (const jornada of JORNADAS) {
           for (const passo of jornada.passos) {
             aplicar(passo.cenario)
             await passo.ir(page)
+            await aplicarTema(page, tema)
             await expect(page.locator(passo.pronto)).toBeVisible()
             await expect(page.locator(SELETOR_TITULO)).toBeVisible()
-            await aplicarTema(page, tema)
             await assentar(page)
             await fotografar(page, jornada.nome, largura, tema, passo)
           }

@@ -77,40 +77,48 @@ test("o topo preserva ações e mostra Encontro sem cortar em 375", async ({ pag
   expect(await titulo.evaluate((el) => el.scrollWidth <= el.clientWidth)).toBe(true)
 })
 
-test("o topo da conversa acompanha a pessoa e não conserva nome ao sair", async ({ page }) => {
+test("o topo da conversa diz a seção e o nome aparece uma vez só, no cabeçalho", async ({
+  page,
+}) => {
   await simularConversas(page)
   await page.goto("/app/conversa/nao-existe")
-  // A largura do título é medida três vezes abaixo.
   await page.evaluate(async () => {
     await document.fonts.ready
   })
   const topo = page.locator('[data-topo="barra"]')
   const titulo = topo.locator('[data-titulo="topo"]')
+  const cabecalho = page.locator("[data-titulo-da-tela]")
   await expect(
     page.getByRole("heading", { name: "Página indisponível", exact: true }),
   ).toBeVisible()
   await topo.getByRole("button", { name: "Conversas", exact: true }).click()
   await expect(page).toHaveURL(/\/app\/conversas$/)
   await page.getByRole("button", { name: /^Paulo R\./ }).click()
-  await expect(titulo).toHaveText("Paulo R.")
+  // A barra diz a seção; o nome mora só no cabeçalho da conversa (sem título
+  // duplicado, régua da revisão às cegas).
+  await expect(cabecalho).toHaveText("Paulo R.")
+  await expect(titulo).toHaveText("Conversas")
+  await expect(topo).not.toContainText("Paulo R.")
   expect(await titulo.evaluate((el) => el.scrollWidth <= el.clientWidth)).toBe(true)
   await topo.getByRole("button", { name: "Conversas", exact: true }).click()
   await expect(titulo).toHaveText("Conversas")
   await page.getByRole("button", { name: /^Amazon Climatização/ }).click()
-  await expect(titulo).toHaveText("Amazon Climatização")
-  expect(await titulo.evaluate((el) => el.scrollWidth <= el.clientWidth)).toBe(true)
+  await expect(cabecalho).toHaveText("Amazon Climatização")
+  await expect(topo).not.toContainText("Amazon Climatização")
 
-  // Saltos do histórico nativo mantêm a casca viva e trocam o ID sem recarregar.
+  // Saltos do histórico nativo mantêm a casca viva e trocam o ID sem recarregar:
+  // o cabeçalho acompanha a pessoa e nenhum nome fica preso no topo.
   await page.evaluate(() => history.go(-2))
   await expect(page).toHaveURL(/\/app\/conversa\/t1$/)
-  await expect(titulo).toHaveText("Paulo R.")
+  await expect(cabecalho).toHaveText("Paulo R.")
   await page.evaluate(() => history.go(2))
   await expect(page).toHaveURL(/\/app\/conversa\/t2$/)
-  await expect(titulo).toHaveText("Amazon Climatização")
+  await expect(cabecalho).toHaveText("Amazon Climatização")
   await page.evaluate(() => history.go(-4))
   await expect(page).toHaveURL(/\/app\/conversa\/nao-existe$/)
   await expect(
     page.getByRole("heading", { name: "Página indisponível", exact: true }),
   ).toBeVisible()
-  await expect(titulo).toHaveText("Conversa")
+  await expect(topo).not.toContainText("Paulo R.")
+  await expect(topo).not.toContainText("Amazon Climatização")
 })

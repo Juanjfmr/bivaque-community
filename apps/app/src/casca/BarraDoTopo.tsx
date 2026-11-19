@@ -1,4 +1,4 @@
-import { useLocation, useParams } from "@tanstack/react-router"
+import { useLocation } from "@tanstack/react-router"
 import { useEffect, useRef } from "react"
 
 import { BotaoDeIcone } from "@/components/bivaque/botao"
@@ -30,7 +30,6 @@ export function BarraDoTopo({
   const bancada =
     (import.meta.env.DEV || modoDeProvaAtivo()) &&
     (caminho === "/galeria/mercado" || caminho === "/app/galeria/mercado")
-  const parametros = useParams({ strict: false }) as Record<string, string | undefined>
   const navegacao = useNavegacao()
   const casca = useCasca()
   const acoes = acoesDaBarraDoTopo(rota.nome)
@@ -62,10 +61,10 @@ export function BarraDoTopo({
           <span data-titulo="topo">
             {bancada
               ? "Mercado · prévia"
-              : rota.nome === "conversa" &&
-                  casca.conversaNoTopo &&
-                  casca.conversaNoTopo.id === parametros["id"]
-                ? casca.conversaNoTopo.nome
+              : // Na conversa, a barra diz a seção ("Conversas"); o nome de quem
+                // conversa aparece uma vez só, no cabeçalho da conversa.
+                rota.nome === "conversa"
+                ? "Conversas"
                 : rota.nome === "guia"
                   ? `Guia de ${casca.cidade}`
                   : rota.titulo}
@@ -124,13 +123,15 @@ export function BarraDoTopo({
   )
 }
 
-/** O contador sobre o ícone (protótipo: `.badge` na barra). */
+/** O contador sobre o ícone (protótipo: `.badge` na barra). Tinta, nunca
+ *  Brasa (ADR-20261118 e revisão cega do F10): o laranja da barra é só do
+ *  Criar, e o selo não pode competir com ele. */
 function Contador({ quantidade, nome }: { quantidade: number; nome: "avisos" | "conversas" }) {
   if (quantidade <= 0) return null
   return (
     <span
       data-contador={nome}
-      className="absolute -top-0.5 right-0.5 grid min-w-5 place-items-center rounded-full bg-(--brasa) px-1 text-[11px] font-bold text-(--brasa-foreground)"
+      className="absolute -top-0.5 right-0.5 grid min-w-5 place-items-center rounded-full bg-(--primary) px-1 text-[11px] font-bold text-(--primary-foreground)"
     >
       {quantidade}
     </span>

@@ -152,7 +152,7 @@ test.describe("F09 — avisos reais", { tag: "@stateful" }, () => {
     await semearSessaoDeMembro(context, MEMBRO_COM_AVISO)
 
     await page.goto("/app/voce")
-    const respostas = page.getByRole("checkbox", { name: "Avisos de respostas" })
+    const respostas = page.getByRole("switch", { name: "Respostas no app" })
     await expect(respostas).toBeVisible({ timeout: 30_000 })
     const antes = (await respostas.getAttribute("aria-checked")) === "true"
     await capturar(page, testInfo.project.name, "voce-preferencias")
@@ -164,18 +164,20 @@ test.describe("F09 — avisos reais", { tag: "@stateful" }, () => {
     })
 
     await page.reload()
-    await expect(page.getByRole("checkbox", { name: "Avisos de respostas" })).toHaveAttribute(
+    await expect(page.getByRole("switch", { name: "Respostas no app" })).toHaveAttribute(
       "aria-checked",
       antes ? "false" : "true",
       { timeout: 30_000 },
     )
 
     // Devolve o estado ao terminar.
-    await page.getByRole("checkbox", { name: "Avisos de respostas" }).click()
+    await page.getByRole("switch", { name: "Respostas no app" }).click()
     await page.getByRole("button", { name: "Gravar preferências de avisos" }).click()
     await expect(page.getByRole("status")).toContainText("Preferências de aviso salvas.", {
       timeout: 30_000,
     })
+    await page.reload()
+    await expect(respostas).toHaveAttribute("aria-checked", String(antes), { timeout: 30_000 })
   })
 
   test("sem sessão é 401; corpo inválido e escrita sem o cabeçalho do app são recusados", async ({

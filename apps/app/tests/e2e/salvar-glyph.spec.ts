@@ -125,6 +125,11 @@ async function medirMarcador(
 ): Promise<{ mudaram: number; tintaAntes: number; tintaDepois: number }> {
   const contorno = marcador(cartao, salvar)
   await expect(contorno).toBeVisible()
+  // A troca de tema anima a cor do fundo: mede o repouso só depois que a
+  // transição termina, senão o valor lido é um tom intermediário.
+  await contorno.evaluate((elemento) =>
+    Promise.all(elemento.getAnimations({ subtree: true }).map((animacao) => animacao.finished)),
+  )
   const fundoDeRepouso = await contorno.evaluate(
     (elemento) => getComputedStyle(elemento).backgroundColor,
   )

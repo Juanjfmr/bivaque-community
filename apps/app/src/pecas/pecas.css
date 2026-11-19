@@ -4,8 +4,10 @@
  * docs/agents/regua-nextdoor/IDENTIDADE-DAS-PECAS.md.
  *
  * - Texto: sem-serifa em tudo; a serifa só no destaque (porta, boas-vindas).
- * - Cor: Brasa só na ação principal da tela. Seleção é Grafite; link é tinta
+ * - Cor: Brasa só no começar a criar (FAB e Criar da barra); a ação de concluir
+ *   é ardósia (--acao), uma por tela. Seleção é Grafite; link é tinta
  *   sublinhada; o verde-ardósia (--success) só marca o que já está feito.
+ *   (ADR-20261118-brasa-so-no-criar)
  * - Forma: todo botão é pílula. Cartão 16, campo 12. Nada mais.
  * - Ícone: 20 px ao lado de texto, 24 px sozinho, na cor do texto, com o peso
  *   do texto ao lado (eixo wght da fonte).
@@ -382,11 +384,13 @@
     color var(--pc-toque);
 }
 
+/* O chip ativo é Grafite (seleção é Grafite): no escuro, um degrau claro e
+   legível em vez de quase branco (revisão cega do F10). */
 .pc-chip[aria-pressed="true"],
 .pc-chip[aria-selected="true"] {
-  border-color: var(--pc-tinta);
-  background: var(--pc-tinta);
-  color: var(--pc-fundo);
+  border-color: var(--grafite);
+  background: var(--grafite);
+  color: var(--grafite-texto);
 }
 
 .pc-chip .bv-icone {

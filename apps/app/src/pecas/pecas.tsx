@@ -30,8 +30,10 @@ const juntar = (...classes: (string | false | undefined)[]): string =>
 export type TomDoBotao = "principal" | "tom" | "contorno" | "texto"
 
 /**
- * Todo botão é pílula. `principal` é o único lugar da tela com Brasa: no
- * máximo um por tela. `aria-pressed` liga a seleção (Grafite).
+ * Todo botão é pílula. `principal` é a ação de concluir em ardósia
+ * (--pc-acao): no máximo uma por tela. `aria-pressed` liga a seleção (Grafite).
+ * A Brasa não mora aqui — só no começar a criar (FAB e Criar da barra,
+ * ADR-20261118).
  */
 export function Botao({
   tom = "tom",
@@ -570,7 +572,8 @@ export function CampoDeArquivo({
 
 /**
  * Onde se escreve um comentário: o campo em pílula que cresce com o texto e o
- * envio em Brasa ao lado, que é a ação principal da tela que o usa.
+ * envio em ardósia ao lado, que é a ação de concluir da tela que o usa
+ * (ADR-20261118).
  */
 export function Compositor({
   rotulo,
