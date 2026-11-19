@@ -240,7 +240,7 @@ export function Voce() {
           className="flex flex-wrap items-center gap-2 rounded-2xl bg-(--surface-lowest) p-4 ring-1 ring-(--outline-variant)"
         >
           <p role="alert" className="min-w-0 grow text-sm text-(--destructive)">
-            Seu perfil indisponível agora.
+            Leitura do perfil indisponível agora.
           </p>
           <Botao
             tom="contornado"
