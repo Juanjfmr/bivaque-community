@@ -1235,15 +1235,7 @@
 }
 
 [data-tela="inicio"] {
-  padding-bottom: 90px;
-}
-
-@media (min-width: 720px) and (max-width: 1023.98px) {
-  body:has([data-tela="inicio"]) [data-nav="principal"][data-minimizada="sim"] [data-acao="criar"] {
-    right: 16px;
-    left: auto;
-    transform: none;
-  }
+  padding-bottom: 180px;
 }
 
 /* Início: coluna de leitura e trilho de contexto (parecer cego de 12/11).
@@ -1495,6 +1487,7 @@
 }
 .bv-criar-escolha small {
   font-size: 12px;
+  white-space: normal;
 }
 .bv-criar-menu[data-modo="painel"] .bv-criar-escolha {
   min-width: 0;
@@ -3576,6 +3569,11 @@ body[data-profundidade="sim"] [data-casca="app"] {
     margin-inline: auto;
   }
 
+  [data-tela="anuncio"] [data-capa="foto"] {
+    height: 200px;
+    aspect-ratio: auto;
+  }
+
   [data-tela="imoveis"] .bv-grade,
   [data-tela="negocios"] .bv-grade {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -3590,11 +3588,13 @@ body[data-profundidade="sim"] [data-casca="app"] {
   justify-self: start;
 }
 
-[data-tela="negocios"] [data-chip] {
-  max-width: 7rem;
-  padding-inline: 0.5rem;
-  line-height: 1.2;
-  white-space: normal;
+@media (max-width: 1023.98px) {
+  [data-tela="negocios"] [data-chip] {
+    max-width: 7rem;
+    padding-inline: 0.5rem;
+    line-height: 1.2;
+    white-space: normal;
+  }
 }
 
 [data-tela="guia"] [data-guia="secao"] {

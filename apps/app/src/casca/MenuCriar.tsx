@@ -96,7 +96,7 @@ export function MenuCriar({ aoFechar }: { readonly aoFechar: () => void }) {
     const ancora = document.querySelector('[data-criar="botao"]')?.getBoundingClientRect()
     if (!menu || !ancora) return
     const largura = Math.min(
-      painel || tipo !== null || concluido ? 620 : 310,
+      painel || tipo !== null || concluido ? 620 : 262,
       window.innerWidth - 24,
     )
     const central = window.innerWidth < 1024

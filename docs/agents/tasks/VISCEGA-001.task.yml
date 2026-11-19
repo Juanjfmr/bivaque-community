@@ -19,6 +19,8 @@ baseline:
 allowed_paths:
   - apps/app/src/telas/*.tsx
   - apps/app/src/casca/MenuCriar.tsx
+  - apps/app/src/grupos/Participacao.tsx
+  - apps/app/src/eventos/FormularioDeEncontro.tsx
   - apps/app/src/pecas/*.tsx
   - apps/app/src/pecas/pecas.css
   - apps/app/src/styles.css

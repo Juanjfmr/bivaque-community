@@ -348,6 +348,10 @@ export function Busca() {
             </Secao>
 
             <Secao titulo={`O que existe em ${cidade}`}>
+              <p data-busca="resumo-da-cidade" className="text-sm text-(--on-surface-variant)">
+                {negociosDaCidade.length} negócios · {anunciosDaCidade.length} anúncios ·{" "}
+                {perguntasDaCidade.length} indicações · {gruposDaCidade.length} grupos
+              </p>
               {bairrosDaCidade.length === 0 ? null : (
                 <p className="text-sm text-(--on-surface-variant)">
                   {`Com anúncios em ${bairrosDaCidade.join(", ")}.`}
