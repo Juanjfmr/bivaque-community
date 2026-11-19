@@ -23,7 +23,7 @@ const AUTH_BYPASS = process.env["BIVAQUE_AUTH_BYPASS"] === "true"
 
 export async function proxy(request: NextRequest) {
   const pathname = request.nextUrl.pathname
-  if (pathname === "/app" || pathname.startsWith("/app/") || pathname.startsWith("/api/")) {
+  if (/^\/(?:app|api)(?:\/|$)/.test(pathname)) {
     return encaminhar(request, new Headers(request.headers))
   }
   const nonce = Buffer.from(crypto.randomUUID()).toString("base64")
