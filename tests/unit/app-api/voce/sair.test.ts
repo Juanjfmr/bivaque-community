@@ -92,6 +92,7 @@ describe("POST /api/app/voce/sair", () => {
     const resposta = await POST(requisicao({ origin: ORIGEM, "x-bivaque-app": "bivaque-spa" }))
 
     expect(resposta.status).toBe(401)
+    expect(resposta.headers.get("clear-site-data")).toBeNull()
     expect(await resposta.json()).toMatchObject({ autenticado: false })
     expect(sessoesEncerradas).toHaveLength(0)
     expect(resposta.headers.get("set-cookie")).toBeNull()

@@ -24,7 +24,7 @@ describe("cabeçalhos de segurança do Next", () => {
     expect(porNome["strict-transport-security"]).toBe("max-age=63072000; includeSubDomains")
   })
 
-  it("aplica CSP est?tica ao app", async () => {
+  it("aplica CSP estática ao app", async () => {
     const regras = await nextConfig.headers?.()
     const app = regras?.find((regra) => regra.source === "/app/:path*")
     const csp = app?.headers.find((cabecalho) => cabecalho.key === "Content-Security-Policy")?.value
@@ -39,9 +39,9 @@ describe("cabeçalhos de segurança do Next", () => {
   it("restringe respostas da API", async () => {
     const regras = await nextConfig.headers?.()
     const api = regras?.find((regra) => regra.source === "/api/:path*")
-    expect(api?.headers.find((cabecalho) => cabecalho.key === "Content-Security-Policy")?.value).toBe(
-      "default-src 'none'; frame-ancestors 'none'",
-    )
+    expect(
+      api?.headers.find((cabecalho) => cabecalho.key === "Content-Security-Policy")?.value,
+    ).toBe("default-src 'none'; frame-ancestors 'none'")
   })
 
   it("nenhuma regra afrouxa o enquadramento para um caminho específico", async () => {

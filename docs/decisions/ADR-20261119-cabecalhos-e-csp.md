@@ -34,8 +34,7 @@ compartilhado (público de famílias e de quartel).
    - `style-src` aceita `'unsafe-inline'`, porque o React e as peças usam `style` inline; injetar
      estilo sem script não executa código, e o risco residual (vazamento por seletor CSS) é baixo
      para o lançamento.
-   - `connect-src` e `img-src` listam só as origens usadas: a do Supabase do ambiente, a do Sentry
-     quando configurado e a do storage de mídia. As origens vêm das variáveis públicas do ambiente,
+   - `connect-src` e `img-src` listam só as origens usadas: a do Supabase do ambiente e a do storage de mídia. As origens vêm das variáveis públicas do ambiente,
      nunca escritas fixas.
 3. **`Clear-Site-Data: "cache", "storage"`** na resposta de sucesso de `POST /api/app/voce/sair`.
    - Sem `"cookies"`: os cookies da sessão já saem pelo `signOut`, e limpar todos apagaria também o
@@ -48,6 +47,10 @@ compartilhado (público de famílias e de quartel).
    - sair pelo app leva à entrada sem quebrar a tela nova.
 
 ## Consequências
+
+- As páginas Next são renderizadas por requisição e não podem ficar em cache de CDN.
+- Ligar o Sentry no navegador exige adicionar sua origem à CSP.
+- HSTS com `includeSubDomains` prende os subdomínios do host por dois anos.
 
 - Um script de terceiro novo (analytics, mapa) precisa entrar na CSP de forma explícita; antes
   disso, o navegador bloqueia e a violação aparece no console e no e2e.

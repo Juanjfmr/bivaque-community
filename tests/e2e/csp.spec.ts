@@ -1,4 +1,5 @@
 import { test as base, expect } from "@playwright/test"
+import sharp from "sharp"
 import { MEMBRO_SEMEADO, semearSessaoDeMembro } from "./entrada-real-ajuda"
 
 const test = base.extend<{ vigiarCsp: undefined }>({
@@ -19,7 +20,7 @@ const test = base.extend<{ vigiarCsp: undefined }>({
         if (mensagem.text().includes("Content Security Policy")) violacoes.push(mensagem.text())
       })
       await use(undefined)
-      expect(violacoes, "viola??es de CSP").toEqual([])
+      expect(violacoes, "violações de CSP").toEqual([])
     },
     { auto: true },
   ],
@@ -53,7 +54,7 @@ test("landing e entrada carregam sob CSP", async ({ page }) => {
   ).toBeVisible()
 })
 
-test("jornadas e sa?da mant?m a CSP e o tema", async ({ page, context }) => {
+test("jornadas e saída mantém a CSP e o tema", async ({ page, context }) => {
   await semearSessaoDeMembro(context, MEMBRO_SEMEADO)
   for (const [caminho, tela] of [
     ["/app/inicio", "inicio"],
@@ -80,4 +81,44 @@ test("jornadas e sa?da mant?m a CSP e o tema", async ({ page, context }) => {
   ).toBeVisible()
   await expect(page.locator("html")).toHaveAttribute("data-tema", "claro")
   await expect(page.locator('meta[name="theme-color"]')).toHaveAttribute("content", "#F3F5F6")
+})
+
+test("comunidade, grupo, foto, conversa e perfil sob CSP", async ({ page, context }) => {
+  test.setTimeout(120_000)
+  await semearSessaoDeMembro(context, MEMBRO_SEMEADO)
+  await page.goto("/app/comunidade")
+  await expect(page.getByRole("heading", { name: "Comunidade", exact: true })).toBeVisible()
+
+  const grupo = "60000000-0000-4000-8000-000000000002"
+  await page.goto(`/app/grupo/${grupo}`)
+  await expect(page.getByText(/Manaus \u00b7 \d+ membros/)).toBeVisible({ timeout: 30_000 })
+  await page.getByRole("button", { name: "Escrever", exact: true }).click()
+  const texto = `Publicação CSP ${Date.now()}`
+  await page.getByLabel("Sua publicação").fill(texto)
+  const imagem = await sharp({
+    create: { width: 8, height: 8, channels: 3, background: "#334455" },
+  })
+    .png()
+    .toBuffer()
+  const upload = page.waitForResponse(
+    (resposta) =>
+      resposta.url().endsWith(`/grupos/${grupo}/fotos`) && resposta.request().method() === "POST",
+  )
+  await page.getByLabel("Adicionar fotos (até 4, de até 5 MB)").setInputFiles({
+    name: "foto.png",
+    mimeType: "image/png",
+    buffer: imagem,
+  })
+  expect((await upload).status()).toBe(201)
+  await page.getByRole("button", { name: "Publicar", exact: true }).click()
+  await expect(page.locator('[data-publicacao-na-lista="sim"]').first()).toContainText(texto)
+
+  await page.goto("/app/conversa/41000000-0000-4000-8000-000000000051")
+  await expect(page.locator('[data-mensagens="historico"]')).toContainText("Confirmado, 9h", {
+    timeout: 30_000,
+  })
+  await page.goto("/app/perfil/30000000-0000-4000-8000-000000000002")
+  await expect(page.getByRole("heading", { level: 1, name: /Carla Almeida/ })).toBeVisible({
+    timeout: 30_000,
+  })
 })

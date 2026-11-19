@@ -3,8 +3,8 @@ import { cspDasPaginas, origensDaCsp } from "../../../apps/web/lib/security/csp"
 
 afterEach(() => vi.unstubAllEnvs())
 
-describe("CSP das p?ginas", () => {
-  it("restringe scripts ao nonce e mant?m as diretivas de seguran?a", () => {
+describe("CSP das páginas", () => {
+  it("restringe scripts ao nonce e mantém as diretivas de segurança", () => {
     const csp = cspDasPaginas("nonceDeTeste")
     expect(csp).toContain("script-src 'self' 'nonce-nonceDeTeste' 'strict-dynamic'")
     expect(csp).toContain("object-src 'none'")
@@ -14,7 +14,7 @@ describe("CSP das p?ginas", () => {
     expect(csp).not.toContain("'unsafe-eval'")
   })
 
-  it("usa somente origens HTTP v?lidas configuradas", () => {
+  it("usa somente origens HTTP válidas configuradas", () => {
     vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "https://supabase.example.invalid/path")
     expect(origensDaCsp()).toBe("https://supabase.example.invalid")
     vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "javascript:alert(1)")
