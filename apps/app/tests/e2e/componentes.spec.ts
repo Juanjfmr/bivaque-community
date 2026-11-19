@@ -109,7 +109,7 @@ test.describe("a galeria de prova cobre a seção 7", () => {
     await abrirGaleria(page)
     const bloco = page.locator(GALERIA("estado-vazio"))
     await expect(bloco.locator("svg[aria-hidden='true']")).toBeVisible()
-    await expect(bloco.locator("h3")).not.toHaveText("")
+    await expect(bloco.locator("h2")).not.toHaveText("")
     // O bloco da galeria tem três `<p>` de ficha (título, regra, consumidor):
     // o texto do componente é o que vive dentro da área do exemplo.
     await expect(bloco.locator("[data-galeria-exemplo] p")).not.toHaveText("")

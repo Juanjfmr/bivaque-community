@@ -1,0 +1,65 @@
+task_id: ENDURECE-001
+objective: >
+  O app em /app passa nos pontos rápidos da auditoria Modern Web Guidance de 18/11: Enter respeita a
+  composição de texto (IME), cada tela tem título próprio na aba, há atalho para pular ao conteúdo,
+  os títulos seguem a ordem sem salto, o foco continua visível em modo de alto contraste e o
+  navegador sabe que o app tem tema claro e escuro.
+authority:
+  - tools/backend-kanban/public/board.json (ENDURECE-A)
+  - "Auditoria Modern Web Guidance, Antigravity, 18/11 00:25–00:37 (só na conversa; resumo no card)"
+  - docs/agents/regua-nextdoor/PADRAO-DE-TELA.md
+  - docs/agents/regua-nextdoor/IDENTIDADE-DAS-PECAS.md
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    Conferido na main 912fd17e: apps/app/index.html:7 fixa <title>Bivaque</title> e não tem meta
+    color-scheme; nenhum document.title no app, embora titulos.ts/tituloDaRota existam; a Casca não
+    tem link de pular ao conteúdo; Guia.tsx:71 usa h3 logo abaixo do h1 da tela; os anéis de foco das
+    peças (pecas.css, box-shadow) não têm fallback em forced-colors; Paleta.tsx:151 já checa
+    isComposing, mas não keyCode 229 (Safari).
+allowed_paths:
+  - apps/app/index.html
+  - apps/app/src/casca/Casca.tsx
+  - apps/app/src/casca/Paleta.tsx
+  - apps/app/src/casca/MenuCriar.tsx
+  - apps/app/src/roteador.tsx
+  - apps/app/src/titulos.ts
+  - apps/app/src/telas/Guia.tsx
+  - apps/app/src/pecas/pecas.css
+  - apps/app/src/styles.css
+  - apps/app/src/casca/teclado.ts
+  - apps/app/components/bivaque/estado-vazio.tsx
+  - apps/app/src/telas/*.tsx
+  - apps/app/tests/estado-vazio*.test.ts
+  - apps/app/tests/estado-vazio*.test.tsx
+  - apps/app/tests/teclado*.test.ts
+  - apps/app/tests/titulo*.test.ts
+  - apps/app/tests/titulo*.test.tsx
+  - apps/app/tests/e2e/endurece-a.spec.ts
+  - apps/app/tests/e2e/casca-visual.spec.ts
+forbidden:
+  - tocar em telas fora da lista ou mudar o visual além do anel de foco em forced-colors e do link de pular (que só aparece no foco)
+  - criar rota de API, mudar banco, migrations, next.config.ts ou cabeçalhos do servidor (isso é ENDURECE-B)
+  - adicionar dependência nova
+  - afrouxar ou apagar teste existente para ficar verde
+  - usar git stash, reiniciar ou reconstruir o banco local, delegar
+acceptance:
+  - todo envio por Enter no app ignora a tecla durante composição (isComposing ou keyCode 229), com teste unitário de um ajudante comum
+  - a aba do navegador mostra o título da tela atual (ex. "Conversas · Bivaque") e muda ao navegar; prova em e2e
+  - o link Pular para o conteúdo é o primeiro alvo do Tab, fica visível no foco e leva o foco ao conteúdo principal; prova em e2e
+  - Guia sem salto de nível; axe heading-order sem violação nas telas da casca-visual
+  - com forced-colors ativo, o foco dos botões e campos das peças fica visível (outline), prova em e2e com emulação forced-colors
+  - index.html tem meta color-scheme "light dark"; o tema continua controlado por data-tema
+  - casca-visual verde em 375/768/1440, claro e escuro
+proof:
+  - npx pnpm@11.18.0 gate --fast
+  - npx pnpm@11.18.0 --filter @bivaque/app test
+  - npx pnpm@11.18.0 --filter @bivaque/app exec vite build
+  - npx pnpm@11.18.0 --filter @bivaque/app test:e2e -- endurece-a casca-visual
+risk: interface
+risk_level: R2
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: HUMAN_DECISION
+closure:
+  requires_runtime_evidence: true

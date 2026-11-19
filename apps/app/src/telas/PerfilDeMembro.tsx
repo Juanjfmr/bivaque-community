@@ -244,6 +244,7 @@ export function PerfilDeMembro() {
           <Secao titulo="Publicações">
             {perfil.publicacoes.length === 0 ? (
               <EstadoVazio
+                nivel="h3"
                 titulo="Nenhuma publicação visível"
                 texto="O que vocês dois podem ver aparece aqui."
                 icone="forum"
@@ -268,6 +269,7 @@ export function PerfilDeMembro() {
           <Secao titulo="Eventos">
             {perfil.eventos.length === 0 ? (
               <EstadoVazio
+                nivel="h3"
                 titulo="Nenhum evento visível"
                 texto="Os encontros que essa pessoa organiza aparecem aqui."
                 icone="event"
