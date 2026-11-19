@@ -1,5 +1,6 @@
 import { brandTokens } from "@bivaque/tokens"
 import type { Metadata, Viewport } from "next"
+import { headers } from "next/headers"
 import { LandingPage } from "./landing/landing"
 
 // PORT-001 (R73): os metadados da landing v8. O título e a descrição saem do
@@ -44,6 +45,7 @@ export const viewport: Viewport = {
   ],
 }
 
-export default function HomePage() {
-  return <LandingPage />
+export default async function HomePage() {
+  const nonce = (await headers()).get("x-nonce") ?? undefined
+  return <LandingPage nonce={nonce} />
 }

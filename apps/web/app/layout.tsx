@@ -1,6 +1,7 @@
 import { brandTokens } from "@bivaque/tokens"
 import type { Metadata, Viewport } from "next"
 import localFont from "next/font/local"
+import { headers } from "next/headers"
 import type { ReactNode } from "react"
 import { ServiceWorkerRegistration } from "./components/bivaque/service-worker-registration"
 import "./globals.css"
@@ -47,7 +48,8 @@ type RootLayoutProperties = Readonly<{
 // Google e pelas prévias de link. Cada grupo de rotas que usa o cliente do
 // navegador monta o provider no próprio layout: `(admin)`, `(owner)`,
 // `(preauth)`, `(provider)`, `(shell)` e `auth/`.
-export default function RootLayout({ children }: RootLayoutProperties) {
+export default async function RootLayout({ children }: RootLayoutProperties) {
+  await headers()
   return (
     <html lang="pt-BR" data-theme="bivaque" className={publicSans.variable}>
       <body className="bg-background text-foreground antialiased">

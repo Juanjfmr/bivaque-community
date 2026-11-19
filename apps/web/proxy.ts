@@ -2,6 +2,7 @@ import { CONSENT_VERSION } from "@bivaque/domain"
 import { createServerClient } from "@supabase/ssr"
 import type { NextRequest } from "next/server"
 import { NextResponse } from "next/server"
+import { cspDasPaginas } from "./lib/security/csp"
 import { areaDoPrestador, entradaEmAndamento, isPublicPath } from "./lib/security/route-surface"
 
 // A superfície pública mora em `lib/security/route-surface.ts` — uma lista, três
@@ -21,6 +22,21 @@ const SUPABASE_ANON_KEY = process.env["NEXT_PUBLIC_SUPABASE_ANON_KEY"]
 const AUTH_BYPASS = process.env["BIVAQUE_AUTH_BYPASS"] === "true"
 
 export async function proxy(request: NextRequest) {
+  const pathname = request.nextUrl.pathname
+  if (/^\/(?:app|api)(?:\/|$)/.test(pathname)) {
+    return encaminhar(request, new Headers(request.headers))
+  }
+  const nonce = Buffer.from(crypto.randomUUID()).toString("base64")
+  const csp = cspDasPaginas(nonce)
+  const headers = new Headers(request.headers)
+  headers.set("x-nonce", nonce)
+  headers.set("Content-Security-Policy", csp)
+  const response = await encaminhar(request, headers)
+  response.headers.set("Content-Security-Policy", csp)
+  return response
+}
+
+async function encaminhar(request: NextRequest, headers: Headers) {
   const { pathname } = request.nextUrl
 
   if (AUTH_BYPASS) {
@@ -31,19 +47,19 @@ export async function proxy(request: NextRequest) {
         headers: { "content-type": "text/plain; charset=utf-8" },
       })
     }
-    return NextResponse.next()
+    return NextResponse.next({ request: { headers } })
   }
 
   // Public paths bypass all checks — no session round-trip needed.
   if (isPublicPath(pathname)) {
-    return NextResponse.next()
+    return NextResponse.next({ request: { headers } })
   }
 
   // Build a Supabase server client wired to the request cookies so
   // getUser() can read the session token the browser sent. Any
   // Set-Cookie headers emitted by Supabase (token refresh, etc.) are
   // forwarded onto the response.
-  const supabaseResponse = NextResponse.next({ request })
+  const supabaseResponse = NextResponse.next({ request: { headers } })
 
   if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
     throw new Error("NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY must be set")

@@ -15,6 +15,49 @@ describe("cabeçalhos de segurança do Next", () => {
     )
     expect(porNome["content-security-policy"]).toBe("frame-ancestors 'none'")
     expect(porNome["x-frame-options"]).toBe("DENY")
+    expect(porNome["x-content-type-options"]).toBe("nosniff")
+    expect(porNome["referrer-policy"]).toBe("strict-origin-when-cross-origin")
+    expect(porNome["permissions-policy"]).toBe(
+      "camera=(), microphone=(), geolocation=(), payment=(), usb=()",
+    )
+    expect(porNome["cross-origin-opener-policy"]).toBe("same-origin")
+    expect(porNome["strict-transport-security"]).toBe("max-age=63072000; includeSubDomains")
+  })
+
+  it("aplica CSP estática ao app", async () => {
+    const regras = await nextConfig.headers?.()
+    const app = regras?.find((regra) => regra.source === "/app/:path*")
+    const csp = app?.headers.find((cabecalho) => cabecalho.key === "Content-Security-Policy")?.value
+    expect(csp).toContain("script-src 'self';")
+    expect(csp).toContain("object-src 'none'")
+    expect(csp).toContain("base-uri 'self'")
+    expect(csp).toContain("form-action 'self'")
+    expect(csp).toContain("frame-ancestors 'none'")
+    expect(csp).not.toContain("nonce-")
+  })
+
+  it("restringe respostas da API", async () => {
+    const regras = await nextConfig.headers?.()
+    const api = regras?.find((regra) => regra.source === "/api/:path*")
+    expect(
+      api?.headers.find((cabecalho) => cabecalho.key === "Content-Security-Policy")?.value,
+    ).toBe("default-src 'none'; frame-ancestors 'none'")
+  })
+
+  it("permite ao service worker buscar recursos da propria origem", async () => {
+    const regras = await nextConfig.headers?.()
+    const worker = regras?.find((regra) => regra.source === "/api/sw")
+    expect(
+      worker?.headers.find((cabecalho) => cabecalho.key === "Content-Security-Policy")?.value,
+    ).toBe("default-src 'none'; connect-src 'self'; frame-ancestors 'none'")
+  })
+
+  it("preserva a CSP do descadastro", async () => {
+    const regras = await nextConfig.headers?.()
+    const rota = regras?.find((regra) => regra.source === "/api/app/resumo/descadastro")
+    expect(
+      rota?.headers.find((cabecalho) => cabecalho.key === "Content-Security-Policy")?.value,
+    ).toBe("default-src 'none'; frame-ancestors 'none'; base-uri 'none'")
   })
 
   it("nenhuma regra afrouxa o enquadramento para um caminho específico", async () => {
