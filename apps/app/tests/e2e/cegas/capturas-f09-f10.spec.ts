@@ -599,15 +599,12 @@ const JORNADAS: ReadonlyArray<{ nome: string; passos: readonly Passo[] }> = [
           await expect(page.locator('[data-mensagens="historico"]')).toBeVisible()
           await page.locator("#mensagem-da-conversa").fill("Consigo buscar na quinta à tarde.")
           await page.locator('[data-acao="enviar-mensagem"]').click()
-          // O balão da própria mensagem é a única mensagem do erro (D22).
-          await expect(
-            page.locator('[data-mensagem="nao-enviada"] [role="alert"]'),
-          ).toBeInViewport()
-          await expect(page.locator('[data-mensagem="nao-enviada"] button')).toBeInViewport()
-          await expect(page.locator('[data-mensagem="nao-enviada"]')).toBeVisible()
-          await expect(page.locator('[data-mensagem="nao-enviada"] [role="alert"]')).toContainText(
-            "Não enviada",
-          )
+          // O balão da própria mensagem é a única mensagem visível do erro (D22);
+          // o alerta mora só na região viva oculta do compositor.
+          const balao = page.locator('[data-mensagem="nao-enviada"]')
+          await expect(balao.getByText("Não enviada")).toBeInViewport()
+          await expect(balao.locator("button")).toBeInViewport()
+          await expect(balao).toBeVisible()
         },
         pronto: '[data-mensagem="nao-enviada"]',
       },
