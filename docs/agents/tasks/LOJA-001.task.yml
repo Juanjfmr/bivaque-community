@@ -35,6 +35,14 @@ allowed_paths:
   - .gitignore
   - .github/workflows/app-loja.yml
   - docs/agents/LOJA-SESSAO-INVENTARIO.md
+  - docs/agents/prototipo-shadcn/versoes-1a.json
+  - apps/app/scripts/**
+  - apps/app/src/pecas/pecas.tsx
+  - apps/app/src/grupos/Escrever.tsx
+  - apps/app/src/mercado/gerenciar.tsx
+  - apps/app/src/meu-negocio/MeuNegocio.tsx
+  - apps/app/src/previa-grupos/tela-publicacao.tsx
+  - apps/app/components/bivaque/formulario-negocio.tsx
   - docs/agents/tasks/LOJA-001.task.yml
 forbidden:
   - apps/web, supabase/, migrations, packages/
@@ -43,7 +51,8 @@ forbidden:
   - o termo da plataforma do Google no código ou nos templates (tire do template Android a aplicação condicional do plugin de serviços do Google; ela volta no lote de push, com a exceção do ADR-20261118 §5)
   - mudar tests/privacy/product-boundaries-and-pii.test.ts ou afrouxar qualquer teste existente
   - google-services.json, GoogleService-Info.plist, keystore, chave .p8, certificado ou qualquer segredo no repositório
-  - dependência que não seja do Capacitor oficial (@capacitor/*), com versões exatas fixadas
+  - dependência que não seja do Capacitor oficial (@capacitor/*), com versões exatas fixadas; cada versão publicada até 2026-10-11 e registrada em versoes-1a.json com o publishedAt real do registro npm (a regra de tests/scope/app-foundation.test.mjs não muda)
+  - nos seis arquivos de seletor de foto, qualquer mudança além de trocar o input de arquivo pelo seletor comum que usa a câmera no nativo
   - mudar o comportamento do app na web (a base relativa continua sendo o padrão fora do Capacitor)
   - git stash, reiniciar ou reconstruir o banco local, delegar
   - dado pessoal real ou CPF real
