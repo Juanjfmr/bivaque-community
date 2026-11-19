@@ -66,20 +66,25 @@ describe("raiz do site no proxy", () => {
 })
 
 describe("entrada da comunidade no app", () => {
-  it.each([false, true])("sessão presente: %s", async (autenticado) => {
-    sessao.usuario = autenticado ? { id: "00000000-0000-4000-8000-000000000001" } : null
-    const proxy = await carregarProxy()
-    const resposta = await proxy(
-      new NextRequest("http://localhost:3000/app/comunidade?origem=aviso"),
-    )
-    if (autenticado) {
-      expect(resposta.headers.get("x-middleware-next")).toBe("1")
-    } else {
-      expect(resposta.status).toBe(307)
-      expect(destino(resposta)).toBe("/app/entrar")
-      expect(new URL(resposta.headers.get("location") ?? "").searchParams.get("redirect")).toBe(
-        "/app/comunidade?origem=aviso",
-      )
-    }
-  })
+  it.each(["/app/comunidade", "/app/publicacao/123", "/app/pergunta/123", "/app/salvos"])(
+    "protege %s",
+    async (caminho) => {
+      for (const autenticado of [false, true]) {
+        sessao.usuario = autenticado ? { id: "00000000-0000-4000-8000-000000000001" } : null
+        const proxy = await carregarProxy()
+        const resposta = await proxy(
+          new NextRequest(`http://localhost:3000${caminho}?origem=aviso`),
+        )
+        if (autenticado) {
+          expect(resposta.headers.get("x-middleware-next")).toBe("1")
+        } else {
+          expect(resposta.status).toBe(307)
+          expect(destino(resposta)).toBe("/app/entrar")
+          expect(new URL(resposta.headers.get("location") ?? "").searchParams.get("redirect")).toBe(
+            `${caminho}?origem=aviso`,
+          )
+        }
+      }
+    },
+  )
 })

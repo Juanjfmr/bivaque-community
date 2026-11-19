@@ -87,7 +87,7 @@ export default async function ProviderInvitationAcceptPage({
 
         {invitation ? (
           <Link
-            href={"/app/comunidade" as Route}
+            href={`/communities/${invitation.community_id}` as Route}
             className="inline-flex min-h-11 w-fit items-center rounded-md text-sm text-accent underline-offset-4 transition-colors duration-[var(--semantic-motion-duration-fast)] hover:underline"
           >
             Voltar para a comunidade

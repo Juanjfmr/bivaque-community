@@ -3,7 +3,12 @@ import { createServerClient } from "@supabase/ssr"
 import type { NextRequest } from "next/server"
 import { NextResponse } from "next/server"
 import { cspDasPaginas } from "./lib/security/csp"
-import { areaDoPrestador, entradaEmAndamento, isPublicPath } from "./lib/security/route-surface"
+import {
+  areaDoPrestador,
+  entradaEmAndamento,
+  entradaProtegidaDoApp,
+  isPublicPath,
+} from "./lib/security/route-surface"
 
 // A superfície pública mora em `lib/security/route-surface.ts` — uma lista, três
 // modos (`exata`, `pasta`, `ativos`) e comparação por fronteira. Este arquivo não
@@ -51,7 +56,7 @@ async function encaminhar(request: NextRequest, headers: Headers) {
   }
 
   // Public paths bypass all checks — no session round-trip needed.
-  if (isPublicPath(pathname) && pathname !== "/app/comunidade" && pathname !== "/app/comunidade/") {
+  if (isPublicPath(pathname)) {
     return NextResponse.next({ request: { headers } })
   }
 
@@ -95,7 +100,7 @@ async function encaminhar(request: NextRequest, headers: Headers) {
     // no-op — user remains null
   }
 
-  if (pathname === "/app/comunidade" || pathname === "/app/comunidade/") {
+  if (entradaProtegidaDoApp(pathname)) {
     if (user) return supabaseResponse
     const entrada = new URL("/app/entrar", request.url)
     entrada.searchParams.set("redirect", `${pathname}${request.nextUrl.search}`)
