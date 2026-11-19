@@ -1,4 +1,4 @@
-﻿import { Camera } from "@capacitor/camera"
+import { Camera } from "@capacitor/camera"
 import { describe, expect, it, vi } from "vitest"
 import { fotoDaCamera } from "../lib/nativo/foto"
 

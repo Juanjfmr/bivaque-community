@@ -1,4 +1,4 @@
-﻿import { Capacitor } from "@capacitor/core"
+import { Capacitor } from "@capacitor/core"
 import type { ComponentProps } from "react"
 import { fotoDaCamera } from "@/lib/nativo/foto"
 

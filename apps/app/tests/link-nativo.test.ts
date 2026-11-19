@@ -1,4 +1,4 @@
-﻿import { describe, expect, it } from "vitest"
+import { describe, expect, it } from "vitest"
 import { rotaDoLink } from "../lib/nativo/link"
 
 describe("links do app", () => {

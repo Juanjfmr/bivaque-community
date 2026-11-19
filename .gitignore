@@ -70,3 +70,6 @@ apps/app/ios/DerivedData/
 .pnpm-store/
 
 apps/app/dist-nativo/
+
+*.keystore
+*.jks

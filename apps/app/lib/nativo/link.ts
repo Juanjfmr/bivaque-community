@@ -1,4 +1,4 @@
-﻿import { esquemaDeLink } from "../../capacitor.config"
+import { esquemaDeLink } from "../../capacitor.config"
 
 export function rotaDoLink(link: string, base: string | undefined): string | null {
   try {

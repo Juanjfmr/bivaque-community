@@ -1,4 +1,4 @@
-﻿import { cp, mkdir, rm, writeFile } from "node:fs/promises"
+import { cp, mkdir, rm, writeFile } from "node:fs/promises"
 
 const destino = new URL("../dist-nativo/", import.meta.url)
 await rm(destino, { recursive: true, force: true })

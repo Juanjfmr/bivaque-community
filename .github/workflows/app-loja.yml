@@ -32,24 +32,28 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm --filter @bivaque/app build
       - run: pnpm --filter @bivaque/app exec cap sync android
-      - name: Compilar APK sem gerar chave
-        run: |
-          printf '%s\n' 'gradle.beforeProject { p -> if (p.path == ":app") p.afterEvaluate { p.android.buildTypes.debug.signingConfig = null } }' > "$RUNNER_TEMP/sem-assinatura.gradle"
-          ./gradlew --init-script "$RUNNER_TEMP/sem-assinatura.gradle" assembleDebug
+      - name: Compilar APK de debug
+        run: ./gradlew assembleDebug
         working-directory: apps/app/android
-      - name: Varrer o APK
+      # O scanner cobre texto do build web e projetos nativos versionados, nao binarios APK/IPA.
+      - name: Varrer arquivos textuais
         run: |
-          mkdir -p "$RUNNER_TEMP/scan/tests" "$RUNNER_TEMP/scan/artefato"
+          mkdir -p "$RUNNER_TEMP/scan/tests"
           cp tests/secrets-scan.mjs "$RUNNER_TEMP/scan/tests/"
-          unzip -q apps/app/android/app/build/outputs/apk/debug/app-debug-unsigned.apk -d "$RUNNER_TEMP/scan/artefato"
+          { git ls-files apps/app/android apps/app/ios; find apps/app/dist-nativo -type f; } | while IFS= read -r file; do
+            if [ -f "$file" ] && grep -Iq . "$file"; then
+              mkdir -p "$RUNNER_TEMP/scan/$(dirname "$file")"
+              cp "$file" "$RUNNER_TEMP/scan/$file"
+            fi
+          done
           cd "$RUNNER_TEMP/scan"
           git init -q
-          git add -f artefato
+          git add -f apps
           node tests/secrets-scan.mjs
       - uses: actions/upload-artifact@v4
         with:
           name: android-debug
-          path: apps/app/android/app/build/outputs/apk/debug/app-debug-unsigned.apk
+          path: apps/app/android/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
 
   ios:
@@ -71,14 +75,20 @@ jobs:
       - name: Compilar sem assinatura
         run: xcodebuild -project App.xcodeproj -scheme App -sdk iphonesimulator -configuration Debug -derivedDataPath "$RUNNER_TEMP/ios-build" CODE_SIGNING_ALLOWED=NO build
         working-directory: apps/app/ios/App
-      - name: Varrer o aplicativo compilado
+      # O scanner cobre texto do build web e projetos nativos versionados, nao binarios APK/IPA.
+      - name: Varrer arquivos textuais
         run: |
-          mkdir -p "$RUNNER_TEMP/scan/tests" "$RUNNER_TEMP/scan/artefato"
+          mkdir -p "$RUNNER_TEMP/scan/tests"
           cp tests/secrets-scan.mjs "$RUNNER_TEMP/scan/tests/"
-          cp -R "$RUNNER_TEMP/ios-build/Build/Products/Debug-iphonesimulator/App.app" "$RUNNER_TEMP/scan/artefato/"
+          { git ls-files apps/app/android apps/app/ios; find apps/app/dist-nativo -type f; } | while IFS= read -r file; do
+            if [ -f "$file" ] && grep -Iq . "$file"; then
+              mkdir -p "$RUNNER_TEMP/scan/$(dirname "$file")"
+              cp "$file" "$RUNNER_TEMP/scan/$file"
+            fi
+          done
           cd "$RUNNER_TEMP/scan"
           git init -q
-          git add -f artefato
+          git add -f apps
           node tests/secrets-scan.mjs
       - uses: actions/upload-artifact@v4
         with:

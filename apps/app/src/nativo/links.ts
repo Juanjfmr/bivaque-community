@@ -1,4 +1,4 @@
-﻿import { App } from "@capacitor/app"
+import { App } from "@capacitor/app"
 import { rotaDoLink } from "@/lib/nativo/link"
 import { roteador } from "@/src/roteador"
 
