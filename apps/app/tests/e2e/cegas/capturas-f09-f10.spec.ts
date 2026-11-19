@@ -600,7 +600,9 @@ const JORNADAS: ReadonlyArray<{ nome: string; passos: readonly Passo[] }> = [
           await page.locator("#mensagem-da-conversa").fill("Consigo buscar na quinta à tarde.")
           await page.locator('[data-acao="enviar-mensagem"]').click()
           // O balão da própria mensagem é a única mensagem do erro (D22).
-          await expect(page.locator('[data-mensagem="nao-enviada"] [role="alert"]')).toBeInViewport()
+          await expect(
+            page.locator('[data-mensagem="nao-enviada"] [role="alert"]'),
+          ).toBeInViewport()
           await expect(page.locator('[data-mensagem="nao-enviada"] button')).toBeInViewport()
           await expect(page.locator('[data-mensagem="nao-enviada"]')).toBeVisible()
           await expect(page.locator('[data-mensagem="nao-enviada"] [role="alert"]')).toContainText(
@@ -675,7 +677,28 @@ const JORNADAS: ReadonlyArray<{ nome: string; passos: readonly Passo[] }> = [
           await secao.evaluate((elemento) => {
             elemento.closest('[data-secao="sim"]')?.scrollIntoView({ block: "start" })
           })
+          const ultimo = secao.locator('[data-preferencia="product_news"] [role="switch"]').last()
+          await ultimo.scrollIntoViewIfNeeded()
           await page.waitForTimeout(400)
+          await expect(ultimo).toBeInViewport()
+          const livre = await ultimo.evaluate((elemento) => {
+            const alvo = elemento.getBoundingClientRect()
+            const barra = document
+              .querySelector('[data-barra="gravar-preferencias"]')
+              ?.getBoundingClientRect()
+            const criar = document.querySelector('[data-acao="criar"]')
+            const fab = criar?.getBoundingClientRect()
+            const sobrepoe = (outro: DOMRect) =>
+              alvo.left < outro.right &&
+              alvo.right > outro.left &&
+              alvo.top < outro.bottom &&
+              alvo.bottom > outro.top
+            return (
+              (!barra || !sobrepoe(barra)) &&
+              (!fab || !criar || getComputedStyle(criar).visibility === "hidden" || !sobrepoe(fab))
+            )
+          })
+          expect(livre).toBe(true)
         },
         pronto: '[data-preferencias-de-aviso="sim"]',
       },
