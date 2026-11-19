@@ -122,7 +122,7 @@ export function Familia() {
   if (familia === null) return <EsqueletoDeLista linhas={2} />
 
   return (
-    <div className="grid gap-3">
+    <div className="grid gap-3" aria-busy={enviando || revogando !== null}>
       {mensagem === null ? null : (
         <p role="alert" className="text-sm text-(--destructive)">
           {mensagem}
