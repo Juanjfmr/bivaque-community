@@ -114,6 +114,41 @@ interface PortaDeclarada extends AllowedUnreached {
 
 const PORTAS_FORA_DO_LINK: readonly PortaDeclarada[] = [
   {
+    route: "/groups/[id]",
+    porta: "DIVIDA LAN-TROCA: tela mantida na web; falta porta no app",
+    dono: "membro",
+  },
+  {
+    route: "/communities/[id]/indicar-prestador",
+    porta: "DIVIDA LAN-TROCA: tela mantida na web; falta porta no app",
+    dono: "dono de vila",
+  },
+  {
+    route: "/communities/[id]/admin",
+    porta: "DIVIDA LAN-TROCA: tela mantida na web; falta porta no app",
+    dono: "dono de vila",
+  },
+  {
+    route: "/communities/[id]/admin/media",
+    porta: "DIVIDA LAN-TROCA: tela mantida na web; falta porta no app",
+    dono: "dono de vila",
+  },
+  {
+    route: "/communities/[id]/admin/moderators",
+    porta: "DIVIDA LAN-TROCA: tela mantida na web; falta porta no app",
+    dono: "dono de vila",
+  },
+  {
+    route: "/communities/[id]/admin/pending",
+    porta: "DIVIDA LAN-TROCA: tela mantida na web; falta porta no app",
+    dono: "dono de vila",
+  },
+  {
+    route: "/communities/[id]/admin/providers",
+    porta: "DIVIDA LAN-TROCA: tela mantida na web; falta porta no app",
+    dono: "dono de vila",
+  },
+  {
     route: "/auth/callback-error",
     porta: "FLUXO: redirect do /auth/callback quando o OAuth falha",
     dono: "visitante",

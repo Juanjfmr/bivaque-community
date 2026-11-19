@@ -14,16 +14,12 @@ const ORIGEM = "https://bivaque.example.invalid"
 const TROCADAS = [
   ["/communities", "/app/comunidade"],
   [`/communities/${ID}?fonte=teste`, "/app/comunidade?fonte=teste"],
-  [`/communities/${ID}/indicar-prestador`, "/app/comunidade"],
-  [`/communities/${ID}/admin`, "/app/comunidade"],
-  [`/communities/${ID}/admin/pending?aba=1`, "/app/comunidade?aba=1"],
   ["/community", "/app/comunidade"],
   [`/community?post=${ID}`, `/app/publicacao/${ID}?post=${ID}`],
   ["/community?post=invalido", "/app/comunidade?post=invalido"],
   ["/indicacoes?pedir=1", "/app/comunidade?pedir=1"],
   ["/recommendations?aba=request", "/app/comunidade?aba=request"],
   ["/groups", "/app/comunidade"],
-  [`/groups/${ID}`, `/app/grupo/${ID}`],
   [`/indicacoes/${ID}`, `/app/pergunta/${ID}`],
   [`/mercado/${ID}`, `/app/anuncio/${ID}`],
   [`/mercado/${ID}/editar`, `/app/anuncio/${ID}`],
@@ -278,7 +274,6 @@ describe("LAN-TROCA fase 1", () => {
     "configuracoes",
     "messages",
     "salvos",
-    "groups",
     "community",
     "indicacoes",
     "recommendations",
@@ -290,15 +285,30 @@ describe("LAN-TROCA fase 1", () => {
     expect(sobras).toEqual([])
   })
 
-  it("preserva as rotas de convite e remove as telas de comunidades", async () => {
+  it("preserva convites, indicação de prestador, detalhe de grupo e console do dono", async () => {
     expect((await resolver(`/communities/${ID}/invite`)).status).toBe(200)
     expect((await resolver("/invite/token")).status).toBe(200)
     expect(existsSync(join(shell, "communities", "[id]", "invite", "page.tsx"))).toBe(true)
     expect(existsSync(join(shell, "invite", "[token]", "page.tsx"))).toBe(true)
-    for (const rota of ["communities", "communities/[id]", "communities/[id]/indicar-prestador"]) {
+    for (const rota of ["communities", "communities/[id]"]) {
       expect(existsSync(join(shell, rota, "page.tsx"))).toBe(false)
     }
-    expect(existsSync(join(shell, "..", "(owner)", "communities", "[id]", "admin"))).toBe(false)
+    for (const caminho of [
+      `/communities/${ID}/indicar-prestador`,
+      `/groups/${ID}`,
+      ...["", "/pending", "/moderators", "/providers", "/media"].map(
+        (subrota) => `/communities/${ID}/admin${subrota}`,
+      ),
+    ]) {
+      expect((await resolver(caminho)).headers.get("location")).toBeNull()
+    }
+    expect(existsSync(join(shell, "communities", "[id]", "indicar-prestador", "page.tsx"))).toBe(
+      true,
+    )
+    expect(existsSync(join(shell, "groups", "[id]", "page.tsx"))).toBe(true)
+    expect(
+      existsSync(join(shell, "..", "(owner)", "communities", "[id]", "admin", "page.tsx")),
+    ).toBe(true)
   })
 
   it.each(["mercado", "imoveis", "guide"])(

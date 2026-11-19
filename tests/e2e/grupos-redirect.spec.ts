@@ -7,11 +7,6 @@ test("rotas antigas redirecionam para o app e preservam a consulta", async ({ re
     ["/indicacoes?origem=aviso", "/app/comunidade?origem=aviso"],
     ["/recommendations?origem=aviso", "/app/comunidade?origem=aviso"],
     ["/communities?origem=aviso", "/app/comunidade?origem=aviso"],
-    ["/communities/abc/admin/pending?origem=aviso", "/app/comunidade?origem=aviso"],
-    [
-      "/groups/60000000-0000-4000-8000-000000000006?origem=aviso",
-      "/app/grupo/60000000-0000-4000-8000-000000000006?origem=aviso",
-    ],
   ] as const) {
     const resposta = await request.get(origem, { maxRedirects: 0 })
     expect(resposta.status()).toBe(307)

@@ -168,13 +168,10 @@ const nextConfig: NextConfig = {
         [
           ["/communities", "/app/comunidade"],
           ["/communities/:id", "/app/comunidade"],
-          ["/communities/:id/indicar-prestador", "/app/comunidade"],
-          ["/communities/:id/admin/:caminho*", "/app/comunidade"],
           ["/community", "/app/comunidade"],
           ["/indicacoes", "/app/comunidade"],
           ["/recommendations", "/app/comunidade"],
           ["/groups", "/app/comunidade"],
-          ["/groups/:id", "/app/grupo/:id"],
           ["/indicacoes/:id", "/app/pergunta/:id"],
           ["/messages", "/app/conversas"],
           ["/messages/:id", "/app/conversa/:id"],
