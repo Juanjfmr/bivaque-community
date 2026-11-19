@@ -16,6 +16,8 @@ test("declarar a mudança mostra o estado de saída e sobrevive ao recarregar", 
   await simularVoce(page)
   await page.goto("/app/voce")
 
+  // O formulário fica atrás da linha, não na cara do hub (REGUA-002).
+  await page.getByRole("button", { name: "Mudar de cidade" }).click()
   const cidade = page.locator('[data-secao="sim"]', { hasText: "Sua cidade" })
   await expect(cidade.getByText("Sua cidade é")).toContainText("Manaus")
   await expect(cidade.locator('[data-aviso="saindo"]')).toHaveCount(0)
@@ -61,6 +63,11 @@ test("declarar a mudança mostra o estado de saída e sobrevive ao recarregar", 
 
   // Gravação que sobrevive ao recarregamento: a tela lê do servidor.
   await page.reload()
+  await expect(page.locator('[data-tela="voce"] p', { hasText: "Sua cidade é" })).toContainText(
+    "Rio de Janeiro",
+  )
+  await expect(page.locator('[data-aviso="saindo"]')).toContainText("Você está saindo de Manaus")
+  await page.getByRole("button", { name: "Mudar de cidade" }).click()
   await expect(cidade.locator('[data-aviso="saindo"]')).toContainText("Manaus, AM")
   await expect(cidade.locator('[data-aviso="saindo"]')).toContainText("participa de lá até")
 
@@ -75,6 +82,7 @@ test("pessoa já em transferência vê a linha de saída e nenhum formulário", 
     saida: { nome: "Manaus", uf: "AM", endsAt: "2026-12-05", readOnly: false },
   })
   await page.goto("/app/voce")
+  await page.getByRole("button", { name: "Mudar de cidade" }).click()
 
   const cidade = page.locator('[data-secao="sim"]', { hasText: "Sua cidade" })
   const saida = cidade.locator('[data-aviso="saindo"]')
@@ -88,6 +96,7 @@ test("segunda mudança: a recusa do servidor aparece como mensagem, não como su
 }) => {
   await simularVoce(page, { respostaDaMudanca: "mudanca-em-andamento" })
   await page.goto("/app/voce")
+  await page.getByRole("button", { name: "Mudar de cidade" }).click()
 
   const cidade = page.locator('[data-secao="sim"]', { hasText: "Sua cidade" })
   await cidade.getByRole("combobox", { name: "Estado" }).click()
@@ -107,6 +116,7 @@ test("o link ?mudar= abre o formulário com o destino escolhido", async ({ page 
   await simularVoce(page)
   await page.goto(`/app/voce?mudar=${RIO}`)
 
+  // O destino do endereço abre o formulário sozinho: a pessoa chega querendo.
   const cidade = page.locator('[data-secao="sim"]', { hasText: "Sua cidade" })
   // O destino do endereço já vem marcado: estado e cidade preenchidos.
   const estado = cidade.getByRole("combobox", { name: "Estado" })
@@ -119,12 +129,31 @@ test("o link ?mudar= abre o formulário com o destino escolhido", async ({ page 
   await expect(page.getByRole("alertdialog")).toContainText("Mudar para Rio de Janeiro?")
 })
 
+test("a âncora #cidade abre a linha sozinha, como o ?mudar=", async ({ page }) => {
+  await simularVoce(page)
+  // É o endereço que o rodapé do seletor de cidade da casca web linka
+  // (achado 4 da revisão de código): quem chega por ele não pode aterrissar
+  // num bloco vazio, um clique atrás do que veio buscar.
+  await page.goto("/app/voce#cidade")
+
+  // O formulário aberto também tem um botão "Mudar de cidade" (o que grava);
+  // a linha que interessa é a da lista "Seu Bivaque".
+  const linha = page
+    .locator('[data-secao="sim"]', { hasText: "Seu Bivaque" })
+    .getByRole("button", { name: "Mudar de cidade" })
+  await expect(linha).toHaveAttribute("aria-expanded", "true")
+  const cidade = page.locator('[data-secao="sim"]', { hasText: "Sua cidade" })
+  await expect(cidade.getByText("Sua cidade é")).toContainText("Manaus")
+})
+
 test("Força Armada e OM: gravar, sobreviver ao recarregar e apagar limpando o campo", async ({
   page,
 }) => {
   await simularVoce(page)
   await page.goto("/app/voce")
 
+  // O formulário fica atrás da linha, como a mudança de cidade (REGUA-002).
+  await page.getByRole("button", { name: "Força e OM" }).click()
   const secao = page.locator('[data-secao="sim"]', { hasText: "Força Armada e OM" })
   await expect(secao).toContainText("Opcional e privado — outras pessoas não veem.")
 
@@ -137,6 +166,7 @@ test("Força Armada e OM: gravar, sobreviver ao recarregar e apagar limpando o c
   await expect(secao.getByRole("status")).toContainText("Salvo.")
 
   await page.reload()
+  await page.getByRole("button", { name: "Força e OM" }).click()
   const depois = page.locator('[data-secao="sim"]', { hasText: "Força Armada e OM" })
   await expect(depois.getByRole("combobox", { name: "Força Armada" })).toContainText("Marinha")
   await expect(depois.getByLabel("Organização Militar (OM)")).toHaveValue("12º BIS")
@@ -149,6 +179,7 @@ test("Força Armada e OM: gravar, sobreviver ao recarregar e apagar limpando o c
   await expect(depois.getByRole("status")).toContainText("Salvo.")
 
   await page.reload()
+  await page.getByRole("button", { name: "Força e OM" }).click()
   const limpo = page.locator('[data-secao="sim"]', { hasText: "Força Armada e OM" })
   await expect(limpo.getByRole("combobox", { name: "Força Armada" })).toContainText("Nenhuma")
   await expect(limpo.getByLabel("Organização Militar (OM)")).toHaveValue("")

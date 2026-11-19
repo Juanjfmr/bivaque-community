@@ -112,7 +112,7 @@ test.describe("F10 — Você real no app", { tag: "@stateful" }, () => {
       timeout: 30_000,
     })
     await expect(
-      page.locator('[data-tela="bloqueados"] [data-linha="lista"]'),
+      page.locator('[data-tela="bloqueados"] [data-linha="bloqueado"]'),
       "o bloqueio semeado precisa aparecer",
     ).toHaveCount(1)
     await expect(page.getByText("Desbloquear")).toBeVisible()
@@ -138,9 +138,9 @@ test.describe("F10 — Você real no app", { tag: "@stateful" }, () => {
 
     await page.route("**/api/app/voce", (rota) => rota.abort())
     await page.goto("/app/voce")
-    const erro = page.locator('[data-estado="erro"]')
+    const erro = page.locator('[data-aviso="perfil"]')
     await expect(erro).toBeVisible({ timeout: 30_000 })
-    await expect(erro).toContainText("Não foi possível carregar")
+    await expect(erro).toContainText("Leitura do perfil indisponível")
     await expect(
       page.getByText("Ninguém bloqueado"),
       "banco fora não pode virar perfil vazio",
@@ -179,7 +179,7 @@ test.describe("F10 — Você real no app", { tag: "@stateful" }, () => {
     // O bloqueio real continua na lista: a recusa não apagou nada.
     await page.goto("/app/bloqueados")
     await expect(
-      page.locator('[data-tela="bloqueados"] [data-linha="lista"]'),
+      page.locator('[data-tela="bloqueados"] [data-linha="bloqueado"]'),
       "a recusa não pode mexer no estado",
     ).toHaveCount(1)
   })
