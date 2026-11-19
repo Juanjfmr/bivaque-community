@@ -116,9 +116,12 @@ test.describe("F09 — conversas reais", { tag: "@stateful" }, () => {
     const texto = `Texto preservado ${testInfo.project.name} ${Date.now()}`
     await page.getByLabel("Mensagem", { exact: true }).fill(texto)
     await page.getByRole("button", { name: "Enviar", exact: true }).click()
-    await expect(page.getByRole("alert")).toContainText("Seu texto foi mantido")
+    await expect(
+      page.getByRole("alert").filter({ hasText: "Seu texto foi mantido" }),
+    ).toBeAttached()
     await expect(page.getByLabel("Mensagem", { exact: true })).toHaveValue(texto)
-    await expect(page.locator('[data-mensagens="historico"]')).not.toContainText(texto)
+    await expect(page.locator('[data-mensagem="nao-enviada"]')).toContainText(texto)
+    await expect(page.locator('[data-mensagem="nao-enviada"]')).toContainText("Não enviada")
     await page.unroute("**/api/app/conversas/*/mensagens")
     await page.getByRole("button", { name: "Enviar", exact: true }).click()
     await expect(page.locator('[data-mensagens="historico"]')).toContainText(texto)

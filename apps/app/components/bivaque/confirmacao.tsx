@@ -10,6 +10,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { useSobreposicaoDaEntrada } from "@/lib/navegacao/react"
+import { cn } from "@/lib/utils"
 
 /**
  * A confirmação (inventário §7, `shell/dialogs.js`: `confirm`).
@@ -23,8 +24,8 @@ import { useSobreposicaoDaEntrada } from "@/lib/navegacao/react"
  *
  * A caixa e as ações vêm da base shadcn (`components/ui/alert-dialog`), não do
  * Radix direto: é a correção do achado S01 da auditoria de 26/10. A ação de
- * perigo usa a variante `destructive` do botão; a de concluir usa a `brasa`,
- * que é a ação da peça (ADR-20261102-paleta-fria mantém a brasa no criar).
+ * perigo usa a variante `destructive` do botão; a de concluir é ardósia
+ * (ADR-20261118) — Brasa fica só no começar a criar.
  */
 export function Confirmacao({
   titulo,
@@ -57,9 +58,12 @@ export function Confirmacao({
             {cancelar}
           </AlertDialogCancel>
           <AlertDialogAction
-            variant={perigo ? "destructive" : "brasa"}
+            variant={perigo ? "destructive" : "default"}
             data-acao="confirmar"
-            className="min-h-11 rounded-xl px-4 text-sm"
+            className={cn(
+              "min-h-11 rounded-xl px-4 text-sm",
+              !perigo && "bg-(--acao) text-(--acao-foreground) hover:bg-(--acao)/90",
+            )}
             onClick={() => {
               aoConfirmar()
             }}

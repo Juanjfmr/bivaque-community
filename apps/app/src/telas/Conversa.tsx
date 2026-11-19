@@ -3,7 +3,6 @@
 import { useParams } from "@tanstack/react-router"
 import { useEffect, useRef, useState } from "react"
 import { Botao, BotaoDeIcone } from "@/components/bivaque/botao"
-import { Campo } from "@/components/bivaque/campos"
 import { Confirmacao } from "@/components/bivaque/confirmacao"
 import { ContextoDaConversa } from "@/components/bivaque/contexto-conversa"
 import { EsqueletoDeLista } from "@/components/bivaque/esqueleto"
@@ -11,12 +10,13 @@ import { EstadoDeErro, EstadoVazio } from "@/components/bivaque/estado-vazio"
 import { Icone } from "@/components/bivaque/icone"
 import { ItemDoMenu, MenuDaLinha } from "@/components/bivaque/menu-de-linha"
 import { NomeDeMembro } from "@/components/bivaque/nome-de-membro"
+import { Sobreposicao } from "@/components/bivaque/sobreposicao"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog"
 import { Textarea } from "@/components/ui/textarea"
 import { enviar, FalhaDaApi } from "@/lib/api/cliente"
 import {
   buscarConversa,
+  type Caixa,
   type DetalheDaConversa,
   enviarMensagem,
   lerConversas,
@@ -29,10 +29,12 @@ import { useNavegacao, useRolagemEFoco, useSobreposicaoDaEntrada } from "@/lib/n
 import { CARGA_CONCLUIDA } from "@/lib/navegacao/restauracao"
 import { validarParametros } from "@/lib/navegacao/rotas"
 import { iniciais } from "@/lib/texto"
+import { useLarguraDaTela } from "@/src/casca/ganchos"
 import { useCasca } from "@/src/contexto/casca"
 import { contexto } from "@/src/conversas/contexto"
 import { EstadoDeSessaoVencida, EstadoNegado } from "@/src/eventos/EstadosDeAcesso"
 import { acessoNegado, sessaoVencida } from "@/src/eventos/formulario"
+import { ListaDeConversas } from "@/src/telas/Conversas"
 import { TelaIndisponivel } from "@/src/telas/TelaIndisponivel"
 
 /** Os motivos são os da regra compartilhada (`lib/reports/reports`). */
@@ -43,18 +45,42 @@ const MOTIVOS_DA_DENUNCIA: ReadonlyArray<readonly [string, string]> = [
   ["outro", "Outro"],
 ]
 
+/**
+ * A conversa (F09). No computador (referência Mobbin, Chats com conversa
+ * aberta: https://mobbin.com/screens/fd834924-6a02-4fa0-a5e7-1c3d20f9c549) a
+ * caixa fica à esquerda e a conversa, à direita, com o nome de quem conversa
+ * UMA vez, no cabeçalho do painel. No celular, lista → conversa.
+ *
+ * O menu ⋯ é folha de baixo no celular (referência Mobbin, menu ⋯ como folha:
+ * https://mobbin.com/screens/f23df80d-4b7d-4a7a-8abc-fdeadbc0bedd) e suspenso
+ * no computador. A denúncia é folha e cita a mensagem denunciada.
+ */
 export function Conversa() {
   const parametros = useParams({ strict: false }) as Record<string, string | undefined>
   const id = parametros["id"] ?? ""
   const casca = useCasca()
   const navegacao = useNavegacao()
+  const largura = useLarguraDaTela()
+  const menuSuspenso = largura >= 1024
   const [dados, setDados] = useState<DetalheDaConversa | null>(null)
+  const [caixa, setCaixa] = useState<Caixa | null>(null)
+  const [erroCaixa, setErroCaixa] = useState(false)
+  const [rodadaCaixa, setRodadaCaixa] = useState(0)
+  const balaoFalho = useRef<HTMLDivElement>(null)
   const [erro, setErro] = useState<"falhou" | "sessao" | "negado" | "ausente" | null>(null)
   const [rodada, setRodada] = useState(0)
   const [rascunho, setRascunho] = useState("")
   const [enviando, setEnviando] = useState(false)
   const [carregandoMais, setCarregandoMais] = useState(false)
   const [erroLocal, setErroLocal] = useState("")
+  /**
+   * O envio que falhou, como balão da própria mensagem (revisão cega 18/11).
+   * O anúncio de leitor de tela ("Seu texto foi mantido") é região viva
+   * OCULTA no compositor: visível é só o balão — nada de rodapé duplicado
+   * (D22/D3).
+   */
+  const [naoEnviada, setNaoEnviada] = useState<string | null>(null)
+  const [anuncioDeEnvio, setAnuncioDeEnvio] = useState("")
   const [aviso, setAviso] = useState("")
   const [mostrarSeguranca, setMostrarSeguranca] = useState(false)
   /** Quem EU bloqueei. O bloqueio da outra pessoa nunca chega ao cliente. */
@@ -64,6 +90,7 @@ export function Conversa() {
   const [explicacao, setExplicacao] = useState("")
   const [agindo, setAgindo] = useState(false)
   const denuncia = useSobreposicaoDaEntrada("conversa-denuncia")
+  const menuDaLinha = useSobreposicaoDaEntrada("menu-de-linha")
   const controle = useRef<AbortController | null>(null)
   const ultimaChave = useRef<{ texto: string; chave: string } | null>(null)
   useRolagemEFoco(CARGA_CONCLUIDA)
@@ -83,6 +110,22 @@ export function Conversa() {
       })
     return () => pedido.abort()
   }, [rodada])
+  // biome-ignore lint/correctness/useExhaustiveDependencies: rodadaCaixa solicita nova leitura
+  useEffect(() => {
+    const pedido = new AbortController()
+    setErroCaixa(false)
+    setCaixa(null)
+    // A caixa da coluna da esquerda (≥768) lê junto com a conversa; se falhar,
+    // a conversa segue e a coluna fica como estava.
+    void lerConversas({ signal: pedido.signal })
+      .then((lida) => {
+        if (!pedido.signal.aborted) setCaixa(lida)
+      })
+      .catch(() => {
+        if (!pedido.signal.aborted) setErroCaixa(true)
+      })
+    return () => pedido.abort()
+  }, [id, rodadaCaixa])
   // biome-ignore lint/correctness/useExhaustiveDependencies: rodada solicita nova leitura
   useEffect(() => {
     const pedido = new AbortController()
@@ -92,14 +135,19 @@ export function Conversa() {
     setErroLocal("")
     setEnviando(false)
     setCarregandoMais(false)
+    setNaoEnviada(null)
+    setAnuncioDeEnvio("")
     void buscarConversa(id, { signal: pedido.signal })
       .then((valor) => {
         if (!pedido.signal.aborted) {
           setDados(valor)
           void marcarConversaLida(id, pedido.signal)
             .then(() => lerConversas({ signal: pedido.signal }))
-            .then((caixa) => {
-              if (!pedido.signal.aborted) casca.definir({ conversas: caixa.porLer })
+            .then((lida) => {
+              if (!pedido.signal.aborted) {
+                casca.definir({ conversas: lida.porLer })
+                setCaixa(lida)
+              }
             })
             .catch(() => undefined)
         }
@@ -125,32 +173,39 @@ export function Conversa() {
   }, [id])
   const nome = dados?.conversa.nome ?? ""
   const outroId = dados?.conversa.outroId ?? ""
-  const mostrarConversaNoTopo = casca.mostrarConversaNoTopo
   useEffect(() => {
-    mostrarConversaNoTopo(nome ? { id, nome } : null)
-    return () => mostrarConversaNoTopo(null)
-  }, [id, nome, mostrarConversaNoTopo])
-  async function enviarTexto() {
+    if (naoEnviada !== null) balaoFalho.current?.scrollIntoView({ block: "nearest" })
+  }, [naoEnviada])
+  async function enviarTexto(texto = rascunho, reenvio = false) {
     const pedido = controle.current
-    if (!pedido || pedido.signal.aborted || enviando || !rascunho.trim()) return
-    const texto = rascunho
+    if (!pedido || pedido.signal.aborted || enviando || !texto.trim()) return
     const anterior = ultimaChave.current
     const clientKey =
       anterior !== null && anterior.texto === texto ? anterior.chave : novaChaveDeEnvio()
     ultimaChave.current = { texto, chave: clientKey }
     setEnviando(true)
     setErroLocal("")
+    setAnuncioDeEnvio("")
     try {
       const mensagem = await enviarMensagem(id, texto, { signal: pedido.signal, clientKey })
       if (!pedido.signal.aborted) {
         setDados((atual) =>
           atual ? { ...atual, mensagens: [...atual.mensagens, mensagem] } : atual,
         )
-        setRascunho("")
+        if (!reenvio) setRascunho("")
+        setNaoEnviada((atual) => (atual === texto ? null : atual))
+        setAnuncioDeEnvio("")
         ultimaChave.current = null
       }
     } catch {
-      if (!pedido.signal.aborted) setErroLocal("Não foi possível enviar. Seu texto foi mantido.")
+      // A mensagem que não saiu fica visível como balão seu, marcada
+      // "Não enviada", com a ação de tentar de novo; o texto continua no campo.
+      // O leitor de tela ouve o fato pelo anúncio oculto; o que se VÊ é só o
+      // balão (D22: um texto por erro).
+      if (!pedido.signal.aborted) {
+        setAnuncioDeEnvio("Não foi possível enviar. Seu texto foi mantido.")
+        setNaoEnviada(texto)
+      }
     } finally {
       if (!pedido.signal.aborted) setEnviando(false)
     }
@@ -248,207 +303,284 @@ export function Conversa() {
   return (
     <section
       data-tela="conversa"
-      className="flex min-h-[calc(100dvh-var(--altura-do-topo)-20px)] min-w-0 flex-col gap-2 pb-[max(1rem,env(safe-area-inset-bottom))] sm:gap-3"
+      className="grid min-h-[calc(100dvh-var(--altura-do-topo)-20px)] min-w-0 gap-2 pb-[max(1rem,env(safe-area-inset-bottom))] sm:gap-3 md:min-h-0 md:pb-0"
     >
-      <div className="flex min-w-0 items-center gap-3 px-1 py-2">
-        <Avatar size="lg" className="size-11 shrink-0" aria-hidden="true">
-          <AvatarFallback className="bg-(--secondary-container) font-semibold">
-            {iniciais(nome)}
-          </AvatarFallback>
-        </Avatar>
-        <span className="grid min-w-0 gap-0.5">
-          <h1
-            id="titulo-da-tela"
-            data-titulo-da-tela
-            tabIndex={-1}
-            className="truncate text-[19px] font-semibold leading-6"
-          >
-            <NomeDeMembro
-              nome={nome}
-              aoAbrir={
-                outroId === ""
-                  ? undefined
-                  : () => void navegacao.irPara("perfil", { parametros: { id: outroId } })
-              }
-              className="truncate text-[19px] leading-6"
-            />
-          </h1>
-        </span>
-        {bloqueadoPorMim ? null : (
-          <MenuDaLinha rotulo="Opções da conversa" className="ml-auto shrink-0">
-            {/*
-              A confirmação SUBSTITUI o menu na mesma entrada. Deixar o Radix
-              fechar o menu (Voltar da entrada) fecharia a confirmação junto,
-              porque cada entrada tem uma sobreposição só — e a pessoa via o
-              menu reabrir sem o diálogo (RUN-165).
-            */}
-            <ItemDoMenu
-              perigo
-              onSelect={(evento) => evento.preventDefault()}
-              onClick={() =>
-                void navegacao.atualizarCom((atual) => ({
-                  ...atual,
-                  sobreposicao: "confirmacao",
-                }))
-              }
-            >
-              Bloquear {nome}
-            </ItemDoMenu>
-          </MenuDaLinha>
-        )}
-      </div>
-      {origem && <ContextoDaConversa origem={origem} />}
-      <aside
-        data-seguranca-conversa="sim"
-        className="rounded-xl bg-(--secondary-container) px-3 py-2 text-xs leading-5"
-      >
-        <button
-          type="button"
-          aria-expanded={mostrarSeguranca}
-          aria-controls="orientacoes-conversa"
-          className="flex min-h-10 w-full items-center gap-2 text-left font-medium"
-          onClick={() => setMostrarSeguranca((atual) => !atual)}
+      <div data-conversa="grade" className="grid min-w-0 gap-2 md:min-h-0 md:gap-0">
+        <aside
+          data-caixa="lista"
+          className="hidden min-h-0 min-w-0 md:block"
+          aria-label="Conversas"
         >
-          <Icone nome="verified_user" className="size-5 shrink-0" />
-          <span className="min-w-0 flex-1">Segurança na negociação</span>
-          <Icone
-            nome="chevron_right"
-            className={mostrarSeguranca ? "size-4 rotate-90" : "size-4"}
-          />
-        </button>
-        {mostrarSeguranca && (
-          <p id="orientacoes-conversa" className="pb-1 text-(--on-surface-variant)">
-            Nunca pague adiantado nem compartilhe documentos ou dados bancários. Combine a entrega
-            em local público.
-          </p>
-        )}
-      </aside>
-      {dados.anterior && (
-        <Botao tom="contornado" disabled={carregandoMais} onClick={() => void mais()}>
-          {carregandoMais ? "Carregando…" : "Ver mensagens anteriores"}
-        </Botao>
-      )}
-      {dados.mensagens.length === 0 ? (
-        <EstadoVazio
-          titulo="Combine os detalhes por aqui"
-          texto="Descreva o que você procura e confirme preço, disponibilidade e horário."
-          icone="chat_bubble"
-        />
-      ) : (
-        <div data-mensagens="historico" className="grid min-w-0 content-start gap-2 pb-2">
-          {dados.mensagens.map((item) => (
-            <div
-              key={item.id}
-              className={
-                item.minha
-                  ? "ml-auto flex max-w-[86%] items-end gap-1"
-                  : "mr-auto flex max-w-[86%] items-end gap-1"
-              }
-            >
-              <p
-                className={
-                  item.minha
-                    ? "whitespace-pre-wrap break-words rounded-2xl rounded-br-sm bg-(--secondary-container) px-3 py-2.5 text-[14px] leading-5"
-                    : "whitespace-pre-wrap break-words rounded-2xl rounded-bl-sm bg-(--surface-lowest) px-3 py-2.5 text-[14px] leading-5 ring-1 ring-(--outline-variant)"
-                }
+          {erroCaixa && caixa === null ? (
+            <EstadoDeErro aoTentar={() => setRodadaCaixa((atual) => atual + 1)} />
+          ) : caixa === null ? (
+            <EsqueletoDeLista linhas={4} />
+          ) : (
+            <ListaDeConversas
+              conversas={caixa.conversas}
+              selecionada={id}
+              comContexto={false}
+              aoAbrir={(nova) => {
+                if (nova === id) return
+                void navegacao.irPara("conversa", { parametros: { id: nova } })
+              }}
+            />
+          )}
+        </aside>
+        <div data-conversa="painel" className="flex min-w-0 flex-col gap-2 sm:gap-3">
+          <div data-cabeca="conversa" className="flex min-w-0 items-center gap-3 px-1 py-2">
+            <Avatar size="lg" className="size-11 shrink-0" aria-hidden="true">
+              <AvatarFallback className="bg-(--secondary-container) font-semibold">
+                {iniciais(nome)}
+              </AvatarFallback>
+            </Avatar>
+            <span className="grid min-w-0 gap-0.5">
+              {/* O nome de quem conversa aparece uma vez só: aqui. A barra do
+                  topo diz a seção ("Conversas"). */}
+              <h1
+                id="titulo-da-tela"
+                data-titulo-da-tela
+                tabIndex={-1}
+                className="truncate text-[19px] font-semibold leading-6"
               >
-                {item.conteudo}
-              </p>
-              {item.minha ? null : (
-                <BotaoDeIcone
-                  nome="flag"
-                  rotulo="Denunciar mensagem"
-                  className="size-8 shrink-0 text-(--on-surface-variant)"
-                  onClick={() => abrirDenuncia(item)}
+                <NomeDeMembro
+                  nome={nome}
+                  aoAbrir={
+                    outroId === ""
+                      ? undefined
+                      : () => void navegacao.irPara("perfil", { parametros: { id: outroId } })
+                  }
+                  className="truncate text-[19px] leading-6"
                 />
+              </h1>
+            </span>
+            {bloqueadoPorMim ? null : menuSuspenso ? (
+              <MenuDaLinha rotulo="Opções da conversa" className="ml-auto shrink-0">
+                {/*
+                  A confirmação SUBSTITUI o menu na mesma entrada. Deixar o Radix
+                  fechar o menu (Voltar da entrada) fecharia a confirmação junto,
+                  porque cada entrada tem uma sobreposição só — e a pessoa via o
+                  menu reabrir sem o diálogo (RUN-165).
+                */}
+                <ItemDoMenu
+                  perigo
+                  onSelect={(evento) => evento.preventDefault()}
+                  onClick={() =>
+                    void navegacao.atualizarCom((atual) => ({
+                      ...atual,
+                      sobreposicao: "confirmacao",
+                    }))
+                  }
+                >
+                  Bloquear {nome}
+                </ItemDoMenu>
+              </MenuDaLinha>
+            ) : (
+              <BotaoDeIcone
+                rotulo="Opções da conversa"
+                nome="more_vert"
+                aberto="menu"
+                data-acao="opcoes"
+                className="ml-auto shrink-0"
+                onClick={() => menuDaLinha.aoMudarAberto(true)}
+              />
+            )}
+          </div>
+          {/* O tipo da conversa sem o rótulo "Contexto da conversa": o título do
+              item entra quando a API o fornecer (F09-B). */}
+          {origem && <ContextoDaConversa origem={{ ...origem, detalhe: "" }} />}
+          <aside
+            data-seguranca-conversa="sim"
+            className="rounded-xl bg-(--secondary-container) px-3 py-2 text-xs leading-5"
+          >
+            <button
+              type="button"
+              aria-expanded={mostrarSeguranca}
+              aria-controls="orientacoes-conversa"
+              className="flex min-h-10 w-full items-center gap-2 text-left font-medium"
+              onClick={() => setMostrarSeguranca((atual) => !atual)}
+            >
+              <Icone nome="verified_user" className="size-5 shrink-0" />
+              <span className="min-w-0 flex-1">Segurança na negociação</span>
+              <Icone
+                nome="chevron_right"
+                className={mostrarSeguranca ? "size-4 rotate-90" : "size-4"}
+              />
+            </button>
+            {mostrarSeguranca && (
+              <p id="orientacoes-conversa" className="pb-1 text-(--on-surface-variant)">
+                Nunca pague adiantado nem compartilhe documentos ou dados bancários. Combine a
+                entrega em local público.
+              </p>
+            )}
+          </aside>
+          {dados.anterior && (
+            <Botao tom="contornado" disabled={carregandoMais} onClick={() => void mais()}>
+              {carregandoMais ? "Carregando…" : "Ver mensagens anteriores"}
+            </Botao>
+          )}
+          {dados.mensagens.length === 0 && naoEnviada === null ? (
+            <EstadoVazio
+              titulo="Combine os detalhes por aqui"
+              texto="Descreva o que você procura e confirme preço, disponibilidade e horário."
+              icone="chat_bubble"
+            />
+          ) : (
+            <div data-mensagens="historico" className="grid min-w-0 content-start gap-2 pb-2">
+              {dados.mensagens.map((item) => (
+                <div
+                  key={item.id}
+                  className={
+                    item.minha
+                      ? "ml-auto flex max-w-[86%] items-end gap-1"
+                      : "mr-auto flex max-w-[86%] items-end gap-1"
+                  }
+                >
+                  <p
+                    className={
+                      item.minha
+                        ? "whitespace-pre-wrap break-words rounded-2xl rounded-br-sm bg-(--secondary-container) px-3 py-2.5 text-[14px] leading-5"
+                        : "whitespace-pre-wrap break-words rounded-2xl rounded-bl-sm bg-(--surface-lowest) px-3 py-2.5 text-[14px] leading-5 ring-1 ring-(--outline-variant)"
+                    }
+                  >
+                    {item.conteudo}
+                  </p>
+                  {item.minha ? null : (
+                    <BotaoDeIcone
+                      nome="flag"
+                      rotulo="Denunciar mensagem"
+                      className="shrink-0"
+                      onClick={() => abrirDenuncia(item)}
+                    />
+                  )}
+                </div>
+              ))}
+              {naoEnviada !== null && (
+                <div
+                  ref={balaoFalho}
+                  data-mensagem="nao-enviada"
+                  className="ml-auto grid max-w-[86%] justify-items-end gap-1"
+                >
+                  {/* D24: a bolha falhada se diferencia da enviada — esmaecida
+                      com borda de erro. */}
+                  <p className="whitespace-pre-wrap break-words rounded-2xl rounded-br-sm bg-(--secondary-container) px-3 py-2.5 text-[14px] leading-5 opacity-85 ring-1 ring-(--destructive)/60">
+                    {naoEnviada}
+                  </p>
+                  <p className="flex min-h-11 items-center gap-1.5 text-xs text-(--destructive)">
+                    <Icone nome="error" className="size-4" />
+                    Não enviada
+                    <Botao
+                      tom="texto"
+                      data-acao="tentar-de-novo"
+                      className="min-h-11 px-2 text-xs font-semibold text-(--destructive) underline"
+                      disabled={enviando}
+                      onClick={() => void enviarTexto(naoEnviada, true)}
+                    >
+                      Tentar de novo
+                    </Botao>
+                  </p>
+                </div>
               )}
             </div>
-          ))}
-        </div>
-      )}
-      {aviso && (
-        <p role="status" className="text-xs text-(--on-surface-variant)">
-          {aviso}
-        </p>
-      )}
-      {bloqueadoPorMim ? (
-        // O histórico fica; o que fecha é a escrita, nos dois sentidos. A frase
-        // não promete esconder conteúdo: esconder é a frente D1/D2, fora deste lote.
-        <div
-          data-conversa-bloqueada="sim"
-          className="sticky bottom-[max(0.5rem,env(safe-area-inset-bottom))] z-10 mt-auto grid gap-1 rounded-2xl border border-(--outline-variant) bg-(--surface-lowest) p-3 shadow-[0_-4px_16px_var(--shadow-soft)]"
-        >
-          <p className="text-sm font-semibold">Você bloqueou {nome}</p>
-          <p className="text-xs leading-5 text-(--on-surface-variant)">
-            A conversa fica fechada nos dois sentidos; o histórico continua visível para vocês; a
-            pessoa não é avisada. Para voltar a conversar, desbloqueie em Pessoas bloqueadas, na
-            área Você.
-          </p>
-        </div>
-      ) : (
-        <div
-          data-compositor-conversa="sim"
-          className="sticky bottom-[max(0.5rem,env(safe-area-inset-bottom))] z-10 mt-auto grid min-w-0 gap-2 rounded-2xl border border-(--outline-variant) bg-(--surface-lowest) p-2.5 shadow-[0_-4px_16px_var(--shadow-soft)] sm:p-3"
-        >
-          <fieldset aria-label="Respostas rápidas" className="flex gap-2 overflow-x-auto pb-0.5">
-            {[
-              "Ainda está disponível?",
-              "Podemos combinar a retirada?",
-              "Obrigado, vou confirmar.",
-            ].map((opcao) => (
-              <button
-                type="button"
-                key={opcao}
-                disabled={enviando}
-                data-resposta-rapida="sim"
-                className="min-h-9 shrink-0 rounded-full border border-(--outline-variant) px-3 text-xs hover:bg-(--surface-low)"
-                onClick={() => setRascunho(opcao)}
-              >
-                {opcao}
-              </button>
-            ))}
-          </fieldset>
-          <form
-            className="grid min-w-0 gap-1.5"
-            onSubmit={(evento) => {
-              evento.preventDefault()
-              void enviarTexto()
-            }}
-          >
-            <div className="flex min-w-0 items-end gap-2">
-              <div className="min-w-0 flex-1">
-                <label htmlFor="mensagem-da-conversa" className="sr-only">
-                  Mensagem
-                </label>
-                <Textarea
-                  id="mensagem-da-conversa"
-                  rows={2}
-                  maxLength={2000}
-                  value={rascunho}
-                  disabled={enviando}
-                  onChange={(evento) => setRascunho(evento.target.value)}
-                  placeholder="Escreva uma mensagem..."
-                  className="min-h-12 max-h-32 resize-y rounded-xl"
-                />
-              </div>
-              <Botao
-                type="submit"
-                data-acao="enviar-mensagem"
-                icone="send"
-                disabled={enviando || !rascunho.trim() || rascunho.length > 2000}
-                className="shrink-0 px-3"
-              >
-                {enviando ? "Enviando…" : "Enviar"}
-              </Botao>
-            </div>
-          </form>
-          {erroLocal && (
-            <p role="alert" className="text-xs text-(--destructive)">
-              {erroLocal}
+          )}
+          {aviso && (
+            <p role="status" className="text-xs text-(--on-surface-variant)">
+              {aviso}
             </p>
           )}
+          {bloqueadoPorMim ? (
+            // O histórico fica; o que fecha é a escrita, nos dois sentidos. A frase
+            // não promete esconder conteúdo: esconder é a frente D1/D2, fora deste lote.
+            <div
+              data-conversa-bloqueada="sim"
+              className="sticky bottom-[max(0.5rem,env(safe-area-inset-bottom))] z-10 mt-auto grid gap-1 rounded-2xl border border-(--outline-variant) bg-(--surface-lowest) p-3 shadow-[0_-4px_16px_var(--shadow-soft)]"
+            >
+              <p className="text-sm font-semibold">Você bloqueou {nome}</p>
+              <p className="text-xs leading-5 text-(--on-surface-variant)">
+                A conversa fica fechada nos dois sentidos; o histórico continua visível para vocês;
+                a pessoa não é avisada. Para voltar a conversar, desbloqueie em Pessoas bloqueadas,
+                na área Você.
+              </p>
+            </div>
+          ) : (
+            <div
+              data-compositor-conversa="sim"
+              className="sticky bottom-[max(0.5rem,env(safe-area-inset-bottom))] z-10 mt-auto grid min-w-0 gap-2 rounded-2xl border border-(--outline-variant) bg-(--surface-lowest) p-2.5 shadow-[0_-4px_16px_var(--shadow-soft)] sm:p-3"
+            >
+              <fieldset
+                aria-label="Respostas rápidas"
+                className="flex min-w-0 flex-wrap gap-2 pb-0.5"
+              >
+                {[
+                  "Ainda está disponível?",
+                  "Podemos combinar a retirada?",
+                  "Obrigado, vou confirmar.",
+                ].map((opcao) => (
+                  <button
+                    type="button"
+                    key={opcao}
+                    disabled={enviando}
+                    data-resposta-rapida="sim"
+                    className="min-h-11 shrink-0 rounded-full border border-(--outline-variant) px-3 text-xs hover:bg-(--surface-low)"
+                    onClick={() => setRascunho(opcao)}
+                  >
+                    {opcao}
+                  </button>
+                ))}
+              </fieldset>
+              <form
+                className="grid min-w-0 gap-1.5"
+                onSubmit={(evento) => {
+                  evento.preventDefault()
+                  void enviarTexto()
+                }}
+              >
+                <div className="flex min-w-0 items-end gap-2">
+                  <div className="min-w-0 flex-1">
+                    <label htmlFor="mensagem-da-conversa" className="sr-only">
+                      Mensagem
+                    </label>
+                    <Textarea
+                      id="mensagem-da-conversa"
+                      rows={2}
+                      maxLength={2000}
+                      value={rascunho}
+                      disabled={enviando}
+                      onChange={(evento) => setRascunho(evento.target.value)}
+                      placeholder="Escreva uma mensagem..."
+                      className="min-h-12 max-h-32 resize-y rounded-xl"
+                    />
+                  </div>
+                  <BotaoDeIcone
+                    type="submit"
+                    rotulo="Enviar"
+                    nome="send"
+                    data-acao="enviar-mensagem"
+                    disabled={enviando || !rascunho.trim() || rascunho.length > 2000}
+                    className={
+                      // D14: um desenho só nos três tamanhos — desligado é
+                      // neutro legível (ícone ≥ 3:1); ligado é ardósia.
+                      enviando || !rascunho.trim() || rascunho.length > 2000
+                        ? "size-11 shrink-0 rounded-full bg-(--surface-high) text-(--on-surface-variant)"
+                        : "size-11 shrink-0 rounded-full bg-(--acao) text-(--acao-foreground) hover:bg-(--acao)/90"
+                    }
+                  />
+                </div>
+              </form>
+              {anuncioDeEnvio && (
+                <p role="alert" className="sr-only">
+                  {anuncioDeEnvio}
+                </p>
+              )}
+              {erroLocal && (
+                <p role="alert" className="text-xs text-(--on-surface-variant)">
+                  {erroLocal}
+                </p>
+              )}
+            </div>
+          )}
         </div>
-      )}
+      </div>
       <Confirmacao
         titulo={`Bloquear ${nome}?`}
         texto="A conversa fica fechada nos dois sentidos; o histórico continua visível para vocês; a pessoa não é avisada. Você pode desfazer em Pessoas bloqueadas, na área Você."
@@ -456,14 +588,49 @@ export function Conversa() {
         perigo
         aoConfirmar={() => void bloquearPessoa()}
       />
-      <Dialog open={denuncia.aberto && denunciando !== null} onOpenChange={denuncia.aoMudarAberto}>
-        <DialogContent data-sobreposicao="denuncia-de-mensagem">
-          <DialogTitle>Denunciar mensagem</DialogTitle>
-          <DialogDescription>
-            O motivo vai para a moderação. Não inclua dados pessoais na explicação.
-          </DialogDescription>
+      {menuDaLinha.aberto && !menuSuspenso && bloqueadoPorMim === false ? (
+        <Sobreposicao
+          id="menu-de-linha"
+          titulo="Opções da conversa"
+          descricao="Escolha o que fazer nesta conversa."
+          aoFechar={() => menuDaLinha.aoMudarAberto(false)}
+        >
+          {/* O menuitem só é ARIA válida dentro de um menu; a casca faz assim
+              no Criar central (MenuCriar) e a folha segue o mesmo idioma. */}
+          <div role="menu" aria-label="Opções da conversa">
+            <button
+              type="button"
+              role="menuitem"
+              className="flex min-h-12 w-full items-center gap-3 rounded-xl px-4 text-left font-medium text-(--destructive) hover:bg-(--surface-low)"
+              onClick={() =>
+                void navegacao.atualizarCom((atual) => ({ ...atual, sobreposicao: "confirmacao" }))
+              }
+            >
+              Bloquear {nome}
+            </button>
+          </div>
+        </Sobreposicao>
+      ) : null}
+      {denuncia.aberto && denunciando !== null ? (
+        <Sobreposicao
+          id="conversa-denuncia"
+          titulo="Denunciar mensagem"
+          descricao="O motivo vai para a moderação. Não inclua dados pessoais na explicação."
+          // D25: no computador nada de folha — diálogo centrado (560 px); a
+          // folha de baixo é do celular (referência Mobbin iOS).
+          formato={menuSuspenso ? "dialogo" : "folha"}
+          aoFechar={() => denuncia.aoMudarAberto(false)}
+        >
+          <p
+            data-mensagem-denunciada="sim"
+            className="line-clamp-2 rounded-xl bg-(--surface-low) px-3 py-2 text-sm leading-5 text-(--on-surface-variant)"
+          >
+            {denunciando.conteudo}
+          </p>
+          {/* D23: 16 px entre a última opção, o campo e o botão — nada
+              encostado no rodapé de ação. */}
           <form
-            className="grid gap-3"
+            className="grid gap-4"
             onSubmit={(evento) => {
               evento.preventDefault()
               void enviarDenuncia()
@@ -484,23 +651,31 @@ export function Conversa() {
                 </label>
               ))}
             </fieldset>
-            <Campo
-              id="explicacao-denuncia"
-              rotulo="Explicação (opcional)"
-              valor={explicacao}
-              aoMudar={setExplicacao}
-              area
-              nota={`${explicacao.length}/300 caracteres`}
-            />
+            <div className="grid gap-1.5">
+              <Textarea
+                id="explicacao-denuncia"
+                rows={3}
+                maxLength={300}
+                value={explicacao}
+                placeholder="Explicação (opcional)"
+                aria-label="Explicação (opcional)"
+                onChange={(evento) => setExplicacao(evento.target.value)}
+                className="rounded-xl"
+              />
+              <p className="text-xs text-(--muted-foreground)">
+                {explicacao.length}/300 caracteres
+              </p>
+            </div>
             <Botao
               type="submit"
+              data-acao="enviar-denuncia"
               disabled={agindo || motivo === "" || explicacao.trim().length > 300}
             >
               {agindo ? "Enviando…" : "Enviar denúncia"}
             </Botao>
           </form>
-        </DialogContent>
-      </Dialog>
+        </Sobreposicao>
+      ) : null}
     </section>
   )
 }

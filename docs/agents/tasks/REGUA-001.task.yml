@@ -51,6 +51,11 @@ allowed_paths:
   - apps/app/tests/e2e/cegas/capturas-f09-f10.spec.ts
   - apps/app/tests/*.test.ts
   - apps/app/tests/*.test.tsx
+  # extensão registrada pelo coordenador em 18/11: critérios da Brasa e das preferências moram nestes arquivos
+  - apps/app/src/avisos/PreferenciasDeAvisos.tsx
+  - apps/app/src/pecas/segmentos.tsx
+  - apps/app/components/bivaque/confirmacao.tsx
+  - apps/app/tests/e2e/base-visual.spec.ts
 forbidden:
   - tocar em Voce.tsx, PerfilDeMembro.tsx, Bloqueados.tsx ou Salvos.tsx (são do lote REGUA-002)
   - mudar rotas de API, banco, migrations ou contratos de dados

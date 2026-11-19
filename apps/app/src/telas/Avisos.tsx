@@ -7,6 +7,7 @@ import { Botao } from "@/components/bivaque/botao"
 import { CabecaDePagina } from "@/components/bivaque/cabeca-de-pagina"
 import { EsqueletoDeLista } from "@/components/bivaque/esqueleto"
 import { EstadoDeErro, EstadoVazio } from "@/components/bivaque/estado-vazio"
+import { Icone } from "@/components/bivaque/icone"
 import { LinhaDeLista, Lista } from "@/components/bivaque/lista"
 import { FalhaDaApi } from "@/lib/api/cliente"
 import {
@@ -254,24 +255,27 @@ export function Avisos() {
                 }
                 onClick={() => abrir(aviso)}
                 fim={
-                  aviso.lida && aviso.total === 1 ? undefined : (
-                    <span className="flex shrink-0 items-center gap-2">
-                      {aviso.total > 1 ? (
-                        <span
-                          data-contagem={String(aviso.total)}
-                          className="rounded-full bg-(--secondary-container) px-2 py-0.5 text-xs font-semibold"
-                        >
-                          {aviso.total}
-                        </span>
-                      ) : null}
-                      {aviso.lida ? null : (
-                        <span
-                          aria-hidden="true"
-                          className="size-2.5 shrink-0 rounded-full bg-(--brasa)"
-                        />
-                      )}
-                    </span>
-                  )
+                  // D11: toda linha abre um detalhe — o chevron vai em todas.
+                  // D10/D21: não lido tem um sinal só: contagem (em tinta)
+                  // quando passa de 1, sem bolinha; bolinha quando é 1.
+                  <span className="flex shrink-0 items-center gap-2">
+                    {aviso.total > 1 ? (
+                      <span
+                        data-contagem={String(aviso.total)}
+                        className="rounded-full bg-(--primary) px-2 py-0.5 text-xs font-semibold text-(--primary-foreground)"
+                      >
+                        {aviso.total}
+                      </span>
+                    ) : null}
+                    {!aviso.lida && aviso.total === 1 ? (
+                      <span
+                        data-sinal="nao-lida"
+                        aria-hidden="true"
+                        className="size-2.5 shrink-0 rounded-full bg-(--primary)"
+                      />
+                    ) : null}
+                    <Icone nome="chevron_right" className="size-5 shrink-0 opacity-70" />
+                  </span>
                 }
               />
             ))}
