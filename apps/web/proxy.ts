@@ -51,7 +51,7 @@ async function encaminhar(request: NextRequest, headers: Headers) {
   }
 
   // Public paths bypass all checks — no session round-trip needed.
-  if (isPublicPath(pathname)) {
+  if (isPublicPath(pathname) && pathname !== "/app/comunidade" && pathname !== "/app/comunidade/") {
     return NextResponse.next({ request: { headers } })
   }
 
@@ -93,6 +93,13 @@ async function encaminhar(request: NextRequest, headers: Headers) {
     user = data.user
   } catch {
     // no-op — user remains null
+  }
+
+  if (pathname === "/app/comunidade" || pathname === "/app/comunidade/") {
+    if (user) return supabaseResponse
+    const entrada = new URL("/app/entrar", request.url)
+    entrada.searchParams.set("redirect", `${pathname}${request.nextUrl.search}`)
+    return NextResponse.redirect(entrada)
   }
 
   // Root redirect — session-aware (new behaviour). The marketing landing

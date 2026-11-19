@@ -192,9 +192,8 @@ test.describe("locality below the §3.4 density threshold: honest empty state", 
     await page.goto(`${APP_URL}/community`, { waitUntil: "load" })
 
     // Then the page is interactive
-    await expect(page.getByRole("region", { name: "O que você procura?" })).toBeVisible({
-      timeout: 20000,
-    })
+    await page.getByRole("button", { name: "Perguntar", exact: true }).click({ timeout: 20000 })
+    await expect(page.getByRole("dialog", { name: "Pedir uma indicação" })).toBeVisible()
 
     // And there is no error banner — the empty state must not look like a
     // failure to the member; the absence of content is the locality's state,
