@@ -1230,7 +1230,19 @@
   place-items: center;
   border-radius: 12px;
   background: var(--surface-lowest);
-  color: var(--brasa);
+  color: var(--on-surface);
+}
+
+[data-tela="inicio"] {
+  padding-bottom: 90px;
+}
+
+@media (min-width: 720px) and (max-width: 1023.98px) {
+  body:has([data-tela="inicio"]) [data-nav="principal"][data-minimizada="sim"] [data-acao="criar"] {
+    right: 16px;
+    left: auto;
+    transform: none;
+  }
 }
 
 /* Início: coluna de leitura e trilho de contexto (parecer cego de 12/11).

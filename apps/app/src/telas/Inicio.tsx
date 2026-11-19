@@ -396,7 +396,7 @@ export function Inicio() {
                       Peça propostas à comunidade
                     </small>
                   </span>
-                  <Icone nome="chevron_right" className="size-5 shrink-0 text-(--brasa)" />
+                  <Icone nome="chevron_right" className="size-5 shrink-0 text-(--on-surface)" />
                 </button>
 
                 <Secao titulo="Oportunidades perto de você">
