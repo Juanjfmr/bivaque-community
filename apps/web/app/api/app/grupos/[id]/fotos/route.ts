@@ -35,6 +35,12 @@ export async function POST(request: NextRequest, { params }: Context): Promise<N
     const membro = await participacao(client, id, userId)
     if (membro?.status !== "approved") return responder(request, { erro: "nao-membro" }, 403)
     const resultado = await enviarFotoDoGrupo(client, userId, id, file)
+    if ("recusada" in resultado)
+      return responder(
+        request,
+        { erro: "recusado", mensagem: "Sua conta não pode publicar fotos agora." },
+        403,
+      )
     if ("invalida" in resultado) return responder(request, { erro: "foto-invalida" }, 400)
     return responder(request, { caminho: resultado.caminho }, 201)
   } catch (error) {
