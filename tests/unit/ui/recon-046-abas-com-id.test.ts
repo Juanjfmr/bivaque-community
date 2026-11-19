@@ -79,23 +79,4 @@ describe("RECON-046 — aba e painel sempre com id", () => {
     }
     expect(offenders, `aba/painel sem id:\n${offenders.join("\n")}`).toEqual([])
   })
-
-  it("as abas de /communities e de uma comunidade tem painel com o mesmo id", () => {
-    const files = [
-      join(appDir, "(shell)", "communities", "communities-screen.tsx"),
-      join(appDir, "(shell)", "communities", "[id]", "community-detail-screen.tsx"),
-    ]
-    for (const file of files) {
-      const source = readFileSync(file, "utf8")
-      const tabIds = openingTags(source, TAB_TAG)
-        .map(({ tag }) => tag.match(/(?:^|\s)id="([^"]+)"/)?.[1])
-        .filter((id): id is string => Boolean(id))
-      expect(tabIds.length, `${file}: nenhuma aba com id`).toBeGreaterThan(0)
-      for (const id of tabIds) {
-        expect(source, `${file}: aba ${id} sem painel de mesmo id`).toContain(
-          `<TabPanel id="${id}"`,
-        )
-      }
-    }
-  })
 })

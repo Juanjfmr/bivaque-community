@@ -66,11 +66,7 @@ const PERSONAS: Array<{ nome: string; email: string | null; entradas: string[]; 
   {
     nome: "dono de vila",
     email: "dono-vila@bivaque.example.invalid",
-    // RUN-176: a casca web não tem link saindo do app, então a porta dela é ENTRADA
-    // declarada, não dívida de link. `/inicio` é 307; `/communities` abre a casca e a
-    // lateral dela leva a Salvos e Configurações. A lista deixou de ser porta fora do link
-    // no run 43853510395: o card "Entrar na comunidade" de /community linka ela.
-    entradas: ["/inicio", "/communities"],
+    entradas: ["/inicio"],
     chega: /^\/app\/inicio$/,
   },
   {
@@ -136,54 +132,11 @@ const PORTAS_FORA_DO_LINK: readonly PortaDeclarada[] = [
     dono: "visitante",
   },
   {
-    route: "/communities/[id]/admin",
-    porta:
-      "CONDICIONAL: menu do console, cuja entrada é 'Analisar pedidos de entrada' na aba Sobre (moderador)",
-    dependeDeDados: true,
-    dono: "dono de vila",
-  },
-  {
-    route: "/communities/[id]/admin/media",
-    porta: "CONDICIONAL: menu do console (moderador)",
-    dependeDeDados: true,
-    dono: "dono de vila",
-  },
-  {
-    route: "/communities/[id]/admin/moderators",
-    porta: "CONDICIONAL: hub do console (moderador)",
-    dependeDeDados: true,
-    dono: "dono de vila",
-  },
-  {
-    route: "/communities/[id]/admin/pending",
-    porta: "CONDICIONAL: 'Analisar pedidos de entrada' na aba Sobre da comunidade (moderador)",
-    dependeDeDados: true,
-    dono: "dono de vila",
-  },
-  {
-    route: "/communities/[id]/admin/providers",
-    porta: "CONDICIONAL: 'Prestadores atestados' no hub do console (moderador)",
-    dependeDeDados: true,
-    dono: "dono de vila",
-  },
-  {
-    route: "/communities/[id]/indicar-prestador",
-    porta: "BOTÃO: 'Mais opções' > 'Indicar prestador' em /communities (window.location.assign)",
-    dono: "dono de vila",
-  },
-  {
     route: "/communities/[id]/invite",
     porta:
       "CONDICIONAL: 'Convidar membros' na aba Sobre; 'Mais opções' > 'Convidar' em /communities",
     dependeDeDados: true,
     dono: "dono de vila",
-  },
-  {
-    route: "/community",
-    porta:
-      "FLUXO: fim do onboarding ('Ir para a comunidade'), notificação de publicação e redirects",
-    dependeDeDados: true,
-    dono: "membro",
   },
   {
     route: "/consent",
@@ -210,12 +163,6 @@ const PORTAS_FORA_DO_LINK: readonly PortaDeclarada[] = [
   {
     route: "/denuncias/nova",
     porta: "FLUXO: versão endereçável (spec C10) do diálogo que as origens abrem por cima da tela",
-  },
-  {
-    route: "/indicacoes",
-    porta:
-      "FLUXO: redireciona para a vista Indicações da Comunidade; fica para links antigos e ?pedir=1",
-    dono: "membro",
   },
   { route: "/invite/[token]", porta: "EXTERNO: link de convite compartilhado" },
   // RUN-172/176: o perfil web era a única tela da casca a que uma persona chegava, e com ele
@@ -274,11 +221,6 @@ const PORTAS_FORA_DO_LINK: readonly PortaDeclarada[] = [
   },
   { route: "/onboarding/welcome", porta: "FLUXO: fim do onboarding", dono: "visitante" },
   { route: "/prestador-convite/[token]", porta: "EXTERNO: e-mail de convite do prestador" },
-  {
-    route: "/recommendations",
-    porta: "FLUXO: aposentada em 25/09/2026; redireciona links antigos para a Comunidade",
-    dono: "membro",
-  },
 ]
 
 // Sementes da persona: as portas que ela detém e cuja URL se digita. Rota com parâmetro fica
@@ -411,6 +353,8 @@ test.describe("rastreador de links", { tag: "@stateful" }, () => {
         // padrão — sem ele, todo link para lá virava "rota inexistente".
         "/guide",
         "/inicio",
+        "/communities",
+        "/communities/[id]",
         "/explorar",
         // RUN-177: a gestão do negócio próprio e o catálogo dele saíram da web
         // (307 para /app/meu-negocio). Continuam destino válido de <a href> — o

@@ -37,15 +37,6 @@ describe("pedir leva à caixa de pedir", () => {
     }
   })
 
-  it("a Comunidade lê ?pedir=1 e ?q= e a caixa foca", () => {
-    const community = web("app", "(shell)", "community", "page.tsx")
-    expect(community).toContain('searchParams.get("pedir") === "1"')
-    expect(community).toContain('searchParams.get("q")')
-    expect(web("app", "components", "indications", "ask-indication.tsx")).toContain(
-      "if (autoFocus) inputRef.current?.focus()",
-    )
-  })
-
   it("o cabeçalho leva a Indicações", () => {
     expect(web("app", "components", "bivaque", "app-shell.tsx")).toContain(
       'href="/community?vista=indicacoes"',

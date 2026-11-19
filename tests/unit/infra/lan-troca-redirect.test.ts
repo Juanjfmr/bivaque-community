@@ -12,6 +12,16 @@ import { routeFromFile } from "../../e2e/helpers/crawl-model"
 const ID = "41000000-0000-4000-8000-000000000051"
 const ORIGEM = "https://bivaque.example.invalid"
 const TROCADAS = [
+  ["/communities", "/app/comunidade"],
+  [`/communities/${ID}?fonte=teste`, "/app/comunidade?fonte=teste"],
+  [`/communities/${ID}/indicar-prestador`, "/app/comunidade"],
+  [`/communities/${ID}/admin`, "/app/comunidade"],
+  [`/communities/${ID}/admin/pending?aba=1`, "/app/comunidade?aba=1"],
+  ["/community", "/app/comunidade"],
+  [`/community?post=${ID}`, `/app/publicacao/${ID}?post=${ID}`],
+  ["/community?post=invalido", "/app/comunidade?post=invalido"],
+  ["/indicacoes?pedir=1", "/app/comunidade?pedir=1"],
+  ["/recommendations?aba=request", "/app/comunidade?aba=request"],
   ["/groups", "/app/comunidade"],
   [`/groups/${ID}`, `/app/grupo/${ID}`],
   [`/indicacoes/${ID}`, `/app/pergunta/${ID}`],
@@ -158,10 +168,6 @@ describe("LAN-TROCA fase 1", () => {
     },
   )
 
-  it("preserva a lista de indicacoes", async () => {
-    expect((await resolver("/indicacoes")).headers.get("location")).toBeNull()
-  })
-
   const shell = join(process.cwd(), "apps/web/app/(shell)")
   it("remove o detalhe antigo de indicacoes", () => {
     expect(existsSync(join(shell, "indicacoes", "[id]"))).toBe(false)
@@ -267,16 +273,33 @@ describe("LAN-TROCA fase 1", () => {
   // de bloqueados/família e as actions (trust-actions.ts) morreram com a troca.
   // RUN-186: salvos saiu pelo mesmo molde. A prova é de ausência: o diretório não
   // existe mais no checkout.
-  it.each(["notifications", "configuracoes", "messages", "salvos", "groups"])(
-    "a pasta antiga %s não deixa tela nem action para trás",
-    (relativa) => {
-      const pasta = join(shell, relativa)
-      const sobras = existsSync(pasta)
-        ? readdirSync(pasta, { recursive: true, encoding: "utf8" })
-        : []
-      expect(sobras).toEqual([])
-    },
-  )
+  it.each([
+    "notifications",
+    "configuracoes",
+    "messages",
+    "salvos",
+    "groups",
+    "community",
+    "indicacoes",
+    "recommendations",
+  ])("a pasta antiga %s não deixa tela nem action para trás", (relativa) => {
+    const pasta = join(shell, relativa)
+    const sobras = existsSync(pasta)
+      ? readdirSync(pasta, { recursive: true, encoding: "utf8" })
+      : []
+    expect(sobras).toEqual([])
+  })
+
+  it("preserva as rotas de convite e remove as telas de comunidades", async () => {
+    expect((await resolver(`/communities/${ID}/invite`)).status).toBe(200)
+    expect((await resolver("/invite/token")).status).toBe(200)
+    expect(existsSync(join(shell, "communities", "[id]", "invite", "page.tsx"))).toBe(true)
+    expect(existsSync(join(shell, "invite", "[token]", "page.tsx"))).toBe(true)
+    for (const rota of ["communities", "communities/[id]", "communities/[id]/indicar-prestador"]) {
+      expect(existsSync(join(shell, rota, "page.tsx"))).toBe(false)
+    }
+    expect(existsSync(join(shell, "..", "(owner)", "communities", "[id]", "admin"))).toBe(false)
+  })
 
   it.each(["mercado", "imoveis", "guide"])(
     "a lista antiga de %s não deixa page.tsx para trás",

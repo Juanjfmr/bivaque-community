@@ -25,7 +25,7 @@ test.describe("BottomNav visibility across viewports", () => {
     await seedSession(context)
 
     // When they open the home route
-    await page.goto("/community")
+    await page.goto("/communities/71000000-0000-4000-8000-000000000001/invite")
 
     // Then all 4 bottom navigation items are visible, in NAV_ITEMS order
     const nav = page.locator(BOTTOM_NAV)
@@ -46,7 +46,7 @@ test.describe("BottomNav visibility across viewports", () => {
     await page.setViewportSize({ width: 768, height: 1024 })
 
     // When they open the home route
-    await page.goto("/community")
+    await page.goto("/communities/71000000-0000-4000-8000-000000000001/invite")
 
     // Then the BottomNav is gone and the sidebar takes over as a 4rem rail.
     // The labels stay in the accessibility tree even though they are not drawn.
@@ -67,7 +67,7 @@ test.describe("BottomNav visibility across viewports", () => {
     await page.setViewportSize({ width: 1440, height: 900 })
 
     // When they open the home route
-    await page.goto("/community")
+    await page.goto("/communities/71000000-0000-4000-8000-000000000001/invite")
 
     // Then the BottomNav is hidden and the sidebar is expanded with labels
     await expect(page.locator(BOTTOM_NAV)).toBeHidden()
@@ -85,7 +85,7 @@ test.describe("Indicações discoverable entry", () => {
     await page.setViewportSize({ width: 375, height: 812 })
 
     // When they open the home route
-    await page.goto("/community")
+    await page.goto("/communities/71000000-0000-4000-8000-000000000001/invite")
 
     // Then Indicações is a labelled header entry, visible at every width — not
     // a BottomNav tab (the ceiling of four containers has no room for it).
@@ -93,7 +93,7 @@ test.describe("Indicações discoverable entry", () => {
     // do RECON-038 #4, e o nome acessível passou a vir do próprio texto.
     const indications = page.getByRole("link", { name: "Indicações" })
     await expect(indications).toBeVisible()
-    await expect(indications).toHaveAttribute("href", "/community?vista=indicacoes")
+    await expect(indications).toHaveAttribute("href", "/app/comunidade")
   })
 
   test("keeps its accessible name in the 768px rail", async ({ page, context }) => {
@@ -102,12 +102,12 @@ test.describe("Indicações discoverable entry", () => {
     await page.setViewportSize({ width: 768, height: 1024 })
 
     // When they open the home route
-    await page.goto("/community")
+    await page.goto("/communities/71000000-0000-4000-8000-000000000001/invite")
 
     // Then the header entry is still named and reachable
     const indications = page.getByRole("link", { name: "Indicações" })
     await expect(indications).toBeVisible()
-    await expect(indications).toHaveAttribute("href", "/community?vista=indicacoes")
+    await expect(indications).toHaveAttribute("href", "/app/comunidade")
   })
 
   test("is reachable from the header at 1440px", async ({ page, context }) => {
@@ -116,12 +116,12 @@ test.describe("Indicações discoverable entry", () => {
     await page.setViewportSize({ width: 1440, height: 900 })
 
     // When they open the home route
-    await page.goto("/community")
+    await page.goto("/communities/71000000-0000-4000-8000-000000000001/invite")
 
     // Then Indicações is reachable from the header, where it is a link
     const indications = page.getByRole("link", { name: "Indicações" })
     await expect(indications).toBeVisible()
-    await expect(indications).toHaveAttribute("href", "/community?vista=indicacoes")
+    await expect(indications).toHaveAttribute("href", "/app/comunidade")
   })
 })
 
@@ -132,12 +132,12 @@ test.describe("Navigation tab links", () => {
     await page.setViewportSize({ width: 375, height: 812 })
 
     // When they open the home route
-    await page.goto("/community")
+    await page.goto("/communities/71000000-0000-4000-8000-000000000001/invite")
 
     // Then each tab links to the expected route
     const tabs = page.locator(BOTTOM_NAV).getByRole("tab")
 
-    const expectedHrefs = ["/inicio", "/explorar", "/communities", "/app/voce"]
+    const expectedHrefs = ["/inicio", "/explorar", "/app/comunidade", "/app/voce"]
 
     for (let index = 0; index < expectedHrefs.length; index++) {
       const href = await tabs.nth(index).getAttribute("href")
@@ -156,7 +156,7 @@ test.describe("Você reachable on mobile", () => {
     await page.setViewportSize({ width: 375, height: 812 })
 
     // When they open the home route
-    await page.goto("/community")
+    await page.goto("/communities/71000000-0000-4000-8000-000000000001/invite")
 
     // Then the header does not repeat Perfil: no celular o avatar repetia a aba
     // Perfil da barra inferior e saiu do cabeçalho (app-shell.tsx).

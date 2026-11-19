@@ -151,8 +151,28 @@ const nextConfig: NextConfig = {
         destination: "/app/conversa/:conversa",
         permanent: false,
       },
+      {
+        source: "/community",
+        has: [
+          {
+            type: "query",
+            key: "post",
+            value:
+              "(?<post>[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})",
+          },
+        ],
+        destination: "/app/publicacao/:post",
+        permanent: false,
+      },
       ...(
         [
+          ["/communities", "/app/comunidade"],
+          ["/communities/:id", "/app/comunidade"],
+          ["/communities/:id/indicar-prestador", "/app/comunidade"],
+          ["/communities/:id/admin/:caminho*", "/app/comunidade"],
+          ["/community", "/app/comunidade"],
+          ["/indicacoes", "/app/comunidade"],
+          ["/recommendations", "/app/comunidade"],
           ["/groups", "/app/comunidade"],
           ["/groups/:id", "/app/grupo/:id"],
           ["/indicacoes/:id", "/app/pergunta/:id"],
