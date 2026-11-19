@@ -5,8 +5,9 @@ import { describe, expect, it } from "vitest"
 import { EstadoVazio } from "@/components/bivaque/estado-vazio"
 
 function marcacao(nivel?: "h2" | "h3"): string {
+  const base = { titulo: "Nada por aqui", texto: "Volte depois." }
   return renderToStaticMarkup(
-    createElement(EstadoVazio, { titulo: "Nada por aqui", texto: "Volte depois.", nivel }),
+    createElement(EstadoVazio, nivel === undefined ? base : { ...base, nivel }),
   )
 }
 
