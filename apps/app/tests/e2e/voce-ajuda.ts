@@ -33,6 +33,8 @@ export async function simularVoce(
     saida?: { nome: string; uf: string; endsAt: string; readOnly: boolean } | null
     /** O que a declaração de mudança responde, para o caminho de recusa. */
     respostaDaMudanca?: "mudanca-em-andamento" | "indisponivel"
+    /** O que o bloqueio pelo perfil de membro responde (REGUA-002). */
+    respostaDoBloqueio?: "indisponivel"
   } = {},
 ) {
   // A entrada lê o progresso para saber se há sessão. Depois de sair não há, e
@@ -111,6 +113,23 @@ export async function simularVoce(
   }
   const contagens = { salvos: 2, anuncios: 3, perguntas: 2, grupos: 1 }
   const conta = { exclusaoPendente: false }
+
+  /** O perfil de outra pessoa, no contrato que `lerPerfilDeMembro` lê. */
+  const MEMBRO = {
+    id: "u-paulo",
+    nome: "Paulo Roberto",
+    bio: "Moro no Centro desde 2010.",
+    publicacoes: [
+      {
+        id: "pub-2",
+        texto: "Sofá retrátil disponível para retirada no Centro.",
+        criadaEm: "2026-11-09T12:00:00.000Z",
+      },
+    ],
+    eventos: [
+      { id: "e-cafe", titulo: "Café dos vizinhos do Centro", comecaEm: "2026-12-06T15:00:00.000Z" },
+    ],
+  }
   const publicacoes = [
     {
       id: "p1",
@@ -268,7 +287,24 @@ export async function simularVoce(
       return rota.fulfill({ json: { afiliacao } })
     }
     if (recurso === "bloqueados") {
-      if (alvo === undefined) return rota.fulfill({ json: { bloqueados } })
+      if (alvo === undefined) {
+        // O bloqueio pelo perfil de membro (REGUA-002): mesma rota da Conversa,
+        // com o corpo e a resposta que `bloquear` exige.
+        if (metodo === "POST") {
+          const corpo = rota.request().postDataJSON() as { id?: string }
+          const id = typeof corpo.id === "string" ? corpo.id : ""
+          if (opcoes.respostaDoBloqueio === "indisponivel")
+            return rota.fulfill({ status: 503, json: { erro: "indisponivel" } })
+          if (id !== "" && !bloqueados.some((pessoa) => pessoa.id === id)) {
+            bloqueados = [
+              ...bloqueados,
+              { id, nome: MEMBRO.nome, bloqueadoEm: "2026-11-18T12:00:00.000Z" },
+            ]
+          }
+          return rota.fulfill({ json: { bloqueado: { id } } })
+        }
+        return rota.fulfill({ json: { bloqueados } })
+      }
       if (metodo === "DELETE") {
         const antes = bloqueados.length
         bloqueados = bloqueados.filter((pessoa) => pessoa.id !== alvo)
@@ -348,4 +384,9 @@ export async function simularVoce(
     }
     return rota.fulfill({ status: 404, json: { erro: "nao-encontrado" } })
   })
+
+  // O perfil de outra pessoa (REGUA-002), pela rota que a tela lê.
+  await page.route(/\/api\/app\/membros\/[^/?#]+(?:\?|$)/, (rota) =>
+    rota.fulfill({ json: { membro: MEMBRO } }),
+  )
 }

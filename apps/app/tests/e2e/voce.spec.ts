@@ -16,25 +16,38 @@ test("o perfil vem da rota, a edição sobrevive ao recarregar e o desfazer some
   await expect(page.getByText("perfil de demonstração")).toHaveCount(0)
   await expect(page.locator('[data-tela="voce"]')).toContainText("Manaus")
 
+  // A barra e a tela leem a mesma pessoa (REGUA-002): o avatar da aba "Você"
+  // é o da leitura do perfil, não o da demonstração.
+  const avatarDaBarra = page.locator(
+    '[data-nav="principal"] [data-aba="voce"] [data-avatar="membro"]',
+  )
+  await expect(avatarDaBarra).toHaveText("AV")
+
   await page.getByRole("button", { name: "Editar" }).click()
   await page.getByLabel("Nome").fill("Ana Editada")
   await page.getByLabel("Apresentação").fill("Nova apresentação do teste.")
   await page.getByRole("button", { name: "Salvar" }).click()
   await expect(page.getByText("Ana Editada")).toBeVisible()
+  await expect(avatarDaBarra, "o nome gravado também muda o avatar da barra").toHaveText("AE")
 
   await page.reload()
   await expect(page.getByText("Ana Editada"), "o nome gravado volta no recarregar").toBeVisible()
   await expect(page.getByText("Nova apresentação do teste.")).toBeVisible()
+  await expect(avatarDaBarra).toHaveText("AE")
 
   await page.goto("/app/bloqueados")
-  const linha = page.locator('[data-tela="bloqueados"] [data-linha="lista"]')
+  const linha = page.locator('[data-tela="bloqueados"] [data-linha="bloqueado"]')
   await expect(linha).toHaveCount(1)
   await expect(linha).toContainText("Maria Souza")
-  await linha.click()
-  await expect(page.getByText("Ninguém bloqueado")).toBeVisible()
+  await expect(linha).toContainText("Bloqueio desde 3 de novembro")
+  const desbloquear = page.getByRole("button", { name: "Desbloquear Maria Souza" })
+  // A ação que conclui a tela é ardósia (--acao), não o contorno pálido (M10).
+  await expect(desbloquear).toHaveAttribute("data-tom", "principal")
+  await desbloquear.click()
+  await expect(page.getByText("Ninguém bloqueado ainda")).toBeVisible()
   await page.reload()
   await expect(
-    page.locator('[data-tela="bloqueados"] [data-linha="lista"]'),
+    page.locator('[data-tela="bloqueados"] [data-linha="bloqueado"]'),
     "o desbloqueio precisa sobreviver ao recarregar",
   ).toHaveCount(0)
 
@@ -46,19 +59,108 @@ test("o perfil vem da rota, a edição sobrevive ao recarregar e o desfazer some
   await expect(page.getByText("Nada oculto por aqui")).toBeVisible()
 })
 
-test("falha de leitura mostra erro com tentar de novo", async ({ page }) => {
+test("falha de leitura mostra um único aviso e a tela segue de pé", async ({ page }) => {
   await simularVoce(page)
   await page.route("**/api/app/voce", (rota) => rota.abort())
   await page.goto("/app/voce")
 
-  const erro = page.locator('[data-estado="erro"]')
-  await expect(erro).toBeVisible()
-  await expect(erro).toContainText("Não foi possível carregar")
-  await expect(page.getByText("Ninguém bloqueado")).toHaveCount(0)
+  const aviso = page.locator('[data-aviso="perfil"]')
+  await expect(aviso).toBeVisible()
+  await expect(aviso).toContainText("Leitura do perfil indisponível agora.")
+  await expect(page.getByRole("button", { name: "Tentar de novo" })).toBeVisible()
+  await expect(page.locator('[data-estado="erro"]')).toHaveCount(0)
+  // Sem leitura não há identidade: a barra cai no ícone, sem nome herdado.
+  await expect(
+    page.locator('[data-nav="principal"] [data-aba="voce"] [data-avatar="membro"]'),
+  ).toHaveCount(0)
+  // A estrutura é a da tela de sucesso: as seções continuam na tela.
+  await expect(page.getByRole("heading", { name: "Seu Bivaque" })).toBeVisible()
+  await expect(page.getByRole("heading", { name: "Família" })).toBeVisible()
+  await expect(page.getByRole("heading", { name: "Avisos" })).toBeVisible()
+  await expect(page.getByRole("heading", { name: "Privacidade e ajuda" })).toBeVisible()
+  // O formulário de cidade depende da leitura: a linha não aparece sem perfil.
+  await expect(page.getByRole("button", { name: "Mudar de cidade" })).toHaveCount(0)
 
   await page.unroute("**/api/app/voce")
   await page.getByRole("button", { name: "Tentar de novo" }).click()
   await expect(page.getByText("Ana Verificada")).toBeVisible()
+  await expect(page.locator('[data-aviso="perfil"]')).toHaveCount(0)
+})
+
+// REGUA-002, achado 2 da revisão de código: o gesto central da aceitação 4 —
+// bloquear pelo perfil de membro — precisava de prova em runtime, positiva e
+// negativa, pela rota existente POST /api/app/voce/bloqueados.
+test("bloquear pelo perfil de membro: espera visível, menu fora e estado bloqueado", async ({
+  page,
+}) => {
+  await simularVoce(page)
+  // A resposta demora o bastante para a espera aparecer na tela (achado 5).
+  await page.route(/\/api\/app\/voce\/bloqueados$/, async (rota) => {
+    if (rota.request().method() !== "POST") return rota.fallback()
+    await new Promise((espera) => setTimeout(espera, 1500))
+    return rota.fallback()
+  })
+
+  // A capa do topo: se a arte falha, a faixa continua com fundo neutro — a
+  // área não fica vazia (revisão cega R1, G4). O bloqueio entra antes do
+  // goto para o pedido da imagem realmente falhar.
+  await page.route(/\/ilustracoes\/cidade\.webp$/, (rota) => rota.abort())
+
+  await page.goto("/app/perfil/u-paulo")
+  await expect(page.getByRole("heading", { name: "Paulo Roberto" })).toBeVisible()
+
+  const capa = page.locator('[data-tela="perfil"] [data-capa="membro"]')
+  await expect(capa).toBeVisible()
+  expect(
+    await capa.evaluate((elemento) => getComputedStyle(elemento).backgroundColor),
+    "capa sem arte continua com fundo neutro",
+  ).not.toBe("rgba(0, 0, 0, 0)")
+  await page.unroute(/\/ilustracoes\/cidade\.webp$/)
+
+  await page.getByRole("button", { name: "Opções" }).click()
+  await page.getByRole("menuitem", { name: "Bloquear Paulo Roberto" }).click()
+
+  const dialogo = page.getByRole("alertdialog")
+  await expect(dialogo).toContainText("Bloquear Paulo Roberto?")
+  const gravou = page.waitForResponse(
+    (resposta) =>
+      resposta.url().endsWith("/api/app/voce/bloqueados") && resposta.request().method() === "POST",
+  )
+  await dialogo.getByRole("button", { name: "Bloquear", exact: true }).click()
+
+  // Durante o envio: a espera é visível e o item do menu não aceita outro
+  // disparo — desabilitado e marcado com aria-busy (achado 5). A resposta
+  // só é aguardada DEPOIS: esperar antes consumiria a espera que se mede.
+  await expect(page.getByRole("status")).toContainText("Bloqueando…")
+  await page.getByRole("button", { name: "Opções" }).click()
+  await expect(page.getByRole("menuitem", { name: /Paulo Roberto/ })).toBeDisabled()
+  await expect(page.getByRole("menuitem", { name: /Paulo Roberto/ })).toHaveAttribute(
+    "aria-busy",
+    "true",
+  )
+  await page.keyboard.press("Escape")
+
+  // Sucesso: o menu sai da tela e o estado bloqueado fica, com o que acontece.
+  expect((await gravou).ok(), "o bloqueio precisa responder com sucesso").toBe(true)
+  await expect(page.getByRole("status")).toContainText("Você bloqueou Paulo Roberto")
+  await expect(page.getByRole("button", { name: "Opções" })).toHaveCount(0)
+})
+
+test("bloquear pelo perfil com o servidor fora: o alerta diz para tentar e o menu continua", async ({
+  page,
+}) => {
+  await simularVoce(page, { respostaDoBloqueio: "indisponivel" })
+
+  await page.goto("/app/perfil/u-paulo")
+  await expect(page.getByRole("heading", { name: "Paulo Roberto" })).toBeVisible()
+  await page.getByRole("button", { name: "Opções" }).click()
+  await page.getByRole("menuitem", { name: "Bloquear Paulo Roberto" }).click()
+  await page.getByRole("alertdialog").getByRole("button", { name: "Bloquear", exact: true }).click()
+
+  await expect(page.getByRole("alert")).toContainText("Não foi possível bloquear agora")
+  // A falha não finge sucesso: sem estado de bloqueado, com a saída à mão.
+  await expect(page.getByRole("status")).toHaveCount(0)
+  await expect(page.getByRole("button", { name: "Opções" })).toBeVisible()
 })
 
 // RUN-184: o aviso da exclusão é o mesmo da tela antiga da web (o que sai agora, o

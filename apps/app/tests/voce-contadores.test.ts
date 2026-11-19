@@ -59,4 +59,25 @@ describe("contadores do Você", () => {
     expect(ocorrencias(desenho, ">1<")).toBe(1)
     expect(desenho).not.toContain(INDISPONIVEL)
   })
+
+  // Revisão às cegas, 22: o cartão não mistura critérios — 1 é singular nos
+  // quatro, e o plural vale a partir de 2 (inclusive para o zero).
+  it("concordância: 1 é singular nos quatro e o plural começa no 2", () => {
+    const um = desenhar(conta({ salvos: 1, anuncios: 1, perguntas: 1, grupos: 1 }))
+    for (const rotulo of ["salvo", "anúncio", "pergunta", "grupo"]) {
+      expect(um).toContain(`>${rotulo}</small>`)
+    }
+    for (const rotulo of ["salvos", "anúncios", "perguntas", "grupos"]) {
+      expect(um).not.toContain(`>${rotulo}</small>`)
+    }
+    for (const valores of [
+      { salvos: 2, anuncios: 2, perguntas: 2, grupos: 2 },
+      { salvos: 0, anuncios: 0, perguntas: 0, grupos: 0 },
+    ]) {
+      const desenho = desenhar(conta(valores))
+      for (const rotulo of ["salvos", "anúncios", "perguntas", "grupos"]) {
+        expect(desenho).toContain(`>${rotulo}</small>`)
+      }
+    }
+  })
 })

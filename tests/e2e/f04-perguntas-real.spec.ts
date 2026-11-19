@@ -442,9 +442,10 @@ test.describe("F04 — perguntas reais no app", { tag: "@stateful" }, () => {
 
     // A tela Salvos lê a pergunta seguida pela sessão.
     await page.goto("/app/salvos")
-    const linha = page.locator('[data-salvos="perguntas"] [data-linha="lista"]', {
-      hasText: TEXTO_SEMEADO,
-    })
+    const linha = page.locator(
+      '[data-tela="salvos"]:visible [data-salvos="perguntas"]:visible [data-linha="lista"]',
+      { hasText: TEXTO_SEMEADO },
+    )
     await expect(linha, "a pergunta seguida precisa aparecer em Salvos").toBeVisible({
       timeout: 30_000,
     })
@@ -491,9 +492,10 @@ test.describe("F04 — perguntas reais no app", { tag: "@stateful" }, () => {
 
     // A remoção é feita na tela Salvos, não no detalhe da pergunta.
     await page.goto("/app/salvos")
-    const linha = page.locator('[data-salvos="perguntas"] [data-linha="lista"]', {
-      hasText: TEXTO_SEMEADO,
-    })
+    const linha = page.locator(
+      '[data-tela="salvos"]:visible [data-salvos="perguntas"]:visible [data-linha="lista"]',
+      { hasText: TEXTO_SEMEADO },
+    )
     await expect(linha, "a pergunta seguida precisa aparecer em Salvos").toBeVisible({
       timeout: 30_000,
     })
@@ -514,7 +516,7 @@ test.describe("F04 — perguntas reais no app", { tag: "@stateful" }, () => {
     // outros seguimentos, esse vazio prova que a linha saiu do banco — o
     // `toHaveCount(0)` antes da leitura terminaria passando com o esqueleto.
     await page.reload()
-    const secao = page.locator('[data-salvos="perguntas"]')
+    const secao = page.locator('[data-tela="salvos"]:visible [data-salvos="perguntas"]:visible')
     await expect(secao, "a seção de perguntas precisa terminar de carregar").toContainText(
       "Nenhuma pergunta seguida ainda",
       { timeout: 30_000 },

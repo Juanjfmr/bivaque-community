@@ -8,8 +8,10 @@ import { cn } from "@/lib/utils"
  *
  * Cada segmento navega de verdade, no molde das sub-abas do Mercado
  * (`ChipsDeFiltro` + `navegacao.irPara`); o ativo leva `aria-current="page"` e
- * pinta a Brasa, que o parecer de 12/11 pediu para o realce e que o medidor da
- * tela prova em AA nos dois temas. A contagem vem ao lado do rótulo, quando a
+ * o Grafite, porque seleção é Grafite (IDENTIDADE-DAS-PECAS; ADR-20261118 — o
+ * parecer de 12/11 que pedia a Brasa aqui foi superado pela regra da Brasa só
+ * no Criar). No escuro o Grafite é um degrau claro, nunca quase branco (F10).
+ * A contagem vem ao lado do rótulo, quando a
  * tela tem o número; com mais páginas o `+` diz que o número é um piso. Sem
  * número conhecido o segmento mostra só o nome: contagem inventada não existe.
  */
@@ -65,7 +67,7 @@ export function Segmentos({
               className={cn(
                 "inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-xl px-4 text-sm font-medium",
                 ativo
-                  ? "bg-(--brasa) text-(--brasa-foreground)"
+                  ? "bg-(--grafite) text-(--grafite-texto)"
                   : "bg-(--surface-lowest) text-(--foreground) ring-1 ring-(--outline-variant) hover:bg-(--surface-low)",
               )}
             >

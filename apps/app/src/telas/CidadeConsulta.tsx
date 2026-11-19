@@ -1,8 +1,9 @@
 import { useParams } from "@tanstack/react-router"
 import { useEffect, useState } from "react"
+import { Botao } from "@/components/bivaque/botao"
 import { CabecaDePagina } from "@/components/bivaque/cabeca-de-pagina"
 import { EsqueletoDeLista } from "@/components/bivaque/esqueleto"
-import { EstadoDeErro, EstadoVazio } from "@/components/bivaque/estado-vazio"
+import { EstadoVazio } from "@/components/bivaque/estado-vazio"
 import { Etiqueta } from "@/components/bivaque/etiqueta"
 import { FaixaDeContexto } from "@/components/bivaque/faixa-de-contexto"
 import { LinhaDeLista, Lista } from "@/components/bivaque/lista"
@@ -41,7 +42,7 @@ export function CidadeConsulta() {
   if (!validacao.ok) return <TelaIndisponivel motivo={validacao.motivo} />
 
   return (
-    <section data-tela="cidade" className="grid gap-2">
+    <section data-tela="cidade" className="grid gap-2 md:mx-auto md:max-w-[640px] lg:max-w-[720px]">
       <Consulta id={id} />
     </section>
   )
@@ -81,11 +82,17 @@ function Consulta({ id }: { id: string }) {
       return <TelaIndisponivel motivo="Esta cidade não está no catálogo." />
     }
     return (
-      <EstadoDeErro
-        titulo="Não foi possível carregar a cidade"
-        texto="Confira a conexão e tente de novo."
-        aoTentar={() => setRodada((atual) => atual + 1)}
-      />
+      <div
+        data-aviso="cidade"
+        className="flex items-center justify-between gap-2 rounded-2xl bg-(--surface-lowest) px-4 py-3 ring-1 ring-(--outline-variant)"
+      >
+        <p role="alert" className="text-sm text-(--destructive)">
+          Não foi possível carregar a cidade.
+        </p>
+        <Botao tom="texto" className="shrink-0" onClick={() => setRodada((atual) => atual + 1)}>
+          Tentar de novo
+        </Botao>
+      </div>
     )
   }
   if (dados === null) return <EsqueletoDeLista linhas={4} />
@@ -211,14 +218,18 @@ function Consulta({ id }: { id: string }) {
         <Secao className="pb-6">
           {/* RUN-172: a transferência é do Você no app (RUN-170), e o destino
               vai na query que a tela lê. O chip do cabeçalho web usa a mesma
-              porta; o 307 de `/profile` é só rede para link antigo. */}
-          <a
-            data-acao="mudar-para-ca"
-            href={`/app/voce?mudar=${encodeURIComponent(dados.cidade.id)}`}
-            className="inline-flex min-h-11 w-fit items-center gap-2 rounded-xl bg-(--primary) px-4 text-sm font-semibold text-(--primary-foreground)"
-          >
-            Vou me mudar para cá
-          </a>
+              porta; o 307 de `/profile` é só rede para link antigo. O escopo
+              `.pc` traz as variáveis da peça do botão. */}
+          <div className="pc pc-embutido">
+            <a
+              data-acao="mudar-para-ca"
+              href={`/app/voce?mudar=${encodeURIComponent(dados.cidade.id)}`}
+              className="pc-botao w-fit"
+              data-tom="principal"
+            >
+              Vou me mudar para cá
+            </a>
+          </div>
         </Secao>
       )}
     </>

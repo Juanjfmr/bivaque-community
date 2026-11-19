@@ -213,7 +213,9 @@ test.describe("F09 — envio pela RPC", { tag: "@stateful" }, () => {
 
     await page.getByLabel("Mensagem", { exact: true }).fill(texto)
     await page.getByRole("button", { name: "Enviar", exact: true }).click()
-    await expect(page.getByRole("alert")).toContainText("Seu texto foi mantido")
+    await expect(
+      page.getByRole("alert").filter({ hasText: "Seu texto foi mantido" }),
+    ).toBeAttached()
     expect(chaves).toHaveLength(1)
 
     // Sem retry automático: só o segundo clique reenvia, com a MESMA chave.

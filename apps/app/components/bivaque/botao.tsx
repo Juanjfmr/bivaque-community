@@ -19,13 +19,16 @@ import { Icone } from "./icone"
 
 export type TomDoBotao = "preenchido" | "tonal" | "texto" | "contornado" | "perigo"
 
-const VARIANTE: Record<TomDoBotao, "brasa" | "secondary" | "ghost" | "outline" | "destructive"> = {
-  preenchido: "brasa",
-  tonal: "secondary",
-  texto: "ghost",
-  contornado: "outline",
-  perigo: "destructive",
-}
+// A ação de concluir é ardósia (ADR-20261118): a Brasa fica só no começar a
+// criar (FAB e Criar da barra), que são peças da casca, não este botão.
+const VARIANTE: Record<TomDoBotao, "default" | "secondary" | "ghost" | "outline" | "destructive"> =
+  {
+    preenchido: "default",
+    tonal: "secondary",
+    texto: "ghost",
+    contornado: "outline",
+    perigo: "destructive",
+  }
 
 export function Botao({
   tom = "preenchido",
@@ -44,7 +47,12 @@ export function Botao({
       data-tom={tom}
       variant={VARIANTE[tom]}
       // O protótipo usa 44 px de altura em todo botão (base.css:16).
-      className={cn("min-h-11 rounded-xl px-4 text-sm", className)}
+      className={cn(
+        "min-h-11 rounded-xl px-4 text-sm",
+        tom === "preenchido" &&
+          "bg-(--acao) text-(--acao-foreground) hover:bg-(--acao)/90 focus-visible:ring-(--acao)/40",
+        className,
+      )}
       {...props}
     >
       {icone === undefined ? null : <Icone nome={icone} preenchido={ligado} />}
