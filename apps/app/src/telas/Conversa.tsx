@@ -173,6 +173,11 @@ export function Conversa() {
   }, [id])
   const nome = dados?.conversa.nome ?? ""
   const outroId = dados?.conversa.outroId ?? ""
+  const mostrarConversaNoTopo = casca.mostrarConversaNoTopo
+  useEffect(() => {
+    mostrarConversaNoTopo(nome ? { id, nome } : null)
+    return () => mostrarConversaNoTopo(null)
+  }, [id, nome, mostrarConversaNoTopo])
   useEffect(() => {
     if (naoEnviada !== null) balaoFalho.current?.scrollIntoView({ block: "nearest" })
   }, [naoEnviada])
@@ -335,8 +340,6 @@ export function Conversa() {
               </AvatarFallback>
             </Avatar>
             <span className="grid min-w-0 gap-0.5">
-              {/* O nome de quem conversa aparece uma vez só: aqui. A barra do
-                  topo diz a seção ("Conversas"). */}
               <h1
                 id="titulo-da-tela"
                 data-titulo-da-tela
@@ -466,12 +469,7 @@ export function Conversa() {
                   <p className="whitespace-pre-wrap break-words rounded-2xl rounded-br-sm bg-(--secondary-container) px-3 py-2.5 text-[14px] leading-5 opacity-85 ring-1 ring-(--destructive)/60">
                     {naoEnviada}
                   </p>
-                  {/* D1: ícone de 16 px como irmão do texto, com 6 px entre
-                      eles; D22: é o único aviso do erro. */}
-                  <p
-                    role="alert"
-                    className="flex min-h-11 items-center gap-1.5 text-xs text-(--destructive)"
-                  >
+                  <p className="flex min-h-11 items-center gap-1.5 text-xs text-(--destructive)">
                     <Icone nome="error" className="size-4" />
                     Não enviada
                     <Botao
