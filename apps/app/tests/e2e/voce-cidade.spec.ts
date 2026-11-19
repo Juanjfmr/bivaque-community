@@ -63,6 +63,10 @@ test("declarar a mudança mostra o estado de saída e sobrevive ao recarregar", 
 
   // Gravação que sobrevive ao recarregamento: a tela lê do servidor.
   await page.reload()
+  await expect(page.locator('[data-tela="voce"] p', { hasText: "Sua cidade é" })).toContainText(
+    "Rio de Janeiro",
+  )
+  await expect(page.locator('[data-aviso="saindo"]')).toContainText("Você está saindo de Manaus")
   await page.getByRole("button", { name: "Mudar de cidade" }).click()
   await expect(cidade.locator('[data-aviso="saindo"]')).toContainText("Manaus, AM")
   await expect(cidade.locator('[data-aviso="saindo"]')).toContainText("participa de lá até")

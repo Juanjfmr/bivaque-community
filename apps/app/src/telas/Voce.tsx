@@ -253,13 +253,17 @@ export function Voce() {
       ) : perfil === null ? null : (
         <div className="flex items-center gap-3 rounded-2xl bg-(--surface-lowest) p-4 ring-1 ring-(--outline-variant)">
           <Avatar nome={perfil.nome} tamanho={56} />
-          <span className="grid min-w-0 grow gap-0.5">
+          <div className="grid min-w-0 grow gap-0.5">
             <b className="text-[17px]">{perfil.nome}</b>
-            <small className="text-(--on-surface-variant)">{perfil.cidade.nome}</small>
+            {cidadeAberta ? null : (
+              <p className="text-sm text-(--on-surface-variant)">
+                Sua cidade é <b>{perfil.cidade.nome}</b>.
+              </p>
+            )}
             {perfil.bio === null || perfil.bio === undefined ? null : (
               <small className="text-(--on-surface-variant)">{perfil.bio}</small>
             )}
-          </span>
+          </div>
           <Botao
             tom="texto"
             icone="edit"
@@ -276,6 +280,21 @@ export function Voce() {
           </Botao>
         </div>
       )}
+
+      {perfil?.outbound && !cidadeAberta ? (
+        <p
+          data-aviso="saindo"
+          className="rounded-2xl bg-(--surface-lowest) px-4 py-3 text-sm ring-1 ring-(--outline-variant)"
+        >
+          {perfil.outbound.readOnly
+            ? `Você não participa mais de ${perfil.outbound.nome}. A sua cidade agora é ${perfil.cidade.nome}.`
+            : `Você está saindo de ${perfil.outbound.nome}${perfil.outbound.uf === "" ? "" : `, ${perfil.outbound.uf}`}${
+                perfil.outbound.endsAt === ""
+                  ? ""
+                  : ` — participa de lá até ${dataLegivel(perfil.outbound.endsAt)}`
+              }. Uma nova mudança fica disponível depois desse prazo.`}
+        </p>
+      ) : null}
 
       {perfil !== null && perfil.localizacao.cep !== null && !perfil.distanciaDisponivel ? (
         <p
