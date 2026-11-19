@@ -92,6 +92,8 @@ export function Conversa() {
   const denuncia = useSobreposicaoDaEntrada("conversa-denuncia")
   const menuDaLinha = useSobreposicaoDaEntrada("menu-de-linha")
   const controle = useRef<AbortController | null>(null)
+  const envioEmCurso = useRef(false)
+  const paginaEmCurso = useRef(false)
   const ultimaChave = useRef<{ texto: string; chave: string } | null>(null)
   useRolagemEFoco(CARGA_CONCLUIDA)
   // A lista de bloqueios é a única fonte do estado "eu bloqueei": ela é minha,
@@ -130,6 +132,8 @@ export function Conversa() {
   useEffect(() => {
     const pedido = new AbortController()
     controle.current = pedido
+    envioEmCurso.current = false
+    paginaEmCurso.current = false
     setDados(null)
     setErro(null)
     setErroLocal("")
@@ -178,7 +182,8 @@ export function Conversa() {
   }, [naoEnviada])
   async function enviarTexto(texto = rascunho, reenvio = false) {
     const pedido = controle.current
-    if (!pedido || pedido.signal.aborted || enviando || !texto.trim()) return
+    if (!pedido || pedido.signal.aborted || envioEmCurso.current || !texto.trim()) return
+    envioEmCurso.current = true
     const anterior = ultimaChave.current
     const clientKey =
       anterior !== null && anterior.texto === texto ? anterior.chave : novaChaveDeEnvio()
@@ -207,19 +212,24 @@ export function Conversa() {
         setNaoEnviada(texto)
       }
     } finally {
-      if (!pedido.signal.aborted) setEnviando(false)
+      if (!pedido.signal.aborted) {
+        envioEmCurso.current = false
+        setEnviando(false)
+      }
     }
   }
   async function mais() {
     const pedido = controle.current
-    if (!pedido || !dados?.anterior || carregandoMais) return
+    if (!pedido || pedido.signal.aborted || !dados?.anterior || paginaEmCurso.current) return
+    paginaEmCurso.current = true
+    const cursor = dados.anterior
     setCarregandoMais(true)
     setErroLocal("")
     try {
-      const pagina = await buscarConversa(id, { antes: dados.anterior, signal: pedido.signal })
+      const pagina = await buscarConversa(id, { antes: cursor, signal: pedido.signal })
       if (!pedido.signal.aborted)
         setDados((atual) =>
-          atual
+          atual?.anterior === cursor
             ? {
                 ...atual,
                 mensagens: [...pagina.mensagens, ...atual.mensagens],
@@ -230,7 +240,10 @@ export function Conversa() {
     } catch {
       if (!pedido.signal.aborted) setErroLocal("Não foi possível carregar as mensagens anteriores.")
     } finally {
-      if (!pedido.signal.aborted) setCarregandoMais(false)
+      if (!pedido.signal.aborted) {
+        paginaEmCurso.current = false
+        setCarregandoMais(false)
+      }
     }
   }
   async function bloquearPessoa() {
@@ -415,7 +428,12 @@ export function Conversa() {
             )}
           </aside>
           {dados.anterior && (
-            <Botao tom="contornado" disabled={carregandoMais} onClick={() => void mais()}>
+            <Botao
+              tom="contornado"
+              disabled={carregandoMais}
+              aria-busy={carregandoMais}
+              onClick={() => void mais()}
+            >
               {carregandoMais ? "Carregando…" : "Ver mensagens anteriores"}
             </Botao>
           )}
@@ -530,6 +548,7 @@ export function Conversa() {
               </fieldset>
               <form
                 className="grid min-w-0 gap-1.5"
+                aria-busy={enviando}
                 onSubmit={(evento) => {
                   evento.preventDefault()
                   void enviarTexto()
