@@ -1,0 +1,87 @@
+name: Build do app de loja
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, labeled]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  android:
+    if: contains(github.event.pull_request.labels.*.name, 'ci:full')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+        with:
+          run_install: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: pnpm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @bivaque/app build
+      - run: pnpm --filter @bivaque/app exec cap sync android
+      - name: Compilar APK sem gerar chave
+        run: |
+          printf '%s\n' 'gradle.projectsEvaluated { gradle.rootProject.project(":app").android.buildTypes.debug.signingConfig = null }' > "$RUNNER_TEMP/sem-assinatura.gradle"
+          ./gradlew --init-script "$RUNNER_TEMP/sem-assinatura.gradle" assembleDebug
+        working-directory: apps/app/android
+      - name: Varrer o APK
+        run: |
+          mkdir -p "$RUNNER_TEMP/scan/tests" "$RUNNER_TEMP/scan/artefato"
+          cp tests/secrets-scan.mjs "$RUNNER_TEMP/scan/tests/"
+          unzip -q apps/app/android/app/build/outputs/apk/debug/app-debug-unsigned.apk -d "$RUNNER_TEMP/scan/artefato"
+          cd "$RUNNER_TEMP/scan"
+          git init -q
+          git add -f artefato
+          node tests/secrets-scan.mjs
+      - uses: actions/upload-artifact@v4
+        with:
+          name: android-debug
+          path: apps/app/android/app/build/outputs/apk/debug/app-debug-unsigned.apk
+          if-no-files-found: error
+
+  ios:
+    if: contains(github.event.pull_request.labels.*.name, 'ci:full')
+    runs-on: macos-15
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+        with:
+          run_install: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @bivaque/app build
+      - run: pnpm --filter @bivaque/app exec cap sync ios
+      - name: Compilar sem assinatura
+        run: xcodebuild -project App.xcodeproj -scheme App -sdk iphonesimulator -configuration Debug -derivedDataPath "$RUNNER_TEMP/ios-build" CODE_SIGNING_ALLOWED=NO build
+        working-directory: apps/app/ios/App
+      - name: Varrer o aplicativo compilado
+        run: |
+          mkdir -p "$RUNNER_TEMP/scan/tests" "$RUNNER_TEMP/scan/artefato"
+          cp tests/secrets-scan.mjs "$RUNNER_TEMP/scan/tests/"
+          cp -R "$RUNNER_TEMP/ios-build/Build/Products/Debug-iphonesimulator/App.app" "$RUNNER_TEMP/scan/artefato/"
+          cd "$RUNNER_TEMP/scan"
+          git init -q
+          git add -f artefato
+          node tests/secrets-scan.mjs
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ios-simulador
+          path: ${{ runner.temp }}/ios-build/Build/Products/Debug-iphonesimulator/App.app
+          if-no-files-found: error
