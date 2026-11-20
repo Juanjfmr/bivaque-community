@@ -6,8 +6,8 @@ owner: Juan
 approved_at: 2026-11-20 (por delegação; mandato do lançamento de 02/11)
 linked_plan: docs/LANCAMENTO.md
 amends: ADR-20261024-front-react-spa (§5, modo Bearer do app de loja); ADR-20261105-porta-de-dados-do-app (§1, credenciais e repetição de leitura no nativo); ADR-20261105-entrada-enxuta-e-r3-sem-parada (entrada congelada, só o modo nativo da verificação do código)
-critic_verdict: pending
-critic_review: 1ª rodada (54e66389) — security-auditor BLOQUEIA (1 HIGH, 6 MEDIUM) e revisão independente FAIL (2 HIGH, 9 MEDIUM); este texto incorpora os dois pareceres e volta às duas revisões antes do merge.
+critic_verdict: pass
+critic_review: 3 rodadas — 1ª (54e66389) security-auditor BLOQUEIA e revisão FAIL; 2ª (4b6321bd) LIBERA COM RESSALVAS e PASS-COM-RESSALVA; 3ª (1e09fca0) LIBERA e PASS-COM-RESSALVA (style-src, renovação na volta do segundo plano). Todas as ressalvas incorporadas neste texto.
 ---
 
 # Sessão nativa do app de loja: token no cofre do aparelho, servidor como porta
@@ -138,17 +138,21 @@ pública do proxy (ADR-20261110), e tem teste positivo e negativo.
   hoje consegue ler o cookie da web, que também não é httpOnly. Por isso o build nativo tem CSP e não
   carrega conteúdo remoto.
 - **CSP do build nativo (decisão):** o `dist-nativo` leva uma meta CSP com `default-src 'self'`,
-  `script-src 'self'` (sem `unsafe-inline` nem `unsafe-eval`), `connect-src 'self'` mais a origem de
+  `script-src 'self'` (sem `unsafe-inline` nem `unsafe-eval`), `style-src 'self' 'unsafe-inline'` e
+  `font-src 'self'` (como a CSP do `/app`, pelo ADR-20261119 §2: o React e as peças usam `style` inline),
+  `connect-src 'self'` mais a origem de
   `VITE_API_BASE` e a do Supabase Storage usada nas URLs assinadas, `img-src 'self' data: blob:` mais essas
   origens, `object-src 'none'`, `base-uri 'none'` e `frame-src 'none'`. O script inline que
   `apps/app/scripts/preparar-nativo.mjs` injeta sai para um arquivo próprio (ou entra por hash). O
   `capacitor.config.ts` não tem `server.url` nem `allowNavigation`. A prova lê o `index.html` gerado e
-  confere a meta, a ausência de script inline sem hash e a configuração.
+  confere a meta, a ausência de script inline sem hash e a configuração; no emulador, o console não mostra
+  violação de CSP.
 
 ### 7. Ciclo de vida
 
-- **Ao abrir e ao voltar do segundo plano:** se há token de renovação no cofre, o app renova antes da
-  primeira leitura. Sem ele, vai para `/app/entrar`.
+- **Ao abrir e ao voltar do segundo plano:** ao abrir, se há token de renovação no cofre, o app renova antes
+  da primeira leitura; ao voltar do segundo plano, renova só se o token de acesso em memória falta menos de
+  5 minutos para vencer (ou não existe). Sem token de renovação, vai para `/app/entrar`.
 - **401 no meio do uso:** só uma renovação em curso por vez, cobrindo também a abertura e a volta do segundo
   plano, e os pedidos esperam por ela. O novo token de renovação é gravado no cofre antes de soltar os
   pedidos. Se a gravação falhar, o app mantém o par novo em memória e segue; se fechar antes de conseguir
@@ -231,6 +235,8 @@ pública do proxy (ADR-20261110), e tem teste positivo e negativo.
   - renovação única com pedidos concorrentes; escrita não repetida; sair repetido uma vez depois de 401;
   - 401 na renovação limpa o cofre; 429, 503 e falta de rede não limpam;
   - o retorno é tratado tanto por `appUrlOpen` quanto por `getLaunchUrl()`;
+  - abrir a frio renova sempre; voltar do segundo plano só renova com menos de 5 minutos para o
+    `expires_at`;
   - retorno sem fluxo pendente ou vencido é ignorado; o verificador não se reutiliza;
   - ordem ao sair: push, plugin, sessão, limpeza local;
   - nada do cofre aparece em `localStorage`, e sair limpa `localStorage`, IndexedDB e Cache Storage;
@@ -255,6 +261,8 @@ pública do proxy (ADR-20261110), e tem teste positivo e negativo.
 - O app de loja passa a funcionar sem cookie, e o resolvedor de sessão continua sendo um só.
 - Ficam duas rotas novas de sessão, um limitador novo, mudanças em três rotas existentes e um plugin de cofre
   para manter.
+- O teto de 120 renovações por IP em 10 minutos pode apertar num CGNAT grande de operadora. O 429 não
+  derruba a sessão, então fica aceito no lançamento, e a medição em produção entra num card próprio.
 - O par de tokens existe no aparelho. O risco fica contido pelo cofre do sistema, pela rotação com revogação
   da família, pela revogação real ao sair e pelo CSP do build nativo. Contra XSS no próprio app, o cofre não
   protege mais do que o cookie protege na web.
