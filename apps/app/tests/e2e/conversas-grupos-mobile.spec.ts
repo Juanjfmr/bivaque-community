@@ -144,8 +144,18 @@ test("Grupo com administrador mostra pedidos, mas não oferece aprovação fict�
   await pedidos.locator("summary").click()
   await expect(pedidos).toContainText("Bruno C.")
   await expect(pedidos).toContainText("Thiago S.")
+  const gestao = page.getByRole("link", { name: "Aprovar pedidos e convidar" })
+  await expect(gestao).toBeVisible()
+  await expect(gestao).toHaveAttribute("href", "/groups/g-futebol")
   await expect(pedidos).not.toContainText("ilustrativa")
   await expect(page.locator('[data-compositor-grupo="sim"]')).toBeVisible()
+})
+
+test("membro sem administração não vê a porta de gestão do grupo", async ({ page }) => {
+  await simularGrupos(page)
+  await page.goto("/app/grupo/g-1")
+  await expect(page.getByText("Participando", { exact: true })).toBeVisible()
+  await expect(page.getByRole("link", { name: "Aprovar pedidos e convidar" })).toHaveCount(0)
 })
 
 test("pedidos do grupo: duplo clique nao duplica pagina, erro preserva lista e retry avanca", async ({

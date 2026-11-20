@@ -57,7 +57,12 @@ export function Participacao({
       >
         <p className="text-sm leading-6 text-(--on-surface-variant)">{grupo.descricao}</p>
         {grupo.admin ? (
-          <Etiqueta tom="ok">Administrador</Etiqueta>
+          <>
+            <Etiqueta tom="ok">Administrador</Etiqueta>
+            <a className="text-sm font-semibold underline" href={`/groups/${grupo.id}`}>
+              Aprovar pedidos e convidar
+            </a>
+          </>
         ) : grupo.membro ? (
           <div className="flex flex-wrap items-center justify-between gap-2">
             <span data-estado-participacao="membro">Participando</span>

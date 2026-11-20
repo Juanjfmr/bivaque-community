@@ -24,7 +24,7 @@ import { signInAs } from "./helpers/session"
 //      declarada em PORTAS_FORA_DO_LINK — ou seja, só se chega a ela digitando a URL;
 //   3. uma porta declarada ficou velha: a rota passou a ter link, ou deixou de existir.
 //
-// O que ele NÃO vê: navegação feita por botão com router.push. Por isso essas rotas entram na
+// Fora do diretório de grupos, o que ele NÃO vê é navegação feita por botão com router.push. Essas rotas entram na
 // lista de portas com o botão nomeado — a lista é a dívida visível, não um esconderijo.
 // Desde o RUN-176 a mesma lista é a entrada da casca: a persona dona de uma porta visita a rota
 // como semente e o crawl segue os links dali. Semente não é link — a invariante da porta
@@ -302,6 +302,27 @@ async function crawl(
     // alcançada: depende de qual link o rastreador seguiu antes, e a medida oscilava entre
     // rodadas. Só conta o que algum link aponta; o resto aparece sempre e é declarado.
     frontier.offer({ target: landed.pathname, from: visit.target, persona })
+
+    // O diretório abre cada detalhe por botão. Visitar os detalhes revela a porta
+    // de administração apenas no grupo em que esta persona é administradora.
+    if (landed.pathname === "/app/comunidade" && ["membro", "dono de vila"].includes(persona)) {
+      await page.locator('[data-chip="grp"]').click()
+      const diretorio = page.locator('[data-diretorio-grupos="sim"]')
+      await diretorio.waitFor()
+      const quantidade = await diretorio.getByRole("button", { name: "Ver grupo" }).count()
+      for (let indice = 0; indice < quantidade; indice++) {
+        if (indice > 0) {
+          await page.goto(visit.target, { waitUntil: "load" })
+          await page.locator('[data-chip="grp"]').click()
+          await diretorio.waitFor()
+        }
+        await diretorio.getByRole("button", { name: "Ver grupo" }).nth(indice).click()
+        await page.waitForURL(/\/app\/grupo\//)
+        frontier.enter({ target: new URL(page.url()).pathname, from: landed.pathname, persona })
+      }
+      await page.goto(visit.target, { waitUntil: "load" })
+      await page.waitForLoadState("networkidle", { timeout: 1_000 }).catch(() => {})
+    }
 
     const hrefs = await page.$$eval("a[href]", (anchors) =>
       anchors.map((anchor) => anchor.getAttribute("href") ?? ""),

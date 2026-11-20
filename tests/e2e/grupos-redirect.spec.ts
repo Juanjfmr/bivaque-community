@@ -2,10 +2,6 @@ import { expect, test } from "@playwright/test"
 
 test("rotas antigas redirecionam para o app e preservam a consulta", async ({ request }) => {
   for (const [origem, destino] of [
-    [
-      "/groups/60000000-0000-4000-8000-000000000001?origem=aviso",
-      "/app/grupo/60000000-0000-4000-8000-000000000001?origem=aviso",
-    ],
     ["/groups?origem=aviso", "/app/comunidade?origem=aviso"],
     ["/community?origem=aviso", "/app/comunidade?origem=aviso"],
     ["/indicacoes?origem=aviso", "/app/comunidade?origem=aviso"],
@@ -22,10 +18,6 @@ test("rotas antigas levam visitantes anônimos à entrada sem ciclo", async ({ p
   for (const [origem, destino] of [
     ["/groups", "/app/comunidade"],
     ["/community", "/app/comunidade"],
-    [
-      "/groups/60000000-0000-4000-8000-000000000001?origem=aviso",
-      "/app/grupo/60000000-0000-4000-8000-000000000001",
-    ],
   ] as const) {
     const resposta = await request.get(origem, { maxRedirects: 0 })
     expect(resposta.status()).toBe(307)
@@ -34,9 +26,7 @@ test("rotas antigas levam visitantes anônimos à entrada sem ciclo", async ({ p
     )
     await page.goto(origem)
     await page.waitForURL(/\/app\/entrar(?:\?|$)/)
-    expect(new URL(page.url()).searchParams.get("redirect")).toBe(
-      origem.startsWith("/groups/") ? `${destino}?origem=aviso` : destino,
-    )
+    expect(new URL(page.url()).searchParams.get("redirect")).toBe(destino)
   }
 })
 

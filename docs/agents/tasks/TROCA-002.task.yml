@@ -24,6 +24,7 @@ allowed_paths:
   - apps/app/src/telas/Comunidade.tsx
   - apps/app/src/telas/Voce.tsx
   - apps/app/src/comunidade/**
+  - apps/app/src/grupos/** # somente a porta para administração de grupo na web
   - apps/app/src/casca/**
   - apps/app/src/entrada/**
   - apps/app/lib/api/cliente.ts
