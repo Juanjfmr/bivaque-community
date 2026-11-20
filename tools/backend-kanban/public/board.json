@@ -10344,7 +10344,11 @@
         "20/11: aberto por decisão do dono (opção 1 do #309: porta provisória no app e nenhuma tela antiga sobrevive). Contrato TROCA-003 pronto para o Codex; começa depois do merge do TROCA-002 (#309)."
       ],
       "updatedAt": "2026-11-20",
-      "sourceRevision": "1bd9c7f8"
+      "sourceRevision": "1bd9c7f8",
+      "notes": [
+        "20/11 pendências do #309 (f1c405e) para este card: MEDIUM — em apps/app/lib/api/cliente.ts a bandeira encaminhouParaEntrada nunca se religa quando a página volta do bfcache; religar no evento pageshow com persisted e cobrir em teste. LOW — comentar em supabase/seed.sql por que o insert de filiação owner/approved ficou só no grupo 2 (link-crawl e synthetic-people).",
+        "20/11 também do #309: aprovação de pedidos e convite de grupo no app (hoje a porta provisória leva ao /groups/:id), porta para moderador além do dono, e os LOWs dos revisores (teste sequencial em vez de Promise.all, laço /app/entrar no retornoValido, 401 em escritas por 42501, Sair com sessão vencida)."
+      ]
     },
     {
       "id": "LAN-TROCA-ADMIN",
