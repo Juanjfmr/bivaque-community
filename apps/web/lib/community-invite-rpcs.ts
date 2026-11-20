@@ -8,6 +8,11 @@ import type { Database } from "supabase/database.generated"
 type ServiceClient = SupabaseClient<Database>
 
 export interface CommunityInviteRpcs {
+  create_community_invitation_for_app: {
+    args: { p_community_id: string; p_token_digest: string; p_expires_at: string }
+    returns: string
+  }
+  accept_community_invitation_for_app: { args: { p_token_digest: string }; returns: string }
   create_community_invitation: {
     args: {
       p_community_id: string
@@ -45,13 +50,16 @@ export async function callCommunityInviteRpc<K extends keyof CommunityInviteRpcs
   supabase: ServiceClient,
   name: K,
   args: CommunityInviteRpcs[K]["args"],
-): Promise<{ data: CommunityInviteRpcs[K]["returns"] | null; error: { message: string } | null }> {
+): Promise<{
+  data: CommunityInviteRpcs[K]["returns"] | null
+  error: { message: string; code?: string } | null
+}> {
   const fn = supabase.rpc as unknown as (
     name: K,
     args: CommunityInviteRpcs[K]["args"],
   ) => Promise<{
     data: CommunityInviteRpcs[K]["returns"] | null
-    error: { message: string } | null
+    error: { message: string; code?: string } | null
   }>
   return fn.call(supabase, name, args)
 }

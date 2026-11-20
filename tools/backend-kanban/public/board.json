@@ -10341,7 +10341,8 @@
       "tests": [],
       "blockers": [],
       "proof": [
-        "20/11: aberto por decisão do dono (opção 1 do #309: porta provisória no app e nenhuma tela antiga sobrevive). Contrato TROCA-003 pronto para o Codex; começa depois do merge do TROCA-002 (#309)."
+        "20/11: aberto por decisão do dono (opção 1 do #309: porta provisória no app e nenhuma tela antiga sobrevive). Contrato TROCA-003 pronto para o Codex; começa depois do merge do TROCA-002 (#309).",
+        "20/11 A2 sobre 6489eb3e: APIs de convite e aceite com cliente da sessao; 21 testes de rota e 4 testes existentes passaram; gate --fast verde. Etapas seguintes e prova integrada permanecem abertas."
       ],
       "updatedAt": "2026-11-20",
       "sourceRevision": "1bd9c7f8",
