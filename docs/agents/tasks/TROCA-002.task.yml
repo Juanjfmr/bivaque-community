@@ -36,6 +36,9 @@ allowed_paths:
   - apps/web/app/(owner)/**
   - apps/web/app/(provider)/**
   - apps/web/components/**
+  - apps/web/app/components/**
+  - tests/scope/f03-criar.test.mjs
+  - supabase/seed.sql (só a filiação aprovada do dono ao próprio grupo, rodada 5)
   - apps/web/lib/**
   - apps/web/proxy.ts
   - apps/web/next.config.ts
@@ -67,7 +70,7 @@ proof:
 risk: ui
 risk_level: R2
 reviewer_must_differ_from_executor: true
-retry_budget: 4  # rodada 4 aberta pelo coordenador em 19/11, só na branch, até a escolha do dono sobre o #309
+retry_budget: 5  # rodadas 4 e 5 abertas pelo coordenador; o dono escolheu em 20/11 a opção 1 (porta no app) com merge só após revisão às cegas PASS
 on_budget_exhausted: HUMAN_DECISION
 closure:
   requires_runtime_evidence: true
