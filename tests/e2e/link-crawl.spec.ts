@@ -65,6 +65,12 @@ const PERSONAS: Array<{ nome: string; email: string | null; entradas: string[]; 
     chega: /^\/app\/inicio$/,
   },
   {
+    nome: "dono de grupo",
+    email: "membro-2@bivaque.example.invalid",
+    entradas: ["/app/comunidade"],
+    chega: /^\/app\/comunidade$/,
+  },
+  {
     nome: "dono de vila",
     email: "dono-vila@bivaque.example.invalid",
     entradas: ["/inicio", "/app/comunidade"],
@@ -305,8 +311,8 @@ async function crawl(
 
     // O diretório abre cada detalhe por botão. Visitar os detalhes revela a porta
     // de administração apenas no grupo em que esta persona é administradora.
-    if (landed.pathname === "/app/comunidade" && persona === "membro") {
-      await page.goto("/app/grupo/60000000-0000-4000-8000-000000000001")
+    if (landed.pathname === "/app/comunidade" && persona === "dono de grupo") {
+      await page.goto("/app/grupo/60000000-0000-4000-8000-000000000002")
       await expect(page.getByRole("link", { name: "Aprovar pedidos e convidar" })).toBeVisible()
       frontier.enter({ target: new URL(page.url()).pathname, from: landed.pathname, persona })
       await page.goto(visit.target, { waitUntil: "load" })

@@ -795,7 +795,7 @@ select
   ('60000000-0000-4000-8000-' || lpad(to_hex(i), 12, '0'))::uuid,
   ('30000000-0000-4000-8000-' || lpad(to_hex(i), 12, '0'))::uuid,
   'owner', 'approved'
-from generate_series(1, 8) as i
+from generate_series(2, 2) as i
 on conflict (group_id, user_id) do update set role = 'owner', status = 'approved';
 
 -- ── Vila Ajuricaba (comunidade), para os specs de E2E de comunidade ───────

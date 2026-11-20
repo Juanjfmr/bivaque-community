@@ -26,6 +26,8 @@ const enderecoInicial =
         busca: window.location.search,
       }
 
+let encaminhouParaEntrada = false
+
 export const CABECALHOS_DO_APP: Readonly<Record<string, string>> = {
   "x-bivaque-app": "bivaque-spa",
 }
@@ -94,8 +96,10 @@ async function interpretar(resposta: Response): Promise<Record<string, unknown>>
   if (
     resposta.status === 401 &&
     typeof window !== "undefined" &&
+    !encaminhouParaEntrada &&
     !window.location.pathname.startsWith("/app/entrar")
   ) {
+    encaminhouParaEntrada = true
     const entrada = new URL("/app/entrar", window.location.origin)
     const busca =
       window.location.search ||

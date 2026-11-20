@@ -43,7 +43,11 @@ describe("cliente do app", () => {
       },
     })
     espiao({}, 401)
-    await expect(ler("/api/app/grupos/123")).rejects.toMatchObject({ codigo: "sem-sessao" })
+    vi.resetModules()
+    const cliente = await import("@/lib/api/cliente")
+    await expect(cliente.ler("/api/app/grupos/123")).rejects.toMatchObject({ codigo: "sem-sessao" })
+    await expect(cliente.ler("/api/app/eventos")).rejects.toMatchObject({ codigo: "sem-sessao" })
+    expect(assign).toHaveBeenCalledOnce()
     const destino = new URL(assign.mock.calls[0]?.[0] as string)
     expect(destino.pathname).toBe("/app/entrar")
     expect(destino.searchParams.get("redirect")).toBe("/app/grupo/123?aba=1")
@@ -53,7 +57,9 @@ describe("cliente do app", () => {
     const assign = vi.fn()
     vi.stubGlobal("window", { location: { pathname: "/app/entrar", assign } })
     espiao({}, 401)
-    await expect(ler("/api/app/eventos")).rejects.toMatchObject({ codigo: "sem-sessao" })
+    vi.resetModules()
+    const cliente = await import("@/lib/api/cliente")
+    await expect(cliente.ler("/api/app/eventos")).rejects.toMatchObject({ codigo: "sem-sessao" })
     expect(assign).not.toHaveBeenCalled()
   })
 
