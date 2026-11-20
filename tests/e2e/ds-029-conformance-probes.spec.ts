@@ -92,9 +92,9 @@ async function signInAs(page: Page, email: string): Promise<void> {
   ])
 }
 
-// LAN-TROCA fase 1: prova o foco do compositor que continua em /community.
+// LAN-TROCA fase 1: prova o foco do compositor que continua em /denuncias.
 async function openComposerWithTrigger(page: Page): Promise<Locator> {
-  await page.goto(`${APP_URL}/community`, { waitUntil: "load" })
+  await page.goto(`${APP_URL}/denuncias`, { waitUntil: "load" })
   // Espera a montagem antes de clicar no menu do shell.
   await expect(page.locator("main").getByRole("heading", { level: 1 })).toBeVisible({
     timeout: 20000,
@@ -136,9 +136,9 @@ test.describe("DS-029 modal focus lifecycle (CreatePostModal)", () => {
 test.describe("DS-029 reflow at 320 CSS-px", () => {
   test.use({ viewport: { width: 320, height: 568 } })
 
-  test("/community does not produce horizontal scroll at 320px", async ({ page }) => {
+  test("/denuncias does not produce horizontal scroll at 320px", async ({ page }) => {
     await signInAs(page, TRANSFERRING_EMAIL)
-    await page.goto(`${APP_URL}/community`, { waitUntil: "load" })
+    await page.goto(`${APP_URL}/denuncias`, { waitUntil: "load" })
     await page.waitForLoadState("networkidle")
 
     const overflow = await page.evaluate(() => {
@@ -153,9 +153,9 @@ test.describe("DS-029 reflow at 320 CSS-px", () => {
 })
 
 test.describe("DS-029 target-size 24×24 minimum on representative controls", () => {
-  test("interactive controls on /community meet the 24×24 floor", async ({ page }) => {
+  test("interactive controls on /denuncias meet the 24×24 floor", async ({ page }) => {
     await signInAs(page, TRANSFERRING_EMAIL)
-    await page.goto(`${APP_URL}/community`, { waitUntil: "load" })
+    await page.goto(`${APP_URL}/denuncias`, { waitUntil: "load" })
     await page.waitForLoadState("networkidle")
 
     const sizes = await page.evaluate(() => {
@@ -189,7 +189,7 @@ test.describe("DS-029 target-size 24×24 minimum on representative controls", ()
 test.describe("DS-029 visible focus on non-tablist controls", () => {
   test("Tab from the shell puts a real focus ring on the next control", async ({ page }) => {
     await signInAs(page, TRANSFERRING_EMAIL)
-    await page.goto(`${APP_URL}/community`, { waitUntil: "load" })
+    await page.goto(`${APP_URL}/denuncias`, { waitUntil: "load" })
     await page.waitForLoadState("networkidle")
 
     await page.locator("header").first().click()
@@ -220,39 +220,13 @@ test.describe("DS-029 visible focus on non-tablist controls", () => {
   })
 })
 
-test.describe("DS-029 non-color state cues", () => {
-  test("error state carries an icon and text, not color alone", async ({ page }) => {
-    await signInAs(page, TRANSFERRING_EMAIL)
-    await page.route("**/rest/v1/community_memberships**", (route) =>
-      route.fulfill({
-        status: 500,
-        contentType: "application/json",
-        body: JSON.stringify({
-          message: "induced failure",
-          code: "PGRST500",
-          details: null,
-          hint: null,
-        }),
-      }),
-    )
-    await page.goto(`${APP_URL}/community`, { waitUntil: "load" })
-    await page.waitForLoadState("networkidle")
-
-    const alert = page.getByRole("alert").filter({ hasText: "Algo deu errado" })
-    await expect(alert).toBeVisible({ timeout: 10000 })
-
-    const hasIcon = await alert.locator("svg").count()
-    expect(hasIcon).toBeGreaterThan(0)
-  })
-})
-
 test.describe("DS-029 prefers-reduced-motion contract", () => {
   test("emulating prefers-reduced-motion zeroes animation/transition durations", async ({
     page,
   }) => {
     await page.emulateMedia({ reducedMotion: "reduce" })
     await signInAs(page, TRANSFERRING_EMAIL)
-    await page.goto(`${APP_URL}/community`, { waitUntil: "load" })
+    await page.goto(`${APP_URL}/denuncias`, { waitUntil: "load" })
     await page.waitForLoadState("networkidle")
 
     const durations = await page.evaluate(() => {

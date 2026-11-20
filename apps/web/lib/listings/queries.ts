@@ -182,66 +182,6 @@ export async function getSavedListingIds(client: Client, ids: string[]): Promise
   return new Set((data ?? []).map((row) => row.listing_id))
 }
 
-export async function isListingSaved(client: Client, id: string): Promise<boolean> {
-  const { data, error } = await client
-    .from("listing_saves")
-    .select("listing_id")
-    .eq("listing_id", id)
-    .maybeSingle()
-  if (error) {
-    throw new Error(`Falha ao carregar o anúncio salvo: ${error.message}`)
-  }
-  return data !== null
-}
-
-export async function getPropertyDetail(
-  client: Client,
-  id: string,
-): Promise<PropertyDetail | null> {
-  const { data, error } = await client.from("listings").select(SELECT).eq("id", id).maybeSingle()
-
-  if (error) {
-    throw new Error(`Falha ao carregar o imóvel: ${error.message}`)
-  }
-  if (data === null) return null
-
-  const row = data as unknown as RawRow
-  if (row.property_details === null) return null
-
-  const { data: profile, error: profileError } = await client
-    .from("profiles")
-    .select("display_name")
-    .eq("user_id", row.owner_user_id)
-    .maybeSingle()
-
-  if (profileError) {
-    throw new Error(`Falha ao carregar o anunciante: ${profileError.message}`)
-  }
-
-  const summary = toSummary(row)
-  const photos = [...(row.listing_photos ?? [])].sort((a, b) => a.position - b.position)
-
-  return {
-    ...summary,
-    description: row.description,
-    address: row.address,
-    iptuCents: row.property_details.iptu_cents,
-    propertyType: row.property_details.property_type,
-    amenities: row.property_details.amenities ?? [],
-    availableFrom: row.property_details.available_from,
-    ownerUserId: row.owner_user_id,
-    ownerName: (profile as { display_name: string } | null)?.display_name ?? null,
-    audienceLabel: row.communities?.name
-      ? `Comunidade — ${row.communities.name}`
-      : `Toda a cidade — ${summary.cityName ?? "cidade"}${summary.stateCode ? `, ${summary.stateCode}` : ""}`,
-    photos: photos.map((photo) => ({
-      id: photo.id,
-      path: photo.path,
-      position: photo.position,
-    })),
-  }
-}
-
 // As assinaturas do próprio usuário vivem na porta do app (RUN-169):
 // `/api/app/imoveis/alertas`, com a leitura sob a mesma policy
 // `listing_alerts_select_owner`.

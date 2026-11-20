@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs"
+import { existsSync, readFileSync } from "node:fs"
 import { join } from "node:path"
 import { describe, expect, it } from "vitest"
 import { showsCreateAction } from "../../../apps/web/app/components/shell/create-visibility"
@@ -93,12 +93,9 @@ describe("montagem no shell", () => {
     expect(fab.slice(0, fab.indexOf("export function CreateButton"))).not.toContain("inert")
   })
 
-  it("a Comunidade não é mais um feed — nem o Início", () => {
-    // N2: a vista "Conversa" saiu da Comunidade e o Início não ganhou feed
-    // (ADR-20261023). Nenhuma das duas telas lista publicações da cidade; o que
-    // se publica vive no feed do grupo.
-    const community = read("apps", "web", "app", "(shell)", "community", "page.tsx")
-    expect(community).not.toContain("POST_CREATED_EVENT")
-    expect(community).not.toContain("FeedPost")
+  it("a tela antiga da Comunidade saiu da web", () => {
+    expect(existsSync(join(root, "apps", "web", "app", "(shell)", "community", "page.tsx"))).toBe(
+      false,
+    )
   })
 })

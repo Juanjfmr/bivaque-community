@@ -16,22 +16,11 @@ async function setConsentCookie(page: import("@playwright/test").Page) {
 }
 
 // ---------------------------------------------------------------------------
-// Denial 1: anonymous visitor — every protected route refuses and sends to login
-//
-// Realinhado em 2026-09-08 com ADR-20260907-consentimento-no-cadastro (approved,
-// R3): "O portão de consentimento sai do proxy". A recusa continua existindo —
-// nenhuma rota protegida renderiza sem sessão — mas o destino agora é
-// /login?redirect=<pathname> (apps/web/proxy.ts:114-118), não /consent.
-// O aceite passou a ser cobrado na criação da conta; a prova disso está em
-// tests/e2e/onboarding-denials.spec.ts, bloco "consent is enforced at account
-// creation".
+// Denial 1: as rotas antigas respondem 307 ao app, que pede entrada sem sessão.
 // ---------------------------------------------------------------------------
 
-// RUN-172: `/profile` saiu desta lista — o redirect de configuração roda ANTES
-// do portão e entrega a pessoa ao Você do app. A recusa não desapareceu, mudou
-// de dono: o app recebe a rota e a leitura sem sessão é recusada (Denial 1b).
 test.describe("anonymous visitor: protected route denial", () => {
-  const PROTECTED_ROUTES = ["/community", "/groups", "/recommendations"]
+  const PROTECTED_ROUTES = ["/community", "/recommendations"]
 
   for (const route of PROTECTED_ROUTES) {
     test(`${route} refuses an anonymous visitor and sends them to the app entry`, async ({
@@ -41,10 +30,8 @@ test.describe("anonymous visitor: protected route denial", () => {
       // When the user navigates directly to a protected route
       await page.goto(route)
 
-      // Then the proxy refuses and routes to the entry screen, keeping the
-      // intended destination so the person does not lose their way
+      // A rota antiga redireciona ao app, que encaminha à entrada.
       await page.waitForURL(/\/app\/entrar/)
-      expect(page.url()).toContain(`redirect=${encodeURIComponent(route)}`)
       await expect(
         page.getByRole("heading", { name: "A comunidade militar da sua cidade." }),
       ).toBeVisible()
@@ -57,14 +44,10 @@ test.describe("anonymous visitor: protected route denial", () => {
   test("the old profile URL lands on the app and the read is refused", async ({ page }) => {
     await page.goto("/profile")
 
-    await expect(page).toHaveURL(/\/app\/voce$/)
-    await expect(page.locator('[data-tela="voce"]')).toBeVisible({ timeout: 15_000 })
-    // A recusa é a da LEITURA do perfil, e a tela a nomeia no cartão de
-    // identidade: sem sessão não há nome nem cidade a mostrar. Não se assere
-    // `[data-estado="erro"]` no geral porque o Você compõe três leituras
-    // (perfil, família, avisos) e as três falham juntas — o locator casaria 3
-    // painéis e a asserção mediria a tela errada.
-    await expect(page.getByText("perfil indisponível agora")).toBeVisible()
+    await expect(page).toHaveURL(
+      (url) => url.pathname === "/app/entrar" && url.searchParams.get("redirect") === "/app/voce",
+      { timeout: 30_000 },
+    )
     await expect(page.getByText(/Sua cidade é/)).toHaveCount(0)
     // Sem leitura não há edição do perfil, nem a cidade que ele traria.
     await expect(page.getByRole("button", { name: /Editar/ })).toHaveCount(0)
@@ -98,31 +81,6 @@ test.describe("anonymous visitor: protected route denial", () => {
 // ---------------------------------------------------------------------------
 
 test.describe("private group admission: denial paths", () => {
-  test("groups page without auth is refused into the app entry", async ({ page }) => {
-    // Given an unauthenticated browser
-    // When the user navigates to /groups
-    await page.goto("/groups")
-
-    // Then the proxy refuses into the entry screen (ADR-20260907: o portão de
-    // consentimento saiu; quem decide o acesso é a sessão)
-    await page.waitForURL(/\/app\/entrar/)
-    expect(page.url()).toContain("/app/entrar")
-  })
-
-  test("groups page with consent but no Supabase auth redirects to /app/entrar", async ({
-    page,
-  }) => {
-    // Given a browser with the consent cookie but no Supabase auth session
-    await setConsentCookie(page)
-
-    // When the user navigates to the groups page
-    await page.goto("/groups")
-
-    // Grupos continua na web até o F04: sem sessão, o portão do proxy manda para a
-    // entrada do app antes da página renderizar.
-    await page.waitForURL(/\/app\/entrar/, { timeout: 10000 })
-  })
-
   test("an anonymous visitor cannot reach a private group directly", async ({ page }) => {
     // Given an unauthenticated browser
     // When the user navigates to a hypothetical private group URL
@@ -134,10 +92,6 @@ test.describe("private group admission: denial paths", () => {
   })
 })
 
-// ---------------------------------------------------------------------------
-// Denial 3: DM without context — messages page requires auth
-// ---------------------------------------------------------------------------
-
 test.describe("DM without context: denial paths", () => {
   test("messages sem sessão chega ao app e recusa a leitura", async ({ page }) => {
     // Given a browser with the consent cookie but no Supabase session
@@ -146,9 +100,11 @@ test.describe("DM without context: denial paths", () => {
     // When the user navigates to the messages page
     await page.goto("/messages")
 
-    // O app recebe a rota; a API recusa a leitura sem sessão.
-    await expect(page).toHaveURL(/\/app\/conversas$/)
-    await expect(page.locator('[data-estado="sessao-vencida"]')).toBeVisible({ timeout: 10000 })
+    await expect(page).toHaveURL(
+      (url) =>
+        url.pathname === "/app/entrar" && url.searchParams.get("redirect") === "/app/conversas",
+      { timeout: 30_000 },
+    )
   })
 })
 
@@ -260,11 +216,10 @@ test.describe("events RSVP: denial paths", () => {
     // When the user navigates to /events
     await page.goto("/events")
 
-    // Then the config redirect lands on the app's agenda, which refuses the
-    // read for lack of a session instead of rendering the old screen
-    await expect(page).toHaveURL(/\/app\/agenda$/)
-    await expect(page.locator('[data-tela="agenda"]')).toBeVisible({ timeout: 15000 })
-    await expect(page.locator('[data-estado="sessao-vencida"]')).toBeVisible()
+    await expect(page).toHaveURL(
+      (url) => url.pathname === "/app/entrar" && url.searchParams.get("redirect") === "/app/agenda",
+      { timeout: 30_000 },
+    )
     await expect(page.getByRole("button", { name: /^Vou/ })).toHaveCount(0)
   })
 })
@@ -274,10 +229,12 @@ test.describe("events RSVP: denial paths", () => {
 // ---------------------------------------------------------------------------
 
 test.describe("notifications redirect: anonymous visitor", () => {
-  test("the old URL lands on the app's expired-session state", async ({ page }) => {
+  test("the old URL sends the visitor to the app entry", async ({ page }) => {
     await page.goto("/notifications")
-    await expect(page).toHaveURL(/\/app\/avisos$/)
-    await expect(page.locator('[data-estado="sessao-vencida"]')).toBeVisible()
+    await expect(page).toHaveURL(
+      (url) => url.pathname === "/app/entrar" && url.searchParams.get("redirect") === "/app/avisos",
+      { timeout: 30_000 },
+    )
   })
 })
 

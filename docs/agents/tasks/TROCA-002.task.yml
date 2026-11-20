@@ -1,0 +1,76 @@
+task_id: TROCA-002
+objective: >
+  Fase 6 do lançamento, segunda e última etapa: no apps/web não resta nenhuma rota de membro
+  servindo tela. Ficam só a landing, o servidor (API, auth, workers), a pré-autenticação
+  (login, cadastro, onboarding, consentimento, páginas legais), o painel do operador ((admin)) e o
+  que ainda não tem equivalente no app. Cada rota de membro com equivalente no /app redireciona
+  (307, preservando IDs e query, sem ciclo), e a tela antiga sai com o código e os testes dela.
+authority:
+  - docs/LANCAMENTO.md (fase 6, critério 6)
+  - docs/decisions/ADR-20261024-front-react-spa.md §8 (ordem da troca; portões do proxy movem no mesmo PR)
+  - "card LAN-TROCA (checklist e lacunas por jornada); fases anteriores no PR #176 e no RUN-019"
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    Na main d6f886419 ainda existem páginas de membro em apps/web/app/(shell): communities,
+    communities/[id] (página, invite, indicar-prestador), community, denuncias (lista, nova, [id]),
+    groups e groups/[id], imoveis/[id], indicacoes, invite/[token], mercado/[id] e
+    recommendations; também (owner)/communities/[id]/admin/* e (provider)/prestador/*. O primeiro
+    passo do lote é um inventário em .visual/troca-002/INVENTARIO.md: para cada rota, o
+    equivalente no /app (rota e arquivo), a decisão (redirecionar e remover, manter por ser
+    operador, pré-autenticação ou servidor, ou bloquear por não ter equivalente) e quem a usa
+    (links, e-mails do outbox, push, testes).
+allowed_paths:
+  - apps/app/src/telas/Comunidade.tsx
+  - apps/app/src/telas/Voce.tsx
+  - apps/app/src/comunidade/**
+  - apps/app/src/grupos/** # somente a porta para administração de grupo na web
+  - apps/app/src/casca/**
+  - apps/app/src/entrada/**
+  - apps/app/lib/api/cliente.ts
+  - apps/app/lib/dados/*.ts
+  - apps/app/tests/*.test.ts
+  - apps/app/tests/*.test.tsx
+  - apps/app/tests/e2e/*.spec.ts
+  - apps/web/app/(shell)/**
+  - apps/web/app/(owner)/**
+  - apps/web/app/(provider)/**
+  - apps/web/components/**
+  - apps/web/app/components/**
+  - tests/scope/f03-criar.test.mjs
+  - supabase/seed.sql (só a filiação aprovada do dono ao próprio grupo, rodada 5)
+  - apps/web/lib/**
+  - apps/web/proxy.ts
+  - apps/web/next.config.ts
+  - tests/e2e/**
+  - tests/unit/**
+  - scripts/**
+  - docs/agents/tasks/TROCA-002.task.yml
+forbidden:
+  - apps/web/app/api/** (rotas de API ficam como estão), apps/web/app/(admin)/**, apps/web/app/(preauth)/**, a landing
+  - API, banco, migrations; em apps/app, qualquer coisa além da porta de entrada para as telas mantidas na web e do envio do anônimo à entrada com retorno validado (rodada 4)
+  - remover rota sem equivalente comprovado no /app (essa vai para o inventário como bloqueada, com o próximo passo)
+  - redirecionamento em ciclo ou que perca ID ou query
+  - links de e-mail ou push do outbox apontando para rota removida (redirecionar ou atualizar o gerador no mesmo lote)
+  - afrouxar ou apagar asserção de teste de uma rota que continua existindo
+  - git stash, reiniciar ou reconstruir o banco local, delegar
+  - dado pessoal real ou CPF real em stub
+acceptance:
+  - "INVENTARIO.md cobre todas as page.tsx de apps/web/app fora de api, (admin), (preauth) e da landing, com decisão e motivo para cada uma"
+  - "cada rota removida devolve 307 para o equivalente no /app, preservando ID e query, com teste positivo; anônimo segue o portão de login sem ciclo, com teste negativo"
+  - "nenhum import morto, componente órfão ou spec de tela removida sobra no repositório; o código de servidor que outras rotas ainda usam fica"
+  - "os geradores de link do outbox (e-mail e push) apontam para o /app ou para uma rota que redireciona"
+  - "o card LAN-TROCA lista as rotas que ficaram, com motivo e próximo passo concreto"
+proof:
+  - npx pnpm@11.18.0 gate --fast
+  - npx pnpm@11.18.0 test
+  - npx pnpm@11.18.0 test:scope
+  - npx pnpm@11.18.0 --filter @bivaque/web build
+  - npx pnpm@11.18.0 test:e2e
+risk: ui
+risk_level: R2
+reviewer_must_differ_from_executor: true
+retry_budget: 5  # rodadas 4 e 5 abertas pelo coordenador; o dono escolheu em 20/11 a opção 1 (porta no app) com merge só após revisão às cegas PASS
+on_budget_exhausted: HUMAN_DECISION
+closure:
+  requires_runtime_evidence: true

@@ -6,9 +6,11 @@ for (const tela of ["inicio", "busca?q=escola"]) {
       rota.fulfill({ status: 401, json: { error: "unauthorized" } }),
     )
     await page.goto(`/app/${tela}`)
-    await expect(page.locator('[data-estado="sessao-vencida"]')).toBeVisible()
-    await page.getByRole("button", { name: "Entrar de novo" }).click()
-    await expect(page).toHaveURL(/\/app\/entrar/)
+    await expect(page).toHaveURL(
+      (url) =>
+        url.pathname === "/app/entrar" && url.searchParams.get("redirect") === `/app/${tela}`,
+      { timeout: 30_000 },
+    )
   })
 }
 

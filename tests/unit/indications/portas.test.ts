@@ -37,38 +37,8 @@ describe("pedir leva à caixa de pedir", () => {
     }
   })
 
-  it("a Comunidade lê ?pedir=1 e ?q= e a caixa foca", () => {
-    const community = web("app", "(shell)", "community", "page.tsx")
-    expect(community).toContain('searchParams.get("pedir") === "1"')
-    expect(community).toContain('searchParams.get("q")')
-    expect(web("app", "components", "indications", "ask-indication.tsx")).toContain(
-      "if (autoFocus) inputRef.current?.focus()",
-    )
-  })
-
   it("o cabeçalho leva a Indicações", () => {
-    expect(web("app", "components", "bivaque", "app-shell.tsx")).toContain(
-      'href="/community?vista=indicacoes"',
-    )
-  })
-})
-
-describe("pedido em uma frase, sem trava nem aviso", () => {
-  const ask = web("app", "components", "indications", "ask-indication.tsx")
-
-  it("busca o que a cidade já perguntou antes de pedir", () => {
-    expect(ask).toContain('supabase.rpc("list_indications"')
-    expect(ask).toContain("Já perguntaram")
-  })
-
-  it("publica na cidade com detalhe opcional", () => {
-    expect(ask).toContain("locality_id: localityId")
-    expect(ask).toContain("body: details.trim()")
-  })
-
-  it("não avisa nem barra saúde", () => {
-    expect(ask).not.toMatch(/saude_bem_estar/)
-    expect(ask).not.toMatch(/todos os membros da cidade verão/i)
+    expect(web("app", "components", "bivaque", "app-shell.tsx")).toContain('href="/app/comunidade"')
   })
 })
 

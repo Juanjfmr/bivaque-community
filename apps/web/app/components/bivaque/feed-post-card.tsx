@@ -219,7 +219,7 @@ export function FeedPost({ post, onHide }: FeedPostProps) {
 
   const handleShare = useCallback(async () => {
     try {
-      await navigator.clipboard.writeText(`${window.location.origin}/community?post=${post.id}`)
+      await navigator.clipboard.writeText(`${window.location.origin}/app/publicacao/${post.id}`)
       setShareFeedback("Link copiado")
       setTimeout(() => setShareFeedback(""), 2000)
     } catch {

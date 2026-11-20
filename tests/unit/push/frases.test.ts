@@ -62,6 +62,12 @@ describe("conteúdo do push", () => {
         target_id: "90000000-0000-4000-8000-000000000009",
       }).destino,
     ).toBe("/app/publicacao/90000000-0000-4000-8000-000000000009")
+    expect(conteudoDoPush("group_post", { target_type: "group", target_id: "abc" }).destino).toBe(
+      "/app/grupo/abc",
+    )
+    expect(conteudoDoPush("recommendation_request", { action: "digest" }).destino).toBe(
+      "/app/comunidade",
+    )
     expect(
       conteudoDoPush("support_answered", { target_type: "support_ticket", target_id: "ignorado" })
         .destino,

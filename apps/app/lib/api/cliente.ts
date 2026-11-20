@@ -18,6 +18,16 @@
  * `mensagem` é o texto pronto para a pessoa, quando o servidor tem um.
  */
 
+const enderecoInicial =
+  typeof window === "undefined"
+    ? null
+    : {
+        caminho: window.location.pathname,
+        busca: window.location.search,
+      }
+
+let encaminhouParaEntrada = false
+
 export const CABECALHOS_DO_APP: Readonly<Record<string, string>> = {
   "x-bivaque-app": "bivaque-spa",
 }
@@ -83,6 +93,20 @@ async function interpretar(resposta: Response): Promise<Record<string, unknown>>
     lido !== null && typeof lido === "object" && !Array.isArray(lido)
       ? (lido as Record<string, unknown>)
       : {}
+  if (
+    resposta.status === 401 &&
+    typeof window !== "undefined" &&
+    !encaminhouParaEntrada &&
+    !window.location.pathname.startsWith("/app/entrar")
+  ) {
+    encaminhouParaEntrada = true
+    const entrada = new URL("/app/entrar", window.location.origin)
+    const busca =
+      window.location.search ||
+      (enderecoInicial?.caminho === window.location.pathname ? enderecoInicial.busca : "")
+    entrada.searchParams.set("redirect", `${window.location.pathname}${busca}`)
+    window.location.assign(entrada.href)
+  }
   if (!resposta.ok) throw falhaDe(resposta.status, dados)
   return dados
 }

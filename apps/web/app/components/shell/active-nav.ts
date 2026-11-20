@@ -58,14 +58,8 @@ export const AREA_CONTAINERS: ReadonlyArray<readonly [string, PrimaryContainer]>
   ["/explorar", "explorar"],
   ["/guide", "explorar"],
   ["/events", "explorar"],
-  ["/mercado", "explorar"],
-  ["/imoveis", "explorar"],
-  ["/recommendations", "explorar"],
-  // Indicações é uma vista da comunidade (ADR-20260925-memoria-de-indicacoes).
-  ["/indicacoes", "comunidades"],
   ["/prestadores", "explorar"],
   ["/communities", "comunidades"],
-  ["/community", "comunidades"],
   ["/groups", "comunidades"],
   // Sem `/profile`: o perfil próprio é do app desde o RUN-172, e a tela web não
   // existe mais. O perfil alheio (`/profile/:id`) também é redirect. O que ainda

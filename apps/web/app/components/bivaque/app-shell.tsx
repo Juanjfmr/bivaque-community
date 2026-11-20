@@ -186,7 +186,7 @@ export function AppShell({ children }: AppShellProperties) {
             {/* Nome acessível pelo aria-label em toda largura; o texto visível
                 entra a partir de lg, onde há espaço para ele. */}
             <a
-              href="/community?vista=indicacoes"
+              href="/app/comunidade"
               aria-label="Indicações"
               className={`${ICON_BUTTON} lg:w-auto lg:gap-1.5 lg:px-3 lg:text-sm lg:font-medium`}
             >
@@ -313,7 +313,6 @@ function SidebarSecondaryItem({
 
 // Miniatura real quando a comunidade tem uma; a inicial é o recuo honesto.
 function SidebarCommunityItem({
-  id,
   name,
   thumbnailUrl,
 }: {
@@ -322,7 +321,7 @@ function SidebarCommunityItem({
   thumbnailUrl: string | null
 }) {
   return (
-    <a href={`/communities/${id}`} className={`${NAV_LINK} ${NAV_IDLE}`}>
+    <a href="/app/comunidade" className={`${NAV_LINK} ${NAV_IDLE}`}>
       {thumbnailUrl ? (
         <Image
           src={thumbnailUrl}

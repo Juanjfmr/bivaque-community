@@ -235,9 +235,9 @@ export type OwnReport = {
 }
 
 const TARGET_HREF: Record<ReportTargetType, (id: string) => string | null> = {
-  post: (id) => `/community?post=${id}`,
+  post: (id) => `/app/publicacao/${id}`,
   comment: () => null,
-  group: (id) => `/groups/${id}`,
+  group: (id) => `/app/grupo/${id}`,
   message: () => null,
   recommendation_request: (id) => `/app/pergunta/${id}`,
   recommendation_reply: () => null,

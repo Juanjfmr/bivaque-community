@@ -1,3 +1,6 @@
+import { getPathMatch } from "next/dist/shared/lib/router/utils/path-match"
+import { matchHas } from "next/dist/shared/lib/router/utils/prepare-destination"
+import { NextRequest } from "next/server"
 import { describe, expect, it } from "vitest"
 import {
   ASK_INDICATION_HREF,
@@ -13,10 +16,7 @@ import {
   suggestCategory,
   titleProblem,
 } from "../../../apps/web/lib/indications/indications"
-import {
-  indicacoesRedirect,
-  recommendationsRedirect,
-} from "../../../apps/web/lib/indications/legacy-routes"
+import nextConfig from "../../../apps/web/next.config"
 
 describe("categoria sugerida pelo pedido", () => {
   it.each([
@@ -101,9 +101,9 @@ describe("um pedido, um endereço", () => {
   it("o detalhe mora em /app/pergunta/<id>", () => {
     expect(indicationHref("abc")).toBe("/app/pergunta/abc")
   })
-  it("as indicações moram na Comunidade, e pedir abre a caixa focada", () => {
-    expect(INDICATIONS_HREF).toBe("/community?vista=indicacoes")
-    expect(ASK_INDICATION_HREF).toBe("/community?vista=indicacoes&pedir=1")
+  it("as indicações e o pedido levam à Comunidade do app", () => {
+    expect(INDICATIONS_HREF).toBe("/app/comunidade")
+    expect(ASK_INDICATION_HREF).toBe("/app/comunidade?pedir=1")
   })
   it("rótulo de categoria desconhecida cai em Outros", () => {
     expect(categoryLabel("outros")).toBe("Outros")
@@ -149,28 +149,30 @@ describe("o Guia antes de pedir", () => {
 })
 
 // /indicacoes e /recommendations continuam só para link antigo chegar ao lugar.
-describe("endereços antigos", () => {
+
+describe("endereços antigos de indicações", () => {
   const id = "80000000-0000-4000-8000-000000000f01"
 
-  it("/indicacoes vai à vista, e ?pedir=1 à caixa de pedir", () => {
-    expect(indicacoesRedirect({})).toBe("/community?vista=indicacoes")
-    expect(indicacoesRedirect({ pedir: "1" })).toBe("/community?vista=indicacoes&pedir=1")
-  })
-
-  it("/recommendations?focus=<id> abre o próprio pedido", () => {
-    expect(recommendationsRedirect({ focus: id })).toBe(`/app/pergunta/${id}`)
-  })
-
-  it("focus que não é id não vira endereço", () => {
-    expect(recommendationsRedirect({ focus: "../admin" })).toBe("/community?vista=indicacoes")
-  })
-
-  it("cada aba antiga tem destino", () => {
-    expect(recommendationsRedirect({ aba: "request" })).toBe("/community?vista=indicacoes&pedir=1")
-    // RUN-186: a tela de salvos saiu da web e o endereço antigo é um 307 — a aba
-    // "Salvas" vai direto à tela do app, sem `?aba=` (decisão 2.3.6 do lote).
-    expect(recommendationsRedirect({ aba: "saved" })).toBe("/app/salvos")
-    expect(recommendationsRedirect({ aba: "browse" })).toBe("/community?vista=indicacoes")
-    expect(recommendationsRedirect({})).toBe("/community?vista=indicacoes")
+  it.each([
+    [`focus=${id}`, "/app/pergunta/:pergunta"],
+    ["focus=inválido", "/app/comunidade"],
+    ["aba=saved", "/app/salvos"],
+    ["pedir=1", "/app/comunidade"],
+    ["aba=request", "/app/comunidade"],
+    ["", "/app/comunidade"],
+  ])("a query %s escolhe %s", async (query, destino) => {
+    const url = new URL(`/recommendations?${query}`, "https://example.invalid")
+    const regra = ((await nextConfig.redirects?.()) ?? []).find(
+      (item) =>
+        getPathMatch(item.source)(url.pathname) &&
+        matchHas(
+          new NextRequest(url),
+          Object.fromEntries(url.searchParams),
+          item.has,
+          item.missing,
+        ),
+    )
+    expect(regra?.destination).toBe(destino)
+    expect(regra?.permanent).toBe(false)
   })
 })

@@ -10,7 +10,7 @@ const BASE_URL = process.env["APP_URL"] ?? "http://127.0.0.1:3000"
 // toda a subárvore /onboarding*, a resposta HTTP é do redirect de configuração,
 // não do portão — a lista do funil é inalcançável por HTTP (drift registrado no
 // ADR). Por isso a decisão do proxy é observada numa rota que a configuração não
-// intercepta (/community, /prestador, /prestadorx, /landing/*): o 307 com o
+// intercepta (/denuncias, /prestador, /prestadorx, /landing/*): o 307 com o
 // `location` que o proxy escolheu é a prova, antes do próximo salto.
 //
 // `fetch` nativo com `redirect: "manual"` em vez de `maxRedirects: 0` do
@@ -44,20 +44,20 @@ const VERIFICADO_SEM_CIDADE = "verified-no-membership@bivaque.example.invalid"
 const PENDENTE = "admissao-1@bivaque.example.invalid"
 
 test.describe("anônimo", () => {
-  test("GET /community é recusado pelo proxy e termina na entrada do app", async ({ browser }) => {
+  test("GET /denuncias é recusado pelo proxy e termina na entrada do app", async ({ browser }) => {
     const context = await browser.newContext()
     await context.addCookies([
       { name: "bivaque-consent-version", value: CURRENT_CONSENT, domain: "127.0.0.1", path: "/" },
     ])
 
-    const recusa = await pedir("/community")
+    const recusa = await pedir("/denuncias")
     expect(recusa.status).toBe(307)
     const destino = localizacao(recusa)
     expect(destino.pathname).toBe("/login")
-    expect(destino.searchParams.get("redirect")).toBe("/community")
+    expect(destino.searchParams.get("redirect")).toBe("/denuncias")
 
     const page = await context.newPage()
-    await page.goto("/community")
+    await page.goto("/denuncias")
 
     // O proxy manda a /login?redirect=...; a configuração leva a /app/entrar.
     await expect(page).toHaveURL("http://127.0.0.1:3000/app/entrar")
@@ -106,10 +106,10 @@ test.describe("anônimo", () => {
 })
 
 test.describe("membro admitido", () => {
-  test("/community abre com sessão; /landing exato continua indo para /", async ({ browser }) => {
+  test("/denuncias abre com sessão; /landing exato continua indo para /", async ({ browser }) => {
     const { context, cookie } = await abrirSessao(browser, VISUAL)
 
-    const comunidade = await pedir("/community", cookie)
+    const comunidade = await pedir("/denuncias", cookie)
     expect(comunidade.status).toBe(200)
 
     const landing = await pedir("/landing", cookie)
@@ -129,7 +129,7 @@ test.describe("prestador", () => {
     const propriaArea = await pedir("/prestador", cookie)
     expect(propriaArea.status).toBe(200)
 
-    const fora = await pedir("/community", cookie)
+    const fora = await pedir("/denuncias", cookie)
     expect(fora.status).toBe(307)
     expect(localizacao(fora).pathname).toBe("/prestador")
 
@@ -157,7 +157,7 @@ test.describe("pré-admissão", () => {
   }) => {
     const { context, cookie } = await abrirSessao(browser, VERIFICADO_SEM_CIDADE)
 
-    const resposta = await pedir("/community", cookie)
+    const resposta = await pedir("/denuncias", cookie)
     expect(resposta.status).toBe(307)
     expect(localizacao(resposta).pathname).toBe("/onboarding/locality")
 
@@ -169,11 +169,11 @@ test.describe("pré-admissão", () => {
   }) => {
     const { context, cookie } = await abrirSessao(browser, PENDENTE)
 
-    const resposta = await pedir("/community", cookie)
+    const resposta = await pedir("/denuncias", cookie)
     expect(resposta.status).toBe(307)
     const destino = localizacao(resposta)
     expect(destino.pathname).toBe("/onboarding/status")
-    expect(destino.searchParams.get("next")).toBe("/community")
+    expect(destino.searchParams.get("next")).toBe("/denuncias")
 
     await context.close()
   })

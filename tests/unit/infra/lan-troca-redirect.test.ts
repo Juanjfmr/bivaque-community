@@ -12,6 +12,18 @@ import { routeFromFile } from "../../e2e/helpers/crawl-model"
 const ID = "41000000-0000-4000-8000-000000000051"
 const ORIGEM = "https://bivaque.example.invalid"
 const TROCADAS = [
+  ["/communities", "/app/comunidade"],
+  [`/communities/${ID}?fonte=teste`, "/app/comunidade?fonte=teste"],
+  ["/community", "/app/comunidade"],
+  [`/community?post=${ID}`, `/app/publicacao/${ID}?post=${ID}`],
+  ["/community?post=invalido", "/app/comunidade?post=invalido"],
+  ["/indicacoes?pedir=1", "/app/comunidade?pedir=1"],
+  [`/recommendations?focus=${ID}`, `/app/pergunta/${ID}?focus=${ID}`],
+  ["/recommendations?focus=../admin", "/app/comunidade?focus=../admin"],
+  ["/recommendations?aba=saved", "/app/salvos?aba=saved"],
+  ["/recommendations?pedir=1", "/app/comunidade?pedir=1"],
+  ["/recommendations?aba=request", "/app/comunidade?aba=request"],
+  ["/groups", "/app/comunidade"],
   [`/indicacoes/${ID}`, `/app/pergunta/${ID}`],
   [`/mercado/${ID}`, `/app/anuncio/${ID}`],
   [`/mercado/${ID}/editar`, `/app/anuncio/${ID}`],
@@ -156,10 +168,6 @@ describe("LAN-TROCA fase 1", () => {
     },
   )
 
-  it("preserva a lista de indicacoes", async () => {
-    expect((await resolver("/indicacoes")).headers.get("location")).toBeNull()
-  })
-
   const shell = join(process.cwd(), "apps/web/app/(shell)")
   it("remove o detalhe antigo de indicacoes", () => {
     expect(existsSync(join(shell, "indicacoes", "[id]"))).toBe(false)
@@ -265,16 +273,47 @@ describe("LAN-TROCA fase 1", () => {
   // de bloqueados/família e as actions (trust-actions.ts) morreram com a troca.
   // RUN-186: salvos saiu pelo mesmo molde. A prova é de ausência: o diretório não
   // existe mais no checkout.
-  it.each(["notifications", "configuracoes", "messages", "salvos"])(
-    "a pasta antiga %s não deixa tela nem action para trás",
-    (relativa) => {
-      const pasta = join(shell, relativa)
-      const sobras = existsSync(pasta)
-        ? readdirSync(pasta, { recursive: true, encoding: "utf8" })
-        : []
-      expect(sobras).toEqual([])
-    },
-  )
+  it.each([
+    "notifications",
+    "configuracoes",
+    "messages",
+    "salvos",
+    "community",
+    "indicacoes",
+    "recommendations",
+  ])("a pasta antiga %s não deixa tela nem action para trás", (relativa) => {
+    const pasta = join(shell, relativa)
+    const sobras = existsSync(pasta)
+      ? readdirSync(pasta, { recursive: true, encoding: "utf8" })
+      : []
+    expect(sobras).toEqual([])
+  })
+
+  it("preserva convites, indicação de prestador, detalhe de grupo e console do dono", async () => {
+    expect((await resolver(`/communities/${ID}/invite`)).status).toBe(200)
+    expect((await resolver("/invite/token")).status).toBe(200)
+    expect(existsSync(join(shell, "communities", "[id]", "invite", "page.tsx"))).toBe(true)
+    expect(existsSync(join(shell, "invite", "[token]", "page.tsx"))).toBe(true)
+    for (const rota of ["communities", "communities/[id]"]) {
+      expect(existsSync(join(shell, rota, "page.tsx"))).toBe(false)
+    }
+    for (const caminho of [
+      `/communities/${ID}/indicar-prestador`,
+      `/groups/${ID}`,
+      ...["", "/pending", "/moderators", "/providers", "/media"].map(
+        (subrota) => `/communities/${ID}/admin${subrota}`,
+      ),
+    ]) {
+      expect((await resolver(caminho)).headers.get("location")).toBeNull()
+    }
+    expect(existsSync(join(shell, "communities", "[id]", "indicar-prestador", "page.tsx"))).toBe(
+      true,
+    )
+    expect(existsSync(join(shell, "groups", "[id]", "page.tsx"))).toBe(true)
+    expect(
+      existsSync(join(shell, "..", "(owner)", "communities", "[id]", "admin", "page.tsx")),
+    ).toBe(true)
+  })
 
   it.each(["mercado", "imoveis", "guide"])(
     "a lista antiga de %s não deixa page.tsx para trás",
@@ -286,13 +325,17 @@ describe("LAN-TROCA fase 1", () => {
 
   // F06 resíduo: criar e editar desapego e imóvel saíram sem deixar page.tsx
   // para trás (RUN-156 e RUN-164).
-  it.each(["mercado/novo", "mercado/[id]/editar", "imoveis/novo", "imoveis/[id]/editar"])(
-    "a página trocada %s não deixa page.tsx para trás",
-    (relativa) => {
-      const arquivo = join(shell, relativa, "page.tsx")
-      expect(existsSync(arquivo), `arquivo de página que sobrou: ${arquivo}`).toBe(false)
-    },
-  )
+  it.each([
+    "mercado/novo",
+    "mercado/[id]",
+    "mercado/[id]/editar",
+    "imoveis/novo",
+    "imoveis/[id]",
+    "imoveis/[id]/editar",
+  ])("a página trocada %s não deixa page.tsx para trás", (relativa) => {
+    const arquivo = join(shell, relativa, "page.tsx")
+    expect(existsSync(arquivo), `arquivo de página que sobrou: ${arquivo}`).toBe(false)
+  })
 
   it("a pasta antiga de meus-anuncios não deixa arquivos para trás", () => {
     const pasta = join(shell, "meus-anuncios")

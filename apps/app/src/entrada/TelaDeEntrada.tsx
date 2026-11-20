@@ -1,3 +1,4 @@
+import { useRouter } from "@tanstack/react-router"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useNavegacao } from "@/lib/navegacao/react"
 import { Nota } from "@/src/pecas/pecas"
@@ -16,6 +17,7 @@ import "@/src/previa-f01/previa-f01.css"
 import { ProvedorDoServidorDaEntrada, type ServidorDaEntrada } from "./contexto"
 import { paraServidor, progressoDoServidor, verificacaoDoStatus } from "./estado"
 import { mensagemDoConvite } from "./mensagens"
+import { retornoValido } from "./retorno"
 import {
   aceitarConvite,
   aceitarTermos,
@@ -60,8 +62,15 @@ const MOMENTO_DO_PROVISIONAMENTO = {
   saindo: "leaving",
 } as const
 
+const retornoInicial =
+  typeof window === "undefined"
+    ? null
+    : retornoValido(new URLSearchParams(window.location.search).get("redirect"))
+
 export function TelaDeEntrada() {
   const navegacao = useNavegacao()
+  const roteador = useRouter()
+  const retorno = retornoInicial
   const [progresso, setProgresso] = useState<Progresso | null>(null)
   const [autenticado, setAutenticado] = useState(false)
   const [falha, setFalha] = useState<string | null>(null)
@@ -295,9 +304,14 @@ export function TelaDeEntrada() {
   // ── fim do fluxo: entra no app ────────────────────────────────────────────
   useEffect(() => {
     if (progresso?.etapa === "inicio") {
-      void navegacao.irPara("inicio")
+      if (retorno?.startsWith("/app/")) {
+        void navegacao.materializarEntrada(roteador.state.location.state).then(() => {
+          roteador.history.push(retorno)
+        })
+      } else if (retorno) window.location.assign(retorno)
+      else void navegacao.irPara("inicio")
     }
-  }, [progresso?.etapa, navegacao])
+  }, [progresso?.etapa, navegacao, roteador])
 
   const concluir = useCallback(
     async (mudancas?: Partial<Progresso>) => {

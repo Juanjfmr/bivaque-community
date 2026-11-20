@@ -134,7 +134,7 @@ function waitForGroupPost(page: Page, groupId: string) {
   )
 }
 
-// O ciclo é longo (cria grupo pela tela, cria e fixa a publicação, responde,
+// O ciclo é longo (cria grupo pela RPC, cria e fixa a publicação, responde,
 // denuncia e troca o aviso, nos três tamanhos): o teto padrão de 30 s não cabe.
 // Mesmo remédio de close-label-ptbr.spec.ts e feed-attachment-publish.spec.ts.
 test.setTimeout(120_000)
@@ -151,34 +151,27 @@ test.describe("COM-003 — a base do grupo", { tag: "@stateful" }, () => {
     const postCreatedAt = new Date(Date.now() - 12 * 24 * 60 * 60 * 1000).toISOString()
     const postDate = new Date(postCreatedAt).toLocaleDateString("pt-BR")
 
-    // ── Criar grupo, com as regras e o rótulo Aberto ────────────────────────
-    await page.goto("/groups")
-    await page.getByRole("button", { name: "Criar grupo" }).first().click()
-
-    const nameField = page.getByRole("textbox", { name: "Nome do grupo" })
-    await nameField.fill(groupName)
-    await page.getByRole("textbox", { name: "Sobre o grupo" }).fill("Grupo criado pela prova.")
-    await page.getByRole("textbox", { name: "Regras do grupo" }).fill(rulesText)
-    await expect(page.getByRole("radio", { name: /Aberto/ })).toBeVisible()
-    await expect(page.getByRole("radio", { name: /Fechado/ })).toBeVisible()
-
-    const created = page.waitForResponse(
-      (r) => r.request().method() === "POST" && r.url().includes("/rest/v1/rpc/create_group"),
-    )
-    await page
-      .locator("form")
-      .filter({ has: nameField })
-      .getByRole("button", { name: "Criar", exact: true })
-      .click()
-    await created
-
-    const groupLink = page.getByRole("link", { name: groupName })
-    await expect(groupLink).toBeVisible({ timeout: 15_000 })
-
+    // Criar o grupo pela mesma RPC usada pelo formulário do app.
+    const response = await page.context().request.post(`${SUPABASE_URL}/rest/v1/rpc/create_group`, {
+      headers: {
+        apikey: session.anonKey,
+        Authorization: `Bearer ${session.accessToken}`,
+        "Content-Type": "application/json",
+      },
+      data: {
+        p_name: groupName,
+        p_visibility: "public",
+        p_locality_id: MANAUS_LOCALITY_ID,
+        p_description: "Grupo criado pela prova.",
+        p_rules: rulesText,
+      },
+    })
+    if (!response.ok())
+      throw new Error(`create_group falhou (HTTP ${response.status()}): ${await response.text()}`)
     const groupId = await findGroupId(page, session, groupName)
 
     // ── Detalhe: rótulo Aberto e as regras ─────────────────────────────────
-    await groupLink.click()
+    await page.goto(`/groups/${groupId}`)
     await page.waitForURL(`**/groups/${groupId}`)
     await expect(page.getByRole("heading", { level: 1, name: groupName })).toBeVisible()
     await expect(page.getByText("Aberto", { exact: true })).toBeVisible()

@@ -288,8 +288,11 @@ for (const tema of ["light"] as const) {
         rota.fulfill({ status: 401, json: { erro: "sem-sessao" } }),
       )
       await page.goto("/app/negocios")
-      await expect(page.getByRole("button", { name: "Entrar de novo", exact: true })).toBeVisible()
-      await expect(page.getByRole("button", { name: "Tentar de novo", exact: true })).toHaveCount(0)
+      await expect(page).toHaveURL(
+        (url) =>
+          url.pathname === "/app/entrar" && url.searchParams.get("redirect") === "/app/negocios",
+        { timeout: 30_000 },
+      )
       await page.route(/\/api\/app\/pedidos(?:[/?]|$)/, (rota) =>
         rota.fulfill({ status: 403, json: { erro: "recusado" } }),
       )

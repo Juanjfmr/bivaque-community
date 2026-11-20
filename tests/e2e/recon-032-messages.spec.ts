@@ -64,8 +64,12 @@ test.beforeAll(async () => {
 test.describe("conversa por URL estavel", () => {
   test("anônimo chega ao app e precisa entrar antes de ver mensagens", async ({ page }) => {
     await page.goto(`/messages/${conversationId}`)
-    await expect(page).toHaveURL(new RegExp(`/app/conversa/${conversationId}$`))
-    await expect(page.locator('[data-estado="sessao-vencida"]')).toBeVisible()
+    await expect(page).toHaveURL(
+      (url) =>
+        url.pathname === "/app/entrar" &&
+        url.searchParams.get("redirect") === `/app/conversa/${conversationId}`,
+      { timeout: 30_000 },
+    )
   })
 
   test("quem nao e participante nao ve a conversa, nem por URL direta", async ({ browser }) => {
@@ -152,7 +156,7 @@ test.describe("leitura de notificacoes persiste (prancha 54)", () => {
 
     // RUN-172: o host era /profile; o contador da sidebar é o da casca web, viva
     // em toda rota de membro do grupo. RUN-186: /salvos virou 307 para o app.
-    await page.goto("/community")
+    await page.goto("/denuncias")
     const badge = page.locator('a[href="/app/avisos"] span.ml-auto')
     await expect(badge).toBeVisible({ timeout: 10_000 })
     const unreadCount = Number(await badge.textContent())

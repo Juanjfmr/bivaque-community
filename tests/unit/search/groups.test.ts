@@ -175,7 +175,7 @@ describe("grupo Indicações", () => {
       meta: "Saúde · Resolvido",
       href: "/app/pergunta/i1",
     })
-    expect(group?.verTodosHref).toBe("/community?vista=indicacoes&q=pediatra")
+    expect(group?.verTodosHref).toBe("/app/comunidade?q=pediatra")
   })
 
   it("sem resposta marcada, o trecho é a resposta que casou", () => {

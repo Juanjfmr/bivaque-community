@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test"
 import { stubVerificationStatus } from "./helpers/onboarding-status"
-import { BOTTOM_NAV, SIDEBAR, seedSession } from "./helpers/session"
+import { BOTTOM_NAV, seedSession } from "./helpers/session"
 
 // ---------------------------------------------------------------------------
 // helpers
@@ -97,123 +97,16 @@ test.describe("community feed", () => {
     // When the user navigates directly to /community
     await page.goto("/community")
 
-    // Then the middleware redirects to the consent gate
+    // A rota antiga redireciona ao app, que encaminha o visitante à entrada.
     await page.waitForURL(/\/app\/entrar/)
     await expect(
       page.getByRole("heading", { name: "A comunidade militar da sua cidade." }),
     ).toBeVisible()
   })
-
-  test("feed page with consent cookie renders the community heading", async ({ page, context }) => {
-    // Given a browser with the consent cookie set
-    await seedSession(context)
-
-    // When the user navigates to the community page
-    await page.goto("/community")
-
-    // Then the community page renders. A conta do seedSession() não tem
-    // comunidade: a Comunidade mostra o que ela é desde o lote 5 N2 — o painel
-    // de Indicações da cidade, com o convite a entrar numa comunidade acima.
-    // Não há feed da cidade aqui, e a linha de "Publicar" saiu com ele:
-    // publicar existe só dentro de um grupo.
-    await expect(
-      page.getByRole("heading", { level: 1, name: "Comunidade", exact: true }),
-    ).toBeVisible({
-      timeout: 15000,
-    })
-    await expect(page.getByRole("button", { name: "Publicar" })).toHaveCount(0)
-  })
-
-  test("feed page is reachable at all three viewport widths", async ({ page, context }) => {
-    // Given the consent cookie and the mobile-375 viewport
-    await seedSession(context)
-    await page.goto("/community")
-
-    // Then the community page renders without horizontal overflow
-    await expect(
-      page.getByRole("heading", { level: 1, name: "Comunidade", exact: true }),
-    ).toBeVisible({
-      timeout: 15000,
-    })
-    const bodyWidth = await page.evaluate(() => document.body.scrollWidth)
-    const viewportWidth = await page.evaluate(() => window.innerWidth)
-    expect(bodyWidth).toBeLessThanOrEqual(viewportWidth)
-  })
 })
 
 // ---------------------------------------------------------------------------
-// Flow 4: Groups — private group admission
-// ---------------------------------------------------------------------------
-
-test.describe("groups journey", () => {
-  test("groups page refuses an anonymous visitor into the app entry", async ({ page }) => {
-    // Given an unauthenticated browser
-    // When the user navigates directly to /groups
-    await page.goto("/groups")
-
-    // Then the proxy refuses into the entry screen. ADR-20260907-consentimento-
-    // no-cadastro tirou o portão de consentimento do proxy; a recusa continua,
-    // o destino mudou.
-    await page.waitForURL(/\/app\/entrar/)
-    await expect(
-      page.getByRole("heading", { name: "A comunidade militar da sua cidade." }),
-    ).toBeVisible()
-  })
-
-  test("groups page with consent cookie renders groups UI", async ({ page, context }) => {
-    // Given a browser with consent cookie
-    await seedSession(context)
-
-    // When the user navigates to the groups page
-    await page.goto("/groups")
-
-    // Then the groups page renders (may show auth error or empty state)
-    await expect(page.locator("h1").first()).toBeVisible({ timeout: 15000 })
-  })
-
-  test("groups page shows primary navigation with correct item order", async ({
-    page,
-    context,
-  }) => {
-    // Given an authenticated member
-    await seedSession(context)
-    await page.goto("/groups")
-
-    // Then exactly one primary navigation is on screen: the BottomNav below
-    // md (4 tabs — the ADR-20260816-shells-e-navegacao containers), the
-    // sidebar from md up (rail or expanded, links).
-    const width = page.viewportSize()?.width ?? 0
-
-    if (width < 768) {
-      // Mobile: BottomNav with 4 tabs in NAV_ITEMS order
-      const nav = page.locator(BOTTOM_NAV)
-      await expect(nav).toBeVisible()
-      const tabs = nav.getByRole("tab")
-      await expect(tabs).toHaveCount(4)
-      // Containers de PROCESSO-DE-CONSTRUCAO §7, travados em
-      // tests/scope/navigation.test.mjs:42. Substituíram os quatro do
-      // ADR-20260816 em 2026-09-08.
-      await expect(tabs.nth(0)).toContainText("Início")
-      await expect(tabs.nth(1)).toContainText("Explorar")
-      await expect(tabs.nth(2)).toContainText("Comunidades")
-      await expect(tabs.nth(3)).toContainText("Perfil")
-    } else {
-      // Tablet rail / desktop sidebar: BottomNav hidden, sidebar links visible.
-      // A sidebar ganhou seções além da primária (secundária, comunidades,
-      // rodapé), então a contagem total de links não é mais 4: ancoramos nos
-      // quatro containers por href, na ordem de NAV_ITEMS.
-      await expect(page.locator(BOTTOM_NAV)).toBeHidden()
-      const sidebar = page.locator(SIDEBAR)
-      await expect(sidebar).toBeVisible()
-      for (const href of ["/inicio", "/explorar", "/communities", "/app/voce"]) {
-        await expect(sidebar.locator(`a[href="${href}"]`).first()).toBeVisible()
-      }
-    }
-  })
-})
-
-// ---------------------------------------------------------------------------
-// Flow 5: Recommendations
+// Flow 4: Recommendations — anonymous access
 // ---------------------------------------------------------------------------
 
 test.describe("recommendations journey", () => {
@@ -230,24 +123,6 @@ test.describe("recommendations journey", () => {
       page.getByRole("heading", { name: "A comunidade militar da sua cidade." }),
     ).toBeVisible()
   })
-
-  // /recommendations foi aposentada em 25/09/2026 (ADR-20260925-memoria-de-indicacoes):
-  // o endereço antigo leva à vista Indicações da Comunidade. Desde o lote 5 N2 a
-  // Comunidade não tem mais a aba "Conversa": a Indicações é o que ela mostra, e
-  // o endereço canônico continua carregando o parâmetro.
-  test("recommendations leva à vista Indicações da Comunidade", async ({ page, context }) => {
-    await seedSession(context)
-    await page.goto("/recommendations")
-    await page.waitForURL(/\/community\?vista=indicacoes$/)
-    await expect(page.getByRole("heading", { name: "O que você procura?" })).toBeVisible()
-  })
-
-  test("a aba antiga de pedir chega à caixa de pedir focada", async ({ page, context }) => {
-    await seedSession(context)
-    await page.goto("/recommendations?aba=request")
-    await page.waitForURL(/\/community\?vista=indicacoes&pedir=1$/)
-    await expect(page.getByRole("textbox", { name: "O que você procura" })).toBeFocused()
-  })
 })
 
 // ---------------------------------------------------------------------------
@@ -262,14 +137,10 @@ test.describe("events journey", () => {
     // When the user navigates to /events
     await page.goto("/events")
 
-    // Then RUN-133/F05: o redirect de configuração roda antes do portão e
-    // entrega a pessoa à agenda do app; sem sessão, a agenda não inventa
-    // conteúdo — pede entrada de novo dentro da própria tela.
-    await expect(page).toHaveURL(/\/app\/agenda$/)
-    await expect(page.getByRole("heading", { name: "Agenda da cidade" })).toBeVisible({
-      timeout: 15000,
-    })
-    await expect(page.locator('[data-estado="sessao-vencida"]')).toBeVisible()
+    await expect(page).toHaveURL(
+      (url) => url.pathname === "/app/entrar" && url.searchParams.get("redirect") === "/app/agenda",
+      { timeout: 30_000 },
+    )
   })
 
   test("events page with consent cookie renders the app agenda", async ({ page, context }) => {
@@ -309,8 +180,10 @@ test.describe("notifications journey", () => {
     page,
   }) => {
     await page.goto("/notifications")
-    await expect(page).toHaveURL(/\/app\/avisos$/)
-    await expect(page.locator('[data-estado="sessao-vencida"]')).toBeVisible()
+    await expect(page).toHaveURL(
+      (url) => url.pathname === "/app/entrar" && url.searchParams.get("redirect") === "/app/avisos",
+      { timeout: 30_000 },
+    )
   })
 
   test("notifications page with consent cookie renders notifications UI", async ({
@@ -405,22 +278,6 @@ test.describe("accessibility across journeys", () => {
       expect(bodyWidth).toBeLessThanOrEqual(viewportWidth)
     })
   }
-
-  test("no horizontal overflow on community page at 375px with consent cookie", async ({
-    page,
-    context,
-  }) => {
-    // Given the consent cookie
-    await seedSession(context)
-    // When the browser opens /community
-    await page.goto("/community")
-
-    // Then there is no horizontal overflow
-    await page.waitForSelector("body")
-    const bodyWidth = await page.evaluate(() => document.body.scrollWidth)
-    const viewportWidth = await page.evaluate(() => window.innerWidth)
-    expect(bodyWidth).toBeLessThanOrEqual(viewportWidth)
-  })
 
   // Touch-target coverage for the BottomNav tabs and the Indicações entry used
   // to live here against /login, where neither element exists. It now runs
