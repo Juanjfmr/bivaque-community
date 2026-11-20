@@ -3,8 +3,8 @@
   "title": "Prontidão do Bivaque",
   "scopeVersion": "2026-11-05",
   "source": "docs/LANCAMENTO.md",
-  "generatedAt": "2026-11-20T23:54:54.734Z",
-  "revision": "716fbc9215c85a2d50f988267280209cc1f5d6dd",
+  "generatedAt": "2026-11-20T23:55:35.905Z",
+  "revision": "f117e427fc77a1d3e78660d2caf695964546cefa",
   "boardUpdatedAt": "2026-11-07",
   "stage": "Em construção",
   "metrics": {
@@ -480,24 +480,24 @@
   "checks": {
     "frontend": {
       "status": "pending",
-      "revision": "716fbc9215c85a2d50f988267280209cc1f5d6dd",
+      "revision": "f117e427fc77a1d3e78660d2caf695964546cefa",
       "urls": [
-        "https://github.com/Juanjfmr/bivaque-community/actions/runs/44840188169",
-        "https://github.com/Juanjfmr/bivaque-community/actions/runs/44840188486"
+        "https://github.com/Juanjfmr/bivaque-community/actions/runs/44840265974",
+        "https://github.com/Juanjfmr/bivaque-community/actions/runs/44840265992"
       ]
     },
     "backend": {
       "status": "pending",
-      "revision": "716fbc9215c85a2d50f988267280209cc1f5d6dd",
+      "revision": "f117e427fc77a1d3e78660d2caf695964546cefa",
       "urls": [
-        "https://github.com/Juanjfmr/bivaque-community/actions/runs/44840188169"
+        "https://github.com/Juanjfmr/bivaque-community/actions/runs/44840265974"
       ]
     },
     "integration": {
       "status": "pending",
-      "revision": "716fbc9215c85a2d50f988267280209cc1f5d6dd",
+      "revision": "f117e427fc77a1d3e78660d2caf695964546cefa",
       "urls": [
-        "https://github.com/Juanjfmr/bivaque-community/actions/runs/44840188169"
+        "https://github.com/Juanjfmr/bivaque-community/actions/runs/44840265974"
       ]
     }
   },
