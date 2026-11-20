@@ -60,13 +60,14 @@ const PERSONAS: Array<{ nome: string; email: string | null; entradas: string[]; 
     // RUN-172: a segunda entrada era `/profile`, hoje 307 para o app. O Início
     // é a porta da casca web, e os destinos da pessoa (Salvos, Configurações,
     // o Você no app) saem dos links dele.
-    entradas: ["/inicio"],
+    // A aba Comunidade abre por botão no app; o rastreador segue apenas links.
+    entradas: ["/inicio", "/app/comunidade"],
     chega: /^\/app\/inicio$/,
   },
   {
     nome: "dono de vila",
     email: "dono-vila@bivaque.example.invalid",
-    entradas: ["/inicio"],
+    entradas: ["/inicio", "/app/comunidade"],
     chega: /^\/app\/inicio$/,
   },
   {

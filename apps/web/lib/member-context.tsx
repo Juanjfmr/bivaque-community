@@ -15,6 +15,7 @@ import { createContext, type ReactNode, useContext } from "react"
 export type MemberCommunity = {
   id: string
   name: string
+  canAdmin: boolean
   /** URL assinada da miniatura atual, ou `null` quando a comunidade não tem. */
   thumbnailUrl: string | null
 }
@@ -22,6 +23,7 @@ export type MemberCommunity = {
 export type MemberContextValue = {
   displayName: string
   communities: MemberCommunity[]
+  communitiesError: boolean
   unreadCount: number
   /** Conversas com mensagem de outra pessoa depois da última leitura (ícone do cabeçalho). */
   unreadConversations: number

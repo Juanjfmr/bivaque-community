@@ -162,7 +162,7 @@ export default async function ShellLayout({ children }: ShellLayoutProperties) {
 
   const { data: communityRows, error: communitiesError } = await supabase
     .from("community_memberships")
-    .select("communities(id, name, is_deleted, thumbnail_path)")
+    .select("role, communities(id, name, is_deleted, thumbnail_path)")
     .eq("user_id", user.id)
     .eq("status", "approved")
 
@@ -182,10 +182,13 @@ export default async function ShellLayout({ children }: ShellLayoutProperties) {
     thumbnail_path: string | null
   }
   const communityRowsFiltered = (
-    (communityRows as unknown as { communities: CommunityEmbed | null }[]) ?? []
+    (communityRows as unknown as { role: string; communities: CommunityEmbed | null }[]) ?? []
   )
-    .map((r) => r.communities)
-    .filter((c): c is CommunityEmbed => c !== null && c.is_deleted !== true)
+    .filter(
+      (r): r is { role: string; communities: CommunityEmbed } =>
+        r.communities !== null && r.communities.is_deleted !== true,
+    )
+    .map((r) => ({ ...r.communities, canAdmin: r.role === "owner" || r.role === "moderator" }))
     .sort((a, b) => a.name.localeCompare(b.name, "pt-BR"))
 
   // URL assinada da miniatura de cada comunidade: o client autenticado assina,
@@ -203,6 +206,7 @@ export default async function ShellLayout({ children }: ShellLayoutProperties) {
   const communities = communityRowsFiltered.map((c) => ({
     id: c.id,
     name: c.name,
+    canAdmin: c.canAdmin,
     thumbnailUrl: communityImageUrls.get(c.id)?.thumbnailUrl ?? null,
   }))
 
@@ -247,7 +251,15 @@ export default async function ShellLayout({ children }: ShellLayoutProperties) {
 
   return (
     <LocalityContextProvider value={{ current, outbound }}>
-      <MemberContextProvider value={{ displayName, communities, unreadCount, unreadConversations }}>
+      <MemberContextProvider
+        value={{
+          displayName,
+          communities,
+          communitiesError: Boolean(communitiesError),
+          unreadCount,
+          unreadConversations,
+        }}
+      >
         <ToastProvider>
           <SupabaseAuthProvider>
             <AppShell>{children}</AppShell>
