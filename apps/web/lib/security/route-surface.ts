@@ -155,7 +155,6 @@ function casaSomenteSubarvore(caminho: string, entrada: string): boolean {
 /** O caminho é público pela lista acima? */
 export function isPublicPath(caminho: string): boolean {
   const alvo = caminho.startsWith("/") ? caminho : `/${caminho}`
-  if (entradaProtegidaDoApp(alvo)) return false
   return PUBLIC_SURFACE.some((entrada) => {
     switch (entrada.modo) {
       case "exata":
@@ -168,12 +167,6 @@ export function isPublicPath(caminho: string): boolean {
         return false
     }
   })
-}
-
-export function entradaProtegidaDoApp(caminho: string): boolean {
-  return ["/app/comunidade", "/app/publicacao", "/app/pergunta", "/app/salvos"].some((rota) =>
-    casaFronteira(caminho, rota),
-  )
 }
 
 /**

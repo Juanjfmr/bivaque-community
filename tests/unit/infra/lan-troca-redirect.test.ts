@@ -24,6 +24,7 @@ const TROCADAS = [
   ["/recommendations?pedir=1", "/app/comunidade?pedir=1"],
   ["/recommendations?aba=request", "/app/comunidade?aba=request"],
   ["/groups", "/app/comunidade"],
+  [`/groups/${ID}?origem=aviso`, `/app/grupo/${ID}?origem=aviso`],
   [`/indicacoes/${ID}`, `/app/pergunta/${ID}`],
   [`/mercado/${ID}`, `/app/anuncio/${ID}`],
   [`/mercado/${ID}/editar`, `/app/anuncio/${ID}`],
@@ -299,7 +300,6 @@ describe("LAN-TROCA fase 1", () => {
     }
     for (const caminho of [
       `/communities/${ID}/indicar-prestador`,
-      `/groups/${ID}`,
       ...["", "/pending", "/moderators", "/providers", "/media"].map(
         (subrota) => `/communities/${ID}/admin${subrota}`,
       ),
@@ -309,7 +309,7 @@ describe("LAN-TROCA fase 1", () => {
     expect(existsSync(join(shell, "communities", "[id]", "indicar-prestador", "page.tsx"))).toBe(
       true,
     )
-    expect(existsSync(join(shell, "groups", "[id]", "page.tsx"))).toBe(true)
+    expect(existsSync(join(shell, "groups", "[id]", "page.tsx"))).toBe(false)
     expect(
       existsSync(join(shell, "..", "(owner)", "communities", "[id]", "admin", "page.tsx")),
     ).toBe(true)

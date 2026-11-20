@@ -12,7 +12,6 @@ test("/notifications chega à caixa do app em 375, 768 e 1440 px, sem sessão", 
   for (const width of [375, 768, 1440]) {
     await page.setViewportSize({ width, height: 900 })
     await page.goto("/notifications")
-    await expect(page).toHaveURL(/\/app\/avisos$/)
-    await expect(page.locator('[data-estado="sessao-vencida"]')).toBeVisible()
+    await page.waitForURL(/\/app\/entrar(?:\?|$)/)
   }
 })

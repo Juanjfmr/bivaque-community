@@ -2,6 +2,10 @@ import { expect, test } from "@playwright/test"
 
 test("rotas antigas redirecionam para o app e preservam a consulta", async ({ request }) => {
   for (const [origem, destino] of [
+    [
+      "/groups/60000000-0000-4000-8000-000000000001?origem=aviso",
+      "/app/grupo/60000000-0000-4000-8000-000000000001?origem=aviso",
+    ],
     ["/groups?origem=aviso", "/app/comunidade?origem=aviso"],
     ["/community?origem=aviso", "/app/comunidade?origem=aviso"],
     ["/indicacoes?origem=aviso", "/app/comunidade?origem=aviso"],
@@ -15,13 +19,59 @@ test("rotas antigas redirecionam para o app e preservam a consulta", async ({ re
 })
 
 test("rotas antigas levam visitantes anônimos à entrada sem ciclo", async ({ page, request }) => {
-  for (const origem of ["/groups", "/community"]) {
+  for (const [origem, destino] of [
+    ["/groups", "/app/comunidade"],
+    ["/community", "/app/comunidade"],
+    [
+      "/groups/60000000-0000-4000-8000-000000000001?origem=aviso",
+      "/app/grupo/60000000-0000-4000-8000-000000000001",
+    ],
+  ] as const) {
     const resposta = await request.get(origem, { maxRedirects: 0 })
     expect(resposta.status()).toBe(307)
     expect(new URL(resposta.headers()["location"] ?? "", "http://127.0.0.1:3000").pathname).toBe(
-      "/app/comunidade",
+      destino,
     )
     await page.goto(origem)
-    await expect(page).toHaveURL(/\/app\/entrar/)
+    await page.waitForURL(/\/app\/entrar(?:\?|$)/)
+    expect(new URL(page.url()).searchParams.get("redirect")).toBe(
+      origem.startsWith("/groups/") ? `${destino}?origem=aviso` : destino,
+    )
   }
+})
+
+test("entrada retoma o destino validado", async ({ page }) => {
+  await page.route("**/api/app/**", (rota) => rota.fulfill({ json: {} }))
+  await page.route("**/api/app/entry/progress", (rota) =>
+    rota.fulfill({
+      json: { autenticado: true, progresso: { versao: 2, etapa: "inicio", estado: {} } },
+    }),
+  )
+  await page.route("**/api/app/entry/verification", (rota) =>
+    rota.fulfill({ json: { membroDaCidade: true } }),
+  )
+  await page.addInitScript(() => {
+    sessionStorage.setItem("marcador", String(Number(sessionStorage.getItem("marcador") ?? 0) + 1))
+  })
+  await page.goto(`/app/entrar?redirect=${encodeURIComponent("/app/grupo/123?origem=aviso")}`)
+  await page.waitForURL(/\/app\/grupo\/123/)
+  expect(new URL(page.url()).searchParams.get("origem")).toBe("aviso")
+  expect(await page.evaluate(() => sessionStorage.getItem("marcador"))).toBe("1")
+})
+
+test("entrada abre a ponte em pagina inteira", async ({ page }) => {
+  await page.route("**/api/app/entry/progress", (rota) =>
+    rota.fulfill({
+      json: { autenticado: true, progresso: { versao: 2, etapa: "inicio", estado: {} } },
+    }),
+  )
+  await page.route("**/api/app/entry/verification", (rota) =>
+    rota.fulfill({ json: { membroDaCidade: true } }),
+  )
+  await page.route("**/gerir-comunidades", (rota) =>
+    rota.fulfill({ contentType: "text/html", body: "<h1>Ponte</h1>" }),
+  )
+  await page.goto(`/app/entrar?redirect=${encodeURIComponent("/gerir-comunidades")}`)
+  await page.waitForURL("**/gerir-comunidades")
+  await expect(page.getByRole("heading", { name: "Ponte" })).toBeVisible()
 })

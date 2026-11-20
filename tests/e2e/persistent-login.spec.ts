@@ -297,9 +297,7 @@ test.describe("Login persistente Instagram-style", { tag: "@stateful" }, () => {
     expect(page.url(), "Logout redireciona para /app/entrar").toContain("/app/entrar")
 
     await page.goto(`${APP_URL}/community`, { waitUntil: "load" })
-    expect(page.url(), "Apos logout, /community redireciona para /app/entrar").toContain(
-      "/app/entrar",
-    )
+    await page.waitForURL(/\/app\/entrar(?:\?|$)/)
 
     await browser.close()
   })

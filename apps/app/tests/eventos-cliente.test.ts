@@ -32,6 +32,23 @@ afterEach(() => {
 })
 
 describe("cliente do app", () => {
+  it("encaminha 401 ? entrada com o caminho e a consulta, sem ciclo", async () => {
+    const assign = vi.fn()
+    vi.stubGlobal("window", {
+      location: {
+        origin: "https://bivaque.example.invalid",
+        pathname: "/app/grupo/123",
+        search: "?aba=1",
+        assign,
+      },
+    })
+    espiao({}, 401)
+    await expect(ler("/api/app/grupos/123")).rejects.toMatchObject({ codigo: "sem-sessao" })
+    const destino = new URL(assign.mock.calls[0]?.[0] as string)
+    expect(destino.pathname).toBe("/app/entrar")
+    expect(destino.searchParams.get("redirect")).toBe("/app/grupo/123?aba=1")
+  })
+
   it("lê com a sessão do cookie e o cabeçalho do app, sem content-type", async () => {
     const buscar = espiao({ eventos: [] })
     await ler("/api/app/eventos")

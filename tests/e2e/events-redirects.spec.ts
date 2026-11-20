@@ -3,10 +3,7 @@
 // id e query preservados e o destino renderizado, nas três larguras da suíte
 // (mobile-375, tablet-768, desktop-1440 vêm dos projects do playwright.config).
 //
-// A prova roda sem sessão de propósito: o redirect de configuração acontece
-// antes do portão (apps/web/proxy.ts) e entrega a pessoa ao app, que responde
-// com o próprio estado de sessão vencida. Se o endereço antigo ainda passasse
-// pelo portão, a URL final seria /app/entrar e o teste falharia.
+// O app encaminha visitantes a entrada ao receber 401.
 //
 // E2E da web depende do Next + Supabase local (CI); não roda neste worktree.
 
@@ -69,20 +66,10 @@ test.describe("endereços antigos de eventos", () => {
     }
   })
 
-  test("o navegador mostra a agenda do app em /events e /events/novo", async ({ page }) => {
-    for (const caminho of ["/events", "/events/novo"]) {
+  test("visitantes seguem para a entrada sem ciclo", async ({ page }) => {
+    for (const caminho of ["/events", "/events/novo", `/events/${EVENT_ID}`]) {
       await page.goto(caminho)
-      await expect(page).toHaveURL(/\/app\/agenda$/)
-      await expect(page.locator('[data-tela="agenda"]')).toBeVisible({ timeout: 15_000 })
-      await expect(page.getByRole("heading", { name: "Agenda da cidade" })).toBeVisible()
+      await page.waitForURL(/\/app\/entrar(?:\?|$)/)
     }
-  })
-
-  test("o navegador mostra o encontro do app em /events/:id", async ({ page }) => {
-    await page.goto(`/events/${EVENT_ID}`)
-    await expect(page).toHaveURL(new RegExp(`/app/evento/${EVENT_ID}$`))
-    await expect(page.locator('[data-tela="evento"]')).toBeVisible({ timeout: 15_000 })
-    // Sem sessão o app não inventa conteúdo: pede entrada de novo.
-    await expect(page.locator('[data-estado="sessao-vencida"]')).toBeVisible()
   })
 })

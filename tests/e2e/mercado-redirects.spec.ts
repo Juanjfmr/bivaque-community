@@ -44,10 +44,7 @@ test("telas antigas do mercado levam ao app, sem sessão, nas três larguras", a
     for (const width of [375, 768, 1440]) {
       await page.setViewportSize({ width, height: 900 })
       await page.goto(caminho)
-      // Aterrissagem no app pelo pathname: as variantes com query chegam com os
-      // params preservados (provado no TROCADAS), então não se ancora o fim da URL.
-      expect(new URL(page.url()).pathname).toBe(destino)
-      await expect(page.locator('[data-estado="sessao-vencida"]')).toBeVisible()
+      await page.waitForURL(/\/app\/entrar(?:\?|$)/)
     }
   }
 })

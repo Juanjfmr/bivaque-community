@@ -3,12 +3,7 @@ import { createServerClient } from "@supabase/ssr"
 import type { NextRequest } from "next/server"
 import { NextResponse } from "next/server"
 import { cspDasPaginas } from "./lib/security/csp"
-import {
-  areaDoPrestador,
-  entradaEmAndamento,
-  entradaProtegidaDoApp,
-  isPublicPath,
-} from "./lib/security/route-surface"
+import { areaDoPrestador, entradaEmAndamento, isPublicPath } from "./lib/security/route-surface"
 
 // A superfície pública mora em `lib/security/route-surface.ts` — uma lista, três
 // modos (`exata`, `pasta`, `ativos`) e comparação por fronteira. Este arquivo não
@@ -98,13 +93,6 @@ async function encaminhar(request: NextRequest, headers: Headers) {
     user = data.user
   } catch {
     // no-op — user remains null
-  }
-
-  if (entradaProtegidaDoApp(pathname)) {
-    if (user) return supabaseResponse
-    const entrada = new URL("/app/entrar", request.url)
-    entrada.searchParams.set("redirect", `${pathname}${request.nextUrl.search}`)
-    return NextResponse.redirect(entrada)
   }
 
   // Root redirect — session-aware (new behaviour). The marketing landing
