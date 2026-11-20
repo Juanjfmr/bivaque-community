@@ -2,7 +2,8 @@ task_id: LOJA-001
 objective: >
   Primeiro item do LAN-LOJA (ADR-20261118 §8, passo 3): o mesmo build do apps/app empacotado em
   Capacitor, com os projetos Android e iOS versionados no repositório. O app abre no emulador Android
-  na tela de entrada, conversa com a API por uma base absoluta configurável, tira foto pela câmera
+  e mostra a casca (a tela de entrada nativa depende da sessão nativa e passou ao LOJA-002, decisão do
+  coordenador de 20/11 registrada no PR), conversa com a API por uma base absoluta configurável, tira foto pela câmera
   nativa e responde a um link profundo do esquema do app. O CI gera o APK de depuração do Android e
   compila o projeto iOS no executor macOS, sem assinatura de produção. A sessão nativa (como o app
   obtém e guarda o token) NÃO muda neste lote: o executor registra um inventário dela para o ADR
@@ -62,7 +63,7 @@ acceptance:
   - "cliente.ts usa a base absoluta só quando o app roda nativo (Capacitor.isNativePlatform) e a base relativa na web; teste unitário cobre os dois casos e a ausência da base configurada no nativo (falha clara, sem chamar a origem errada)"
   - "um link profundo do esquema do app (ex.: <esquema>://app/pergunta/<id>) abre a rota correspondente do roteador; teste unitário da conversão de URL em rota, com caso inválido recusado (host ou caminho fora do app não navega)"
   - "foto pela câmera nativa: o seletor de foto existente usa @capacitor/camera no nativo e o input de arquivo na web; o arquivo resultante segue pelo mesmo envio e pela mesma validação"
-  - "emulador Android: APK de depuração instalado, o app abre na tela de entrada, o link profundo abre a rota e a câmera abre; capturas em .visual/loja-001/"
+  - "emulador Android: APK de depuração instalado, o app abre e mostra a casca (a tela de entrada nativa entra no LOJA-002, com o ADR-20261120), o link profundo abre a rota e a câmera abre; capturas em .visual/loja-001/"
   - "workflow .github/workflows/app-loja.yml só na suíte completa (label ci:full): gera o APK de depuração no ubuntu e compila o projeto iOS sem assinatura no macos, e roda a varredura de segredos sobre os artefatos"
   - "docs/agents/LOJA-SESSAO-INVENTARIO.md: como o app entra hoje (rotas, cookies, onde a sessão nasce), o que o servidor já aceita por Authorization, o que falta para a sessão nativa e 3 opções com uma recomendada, sem implementar"
 proof:
