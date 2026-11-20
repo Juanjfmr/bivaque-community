@@ -1,0 +1,67 @@
+task_id: TROCA-005
+objective: >
+  Refazer no app as denúncias do membro (/denuncias, /denuncias/nova, /denuncias/[id]) e a área do
+  prestador ((provider)/prestador: início, atendimento, catálogo, conta, ficha e pedidos/[id], mais o
+  aceite em /prestador-convite/[token]), e então apagar as versões do site. Também apagar os arquivos
+  mortos da entrada antiga em (preauth) que next.config.ts já redireciona para /app/entrar (login,
+  signup, recuperar-senha, nova-senha, onboarding/*), com os testes deles. As denúncias do operador em
+  (admin) ficam.
+authority:
+  - docs/LANCAMENTO.md (fase 6, critério: nenhuma rota de membro no apps/web servindo tela)
+  - docs/decisions/ADR-20261024-front-react-spa.md (§5 contrato de API, §8 ordem da troca)
+  - docs/decisions/ADR-20261116-bloqueio-e-denuncia-pela-porta-do-app.md
+  - "card LAN-TROCA-DENUNCIA-PRESTADOR; decisão do dono de 20/11 (nenhuma tela antiga sobrevive)"
+adr: docs/decisions/ADR-20261116-bloqueio-e-denuncia-pela-porta-do-app.md
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    Depois do TROCA-002 (#309) seguem servindo tela no site (shell)/denuncias (3 páginas),
+    (provider)/prestador (6 páginas) e (preauth)/prestador-convite/[token]; as páginas de login, signup,
+    recuperar-senha, nova-senha e onboarding seguem no disco embora next.config.ts as redirecione.
+allowed_paths:
+  - apps/app/src/**
+  - apps/app/lib/**
+  - apps/app/tests/**
+  - apps/web/app/(shell)/denuncias/**
+  - apps/web/app/(provider)/**
+  - apps/web/app/(preauth)/**
+  - apps/web/app/api/app/**
+  - apps/web/lib/**
+  - apps/web/components/**
+  - apps/web/proxy.ts
+  - apps/web/next.config.ts
+  - supabase/migrations/**
+  - supabase/tests/**
+  - tests/**
+  - docs/agents/tasks/TROCA-005.task.yml
+forbidden:
+  - editar migration já aplicada (só arquivo novo); reiniciar ou reconstruir o banco local
+  - remover a tela web antes de a tela do app passar na revisão às cegas e no E2E
+  - redirecionamento em ciclo ou que perca ID, token ou query
+  - afrouxar ou apagar asserção de teste de uma rota que continua existindo
+  - rota de API nova sem o contrato do ADR SPA §5 (resolvedor único, CSRF por Origin e cabeçalho, CORS explícito) e sem teste positivo e negativo
+  - service_role sem autorização explícita no código
+  - mexer em /consent, /auth/*, /privacidade, /codigo-de-conduta, /ajuda ou /conta-apagada (ficam como aceite do Google, troca de código e páginas públicas)
+  - a denúncia identificar o denunciante a quem foi denunciado
+  - git stash, delegar, dado pessoal real ou CPF real
+  - apps/web/app/(admin)/**, a landing, apps/mobile, apps/prototipo
+acceptance:
+  - "o membro denuncia, acompanha e vê o desfecho no app; a área do prestador (pedidos, atendimento, catálogo, ficha, conta) e o aceite do convite de prestador funcionam no app, com falha principal, em 375/768/1440"
+  - "o prestador só vê os próprios pedidos e o membro só as próprias denúncias (testes negativos na API e na tela)"
+  - "as rotas antigas devolvem 307 ao /app com ID e token preservados; páginas, componentes e testes antigos saem, inclusive os arquivos mortos da entrada"
+  - "inventário final: apps/web/app só tem landing, API, auth, páginas públicas e (admin); o card LAN-TROCA registra a lista"
+proof:
+  - npx pnpm@11.18.0 gate --fast
+  - npx pnpm@11.18.0 test
+  - npx pnpm@11.18.0 test:scope
+  - npx pnpm@11.18.0 --filter @bivaque/app test
+  - npx pnpm@11.18.0 --filter @bivaque/app test:e2e
+  - npx pnpm@11.18.0 test:e2e
+  - "npx pnpm@11.18.0 test:db, se houver migration nova, em pilha isolada"
+risk: authz
+risk_level: R3
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: HUMAN_DECISION
+closure:
+  requires_runtime_evidence: true
