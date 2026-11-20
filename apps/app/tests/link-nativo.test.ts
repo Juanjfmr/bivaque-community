@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest"
+import { describe, expect, it, vi } from "vitest"
 import { rotaDoLink } from "../lib/nativo/link"
 
 describe("links do app", () => {
@@ -17,6 +17,8 @@ describe("links do app", () => {
   it("recusa origens e caminhos externos ao app", () => {
     for (const link of [
       "bivaque://outro/entrar",
+      "bivaque:///app/entrar",
+      "bivaque://app:443/entrar",
       "https://outro.invalid/app/entrar",
       "https://bivaque.example.invalid/aplicativo",
       "bivaque://app//outro.invalid",
@@ -26,5 +28,21 @@ describe("links do app", () => {
       expect(rotaDoLink(link, "https://bivaque.example.invalid")).toBeNull()
     }
     expect(rotaDoLink("https://bivaque.example.invalid/app/entrar", undefined)).toBeNull()
+  })
+  it("não depende do parser de esquema próprio da WebView", () => {
+    const URLOriginal = URL
+    class URLDaWebView extends URLOriginal {
+      constructor(url: string) {
+        if (url.startsWith("bivaque:")) throw new Error("Esquema próprio sem host")
+        super(url)
+      }
+    }
+    vi.stubGlobal("URL", URLDaWebView)
+    try {
+      expect(rotaDoLink("bivaque://app/mercado", undefined)).toBe("/mercado")
+      expect(rotaDoLink("bivaque://outro/mercado", undefined)).toBeNull()
+    } finally {
+      vi.unstubAllGlobals()
+    }
   })
 })

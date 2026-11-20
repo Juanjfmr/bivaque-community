@@ -7,7 +7,12 @@ Info.plist também registram o esquema para o sistema operacional.
 
 ## Entrada atual
 
-O app começa em `/app/entrar`. `apps/app/src/entrada/servidor.ts` chama
+Na prova Android deste lote, o app anônimo abriu em Início com erro de carga:
+a API não respondeu no emulador e o redirecionamento de 401 para `/app/entrar`
+depende do #309. A prova da entrada nativa também depende do ADR de sessão
+nativa; este lote não altera login nem sessão.
+
+Na web, a entrada usa `/app/entrar`. `apps/app/src/entrada/servidor.ts` chama
 `/api/app/entry/*` por caminhos relativos, com `credentials: include` e o
 cabeçalho do app. O envio do código usa `entry/otp`; `entry/otp/verify` valida
 o código no servidor e cria a sessão pelo cliente SSR do Supabase, escrevendo

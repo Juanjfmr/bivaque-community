@@ -4,10 +4,15 @@ export function rotaDoLink(link: string, base: string | undefined): string | nul
   try {
     // URL normaliza segmentos com ponto antes de expor pathname.
     if (/(?:^|\/)(?:\.|%2e){1,2}(?:\/|$|[?#])/i.test(link) || link.includes("\\")) return null
-    const url = new URL(link)
+    // A WebView Android pode tratar esquemas próprios como caminho sem host.
+    const esquemaNativo = new RegExp(`^${esquemaDeLink}://`, "i")
+    const nativo = esquemaNativo.test(link)
+    if (nativo && !/^app(?:[/?#]|$)/i.test(link.replace(esquemaNativo, ""))) return null
+    const url = new URL(nativo ? link.replace(esquemaNativo, "https://") : link)
     if (url.username || url.password) return null
     let caminho: string
-    if (url.protocol === `${esquemaDeLink}:` && url.host === "app") {
+    if (nativo) {
+      if (url.host !== "app") return null
       caminho = url.pathname || "/"
     } else {
       if (!base || url.protocol !== "https:" || url.origin !== new URL(base).origin) return null
