@@ -5,13 +5,19 @@
   "type": "module",
   "scripts": {
     "dev": "vite --host 127.0.0.1 --port 3200 --strictPort",
-    "build": "tsc --noEmit && vite build",
+    "build": "tsc --noEmit && vite build && node scripts/preparar-nativo.mjs",
     "preview": "vite preview --host 127.0.0.1 --port 3200 --strictPort",
     "typecheck": "tsc --noEmit",
     "test": "vitest run --config tests/vitest.config.ts",
-    "test:e2e": "playwright test --config playwright.config.ts"
+    "test:e2e": "playwright test --config playwright.config.ts",
+    "nativo:preparar": "node scripts/preparar-nativo.mjs"
   },
   "dependencies": {
+    "@capacitor/android": "8.5.3",
+    "@capacitor/app": "8.1.2",
+    "@capacitor/camera": "8.2.5",
+    "@capacitor/core": "8.5.3",
+    "@capacitor/ios": "8.5.3",
     "@tanstack/react-query": "5.104.1",
     "@tanstack/react-router": "1.170.42",
     "class-variance-authority": "0.7.1",
@@ -23,6 +29,7 @@
     "tailwind-merge": "3.7.0"
   },
   "devDependencies": {
+    "@capacitor/cli": "8.5.3",
     "@tailwindcss/vite": "4.3.3",
     "@types/react": "19.3.0",
     "@types/react-dom": "19.3.0",

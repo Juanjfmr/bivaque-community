@@ -13,6 +13,7 @@ import {
   editarImovel,
   mudarSituacao,
 } from "@/lib/dados/mercado"
+import { SeletorDeFoto } from "@/lib/nativo/SeletorDeFoto"
 import { cepComMascara, cepEmDigitos, errosDoImovel } from "@/src/criar/formularios"
 import {
   type EstadoDaGestao,
@@ -367,7 +368,7 @@ export function GerenciarAnuncio({
             />
             <label className="grid gap-2 text-sm font-medium" htmlFor="editar-foto">
               Trocar foto (opcional)
-              <input
+              <SeletorDeFoto
                 id="editar-foto"
                 className="min-h-11 max-w-full"
                 type="file"

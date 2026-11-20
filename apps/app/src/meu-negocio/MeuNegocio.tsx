@@ -20,6 +20,7 @@ import {
   type ServicoDaFicha,
   salvarMinhaFicha,
 } from "@/lib/dados/negocios"
+import { SeletorDeFoto } from "@/lib/nativo/SeletorDeFoto"
 import { useNavegacao, useRolagemEFoco, useSobreposicaoDaEntrada } from "@/lib/navegacao/react"
 import { CARGA_CONCLUIDA } from "@/lib/navegacao/restauracao"
 import { FalhaDaLeitura } from "@/src/negocios/FalhaDaLeitura"
@@ -472,7 +473,7 @@ export function MeuNegocio() {
                     aoMudar={setLegenda}
                     maxLength={120}
                   />
-                  <input
+                  <SeletorDeFoto
                     ref={campoDaFoto}
                     id="foto-arquivo"
                     type="file"

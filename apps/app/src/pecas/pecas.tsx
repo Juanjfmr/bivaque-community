@@ -12,6 +12,7 @@ import {
 } from "react"
 import { Icone } from "@/components/bivaque/icone"
 import type { NomeDeIcone } from "@/lib/icones"
+import { SeletorDeFoto } from "@/lib/nativo/SeletorDeFoto"
 import "./pecas.css"
 
 /**
@@ -557,7 +558,7 @@ export function CampoDeArquivo({
           {escolhido ?? dica}
         </span>
       </label>
-      <input
+      <SeletorDeFoto
         id={id}
         type="file"
         accept={aceitar}

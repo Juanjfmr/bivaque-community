@@ -2,8 +2,7 @@
  * O cliente único do app para `/api/app/*` (ADR-20261105 §1).
  *
  * O app é servido em `/app` pelo mesmo Next, então a sessão é o cookie e vai
- * sozinha (`credentials: "include"`). O app de loja usa este mesmo caminho
- * enquanto a ponte de token não existir.
+ * sozinha (`credentials: "include"`). A sessão nativa será tratada em outro lote.
  *
  * Três decisões que este arquivo existe para garantir:
  *
@@ -17,6 +16,8 @@
  * que a tela ramifica (`de-outra-cidade`, `nao-organiza`, `sem-cidade`, …) e
  * `mensagem` é o texto pronto para a pessoa, quando o servidor tem um.
  */
+
+import { Capacitor } from "@capacitor/core"
 
 const enderecoInicial =
   typeof window === "undefined"
@@ -123,14 +124,37 @@ async function comRede(fazer: () => Promise<Response>): Promise<Record<string, u
   return interpretar(resposta)
 }
 
+function endereco(caminho: string): string {
+  if (!Capacitor.isNativePlatform()) return caminho
+  const base = import.meta.env["VITE_API_BASE"]
+  let url: URL
+  try {
+    url = new URL(base)
+    if (
+      !["http:", "https:"].includes(url.protocol) ||
+      url.username ||
+      url.password ||
+      url.pathname !== "/" ||
+      url.search ||
+      url.hash
+    ) {
+      throw new Error()
+    }
+  } catch {
+    throw new Error("Configure VITE_API_BASE com a origem absoluta da API no app nativo")
+  }
+  return `${url.origin}${caminho}`
+}
+
 async function chamar(
   metodo: "GET" | "POST" | "PUT" | "PATCH" | "DELETE",
   caminho: string,
   corpo: unknown,
   signal: AbortSignal | undefined,
 ): Promise<Record<string, unknown>> {
+  const url = endereco(caminho)
   return comRede(() =>
-    fetch(caminho, {
+    fetch(url, {
       method: metodo,
       credentials: "include",
       headers:
@@ -171,8 +195,9 @@ export function enviarFormulario(
   formulario: FormData,
   opcoes: { signal?: AbortSignal } = {},
 ) {
+  const url = endereco(caminho)
   return comRede(() =>
-    fetch(caminho, {
+    fetch(url, {
       method: "POST",
       credentials: "include",
       headers: CABECALHOS_DO_APP,
