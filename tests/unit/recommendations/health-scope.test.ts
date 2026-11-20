@@ -15,11 +15,4 @@ describe("pedido de saúde para a cidade", () => {
     const source = read("supabase", "migrations", "20260926004501_memoria_de_indicacoes.sql")
     expect(source).toContain("drop constraint recommendation_health_needs_group")
   })
-
-  it("o formulário novo publica na cidade para qualquer assunto, sem aviso", () => {
-    const ask = read("apps", "web", "app", "components", "indications", "ask-indication.tsx")
-    expect(ask).toContain("locality_id: localityId")
-    expect(ask).not.toContain("saude_bem_estar")
-    expect(ask).not.toMatch(/começam em grupo/)
-  })
 })

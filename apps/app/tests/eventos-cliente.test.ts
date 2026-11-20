@@ -32,6 +32,37 @@ afterEach(() => {
 })
 
 describe("cliente do app", () => {
+  it("encaminha 401 à entrada com o caminho e a consulta, sem ciclo", async () => {
+    const assign = vi.fn()
+    vi.stubGlobal("window", {
+      location: {
+        origin: "https://bivaque.example.invalid",
+        pathname: "/app/grupo/123",
+        search: "?aba=1",
+        assign,
+      },
+    })
+    espiao({}, 401)
+    vi.resetModules()
+    const cliente = await import("@/lib/api/cliente")
+    await expect(cliente.ler("/api/app/grupos/123")).rejects.toMatchObject({ codigo: "sem-sessao" })
+    await expect(cliente.ler("/api/app/eventos")).rejects.toMatchObject({ codigo: "sem-sessao" })
+    expect(assign).toHaveBeenCalledOnce()
+    const destino = new URL(assign.mock.calls[0]?.[0] as string)
+    expect(destino.pathname).toBe("/app/entrar")
+    expect(destino.searchParams.get("redirect")).toBe("/app/grupo/123?aba=1")
+  })
+
+  it("não encaminha 401 quando já está na entrada", async () => {
+    const assign = vi.fn()
+    vi.stubGlobal("window", { location: { pathname: "/app/entrar", assign } })
+    espiao({}, 401)
+    vi.resetModules()
+    const cliente = await import("@/lib/api/cliente")
+    await expect(cliente.ler("/api/app/eventos")).rejects.toMatchObject({ codigo: "sem-sessao" })
+    expect(assign).not.toHaveBeenCalled()
+  })
+
   it("lê com a sessão do cookie e o cabeçalho do app, sem content-type", async () => {
     const buscar = espiao({ eventos: [] })
     await ler("/api/app/eventos")

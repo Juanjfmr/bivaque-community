@@ -299,9 +299,11 @@ test.describe("F06 — mercadoria real no app", { tag: "@stateful" }, () => {
       rota.fulfill({ status: 401, body: '{"autenticado":false,"motivo":"sem-credencial"}' }),
     )
     await page.goto("/app/desapegos")
-    const sessao = page.locator('[data-estado="sessao-vencida"]')
-    await expect(sessao).toBeVisible({ timeout: 30_000 })
-    await expect(sessao.getByRole("button", { name: "Entrar de novo" })).toBeVisible()
+    await expect(page).toHaveURL(
+      (url) =>
+        url.pathname === "/app/entrar" && url.searchParams.get("redirect") === "/app/desapegos",
+      { timeout: 30_000 },
+    )
     await expect(page.getByRole("button", { name: "Tentar de novo" })).toHaveCount(0)
 
     // 403: negado, sem botão que repete a mesma chamada.

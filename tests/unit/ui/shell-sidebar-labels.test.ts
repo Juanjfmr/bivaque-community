@@ -12,7 +12,7 @@ const bottomNav = join(root, "apps", "web", "app", "components", "bivaque", "bot
 const DESTINO_POR_ROTULO: Record<string, string> = {
   Início: "/inicio",
   Explorar: "/explorar",
-  Comunidades: "/communities",
+  Comunidades: "/app/comunidade",
   // RUN-172: o perfil próprio é tela do app; a casca web linka o destino direto.
   Perfil: "/app/voce",
   // RUN-186: Salvos é tela do app; a casca web linka o destino direto.
@@ -30,7 +30,7 @@ function extractLabeledAnchors(source: string): Array<{ href: string; label: str
     // que o leitor de tela nem ouve. O rótulo é o primeiro span que sobra.
     const visible = match[2].replace(/<span\b[^>]*aria-hidden="true"[^>]*>[\s\S]*?<\/span>/g, "")
     const label = /<span[^>]*>([^<]+)<\/span>/.exec(visible)?.[1]?.trim()
-    if (label) anchors.set(label, { href: match[1], label })
+    if (label && !label.startsWith("{")) anchors.set(label, { href: match[1], label })
   }
   const secondaryPattern = /<SidebarSecondaryItem\b([\s\S]*?)\/>/g
   for (const match of source.matchAll(secondaryPattern)) {

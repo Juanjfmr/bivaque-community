@@ -147,12 +147,12 @@ export function resolveNotificationHref(
 ): string | null {
   switch (notification.type) {
     case "comment":
-      return `/community?post=${notification.target_id}`
+      return `/app/publicacao/${notification.target_id}`
     case "group_admission":
-      return `/groups/${notification.target_id}`
+      return `/app/grupo/${notification.target_id}`
     case "group_post":
       // O alvo é o grupo: a publicação vive no feed dele.
-      return `/groups/${notification.target_id}`
+      return `/app/grupo/${notification.target_id}`
     case "invitation_accepted":
       // O perfil de terceiro é do app desde o RUN-172 (/app/perfil/:id). O 307
       // de `/profile/<id>` continua valendo para link antigo, mas a constante
@@ -172,7 +172,7 @@ export function resolveNotificationHref(
     case "recommendation_request":
       // O aviso do dia aponta para a cidade: a lista de pedidos sem resposta.
       return notification.action === "digest"
-        ? "/community?vista=indicacoes"
+        ? "/app/comunidade"
         : `/app/pergunta/${notification.target_id}`
     case "report_resolved":
       return resolveReportTargetHref(reportTarget)
@@ -196,9 +196,9 @@ export function resolveReportTargetHref(target: ReportTarget | null): string | n
   if (!target) return null
   switch (target.target_type) {
     case "post":
-      return `/community?post=${target.target_id}`
+      return `/app/publicacao/${target.target_id}`
     case "group":
-      return `/groups/${target.target_id}`
+      return `/app/grupo/${target.target_id}`
     case "message":
       // A conversa específica não é endereçável a partir do id da mensagem sem
       // outra consulta; /messages é o destino real da caixa de entrada.

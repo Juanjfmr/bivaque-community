@@ -25,12 +25,7 @@
 import type { Page } from "@playwright/test"
 import { expect, test } from "@playwright/test"
 import { openComposer } from "./helpers/composer"
-import {
-  CURRENT_CONSENT,
-  encodeAuthCookieValue,
-  readEnvLocal,
-  seedSession,
-} from "./helpers/session"
+import { CURRENT_CONSENT, encodeAuthCookieValue, readEnvLocal } from "./helpers/session"
 
 const SUPABASE_URL = process.env["SUPABASE_URL"] ?? "http://127.0.0.1:55321"
 const VILA_OWNER_EMAIL = "dono-vila@bivaque.example.invalid"
@@ -100,35 +95,4 @@ test.describe("o gatilho de fechar fala português", () => {
       await expect(page.getByRole("button", { name: "Close", exact: true })).toHaveCount(0)
     })
   }
-
-  test("o botão de limpar a busca também fala português", async ({ page }) => {
-    // Given — a tela de grupos, que monta SearchField.ClearButton. A de
-    // comunidades tem o mesmo campo no código, mas a 375 ele não é renderizado
-    // (o painel "Descobrir" não aparece nessa largura); grupos é alcançável.
-    await seedSession(page.context())
-    await page.setViewportSize({ width: 375, height: 812 })
-    await page.goto("/groups")
-    const busca = page.getByLabel("Buscar grupos")
-    await expect(busca).toBeVisible({ timeout: 20000 })
-
-    // When — há termo digitado, então o botão de limpar existe
-    await busca.fill("vila")
-
-    // Then — o botão de limpar do CAMPO tem nome acessível em português.
-    // A asserção é escopada ao `search-field-group` de propósito: a própria
-    // tela de grupos já tem um botão de texto "Limpar busca" (ação de filtro),
-    // e uma consulta global por nome casaria com os dois — `getByRole` dentro do
-    // grupo resolve pela árvore de acessibilidade, que é o que importa aqui.
-    const limpar = page.locator('[data-slot="search-field-clear-button"]')
-    await expect(limpar).toHaveCount(1)
-    await expect(limpar).toHaveAttribute("aria-label", "Limpar busca")
-    await expect(
-      page
-        .locator('[data-slot="search-field-group"]')
-        .getByRole("button", { name: "Limpar busca", exact: true }),
-    ).toHaveCount(1)
-
-    // And — o rótulo inglês não existe em lugar nenhum da página
-    await expect(page.getByRole("button", { name: "Close", exact: true })).toHaveCount(0)
-  })
 })

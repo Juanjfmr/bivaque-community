@@ -213,9 +213,12 @@ test.describe("F06 — alertas de imóvel no app", { tag: "@stateful" }, () => {
       rota.fulfill({ status: 401, body: '{"autenticado":false,"motivo":"sem-credencial"}' }),
     )
     await page.goto("/app/imoveis/alertas")
-    const sessao = page.locator('[data-estado="sessao-vencida"]')
-    await expect(sessao).toBeVisible({ timeout: 30_000 })
-    await expect(sessao.getByRole("button", { name: "Entrar de novo" })).toBeVisible()
+    await expect(page).toHaveURL(
+      (url) =>
+        url.pathname === "/app/entrar" &&
+        url.searchParams.get("redirect") === "/app/imoveis/alertas",
+      { timeout: 30_000 },
+    )
     await expect(page.getByRole("button", { name: "Tentar de novo" })).toHaveCount(0)
   })
 })

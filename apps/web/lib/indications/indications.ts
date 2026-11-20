@@ -50,10 +50,10 @@ export function indicationHref(requestId: string): string {
  * As indicações moram na Comunidade, ao lado da conversa: é lá que o membro
  * já está. /indicacoes e /recommendations redirecionam para cá.
  */
-export const INDICATIONS_HREF = "/community?vista=indicacoes"
+export const INDICATIONS_HREF = "/app/comunidade"
 
-/** Destino de "Pedir uma indicação": a caixa de pedir já aberta e focada. */
-export const ASK_INDICATION_HREF = `${INDICATIONS_HREF}&pedir=1`
+/** Destino de "Pedir uma indicação": a Comunidade do app. */
+export const ASK_INDICATION_HREF = `${INDICATIONS_HREF}?pedir=1`
 
 // Palavras que denunciam a categoria. Sem acento e em minúsculas: o texto é
 // normalizado antes. A primeira categoria com palavra encontrada vence, então

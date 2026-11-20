@@ -1,8 +1,7 @@
 // RUN-156 / F06 resíduo — as telas web de criar e editar desapego saíram; os
 // endereços antigos passam a chegar ao app. Mesmo desenho do RUN-133: o redirect
-// de configuração acontece antes do portão (apps/web/proxy.ts), então a prova
-// roda sem sessão e o app responde com o próprio estado de sessão vencida. Se o
-// endereço antigo ainda passasse pelo portão, a URL final seria /app/entrar.
+// de configuração acontece antes do portão (apps/web/proxy.ts). Sem sessão,
+// o app encaminha à entrada com o destino de retorno.
 //
 // E2E da web depende do Next + Supabase local (CI); não roda neste worktree.
 
@@ -20,6 +19,8 @@ const TROCAS = [
   ["/mercado?preco_min=10000&pagina=2", "/app/mercado"],
   ["/imoveis?q=centro&quartos=2&valor_max=4000", "/app/imoveis"],
   ["/meus-anuncios", "/app/meus-anuncios"],
+  [`/mercado/${ANUNCIO_ID}?origem=email`, `/app/anuncio/${ANUNCIO_ID}`],
+  [`/imoveis/${ANUNCIO_ID}?origem=push`, `/app/anuncio/${ANUNCIO_ID}`],
   ["/mercado/novo?categoria=eletronicos", "/app/mercado"],
   [`/mercado/${ANUNCIO_ID}/editar?aba=fotos`, `/app/anuncio/${ANUNCIO_ID}`],
   ["/imoveis/novo", "/app/imoveis"],
@@ -42,10 +43,12 @@ test("telas antigas do mercado levam ao app, sem sessão, nas três larguras", a
     for (const width of [375, 768, 1440]) {
       await page.setViewportSize({ width, height: 900 })
       await page.goto(caminho)
-      // Aterrissagem no app pelo pathname: as variantes com query chegam com os
-      // params preservados (provado no TROCADAS), então não se ancora o fim da URL.
-      expect(new URL(page.url()).pathname).toBe(destino)
-      await expect(page.locator('[data-estado="sessao-vencida"]')).toBeVisible()
+      await expect(page).toHaveURL(
+        (url) =>
+          url.pathname === "/app/entrar" &&
+          url.searchParams.get("redirect") === `${destino}${new URL(caminho, BASE_URL).search}`,
+        { timeout: 30_000 },
+      )
     }
   }
 })

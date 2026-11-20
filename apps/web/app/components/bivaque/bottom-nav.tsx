@@ -65,7 +65,7 @@ export const NAV_ITEMS: NavItem[] = [
     id: "comunidades",
     label: "Comunidades",
     shortLabel: "Comunidades",
-    href: "/communities",
+    href: "/app/comunidade",
     Icon: UserGroupIcon,
     IconActive: UserGroupSolid,
   },

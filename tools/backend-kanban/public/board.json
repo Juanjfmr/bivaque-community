@@ -6330,7 +6330,8 @@
         "16/11: RUN-172 mergeado — nenhuma tela de membro das linhas F02-F10 fora das trocadas; o que resta na web pertence a jornadas com card proprio. AVATAR-FOTO-APP e o item M-3 da familia estao registrados.",
         "17/11: /guide/sugerir trocada (RUN-182, #271). Em curso: /configuracoes* (RUN-184) e paridade da Pergunta antes de trocar /indicacoes/[id] (RUN-185). Depois: /salvos e o lote 3 do F09 (troca de /indicacoes/[id] e revogação do INSERT direto). Troca de e-mail fora do lançamento por decisão do dono.",
         "17/11: /configuracoes trocada (RUN-184, #274); paridade da Pergunta pronta (RUN-185, #275) para a troca de /indicacoes/[id] no lote 3 do F09; /salvos em curso (RUN-186, #277).",
-        "18/11: /salvos trocada (RUN-186, #277, 80604fba). Próximo da fase: lote 3 do F09 (troca de /indicacoes/[id] e revogação do INSERT direto) e a tela antiga /convite (SEC-017)."
+        "18/11: /salvos trocada (RUN-186, #277, 80604fba). Próximo da fase: lote 3 do F09 (troca de /indicacoes/[id] e revogação do INSERT direto) e a tela antiga /convite (SEC-017).",
+        "20/11: dono escolheu a opção 1 do #309 (porta provisória no app) e determinou que nenhuma tela antiga sobreviva. Inventário pós-#309 de telas de membro ainda no site dividido em três cards com contrato: LAN-TROCA-CONVITE (TROCA-003), LAN-TROCA-ADMIN (TROCA-004) e LAN-TROCA-DENUNCIA-PRESTADOR (TROCA-005), todos antes do LAN-PROVA (que já depende de LAN-TROCA)."
       ],
       "id": "LAN-TROCA",
       "title": "Fase 6: varredura da troca — nenhuma rota de membro no apps/web servindo tela",
@@ -6358,7 +6359,10 @@
         "LAN-F09",
         "LAN-F10",
         "PROXY-SURFACE-RISK",
-        "LAN-OP"
+        "LAN-OP",
+        "LAN-TROCA-CONVITE",
+        "LAN-TROCA-ADMIN",
+        "LAN-TROCA-DENUNCIA-PRESTADOR"
       ]
     },
     {
@@ -10314,6 +10318,99 @@
       "dependencies": [],
       "updatedAt": "2026-11-19",
       "sourceRevision": "192e9f41"
+    },
+    {
+      "id": "LAN-TROCA-CONVITE",
+      "title": "Troca: convite de membros, aceite do convite e grupo saem do site para o app",
+      "priority": "P1",
+      "category": "frontend",
+      "status": "next",
+      "phase": "Lançamento",
+      "description": "Depois do #309 seguem servindo tela no site /communities/[id]/invite, /invite/[token] e /groups/[id] (este sem regra 307, embora o app já tenha /app/grupo/:id).",
+      "checklist": [
+        "Começa depois do merge do TROCA-002 (#309)",
+        "Tela no app com entrada, ação, persistência, retorno, acompanhamento e falha principal em 375/768/1440",
+        "API pelo ADR SPA §5 com testes positivos e negativos de permissão",
+        "Revisão às cegas PASS e security-auditor (R3) antes de apagar a versão do site",
+        "Rotas antigas em 307 para o /app (ID, token e query preservados), páginas, componentes e testes antigos removidos",
+        "Porta provisória do #309 aponta para a tela nova; link-crawl no rigor normal"
+      ],
+      "dependencies": [],
+      "links": [
+        "apps/web/app/(shell)/communities/[id]/invite/page.tsx",
+        "apps/web/app/(shell)/invite/[token]/page.tsx",
+        "apps/web/app/(shell)/groups/[id]/page.tsx",
+        "docs/agents/tasks/TROCA-003.task.yml"
+      ],
+      "tests": [],
+      "blockers": [],
+      "proof": [
+        "20/11: aberto por decisão do dono (opção 1 do #309: porta provisória no app e nenhuma tela antiga sobrevive). Contrato TROCA-003 pronto para o Codex; começa depois do merge do TROCA-002 (#309)."
+      ],
+      "updatedAt": "2026-11-20",
+      "sourceRevision": "1bd9c7f8"
+    },
+    {
+      "id": "LAN-TROCA-ADMIN",
+      "title": "Troca: indicar prestador e painel do administrador da comunidade saem do site para o app",
+      "priority": "P1",
+      "category": "frontend",
+      "status": "next",
+      "phase": "Lançamento",
+      "description": "Depois do #309 seguem servindo tela no site /communities/[id]/indicar-prestador e as cinco páginas de (owner)/communities/[id]/admin (início, pendentes, moderadores, prestadores, mídia).",
+      "checklist": [
+        "Começa depois do merge do TROCA-002 (#309)",
+        "Tela no app com entrada, ação, persistência, retorno, acompanhamento e falha principal em 375/768/1440",
+        "API pelo ADR SPA §5 com testes positivos e negativos de permissão",
+        "Revisão às cegas PASS e security-auditor (R3) antes de apagar a versão do site",
+        "Rotas antigas em 307 para o /app (ID, token e query preservados), páginas, componentes e testes antigos removidos",
+        "Porta provisória do #309 aponta para a tela nova; link-crawl no rigor normal"
+      ],
+      "dependencies": [],
+      "links": [
+        "apps/web/app/(shell)/communities/[id]/indicar-prestador/page.tsx",
+        "apps/web/app/(owner)/communities/[id]/admin/page.tsx",
+        "docs/agents/tasks/TROCA-004.task.yml"
+      ],
+      "tests": [],
+      "blockers": [],
+      "proof": [
+        "20/11: aberto por decisão do dono (opção 1 do #309: porta provisória no app e nenhuma tela antiga sobrevive). Contrato TROCA-004 pronto para o Codex; começa depois do merge do TROCA-002 (#309)."
+      ],
+      "updatedAt": "2026-11-20",
+      "sourceRevision": "1bd9c7f8"
+    },
+    {
+      "id": "LAN-TROCA-DENUNCIA-PRESTADOR",
+      "title": "Troca: denúncias do membro e área do prestador saem do site para o app; arquivos mortos da entrada saem",
+      "priority": "P1",
+      "category": "frontend",
+      "status": "next",
+      "phase": "Lançamento",
+      "description": "Depois do #309 seguem servindo tela no site /denuncias (3 páginas), (provider)/prestador (6 páginas) e /prestador-convite/[token]; login, signup, recuperar-senha, nova-senha e onboarding já redirecionam para /app/entrar mas os arquivos seguem no disco.",
+      "checklist": [
+        "Começa depois do merge do TROCA-002 (#309)",
+        "Tela no app com entrada, ação, persistência, retorno, acompanhamento e falha principal em 375/768/1440",
+        "API pelo ADR SPA §5 com testes positivos e negativos de permissão",
+        "Revisão às cegas PASS e security-auditor (R3) antes de apagar a versão do site",
+        "Rotas antigas em 307 para o /app (ID, token e query preservados), páginas, componentes e testes antigos removidos",
+        "Porta provisória do #309 aponta para a tela nova; link-crawl no rigor normal",
+        "Inventário final: apps/web/app só com landing, API, auth, páginas públicas e (admin)"
+      ],
+      "dependencies": [],
+      "links": [
+        "apps/web/app/(shell)/denuncias/page.tsx",
+        "apps/web/app/(provider)/prestador/page.tsx",
+        "apps/web/app/(preauth)/prestador-convite/[token]/page.tsx",
+        "docs/agents/tasks/TROCA-005.task.yml"
+      ],
+      "tests": [],
+      "blockers": [],
+      "proof": [
+        "20/11: aberto por decisão do dono (opção 1 do #309: porta provisória no app e nenhuma tela antiga sobrevive). Contrato TROCA-005 pronto para o Codex; começa depois do merge do TROCA-002 (#309)."
+      ],
+      "updatedAt": "2026-11-20",
+      "sourceRevision": "1bd9c7f8"
     }
   ],
   "launch": {

@@ -24,7 +24,7 @@ import { signInAs } from "./helpers/session"
 //      declarada em PORTAS_FORA_DO_LINK — ou seja, só se chega a ela digitando a URL;
 //   3. uma porta declarada ficou velha: a rota passou a ter link, ou deixou de existir.
 //
-// O que ele NÃO vê: navegação feita por botão com router.push. Por isso essas rotas entram na
+// Fora do diretório de grupos, o que ele NÃO vê é navegação feita por botão com router.push. Essas rotas entram na
 // lista de portas com o botão nomeado — a lista é a dívida visível, não um esconderijo.
 // Desde o RUN-176 a mesma lista é a entrada da casca: a persona dona de uma porta visita a rota
 // como semente e o crawl segue os links dali. Semente não é link — a invariante da porta
@@ -60,17 +60,20 @@ const PERSONAS: Array<{ nome: string; email: string | null; entradas: string[]; 
     // RUN-172: a segunda entrada era `/profile`, hoje 307 para o app. O Início
     // é a porta da casca web, e os destinos da pessoa (Salvos, Configurações,
     // o Você no app) saem dos links dele.
-    entradas: ["/inicio"],
+    // A aba Comunidade abre por botão no app; o rastreador segue apenas links.
+    entradas: ["/inicio", "/app/comunidade"],
     chega: /^\/app\/inicio$/,
+  },
+  {
+    nome: "dono de grupo",
+    email: "membro-2@bivaque.example.invalid",
+    entradas: ["/app/comunidade"],
+    chega: /^\/app\/comunidade$/,
   },
   {
     nome: "dono de vila",
     email: "dono-vila@bivaque.example.invalid",
-    // RUN-176: a casca web não tem link saindo do app, então a porta dela é ENTRADA
-    // declarada, não dívida de link. `/inicio` é 307; `/communities` abre a casca e a
-    // lateral dela leva a Salvos e Configurações. A lista deixou de ser porta fora do link
-    // no run 43853510395: o card "Entrar na comunidade" de /community linka ela.
-    entradas: ["/inicio", "/communities"],
+    entradas: ["/inicio", "/app/comunidade"],
     chega: /^\/app\/inicio$/,
   },
   {
@@ -136,63 +139,6 @@ const PORTAS_FORA_DO_LINK: readonly PortaDeclarada[] = [
     dono: "visitante",
   },
   {
-    route: "/groups",
-    porta:
-      "CONDICIONAL: 'Veja os grupos' no compositor, que só aparece para quem ainda não participa de nenhum; o 'Criar o primeiro grupo' de Interesses saiu com a tela web (RUN-163) e o app não oferece criar grupo",
-    dependeDeDados: true,
-    dono: "membro",
-  },
-  {
-    route: "/communities/[id]/admin",
-    porta:
-      "CONDICIONAL: menu do console, cuja entrada é 'Analisar pedidos de entrada' na aba Sobre (moderador)",
-    dependeDeDados: true,
-    dono: "dono de vila",
-  },
-  {
-    route: "/communities/[id]/admin/media",
-    porta: "CONDICIONAL: menu do console (moderador)",
-    dependeDeDados: true,
-    dono: "dono de vila",
-  },
-  {
-    route: "/communities/[id]/admin/moderators",
-    porta: "CONDICIONAL: hub do console (moderador)",
-    dependeDeDados: true,
-    dono: "dono de vila",
-  },
-  {
-    route: "/communities/[id]/admin/pending",
-    porta: "CONDICIONAL: 'Analisar pedidos de entrada' na aba Sobre da comunidade (moderador)",
-    dependeDeDados: true,
-    dono: "dono de vila",
-  },
-  {
-    route: "/communities/[id]/admin/providers",
-    porta: "CONDICIONAL: 'Prestadores atestados' no hub do console (moderador)",
-    dependeDeDados: true,
-    dono: "dono de vila",
-  },
-  {
-    route: "/communities/[id]/indicar-prestador",
-    porta: "BOTÃO: 'Mais opções' > 'Indicar prestador' em /communities (window.location.assign)",
-    dono: "dono de vila",
-  },
-  {
-    route: "/communities/[id]/invite",
-    porta:
-      "CONDICIONAL: 'Convidar membros' na aba Sobre; 'Mais opções' > 'Convidar' em /communities",
-    dependeDeDados: true,
-    dono: "dono de vila",
-  },
-  {
-    route: "/community",
-    porta:
-      "FLUXO: fim do onboarding ('Ir para a comunidade'), notificação de publicação e redirects",
-    dependeDeDados: true,
-    dono: "membro",
-  },
-  {
     route: "/consent",
     porta:
       "DÍVIDA ROTA-CONSENT-LEGADA: portão removido pelo ADR-20260907-consentimento-no-cadastro",
@@ -218,12 +164,6 @@ const PORTAS_FORA_DO_LINK: readonly PortaDeclarada[] = [
     route: "/denuncias/nova",
     porta: "FLUXO: versão endereçável (spec C10) do diálogo que as origens abrem por cima da tela",
   },
-  {
-    route: "/indicacoes",
-    porta:
-      "FLUXO: redireciona para a vista Indicações da Comunidade; fica para links antigos e ?pedir=1",
-    dono: "membro",
-  },
   { route: "/invite/[token]", porta: "EXTERNO: link de convite compartilhado" },
   // RUN-172/176: o perfil web era a única tela da casca a que uma persona chegava, e com ele
   // morreram as portas de Salvos, Configurações, Conta, senha, Comunidades e o detalhe da
@@ -237,7 +177,6 @@ const PORTAS_FORA_DO_LINK: readonly PortaDeclarada[] = [
   // - /recuperar-senha: voltou a ser porta declarada no RUN-184 (ver a entrada logo abaixo de
   //   /nova-senha); o último link morreu com a tela de conta
   // - /communities/[id]: lista de comunidades (communities-screen.tsx:276) e a lateral (:328)
-  // - /groups/[id]: nome do grupo na lista de grupos (groups/page.tsx:448)
   // - /negocio: o painel do prestador (prestador/catalogo/page.tsx:82). Até o RUN-181 a
   //   porta era também 'Ofereça seus serviços' no painel de serviços (explorar/servicos/page.tsx:352);
   //   o painel morreu com a troca para /app/busca, e o link do prestador segue vivo — por isso
@@ -282,11 +221,6 @@ const PORTAS_FORA_DO_LINK: readonly PortaDeclarada[] = [
   },
   { route: "/onboarding/welcome", porta: "FLUXO: fim do onboarding", dono: "visitante" },
   { route: "/prestador-convite/[token]", porta: "EXTERNO: e-mail de convite do prestador" },
-  {
-    route: "/recommendations",
-    porta: "FLUXO: aposentada em 25/09/2026; redireciona links antigos para a Comunidade",
-    dono: "membro",
-  },
 ]
 
 // Sementes da persona: as portas que ela detém e cuja URL se digita. Rota com parâmetro fica
@@ -375,6 +309,33 @@ async function crawl(
     // rodadas. Só conta o que algum link aponta; o resto aparece sempre e é declarado.
     frontier.offer({ target: landed.pathname, from: visit.target, persona })
 
+    // O diretório abre cada detalhe por botão. Visitar os detalhes revela a porta
+    // de administração apenas no grupo em que esta persona é administradora.
+    if (landed.pathname === "/app/comunidade" && persona === "dono de grupo") {
+      await page.goto("/app/grupo/60000000-0000-4000-8000-000000000002")
+      await expect(page.getByRole("link", { name: "Aprovar pedidos e convidar" })).toBeVisible()
+      frontier.enter({ target: new URL(page.url()).pathname, from: landed.pathname, persona })
+      await page.goto(visit.target, { waitUntil: "load" })
+    }
+    if (landed.pathname === "/app/comunidade" && ["membro", "dono de vila"].includes(persona)) {
+      await page.locator('[data-chip="grp"]').click()
+      const diretorio = page.locator('[data-diretorio-grupos="sim"]')
+      await diretorio.waitFor()
+      const quantidade = await diretorio.getByRole("button", { name: "Ver grupo" }).count()
+      for (let indice = 0; indice < quantidade; indice++) {
+        if (indice > 0) {
+          await page.goto(visit.target, { waitUntil: "load" })
+          await page.locator('[data-chip="grp"]').click()
+          await diretorio.waitFor()
+        }
+        await diretorio.getByRole("button", { name: "Ver grupo" }).nth(indice).click()
+        await page.waitForURL(/\/app\/grupo\//)
+        frontier.enter({ target: new URL(page.url()).pathname, from: landed.pathname, persona })
+      }
+      await page.goto(visit.target, { waitUntil: "load" })
+      await page.waitForLoadState("networkidle", { timeout: 1_000 }).catch(() => {})
+    }
+
     const hrefs = await page.$$eval("a[href]", (anchors) =>
       anchors.map((anchor) => anchor.getAttribute("href") ?? ""),
     )
@@ -419,6 +380,8 @@ test.describe("rastreador de links", { tag: "@stateful" }, () => {
         // padrão — sem ele, todo link para lá virava "rota inexistente".
         "/guide",
         "/inicio",
+        "/communities",
+        "/communities/[id]",
         "/explorar",
         // RUN-177: a gestão do negócio próprio e o catálogo dele saíram da web
         // (307 para /app/meu-negocio). Continuam destino válido de <a href> — o

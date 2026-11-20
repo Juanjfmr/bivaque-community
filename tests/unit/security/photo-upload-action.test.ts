@@ -3,7 +3,6 @@ import { setCommunityImageAction } from "web/app/(owner)/communities/actions"
 import { uploadVerificationDocumentAction } from "web/app/(preauth)/onboarding/document-actions"
 import { addPortfolioPhotoAction } from "web/app/(provider)/prestador/actions"
 import { uploadPostPhotoAction } from "web/app/components/bivaque/post-photo-action"
-import { uploadPropertyPhotoAction } from "web/lib/listings/actions"
 import { sanitizeImage } from "web/lib/storage/sanitize-image"
 import { hasExifGps, imageMetadata, locationImage } from "../../fixtures/location-image"
 
@@ -65,7 +64,6 @@ vi.mock("next/headers", () => ({ cookies: async () => ({ getAll: () => [] }) }))
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }))
 vi.mock("next/navigation", () => ({ redirect: vi.fn() }))
 vi.mock("@supabase/ssr", () => ({ createServerClient: () => mocks.client }))
-vi.mock("web/lib/listings/ssr-client", () => ({ createListingClient: () => mocks.client }))
 vi.mock("web/lib/supabase/server", () => ({ createServerClient: () => mocks.service }))
 vi.mock("web/lib/onboarding/document-status", () => ({
   readDocumentPaths: async () => [],
@@ -89,8 +87,6 @@ afterEach(() => vi.unstubAllEnvs())
 
 const formats = ["jpeg", "png", "webp"] as const
 const paths = [
-  { name: "moradia criar", field: "photo", bucket: "listing-photos", maxMB: 10 },
-  { name: "moradia editar", field: "photo", bucket: "listing-photos", maxMB: 10 },
   // RUN-172: a porta de upload de avatar morreu com a edição do perfil na web
   // (ADR-20261116 — o app é iniciais por régua). O `sanitize-image` continua
   // provado nas outras oito portas vivas deste mesmo arquivo.
@@ -126,9 +122,6 @@ function formFor(path: UploadPath, file: File) {
 async function send(path: UploadPath, file: File) {
   const form = formFor(path, file)
   switch (path.name) {
-    case "moradia criar":
-    case "moradia editar":
-      return uploadPropertyPhotoAction(form)
     case "comunidade faixa":
     case "comunidade miniatura":
       return setCommunityImageAction(form)

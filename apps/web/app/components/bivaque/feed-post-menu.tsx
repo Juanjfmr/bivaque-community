@@ -67,7 +67,7 @@ export function LeanOverflowMenu({
   triggerLabel = "Mais opções",
 }: LeanOverflowMenuProps) {
   const handleShare = useCallback(async () => {
-    const url = `${window.location.origin}${sharePath ?? `/community?post=${postId}`}`
+    const url = `${window.location.origin}${sharePath ?? `/app/publicacao/${postId}`}`
     if (typeof navigator !== "undefined" && typeof navigator.share === "function") {
       try {
         await navigator.share({ title: "Bivaque", url })

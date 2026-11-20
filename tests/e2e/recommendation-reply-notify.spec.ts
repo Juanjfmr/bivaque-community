@@ -11,12 +11,7 @@
 
 import type { Page } from "@playwright/test"
 import { expect, test } from "@playwright/test"
-import {
-  CURRENT_CONSENT,
-  encodeAuthCookieValue,
-  readEnvLocal,
-  seedSession,
-} from "./helpers/session"
+import { CURRENT_CONSENT, encodeAuthCookieValue, readEnvLocal } from "./helpers/session"
 
 const SUPABASE_URL = process.env["SUPABASE_URL"] ?? "http://127.0.0.1:55321"
 const CONSENT_COOKIE = "bivaque-consent-version"
@@ -134,19 +129,5 @@ test.describe("recommendation ask-and-answer loop", { tag: "@stateful" }, () => 
     // Then the "Ajudou a resolver" action is reachable on a reply that is not
     // the marked one (the seed marks the first reply)
     await expect(page.getByRole("button", { name: /^Ajudou a resolver/ }).first()).toBeVisible()
-  })
-
-  test("the invite surface has no people search (D43)", async ({ page }) => {
-    // Given a session
-    await seedSession(page.context())
-    await page.goto("/community?vista=indicacoes")
-    await expect(page.getByRole("heading", { name: "O que você procura?" })).toBeVisible()
-
-    // Then no people-search input is present on the recommendation surface.
-    // Escopado ao conteúdo da página: o cabeçalho tem busca global de conteúdo
-    // (RECON-021) e o locator global contava esse campo, medindo outra coisa.
-    const surface = page.locator("main")
-    await expect(surface.locator('input[type="search"]')).toHaveCount(0)
-    await expect(surface.getByText(/buscar pessoas|buscar membros/i)).toHaveCount(0)
   })
 })

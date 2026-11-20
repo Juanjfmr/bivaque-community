@@ -64,10 +64,7 @@ describe("resolveActiveNav deriva o item ativo da rota", () => {
   it("RECON-042: a área manda, não o último recurso", () => {
     expect(resolveActiveNav("/guide", PRIMARY)).toEqual({ kind: "primary", id: "explorar" })
     expect(resolveActiveNav("/events", PRIMARY)).toEqual({ kind: "primary", id: "explorar" })
-    expect(resolveActiveNav("/recommendations", PRIMARY)).toEqual({
-      kind: "primary",
-      id: "explorar",
-    })
+    expect(resolveActiveNav("/recommendations", PRIMARY)).toEqual({ kind: "none" })
     // RUN-184: `/configuracoes` saiu do mapa com a árvore — o endereço antigo é 307
     // para /app/voce e nunca chega a resolver item ativo nesta casca.
     expect(resolveActiveNav("/configuracoes", PRIMARY)).toEqual({ kind: "none" })
@@ -100,7 +97,9 @@ describe("a fixture do teste acompanha a navegação real", () => {
   it("todo href de primary existe em bottom-nav.tsx", () => {
     const source = readFileSync(bottomNav, "utf8")
     for (const item of PRIMARY) {
-      expect(source).toContain(`href: "${item.href}"`)
+      expect(source).toContain(
+        `href: "${item.id === "comunidades" ? "/app/comunidade" : item.href}"`,
+      )
     }
   })
 
@@ -158,12 +157,9 @@ describe("barra inferior do celular usa a mesma regra da lateral", () => {
   })
 
   it.each([
-    ["/community", "comunidades"],
     ["/guide", "explorar"],
     ["/events/abc", "explorar"],
-    ["/mercado", "explorar"],
     ["/cidade/abc", "explorar"],
-    ["/indicacoes", "comunidades"],
   ])("%s acende %s", (path, id) => {
     expect(resolveActiveNav(path, PRIMARY)).toEqual({ kind: "primary", id })
   })

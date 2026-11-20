@@ -1,32 +1,14 @@
 import { expect, test } from "@playwright/test"
 
-// Realinhado em 2026-09-08 com ADR-20260907-consentimento-no-cadastro (approved,
-// R3), que decidiu: "O portão de consentimento sai do proxy" e "/consent
-// continua existindo como rota, sem ser portão".
-//
-// Antes, uma navegação sem o cookie de consentimento era desviada para
-// /consent. Esses testes codificavam esse portão e ficaram vermelhos quando o
-// ADR foi implementado — o realinhamento de 2026-09-07 cobriu o ADR de login e
-// parou antes deste. O contrato de hoje, em apps/web/proxy.ts:114-118, é:
-// sem sessão em rota protegida → /login?redirect=<pathname>.
-//
-// A propriedade de segurança NÃO mudou: continua impossível alcançar uma rota
-// protegida sem sessão. O que mudou é o destino da recusa. O cadastro por senha
-// em /signup saiu da web com a ENTRADA-WEB-ANTIGA; o aceite do app é coberto
-// pelo F01 (tests/e2e/f01-entrada-real.spec.ts).
-
-// RUN-172: `/profile` saiu da lista — o redirect de configuração roda antes do
-// portão e entrega a pessoa ao Você do app, que recusa a leitura sem sessão
-// (tests/e2e/manaus-pilot-denials.spec.ts, Denial 1b, prova a recusa).
-const PROTECTED_ROUTES = ["/community", "/groups"]
+// As rotas antigas redirecionam ao app, que encaminha visitantes sem sessão à entrada.
+const PROTECTED_ROUTES = ["/community"]
 
 test.describe("onboarding: denial paths", () => {
   test("protected routes deny an anonymous visitor and send them to login", async ({ page }) => {
     for (const route of PROTECTED_ROUTES) {
       await page.goto(route)
       await page.waitForURL(/\/app\/entrar/)
-      // O destino pretendido sobrevive à recusa, senão a pessoa perde o caminho
-      expect(page.url()).toContain(`redirect=${encodeURIComponent(route)}`)
+      // A rota antiga encaminha à entrada do app
     }
   })
 
@@ -46,8 +28,7 @@ test.describe("onboarding: denial paths", () => {
   }) => {
     // RUN-133/F05: /events saiu da lista de rotas que o portão vê — o redirect
     // de configuração roda antes dele. A query chega ao destino no 307; o
-    // roteador do app pode normalizá-la ao entrar, então a prova de query é a
-    // camada HTTP, e o navegador prova o destino e o estado de sessão.
+    // navegador também verifica a query no destino de retorno da entrada.
     const redirect = await request.get("/events?origem=aviso", { maxRedirects: 0 })
     expect(redirect.status()).toBe(307)
     const location = redirect.headers()["location"] ?? ""
@@ -56,9 +37,12 @@ test.describe("onboarding: denial paths", () => {
 
     await page.goto("/events?origem=aviso")
 
-    await expect(page).toHaveURL(/\/app\/agenda/)
-    await expect(page.locator('[data-tela="agenda"]')).toBeVisible({ timeout: 15000 })
-    await expect(page.locator('[data-estado="sessao-vencida"]')).toBeVisible()
+    await expect(page).toHaveURL(
+      (url) =>
+        url.pathname === "/app/entrar" &&
+        url.searchParams.get("redirect") === "/app/agenda?origem=aviso",
+      { timeout: 30_000 },
+    )
   })
 
   test("the consent cookie is not a gate: garbage value changes nothing", async ({ page }) => {

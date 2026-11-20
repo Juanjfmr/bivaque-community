@@ -416,10 +416,10 @@ export function CreatePostModal({
                             description="Publicar acontece dentro de um grupo. Veja os grupos da sua cidade e entre em um para publicar."
                             actions={
                               <Link
-                                href={"/groups" as Route}
+                                href={"/app/comunidade" as Route}
                                 // Fecha o compositor ANTES de navegar: ele é
                                 // montado pelo shell e, sem isto, o diálogo
-                                // continua por cima de /groups (o shell não
+                                // continua por cima do destino (o shell não
                                 // desmonta na navegação client-side).
                                 onClick={() => modal.close()}
                                 className="inline-flex min-h-11 items-center text-sm font-semibold text-ui-brand"

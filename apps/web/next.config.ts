@@ -151,8 +151,52 @@ const nextConfig: NextConfig = {
         destination: "/app/conversa/:conversa",
         permanent: false,
       },
+      {
+        source: "/community",
+        has: [
+          {
+            type: "query",
+            key: "post",
+            value:
+              "(?<post>[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})",
+          },
+        ],
+        destination: "/app/publicacao/:post",
+        permanent: false,
+      },
+      {
+        source: "/recommendations",
+        has: [
+          {
+            type: "query",
+            key: "focus",
+            value:
+              "(?<pergunta>[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})",
+          },
+        ],
+        destination: "/app/pergunta/:pergunta",
+        permanent: false,
+      },
+      {
+        source: "/recommendations",
+        has: [{ type: "query", key: "aba", value: "saved" }],
+        destination: "/app/salvos",
+        permanent: false,
+      },
+      {
+        source: "/recommendations",
+        has: [{ type: "query", key: "pedir", value: "1" }],
+        destination: "/app/comunidade",
+        permanent: false,
+      },
       ...(
         [
+          ["/communities", "/app/comunidade"],
+          ["/communities/:id", "/app/comunidade"],
+          ["/community", "/app/comunidade"],
+          ["/indicacoes", "/app/comunidade"],
+          ["/recommendations", "/app/comunidade"],
+          ["/groups", "/app/comunidade"],
           ["/indicacoes/:id", "/app/pergunta/:id"],
           ["/messages", "/app/conversas"],
           ["/messages/:id", "/app/conversa/:id"],

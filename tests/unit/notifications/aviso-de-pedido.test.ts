@@ -13,6 +13,7 @@ import {
   type NotificationRow,
   rendersWithActor,
   resolveNotificationHref,
+  resolveReportTargetHref,
 } from "web/lib/notifications/deep-links"
 import { renderEmail } from "web/lib/outbox/adapters"
 
@@ -104,8 +105,22 @@ describe("o aviso no sino", () => {
     expect(resolveNotificationHref(notification("resolve_prompt", "abc"), null)).toBe(
       "/app/pergunta/abc",
     )
-    expect(resolveNotificationHref(notification("digest", "loc"), null)).toBe(
-      "/community?vista=indicacoes",
+    expect(resolveNotificationHref(notification("digest", "loc"), null)).toBe("/app/comunidade")
+  })
+})
+
+describe("destinos de publicações e grupos", () => {
+  it("abre diretamente o conteúdo no app, inclusive a partir de denúncias", () => {
+    const base = notification("created", "abc")
+    expect(resolveNotificationHref({ ...base, type: "comment" }, null)).toBe("/app/publicacao/abc")
+    for (const type of ["group_admission", "group_post"]) {
+      expect(resolveNotificationHref({ ...base, type }, null)).toBe("/app/grupo/abc")
+    }
+    expect(resolveReportTargetHref({ target_type: "post", target_id: "abc" })).toBe(
+      "/app/publicacao/abc",
+    )
+    expect(resolveReportTargetHref({ target_type: "group", target_id: "abc" })).toBe(
+      "/app/grupo/abc",
     )
   })
 })
@@ -130,7 +145,7 @@ describe("o e-mail do resumo", () => {
     expect(email.subject).toBe("2 pedidos de indicação esperando resposta em Manaus")
     expect(email.text).toContain("• Pediatra")
     expect(email.text).toContain("• Eletricista")
-    expect(email.text).toContain("/community?vista=indicacoes")
+    expect(email.text).toContain("/app/comunidade")
     // RUN-184: a tela de conta saiu da web; as preferências de aviso vivem no Você.
     expect(email.text).toContain("Você > Avisos")
   })

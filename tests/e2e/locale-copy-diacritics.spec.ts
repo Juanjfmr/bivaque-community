@@ -101,12 +101,12 @@ async function signInAs(page: Page, email: string): Promise<void> {
   ])
 }
 
+// UUID inexistente usado nos fallbacks de grupo e evento.
 const NOT_FOUND_GROUP_ID = "00000000-0000-4000-8000-000000000000"
 
 async function signInAndVisit(page: Page, url: string) {
   await signInAs(page, VISUAL_EMAIL)
   await page.goto(`${APP_URL}${url}`, { waitUntil: "load" })
-  await page.waitForLoadState("networkidle")
 }
 
 test.describe("DS-035 — Portuguese diacritics in segment fallbacks", () => {
