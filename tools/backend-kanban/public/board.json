@@ -6369,7 +6369,8 @@
       "sourceRevision": "fc67e19e",
       "links": ["docs/LANCAMENTO.md"],
       "proof": [
-        "02/11: aberto na definição do lançamento (docs/LANCAMENTO.md), por mandato do dono."
+        "02/11: aberto na definição do lançamento (docs/LANCAMENTO.md), por mandato do dono.",
+        "20/11 LOJA-001 (#312): Capacitor com android/ e ios/ versionados, base absoluta no nativo, câmera, link profundo, workflow app-loja.yml e inventário da sessão; revisão às cegas PASS no delta e2f069d3. Capturas do emulador em .visual/loja-001/ (camera, criar, link-entrada)."
       ],
       "id": "LAN-LOJA",
       "title": "Fase 7: app de loja em Capacitor pronto para envio",
@@ -6383,7 +6384,10 @@
         "Builds de release (AAB e arquivo do Xcode em executor macOS) gerados pelo CI sem assinatura de produção",
         "Assinatura, fichas e envio registrados como atos do dono"
       ],
-      "dependencies": ["LAN-TROCA", "BLOCK-MOBILE-RUNTIME"]
+      "dependencies": ["LAN-TROCA", "BLOCK-MOBILE-RUNTIME"],
+      "notes": [
+        "20/11 decisão do coordenador: a tela de entrada no nativo (apps/app/src/entrada/servidor.ts com fetch relativo) sai do LOJA-001 e entra no LOJA-002, junto da sessão nativa do ADR-20261120. Ficam também para o LOJA-002: android:allowBackup, window.alert no SeletorDeFoto, remover o ouvinte appUrlOpen, testes de template com.getcapacitor.myapp, varredura dos gerados do cap sync, ios/Pods no .gitignore, setup-java v4."
+      ]
     },
     {
       "phase": "Lançamento",
