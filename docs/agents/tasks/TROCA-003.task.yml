@@ -1,0 +1,63 @@
+task_id: TROCA-003
+objective: >
+  Refazer no app o convite de membros da comunidade (/communities/[id]/invite), o aceite do convite
+  (/invite/[token]) e o grupo (/groups/[id] passa a 307 para /app/grupo/:id), e então apagar as versões
+  do site com código e testes. A porta provisória que o #309 pôs na tela Comunidade do app passa a
+  abrir a tela nova. Ao fim, nenhuma dessas três rotas serve tela no apps/web.
+authority:
+  - docs/LANCAMENTO.md (fase 6, critério: nenhuma rota de membro no apps/web servindo tela)
+  - docs/decisions/ADR-20261024-front-react-spa.md (§5 contrato de API, §8 ordem da troca)
+  - "card LAN-TROCA-CONVITE; decisão do dono de 20/11 (opção 1 do #309, nenhuma tela antiga sobrevive)"
+adr: docs/decisions/ADR-20261024-front-react-spa.md
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    Depois do TROCA-002 (#309) seguem servindo tela no site: (shell)/communities/[id]/invite,
+    (shell)/invite/[token] e (shell)/groups/[id] (734 linhas, sem regra 307 em next.config.ts,
+    embora o app já tenha /app/grupo/:id usado pelos avisos).
+allowed_paths:
+  - apps/app/src/**
+  - apps/app/lib/**
+  - apps/app/tests/**
+  - apps/web/app/(shell)/communities/**
+  - apps/web/app/(shell)/invite/**
+  - apps/web/app/(shell)/groups/**
+  - apps/web/app/api/app/**
+  - apps/web/lib/**
+  - apps/web/components/**
+  - apps/web/proxy.ts
+  - apps/web/next.config.ts
+  - supabase/migrations/**
+  - supabase/tests/**
+  - tests/**
+  - docs/agents/tasks/TROCA-003.task.yml
+forbidden:
+  - editar migration já aplicada (só arquivo novo); reiniciar ou reconstruir o banco local
+  - remover a tela web antes de a tela do app passar na revisão às cegas e no E2E
+  - redirecionamento em ciclo ou que perca ID, token ou query
+  - afrouxar ou apagar asserção de teste de uma rota que continua existindo
+  - rota de API nova sem o contrato do ADR SPA §5 (resolvedor único, CSRF por Origin e cabeçalho, CORS explícito) e sem teste positivo e negativo
+  - service_role sem autorização explícita no código
+  - git stash, delegar, dado pessoal real ou CPF real
+  - apps/web/app/(admin)/**, a landing, apps/mobile, apps/prototipo
+acceptance:
+  - "convidar membros e aceitar convite funcionam no app: entrada, ação, persistência, retorno, acompanhamento e falha principal (convite vencido, já usado, sem permissão), em 375/768/1440"
+  - "só quem tem permissão vê e usa o convite; negativa provada na API e na tela"
+  - "/communities/:id/invite, /invite/:token e /groups/:id devolvem 307 ao equivalente no /app, com ID e token preservados; anônimo segue o portão sem ciclo"
+  - "as páginas antigas saem com componentes, testes e imports; os e-mails e pushes de convite apontam ao app"
+  - "a porta provisória na tela Comunidade do app passa a abrir a tela nova; link-crawl no rigor normal"
+proof:
+  - npx pnpm@11.18.0 gate --fast
+  - npx pnpm@11.18.0 test
+  - npx pnpm@11.18.0 test:scope
+  - npx pnpm@11.18.0 --filter @bivaque/app test
+  - npx pnpm@11.18.0 --filter @bivaque/app test:e2e
+  - npx pnpm@11.18.0 test:e2e
+  - "npx pnpm@11.18.0 test:db, se houver migration nova, em pilha isolada"
+risk: authz
+risk_level: R3
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: HUMAN_DECISION
+closure:
+  requires_runtime_evidence: true
