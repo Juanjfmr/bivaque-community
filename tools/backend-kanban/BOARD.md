@@ -6,7 +6,7 @@
 
 > docs/LANCAMENTO.md define o lançamento e o que é pronto; os cards LAN-* acompanham cada fase e jornada. O ADR-20261024-front-react-spa governa o app (apps/app) e a troca das telas antigas do apps/web. Documentos de agosto a outubro estão em docs/historico e não orientam trabalho. Código e provas atuais determinam entrega, sem apagar evidências ou criar outra fila.
 
-**Mapa:** 307 frentes · 0 agora · 9 bloqueadas · 172 concluídas · 0 drifts
+**Mapa:** 308 frentes · 1 agora · 9 bloqueadas · 172 concluídas · 0 drifts
 
 Para trabalho autônomo, rode `node tools/backend-kanban/src/board.mjs --next` e resolva um card por commit. Drift é evidência temporária; não é fechamento.
 
@@ -14,7 +14,7 @@ Use o ID abaixo com `node tools/backend-kanban/src/board.mjs --card <ID>` antes 
 
 ## Agora
 
-Nenhum card.
+- **INFRA-CLI-SUPABASE-PC** · P1 · CLI do Supabase falha com EPERM no PC do dono e o banco local está fora de sincronia
 
 ## Bloqueios
 

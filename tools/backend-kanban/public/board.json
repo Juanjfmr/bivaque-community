@@ -10407,6 +10407,32 @@
       ],
       "updatedAt": "2026-11-20",
       "sourceRevision": "1bd9c7f8"
+    },
+    {
+      "phase": "Lançamento",
+      "tests": [],
+      "blockers": [
+        "O CLI do Supabase 2.107.0 (binário Bun) falha com EPERM ao abrir ou criar qualquer arquivo ou pasta: C:/Users/juana/.supabase/telemetry.json.tmp.* e também uma pasta pessoal temporária (HOME/USERPROFILE trocados), inclusive fora do sandbox. Quebra test:db, db:lint, migration list/up e status no PC do dono."
+      ],
+      "updatedAt": "2026-11-20",
+      "sourceRevision": "f1c405eca",
+      "links": ["package.json (supabase 2.107.0)", "PR #314"],
+      "proof": [
+        "20/11: tentados (1) rodar no worktree e no checkout principal; (2) fora do sandbox; (3) HOME/USERPROFILE numa pasta temporária: EPERM em todos. A pasta .supabase aceita escrita pelo bash (touch), e o acesso controlado a pastas do Defender está desligado (EnableControlledFolderAccess=0). As ACLs de ~/.supabase têm uma entrada CodexSandboxUsers (RX) que não nega nada ao usuário juana.",
+        "20/11: o banco local (supabase_db_bivaque-community, de pé há 4 dias) tem supabase_migrations.schema_migrations vazio e não tem as tabelas de 18/11 (push_subscriptions), então está fora de sincronia com a main. Até o card fechar, a prova de banco fica no CI (ci:full), como no #314."
+      ],
+      "id": "INFRA-CLI-SUPABASE-PC",
+      "title": "CLI do Supabase falha com EPERM no PC do dono e o banco local está fora de sincronia",
+      "priority": "P1",
+      "category": "infra",
+      "status": "now",
+      "description": "Sem o CLI, nenhuma prova de banco local roda no PC (test:db, db:lint, migration up). Próximo passo concreto: rodar o binário @supabase/cli-windows-x64 direto com --version e um comando que grava, comparar com o CLI Go oficial (SUPABASE_CLI_BINARY_OVERRIDE apontando para o supabase.exe da release anterior da linha 2.x) e, se o Go funcionar, fixar o override no ambiente local ou voltar o pin; depois, com a pilha exclusiva, reset --local --no-seed e test:db para ressincronizar o banco.",
+      "checklist": [
+        "Diagnóstico do EPERM com o binário direto e com o CLI Go",
+        "CLI funcionando no PC (migration list --local sem erro)",
+        "Banco local ressincronizado com a main (reset --local --no-seed exclusivo) e test:db verde"
+      ],
+      "dependencies": []
     }
   ],
   "launch": {
