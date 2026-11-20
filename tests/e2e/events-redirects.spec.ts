@@ -67,9 +67,16 @@ test.describe("endereços antigos de eventos", () => {
   })
 
   test("visitantes seguem para a entrada sem ciclo", async ({ page }) => {
-    for (const caminho of ["/events", "/events/novo", `/events/${EVENT_ID}`]) {
+    for (const [caminho, destino] of [
+      ["/events", "/app/agenda"],
+      ["/events/novo", "/app/agenda"],
+      [`/events/${EVENT_ID}`, `/app/evento/${EVENT_ID}`],
+    ] as const) {
       await page.goto(caminho)
-      await page.waitForURL(/\/app\/entrar(?:\?|$)/)
+      await expect(page).toHaveURL(
+        (url) => url.pathname === "/app/entrar" && url.searchParams.get("redirect") === destino,
+        { timeout: 30_000 },
+      )
     }
   })
 })

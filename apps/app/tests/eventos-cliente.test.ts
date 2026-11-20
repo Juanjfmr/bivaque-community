@@ -32,7 +32,7 @@ afterEach(() => {
 })
 
 describe("cliente do app", () => {
-  it("encaminha 401 ? entrada com o caminho e a consulta, sem ciclo", async () => {
+  it("encaminha 401 à entrada com o caminho e a consulta, sem ciclo", async () => {
     const assign = vi.fn()
     vi.stubGlobal("window", {
       location: {
@@ -47,6 +47,14 @@ describe("cliente do app", () => {
     const destino = new URL(assign.mock.calls[0]?.[0] as string)
     expect(destino.pathname).toBe("/app/entrar")
     expect(destino.searchParams.get("redirect")).toBe("/app/grupo/123?aba=1")
+  })
+
+  it("não encaminha 401 quando já está na entrada", async () => {
+    const assign = vi.fn()
+    vi.stubGlobal("window", { location: { pathname: "/app/entrar", assign } })
+    espiao({}, 401)
+    await expect(ler("/api/app/eventos")).rejects.toMatchObject({ codigo: "sem-sessao" })
+    expect(assign).not.toHaveBeenCalled()
   })
 
   it("lê com a sessão do cookie e o cabeçalho do app, sem content-type", async () => {

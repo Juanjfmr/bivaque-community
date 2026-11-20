@@ -122,7 +122,7 @@ export const PUBLIC_SURFACE: readonly EntradaDaSuperficie[] = [
   {
     caminho: "/app",
     modo: "pasta",
-    motivo: "SPA pública, exceto as entradas protegidas; APIs autorizam os dados",
+    motivo: "SPA em /app: entrada /app/entrar e assets; a sessão é resolvida nas rotas /api/app",
   },
 ]
 

@@ -136,14 +136,12 @@ test.describe("a conta descartável que pede a exclusão", { tag: "@stateful" },
     const leitura = await page.request.get(new URL("/api/app/voce", page.url()).toString())
     expect(leitura.status(), "a leitura seguinte não pode trazer os dados da pessoa").toBe(401)
 
-    // E navegar não devolve nada da pessoa: a tela fica no estado de falha de
-    // leitura, sem o perfil que existia antes do pedido.
+    // A navegação após o encerramento encaminha à entrada.
     await page.goto("/app/voce")
-    await expect(page.locator('[data-tela="voce"]')).toBeVisible({ timeout: 30_000 })
-    // No celular a tela mostra o estado de erro em mais de uma seção; basta a primeira.
-    await expect(page.locator('[data-tela="voce"] [data-estado="erro"]').first()).toBeVisible({
-      timeout: 30_000,
-    })
+    await expect(page).toHaveURL(
+      (url) => url.pathname === "/app/entrar" && url.searchParams.get("redirect") === "/app/voce",
+      { timeout: 30_000 },
+    )
     await expect(page.getByText("Pessoa Que Sai")).toHaveCount(0)
 
     // O login também não volta: a conta banida recusa um password grant novo

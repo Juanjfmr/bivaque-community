@@ -305,6 +305,12 @@ async function crawl(
 
     // O diretório abre cada detalhe por botão. Visitar os detalhes revela a porta
     // de administração apenas no grupo em que esta persona é administradora.
+    if (landed.pathname === "/app/comunidade" && persona === "membro") {
+      await page.goto("/app/grupo/60000000-0000-4000-8000-000000000001")
+      await expect(page.getByRole("link", { name: "Aprovar pedidos e convidar" })).toBeVisible()
+      frontier.enter({ target: new URL(page.url()).pathname, from: landed.pathname, persona })
+      await page.goto(visit.target, { waitUntil: "load" })
+    }
     if (landed.pathname === "/app/comunidade" && ["membro", "dono de vila"].includes(persona)) {
       await page.locator('[data-chip="grp"]').click()
       const diretorio = page.locator('[data-diretorio-grupos="sim"]')

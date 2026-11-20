@@ -28,8 +28,7 @@ test.describe("onboarding: denial paths", () => {
   }) => {
     // RUN-133/F05: /events saiu da lista de rotas que o portão vê — o redirect
     // de configuração roda antes dele. A query chega ao destino no 307; o
-    // roteador do app pode normalizá-la ao entrar, então a prova de query é a
-    // camada HTTP, e o navegador prova o destino e o estado de sessão.
+    // navegador também verifica a query no destino de retorno da entrada.
     const redirect = await request.get("/events?origem=aviso", { maxRedirects: 0 })
     expect(redirect.status()).toBe(307)
     const location = redirect.headers()["location"] ?? ""
@@ -38,9 +37,12 @@ test.describe("onboarding: denial paths", () => {
 
     await page.goto("/events?origem=aviso")
 
-    await expect(page).toHaveURL(/\/app\/agenda/)
-    await expect(page.locator('[data-tela="agenda"]')).toBeVisible({ timeout: 15000 })
-    await expect(page.locator('[data-estado="sessao-vencida"]')).toBeVisible()
+    await expect(page).toHaveURL(
+      (url) =>
+        url.pathname === "/app/entrar" &&
+        url.searchParams.get("redirect") === "/app/agenda?origem=aviso",
+      { timeout: 30_000 },
+    )
   })
 
   test("the consent cookie is not a gate: garbage value changes nothing", async ({ page }) => {

@@ -1,8 +1,7 @@
 // RUN-156 / F06 resíduo — as telas web de criar e editar desapego saíram; os
 // endereços antigos passam a chegar ao app. Mesmo desenho do RUN-133: o redirect
-// de configuração acontece antes do portão (apps/web/proxy.ts), então a prova
-// roda sem sessão e o app responde com o próprio estado de sessão vencida. Se o
-// endereço antigo ainda passasse pelo portão, a URL final seria /app/entrar.
+// de configuração acontece antes do portão (apps/web/proxy.ts). Sem sessão,
+// o app encaminha à entrada com o destino de retorno.
 //
 // E2E da web depende do Next + Supabase local (CI); não roda neste worktree.
 
@@ -44,7 +43,12 @@ test("telas antigas do mercado levam ao app, sem sessão, nas três larguras", a
     for (const width of [375, 768, 1440]) {
       await page.setViewportSize({ width, height: 900 })
       await page.goto(caminho)
-      await page.waitForURL(/\/app\/entrar(?:\?|$)/)
+      await expect(page).toHaveURL(
+        (url) =>
+          url.pathname === "/app/entrar" &&
+          url.searchParams.get("redirect") === `${destino}${new URL(caminho, BASE_URL).search}`,
+        { timeout: 30_000 },
+      )
     }
   }
 })

@@ -44,14 +44,10 @@ test.describe("anonymous visitor: protected route denial", () => {
   test("the old profile URL lands on the app and the read is refused", async ({ page }) => {
     await page.goto("/profile")
 
-    await expect(page).toHaveURL(/\/app\/voce$/)
-    await expect(page.locator('[data-tela="voce"]')).toBeVisible({ timeout: 15_000 })
-    // A recusa é a da LEITURA do perfil, e a tela a nomeia no cartão de
-    // identidade: sem sessão não há nome nem cidade a mostrar. Não se assere
-    // `[data-estado="erro"]` no geral porque o Você compõe três leituras
-    // (perfil, família, avisos) e as três falham juntas — o locator casaria 3
-    // painéis e a asserção mediria a tela errada.
-    await expect(page.getByText("perfil indisponível agora")).toBeVisible()
+    await expect(page).toHaveURL(
+      (url) => url.pathname === "/app/entrar" && url.searchParams.get("redirect") === "/app/voce",
+      { timeout: 30_000 },
+    )
     await expect(page.getByText(/Sua cidade é/)).toHaveCount(0)
     // Sem leitura não há edição do perfil, nem a cidade que ele traria.
     await expect(page.getByRole("button", { name: /Editar/ })).toHaveCount(0)
@@ -104,9 +100,11 @@ test.describe("DM without context: denial paths", () => {
     // When the user navigates to the messages page
     await page.goto("/messages")
 
-    // O app recebe a rota; a API recusa a leitura sem sessão.
-    await expect(page).toHaveURL(/\/app\/conversas$/)
-    await expect(page.locator('[data-estado="sessao-vencida"]')).toBeVisible({ timeout: 10000 })
+    await expect(page).toHaveURL(
+      (url) =>
+        url.pathname === "/app/entrar" && url.searchParams.get("redirect") === "/app/conversas",
+      { timeout: 30_000 },
+    )
   })
 })
 
@@ -218,11 +216,10 @@ test.describe("events RSVP: denial paths", () => {
     // When the user navigates to /events
     await page.goto("/events")
 
-    // Then the config redirect lands on the app's agenda, which refuses the
-    // read for lack of a session instead of rendering the old screen
-    await expect(page).toHaveURL(/\/app\/agenda$/)
-    await expect(page.locator('[data-tela="agenda"]')).toBeVisible({ timeout: 15000 })
-    await expect(page.locator('[data-estado="sessao-vencida"]')).toBeVisible()
+    await expect(page).toHaveURL(
+      (url) => url.pathname === "/app/entrar" && url.searchParams.get("redirect") === "/app/agenda",
+      { timeout: 30_000 },
+    )
     await expect(page.getByRole("button", { name: /^Vou/ })).toHaveCount(0)
   })
 })
@@ -232,10 +229,12 @@ test.describe("events RSVP: denial paths", () => {
 // ---------------------------------------------------------------------------
 
 test.describe("notifications redirect: anonymous visitor", () => {
-  test("the old URL lands on the app's expired-session state", async ({ page }) => {
+  test("the old URL sends the visitor to the app entry", async ({ page }) => {
     await page.goto("/notifications")
-    await expect(page).toHaveURL(/\/app\/avisos$/)
-    await expect(page.locator('[data-estado="sessao-vencida"]')).toBeVisible()
+    await expect(page).toHaveURL(
+      (url) => url.pathname === "/app/entrar" && url.searchParams.get("redirect") === "/app/avisos",
+      { timeout: 30_000 },
+    )
   })
 })
 

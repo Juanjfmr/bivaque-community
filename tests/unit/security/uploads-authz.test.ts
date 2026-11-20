@@ -43,13 +43,6 @@ vi.mock("web/lib/supabase/server", () => ({
 vi.mock("web/lib/storage/sanitize-image", () => ({
   sanitizeImage: async () => Buffer.alloc(4),
 }))
-vi.mock("web/lib/listings/ssr-client", () => ({
-  createListingClient: async () => ({
-    auth: { getUser: mock.moradiaUser },
-    from: mock.moradiaFrom,
-    rpc: mock.moradiaRpc,
-  }),
-}))
 vi.mock("web/lib/app-api/rota-do-app", () => ({
   exigirSessao: async () => ({
     ok: true,

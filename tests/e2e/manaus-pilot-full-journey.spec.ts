@@ -137,14 +137,10 @@ test.describe("events journey", () => {
     // When the user navigates to /events
     await page.goto("/events")
 
-    // Then RUN-133/F05: o redirect de configuração roda antes do portão e
-    // entrega a pessoa à agenda do app; sem sessão, a agenda não inventa
-    // conteúdo — pede entrada de novo dentro da própria tela.
-    await expect(page).toHaveURL(/\/app\/agenda$/)
-    await expect(page.getByRole("heading", { name: "Agenda da cidade" })).toBeVisible({
-      timeout: 15000,
-    })
-    await expect(page.locator('[data-estado="sessao-vencida"]')).toBeVisible()
+    await expect(page).toHaveURL(
+      (url) => url.pathname === "/app/entrar" && url.searchParams.get("redirect") === "/app/agenda",
+      { timeout: 30_000 },
+    )
   })
 
   test("events page with consent cookie renders the app agenda", async ({ page, context }) => {
@@ -184,8 +180,10 @@ test.describe("notifications journey", () => {
     page,
   }) => {
     await page.goto("/notifications")
-    await expect(page).toHaveURL(/\/app\/avisos$/)
-    await expect(page.locator('[data-estado="sessao-vencida"]')).toBeVisible()
+    await expect(page).toHaveURL(
+      (url) => url.pathname === "/app/entrar" && url.searchParams.get("redirect") === "/app/avisos",
+      { timeout: 30_000 },
+    )
   })
 
   test("notifications page with consent cookie renders notifications UI", async ({

@@ -64,19 +64,3 @@ describe("raiz do site no proxy", () => {
     expect(resposta.headers.get("x-middleware-next")).toBe("1")
   })
 })
-
-describe("entrada da comunidade no app", () => {
-  it.each(["/app/comunidade", "/app/publicacao/123", "/app/pergunta/123", "/app/salvos"])(
-    "deixa o app decidir a sess?o em %s",
-    async (caminho) => {
-      for (const autenticado of [false, true]) {
-        sessao.usuario = autenticado ? { id: "00000000-0000-4000-8000-000000000001" } : null
-        const proxy = await carregarProxy()
-        const resposta = await proxy(
-          new NextRequest(`http://localhost:3000${caminho}?origem=aviso`),
-        )
-        expect(resposta.headers.get("x-middleware-next")).toBe("1")
-      }
-    },
-  )
-})
