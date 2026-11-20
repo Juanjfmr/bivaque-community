@@ -1,0 +1,62 @@
+task_id: TROCA-004
+objective: >
+  Refazer no app o indicar prestador (/communities/[id]/indicar-prestador) e o painel de quem
+  administra a comunidade ((owner)/communities/[id]/admin: início, pendentes, moderadores, prestadores
+  e mídia), e então apagar as versões do site com código e testes. A porta provisória do #309 passa a
+  abrir as telas novas.
+authority:
+  - docs/LANCAMENTO.md (fase 6, critério: nenhuma rota de membro no apps/web servindo tela)
+  - docs/decisions/ADR-20261024-front-react-spa.md (§5 contrato de API, §8 ordem da troca)
+  - "card LAN-TROCA-ADMIN; decisão do dono de 20/11 (nenhuma tela antiga sobrevive)"
+adr: docs/decisions/ADR-20261024-front-react-spa.md
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    Depois do TROCA-002 (#309) seguem servindo tela no site (shell)/communities/[id]/indicar-prestador
+    e as cinco páginas de (owner)/communities/[id]/admin; no app só existe a porta provisória.
+allowed_paths:
+  - apps/app/src/**
+  - apps/app/lib/**
+  - apps/app/tests/**
+  - apps/web/app/(shell)/communities/**
+  - apps/web/app/(owner)/**
+  - apps/web/app/api/app/**
+  - apps/web/lib/**
+  - apps/web/components/**
+  - apps/web/proxy.ts
+  - apps/web/next.config.ts
+  - supabase/migrations/**
+  - supabase/tests/**
+  - tests/**
+  - docs/agents/tasks/TROCA-004.task.yml
+forbidden:
+  - editar migration já aplicada (só arquivo novo); reiniciar ou reconstruir o banco local
+  - remover a tela web antes de a tela do app passar na revisão às cegas e no E2E
+  - redirecionamento em ciclo ou que perca ID ou query
+  - afrouxar ou apagar asserção de teste de uma rota que continua existindo
+  - rota de API nova sem o contrato do ADR SPA §5 (resolvedor único, CSRF por Origin e cabeçalho, CORS explícito) e sem teste positivo e negativo
+  - service_role sem autorização explícita no código
+  - expor Força/OM de outro membro (BLOCK-AFFILIATION)
+  - git stash, delegar, dado pessoal real ou CPF real
+  - apps/web/app/(admin)/**, a landing, apps/mobile, apps/prototipo
+acceptance:
+  - "indicar prestador e cada seção do painel funcionam no app com entrada, ação, persistência, retorno, acompanhamento e falha principal, em 375/768/1440"
+  - "só dono e moderadores veem e usam o painel; membro comum e anônimo recebem recusa na API e na tela (testes negativos)"
+  - "aprovar ou recusar pendente, nomear moderador, gerir prestadores e mídia gravam com as mesmas regras de hoje (validação compartilhada num só módulo enquanto o caminho velho existir)"
+  - "as rotas antigas devolvem 307 ao /app com ID preservado; páginas, componentes e testes antigos saem"
+  - "a porta provisória passa a abrir as telas novas; link-crawl no rigor normal"
+proof:
+  - npx pnpm@11.18.0 gate --fast
+  - npx pnpm@11.18.0 test
+  - npx pnpm@11.18.0 test:scope
+  - npx pnpm@11.18.0 --filter @bivaque/app test
+  - npx pnpm@11.18.0 --filter @bivaque/app test:e2e
+  - npx pnpm@11.18.0 test:e2e
+  - "npx pnpm@11.18.0 test:db, se houver migration nova, em pilha isolada"
+risk: authz
+risk_level: R3
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: HUMAN_DECISION
+closure:
+  requires_runtime_evidence: true

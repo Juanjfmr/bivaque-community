@@ -31,11 +31,13 @@ export function Conversas() {
   const [carregandoMais, setCarregandoMais] = useState(false)
   const [erroMais, setErroMais] = useState(false)
   const controle = useRef<AbortController | null>(null)
+  const paginaEmCurso = useRef(false)
   useRolagemEFoco(CARGA_CONCLUIDA)
   // biome-ignore lint/correctness/useExhaustiveDependencies: rodada solicita nova leitura
   useEffect(() => {
     const pedido = new AbortController()
     controle.current = pedido
+    paginaEmCurso.current = false
     setDados(null)
     setErro(null)
     void lerConversas({ signal: pedido.signal })
@@ -50,21 +52,30 @@ export function Conversas() {
   }, [rodada])
   async function mais() {
     const pedido = controle.current
-    if (!pedido || pedido.signal.aborted || !dados?.proximo || carregandoMais) return
+    if (!pedido || pedido.signal.aborted || !dados?.proximo || paginaEmCurso.current) return
+    paginaEmCurso.current = true
+    const cursor = dados.proximo
     setCarregandoMais(true)
     setErroMais(false)
     try {
-      const pagina = await lerConversas({ depois: dados.proximo, signal: pedido.signal })
+      const pagina = await lerConversas({ depois: cursor, signal: pedido.signal })
       if (!pedido.signal.aborted)
-        setDados({
-          conversas: [...dados.conversas, ...pagina.conversas],
-          proximo: pagina.proximo,
-          porLer: pagina.porLer,
-        })
+        setDados((atual) =>
+          atual?.proximo === cursor
+            ? {
+                conversas: [...atual.conversas, ...pagina.conversas],
+                proximo: pagina.proximo,
+                porLer: pagina.porLer,
+              }
+            : atual,
+        )
     } catch {
       if (!pedido.signal.aborted) setErroMais(true)
     } finally {
-      if (!pedido.signal.aborted) setCarregandoMais(false)
+      if (!pedido.signal.aborted) {
+        paginaEmCurso.current = false
+        setCarregandoMais(false)
+      }
     }
   }
   const filtradas =
@@ -129,7 +140,12 @@ export function Conversas() {
           {dados?.proximo ? (
             <div className="grid justify-items-center gap-2 pt-2">
               {erroMais && <p role="alert">Não foi possível carregar mais conversas.</p>}
-              <Botao tom="contornado" disabled={carregandoMais} onClick={() => void mais()}>
+              <Botao
+                tom="contornado"
+                disabled={carregandoMais}
+                aria-busy={carregandoMais}
+                onClick={() => void mais()}
+              >
                 {carregandoMais ? "Carregando…" : "Ver mais conversas"}
               </Botao>
             </div>
@@ -163,6 +179,7 @@ export function Conversas() {
                   <Botao
                     data-acao="ver-mais-conversas"
                     disabled={carregandoMais}
+                    aria-busy={carregandoMais}
                     onClick={() => void mais()}
                   >
                     Ver mais conversas

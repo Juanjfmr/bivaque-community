@@ -53,12 +53,13 @@ export function Participacao({
     <>
       <div
         data-controles-grupo="sim"
+        aria-busy={ocupado}
         className="grid gap-3 rounded-2xl border border-(--outline-variant) bg-(--surface-lowest) p-3"
       >
         <p className="text-sm leading-6 text-(--on-surface-variant)">{grupo.descricao}</p>
         {grupo.admin ? (
           <>
-            <Etiqueta tom="ok">Administrador</Etiqueta>
+            <Etiqueta tom="neutro">Administrador</Etiqueta>
             <a className="text-sm font-semibold underline" href={`/groups/${grupo.id}`}>
               Aprovar pedidos e convidar
             </a>

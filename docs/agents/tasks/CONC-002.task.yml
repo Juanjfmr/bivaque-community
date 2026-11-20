@@ -1,0 +1,63 @@
+task_id: CONC-002
+objective: >
+  Levar à main atual as guardas de concorrência dos PRs #172 e #173 (abertos desde 07–09/11, base
+  9e21be567): o mesmo envio, página, pedido de participação ou convite não sai duas vezes quando há
+  dois eventos no mesmo quadro. É uma reaplicação sobre o código de hoje, não um rebase: Conversa,
+  Conversas, Participacao e Familia mudaram muito desde então. Ao final, os PRs #172 e #173 são
+  fechados com um comentário que aponta para o PR novo.
+authority:
+  - docs/LANCAMENTO.md (F05 Conversas, F04 grupos, família; fluxo completo com caminho de falha)
+  - "PR #172 (fix/fluxos-mutacoes-concorrentes-20261109): docs/agents/CONCORRENCIA-DE-MUTACOES.md com as invariantes, e o spec mutacoes-concorrentes.spec.ts"
+  - "PR #173 (refactor/conversas-estado-local-20261109): guarda local de paginação e repetição em Conversas.tsx, spec conversas-paginacao.spec.ts"
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    Os PRs #172 e #173 trazem specs que disparam dois eventos no mesmo quadro com a resposta da API
+    retida e esperam uma única mutação. Eles nunca foram mesclados e a base deles está defasada. O
+    executor deve primeiro portar os dois specs para a main atual e mostrar quais casos falham hoje
+    (registrar em .visual/conc-002/BASELINE.md); os casos que já passam na main ficam como regressão,
+    sem mudança de código.
+allowed_paths:
+  - apps/app/src/telas/Conversa.tsx
+  - apps/app/src/telas/Conversas.tsx
+  - apps/app/src/grupos/Participacao.tsx
+  - apps/app/src/voce/Familia.tsx
+  - apps/app/src/conversas/*.ts
+  - apps/app/src/conversas/*.tsx
+  - apps/app/tests/*.test.ts
+  - apps/app/tests/*.test.tsx
+  - apps/app/tests/e2e/mutacoes-concorrentes.spec.ts
+  - apps/app/tests/e2e/conversas-paginacao.spec.ts
+  - docs/agents/CONCORRENCIA-DE-MUTACOES.md
+  - docs/agents/tasks/CONC-002.task.yml
+forbidden:
+  - API, banco, migrations, apps/web, packages/
+  - idempotência no servidor ou chave de idempotência (fora do escopo; o limite fica escrito no documento)
+  - atualização otimista nova
+  - dependência nova, hook genérico novo ou abstração compartilhada só para isso
+  - afrouxar ou apagar asserção de teste existente
+  - registrar em log o texto da mensagem, o motivo do pedido ou e-mails
+  - git stash, reiniciar ou reconstruir o banco local, delegar
+  - dado pessoal real ou CPF real em stub
+acceptance:
+  - "a guarda efetiva é uma ref síncrona; o estado visível mostra disabled e aria-busy durante a operação"
+  - "Conversa: um segundo envio enquanto o primeiro aguarda não gera um segundo POST; uma falha mantém o rascunho e permite tentar de novo; a página de mensagens anteriores do mesmo cursor não é pedida duas vezes"
+  - "Conversas: a paginação não repete o mesmo cursor enquanto um pedido está pendente; depois de um erro, Tentar novamente funciona"
+  - "Grupo: pedir participação e cancelar não ficam pendentes ao mesmo tempo; o diálogo de confirmação não fecha durante o envio"
+  - "Família: convite duplicado antes do render e convite concorrente com revogação são recusados no cliente"
+  - "mutacoes-concorrentes.spec.ts e conversas-paginacao.spec.ts com retenção da resposta: exatamente uma requisição observada em cada caso; o caminho de erro e a repetição estão cobertos"
+  - "CONCORRENCIA-DE-MUTACOES.md atualizado com as invariantes e o limite de garantia (só dentro da mesma montagem da tela)"
+  - "suítes existentes de conversa, grupos e família continuam verdes, sem regressão visual nas capturas das jornadas tocadas em 375/768/1440, claro e escuro"
+proof:
+  - npx pnpm@11.18.0 gate --fast
+  - npx pnpm@11.18.0 --filter @bivaque/app test
+  - npx pnpm@11.18.0 --filter @bivaque/app exec vite build
+  - npx pnpm@11.18.0 --filter @bivaque/app exec playwright test tests/e2e/mutacoes-concorrentes.spec.ts tests/e2e/conversas-paginacao.spec.ts
+  - npx pnpm@11.18.0 --filter @bivaque/app test:e2e
+risk: ui
+risk_level: R2
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: HUMAN_DECISION
+closure:
+  requires_runtime_evidence: true

@@ -23,8 +23,8 @@ function chromiumInstalado(): string | undefined {
 }
 
 const chromium = chromiumInstalado()
-const porta = 3200
-const portaDoBuild = 3201
+const porta = Number(process.env["PLAYWRIGHT_PORT"] ?? 3200)
+const portaDoBuild = Number(process.env["PLAYWRIGHT_BUILD_PORT"] ?? 3201)
 const SO_DO_BUILD = /.publicado.spec.ts$/
 
 export default defineConfig({
@@ -42,7 +42,7 @@ export default defineConfig({
   },
   webServer: [
     {
-      command: "npx pnpm@11.18.0 dev",
+      command: `npx pnpm@11.18.0 exec vite --host 127.0.0.1 --port ${porta} --strictPort`,
       url: `http://127.0.0.1:${porta}/app/`,
       reuseExistingServer: false,
       timeout: 180_000,

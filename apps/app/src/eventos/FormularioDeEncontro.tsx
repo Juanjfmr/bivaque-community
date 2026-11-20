@@ -220,7 +220,7 @@ export function FormularioDeEncontro({
           )}
 
           {aviso && <p role="status">{aviso}</p>}
-          <div className="flex flex-wrap justify-end gap-2">
+          <div data-acoes-encontro="sim" className="flex flex-wrap justify-end gap-2">
             <Botao tom="texto" onClick={() => (revisando ? setRevisando(false) : aoFechar())}>
               {revisando ? "Editar" : "Cancelar"}
             </Botao>

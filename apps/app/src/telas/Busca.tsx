@@ -67,16 +67,9 @@ const TOPICOS: readonly ItemDeFiltro[] = [
   ...TOPICOS_DAS_PERGUNTAS,
 ]
 
-const TAMANHO_DA_LISTA = 20
-
 type Achados = Pick<BuscaDaCidade, "anuncios" | "negocios" | "perguntas" | "grupos" | "guia">
 
 const SEM_ACHADOS: Achados = { anuncios: [], negocios: [], perguntas: [], grupos: [], guia: [] }
-
-/** Contagem que não afirma mais do que a página lida mostra. */
-function contagem(quantidade: number, truncada: boolean): string {
-  return truncada ? `${quantidade}+` : String(quantidade)
-}
 
 function precoDe(anuncio: AnuncioDoInicio): number | null {
   return anuncio.precoCentavos === null ? null : anuncio.precoCentavos / 100
@@ -192,22 +185,8 @@ export function Busca() {
   const teto = escopo === "all" ? 4 : Number.POSITIVE_INFINITY
   const negociosDaCidade = explorar?.negocios ?? []
   const anunciosDaCidade = explorar?.anuncios ?? []
-  const anunciosTruncados = explorar !== null && explorar.proximo !== null
   const perguntasDaCidade = explorar?.perguntas ?? []
   const gruposDaCidade = explorar?.grupos ?? []
-  const bairrosDaCidade = [
-    ...new Set(
-      anunciosDaCidade.flatMap((anuncio) => (anuncio.bairro === null ? [] : [anuncio.bairro])),
-    ),
-  ].slice(0, 6)
-  const cidadeSemConteudo =
-    !comTermo &&
-    categoriaAtiva === null &&
-    explorar !== null &&
-    negociosDaCidade.length === 0 &&
-    anunciosDaCidade.length === 0 &&
-    perguntasDaCidade.length === 0 &&
-    gruposDaCidade.length === 0
   const resumoDaCidade = [
     negociosDaCidade.length === 0
       ? null
@@ -224,6 +203,19 @@ export function Busca() {
   ]
     .filter((parte): parte is string => parte !== null)
     .join(" · ")
+  const bairrosDaCidade = [
+    ...new Set(
+      anunciosDaCidade.flatMap((anuncio) => (anuncio.bairro === null ? [] : [anuncio.bairro])),
+    ),
+  ].slice(0, 6)
+  const cidadeSemConteudo =
+    !comTermo &&
+    categoriaAtiva === null &&
+    explorar !== null &&
+    negociosDaCidade.length === 0 &&
+    anunciosDaCidade.length === 0 &&
+    perguntasDaCidade.length === 0 &&
+    gruposDaCidade.length === 0
 
   return (
     <section data-tela="busca" className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-2">
@@ -243,6 +235,10 @@ export function Busca() {
         rotulo="Filtrar por tipo"
         className="mt-1"
       />
+
+      <p className="text-xs text-(--on-surface-variant) sm:hidden">
+        Deslize para ver todos os filtros.
+      </p>
 
       {comTermo && (escopo === "perguntas" || escopo === "all") ? (
         <div data-topicos="filtro-busca">
@@ -318,9 +314,6 @@ export function Busca() {
                 )
                   .slice(0, 6)
                   .map((item) => {
-                    const quantidade = negociosDaCidade.filter((negocio) =>
-                      negocioDoGrupo(item.id, negocio.categoria),
-                    ).length
                     return (
                       <button
                         key={item.id}
@@ -337,10 +330,6 @@ export function Busca() {
                         </span>
                         <span className="grid min-w-0 gap-0.5">
                           <b className="text-[13px] leading-4">{item.rotulo}</b>
-                          <small className="text-xs text-(--on-surface-variant)">
-                            {contagem(quantidade, negociosDaCidade.length >= TAMANHO_DA_LISTA)}{" "}
-                            {quantidade === 1 ? "negócio" : "negócios"}
-                          </small>
                         </span>
                       </button>
                     )
@@ -350,13 +339,11 @@ export function Busca() {
                     id: "imoveis",
                     rotulo: "Imóveis",
                     icone: "apartment",
-                    quantidade: anunciosDaCidade.filter((a) => a.tipo === "property").length,
                   },
                   {
                     id: "desapegos",
                     rotulo: "Desapegos",
                     icone: "sell",
-                    quantidade: anunciosDaCidade.filter((a) => a.tipo !== "property").length,
                   },
                 ].map((item) => (
                   <button
@@ -371,9 +358,6 @@ export function Busca() {
                     </span>
                     <span className="grid min-w-0 gap-0.5">
                       <b className="text-[13px] leading-4">{item.rotulo}</b>
-                      <small className="text-xs text-(--on-surface-variant)">
-                        {contagem(item.quantidade, anunciosTruncados)} disponíveis
-                      </small>
                     </span>
                   </button>
                 ))}
@@ -381,9 +365,11 @@ export function Busca() {
             </Secao>
 
             <Secao titulo={`O que existe em ${cidade}`}>
-              <p data-busca="resumo-da-cidade" className="text-sm text-(--on-surface-variant)">
-                {resumoDaCidade}
-              </p>
+              {resumoDaCidade ? (
+                <p data-busca="resumo-da-cidade" className="text-sm text-(--on-surface-variant)">
+                  {resumoDaCidade}
+                </p>
+              ) : null}
               {bairrosDaCidade.length === 0 ? null : (
                 <p className="text-sm text-(--on-surface-variant)">
                   {`Com anúncios em ${bairrosDaCidade.join(", ")}.`}

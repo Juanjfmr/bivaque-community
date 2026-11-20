@@ -129,6 +129,8 @@ test.describe("estado de primeira entrada", () => {
     )
     await expect(page.locator('[data-explorar="categorias"]')).toBeVisible()
     await expect(page.locator('[data-busca="resumo-da-cidade"]')).toContainText("6 negócios")
+    await expect(page.locator('[data-busca="resumo-da-cidade"]')).toContainText("1 grupo")
+    await expect(page.locator('[data-busca="resumo-da-cidade"]')).not.toContainText("1 grupos")
     await expect(page.getByRole("button", { name: "Abrir o Criar" })).toBeVisible()
     // Sem busca de verdade, não existe "recente".
     await expect(page.getByText("Buscas recentes")).toHaveCount(0)
@@ -141,6 +143,7 @@ test.describe("estado de primeira entrada", () => {
     await expect(page.getByRole("heading", { name: "Nada publicado por aqui ainda" })).toBeVisible()
     await expect(page.getByRole("button", { name: "Publicar na cidade" })).toBeVisible()
     await expect(page.locator('[data-explorar="categorias"]')).toHaveCount(0)
+    await expect(page.locator('[data-busca="resumo-da-cidade"]')).toHaveCount(0)
   })
 
   test("a busca recente aparece só depois de uma busca de verdade", async ({ page }) => {

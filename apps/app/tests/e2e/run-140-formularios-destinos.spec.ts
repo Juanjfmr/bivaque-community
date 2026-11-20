@@ -94,6 +94,10 @@ test("encontro: dd/mm/aaaa e 24 h, erro no campo e envio só com os obrigatório
   await titulo.fill("Encontro de veteranos no centro")
   await data.fill("05/12/2026")
   await hora.fill("19:00")
+  await folha.evaluate((elemento) => {
+    elemento.scrollTop = 0
+  })
+  await expect(criar).toBeInViewport({ ratio: 1 })
   await folha.getByRole("button", { name: "Salvar rascunho" }).click()
   await expect(folha.getByRole("status")).toContainText("Rascunho salvo")
   // Fechar a folha volta ao menu Criar; reabrir o Criar encontro restaura o texto.
@@ -107,6 +111,7 @@ test("encontro: dd/mm/aaaa e 24 h, erro no campo e envio só com os obrigatório
     if (request.method() === "POST" && request.url().endsWith("/api/app/eventos")) envios += 1
   })
   await expect(criar).toBeEnabled()
+  await expect(criar).toBeInViewport({ ratio: 1 })
   await criar.click()
   expect(envios).toBe(0)
   await expect(folha.locator('[data-revisao="encontro"]')).toContainText(
