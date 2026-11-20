@@ -63,7 +63,8 @@ pública do proxy (ADR-20261110), e tem teste positivo e negativo.
     "local")`, que é `POST /logout?scope=local` com o JWT da pessoa e não usa `service_role`. O
     `signOut()` do cliente criado a partir do token é proibido: com `persistSession: false` ele não chama o
     GoTrue e responde sem revogar. No modo cookie, nada muda, inclusive o `Clear-Site-Data` do
-    ADR-20261119 §3.
+    ADR-20261119 §3. No modo Bearer a resposta não leva `Clear-Site-Data` (não alcança a origem nativa;
+    a limpeza local é do app, §7).
 - **Novas:**
   - `POST /api/app/sessao/token` troca `code` mais `code_verifier` (§5) pelo par.
   - `POST /api/app/sessao/renovar` recebe o token de renovação no corpo e devolve o par novo.
@@ -71,13 +72,19 @@ pública do proxy (ADR-20261110), e tem teste positivo e negativo.
 - **Limitador:** `sessao/token` e `sessao/renovar` são públicas e chamam o GoTrue a partir do IP do
   servidor, cuja cota por IP todos os membros dividem. Por isso as duas ganham limitador por IP confiável no
   banco, consumido antes da chamada ao GoTrue e fechando em falha, no mesmo padrão da verificação do código.
-  Ao estourar, respondem 429.
+  - **Tetos:** `sessao/token`, 20 por IP em 10 minutos; `sessao/renovar`, 120 por IP em 10 minutos. A
+    verificação do código usa 30 em 10 minutos; a renovação fica mais folgada porque vários aparelhos atrás
+    do mesmo CGNAT renovam sozinhos, e o app só renova quando faltam menos de 5 minutos para o
+    `expires_at` (ou diante de 401), o que deixa cada aparelho em poucas renovações por hora.
+  - **IP indisponível:** quando `ipConfiavel` devolve `null`, a chave do limitador é um balde único
+    `sem-ip` com o mesmo teto, nunca isenção.
+  - Ao estourar, respondem 429. Para o app, 429 é falha passageira (§4): não limpa o cofre.
 
 ### 4. Classes de resposta da renovação
 
 - **Recusa definitiva → 401:** token inexistente, revogado, reusado fora da janela ou usuário removido. O
   app limpa o cofre e vai para a entrada.
-- **Falha passageira → 503 ou erro de rede:** 429 do GoTrue, 5xx, tempo esgotado ou falta de rede. O cofre
+- **Falha passageira → 429, 503 ou erro de rede:** 429 do limitador ou do GoTrue, 5xx, tempo esgotado ou falta de rede. O cofre
   fica intacto e o app tenta de novo com espera crescente. Abrir o app sem rede não derruba a sessão.
 - **Rotação:** fica ligada, com a janela de reuso do `supabase/config.toml` (`refresh_token_reuse_interval
   = 10` s). Dentro da janela, o token anterior ainda devolve sessão; fora dela, o GoTrue revoga a família
@@ -94,13 +101,16 @@ pública do proxy (ADR-20261110), e tem teste positivo e negativo.
 - Quem monta a URL de autorização é o servidor, como hoje (`entry/oauth`), estendido para Google e Apple e
   para o modo nativo. Ele usa `code_challenge_method=s256` e um `redirect_to` constante definido no
   servidor, nunca vindo do pedido nem do `Host`. A rota da web, que guarda o verificador em cookie e deriva
-  o retorno do `Host`, não é reaproveitada no nativo.
+  o retorno do `Host`, não é reaproveitada no nativo: o ramo nativo de `entry/oauth` não usa o cliente SSR
+  com cookie nem `origemDoPedido`, e não grava cookie.
 - O retorno é `bivaque://auth-callback?code=…`, a URI exata que já está em `additional_redirect_urls` do
   `supabase/config.toml`, sem curinga. O registro no projeto hospedado é ato do dono no painel.
 - **CSRF de login:** coberto pelo PKCE mais o fluxo pendente. O app só aceita um retorno se houver no cofre
   um verificador criado há menos de 10 minutos. Verificador e marcador são apagados na primeira tentativa,
   com sucesso ou falha. Retorno sem fluxo pendente é ignorado. Não há `state` do app na URL.
-- **Ouvinte próprio:** o retorno tem um ouvinte separado de `ouvirLinksNativos`. `rotaDoLink` continua
+- **Ouvinte próprio:** o retorno tem um ouvinte separado de `ouvirLinksNativos`, que trata o evento
+  `appUrlOpen` e também `App.getLaunchUrl()` na abertura a frio (o sistema pode ter matado o app enquanto o
+  navegador estava aberto). `rotaDoLink` continua
   recusando esse host, para o `code` nunca entrar no roteador nem no histórico. Depois da troca, o app segue
   o mesmo destino do `next` do callback da web (`/app/entrar`, que decide o passo seguinte).
 - **Navegador:** `@capacitor/browser`, que usa Custom Tabs no Android e SFSafariViewController no iOS. Com
@@ -127,6 +137,13 @@ pública do proxy (ADR-20261110), e tem teste positivo e negativo.
 - **Limite do cofre:** ele protege o dado parado, não a WebView. Um XSS no app consegue chamar o plugin, como
   hoje consegue ler o cookie da web, que também não é httpOnly. Por isso o build nativo tem CSP e não
   carrega conteúdo remoto.
+- **CSP do build nativo (decisão):** o `dist-nativo` leva uma meta CSP com `default-src 'self'`,
+  `script-src 'self'` (sem `unsafe-inline` nem `unsafe-eval`), `connect-src 'self'` mais a origem de
+  `VITE_API_BASE` e a do Supabase Storage usada nas URLs assinadas, `img-src 'self' data: blob:` mais essas
+  origens, `object-src 'none'`, `base-uri 'none'` e `frame-src 'none'`. O script inline que
+  `apps/app/scripts/preparar-nativo.mjs` injeta sai para um arquivo próprio (ou entra por hash). O
+  `capacitor.config.ts` não tem `server.url` nem `allowNavigation`. A prova lê o `index.html` gerado e
+  confere a meta, a ausência de script inline sem hash e a configuração.
 
 ### 7. Ciclo de vida
 
@@ -134,7 +151,9 @@ pública do proxy (ADR-20261110), e tem teste positivo e negativo.
   primeira leitura. Sem ele, vai para `/app/entrar`.
 - **401 no meio do uso:** só uma renovação em curso por vez, cobrindo também a abertura e a volta do segundo
   plano, e os pedidos esperam por ela. O novo token de renovação é gravado no cofre antes de soltar os
-  pedidos. Se a gravação falhar, o antigo fica, e a janela de reuso absorve a diferença.
+  pedidos. Se a gravação falhar, o app mantém o par novo em memória e segue; se fechar antes de conseguir
+  gravar, o token antigo no cofre já foi rotacionado, e a próxima abertura pode cair na entrada. Esse
+  resíduo é aceito e declarado.
   - Se a renovação der certo, o pedido é repetido uma vez só, e só leituras. Escrita não se repete (regra do
     `cliente.ts`): a tela oferece "Tentar de novo". A exceção é sair (abaixo).
   - Se a renovação for recusada (401), o app limpa o cofre e vai para a entrada com `redirect`, pelo mesmo
@@ -147,9 +166,9 @@ pública do proxy (ADR-20261110), e tem teste positivo e negativo.
   4. limpar o cofre, os caches de consulta e o armazenamento da WebView (`localStorage`, IndexedDB e Cache
      Storage, onde ficam os rascunhos). O `Clear-Site-Data` da resposta não alcança a origem nativa, então
      o app limpa sozinho.
-- **Sair sem rede:** o passo 4 acontece mesmo sem resposta, e o app guarda uma "revogação pendente" (só o
-  token de renovação, no cofre), que tenta revogar na próxima abertura com rede. Até lá, o token continua
-  válido no servidor. Esse resíduo é aceito e declarado.
+- **Sair sem rede:** o passo 4 acontece mesmo sem resposta, como no ADR-20261118 §2: o app não guarda
+  credencial para revogar depois. O token de renovação continua válido no servidor até a pessoa excluir a
+  conta ou a família ser revogada por reuso. Esse resíduo é aceito e declarado.
 - **Exclusão de conta:** o servidor já responde 401 pelo token (provado na revisão do F10), e o app trata
   como sessão encerrada.
 - **Suspensão:** é aplicada pelas regras do banco em cada leitura e escrita, não pelo token. O token continua
@@ -166,6 +185,10 @@ pública do proxy (ADR-20261110), e tem teste positivo e negativo.
   `fetch`.
 - A exigência do cabeçalho do app em escrita continua valendo só para sessão por cookie, como hoje. Pedido
   com Bearer não carrega credencial ambiente, então não há CSRF a barrar.
+- **Escrita por Bearer vinda da origem nativa:** `avaliarEscrita` e `conferirPorta` hoje recusam com 403
+  uma `Origin` presente fora de `origensPermitidas()`, também para Bearer. Passam a conferir a `Origin`
+  presente de um pedido Bearer contra a lista web mais a nativa. A lista de escrita por cookie continua sem
+  as origens nativas. O preflight lista também `content-type`.
 
 ### 9. O que não se registra
 
@@ -174,8 +197,10 @@ pública do proxy (ADR-20261110), e tem teste positivo e negativo.
 - `/api/app/sessao/*`, `/api/app/entry/otp/verify` e `/api/app/voce/sair` ficam fora da captura de corpo do
   Sentry (`ignoreIncomingRequestBody`).
 - O scrubber (`packages/domain/src/pii-scrub.ts`) e o logger (`apps/web/lib/logger.ts`) passam a apagar
-  `access_token`, `refresh_token`, `provider_token`, `provider_refresh_token`, `code`, `code_verifier` e
-  `state`, também como parâmetro de URL e em breadcrumbs.
+  `access_token`, `refresh_token`, `provider_token`, `provider_refresh_token`, `auth_code` e
+  `code_verifier`, também como parâmetro de URL e em breadcrumbs. A chave genérica `code` não é apagada em
+  todo lugar (ela nomeia códigos de erro): só como parâmetro de `bivaque://auth-callback` e nos corpos de
+  `/api/app/sessao/*`.
 - O tratador do retorno não grava a URL no histórico do roteador.
 
 ## Provas exigidas do lote
@@ -187,7 +212,8 @@ pública do proxy (ADR-20261110), e tem teste positivo e negativo.
   - **Rotação:** R0 vira R1 e R1 vira R2; reusar R0 depois da janela de 10 s é recusado, e R2 também
     passa a ser recusado (família revogada).
   - `renovar` com GoTrue em 5xx responde 503, não 401.
-  - Limitador de `token` e de `renovar` responde 429 antes de chamar o GoTrue.
+  - Limitador de `token` e de `renovar` responde 429 antes de chamar o GoTrue, inclusive com IP
+    indisponível (balde `sem-ip`).
 - **Servidor — modo nativo e origem:**
   - origem web pedindo modo nativo recebe 403, e `Origin: null` também;
   - modo nativo com cookie é recusado;
@@ -195,12 +221,16 @@ pública do proxy (ADR-20261110), e tem teste positivo e negativo.
   - o corpo com o par tem só as três chaves do §2.
   - `sessao/token` com verificador errado e com código reusado é recusado.
 - **Servidor — CORS:** origem nativa recebe `Allow-Origin` exato e nenhum `Allow-Credentials`; o preflight
-  com `x-bivaque-cliente` passa; origem nativa não serve para escrita por cookie.
+  com `x-bivaque-cliente` e `content-type` passa; origem nativa não serve para escrita por cookie;
+  escrita por Bearer com `Origin` nativa passa e com `Origin` fora das duas listas recebe 403.
+- **CSP:** o `index.html` do `dist-nativo` tem a meta do §6 e nenhum script inline sem hash; o
+  `capacitor.config.ts` não tem `server.url` nem `allowNavigation`.
 - **Redação:** teste do scrubber e do logger com um corpo de renovação e uma URL de retorno sintéticos, sem
   sobrar valor.
 - **App:**
   - renovação única com pedidos concorrentes; escrita não repetida; sair repetido uma vez depois de 401;
-  - 401 na renovação limpa o cofre; 503 e falta de rede não limpam;
+  - 401 na renovação limpa o cofre; 429, 503 e falta de rede não limpam;
+  - o retorno é tratado tanto por `appUrlOpen` quanto por `getLaunchUrl()`;
   - retorno sem fluxo pendente ou vencido é ignorado; o verificador não se reutiliza;
   - ordem ao sair: push, plugin, sessão, limpeza local;
   - nada do cofre aparece em `localStorage`, e sair limpa `localStorage`, IndexedDB e Cache Storage;
