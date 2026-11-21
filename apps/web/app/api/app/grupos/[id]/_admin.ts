@@ -21,9 +21,9 @@ export function resultado(
   if (error.code === "23505" || error.code === "23503")
     return responder(request, { erro: "conflito" }, 409)
   const falha = interpretarErroDoBanco(error.code, {
-    recusado: "Opera??o recusada.",
-    dados: "Dados inv?lidos.",
+    recusado: "Operação recusada.",
+    dados: "Dados inválidos.",
   })
-  if (falha.status === 503) registrarFalha("administra??o", error)
+  if (falha.status === 503) registrarFalha("administração", error)
   return responder(request, falha.corpo, falha.status)
 }
