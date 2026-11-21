@@ -1,28 +1,26 @@
 "use client"
 
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react"
-import { Botao } from "@/components/bivaque/botao"
+import { useCallback, useEffect, useRef, useState } from "react"
+import { Botao, BotaoDeIcone } from "@/components/bivaque/botao"
 import { FormularioDeCriacao } from "@/components/bivaque/formulario-criacao"
 
 import { Icone } from "@/components/bivaque/icone"
-import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog"
 import type { NomeDeIcone } from "@/lib/icones"
 import { useNavegacao } from "@/lib/navegacao/react"
 import { TIPOS_RASCUNHO, type TipoRascunho } from "@/lib/rascunhos-criacao"
-import { cn } from "@/lib/utils"
 import { useStateComMidia } from "@/src/casca/midia"
 import { useCasca } from "@/src/contexto/casca"
 import { Desapego } from "@/src/criar/Desapego"
 import { FormularioDeEncontro } from "@/src/eventos/FormularioDeEncontro"
+import { Folha } from "@/src/pecas/pecas"
 
 /**
  * O menu Criar (inventário §5.4).
  *
  * As sete escolhas são as do protótipo, com o mesmo ícone, rótulo e subtítulo.
- * No celular é uma pilha ancorada ao botão; a partir de 1024 px vira o painel
- * "Criar no Bivaque" em duas colunas, com o morfo do botão (itens 12 e 13 do
- * §6). Abre pelo teclado com `C` no desktop, fora de campos de texto, e as
- * setas andam pelas escolhas.
+ * É a Folha única do app: no celular sobe de baixo e fecha arrastando; a partir
+ * de 1024 px é a mesma Folha em painel de duas colunas. Abre pelo teclado com
+ * `C` no desktop, fora de campos de texto, e as setas andam pelas escolhas.
  *
  * Cada escolha é uma **porta**, não uma tela: quem liga cada fluxo é a onda que
  * tem a jornada (2 a 8). Aqui elas avisam que ainda não existem.
@@ -77,54 +75,13 @@ export function MenuCriar({ aoFechar }: { readonly aoFechar: () => void }) {
   const [encontro, setEncontro] = useState(false)
   const [concluido, setConcluido] = useState(false)
   const lista = useRef<HTMLDivElement | null>(null)
-  const popup = useRef<HTMLDivElement | null>(null)
-  // A escolha que abriu um fluxo dentro do menu devolve o foco a ela quando o
-  // fluxo fecha: o Radix tenta devolver ao botão de origem, mas ele já saiu da
-  // árvore quando o menu dá lugar ao formulário.
-  const escolhaDeOrigem = useRef<string | null>(null)
-  // Fechar pelo menu (Esc, botão, clique fora) devolve o foco ao Criar; a saída
-  // por navegação não, porque a tela seguinte é quem passa a dona do foco.
-  const fechamentoPedido = useRef(false)
+  // A escolha que abriu um fluxo dentro do menu recebe o foco de volta quando o
+  // fluxo fecha: a Folha foca a origem em vez da primeira escolha.
+  const [origemDoFluxo, setOrigemDoFluxo] = useState<string | null>(null)
 
   const fechar = useCallback(() => {
-    fechamentoPedido.current = true
     aoFechar()
   }, [aoFechar])
-
-  const posicionar = useCallback(() => {
-    const menu = popup.current
-    const ancora = document.querySelector('[data-criar="botao"]')?.getBoundingClientRect()
-    if (!menu || !ancora) return
-    const largura = Math.min(
-      painel || tipo !== null || concluido ? 620 : 262,
-      window.innerWidth - 24,
-    )
-    const central = window.innerWidth < 1024
-    const esquerda = painel
-      ? ancora.left
-      : central
-        ? ancora.x + ancora.width / 2 - largura / 2
-        : ancora.right - largura
-    const acima = ancora.top > window.innerHeight / 2
-    const topo = painel
-      ? ancora.top
-      : acima
-        ? ancora.top - menu.offsetHeight - 10
-        : ancora.bottom + 12
-    menu.style.width = `${largura}px`
-    const x = Math.max(12, Math.min(window.innerWidth - largura - 12, esquerda))
-    const y = Math.max(12, Math.min(window.innerHeight - menu.offsetHeight - 12, topo))
-    menu.style.left = `${x}px`
-    menu.style.top = `${y}px`
-    menu.style.setProperty("--fab-x", `${ancora.x + ancora.width / 2 - 29 - x}px`)
-    menu.style.setProperty("--fab-y", `${ancora.y - y}px`)
-  }, [painel, tipo, concluido])
-
-  useLayoutEffect(() => {
-    posicionar()
-    window.addEventListener("resize", posicionar)
-    return () => window.removeEventListener("resize", posicionar)
-  }, [posicionar])
 
   const mover = (passo: number | "primeiro" | "ultimo") => {
     const itens = [...(lista.current?.querySelectorAll<HTMLElement>("[data-escolha]") ?? [])]
@@ -152,7 +109,7 @@ export function MenuCriar({ aoFechar }: { readonly aoFechar: () => void }) {
           return
         }
         if (escolha.id === "create-event") {
-          escolhaDeOrigem.current = escolha.id
+          setOrigemDoFluxo(escolha.id)
           setEncontro(true)
           return
         }
@@ -226,52 +183,20 @@ export function MenuCriar({ aoFechar }: { readonly aoFechar: () => void }) {
           aoSalvar={(id) => void navegacao.irPara("evento", { parametros: { id }, replace: true })}
         />
       ) : null}
-      <Dialog
-        open={!encontro}
-        onOpenChange={(aberto) => {
-          if (!aberto) fechar()
-        }}
-      >
-        <DialogContent
-          ref={popup}
-          unstyled
-          showCloseButton={false}
-          data-sobreposicao="menu-criar"
-          data-modo={painel ? "painel" : "pilha"}
-          overlayProps={{ "data-criar-fundo": painel ? "painel" : undefined }}
-          onOpenAutoFocus={(evento) => {
-            // O foco vai para a escolha que abriu o fluxo e, na primeira
-            // abertura, para a primeira escolha (§5.4) — nunca para o botão de
-            // fechar: o foco automático do Radix não decide por nós.
-            evento.preventDefault()
-            posicionar()
-            const origem = escolhaDeOrigem.current
-            escolhaDeOrigem.current = null
-            const alvo =
-              (origem === null
-                ? null
-                : lista.current?.querySelector<HTMLElement>(`[data-escolha="${origem}"]`)) ??
-              lista.current?.querySelector<HTMLElement>("[data-escolha]")
-            alvo?.focus()
-          }}
-          onCloseAutoFocus={(evento) => {
-            // Sem escolha de origem o Radix ainda acerta na primeira abertura;
-            // depois do formulário de encontro ele restauraria o foco para o
-            // botão que já saiu da árvore. O destino certo é o Criar.
-            if (!fechamentoPedido.current) return
-            fechamentoPedido.current = false
-            evento.preventDefault()
-            document.querySelector<HTMLElement>('[data-acao="criar"]')?.focus()
-          }}
-          className="bv-painel bv-criar-menu rounded-2xl border border-(--outline-variant) bg-(--surface-lowest) p-3 shadow-[0_28px_64px_-16px_var(--shadow-strong)]"
-        >
-          <div className={cn("flex items-start justify-between gap-3", !painel && "sr-only")}>
-            <div>
-              <DialogTitle className="text-lg leading-6">Criar no Bivaque</DialogTitle>
-              <DialogDescription className="mt-0.5 text-sm text-(--on-surface-variant)">
-                {painel ? "O que você quer publicar ou pedir?" : "Escolha o que publicar"}
-              </DialogDescription>
-            </div>
+      <Folha
+        aberta={!encontro}
+        aoFechar={fechar}
+        titulo="Criar no Bivaque"
+        descricao={painel ? "O que você quer publicar ou pedir?" : "Escolha o que publicar"}
+        modo={painel ? "painel" : "folha"}
+        focoInicial={
+          origemDoFluxo === null ? "[data-escolha]" : `[data-escolha="${origemDoFluxo}"]`
+        }
+        sobreposicao="menu-criar"
+        {...(painel ? { fundoProps: { "data-criar-fundo": "painel" } } : {})}
+        className="bv-criar-menu rounded-2xl border border-(--outline-variant) bg-(--surface-lowest) p-3 shadow-[0_28px_64px_-16px_var(--shadow-strong)]"
+        acaoDoCabecalho={
+          <div className="flex shrink-0 items-center gap-2">
             {painel ? <kbd className="bv-criar-atalho">C</kbd> : null}
             {painel ? (
               <button
@@ -283,80 +208,77 @@ export function MenuCriar({ aoFechar }: { readonly aoFechar: () => void }) {
               >
                 <Icone nome="close" className="size-6" />
               </button>
-            ) : null}
+            ) : (
+              <BotaoDeIcone rotulo="Fechar" nome="close" data-criar="fechar" onClick={fechar} />
+            )}
           </div>
-          {!painel ? (
-            <button type="button" data-criar="fechar" aria-label="Fechar" onClick={fechar}>
-              <Icone nome="close" />
-            </button>
-          ) : null}
-
-          {tipo !== null ? (
-            <div
-              data-criar-etapa="formulario"
-              className="mt-3 max-h-[76dvh] overflow-y-auto px-1 pb-2"
-            >
-              {tipo === "create-item" ? (
-                <Desapego
-                  cidade={casca.cidade}
-                  aoCancelar={() => setTipo(null)}
-                  aoSalvar={(id) =>
-                    void navegacao.irPara("anuncio", { parametros: { id }, replace: true })
-                  }
-                />
-              ) : (
-                <FormularioDeCriacao
-                  key={tipo}
-                  tipo={tipo}
-                  cidade={casca.cidade}
-                  aoCancelar={() => setTipo(null)}
-                  aoConcluir={() => {
-                    setTipo(null)
-                    setConcluido(true)
-                  }}
-                />
-              )}
+        }
+      >
+        {tipo !== null ? (
+          <div
+            data-criar-etapa="formulario"
+            className="mt-3 max-h-[76dvh] overflow-y-auto px-1 pb-2"
+          >
+            {tipo === "create-item" ? (
+              <Desapego
+                cidade={casca.cidade}
+                aoCancelar={() => setTipo(null)}
+                aoSalvar={(id) =>
+                  void navegacao.irPara("anuncio", { parametros: { id }, replace: true })
+                }
+              />
+            ) : (
+              <FormularioDeCriacao
+                key={tipo}
+                tipo={tipo}
+                cidade={casca.cidade}
+                aoCancelar={() => setTipo(null)}
+                aoConcluir={() => {
+                  setTipo(null)
+                  setConcluido(true)
+                }}
+              />
+            )}
+          </div>
+        ) : concluido ? (
+          <div data-criar-etapa="concluido" className="grid gap-4 p-3">
+            <b className="text-lg">Rascunho salvo nesta sessão</b>
+            <p className="text-sm text-(--on-surface-variant)">
+              Este conteúdo não foi publicado. Você pode consultá-lo e excluí-lo em Meus anúncios.
+            </p>
+            <div className="flex flex-wrap gap-2">
+              <Botao onClick={() => void navegacao.irPara("meus-anuncios")}>
+                Ver meus rascunhos
+              </Botao>
+              <Botao tom="contornado" onClick={() => setConcluido(false)}>
+                Criar outro
+              </Botao>
             </div>
-          ) : concluido ? (
-            <div data-criar-etapa="concluido" className="grid gap-4 p-3">
-              <b className="text-lg">Rascunho salvo nesta sessão</b>
-              <p className="text-sm text-(--on-surface-variant)">
-                Este conteúdo não foi publicado. Você pode consultá-lo e excluí-lo em Meus anúncios.
-              </p>
-              <div className="flex flex-wrap gap-2">
-                <Botao onClick={() => void navegacao.irPara("meus-anuncios")}>
-                  Ver meus rascunhos
-                </Botao>
-                <Botao tom="contornado" onClick={() => setConcluido(false)}>
-                  Criar outro
-                </Botao>
-              </div>
-            </div>
-          ) : painel ? (
-            <div
-              ref={lista}
-              role="dialog"
-              aria-label="Criar publicação"
-              data-lista-de-escolhas="sim"
-              onKeyDown={aoTeclar}
-              className="mt-2 grid grid-cols-2 gap-1"
-            >
-              {escolhas}
-            </div>
-          ) : (
-            <div
-              ref={lista}
-              role="menu"
-              aria-label="Criar publicação"
-              data-lista-de-escolhas="sim"
-              onKeyDown={aoTeclar}
-              className="grid justify-items-center gap-2"
-            >
-              {escolhas}
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
+          </div>
+        ) : painel ? (
+          <div
+            ref={lista}
+            role="dialog"
+            aria-label="Criar publicação"
+            data-lista-de-escolhas="sim"
+            onKeyDown={aoTeclar}
+            className="mt-2 grid grid-cols-2 gap-1"
+          >
+            {escolhas}
+          </div>
+        ) : (
+          <div
+            ref={lista}
+            role="menu"
+            aria-label="Criar publicação"
+            data-lista-de-escolhas="sim"
+            onKeyDown={aoTeclar}
+            className="grid justify-items-center gap-2"
+          >
+            {escolhas}
+          </div>
+        )}
+      </Folha>
     </>
   )
 }

@@ -1,5 +1,5 @@
 import { useLocation, useRouter, useRouterState } from "@tanstack/react-router"
-import { useCallback, useEffect } from "react"
+import { useCallback, useEffect, useState } from "react"
 
 import { abaAtiva } from "./abas"
 import {
@@ -20,7 +20,12 @@ import {
   type Sobreposicao,
   temEntrada,
 } from "./entrada"
-import { type CargaDaEntrada, registrarRolagem, restaurarEntrada } from "./restauracao"
+import {
+  type CargaDaEntrada,
+  criarCargaPendente,
+  registrarRolagem,
+  restaurarEntrada,
+} from "./restauracao"
 import { type Aba, ROTA_INDISPONIVEL, type Rota, rotaPeloCaminho, rotaPorNome } from "./rotas"
 import {
   abrirSobreposicao,
@@ -146,6 +151,22 @@ export function useRolagemEFoco(carga: CargaDaEntrada): void {
     })
     return () => controle.abort()
   }, [chaveDaEntrada, carga, roteador])
+}
+
+/**
+ * A carga de uma lista que ainda vai chegar (NAV-001).
+ *
+ * As telas que buscam do servidor renderizam curto no primeiro quadro: restaurar
+ * a rolagem ali a grudaria no zero. Esta carga só libera a restauração quando a
+ * lista está pronta (`pronta`), e a tela continua sendo quem decide o que é
+ * "pronta" — o dado chegou ou a falha já tem a sua tela.
+ */
+export function useCargaDaLista(pronta: boolean): CargaDaEntrada {
+  const [carga] = useState(() => criarCargaPendente())
+  useEffect(() => {
+    if (pronta) carga.confirmar()
+  }, [carga, pronta])
+  return carga
 }
 
 export type OpcoesDeNavegacao = {

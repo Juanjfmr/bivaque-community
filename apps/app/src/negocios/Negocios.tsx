@@ -7,8 +7,12 @@ import { EsqueletoDeLista } from "@/components/bivaque/esqueleto"
 import { EstadoVazio } from "@/components/bivaque/estado-vazio"
 import { Grade } from "@/components/bivaque/grade"
 import { type ListaDeNegocios, lerNegocios } from "@/lib/dados/negocios"
-import { useEntradaDaTela, useNavegacao, useRolagemEFoco } from "@/lib/navegacao/react"
-import { CARGA_CONCLUIDA } from "@/lib/navegacao/restauracao"
+import {
+  useCargaDaLista,
+  useEntradaDaTela,
+  useNavegacao,
+  useRolagemEFoco,
+} from "@/lib/navegacao/react"
 import { tituloDaRota } from "@/lib/navegacao/rotas"
 import { type ItemDeSegmento, Segmentos } from "@/src/pecas/segmentos"
 import { FalhaDaLeitura } from "./FalhaDaLeitura"
@@ -35,7 +39,10 @@ export function Negocios() {
   const [salvos, setSalvos] = useState<ReadonlySet<string>>(() => new Set())
   const controle = useRef<AbortController | null>(null)
 
-  useRolagemEFoco(CARGA_CONCLUIDA)
+  // A lista só devolve a rolagem quando o dado chegou (NAV-001): voltar de um
+  // negócio não restaura a posição sobre uma lista ainda vazia.
+  const carga = useCargaDaLista(dados !== null || erro !== null)
+  useRolagemEFoco(carga)
   // biome-ignore lint/correctness/useExhaustiveDependencies: rodada repete a leitura por pedido da pessoa
   useEffect(() => {
     const leitura = new AbortController()

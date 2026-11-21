@@ -81,6 +81,10 @@ test("Voltar fecha a paleta antes de sair da página", async ({ page }) => {
 test("escolher na paleta não deixa camada fantasma no histórico", async ({ page }) => {
   test.skip((page.viewportSize()?.width ?? 0) < 1024, "a paleta pertence ao desktop")
   await page.goto("/app/inicio")
+  // A casca é quem monta o atalho: esperar a barra de navegação garante que a
+  // tecla não chega antes de o app existir (a prova digita mais rápido que a
+  // montagem do React).
+  await expect(page.locator('[data-nav="principal"] [data-aba="inicio"]')).toBeVisible()
   await page.keyboard.press("Control+k")
   const paleta = page.getByRole("dialog", { name: "Buscar e ir para", exact: true })
   await expect(paleta).toBeVisible()

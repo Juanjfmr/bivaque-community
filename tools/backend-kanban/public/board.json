@@ -10460,6 +10460,67 @@
       "proof": [
         "21/11: CI do PR #317 (run 44908862984), anotação diagnostico em 1440: rotaR0 401 credencial-recusada, goTrueR2 200, usuarioR2 200."
       ]
+    },
+    {
+      "id": "NAV-001",
+      "title": "Base de navegação: Folha única, ação otimista com Desfazer e volta à posição da lista",
+      "phase": "Lançamento",
+      "priority": "P1",
+      "category": "frontend",
+      "status": "done",
+      "description": "Três peças comuns do app (contrato docs/agents/tasks/NAV-BASE.task.yml): Folha única com arrasto e movimento reduzido para Criar, Paleta, cidade e Sugerir lugar; ação otimista comum (lib/acao-otimista.ts) com Desfazer em Anúncio, Salvos e Verbete; volta de detalhe com rolagem, aba e filtros em Início, Comunidade, Grupo, Mercado (Desapegos, Imóveis, Negócios), Busca e Salvos. Base dos lotes NAV-002..004.",
+      "checklist": [
+        "Folha única com arrasto, Esc, fundo, Fechar e foco de volta",
+        "Movimento reduzido: só opacidade até 120 ms",
+        "Ação otimista comum com reversão, Desfazer e guarda de toque duplo",
+        "Posição, aba e filtros preservados nas listas citadas",
+        "Vitest e E2E 375/768/1440 claro/escuro"
+      ],
+      "dependencies": [],
+      "tests": [
+        "apps/app/tests/acao-otimista.test.ts",
+        "apps/app/tests/folha.test.ts",
+        "apps/app/tests/navegacao/listas.test.ts",
+        "apps/app/tests/e2e/nav-001.spec.ts"
+      ],
+      "blockers": [],
+      "updatedAt": "2026-11-21",
+      "completedAt": "2026-11-21",
+      "sourceRevision": "27ba94327",
+      "links": [
+        "docs/agents/tasks/NAV-BASE.task.yml",
+        "https://github.com/Juanjfmr/bivaque-community/pull/318"
+      ],
+      "proof": [
+        "21/11: implementado pelo DeepSeek v4.1 Flash (Codex Terra indisponível), 22 commits em apps/app (mais 1 chamada em src/roteador.tsx, aceita pelo coordenador). Conferido pelo coordenador em f03406ef7: typecheck limpo; app test 71 arquivos/756 testes; nav-001.spec 33/33 em mobile-375, tablet-768, desktop-1440, claro e escuro; capturas em .visual/nav-001/pos-*.",
+        "21/11: revisão independente às cegas (subagente reviewer) deu FAIL com 4 altos e 5 médios; rodada única de correção fechou todos com teste (fundo da Folha/Aviso fora de .pc, ignorado em Salvos, Negócios, categoria da Busca, foco de volta, Grupos, altura no computador, tempos do ANIMATION.md, fechamento por arrasto). Baixos em NAV-001-RESSALVAS.",
+        "21/11: merge do PR #318 condicionado ao CI completo (ci:full) verde no head."
+      ]
+    },
+    {
+      "id": "NAV-001-RESSALVAS",
+      "title": "Ressalvas baixas da revisão do NAV-001",
+      "phase": "Lançamento",
+      "priority": "P3",
+      "category": "frontend",
+      "status": "repo",
+      "description": "Achados baixos e de aparelho real da revisão às cegas do NAV-001 (PR #318), fora da rodada de correção.",
+      "checklist": [
+        "Arrasto pelo conteúdo no toque real: touch-action do .pc-folha-corpo e rolagem interna do formulário do Criar (provar em aparelho)",
+        "pecas.tsx: animation.finish() pula a entrada para o fim; interromper do estado atual (ANIMATION §4)",
+        "Arrasto com mouse na caixa central (>=768) pode fechar ao selecionar texto",
+        "Motivo da recusa aparece inline, não na peça Aviso; decidir e alinhar",
+        "Código morto: listaPronta (lib/navegacao/listas.ts) e seletores pilha em styles.css",
+        "pecas.tsx acima de 800 linhas: extrair a Folha",
+        "tests/navegacao/listas.test.ts confere texto do fonte; trocar por teste de comportamento"
+      ],
+      "dependencies": [],
+      "tests": [],
+      "blockers": [],
+      "updatedAt": "2026-11-21",
+      "sourceRevision": "27ba94327",
+      "links": ["https://github.com/Juanjfmr/bivaque-community/pull/318"],
+      "proof": ["21/11: registrado pelo coordenador a partir da revisão às cegas do NAV-001."]
     }
   ],
   "launch": {

@@ -7,7 +7,7 @@ import { useNavegacao, useSobreposicaoDaEntrada } from "@/lib/navegacao/react"
 import { CriarGrupo } from "./CriarGrupo"
 import { EstadoDaLeitura } from "./EstadoDaLeitura"
 
-export function Diretorio() {
+export function Diretorio({ aoPronto }: { aoPronto?: () => void }) {
   const navegacao = useNavegacao()
   // A porta de criar grupo mora aqui, e não no menu Criar: as escolhas de lá
   // são inventário fixo (casca.spec.ts). O dono natural do grupo é o diretório.
@@ -26,10 +26,17 @@ export function Diretorio() {
     setErro(null)
     void lerGrupos({ signal: pedido.signal })
       .then((lidos) => {
-        if (!pedido.signal.aborted) setDados(lidos)
+        if (pedido.signal.aborted) return
+        setDados(lidos)
+        // A carga da tela de cima espera esta leitura: é aqui que a lista fica
+        // com a altura de verdade, e voltar de um grupo devolve a posição.
+        aoPronto?.()
       })
       .catch((falha: unknown) => {
-        if (!pedido.signal.aborted) setErro(falha)
+        if (pedido.signal.aborted) return
+        setErro(falha)
+        // A falha já tem tela própria: também libera a restauração.
+        aoPronto?.()
       })
     return () => pedido.abort()
   }, [rodada])

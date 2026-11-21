@@ -11,8 +11,20 @@ import {
   useState,
 } from "react"
 import { Icone } from "@/components/bivaque/icone"
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog"
 import type { NomeDeIcone } from "@/lib/icones"
+import { prefersReduzido } from "@/lib/movimento"
 import { SeletorDeFoto } from "@/lib/nativo/SeletorDeFoto"
+import {
+  animacaoDaFolha,
+  comecaArrasto,
+  deslocamentoVisivel,
+  duracaoDaAbertura,
+  duracaoDoFechamento,
+  fechaAoSoltar,
+  transicaoDoFechamento,
+  transicaoDoRetorno,
+} from "./gesto-da-folha"
 import "./pecas.css"
 
 /**
@@ -717,85 +729,237 @@ export function BarraDeAcao({ children }: { children: ReactNode }) {
 }
 
 // ── folha que sobe de baixo ────────────────────────────────────────────────
-const ARRASTO_PARA_FECHAR = 96
-
 /**
- * Folha modal com alça. É um `<dialog>`: o navegador cuida do foco preso, do
- * Esc e de devolver o foco a quem abriu. Arrastar a alça para baixo fecha.
+ * A Folha única do app (NAV-001): toda sobreposição de ação é esta peça.
+ *
+ * A caixa é a do Radix (`DialogContent`), que já prende o foco, fecha no Esc e
+ * no fundo e devolve o foco a quem abriu. Arrastar a alça — ou o topo do
+ * conteúdo, quando ele está rolado até o início — acompanha o dedo; soltar
+ * antes do limite volta ao lugar com a curva do ANIMATION.md, e depois dele
+ * fecha. `modo="painel"` é a mesma caixa em painel central, para o Criar e a
+ * paleta no computador.
  */
 export function Folha({
   aberta,
   aoFechar,
   titulo,
+  descricao,
+  modo = "folha",
+  focoInicial,
+  sobreposicao,
+  acaoDoCabecalho,
+  fundoProps,
+  className,
   children,
 }: {
   aberta: boolean
   aoFechar: () => void
   titulo: string
+  descricao?: ReactNode
+  modo?: "folha" | "painel"
+  /** Seletor do que recebe o foco ao abrir; sem ele, o primeiro focável. */
+  focoInicial?: string
+  /** Id publicado em `data-sobreposicao`, para a casca e as provas. */
+  sobreposicao?: string
+  /** No lugar do botão Fechar padrão (o Criar mantém o dele). */
+  acaoDoCabecalho?: ReactNode
+  /** Atributos do fundo, para quem já o pinta por CSS (`data-criar-fundo`). */
+  fundoProps?: Readonly<Record<`data-${string}`, string | undefined>>
+  className?: string
   children: ReactNode
 }) {
-  const ref = useRef<HTMLDialogElement>(null)
-  const inicio = useRef<number | null>(null)
-  const idTitulo = useId()
+  const caixa = useRef<HTMLDivElement>(null)
+  // Quem abriu a Folha: o Radix devolve o foco ao gatilho, e a Folha não tem
+  // `DialogTrigger` — sem isto, SugerirLugar (aberta por estado local) perde o
+  // foco no fechamento.
+  const quemAbriu = useRef<HTMLElement | null>(null)
+  const inicio = useRef<{
+    y: number
+    quando: number
+    capturado: boolean
+  } | null>(null)
+  const reduzido = useMovimentoReduzido()
+  // O fechamento por arrasto termina depois da animação de saída; sair da tela
+  // antes disso não pode deixar um `aoFechar` atrasado na fila.
+  const saida = useRef<number | null>(null)
+  useEffect(
+    () => () => {
+      if (saida.current !== null) window.clearTimeout(saida.current)
+    },
+    [],
+  )
 
-  useEffect(() => {
-    const dialogo = ref.current
-    if (dialogo === null) return
-    if (aberta && !dialogo.open) dialogo.showModal()
-    if (!aberta && dialogo.open) dialogo.close()
-  }, [aberta])
-
-  const deslocar = (y: number) => {
-    const dialogo = ref.current
-    if (dialogo === null) return
-    dialogo.style.transition = y > 0 ? "none" : ""
-    dialogo.style.transform = y > 0 ? `translateY(${y}px)` : ""
+  const deslocar = (deslocamento: number) => {
+    const folha = caixa.current
+    if (folha === null) return
+    folha.style.transition = "none"
+    folha.style.transform = deslocamento > 0 ? `translateY(${deslocamento}px)` : ""
   }
-  const aoDescer = (evento: PointerEvent<HTMLButtonElement>) => {
-    inicio.current = evento.clientY
-    evento.currentTarget.setPointerCapture(evento.pointerId)
-  }
-  const aoMover = (evento: PointerEvent<HTMLButtonElement>) => {
-    if (inicio.current !== null) deslocar(evento.clientY - inicio.current)
-  }
-  const aoSoltar = (evento: PointerEvent<HTMLButtonElement>) => {
-    const distancia = inicio.current === null ? 0 : evento.clientY - inicio.current
+  const soltar = (deslocamento: number, velocidade: number) => {
     inicio.current = null
-    deslocar(0)
-    if (distancia > ARRASTO_PARA_FECHAR) aoFechar()
+    const folha = caixa.current
+    if (fechaAoSoltar(deslocamento, velocidade)) {
+      if (folha === null) {
+        aoFechar()
+        return
+      }
+      // A saída parte da posição atual e desce até sumir; só então a caixa
+      // desmonta. Voltar ao topo antes de fechar dava um salto para cima.
+      const duracao = duracaoDoFechamento(reduzido)
+      folha.style.transition = transicaoDoFechamento(reduzido)
+      folha.style.transform = "translateY(100%)"
+      folha.style.opacity = "0"
+      if (duracao === 0) {
+        aoFechar()
+        return
+      }
+      if (saida.current !== null) window.clearTimeout(saida.current)
+      saida.current = window.setTimeout(aoFechar, duracao)
+      return
+    }
+    if (folha !== null) {
+      folha.style.transition = transicaoDoRetorno(reduzido)
+      folha.style.transform = ""
+    }
   }
+  const aoDescer = (evento: PointerEvent<HTMLElement>) => {
+    const folha = caixa.current
+    if (folha === null) return
+    // O corpo só arrasta a folha quando o conteúdo está no início; rolado no
+    // meio, o gesto é da lista.
+    const noCorpo = evento.currentTarget.classList.contains("pc-folha-corpo")
+    if (noCorpo) {
+      if (!comecaArrasto(folha.scrollTop)) return
+      // No conteúdo, o toque em campo, botão ou link é da peça, não da folha —
+      // inclusive os seletores nativos, cujo ponteiro sai da página no menu.
+      const alvo = evento.target as Element | null
+      if (alvo !== null && alvo.closest("input, select, textarea, button, a, label") !== null)
+        return
+    }
+    // O arrasto interrompe a abertura no estado atual (ANIMATION §4): a
+    // animação de entrada não pode segurar o dedo.
+    if (typeof folha.getAnimations === "function") {
+      for (const animacao of folha.getAnimations()) animacao.finish()
+    }
+    inicio.current = { y: evento.clientY, quando: performance.now(), capturado: !noCorpo }
+    // A captura no corpo só vem quando o gesto prova que é arrasto: capturar no
+    // toque desviaria o clique dos botões para o corpo.
+    if (!noCorpo) evento.currentTarget.setPointerCapture(evento.pointerId)
+  }
+  const aoMover = (evento: PointerEvent<HTMLElement>) => {
+    const comeco = inicio.current
+    if (comeco === null) return
+    const deslocamento = evento.clientY - comeco.y
+    if (!comeco.capturado) {
+      if (deslocamento < 8) return
+      comeco.capturado = true
+      evento.currentTarget.setPointerCapture(evento.pointerId)
+    }
+    deslocar(deslocamentoVisivel(deslocamento))
+  }
+  const aoSoltar = (evento: PointerEvent<HTMLElement>) => {
+    const comeco = inicio.current
+    if (comeco === null) return
+    const deslocamento = evento.clientY - comeco.y
+    const decorrido = Math.max(1, performance.now() - comeco.quando)
+    if (!comeco.capturado) {
+      inicio.current = null
+      return
+    }
+    soltar(deslocamento, deslocamento / decorrido)
+  }
+  const gesto = modo === "folha"
 
   return (
-    // O clique no fundo chega ao próprio <dialog>; o teclado tem o Esc nativo.
-    // biome-ignore lint/a11y/useKeyWithClickEvents: o Esc do <dialog> cobre o teclado.
-    <dialog
-      ref={ref}
-      className="pc-folha"
-      aria-labelledby={idTitulo}
-      onClose={aoFechar}
-      onClick={(evento) => {
-        if (evento.target === ref.current) aoFechar()
+    <Dialog
+      open={aberta}
+      onOpenChange={(aberto) => {
+        if (!aberto) aoFechar()
       }}
     >
-      <button
-        type="button"
-        className="pc-folha-alca"
-        aria-label="Arraste para fechar"
-        tabIndex={-1}
-        onPointerDown={aoDescer}
-        onPointerMove={aoMover}
-        onPointerUp={aoSoltar}
-        onPointerCancel={aoSoltar}
-      />
-      <div className="pc-folha-cabeca">
-        <h2 id={idTitulo} className="pc-subtitulo">
-          {titulo}
-        </h2>
-        <BotaoDeIcone rotulo="Fechar" nome="close" onClick={aoFechar} />
-      </div>
-      <div className="pc-folha-corpo">{children}</div>
-    </dialog>
+      <DialogContent
+        unstyled
+        showCloseButton={false}
+        ref={caixa}
+        className={juntar("pc-folha", className)}
+        data-modo={modo}
+        data-animacao={animacaoDaFolha(reduzido)}
+        data-sobreposicao={sobreposicao}
+        style={
+          {
+            "--pc-folha-entrada": `${duracaoDaAbertura(reduzido, modo)}ms`,
+          } as CSSProperties
+        }
+        {...(fundoProps === undefined ? {} : { overlayProps: fundoProps })}
+        onOpenAutoFocus={(evento) => {
+          // Antes de o Radix mover o foco: aqui ainda é quem abriu.
+          const ativo = document.activeElement
+          quemAbriu.current = ativo instanceof HTMLElement ? ativo : null
+          if (focoInicial === undefined) return
+          const alvo = caixa.current?.querySelector<HTMLElement>(focoInicial)
+          if (!alvo) return
+          evento.preventDefault()
+          alvo.focus()
+        }}
+        onCloseAutoFocus={(evento) => {
+          // Sobreposição de histórico: a volta da entrada já devolve o foco.
+          if (sobreposicao !== undefined) return
+          const alvo = quemAbriu.current
+          quemAbriu.current = null
+          if (alvo === null || alvo === document.body || !alvo.isConnected) return
+          evento.preventDefault()
+          alvo.focus()
+        }}
+      >
+        {gesto ? (
+          <button
+            type="button"
+            className="pc-folha-alca"
+            aria-label="Arraste para fechar"
+            tabIndex={-1}
+            onPointerDown={aoDescer}
+            onPointerMove={aoMover}
+            onPointerUp={aoSoltar}
+            onPointerCancel={aoSoltar}
+          />
+        ) : null}
+        <div className="pc-folha-cabeca">
+          <div className="grid min-w-0 gap-0.5">
+            <DialogTitle className="pc-subtitulo">{titulo}</DialogTitle>
+            {descricao === undefined ? null : (
+              <DialogDescription className="pc-apoio">{descricao}</DialogDescription>
+            )}
+          </div>
+          {acaoDoCabecalho ?? <BotaoDeIcone rotulo="Fechar" nome="close" onClick={aoFechar} />}
+        </div>
+        <div
+          className="pc-folha-corpo"
+          onPointerDown={gesto ? aoDescer : undefined}
+          onPointerMove={gesto ? aoMover : undefined}
+          onPointerUp={gesto ? aoSoltar : undefined}
+          onPointerCancel={gesto ? aoSoltar : undefined}
+        >
+          {children}
+        </div>
+      </DialogContent>
+    </Dialog>
   )
+}
+
+/**
+ * `prefers-reduced-motion` ao vivo: a pessoa pode trocar no meio da sessão e a
+ * próxima abertura já sai do jeito certo.
+ */
+function useMovimentoReduzido(): boolean {
+  const [reduzido, setReduzido] = useState(prefersReduzido)
+  useEffect(() => {
+    if (typeof window.matchMedia !== "function") return
+    const consulta = window.matchMedia("(prefers-reduced-motion: reduce)")
+    const aoMudar = () => setReduzido(consulta.matches)
+    consulta.addEventListener("change", aoMudar)
+    return () => consulta.removeEventListener("change", aoMudar)
+  }, [])
+  return reduzido
 }
 
 // ── aviso com desfazer ─────────────────────────────────────────────────────

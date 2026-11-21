@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react"
+import { useState } from "react"
 import { Botao } from "@/components/bivaque/botao"
 import { FalhaDaApi } from "@/lib/api/cliente"
 import { CATEGORIAS_DO_GUIA, type CategoriaDoGuia, sugerirLugar } from "@/lib/dados/guia"
@@ -15,13 +15,6 @@ export function SugerirLugar() {
   const [erro, setErro] = useState<string | null>(null)
   const [sucesso, setSucesso] = useState(false)
   const [enviando, setEnviando] = useState(false)
-  const campoNome = useRef<HTMLInputElement>(null)
-
-  useEffect(() => {
-    if (!aberta) return
-    const quadro = requestAnimationFrame(() => campoNome.current?.focus())
-    return () => cancelAnimationFrame(quadro)
-  }, [aberta])
 
   async function enviar(evento: React.FormEvent<HTMLFormElement>) {
     evento.preventDefault()
@@ -65,12 +58,16 @@ export function SugerirLugar() {
       >
         Sugerir um lugar
       </Botao>
-      <Folha aberta={aberta} aoFechar={() => setAberta(false)} titulo="Sugerir referência">
+      <Folha
+        aberta={aberta}
+        aoFechar={() => setAberta(false)}
+        titulo="Sugerir referência"
+        focoInicial="#sugestao-nome"
+      >
         <form onSubmit={(evento) => void enviar(evento)} className="grid gap-4">
           <label className="grid gap-1">
             Nome
             <input
-              ref={campoNome}
               id="sugestao-nome"
               required
               minLength={2}

@@ -23,8 +23,13 @@ import {
 } from "@/lib/dados/inicio"
 import { TOPICOS_DAS_PERGUNTAS } from "@/lib/dados/perguntas"
 import { iconeDeDado } from "@/lib/icones"
-import { useNavegacao, useRolagemEFoco } from "@/lib/navegacao/react"
-import { CARGA_CONCLUIDA } from "@/lib/navegacao/restauracao"
+import { lerDaLista, lerTextoDaLista, mudancaDaLista } from "@/lib/navegacao/listas"
+import {
+  useCargaDaLista,
+  useEntradaDaTela,
+  useNavegacao,
+  useRolagemEFoco,
+} from "@/lib/navegacao/react"
 import { lerRecentes } from "@/src/busca/recentes"
 import { termoDaUrl } from "@/src/busca/termo-url"
 import { useCasca } from "@/src/contexto/casca"
@@ -82,9 +87,39 @@ export function Busca() {
   const [explorar, setExplorar] = useState<InicioDaCidade | null>(null)
   const [erro, setErro] = useState<TipoDeFalha | null>(null)
   const [rodada, setRodada] = useState(0)
-  const [escopo, setEscopo] = useState("all")
-  const [topico, setTopico] = useState("todos")
-  const [categoriaAtiva, setCategoriaAtiva] = useState<string | null>(null)
+  // Escopo, tópico e categoria moram na entrada (NAV-001): abrir um resultado e
+  // voltar devolve a busca filtrada como estava.
+  const entrada = useEntradaDaTela()
+  const [escopo, setEscopo] = useState(() =>
+    lerDaLista(
+      entrada.filtros,
+      "busca-escopo",
+      FILTROS.map((item) => item.id),
+      "all",
+    ),
+  )
+  const [topico, setTopico] = useState(() =>
+    lerDaLista(
+      entrada.filtros,
+      "busca-topico",
+      TOPICOS.map((item) => item.id),
+      "todos",
+    ),
+  )
+  const [categoriaAtiva, setCategoriaAtiva] = useState<string | null>(
+    () => lerTextoDaLista(entrada.filtros, "busca-categoria") || null,
+  )
+  const guardar = (chave: string, valor: string) =>
+    void navegacao.atualizar(mudancaDaLista(chave, valor))
+  // A categoria tocada na grade Explorar também mora na entrada, com o escopo:
+  // abrir um resultado e voltar devolve a grade filtrada como estava.
+  const guardarExplorar = (categoria: string) => {
+    setCategoriaAtiva(categoria)
+    setEscopo("negocios")
+    void navegacao.atualizar({
+      filtros: { "busca-categoria": categoria, "busca-escopo": "negocios" },
+    })
+  }
   const [recentes, setRecentes] = useState<readonly string[]>([])
   const { consulta, definirConsulta: setConsulta } = casca
 
@@ -122,7 +157,9 @@ export function Busca() {
   const termo = (semente ?? consulta).trim()
   const comTermo = termo.length >= 2
 
-  useRolagemEFoco(CARGA_CONCLUIDA)
+  // A lista só devolve a rolagem quando o dado chegou (NAV-001).
+  const carga = useCargaDaLista(dados !== null || explorar !== null || erro !== null)
+  useRolagemEFoco(carga)
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: rodada solicita nova leitura
   useEffect(() => {
@@ -229,8 +266,12 @@ export function Busca() {
         valor={escopo}
         aoEscolher={(id) => {
           setEscopo(id)
+          guardar("busca-escopo", id)
           // O tópico só alcança as perguntas: fora dos escopos delas, volta a "todos".
-          if (id !== "perguntas" && id !== "all") setTopico("todos")
+          if (id !== "perguntas" && id !== "all") {
+            setTopico("todos")
+            guardar("busca-topico", "todos")
+          }
         }}
         rotulo="Filtrar por tipo"
         className="mt-1"
@@ -245,7 +286,10 @@ export function Busca() {
           <ChipsDeFiltro
             itens={TOPICOS}
             valor={topico}
-            aoEscolher={setTopico}
+            aoEscolher={(id) => {
+              setTopico(id)
+              guardar("busca-topico", id)
+            }}
             rotulo="Filtrar perguntas por tópico"
           />
         </div>
@@ -319,10 +363,7 @@ export function Busca() {
                         key={item.id}
                         type="button"
                         data-explorar-categoria={item.id}
-                        onClick={() => {
-                          setCategoriaAtiva(item.id)
-                          setEscopo("negocios")
-                        }}
+                        onClick={() => guardarExplorar(item.id)}
                         className="bv-press flex min-h-20 items-center gap-2 rounded-xl bg-(--surface-lowest) px-3 text-left ring-1 ring-(--outline-variant) hover:bg-(--muted)"
                       >
                         <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-(--secondary-container)">
