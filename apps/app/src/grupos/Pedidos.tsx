@@ -34,13 +34,13 @@ export function Pedidos({ id }: { id: string }) {
   }, [id, rodada])
 
   return (
-    <details
+    <section
       data-pedidos-entrada="sim"
       className="rounded-2xl border border-(--outline-variant) bg-(--surface-lowest) p-3"
     >
-      <summary className="min-h-11 cursor-pointer text-sm font-semibold">
+      <h2 className="min-h-11 text-sm font-semibold">
         Pedidos de entrada{dados ? ` (${dados.pedidos.length})` : ""}
-      </summary>
+      </h2>
       {retorno ? <p role="status">{retorno}</p> : null}
       {erro ? (
         <div role="alert">
@@ -130,6 +130,6 @@ export function Pedidos({ id }: { id: string }) {
           </Botao>
         </div>
       ) : null}
-    </details>
+    </section>
   )
 }

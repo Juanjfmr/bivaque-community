@@ -17,6 +17,7 @@ import {
   lerRascunhosDoGrupo,
 } from "@/lib/grupos-locais"
 import { useSobreposicaoDaEntrada } from "@/lib/navegacao/react"
+import { Botao as BotaoPeca } from "@/src/pecas/pecas"
 import {
   AVISO_DA_CIDADE,
   corpoDaPergunta,
@@ -228,14 +229,14 @@ export function Escrever({
     >
       <div className="flex flex-wrap items-center justify-between gap-2">
         <b className="text-sm">Publicações do grupo</b>
-        <Botao
-          tom="tonal"
+        <BotaoPeca
+          tom="principal"
           icone="edit_square"
           data-acao="escrever-grupo"
           onClick={() => setAberto(true)}
         >
           Escrever
-        </Botao>
+        </BotaoPeca>
       </div>
       {rascunhos.length === 0 ? (
         <small className="text-xs text-(--on-surface-variant)">

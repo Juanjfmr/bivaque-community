@@ -77,9 +77,13 @@ for (const tema of ["claro", "escuro"]) {
     const largura = page.viewportSize()?.width
     if (largura === 375 || largura === 768 || largura === 1440) {
       await expect(page.getByRole("button", { name: "Convidar" })).toBeVisible()
+      expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
+        true,
+      )
       await page.screenshot({
         path: resolve(process.cwd(), `../../.visual/troca-003/grupo-${largura}-${tema}.png`),
         fullPage: true,
+        animations: "disabled",
       })
     }
     await page.getByRole("button", { name: "Convidar" }).click()
@@ -88,17 +92,25 @@ for (const tema of ["claro", "escuro"]) {
     await expect(page.getByRole("heading", { name: "Administrar grupo" })).toBeVisible()
     await expect(page.getByRole("button", { name: "Remover" })).toBeVisible()
     if (largura === 375 || largura === 768 || largura === 1440) {
+      expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
+        true,
+      )
       await page.screenshot({
         path: resolve(process.cwd(), `../../.visual/troca-003/administrar-${largura}-${tema}.png`),
         fullPage: true,
+        animations: "disabled",
       })
     }
-    await page.getByText("Pedidos de entrada").click()
+    await expect(page.getByText("Quero participar")).toBeVisible()
     await page.getByRole("button", { name: "Aprovar" }).click()
     await expect(page.getByText("Pedido aprovado.")).toBeVisible()
+    await expect(page.getByRole("button", { name: "Salvar regras" })).toBeDisabled()
+    await expect(page.getByLabel("Regras do grupo")).toHaveValue("Regra anterior")
     await page.getByLabel("Regras do grupo").fill("Nova regra")
+    await expect(page.getByRole("button", { name: "Salvar regras" })).toBeEnabled()
     await page.getByRole("button", { name: "Salvar regras" }).click()
     await expect(page.getByText("Regras salvas.")).toBeVisible()
+    await expect(page.getByRole("button", { name: "Salvar regras" })).toBeDisabled()
     await page.reload()
     await expect(page.getByLabel("Regras do grupo")).toHaveValue("Nova regra")
   })

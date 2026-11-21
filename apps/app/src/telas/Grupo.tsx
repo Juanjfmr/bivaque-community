@@ -29,6 +29,8 @@ import {
   retemOTopo,
 } from "@/src/grupos/lista-do-grupo"
 import { Participacao } from "@/src/grupos/Participacao"
+import { Botao as BotaoPeca } from "@/src/pecas/pecas"
+import "@/src/grupos/grupo-coluna.css"
 import { semConfirmacao } from "@/src/grupos/publicacao"
 import { quandoDe } from "@/src/telas/comum"
 
@@ -269,8 +271,15 @@ export function Grupo() {
   // filtro de salvas seria mentira sobre o grupo.
   const vazio = VAZIO_DO_GRUPO[ordem]
   return (
-    <section data-tela="grupo" className="grid gap-3">
-      <CabecaDePagina titulo={grupo.nome} subtitulo={subtitulo} />
+    <section data-tela="grupo" className="pc pc-embutido grupo-coluna grid min-w-0 gap-3">
+      <CabecaDePagina
+        titulo={grupo.nome}
+        subtitulo={
+          <>
+            {subtitulo} {grupo.admin ? <Etiqueta tom="neutro">Administrador</Etiqueta> : null}
+          </>
+        }
+      />
       <Participacao
         key={grupo.id}
         grupo={grupo}
@@ -370,7 +379,7 @@ export function Grupo() {
           <fieldset
             data-ordenacao-grupo="sim"
             aria-label="Ordenar publicações"
-            className="flex flex-wrap gap-2"
+            className="flex min-w-0 gap-2 overflow-x-auto"
           >
             {(
               [
@@ -379,9 +388,9 @@ export function Grupo() {
                 ...(grupo.membro ? (["salvas", "ocultadas"] as const) : []),
               ] as const
             ).map((chave) => (
-              <Botao
+              <BotaoPeca
                 key={chave}
-                tom={ordem === chave ? "tonal" : "contornado"}
+                tom={ordem === chave ? "tom" : "contorno"}
                 aria-pressed={ordem === chave}
                 onClick={() => setOrdem(chave)}
               >
@@ -393,7 +402,7 @@ export function Grupo() {
                     ocultadas: "Ocultadas",
                   }[chave]
                 }
-              </Botao>
+              </BotaoPeca>
             ))}
           </fieldset>
           {publicacoes.length === 0 ? (

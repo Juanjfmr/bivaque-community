@@ -1,0 +1,19 @@
+.grupo-coluna {
+  width: 100%;
+  max-width: 63rem;
+  margin-inline: auto;
+  --pc-coluna: 63rem;
+}
+
+.grupo-coluna,
+.grupo-coluna * {
+  box-sizing: border-box;
+}
+
+.grupo-coluna [data-cabeca="pagina"] h1 {
+  color: var(--foreground);
+  font-family: var(--font-plain);
+  font-size: var(--pc-fs-titulo);
+  font-weight: 700;
+  line-height: 1.22;
+}

@@ -2,7 +2,6 @@ import { useParams } from "@tanstack/react-router"
 import { useEffect, useState } from "react"
 import { Botao } from "@/components/bivaque/botao"
 import { CabecaDePagina } from "@/components/bivaque/cabeca-de-pagina"
-import { Campo } from "@/components/bivaque/campos"
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog"
 import {
   buscarGrupo,
@@ -16,6 +15,8 @@ import {
 } from "@/lib/dados/grupos"
 import { useNavegacao } from "@/lib/navegacao/react"
 import { Pedidos } from "@/src/grupos/Pedidos"
+import "./grupo-coluna.css"
+import { AreaDeTexto, Avatar, Botao as BotaoPeca } from "@/src/pecas/pecas"
 
 type Confirmacao = { tipo: "remover" | "transferir"; membro: MembroDoGrupo } | { tipo: "excluir" }
 // Referências: https://mobbin.com/screens/c83c5c82-8402-4c6a-b21a-4d4ba27ffdfb
@@ -99,7 +100,7 @@ export function AdministrarGrupo() {
       </section>
     )
   return (
-    <section className="grid gap-4">
+    <section className="pc pc-embutido grupo-coluna grid min-w-0 gap-4">
       <CabecaDePagina titulo="Administrar grupo" subtitulo={grupo.nome} />
       {retorno ? <p role="status">{retorno}</p> : null}
       {erro ? (
@@ -117,58 +118,85 @@ export function AdministrarGrupo() {
           <p>Carregando membros…</p>
         ) : (
           membros.map((m) => (
-            <div key={m.id} className="rounded-xl bg-(--surface-low) p-3">
-              <b>{m.nome || "Membro"}</b>{" "}
-              <span>
-                {m.papel === "owner" ? "Dono" : m.papel === "moderator" ? "Moderador" : "Membro"}
+            <div
+              key={m.id}
+              className="flex min-w-0 flex-wrap items-center gap-3 border-b border-(--border) py-3"
+            >
+              <Avatar nome={m.nome || "Membro"} />
+              <b>{m.nome || "Membro"}</b>
+              <span className="rounded-full bg-(--secondary) px-3 py-1 text-sm">
+                {m.papel === "owner"
+                  ? "Administrador"
+                  : m.papel === "moderator"
+                    ? "Moderador"
+                    : "Membro"}
               </span>
-              {m.papel !== "owner" && (grupo.dono || m.papel === "member") ? (
-                <Botao tom="texto" onClick={() => setConfirmacao({ tipo: "remover", membro: m })}>
-                  Remover
-                </Botao>
-              ) : null}
-              {grupo.dono && m.papel !== "owner" ? (
-                <Botao
-                  tom="texto"
-                  onClick={() => setConfirmacao({ tipo: "transferir", membro: m })}
-                >
-                  Passar a administração
-                </Botao>
-              ) : null}
+              <div className="flex w-full flex-wrap gap-2">
+                {m.papel !== "owner" && (grupo.dono || m.papel === "member") ? (
+                  <BotaoPeca
+                    tom="contorno"
+                    className="border-(--destructive)! text-(--destructive)!"
+                    onClick={() => setConfirmacao({ tipo: "remover", membro: m })}
+                  >
+                    Remover
+                  </BotaoPeca>
+                ) : null}
+                {grupo.dono && m.papel !== "owner" ? (
+                  <BotaoPeca
+                    tom="contorno"
+                    onClick={() => setConfirmacao({ tipo: "transferir", membro: m })}
+                  >
+                    Passar a administração
+                  </BotaoPeca>
+                ) : null}
+              </div>
             </div>
           ))
         )}
       </section>
       <section className="grid gap-2">
         <h2>Regras</h2>
-        <Campo
+        <AreaDeTexto
           id="regras-grupo"
           rotulo="Regras do grupo"
-          area
-          valor={regras}
-          aoMudar={setRegras}
-          nota={`${regras.length}/600 caracteres`}
+          value={regras}
+          onChange={(evento) => setRegras(evento.target.value)}
+          aria-describedby="regras-contagem"
+          maxLength={600}
         />
-        <Botao
-          disabled={ocupado || regras.length > 600}
+        <p id="regras-contagem" className="text-[13px] text-(--muted-foreground)">
+          {regras.length}/600 caracteres
+        </p>
+        <BotaoPeca
+          tom="principal"
+          disabled={ocupado || regras === grupo.regras}
+          aria-disabled={ocupado || regras === grupo.regras}
           onClick={() => {
             setOcupado(true)
             setErro("")
             void salvarRegras(id, regras)
-              .then(() => setRetorno("Regras salvas."))
+              .then(() => {
+                setGrupo((atual) => (atual ? { ...atual, regras } : atual))
+                setRetorno("Regras salvas.")
+              })
               .catch(() => setErro("Não foi possível salvar as regras. Tente de novo."))
               .finally(() => setOcupado(false))
           }}
         >
           Salvar regras
-        </Botao>
+        </BotaoPeca>
       </section>
       {grupo.dono ? (
-        <section className="grid gap-2">
+        <section className="grid gap-2 border-t border-(--border) pt-6">
           <h2>Excluir grupo</h2>
-          <Botao tom="contornado" onClick={() => setConfirmacao({ tipo: "excluir" })}>
+          <p>O grupo deixará de estar disponível para seus membros.</p>
+          <BotaoPeca
+            tom="contorno"
+            className="border-(--destructive)! text-(--destructive)!"
+            onClick={() => setConfirmacao({ tipo: "excluir" })}
+          >
             Excluir grupo
-          </Botao>
+          </BotaoPeca>
         </section>
       ) : null}
       <Dialog

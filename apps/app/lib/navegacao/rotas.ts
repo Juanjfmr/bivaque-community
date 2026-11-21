@@ -148,7 +148,7 @@ const LINHAS: readonly LinhaDoCatalogo[] = [
   [
     "grupo-administrar",
     "/grupo/$id/administrar",
-    "Administrar grupo",
+    "Grupo",
     "comunidade",
     { parametro: "id", pai: "grupo" },
   ],
