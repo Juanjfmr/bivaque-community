@@ -1,4 +1,4 @@
-﻿import { beforeEach, describe, expect, it, vi } from "vitest"
+import { beforeEach, describe, expect, it, vi } from "vitest"
 
 const sentry = vi.hoisted(() => ({ init: vi.fn() }))
 vi.mock("@sentry/nextjs", () => sentry)
