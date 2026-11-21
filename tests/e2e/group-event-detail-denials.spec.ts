@@ -14,6 +14,7 @@ import { CURRENT_CONSENT, encodeAuthCookieValue } from "./helpers/session"
 // pair. Seed identities are public and disposable by design
 // (supabase/seed.sql).
 
+const APP_URL = process.env["APP_URL"] ?? "http://127.0.0.1:3000"
 const SUPABASE_URL = process.env["SUPABASE_URL"] ?? "http://127.0.0.1:55321"
 
 // Seed fixtures (supabase/seed.sql): groups 6 and 8 are private; membro-4 is
@@ -72,7 +73,7 @@ function requireCredentials(): { anonKey: string; password: string } {
 // Mints a session with the password grant and installs the cookie pair the
 // callback route would have written — same flow as tests/e2e/helpers/session.ts,
 // parametrised by account so the spec can sign in as more than one seed user.
-async function signInAs(page: Page, email: string): Promise<void> {
+async function signInAs(page: Page, email: string): Promise<string> {
   const { anonKey, password } = requireCredentials()
 
   const api = page.context().request
@@ -109,58 +110,89 @@ async function signInAs(page: Page, email: string): Promise<void> {
     { name: `sb-${projectRef}-auth-token`, value: cookieValue, ...shared },
     { name: CONSENT_COOKIE, value: CURRENT_CONSENT, ...shared },
   ])
+  return body.access_token
 }
 
 test.describe("group detail: RLS decides, not the page", () => {
-  test("approved member of the private group opens it and sees the member list", async ({
-    page,
-  }) => {
-    await signInAs(page, PRIVATE_GROUP_MEMBER_EMAIL)
-    const response = await page.goto(`/groups/${PRIVATE_GROUP_ID}`)
-
-    expect(response?.status()).toBe(200)
-    await expect(page.getByRole("heading", { name: "Mães da Cidade" })).toBeVisible()
-    await expect(page.getByRole("heading", { name: "Membros" })).toBeVisible()
+  test("approved member can see the private group", async ({ page }) => {
+    const token = await signInAs(page, PRIVATE_GROUP_MEMBER_EMAIL)
+    const members = await page.request.get(
+      `${SUPABASE_URL}/rest/v1/group_memberships?select=user_id&group_id=eq.${PRIVATE_GROUP_ID}&status=eq.approved`,
+      {
+        headers: { apikey: requireCredentials().anonKey, Authorization: `Bearer ${token}` },
+      },
+    )
+    expect(members.status()).toBe(200)
+    expect((await members.json()).length).toBeGreaterThan(0)
+    const redirect = await page.request.get(`${APP_URL}/groups/${PRIVATE_GROUP_ID}`, {
+      maxRedirects: 0,
+    })
+    expect(redirect.status()).toBe(307)
+    expect(new URL(redirect.headers()["location"] ?? "", "http://127.0.0.1:3000").pathname).toBe(
+      `/app/grupo/${PRIVATE_GROUP_ID}`,
+    )
+    await page.goto(`${APP_URL}/app/grupo/${PRIVATE_GROUP_ID}`)
+    await expect(page.getByRole("heading", { name: "Mães da Cidade" })).toBeVisible({
+      timeout: 15000,
+    })
+    await expect(page.locator('[data-estado-participacao="membro"]')).toBeVisible()
+    await expect(page.getByText("Administrar grupo")).toHaveCount(0)
   })
 
-  test("locality member who is not in the private group sees metadata but no member names", async ({
-    page,
-  }) => {
-    await signInAs(page, LOCALITY_MEMBER_EMAIL)
-    const response = await page.goto(`/groups/${PRIVATE_GROUP_ID}`)
-
-    // Metadata stays readable on purpose — a group must be discoverable for
-    // someone to request to join. The leak was the member list, and the
-    // group_memberships_select policy hides it for non-members.
-    expect(response?.status()).toBe(200)
-    await expect(page.getByRole("heading", { name: "Mães da Cidade" })).toBeVisible()
-    await expect(page.getByRole("heading", { name: "Membros" })).toHaveCount(0)
+  test("non-member sees private metadata but no content or member actions", async ({ page }) => {
+    const token = await signInAs(page, LOCALITY_MEMBER_EMAIL)
+    const members = await page.request.get(
+      `${SUPABASE_URL}/rest/v1/group_memberships?select=user_id&group_id=eq.${PRIVATE_GROUP_ID}&status=eq.approved`,
+      {
+        headers: { apikey: requireCredentials().anonKey, Authorization: `Bearer ${token}` },
+      },
+    )
+    expect(members.status()).toBe(200)
+    expect(await members.json()).toEqual([])
+    const api = await page.request.get(`${APP_URL}/api/app/grupos/${PRIVATE_GROUP_ID}`)
+    expect(api.status()).toBe(200)
+    expect((await api.json()).publicacoes).toEqual([])
+    expect(
+      (await page.request.get(`${APP_URL}/api/app/grupos/${PRIVATE_GROUP_ID}/membros`)).status(),
+    ).toBe(403)
+    await page.goto(`${APP_URL}/app/grupo/${PRIVATE_GROUP_ID}`)
+    await expect(page.getByRole("heading", { name: "Mães da Cidade" })).toBeVisible({
+      timeout: 15000,
+    })
+    await expect(
+      page.getByText("O conteúdo dos grupos fechados é reservado aos membros."),
+    ).toBeVisible()
+    await expect(page.locator('[data-publicacao-na-lista="sim"]')).toHaveCount(0)
+    await expect(page.getByText("Administrar grupo")).toHaveCount(0)
+    await expect(page.getByRole("button", { name: "Sair do grupo" })).toHaveCount(0)
+    await expect(page.getByRole("button", { name: "Pedir entrada" })).toBeVisible()
   })
 
-  test("authenticated outsider without locality membership gets the not-found page", async ({
-    page,
-  }) => {
+  test("outsider cannot read the private group", async ({ page }) => {
     await signInAs(page, OUTSIDER_EMAIL)
-    await page.goto(`/groups/${PRIVATE_GROUP_ID}`)
-
-    // The admission gate (middleware, wave D2 2026-08-15) intercepts the
-    // outsider before this segment ever resolves: no locality membership
-    // sends the person to the entry, never the group page. The gate's target
-    // is /onboarding/status, which the web now redirects to /app/entrar
-    // (ENTRADA-WEB-ANTIGA). The security property is unchanged - no group
-    // content can render - and the gate makes the boundary stronger, not
-    // weaker. The segment's own notFound() remains as defence in depth for
-    // anyone who reaches it without access.
-    await expect(page).toHaveURL(/\/app\/entrar/)
+    const api = await page.request.get(`${APP_URL}/api/app/grupos/${PRIVATE_GROUP_ID}`)
+    expect(api.status()).toBe(404)
+    await page.goto(`${APP_URL}/app/grupo/${PRIVATE_GROUP_ID}`)
+    await expect(page.locator('[data-tela="indisponivel"]')).toBeVisible({ timeout: 15000 })
     await expect(page.getByRole("heading", { name: "Mães da Cidade" })).toHaveCount(0)
   })
 
   test("public group opens for any locality member", async ({ page }) => {
     await signInAs(page, LOCALITY_MEMBER_EMAIL)
-    const response = await page.goto(`/groups/${PUBLIC_GROUP_ID}`)
-
-    expect(response?.status()).toBe(200)
-    await expect(page.getByRole("heading", { name: "Caminhada no Mindu" })).toBeVisible()
+    const redirect = await page.request.get(`${APP_URL}/groups/${PUBLIC_GROUP_ID}`, {
+      maxRedirects: 0,
+    })
+    expect(redirect.status()).toBe(307)
+    expect(new URL(redirect.headers()["location"] ?? "", "http://127.0.0.1:3000").pathname).toBe(
+      `/app/grupo/${PUBLIC_GROUP_ID}`,
+    )
+    await page.goto(`${APP_URL}/app/grupo/${PUBLIC_GROUP_ID}`)
+    await expect(page.getByRole("heading", { name: "Caminhada no Mindu" })).toBeVisible({
+      timeout: 15000,
+    })
+    await expect(page.locator('[data-ordenacao-grupo="sim"]')).toBeVisible()
+    await expect(page.locator('[data-publicacao-na-lista="sim"]').first()).toBeVisible()
+    await expect(page.getByText("Administrar grupo")).toHaveCount(0)
   })
 })
 

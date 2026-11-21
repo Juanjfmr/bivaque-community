@@ -2,6 +2,10 @@ import { expect, test } from "@playwright/test"
 
 test("rotas antigas redirecionam para o app e preservam a consulta", async ({ request }) => {
   for (const [origem, destino] of [
+    [
+      "/groups/41000000-0000-4000-8000-000000000051?origem=aviso",
+      "/app/grupo/41000000-0000-4000-8000-000000000051?origem=aviso",
+    ],
     ["/groups?origem=aviso", "/app/comunidade?origem=aviso"],
     ["/community?origem=aviso", "/app/comunidade?origem=aviso"],
     ["/indicacoes?origem=aviso", "/app/comunidade?origem=aviso"],
@@ -19,6 +23,10 @@ test("rotas antigas redirecionam para o app e preservam a consulta", async ({ re
 
 test("rotas antigas levam visitantes anônimos à entrada sem ciclo", async ({ page, request }) => {
   for (const [origem, destino] of [
+    [
+      "/groups/41000000-0000-4000-8000-000000000051",
+      "/app/grupo/41000000-0000-4000-8000-000000000051",
+    ],
     ["/groups", "/app/comunidade"],
     ["/community", "/app/comunidade"],
     ["/communities/123/invite", "/app/comunidade"],

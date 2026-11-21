@@ -10,7 +10,7 @@ import { expect, type Locator, type Page } from "@playwright/test"
 
 export const TEST_GROUP_ID = "60000000-0000-4000-8000-000000000002"
 export const TEST_GROUP_NAME = "Pais e Filhos"
-export const TEST_GROUP_FEED_URL = `/groups/${TEST_GROUP_ID}`
+export const TEST_GROUP_FEED_URL = `/app/grupo/${TEST_GROUP_ID}`
 
 /** Abre o compositor pelo menu do shell antigo, preservado em /denuncias. */
 export async function openComposer(page: Page): Promise<void> {

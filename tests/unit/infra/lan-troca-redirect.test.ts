@@ -26,6 +26,7 @@ const TROCADAS = [
   ["/recommendations?aba=saved", "/app/salvos?aba=saved"],
   ["/recommendations?pedir=1", "/app/comunidade?pedir=1"],
   ["/recommendations?aba=request", "/app/comunidade?aba=request"],
+  [`/groups/${ID}?origem=aviso`, `/app/grupo/${ID}?origem=aviso`],
   ["/groups", "/app/comunidade"],
   [`/indicacoes/${ID}`, `/app/pergunta/${ID}`],
   [`/mercado/${ID}`, `/app/anuncio/${ID}`],
@@ -292,7 +293,7 @@ describe("LAN-TROCA fase 1", () => {
     expect(sobras).toEqual([])
   })
 
-  it("remove as telas da vila e preserva indicação, grupo e console do dono", async () => {
+  it("remove as telas da vila e preserva indicação e console do dono", async () => {
     for (const rota of ["communities/[id]/invite", "invite", "gerir-comunidades"]) {
       expect(existsSync(join(shell, rota))).toBe(false)
     }
@@ -301,7 +302,6 @@ describe("LAN-TROCA fase 1", () => {
     }
     for (const caminho of [
       `/communities/${ID}/indicar-prestador`,
-      `/groups/${ID}`,
       ...["", "/pending", "/moderators", "/providers", "/media"].map(
         (subrota) => `/communities/${ID}/admin${subrota}`,
       ),
@@ -311,7 +311,7 @@ describe("LAN-TROCA fase 1", () => {
     expect(existsSync(join(shell, "communities", "[id]", "indicar-prestador", "page.tsx"))).toBe(
       true,
     )
-    expect(existsSync(join(shell, "groups", "[id]", "page.tsx"))).toBe(true)
+    expect(existsSync(join(shell, "groups"))).toBe(false)
     expect(
       existsSync(join(shell, "..", "(owner)", "communities", "[id]", "admin", "page.tsx")),
     ).toBe(true)

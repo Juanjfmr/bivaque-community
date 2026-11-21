@@ -21,7 +21,7 @@ const OPERATOR_EMAIL = "operador@bivaque.example.invalid"
 // post denunciável é lido no feed do GRUPO. O grupo abaixo é público ("Estudos
 // para Concurso"), de Manaus, e as publicações do seed com este texto marcador
 // pertencem a outros membros — o denunciante não é o autor.
-const GROUP_FEED_URL = "/groups/60000000-0000-4000-8000-000000000005"
+const GROUP_FEED_URL = "/app/grupo/60000000-0000-4000-8000-000000000005"
 const TARGET_POST_TEXT =
   "A feira do fim de semana abriu mais cedo e estava tranquila na primeira hora."
 
@@ -179,16 +179,16 @@ test.describe("report flow: membro denuncia e recebe retorno", { tag: "@stateful
       await signInAsCookie(context, REPORTER_EMAIL)
       // O feed onde o post denunciável aparece é o do grupo (lote 5 N2: a
       // publicação vive dentro de um grupo).
-      await page.goto(GROUP_FEED_URL, { waitUntil: "load" })
-      await expect(page).toHaveURL(/\/groups\//)
+      await page.goto(`${APP_BASE}${GROUP_FEED_URL}`, { waitUntil: "load" })
+      await expect(page).toHaveURL(/\/app\/grupo\//)
 
       // O post municipal fixo pertence ao proprio dono-vila e nao pode ser
       // denunciado por ele. Este texto vem dos posts gerados por outros
       // membros e reduz o locator ao artigo correto antes de abrir o menu.
       const post = page.getByRole("article").filter({ hasText: TARGET_POST_TEXT }).first()
       await expect(post).toBeVisible({ timeout: 20000 })
-      await post.getByRole("button", { name: "Mais opções" }).click()
-      await page.getByRole("menuitem", { name: /Denunciar/i }).click()
+      await post.getByRole("button", { name: "Opções da publicação" }).click()
+      await page.getByRole("button", { name: "Denunciar publicação" }).click()
 
       // A RECON-016 (prancha 56) trocou o campo unico de texto por categoria
       // fechada + explicacao opcional. O motivo gravado passa a ser
@@ -198,11 +198,8 @@ test.describe("report flow: membro denuncia e recebe retorno", { tag: "@stateful
       // Nomeado: o popover do menu suspenso tambem carrega role="dialog".
       const dialog = page.getByRole("dialog", { name: /Denunciar/ })
       await expect(dialog).toBeVisible({ timeout: 10000 })
-      // Clica no LABEL: o React Aria esconde o <input type="radio"> e o span
-      // do controle intercepta o ponteiro. O label e o alvo real, e e tambem
-      // o que uma pessoa clica.
-      await dialog.locator('label[data-slot="radio-content"]').filter({ hasText: "Outro" }).click()
-      await dialog.getByLabel(/Explique/).fill(reason)
+      await dialog.getByLabel("Outro").check()
+      await dialog.getByLabel(/Explicação/).fill(reason)
       await dialog.getByRole("button", { name: "Enviar denúncia" }).click()
 
       // A tela NAO promete mais prazo de analise.
@@ -215,7 +212,7 @@ test.describe("report flow: membro denuncia e recebe retorno", { tag: "@stateful
       // sobre quando.
       // Copy de fd547dc: fala com a pessoa ("A equipe vai analisar"), sem
       // descrever a fila por dentro e sem prometer prazo.
-      await expect(page.getByText(/A equipe vai analisar/i)).toBeVisible({
+      await expect(page.getByText(/A moderação vai analisar/i)).toBeVisible({
         timeout: 5000,
       })
       await expect(page.getByText(/48 horas/)).toHaveCount(0)

@@ -275,21 +275,36 @@ test.describe("cinco pessoas sintéticas interagindo", { tag: "@stateful" }, () 
     expect(notifs.some((n) => n.type === "comment" && n.target_id === postId)).toBe(true)
   })
 
-  test("grupo privado: membro vê a lista, não-membro vê só os metadados", async ({ browser }) => {
+  test("grupo privado: membro participa e não-membro não lê conteúdo", async ({ browser }) => {
     desktopOnly()
-
-    // 1. O membro aprovado vê a lista de membros
     await withPersona(browser, GROUP_MEMBER_EMAIL, async (page) => {
-      await page.goto(`${APP_URL}/groups/${PRIVATE_GROUP_ID}`, { waitUntil: "load" })
+      const redirect = await page.request.get(`${APP_URL}/groups/${PRIVATE_GROUP_ID}`, {
+        maxRedirects: 0,
+      })
+      expect(redirect.status()).toBe(307)
+      expect(new URL(redirect.headers()["location"] ?? "", "http://127.0.0.1:3000").pathname).toBe(
+        `/app/grupo/${PRIVATE_GROUP_ID}`,
+      )
+      await page.goto(`${APP_URL}/app/grupo/${PRIVATE_GROUP_ID}`, { waitUntil: "load" })
       await expect(page.getByRole("heading", { name: PRIVATE_GROUP_NAME })).toBeVisible()
-      await expect(page.getByRole("heading", { name: "Membros" })).toBeVisible()
+      await expect(page.locator('[data-estado-participacao="membro"]')).toBeVisible()
+      await expect(page.getByText("Administrar grupo")).toHaveCount(0)
     })
-
-    // 2. O não-membro vê só os metadados
     await withPersona(browser, GROUP_OUTSIDER_EMAIL, async (page) => {
-      await page.goto(`${APP_URL}/groups/${PRIVATE_GROUP_ID}`, { waitUntil: "load" })
+      const api = await page.request.get(`${APP_URL}/api/app/grupos/${PRIVATE_GROUP_ID}`)
+      expect(api.status()).toBe(200)
+      expect((await api.json()).publicacoes).toEqual([])
+      expect(
+        (await page.request.get(`${APP_URL}/api/app/grupos/${PRIVATE_GROUP_ID}/membros`)).status(),
+      ).toBe(403)
+      await page.goto(`${APP_URL}/app/grupo/${PRIVATE_GROUP_ID}`, { waitUntil: "load" })
       await expect(page.getByRole("heading", { name: PRIVATE_GROUP_NAME })).toBeVisible()
-      await expect(page.getByRole("heading", { name: "Membros" })).toHaveCount(0)
+      await expect(
+        page.getByText("O conteúdo dos grupos fechados é reservado aos membros."),
+      ).toBeVisible()
+      await expect(page.locator('[data-publicacao-na-lista="sim"]')).toHaveCount(0)
+      await expect(page.getByText("Administrar grupo")).toHaveCount(0)
+      await expect(page.getByRole("button", { name: "Sair do grupo" })).toHaveCount(0)
     })
   })
 })

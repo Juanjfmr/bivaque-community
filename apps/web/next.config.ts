@@ -199,6 +199,7 @@ const nextConfig: NextConfig = {
           ["/community", "/app/comunidade"],
           ["/indicacoes", "/app/comunidade"],
           ["/recommendations", "/app/comunidade"],
+          ["/groups/:id", "/app/grupo/:id"],
           ["/groups", "/app/comunidade"],
           ["/indicacoes/:id", "/app/pergunta/:id"],
           ["/messages", "/app/conversas"],
