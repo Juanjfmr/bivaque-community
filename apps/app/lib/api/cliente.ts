@@ -89,13 +89,17 @@ function falhaDe(status: number, corpo: Record<string, unknown>): FalhaDaApi {
   return new FalhaDaApi(codigo, status, textoOuNulo(corpo, "erro"), textoOuNulo(corpo, "mensagem"))
 }
 
-async function interpretar(resposta: Response): Promise<Record<string, unknown>> {
+async function interpretar(
+  resposta: Response,
+  redirecionar = true,
+): Promise<Record<string, unknown>> {
   const lido = (await resposta.json().catch(() => ({}))) as unknown
   const dados =
     lido !== null && typeof lido === "object" && !Array.isArray(lido)
       ? (lido as Record<string, unknown>)
       : {}
   if (
+    redirecionar &&
     resposta.status === 401 &&
     typeof window !== "undefined" &&
     !encaminhouParaEntrada &&
@@ -113,7 +117,10 @@ async function interpretar(resposta: Response): Promise<Record<string, unknown>>
   return dados
 }
 
-async function comRede(fazer: () => Promise<Response>): Promise<Record<string, unknown>> {
+async function comRede(
+  fazer: () => Promise<Response>,
+  redirecionar = true,
+): Promise<Record<string, unknown>> {
   let resposta: Response
   try {
     resposta = await fazer()
@@ -122,20 +129,20 @@ async function comRede(fazer: () => Promise<Response>): Promise<Record<string, u
     if (erro instanceof DOMException && erro.name === "AbortError") throw erro
     throw new FalhaDaApi("rede", 0)
   }
-  return interpretar(resposta)
+  return interpretar(resposta, redirecionar)
 }
 
 export async function requisitar(caminho: string, init: RequestInit = {}): Promise<Response> {
   if (!Capacitor.isNativePlatform()) return fetch(caminho, init)
   const publica = caminho.startsWith("/api/app/entry/") || caminho.startsWith("/api/localities")
-  let token = acessoAtual()
-  if (!token && !publica) token = await renovarSessao()
+  const origem = origemDaApi()
+  const token = await acessoAtual()
   const fazer = (credencial: string | null) => {
     const headers = new Headers(init.headers)
     headers.set("x-bivaque-app", "bivaque-spa")
     headers.set("x-bivaque-cliente", "loja")
     if (credencial) headers.set("Authorization", `Bearer ${credencial}`)
-    return fetch(`${origemDaApi()}${caminho}`, { ...init, headers, credentials: "omit" })
+    return fetch(`${origem}${caminho}`, { ...init, headers, credentials: "omit" })
   }
   const resposta = await fazer(token)
   if (resposta.status === 401 && (init.method ?? "GET") === "GET" && !publica) {
@@ -151,17 +158,19 @@ async function chamar(
   corpo: unknown,
   signal: AbortSignal | undefined,
 ): Promise<Record<string, unknown>> {
-  return comRede(() =>
-    requisitar(caminho, {
-      method: metodo,
-      credentials: "include",
-      headers:
-        corpo === undefined
-          ? CABECALHOS_DO_APP
-          : { ...CABECALHOS_DO_APP, "content-type": "application/json" },
-      ...(corpo === undefined ? {} : { body: JSON.stringify(corpo) }),
-      ...(signal === undefined ? {} : { signal }),
-    }),
+  return comRede(
+    () =>
+      requisitar(caminho, {
+        method: metodo,
+        credentials: "include",
+        headers:
+          corpo === undefined
+            ? CABECALHOS_DO_APP
+            : { ...CABECALHOS_DO_APP, "content-type": "application/json" },
+        ...(corpo === undefined ? {} : { body: JSON.stringify(corpo) }),
+        ...(signal === undefined ? {} : { signal }),
+      }),
+    !Capacitor.isNativePlatform() || metodo === "GET",
   )
 }
 
@@ -193,13 +202,15 @@ export function enviarFormulario(
   formulario: FormData,
   opcoes: { signal?: AbortSignal } = {},
 ) {
-  return comRede(() =>
-    requisitar(caminho, {
-      method: "POST",
-      credentials: "include",
-      headers: CABECALHOS_DO_APP,
-      body: formulario,
-      ...(opcoes.signal === undefined ? {} : { signal: opcoes.signal }),
-    }),
+  return comRede(
+    () =>
+      requisitar(caminho, {
+        method: "POST",
+        credentials: "include",
+        headers: CABECALHOS_DO_APP,
+        body: formulario,
+        ...(opcoes.signal === undefined ? {} : { signal: opcoes.signal }),
+      }),
+    !Capacitor.isNativePlatform(),
   )
 }

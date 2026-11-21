@@ -1,9 +1,10 @@
-﻿import { apagarRenovacao, gravarRenovacao, lerRenovacao } from "./cofre"
+import { apagarRenovacao, gravarRenovacao, lerRenovacao } from "./cofre"
 
 let acesso: string | null = null
 let expiracao = 0
 let renovacao: string | null = null
 let pendente: Promise<string | null> | null = null
+let respostaPendenteDesde: number | null = null
 
 export function origemDaApi(): string {
   try {
@@ -23,8 +24,9 @@ export function origemDaApi(): string {
   }
 }
 
-export function acessoAtual(): string | null {
-  return acesso
+export async function acessoAtual(): Promise<string | null> {
+  if (pendente) return pendente
+  return acesso ?? renovarSessao()
 }
 
 export function precisaRenovar(): boolean {
@@ -35,6 +37,7 @@ export function limparMemoria(): void {
   acesso = null
   expiracao = 0
   renovacao = null
+  respostaPendenteDesde = null
 }
 
 export function renovarSessao(): Promise<string | null> {
@@ -42,7 +45,8 @@ export function renovarSessao(): Promise<string | null> {
   pendente = (async () => {
     const token = renovacao ?? (await lerRenovacao())
     if (!token) return null
-    const inicio = Date.now()
+    const inicio = respostaPendenteDesde ?? Date.now()
+    if (Date.now() - inicio >= 9000) throw new Error("renovação sem resposta")
     let espera = 250
     while (true) {
       let resposta: Response
@@ -59,15 +63,31 @@ export function renovarSessao(): Promise<string | null> {
           signal: AbortSignal.timeout(3000),
         })
       } catch {
-        if (Date.now() - inicio + espera >= 9000) throw new Error("rede")
+        respostaPendenteDesde ??= inicio
+        if (espera > 500 || Date.now() - inicio + espera >= 9000) throw new Error("rede")
         await new Promise((resolve) => setTimeout(resolve, espera))
         espera *= 2
         continue
       }
+      if (resposta.status === 503) respostaPendenteDesde ??= inicio
       if (resposta.status === 401) {
         limparMemoria()
         await apagarRenovacao().catch(() => undefined)
+        if (typeof window !== "undefined" && !window.location.pathname.startsWith("/app/entrar")) {
+          const entrada = new URL("/app/entrar", window.location.origin)
+          entrada.searchParams.set(
+            "redirect",
+            `${window.location.pathname}${window.location.search}`,
+          )
+          window.location.assign(entrada.href)
+        }
         return null
+      }
+      if (resposta.status === 429 || resposta.status === 503) {
+        if (espera > 500 || Date.now() - inicio + espera >= 9000) throw new Error("indisponivel")
+        await new Promise((resolve) => setTimeout(resolve, espera))
+        espera *= 2
+        continue
       }
       if (!resposta.ok) throw new Error("renovação indisponível")
       const par: unknown = await resposta.json()
@@ -79,6 +99,7 @@ export function renovarSessao(): Promise<string | null> {
         typeof dados["expires_at"] !== "number"
       )
         throw new Error("resposta inválida")
+      respostaPendenteDesde = null
       acesso = dados["access_token"]
       renovacao = dados["refresh_token"]
       expiracao = dados["expires_at"]

@@ -1,4 +1,4 @@
-﻿import type { QueryClient } from "@tanstack/react-query"
+import type { QueryClient } from "@tanstack/react-query"
 import { requisitar } from "@/lib/api/cliente"
 import { apagarPkce, apagarRenovacao } from "./cofre"
 import { limparMemoria, renovarSessao } from "./sessao"

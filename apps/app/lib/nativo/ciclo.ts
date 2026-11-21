@@ -1,4 +1,4 @@
-﻿import { App } from "@capacitor/app"
+import { App } from "@capacitor/app"
 import { precisaRenovar, renovarSessao } from "./sessao"
 
 export async function iniciarCicloDaSessao(): Promise<void> {

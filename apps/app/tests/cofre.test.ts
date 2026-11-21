@@ -22,6 +22,16 @@ describe("cofre nativo", () => {
     expect(await lerPkce()).toEqual({ verificador: "sintetico", criadoEm: 42 })
   })
 
+  it("não grava credenciais no armazenamento local", async () => {
+    const setItem = vi.fn()
+    vi.stubGlobal("localStorage", { setItem })
+    cofre.set.mockResolvedValue({ value: true })
+    await gravarRenovacao("sintetico")
+    await gravarPkce({ verificador: "sintetico", criadoEm: 42 })
+    expect(setItem).not.toHaveBeenCalled()
+    vi.unstubAllGlobals()
+  })
+
   it("propaga falha de gravação", async () => {
     cofre.set.mockResolvedValue({ value: false })
     await expect(gravarRenovacao("sintetico")).rejects.toThrow()
