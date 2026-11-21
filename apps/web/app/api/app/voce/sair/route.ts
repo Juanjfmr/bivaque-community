@@ -1,4 +1,6 @@
+import { createClient } from "@supabase/supabase-js"
 import type { NextRequest, NextResponse } from "next/server"
+import { resolverCredencial } from "../../../../../lib/app-api/contrato"
 import {
   aplicarCookies,
   conferirEscrita,
@@ -33,6 +35,23 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   if (porta !== "ok") return responder(request, { erro: porta }, 403)
   const userId = auth.sessao.usuario.id
   try {
+    if (auth.sessao.via === "bearer") {
+      const credencial = resolverCredencial({
+        autorizacao: request.headers.get("authorization"),
+        temCookie: false,
+      })
+      const url = process.env["NEXT_PUBLIC_SUPABASE_URL"]
+      const anon = process.env["NEXT_PUBLIC_SUPABASE_ANON_KEY"]
+      if (!("via" in credencial) || credencial.via !== "bearer" || !url || !anon) {
+        throw new Error("configuracao ou credencial indisponivel")
+      }
+      const cliente = createClient(url, anon, {
+        auth: { persistSession: false, autoRefreshToken: false },
+      })
+      const { error } = await cliente.auth.admin.signOut(credencial.token, "local")
+      if (error) throw error
+      return responder(request, { ok: true }, 200)
+    }
     const { error } = await auth.sessao.cliente.auth.signOut({ scope: "local" })
     if (error) throw error
     const resposta = aplicarCookies(
@@ -43,7 +62,12 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     return resposta
   } catch (erro) {
     log.error("app voce: saída falhou", {
-      error: erro instanceof Error ? erro.message : "unknown",
+      error:
+        auth.sessao.via === "bearer"
+          ? "revogacao falhou"
+          : erro instanceof Error
+            ? erro.message
+            : "unknown",
       userId,
     })
     return responder(request, { erro: "saida-indisponivel" }, 503)

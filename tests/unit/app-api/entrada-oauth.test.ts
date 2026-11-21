@@ -17,6 +17,7 @@ vi.mock("next/headers", () => ({
 }))
 vi.mock("web/lib/app-api/sessao-do-next", () => ({ resolverSessaoDaRequisicao: vi.fn() }))
 
+import { cookies } from "next/headers"
 import { POST } from "web/app/api/app/entry/oauth/route"
 import { consentStepTarget } from "web/app/auth/callback/redirect-plan"
 
@@ -49,6 +50,68 @@ beforeEach(() => {
 })
 
 describe("POST /api/app/entry/oauth", () => {
+  it("monta autorizacao nativa com PKCE sem acessar cookies", async () => {
+    const resposta = await POST(
+      new NextRequest(URL_DA_ROTA, {
+        method: "POST",
+        headers: {
+          origin: "https://localhost",
+          "x-bivaque-cliente": "loja",
+          "x-bivaque-app": "bivaque-spa",
+        },
+        body: JSON.stringify({ provedor: "google", code_challenge: "a".repeat(43) }),
+      }),
+    )
+    expect(resposta.status).toBe(200)
+    const url = new URL((await resposta.json()).url)
+    expect(url.pathname).toBe("/auth/v1/authorize")
+    expect(url.searchParams.get("provider")).toBe("google")
+    expect(url.searchParams.get("redirect_to")).toBe("bivaque://auth-callback")
+    expect(url.searchParams.get("code_challenge")).toBe("a".repeat(43))
+    expect(url.searchParams.get("code_challenge_method")).toBe("s256")
+    expect(resposta.headers.get("set-cookie")).toBeNull()
+    expect(cookies).not.toHaveBeenCalled()
+    expect(criarClienteSSR).not.toHaveBeenCalled()
+  })
+
+  it.each([
+    [{ provedor: "google" }, 400],
+    [{ provedor: "google", code_challenge: "curto" }, 400],
+    [{ provedor: "google", code_challenge: "!".repeat(43) }, 400],
+    [{ provedor: "apple", code_challenge: "a".repeat(43) }, 400],
+  ])("recusa corpo nativo invalido", async (corpo, status) => {
+    const resposta = await POST(
+      new NextRequest(URL_DA_ROTA, {
+        method: "POST",
+        headers: {
+          origin: "https://localhost",
+          "x-bivaque-cliente": "loja",
+          "x-bivaque-app": "bivaque-spa",
+        },
+        body: JSON.stringify(corpo),
+      }),
+    )
+    expect(resposta.status).toBe(status)
+    expect(cookies).not.toHaveBeenCalled()
+  })
+
+  it.each([
+    [{ origin: ORIGEM }, 403],
+    [{ origin: "null" }, 403],
+    [{ origin: "https://localhost", cookie: "sb-projeto-auth-token=x" }, 400],
+    [{ origin: "https://localhost", "x-bivaque-app": "" }, 403],
+  ])("recusa origem, cookie ou cabecalho nativo invalido", async (headers, status) => {
+    const resposta = await POST(
+      new NextRequest(URL_DA_ROTA, {
+        method: "POST",
+        headers: { "x-bivaque-cliente": "loja", "x-bivaque-app": "bivaque-spa", ...headers },
+        body: JSON.stringify({ provedor: "google", code_challenge: "a".repeat(43) }),
+      }),
+    )
+    expect(resposta.status).toBe(status)
+    expect(cookies).not.toHaveBeenCalled()
+  })
+
   it("recusa origem fora da lista antes de falar com o Supabase", async () => {
     const resposta = await POST(
       requisicao({ origem: "https://mal.example", cabecalho: "bivaque-spa" }),

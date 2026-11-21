@@ -8,6 +8,12 @@ import { beforeEach, describe, expect, it, vi } from "vitest"
 // resposta: o app não tem cliente Supabase para sair por conta própria
 // (ADR-20261105).
 
+const { criarCliente, revogar, sairDoCliente } = vi.hoisted(() => ({
+  criarCliente: vi.fn(),
+  revogar: vi.fn(),
+  sairDoCliente: vi.fn(),
+}))
+vi.mock("@supabase/supabase-js", () => ({ createClient: criarCliente }))
 vi.mock("@supabase/ssr", () => ({ createServerClient: vi.fn() }))
 
 import { createServerClient } from "@supabase/ssr"
@@ -43,6 +49,14 @@ beforeEach(() => {
   vi.stubEnv("BIVAQUE_APP_ORIGINS", "")
   vi.stubEnv("NODE_ENV", "test")
 
+  revogar.mockResolvedValue({ error: null })
+  criarCliente.mockReturnValue({
+    auth: {
+      getUser: async () => ({ data: { user: PESSOA }, error: null }),
+      signOut: sairDoCliente,
+      admin: { signOut: revogar },
+    },
+  })
   criarClienteDoCookie.mockImplementation(((_url: string, _chave: string, opcoes: never) => {
     const configuracao = opcoes as unknown as ConfiguracaoDoSsr
     return {
@@ -66,6 +80,27 @@ beforeEach(() => {
 })
 
 describe("POST /api/app/voce/sair", () => {
+  it("revoga o Bearer localmente sem cookies nem Clear-Site-Data", async () => {
+    const resposta = await POST(
+      requisicao({ origin: "https://localhost", authorization: "Bearer token-sintetico" }),
+    )
+    expect(resposta.status).toBe(200)
+    expect(await resposta.json()).toEqual({ ok: true })
+    expect(revogar).toHaveBeenCalledWith("token-sintetico", "local")
+    expect(sairDoCliente).not.toHaveBeenCalled()
+    expect(resposta.headers.get("clear-site-data")).toBeNull()
+    expect(resposta.headers.get("set-cookie")).toBeNull()
+  })
+
+  it("falha de revogacao Bearer responde 503", async () => {
+    revogar.mockResolvedValue({ error: new Error("falha") })
+    const resposta = await POST(requisicao({ authorization: "Bearer token-sintetico" }))
+    expect(resposta.status).toBe(503)
+    expect(await resposta.json()).toEqual({ erro: "saida-indisponivel" })
+    expect(resposta.headers.get("clear-site-data")).toBeNull()
+    expect(resposta.headers.get("set-cookie")).toBeNull()
+  })
+
   it("encerra a sessão e devolve os cookies de remoção na resposta", async () => {
     const resposta = await POST(requisicao())
 
