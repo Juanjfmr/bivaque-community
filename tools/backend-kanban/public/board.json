@@ -10412,6 +10412,29 @@
       ],
       "updatedAt": "2026-11-20",
       "sourceRevision": "1bd9c7f8"
+    },
+    {
+      "id": "CASCA-TOPO-E-NAV-DETALHE",
+      "title": "Casca: barra do topo alinhada à coluna a 1440 e navegação nas telas de detalhe a 375/768",
+      "phase": "lancamento",
+      "priority": "P2",
+      "category": "frontend",
+      "status": "next",
+      "description": "Revisão visual cega do TROCA-003 (3ª rodada, 21/11) mediu na casca compartilhada: a 1440 os controles do topo vão até x=1398 enquanto o conteúdo termina em x=1271 (IDENTIDADE-DAS-PECAS manda alinhar à coluna); a 375 e 768 as telas de detalhe (Grupo, Administrar grupo) não mostram barra inferior nem Criar, só o voltar. Decidir se detalhe mantém a navegação (régua Nextdoor) e alinhar o topo; vale para todas as telas, por isso fica fora do TROCA-003.",
+      "checklist": [
+        "[ ] Decidir navegação em telas de detalhe a partir de referências do Mobbin citadas",
+        "[ ] Topo alinhado à coluna a 1440 em todas as telas",
+        "[ ] Capturas 375/768/1440 nos dois temas e revisão cega"
+      ],
+      "dependencies": [],
+      "tests": [],
+      "blockers": [],
+      "updatedAt": "2026-11-21",
+      "sourceRevision": "02c7bca90",
+      "links": ["docs/agents/regua-nextdoor/IDENTIDADE-DAS-PECAS.md"],
+      "proof": [
+        "21/11: .visual/troca-003/revisao-visual-3.md (H2 e H4), capturas administrar|grupo-375|768|1440."
+      ]
     }
   ],
   "launch": {
