@@ -7,7 +7,7 @@ approved_at: 2026-11-20 (por delegação; mandato do lançamento de 02/11); emen
 linked_plan: docs/LANCAMENTO.md
 amends: ADR-20261024-front-react-spa (§5, modo Bearer do app de loja); ADR-20261105-porta-de-dados-do-app (§1, credenciais e repetição de leitura no nativo); ADR-20261105-entrada-enxuta-e-r3-sem-parada (entrada congelada, só o modo nativo da verificação do código)
 critic_verdict: pass
-critic_review: 3 rodadas — 1ª (54e66389) security-auditor BLOQUEIA e revisão FAIL; 2ª (4b6321bd) LIBERA COM RESSALVAS e PASS-COM-RESSALVA; 3ª (1e09fca0) LIBERA e PASS-COM-RESSALVA (style-src, renovação na volta do segundo plano). Todas as ressalvas incorporadas neste texto.
+critic_review: 3 rodadas — 1ª (54e66389) security-auditor BLOQUEIA e revisão FAIL; 2ª (4b6321bd) LIBERA COM RESSALVAS e PASS-COM-RESSALVA; 3ª (1e09fca0) LIBERA e PASS-COM-RESSALVA (style-src, renovação na volta do segundo plano). Todas as ressalvas incorporadas neste texto. Emenda de 21/11 (40850d7b4): security-auditor LIBERA COM RESSALVAS (reuso não revoga a família, aceito como resíduo; sem CRITICAL/HIGH) e revisão independente PASS-COM-RESSALVA; ressalvas incorporadas no §4, no §8 e nas Consequências.
 ---
 
 # Sessão nativa do app de loja: token no cofre do aparelho, servidor como porta
@@ -190,8 +190,11 @@ pública do proxy (ADR-20261110), e tem teste positivo e negativo.
 - No nativo, o cliente do app (`cliente.ts`) e a entrada (`apps/app/src/entrada/servidor.ts`) usam a base
   absoluta e `credentials: "omit"`. A entrada passa a usar o cliente único, em vez de montar o próprio
   `fetch`.
-- A exigência do cabeçalho do app em escrita continua valendo só para sessão por cookie, como hoje. Pedido
-  com Bearer não carrega credencial ambiente, então não há CSRF a barrar.
+- A exigência do cabeçalho do app em escrita vale para sessão por cookie, como hoje. **Emenda de 21/11:**
+  as rotas de entrada e de sessão em modo nativo (`entry/oauth`, `entry/otp`, `entry/otp/verify`,
+  `sessao/token`, `sessao/renovar`) também exigem o cabeçalho do app, e o cliente do LOJA-003 o envia em
+  todo pedido. As demais rotas com Bearer não o exigem: Bearer não carrega credencial ambiente, então não há
+  CSRF a barrar.
 - **Escrita por Bearer vinda da origem nativa:** `avaliarEscrita` e `conferirPorta` hoje recusam com 403
   uma `Origin` presente fora de `origensPermitidas()`, também para Bearer. Passam a conferir a `Origin`
   presente de um pedido Bearer contra a lista web mais a nativa. A lista de escrita por cookie continua sem
@@ -270,6 +273,12 @@ pública do proxy (ADR-20261110), e tem teste positivo e negativo.
   reusado, pela revogação real ao sair e pelo CSP do build nativo. Contra XSS no próprio app, o cofre não
   protege mais do que o cookie protege na web.
 - Sair sem rede deixa o token de renovação vivo no servidor até a próxima abertura com rede.
+- **Tempo esgotado depois da rotação (emenda de 21/11):** se o GoTrue rotacionar R_n e a resposta não chegar
+  antes dos 10 s do `renovar`, o servidor responde 503 e o app guarda R_n; uma nova tentativa depois da janela
+  recebe 401 e a sessão cai. O LOJA-003 só repete dentro da janela de reuso; fora dela, a queda é aceita como
+  resíduo raro.
+- **Apple:** o `entry/oauth` do LOJA-002 aceita só Google. Apple (pelo navegador ou nativa no iOS) entra no
+  LOJA-003 ou no adendo do §5.
 - **Resíduo da emenda de 21/11:** quem copiar um token de renovação e usá-lo antes do dono mantém a cadeia
   dele viva mesmo depois que o dono reusar o antigo; o reuso só derruba o token reusado. Fica aceito no
   lançamento porque exige roubo do cofre do aparelho, e a revogação ao sair e a exclusão de conta seguem

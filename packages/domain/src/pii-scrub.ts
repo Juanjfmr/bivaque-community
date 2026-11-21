@@ -37,7 +37,10 @@ const URL_IN_TEXT = /(?:[a-z][a-z0-9+.-]*:\/\/[^\s"'<>]+|\/[a-z0-9_./-]+\?[^\s"'
 
 export function scrubCredentialUrls(value: string): string {
   return value.replace(URL_IN_TEXT, (url) => {
-    const hideCode = /^bivaque:\/\/auth-callback(?:[/?#]|$)/i.test(url) || SESSION_PATH.test(url)
+    const hideCode =
+      /^bivaque:\/\/auth-callback(?:[/?#]|$)/i.test(url) ||
+      /\/auth\/callback(?:[?#]|$)/i.test(url) ||
+      SESSION_PATH.test(url)
     return url.replace(/([?&#])([^=&#]+)=([^&#\s]*)/g, (param, separator: string, key: string) => {
       let name: string
       try {

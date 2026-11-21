@@ -1,8 +1,9 @@
 begin;
-select plan(12);
+select plan(13);
 select ok((select relrowsecurity and relforcerowsecurity from pg_class where oid = 'private.sessao_nativa_limits'::regclass), 'RLS ligada e forçada');
 select ok(not has_table_privilege('anon', 'private.sessao_nativa_limits', 'SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER'), 'anon sem privilégios na tabela');
 select ok(not has_table_privilege('authenticated', 'private.sessao_nativa_limits', 'SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER'), 'authenticated sem privilégios na tabela');
+select ok(not has_table_privilege('service_role', 'private.sessao_nativa_limits', 'SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER'), 'service_role sem acesso direto à tabela');
 select ok(not has_function_privilege('anon', 'public.sessao_nativa_attempt(text,text,integer,integer)', 'EXECUTE'), 'anon não executa');
 select ok(not has_function_privilege('authenticated', 'public.sessao_nativa_attempt(text,text,integer,integer)', 'EXECUTE'), 'authenticated não executa');
 select ok(has_function_privilege('service_role', 'public.sessao_nativa_attempt(text,text,integer,integer)', 'EXECUTE'), 'service_role executa');

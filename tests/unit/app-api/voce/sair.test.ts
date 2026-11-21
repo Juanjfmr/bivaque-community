@@ -133,6 +133,14 @@ describe("POST /api/app/voce/sair", () => {
     expect(resposta.headers.get("set-cookie")).toBeNull()
   })
 
+  it.each([ORIGEM, "null"])("recusa modo de loja com Origin %s", async (origin) => {
+    const resposta = await POST(
+      requisicao({ origin, "x-bivaque-cliente": "loja", authorization: "Bearer token-sintetico" }),
+    )
+    expect(resposta.status).toBe(403)
+    expect(revogar).not.toHaveBeenCalled()
+  })
+
   it.each([
     ["sem o cabeçalho do app", { origin: ORIGEM, cookie: COOKIE }],
     ["com origem fora da lista", { ...CABECALHOS, origin: "https://fora.example" }],

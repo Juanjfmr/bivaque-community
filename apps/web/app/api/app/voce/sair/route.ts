@@ -1,6 +1,7 @@
 import { createClient } from "@supabase/supabase-js"
 import type { NextRequest, NextResponse } from "next/server"
 import { resolverCredencial } from "../../../../../lib/app-api/contrato"
+import { avaliarModoNativo } from "../../../../../lib/app-api/modo-nativo"
 import {
   aplicarCookies,
   conferirEscrita,
@@ -29,11 +30,12 @@ export const dynamic = "force-dynamic"
  * `setAll`; o que ele não faz é deslogar a pessoa nos outros aparelhos.
  */
 export async function POST(request: NextRequest): Promise<NextResponse> {
+  const modo = avaliarModoNativo(request)
+  if ("recusa" in modo) return responder(request, { erro: "origem-recusada" }, modo.recusa)
   const auth = await exigirSessao(request)
   if (!auth.ok) return auth.resposta
   const porta = conferirEscrita(request, auth.sessao.via)
   if (porta !== "ok") return responder(request, { erro: porta }, 403)
-  const userId = auth.sessao.usuario.id
   try {
     if (auth.sessao.via === "bearer") {
       const credencial = resolverCredencial({
@@ -60,16 +62,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     )
     resposta.headers.set("Clear-Site-Data", '"cache", "storage"')
     return resposta
-  } catch (erro) {
-    log.error("app voce: saída falhou", {
-      error:
-        auth.sessao.via === "bearer"
-          ? "revogacao falhou"
-          : erro instanceof Error
-            ? erro.message
-            : "unknown",
-      userId,
-    })
+  } catch {
+    log.error("app voce: saída falhou")
     return responder(request, { erro: "saida-indisponivel" }, 503)
   }
 }

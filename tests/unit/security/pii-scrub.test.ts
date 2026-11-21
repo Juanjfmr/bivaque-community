@@ -52,7 +52,9 @@ describe("PII scrubbing (D1 Task 6)", () => {
       ],
       urls: [
         "bivaque://auth-callback?code=callback-secret&state=ok",
+        "https://example.test/auth/callback?code=auth-callback-secret&state=ok",
         "https://example.test/api/app/sessao/token?code=session-secret&refresh_token=url-secret",
+        "https://example.test/outro?code=nao-apagar",
         "https://example.test/outro?code=erro-comum",
       ],
     }
@@ -65,11 +67,13 @@ describe("PII scrubbing (D1 Task 6)", () => {
       "auth-secret",
       "verifier-secret",
       "callback-secret",
+      "auth-callback-secret",
       "session-secret",
       "url-secret",
     ])
       expect(result).not.toContain(secret)
     expect(result).toContain("erro-comum")
+    expect(result).toContain("nao-apagar")
     expect(result).toContain("state=ok")
   })
 

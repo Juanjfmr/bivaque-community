@@ -134,6 +134,17 @@ describe.each(rotas)("sessao/$nome", ({ nome, post, options, corpo }) => {
     chamada.mockResolvedValueOnce(new Response(null, { status }))
     expect((await post(pedido(nome, corpo))).status).toBe(503)
   })
+  it("nao registra token nem corpo do GoTrue nos logs de falha", async () => {
+    const token = "refresh-token-super-secreto"
+    const erro = vi.spyOn(console, "error").mockImplementation(() => {})
+    chamada.mockResolvedValueOnce(Response.json({ message: token }, { status: 503 }))
+    expect((await post(pedido(nome, corpo))).status).toBe(503)
+    chamada.mockRejectedValueOnce(new Error(token))
+    expect((await post(pedido(nome, corpo))).status).toBe(503)
+    expect(erro.mock.calls.flat().join(" ")).not.toContain(token)
+    erro.mockRestore()
+  })
+
   it("trata timeout, rede e resposta incompleta como indisponibilidade", async () => {
     chamada
       .mockRejectedValueOnce(new DOMException("timeout", "TimeoutError"))

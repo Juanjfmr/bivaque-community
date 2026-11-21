@@ -75,7 +75,7 @@ proof:
   - npx pnpm@11.18.0 gate --fast
   - npx pnpm@11.18.0 test
   - npx pnpm@11.18.0 test:scope
-  - "teste de integração contra o GoTrue local, sem mock: sair por Bearer recusa depois o mesmo token de acesso e o de renovação; rotação R0→R1→R2 e reuso de R0 depois de 10 s revoga a família (no CI, ci:full, se o banco local do PC estiver indisponível; ver INFRA-CLI-SUPABASE-PC)"
+  - "teste de integração contra o GoTrue local, sem mock: sair por Bearer recusa depois o mesmo token de acesso e o de renovação; rotação R0→R1→R2 e reuso de R0 depois de 10 s recusa R0 com 401 (R2 não é asserção do lote, emenda de 21/11 do ADR) (no CI, ci:full, se o banco local do PC estiver indisponível; ver INFRA-CLI-SUPABASE-PC)"
   - "npx pnpm@11.18.0 test:db para o pgTAP do limitador (no CI, ci:full, enquanto o card INFRA-CLI-SUPABASE-PC estiver aberto)"
 risk: security
 risk_level: R3

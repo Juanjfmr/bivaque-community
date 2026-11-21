@@ -77,6 +77,7 @@ export async function trocarSessao(
       },
     )
     if (!resposta.ok) {
+      log.error("session: GoTrue failed", { error: "GoTrueError" })
       if (resposta.status >= 400 && resposta.status < 500 && resposta.status !== 429) {
         const erro: unknown = await resposta.json().catch(() => null)
         if (typeof erro === "object" && erro !== null) {
@@ -114,7 +115,10 @@ export async function trocarSessao(
       { access_token: par["access_token"], refresh_token: par["refresh_token"], expires_at },
       200,
     )
-  } catch {
+  } catch (erro) {
+    log.error("session: request failed", {
+      error: erro instanceof Error ? erro.name : typeof erro,
+    })
     return respostaIndisponivel(request)
   }
 }
