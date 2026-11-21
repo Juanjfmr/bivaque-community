@@ -46,7 +46,8 @@ $$;
 create function public.sessao_nativa_attempt(
   p_scope text, p_key_hash text, p_max integer, p_window_seconds integer
 ) returns boolean
-language sql security invoker set search_path = ''
+-- Ponte no molde de entry_otp_*: security definer, porque service_role não tem usage no schema private.
+language sql security definer set search_path = ''
 as $$
   select private.sessao_nativa_attempt(p_scope, p_key_hash, p_max, p_window_seconds);
 $$;
