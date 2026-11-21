@@ -83,8 +83,9 @@ export function Ajuda() {
   const [aberta, setAberta] = useState<Denuncia | null>(null)
   const [selecionada, setSelecionada] = useState<string | null>(null)
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: rodada é o pedido de tentar de novo
+  // biome-ignore lint/correctness/useExhaustiveDependencies: aba e rodada comandam a leitura
   useEffect(() => {
+    if (aba !== "denuncias") return
     const controle = new AbortController()
     setErroDasDenuncias(null)
     void lerDenuncias({ signal: controle.signal })
@@ -95,7 +96,7 @@ export function Ajuda() {
         if (!controle.signal.aborted) setErroDasDenuncias(falha)
       })
     return () => controle.abort()
-  }, [rodada])
+  }, [aba, rodada])
 
   useRolagemEFoco(
     useCargaDaLista(aba !== "denuncias" || denuncias !== null || erroDasDenuncias !== null),
