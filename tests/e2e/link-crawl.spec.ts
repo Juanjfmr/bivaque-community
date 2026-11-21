@@ -180,7 +180,6 @@ const PORTAS_FORA_DO_LINK: readonly PortaDeclarada[] = [
     route: "/denuncias/nova",
     porta: "FLUXO: versão endereçável (spec C10) do diálogo que as origens abrem por cima da tela",
   },
-  { route: "/invite/[token]", porta: "EXTERNO: link de convite compartilhado" },
   // RUN-172/176: o perfil web era a única tela da casca a que uma persona chegava, e com ele
   // morreram as portas de Salvos, Configurações, Conta, senha, Comunidades e o detalhe da
   // indicação. Entrar na casca por uma semente devolveu a medida, e estas voltaram a ter link
