@@ -15,6 +15,7 @@ import { MolduraContexto } from "@/src/previa-f01/moldura"
 import { TELAS_DA_ENTRADA } from "@/src/previa-f01/telas"
 import "@/src/previa-f01/previa-f01.css"
 import { ProvedorDoServidorDaEntrada, type ServidorDaEntrada } from "./contexto"
+import { AceiteDeConviteDePrestador } from "./AceiteDeConviteDePrestador"
 import { paraServidor, progressoDoServidor, verificacaoDoStatus } from "./estado"
 import { mensagemDoConvite } from "./mensagens"
 import { retornoValido } from "./retorno"
@@ -105,6 +106,13 @@ export function TelaDeEntrada() {
         : null,
     [],
   )
+
+  // TROCA-005 — o convite de prestador chega pelo mesmo endereço da entrada,
+  // com o token na busca; é um estado da entrada, não uma tela nova.
+  const tokenDoPrestador = useMemo(() => {
+    const bruto = new URLSearchParams(window.location.search).get("prestador") ?? ""
+    return /^[0-9a-fA-F]{64}$/.test(bruto) ? bruto : null
+  }, [])
 
   useEffect(() => {
     if (conviteDaUrl === null) return
@@ -412,6 +420,8 @@ export function TelaDeEntrada() {
           },
     [progresso, anterior, voltar],
   )
+
+  if (tokenDoPrestador !== null) return <AceiteDeConviteDePrestador token={tokenDoPrestador} />
 
   if (progresso === null || contexto === null) {
     return (
