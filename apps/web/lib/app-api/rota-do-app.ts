@@ -56,6 +56,10 @@ export function origensPermitidas(): string[] {
   return [...new Set([...ORIGENS_LOCAIS, ...doAmbiente])]
 }
 
+export function origensNativas(): string[] {
+  return ["https://localhost", "capacitor://localhost"]
+}
+
 /**
  * A origem que o navegador abriu, reconstruída do `Host` que a plataforma
  * entregou e do `x-forwarded-proto` da borda. É ela — nunca um domínio fixo —
@@ -108,7 +112,7 @@ export function responder(
     status,
     headers: {
       "cache-control": "no-store",
-      ...cabecalhosDeCors(request.headers.get("origin"), origensPermitidas()),
+      ...cabecalhosDeCors(request.headers.get("origin"), origensPermitidas(), origensNativas()),
       ...extras,
     },
   })
@@ -134,7 +138,11 @@ export function respostaIndisponivel(request: Request): NextResponse {
 }
 
 export function opcoesDoApp(request: Request): NextResponse {
-  const cabecalhos = cabecalhosDePreflight(request.headers.get("origin"), origensPermitidas())
+  const cabecalhos = cabecalhosDePreflight(
+    request.headers.get("origin"),
+    origensPermitidas(),
+    origensNativas(),
+  )
   if (Object.keys(cabecalhos).length === 0) {
     return new NextResponse(null, { status: 403, headers: { "cache-control": "no-store" } })
   }
@@ -150,7 +158,14 @@ export function opcoesDoApp(request: Request): NextResponse {
  */
 export function conferirPorta(request: Request, via: "cookie" | "bearer"): Porta {
   const origem = request.headers.get("origin")
-  if (origem !== null && !origemPermitida(origem, origensPermitidas())) {
+  if (
+    origem !== null &&
+    ((via === "cookie" && origemPermitida(origem, origensNativas())) ||
+      !origemPermitida(
+        origem,
+        via === "bearer" ? [...origensPermitidas(), ...origensNativas()] : origensPermitidas(),
+      ))
+  ) {
     return "origem-recusada"
   }
   if (via === "cookie" && request.headers.get("x-bivaque-app") !== VALOR_DO_CABECALHO_DO_APP) {
@@ -239,6 +254,7 @@ export function conferirEscrita(request: Request, via: "cookie" | "bearer"): Por
     origem: request.headers.get("origin"),
     cabecalhoDoApp: request.headers.get("x-bivaque-app"),
     origensPermitidas: origensPermitidas(),
+    origensNativas: origensNativas(),
   })
   return veredito.ok ? "ok" : veredito.motivo
 }

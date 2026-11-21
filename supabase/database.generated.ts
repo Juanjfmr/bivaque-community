@@ -3828,6 +3828,15 @@ export type Database = {
         Args: { p_request_id: string }
         Returns: number
       }
+      sessao_nativa_attempt: {
+        Args: {
+          p_key_hash: string
+          p_max: number
+          p_scope: string
+          p_window_seconds: number
+        }
+        Returns: boolean
+      }
       set_community_image: {
         Args: {
           p_caller_user_id: string

@@ -17,8 +17,13 @@ import {
   type PerguntaDoGrupo,
   type PublicacaoCriada,
 } from "@/lib/dados/grupos"
-import { useNavegacao, useRolagemEFoco } from "@/lib/navegacao/react"
-import { CARGA_CONCLUIDA } from "@/lib/navegacao/restauracao"
+import { lerDaLista, mudancaDaLista } from "@/lib/navegacao/listas"
+import {
+  useCargaDaLista,
+  useEntradaDaTela,
+  useNavegacao,
+  useRolagemEFoco,
+} from "@/lib/navegacao/react"
 import { useAcoesDaPublicacao } from "@/src/grupos/AcoesDaPublicacao"
 import { ConviteEAvisos } from "@/src/grupos/ConviteEAvisos"
 import { Escrever } from "@/src/grupos/Escrever"
@@ -79,7 +84,18 @@ export function Grupo() {
   const [dados, setDados] = useState<DetalheDoGrupo | null>(null)
   const [erro, setErro] = useState<unknown>(null)
   const [rodada, setRodada] = useState(0)
-  const [ordem, setOrdem] = useState<OrdemDoGrupo>("recentes")
+  // A ordem mora na entrada (NAV-001): abrir uma publicação e voltar devolve a
+  // lista na mesma aba e na mesma posição.
+  const entrada = useEntradaDaTela()
+  const [ordem, setOrdem] = useState<OrdemDoGrupo>(
+    () =>
+      lerDaLista(
+        entrada.filtros,
+        "grupo-ordem",
+        ["recentes", "discutidas", "salvas", "ocultadas"],
+        "recentes",
+      ) as OrdemDoGrupo,
+  )
   const [mais, setMais] = useState(false)
   const [erroMais, setErroMais] = useState(false)
   // As perguntas do grupo vivem na própria linha do banco e são lidas por rota
@@ -116,7 +132,9 @@ export function Grupo() {
           : atual,
       ),
   })
-  useRolagemEFoco(CARGA_CONCLUIDA)
+  // A lista só devolve a rolagem quando o dado chegou (NAV-001).
+  const carga = useCargaDaLista(dados !== null || erro !== null)
+  useRolagemEFoco(carga)
   useEffect(() => () => controle.abort(), [controle])
   useEffect(() => {
     if (recemPublicada === null || dados === null) return
@@ -394,7 +412,10 @@ export function Grupo() {
                   key={chave}
                   tom={ordem === chave ? "tom" : "contorno"}
                   aria-pressed={ordem === chave}
-                  onClick={() => setOrdem(chave)}
+                  onClick={() => {
+                    setOrdem(chave)
+                    void navegacao.atualizar(mudancaDaLista("grupo-ordem", chave))
+                  }}
                 >
                   {
                     {

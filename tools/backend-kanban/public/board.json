@@ -6373,7 +6373,10 @@
       "sourceRevision": "fc67e19e",
       "links": ["docs/LANCAMENTO.md"],
       "proof": [
-        "02/11: aberto na definição do lançamento (docs/LANCAMENTO.md), por mandato do dono."
+        "02/11: aberto na definição do lançamento (docs/LANCAMENTO.md), por mandato do dono.",
+        "20/11 LOJA-001 (#312): Capacitor com android/ e ios/ versionados, base absoluta no nativo, câmera, link profundo, workflow app-loja.yml e inventário da sessão; revisão às cegas PASS no delta e2f069d3. Capturas do emulador em .visual/loja-001/ (camera, criar, link-entrada).",
+        "21/11 LOJA-002 (#317): a prova contra o GoTrue local mediu que o reuso de R0 fora da janela recusa só R0 (401, 'Possible abuse attempt' no log); R2 segue válido direto no GoTrue. Emenda de 21/11 no ADR-20261120 por delegação: a revogação da família deixa de ser promessa, resíduo declarado na RATIFICACAO e card SEC-FAMILIA-RENOVACAO pós-lançamento.",
+        "21/11 LOJA-002 (#317, 40850d7b4): CI completo verde (run 44910688304, stateful 375/768/1440); security-auditor LIBERA COM RESSALVAS e revisão independente PASS-COM-RESSALVA. Herdado pelo LOJA-003: cofre, PKCE no app, CSP nativa e retorno com auditoria própria; cabeçalho do app em todo pedido nativo; repetir renovar só dentro da janela de 10 s; Apple no entry/oauth."
       ],
       "id": "LAN-LOJA",
       "title": "Fase 7: app de loja em Capacitor pronto para envio",
@@ -6387,7 +6390,10 @@
         "Builds de release (AAB e arquivo do Xcode em executor macOS) gerados pelo CI sem assinatura de produção",
         "Assinatura, fichas e envio registrados como atos do dono"
       ],
-      "dependencies": ["LAN-TROCA", "BLOCK-MOBILE-RUNTIME"]
+      "dependencies": ["LAN-TROCA", "BLOCK-MOBILE-RUNTIME"],
+      "notes": [
+        "20/11 decisão do coordenador: a tela de entrada no nativo (apps/app/src/entrada/servidor.ts com fetch relativo) sai do LOJA-001 e entra no LOJA-002, junto da sessão nativa do ADR-20261120. Ficam também para o LOJA-002: android:allowBackup, window.alert no SeletorDeFoto, remover o ouvinte appUrlOpen, testes de template com.getcapacitor.myapp, varredura dos gerados do cap sync, ios/Pods no .gitignore, setup-java v4."
+      ]
     },
     {
       "phase": "Lançamento",
@@ -10412,6 +10418,114 @@
       ],
       "updatedAt": "2026-11-20",
       "sourceRevision": "1bd9c7f8"
+    },
+    {
+      "phase": "Lançamento",
+      "tests": [],
+      "blockers": [
+        "O CLI do Supabase 2.107.0 (binário Bun) falha com EPERM ao abrir ou criar qualquer arquivo ou pasta: C:/Users/juana/.supabase/telemetry.json.tmp.* e também uma pasta pessoal temporária (HOME/USERPROFILE trocados), inclusive fora do sandbox. Quebra test:db, db:lint, migration list/up e status no PC do dono."
+      ],
+      "updatedAt": "2026-11-20",
+      "sourceRevision": "f1c405eca",
+      "links": ["package.json (supabase 2.107.0)", "PR #314"],
+      "proof": [
+        "20/11: tentados (1) rodar no worktree e no checkout principal; (2) fora do sandbox; (3) HOME/USERPROFILE numa pasta temporária: EPERM em todos. A pasta .supabase aceita escrita pelo bash (touch), e o acesso controlado a pastas do Defender está desligado (EnableControlledFolderAccess=0). As ACLs de ~/.supabase têm uma entrada CodexSandboxUsers (RX) que não nega nada ao usuário juana.",
+        "20/11: o banco local (supabase_db_bivaque-community, de pé há 4 dias) tem supabase_migrations.schema_migrations vazio e não tem as tabelas de 18/11 (push_subscriptions), então está fora de sincronia com a main. Até o card fechar, a prova de banco fica no CI (ci:full), como no #314.",
+        "20/11 noite: com DO_NOT_TRACK=1 SUPABASE_TELEMETRY_DISABLED=1 o EPERM some e `supabase migration new` funciona (criou 20261121002331_sessao_nativa_limiter.sql). `supabase status` agora falha em outro ponto: acesso negado ao pipe do Docker Desktop (//./pipe/dockerDesktopLinuxEngine) a partir desta sessão. Próximo passo: rodar status/test:db com a variável num terminal do dono para separar sandbox de permissão do Docker."
+      ],
+      "id": "INFRA-CLI-SUPABASE-PC",
+      "title": "CLI do Supabase falha com EPERM no PC do dono e o banco local está fora de sincronia",
+      "priority": "P1",
+      "category": "infra",
+      "status": "now",
+      "description": "Sem o CLI, nenhuma prova de banco local roda no PC (test:db, db:lint, migration up). Próximo passo concreto: rodar o binário @supabase/cli-windows-x64 direto com --version e um comando que grava, comparar com o CLI Go oficial (SUPABASE_CLI_BINARY_OVERRIDE apontando para o supabase.exe da release anterior da linha 2.x) e, se o Go funcionar, fixar o override no ambiente local ou voltar o pin; depois, com a pilha exclusiva, reset --local --no-seed e test:db para ressincronizar o banco.",
+      "checklist": [
+        "Diagnóstico do EPERM com o binário direto e com o CLI Go",
+        "CLI funcionando no PC (migration list --local sem erro)",
+        "Banco local ressincronizado com a main (reset --local --no-seed exclusivo) e test:db verde"
+      ],
+      "dependencies": []
+    },
+    {
+      "id": "SEC-FAMILIA-RENOVACAO",
+      "title": "Revogação própria da família de renovação no reuso",
+      "priority": "P3",
+      "category": "backend",
+      "status": "repo",
+      "description": "O GoTrue recusa o token de renovação reusado fora da janela, mas mantém válidos os descendentes (medido no CI do PR #317, run 44908862984: R2 renovado direto no GoTrue devolve 200). Pós-lançamento: mapear o token para a sessão e chamar signOut global no reuso detectado, ou subir para uma versão do GoTrue que revogue a família. Exige ADR R3 nova (tabela e service_role).",
+      "sourceRevision": "03a0c9fca",
+      "updatedAt": "2026-11-21",
+      "dependencies": [],
+      "checklist": [
+        "[ ] ADR R3 com a estratégia (mapa token→sessão ou versão do GoTrue)",
+        "[ ] Prova contra o GoTrue local: reuso de R0 recusa R2",
+        "[ ] Revisão do security-auditor"
+      ],
+      "links": ["docs/decisions/ADR-20261120-sessao-nativa-do-app-de-loja.md"],
+      "proof": [
+        "21/11: CI do PR #317 (run 44908862984), anotação diagnostico em 1440: rotaR0 401 credencial-recusada, goTrueR2 200, usuarioR2 200."
+      ]
+    },
+    {
+      "id": "NAV-001",
+      "title": "Base de navegação: Folha única, ação otimista com Desfazer e volta à posição da lista",
+      "phase": "Lançamento",
+      "priority": "P1",
+      "category": "frontend",
+      "status": "done",
+      "description": "Três peças comuns do app (contrato docs/agents/tasks/NAV-BASE.task.yml): Folha única com arrasto e movimento reduzido para Criar, Paleta, cidade e Sugerir lugar; ação otimista comum (lib/acao-otimista.ts) com Desfazer em Anúncio, Salvos e Verbete; volta de detalhe com rolagem, aba e filtros em Início, Comunidade, Grupo, Mercado (Desapegos, Imóveis, Negócios), Busca e Salvos. Base dos lotes NAV-002..004.",
+      "checklist": [
+        "Folha única com arrasto, Esc, fundo, Fechar e foco de volta",
+        "Movimento reduzido: só opacidade até 120 ms",
+        "Ação otimista comum com reversão, Desfazer e guarda de toque duplo",
+        "Posição, aba e filtros preservados nas listas citadas",
+        "Vitest e E2E 375/768/1440 claro/escuro"
+      ],
+      "dependencies": [],
+      "tests": [
+        "apps/app/tests/acao-otimista.test.ts",
+        "apps/app/tests/folha.test.ts",
+        "apps/app/tests/navegacao/listas.test.ts",
+        "apps/app/tests/e2e/nav-001.spec.ts"
+      ],
+      "blockers": [],
+      "updatedAt": "2026-11-21",
+      "completedAt": "2026-11-21",
+      "sourceRevision": "27ba94327",
+      "links": [
+        "docs/agents/tasks/NAV-BASE.task.yml",
+        "https://github.com/Juanjfmr/bivaque-community/pull/318"
+      ],
+      "proof": [
+        "21/11: implementado pelo DeepSeek v4.1 Flash (Codex Terra indisponível), 22 commits em apps/app (mais 1 chamada em src/roteador.tsx, aceita pelo coordenador). Conferido pelo coordenador em f03406ef7: typecheck limpo; app test 71 arquivos/756 testes; nav-001.spec 33/33 em mobile-375, tablet-768, desktop-1440, claro e escuro; capturas em .visual/nav-001/pos-*.",
+        "21/11: revisão independente às cegas (subagente reviewer) deu FAIL com 4 altos e 5 médios; rodada única de correção fechou todos com teste (fundo da Folha/Aviso fora de .pc, ignorado em Salvos, Negócios, categoria da Busca, foco de volta, Grupos, altura no computador, tempos do ANIMATION.md, fechamento por arrasto). Baixos em NAV-001-RESSALVAS.",
+        "21/11: merge do PR #318 condicionado ao CI completo (ci:full) verde no head."
+      ]
+    },
+    {
+      "id": "NAV-001-RESSALVAS",
+      "title": "Ressalvas baixas da revisão do NAV-001",
+      "phase": "Lançamento",
+      "priority": "P3",
+      "category": "frontend",
+      "status": "repo",
+      "description": "Achados baixos e de aparelho real da revisão às cegas do NAV-001 (PR #318), fora da rodada de correção.",
+      "checklist": [
+        "Arrasto pelo conteúdo no toque real: touch-action do .pc-folha-corpo e rolagem interna do formulário do Criar (provar em aparelho)",
+        "pecas.tsx: animation.finish() pula a entrada para o fim; interromper do estado atual (ANIMATION §4)",
+        "Arrasto com mouse na caixa central (>=768) pode fechar ao selecionar texto",
+        "Motivo da recusa aparece inline, não na peça Aviso; decidir e alinhar",
+        "Código morto: listaPronta (lib/navegacao/listas.ts) e seletores pilha em styles.css",
+        "pecas.tsx acima de 800 linhas: extrair a Folha",
+        "tests/navegacao/listas.test.ts confere texto do fonte; trocar por teste de comportamento"
+      ],
+      "dependencies": [],
+      "tests": [],
+      "blockers": [],
+      "updatedAt": "2026-11-21",
+      "sourceRevision": "27ba94327",
+      "links": ["https://github.com/Juanjfmr/bivaque-community/pull/318"],
+      "proof": ["21/11: registrado pelo coordenador a partir da revisão às cegas do NAV-001."]
     },
     {
       "id": "CASCA-TOPO-E-NAV-DETALHE",

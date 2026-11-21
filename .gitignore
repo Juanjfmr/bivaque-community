@@ -59,5 +59,17 @@ apps/mobile/dist-ios/
 apps/mobile/*.apk
 apps/mobile/build-log-*.txt
 
+# Artefatos locais dos projetos Capacitor.
+apps/app/android/.gradle/
+apps/app/android/**/build/
+apps/app/android/local.properties
+apps/app/ios/Pods/
+apps/app/ios/DerivedData/
+
 # Store local do pnpm: ~82 mil arquivos, nunca versionado.
 .pnpm-store/
+
+apps/app/dist-nativo/
+
+*.keystore
+*.jks

@@ -16,6 +16,7 @@ import {
   guardarRascunhoDoGrupo,
   lerRascunhosDoGrupo,
 } from "@/lib/grupos-locais"
+import { SeletorDeFoto } from "@/lib/nativo/SeletorDeFoto"
 import { useSobreposicaoDaEntrada } from "@/lib/navegacao/react"
 import { Botao as BotaoPeca } from "@/src/pecas/pecas"
 import {
@@ -407,7 +408,7 @@ export function Escrever({
             <>
               <label className="grid gap-2 text-sm" htmlFor="texto-grupo-fotos">
                 Adicionar fotos (até 4, de até 5 MB)
-                <input
+                <SeletorDeFoto
                   id="texto-grupo-fotos"
                   type="file"
                   accept="image/jpeg,image/png,image/webp"

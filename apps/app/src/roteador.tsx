@@ -2,6 +2,7 @@ import type { SearchMiddleware } from "@tanstack/react-router"
 import { createRootRoute, createRoute, createRouter } from "@tanstack/react-router"
 import type { ComponentType } from "react"
 
+import { esquecerEntradaDeOutroDocumento } from "@/lib/navegacao/dom"
 import { ROTAS } from "@/lib/navegacao/rotas"
 import { Casca } from "@/src/casca/Casca"
 import { TelaDeEntrada } from "@/src/entrada/TelaDeEntrada"
@@ -208,6 +209,10 @@ const mercadoLab = createRoute({
 })
 
 const arvore = raiz.addChildren([indice, ...paginas, mercado, galeria, mercadoLab])
+
+// Antes de o roteador ler a localização inicial: a entrada que veio de outro
+// documento só vale quando a pessoa recarregou ou voltou/avançou.
+esquecerEntradaDeOutroDocumento()
 
 export const roteador = createRouter({
   basepath: "/app",

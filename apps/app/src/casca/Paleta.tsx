@@ -4,7 +4,6 @@ import { useCallback, useEffect } from "react"
 import { Icone } from "@/components/bivaque/icone"
 import {
   Command,
-  CommandDialog,
   CommandEmpty,
   CommandGroup,
   CommandInput,
@@ -16,6 +15,7 @@ import { useEntradaDaTela, useNavegacao } from "@/lib/navegacao/react"
 import { tituloDaRota } from "@/lib/navegacao/rotas"
 import { normalizar } from "@/lib/texto"
 import { emComposicao } from "@/src/casca/teclado"
+import { Folha } from "@/src/pecas/pecas"
 
 /**
  * A paleta de comandos da onda 2 (protótipo: shell/command-palette.js), só no
@@ -25,7 +25,8 @@ import { emComposicao } from "@/src/casca/teclado"
  *
  * A peça é o `Command` do shadcn, sobre `cmdk` (achado S02 da auditoria de
  * 26/10): a filtragem, a seleção e as teclas são da peça, e não uma lista
- * manual sobre Radix. O que continua sendo do app é o histórico: abrir e
+ * manual sobre Radix. A caixa é a Folha única (NAV-001), em painel, com o
+ * campo focado ao abrir. O que continua sendo do app é o histórico: abrir e
  * fechar passam por `useSobreposicaoDaEntrada`, então o Voltar do sistema
  * fecha a paleta antes de sair da tela.
  */
@@ -135,6 +136,37 @@ const ITENS: readonly Item[] = [
 const DESKTOP = "(min-width: 1024px)"
 const GRUPOS = ["Ações", "Ir para"] as const
 
+/**
+ * O atalho não pode depender do primeiro commit do React: entre o `load` e a
+ * montagem a pessoa (e a prova) já consegue digitar. O ouvinte mora no módulo,
+ * que o navegador avalia antes de pintar, e chama quem estiver montado; sem
+ * ninguém montado, não faz nada.
+ */
+let abrirPaleta: (() => void) | null = null
+let atalhoInstalado = false
+
+function aoTeclarPaleta(evento: KeyboardEvent): void {
+  if (abrirPaleta === null) return
+  if (evento.defaultPrevented || emComposicao(evento) || evento.repeat) return
+  const alvo = evento.target as HTMLElement | null
+  const emCampo = alvo !== null && ["INPUT", "TEXTAREA", "SELECT"].includes(alvo.tagName)
+  const tecla = evento.key.toLowerCase()
+  const combo =
+    (evento.ctrlKey || evento.metaKey) && !evento.altKey && !evento.shiftKey && tecla === "k"
+  const barra = tecla === "/" && !evento.ctrlKey && !evento.metaKey && !evento.altKey && !emCampo
+  if (!combo && !barra) return
+  evento.preventDefault()
+  abrirPaleta()
+}
+
+function instalarAtalhoDaPaleta(): void {
+  if (atalhoInstalado || typeof document === "undefined") return
+  atalhoInstalado = true
+  document.addEventListener("keydown", aoTeclarPaleta)
+}
+
+instalarAtalhoDaPaleta()
+
 export function Paleta() {
   const { abrir: abrirSobreposicao, fecharSobreposicao: fechar, irPara } = useNavegacao()
   const aberta = useEntradaDaTela().sobreposicao === "paleta"
@@ -146,22 +178,10 @@ export function Paleta() {
   }, [abrirSobreposicao])
 
   useEffect(() => {
-    if (typeof document === "undefined") return
-    const aoTeclar = (evento: KeyboardEvent) => {
-      if (evento.defaultPrevented || emComposicao(evento) || evento.repeat) return
-      const alvo = evento.target as HTMLElement | null
-      const emCampo = alvo !== null && ["INPUT", "TEXTAREA", "SELECT"].includes(alvo.tagName)
-      const tecla = evento.key.toLowerCase()
-      const combo =
-        (evento.ctrlKey || evento.metaKey) && !evento.altKey && !evento.shiftKey && tecla === "k"
-      const barra =
-        tecla === "/" && !evento.ctrlKey && !evento.metaKey && !evento.altKey && !emCampo
-      if (!combo && !barra) return
-      evento.preventDefault()
-      abrir()
+    abrirPaleta = abrir
+    return () => {
+      if (abrirPaleta === abrir) abrirPaleta = null
     }
-    document.addEventListener("keydown", aoTeclar)
-    return () => document.removeEventListener("keydown", aoTeclar)
   }, [abrir])
 
   if (!aberta) return null
@@ -171,14 +191,14 @@ export function Paleta() {
   }
 
   return (
-    <CommandDialog
-      open
-      onOpenChange={(valor) => {
-        if (!valor) fechar()
-      }}
-      title="Buscar e ir para"
-      description="Busque um destino ou escolha uma ação."
-      className="w-[calc(100%-32px)] max-w-xl"
+    <Folha
+      aberta
+      aoFechar={fechar}
+      titulo="Buscar e ir para"
+      descricao="Busque um destino ou escolha uma ação."
+      modo="painel"
+      sobreposicao="paleta"
+      focoInicial="#paleta-busca"
     >
       <Command
         onKeyDownCapture={(evento) => {
@@ -190,7 +210,7 @@ export function Paleta() {
       >
         {/* O `label` da peça nomeia o campo: o cmdk liga o `aria-labelledby` do
             input a ele, e o placeholder é só a dica visual. */}
-        <CommandInput autoFocus placeholder="Buscar ou ir para…" />
+        <CommandInput id="paleta-busca" placeholder="Buscar ou ir para…" />
         <CommandList data-sobreposicao="paleta" label="Destinos e ações">
           <CommandEmpty>Nada encontrado.</CommandEmpty>
           {GRUPOS.map((grupo) => (
@@ -213,6 +233,6 @@ export function Paleta() {
           ↑ ↓ navegar · ↵ abrir · Esc fechar
         </p>
       </Command>
-    </CommandDialog>
+    </Folha>
   )
 }

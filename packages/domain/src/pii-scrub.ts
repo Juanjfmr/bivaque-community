@@ -8,6 +8,15 @@ const CPF = /\b\d{3}[.\s-]?\d{3}[.\s-]?\d{3}[.\s-]?\d{2}\b/g
 const JWT = /\beyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\b/g
 const AUTH_HEADER = /(authorization\s*[:=]\s*).+/gi
 
+export const CREDENTIAL_KEYS = [
+  "access_token",
+  "refresh_token",
+  "provider_token",
+  "provider_refresh_token",
+  "auth_code",
+  "code_verifier",
+] as const
+
 // Fields whose whole value is user content or a credential: replace, never
 // pattern-scrub, because user-generated text can contain anything.
 const REDACTED_KEYS = new Set([
@@ -18,23 +27,58 @@ const REDACTED_KEYS = new Set([
   "password",
   "secret",
   "authorization",
+  ...CREDENTIAL_KEYS,
 ])
 
+const SESSION_PATH = /\/api\/app\/sessao\//i
+const PRIVATE_BODY_PATH =
+  /\/api\/app\/(?:sessao\/[^?#\s]*|entry\/otp\/verify|voce\/sair)(?:[?#\s]|$)/i
+const URL_IN_TEXT = /(?:[a-z][a-z0-9+.-]*:\/\/[^\s"'<>]+|\/[a-z0-9_./-]+\?[^\s"'<>]*)/gi
+
+export function scrubCredentialUrls(value: string): string {
+  return value.replace(URL_IN_TEXT, (url) => {
+    const hideCode =
+      /^bivaque:\/\/auth-callback(?:[/?#]|$)/i.test(url) ||
+      /\/auth\/callback(?:[?#]|$)/i.test(url) ||
+      SESSION_PATH.test(url)
+    return url.replace(/([?&#])([^=&#]+)=([^&#\s]*)/g, (param, separator: string, key: string) => {
+      let name: string
+      try {
+        name = decodeURIComponent(key.replace(/\+/g, " ")).toLowerCase()
+      } catch {
+        return param
+      }
+      return CREDENTIAL_KEYS.some((credential) => credential === name) ||
+        (hideCode && name === "code")
+        ? `${separator}${key}=[redacted]`
+        : param
+    })
+  })
+}
+
 export function scrubPii(value: string): string {
-  return value
+  return scrubCredentialUrls(value)
     .replace(AUTH_HEADER, "$1[redacted]")
     .replace(JWT, "[redacted]")
     .replace(EMAIL, "[redacted]")
     .replace(CPF, "[redacted]")
 }
 
-export function scrubEvent(input: unknown): unknown {
+export function scrubEvent(input: unknown, session = false): unknown {
   if (typeof input === "string") return scrubPii(input)
-  if (Array.isArray(input)) return input.map(scrubEvent)
+  if (Array.isArray(input)) return input.map((item) => scrubEvent(item, session))
   if (input !== null && typeof input === "object") {
+    const obj = input as Record<string, unknown>
+    const url = typeof obj["url"] === "string" ? obj["url"] : ""
+    const isSession = session || SESSION_PATH.test(url)
     const out: Record<string, unknown> = {}
-    for (const [key, value] of Object.entries(input as Record<string, unknown>)) {
-      out[key] = REDACTED_KEYS.has(key.toLowerCase()) ? "[redacted]" : scrubEvent(value)
+    for (const [key, value] of Object.entries(obj)) {
+      const lower = key.toLowerCase()
+      if (PRIVATE_BODY_PATH.test(url) && (lower === "data" || lower === "body")) continue
+      out[key] =
+        REDACTED_KEYS.has(lower) || (isSession && lower === "code")
+          ? "[redacted]"
+          : scrubEvent(value, isSession)
     }
     return out
   }

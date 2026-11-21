@@ -70,7 +70,8 @@ describe("Base shadcn — o equivalente existe e tem consumidor real", () => {
     },
     {
       base: "components/ui/dialog.tsx",
-      consumidor: "src/casca/MenuCriar.tsx",
+      // A Folha única (NAV-001) é quem monta a base; o Criar e a paleta usam a peça.
+      consumidor: "src/pecas/pecas.tsx",
     },
   ] as const
 

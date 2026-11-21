@@ -1448,13 +1448,11 @@
 }
 
 .bv-criar-menu {
-  position: fixed;
-  z-index: 45;
-  max-height: calc(100dvh - 24px);
-  overflow: auto;
+  width: 262px;
 }
 
 .bv-criar-menu[data-modo="painel"] {
+  width: min(620px, calc(100vw - 24px));
   padding: 18px;
   border: 1px solid var(--outline-variant);
   border-radius: 16px;
@@ -1462,8 +1460,8 @@
   box-shadow: 0 28px 64px -16px var(--shadow-strong);
 }
 
-.bv-criar-menu[data-modo="pilha"] {
-  overflow: visible;
+.bv-criar-menu[data-modo="folha"] {
+  max-height: 88dvh;
 }
 
 .bv-criar-escolha {
@@ -1531,18 +1529,6 @@
 .bv-criar-atalho {
   margin-left: auto;
   border: 1px solid var(--outline-variant);
-}
-[data-criar="fechar"] {
-  position: absolute;
-  left: var(--fab-x);
-  top: var(--fab-y);
-  display: grid;
-  place-items: center;
-  width: 58px;
-  height: 58px;
-  border-radius: 18px;
-  background: var(--brasa);
-  color: var(--brasa-foreground);
 }
 
 .bv-scrim {

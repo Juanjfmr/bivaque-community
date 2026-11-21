@@ -7,17 +7,23 @@ import { CartaoDeFoto } from "@/components/bivaque/cartao-de-anuncio"
 import { EsqueletoDeLista } from "@/components/bivaque/esqueleto"
 import { EstadoVazio } from "@/components/bivaque/estado-vazio"
 import { LinhaDeLista, Lista } from "@/components/bivaque/lista"
+import { type AcaoOtimista, criarAcaoOtimista } from "@/lib/acao-otimista"
 import { FalhaDaApi } from "@/lib/api/cliente"
 import { agirNaPublicacao, lerPublicacoesSalvas, type PublicacaoReal } from "@/lib/dados/grupos"
 import { type EntradaDoGuia, lerSalvosDoGuia, marcarNoGuia } from "@/lib/dados/guia"
 import { type AnuncioDaLista, listarAnunciosSalvos, marcarSalvoAnuncio } from "@/lib/dados/mercado"
 import { lerPerguntasSalvas, marcarSalvaPergunta, type PerguntaSalva } from "@/lib/dados/perguntas"
 import { iconeDeDado } from "@/lib/icones"
-import { useNavegacao, useRolagemEFoco } from "@/lib/navegacao/react"
-import { CARGA_CONCLUIDA } from "@/lib/navegacao/restauracao"
+import { lerDaLista, lerTextoDaLista, mudancaDaLista } from "@/lib/navegacao/listas"
+import {
+  useCargaDaLista,
+  useEntradaDaTela,
+  useNavegacao,
+  useRolagemEFoco,
+} from "@/lib/navegacao/react"
 import { foiAbortada } from "@/src/eventos/formulario"
 import { ICONE_DA_CATEGORIA } from "@/src/guia/comum"
-import { Botao as BotaoDaPeca, CampoDeBusca, Chip } from "@/src/pecas/pecas"
+import { Aviso, Botao as BotaoDaPeca, CampoDeBusca, Chip, useAviso } from "@/src/pecas/pecas"
 
 type AbaDosSalvos = "desapegos" | "imoveis"
 
@@ -40,6 +46,92 @@ function falhaAoRemover(falha: unknown): string {
 }
 
 /**
+ * O caminho de dessalvar, fora do componente para a prova do toque repetido.
+ *
+ * Um toque já em gravação não é sucesso: nada de confirmar a remoção, tirar o
+ * item de novo nem anunciar "Removido dos salvos.". `executar` devolver
+ * `ignorado` encerra o toque aqui, e o guarda de `gravando` evita até segurar o
+ * item duas vezes no mapa de quem está saindo.
+ */
+export async function removerDosSalvos<T extends { id: string }>({
+  acao,
+  avisos,
+  id,
+  lista,
+  definir,
+  gravar,
+  repor,
+  mesmaSecao = () => true,
+  segurar,
+  largar,
+  confirmar,
+  aoRemovendo,
+  aoRecusar,
+}: {
+  acao: AcaoOtimista
+  avisos: { mostrar(texto: string, desfazer?: () => void): void }
+  id: string
+  lista: readonly T[] | null
+  definir: Dispatch<SetStateAction<readonly T[] | null>>
+  gravar: () => Promise<unknown>
+  /** A gravação inversa: o Desfazer do Aviso grava o estado anterior de verdade. */
+  repor: () => Promise<unknown>
+  mesmaSecao?: () => boolean
+  segurar: () => void
+  largar: () => void
+  confirmar: () => void
+  aoRemovendo: (gravando: boolean) => void
+  aoRecusar: (mensagem: string) => void
+}): Promise<void> {
+  const onde = lista?.findIndex((item) => item.id === id) ?? -1
+  const item = lista?.find((outro) => outro.id === id)
+  const tirar = () => definir((atual) => atual?.filter((outro) => outro.id !== id) ?? atual)
+  // shortcut: repõe no índice original; se um vizinho anterior também saiu,
+  // ela entra depois dele.
+  const recolocar = () => {
+    if (item === undefined || !mesmaSecao()) return
+    definir((atual) => {
+      if (atual === null || atual.some((outro) => outro.id === id)) return atual
+      const comOItem = [...atual]
+      comOItem.splice(onde < 0 ? comOItem.length : Math.min(onde, comOItem.length), 0, item)
+      return comOItem
+    })
+  }
+
+  if (acao.gravando(id)) return
+  segurar()
+  const resultado = await acao.executar(id, {
+    aplicar: tirar,
+    reverter: recolocar,
+    gravar,
+    mensagemDaRecusa: (falha) => (foiAbortada(falha) ? "" : falhaAoRemover(falha)),
+    aoGravando: aoRemovendo,
+  })
+  largar()
+  if (resultado.tipo === "ignorado") return
+  if (resultado.tipo === "recusa") {
+    if (resultado.mensagem !== "") aoRecusar(resultado.mensagem)
+    return
+  }
+  // Sucesso: o item sai também da lista que voltou durante a chamada, e
+  // leituras já começadas que chegarem depois não o repõem.
+  confirmar()
+  tirar()
+  avisos.mostrar("Removido dos salvos.", () => {
+    void acao
+      .executar(id, {
+        aplicar: recolocar,
+        reverter: tirar,
+        gravar: repor,
+        mensagemDaRecusa: (falha) => (foiAbortada(falha) ? "" : falhaAoRemover(falha)),
+      })
+      .then((desfeito) => {
+        if (desfeito.tipo === "recusa" && desfeito.mensagem !== "") aoRecusar(desfeito.mensagem)
+      })
+  })
+}
+
+/**
  * Salvos: os anúncios que a pessoa guardou, as publicações de grupo, as perguntas
  * que ela segue e as referências do guia. Todas as seções vêm das rotas da sessão
  * (`/api/app/mercado/salvos`, `/grupos/salvas`, `/perguntas/salvas`,
@@ -51,8 +143,27 @@ function falhaAoRemover(falha: unknown): string {
  */
 export function Salvos() {
   const navegacao = useNavegacao()
-  const [aba, setAba] = useState<AbaDosSalvos>("desapegos")
-  const [busca, setBusca] = useState("")
+  // Aba e busca moram na entrada (NAV-001): voltar de um anúncio devolve a
+  // mesma seção, com o mesmo filtro digitado.
+  const entrada = useEntradaDaTela()
+  const [aba, setAba] = useState<AbaDosSalvos>(
+    () =>
+      lerDaLista(
+        entrada.filtros,
+        "salvos-aba",
+        ["desapegos", "imoveis"],
+        "desapegos",
+      ) as AbaDosSalvos,
+  )
+  const [busca, setBusca] = useState(() => lerTextoDaLista(entrada.filtros, "salvos-busca"))
+  const trocarAba = (nova: AbaDosSalvos) => {
+    setAba(nova)
+    void navegacao.atualizar(mudancaDaLista("salvos-aba", nova))
+  }
+  const trocarBusca = (texto: string) => {
+    setBusca(texto)
+    void navegacao.atualizar(mudancaDaLista("salvos-busca", texto))
+  }
   const [anuncios, setAnuncios] = useState<readonly AnuncioDaLista[] | null>(null)
   const [erroDosAnuncios, setErroDosAnuncios] = useState(false)
   const [rodadaDosAnuncios, setRodadaDosAnuncios] = useState(0)
@@ -60,6 +171,8 @@ export function Salvos() {
   const [outroVazio, setOutroVazio] = useState<boolean | null>(null)
   const [aviso, setAviso] = useState<string | null>(null)
   const [removendo, setRemovendo] = useState<string | null>(null)
+  const [acao] = useState(criarAcaoOtimista)
+  const avisos = useAviso()
   const [publicacoes, setPublicacoes] = useState<readonly PublicacaoReal[] | null>(null)
   const [erroDasPublicacoes, setErroDasPublicacoes] = useState(false)
   const [rodadaDasPublicacoes, setRodadaDasPublicacoes] = useState(0)
@@ -70,7 +183,9 @@ export function Salvos() {
   const [erroDasPerguntas, setErroDasPerguntas] = useState(false)
   const [rodadaDasPerguntas, setRodadaDasPerguntas] = useState(0)
 
-  useRolagemEFoco(CARGA_CONCLUIDA)
+  // A lista só devolve a rolagem quando o dado chegou (NAV-001).
+  const carga = useCargaDaLista(anuncios !== null || erroDosAnuncios)
+  useRolagemEFoco(carga)
 
   // A aba em vigor agora, para a volta de um anúncio não cair na lista do
   // segmento seguinte depois de a pessoa trocar de seção.
@@ -235,42 +350,41 @@ export function Salvos() {
    * releitura da seção sai sem o item, e o sucesso também o tira da lista que
    * chegou no meio da chamada.
    */
-  async function remover<T extends { id: string }>(
-    secao: SecaoDosSalvos,
-    id: string,
-    lista: readonly T[] | null,
-    definir: Dispatch<SetStateAction<readonly T[] | null>>,
-    gravar: () => Promise<unknown>,
-    mesmaSecao: () => boolean = () => true,
-  ) {
-    const onde = lista?.findIndex((item) => item.id === id) ?? -1
-    const item = lista?.find((outro) => outro.id === id)
+  async function remover<T extends { id: string }>({
+    secao,
+    id,
+    lista,
+    definir,
+    gravar,
+    repor,
+    mesmaSecao = () => true,
+  }: {
+    secao: SecaoDosSalvos
+    id: string
+    lista: readonly T[] | null
+    definir: Dispatch<SetStateAction<readonly T[] | null>>
+    gravar: () => Promise<unknown>
+    /** A gravação inversa: o Desfazer do Aviso grava o estado anterior de verdade. */
+    repor: () => Promise<unknown>
+    mesmaSecao?: () => boolean
+  }) {
     setAviso(null)
-    setRemovendo(id)
-    segurar(secao, id)
-    definir((atual) => atual?.filter((outro) => outro.id !== id) ?? atual)
-    try {
-      await gravar()
-      // Sucesso: o item sai também da lista que voltou durante a chamada, e
-      // leituras já começadas que chegarem depois não o repõem.
-      confirmar(secao, id)
-      definir((atual) => atual?.filter((outro) => outro.id !== id) ?? atual)
-    } catch (falha: unknown) {
-      // shortcut: repõe no índice original; se um vizinho anterior também saiu,
-      // ela entra depois dele.
-      if (item !== undefined && mesmaSecao()) {
-        definir((atual) => {
-          if (atual === null || atual.some((outro) => outro.id === id)) return atual
-          const comOItem = [...atual]
-          comOItem.splice(onde < 0 ? comOItem.length : Math.min(onde, comOItem.length), 0, item)
-          return comOItem
-        })
-      }
-      if (!foiAbortada(falha)) setAviso(falhaAoRemover(falha))
-    } finally {
-      largar(secao, id)
-      setRemovendo((atual) => (atual === id ? null : atual))
-    }
+    await removerDosSalvos({
+      acao,
+      avisos,
+      id,
+      lista,
+      definir,
+      gravar,
+      repor,
+      mesmaSecao,
+      segurar: () => segurar(secao, id),
+      largar: () => largar(secao, id),
+      confirmar: () => confirmar(secao, id),
+      aoRemovendo: (gravando) =>
+        setRemovendo((atual) => (gravando ? id : atual === id ? null : atual)),
+      aoRecusar: setAviso,
+    })
   }
 
   const termo = busca.trim().toLocaleLowerCase("pt-BR")
@@ -307,8 +421,9 @@ export function Salvos() {
 
   // No colapso não há campo de busca na tela: um termo que ficou digitado não
   // pode seguir filtrando as perguntas seguidas por baixo do vazio.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: `trocarBusca` grava na entrada; o colapso é a única condição
   useEffect(() => {
-    if (nadaSalvo) setBusca("")
+    if (nadaSalvo) trocarBusca("")
   }, [nadaSalvo])
 
   // A seção das perguntas seguidas é própria (revisão às cegas, 8): seguir não
@@ -349,9 +464,14 @@ export function Salvos() {
                 className="bg-(--muted)"
                 disabled={removendo === pergunta.id}
                 onClick={() =>
-                  void remover("perguntas", pergunta.id, perguntas, setPerguntas, () =>
-                    marcarSalvaPergunta(pergunta.id, false),
-                  )
+                  void remover({
+                    secao: "perguntas",
+                    id: pergunta.id,
+                    lista: perguntas,
+                    definir: setPerguntas,
+                    gravar: () => marcarSalvaPergunta(pergunta.id, false),
+                    repor: () => marcarSalvaPergunta(pergunta.id, true),
+                  })
                 }
               />
             </div>
@@ -406,7 +526,7 @@ export function Salvos() {
               rotulo="Buscar nos salvos"
               placeholder="Buscar nos salvos"
               value={busca}
-              onChange={(evento) => setBusca(evento.target.value)}
+              onChange={(evento) => trocarBusca(evento.target.value)}
             />
           </div>
 
@@ -426,7 +546,7 @@ export function Salvos() {
                 <Chip
                   key={abaDeAnuncio.id}
                   selecionado={aba === abaDeAnuncio.id}
-                  onClick={() => setAba(abaDeAnuncio.id)}
+                  onClick={() => trocarAba(abaDeAnuncio.id)}
                 >
                   {abaDeAnuncio.rotulo}
                 </Chip>
@@ -475,14 +595,15 @@ export function Salvos() {
                       salvo: true,
                     }}
                     aoSalvar={() =>
-                      void remover(
-                        "anuncios",
-                        anuncio.id,
-                        anuncios,
-                        setAnuncios,
-                        () => marcarSalvoAnuncio(anuncio.id, false),
-                        () => abaAtual.current === aba,
-                      )
+                      void remover({
+                        secao: "anuncios",
+                        id: anuncio.id,
+                        lista: anuncios,
+                        definir: setAnuncios,
+                        gravar: () => marcarSalvoAnuncio(anuncio.id, false),
+                        repor: () => marcarSalvoAnuncio(anuncio.id, true),
+                        mesmaSecao: () => abaAtual.current === aba,
+                      })
                     }
                     aoAbrir={() =>
                       void navegacao.irPara("anuncio", { parametros: { id: anuncio.id } })
@@ -532,13 +653,14 @@ export function Salvos() {
                         className="bg-(--muted)"
                         disabled={removendo === publicacao.id}
                         onClick={() =>
-                          void remover(
-                            "publicacoes",
-                            publicacao.id,
-                            publicacoes,
-                            setPublicacoes,
-                            () => agirNaPublicacao(publicacao.id, "salvar", false),
-                          )
+                          void remover({
+                            secao: "publicacoes",
+                            id: publicacao.id,
+                            lista: publicacoes,
+                            definir: setPublicacoes,
+                            gravar: () => agirNaPublicacao(publicacao.id, "salvar", false),
+                            repor: () => agirNaPublicacao(publicacao.id, "salvar", true),
+                          })
                         }
                       />
                     </div>
@@ -583,9 +705,14 @@ export function Salvos() {
                         className="bg-(--muted)"
                         disabled={removendo === entrada.id}
                         onClick={() =>
-                          void remover("guia", entrada.id, guia, setGuia, () =>
-                            marcarNoGuia(entrada.id, false),
-                          )
+                          void remover({
+                            secao: "guia",
+                            id: entrada.id,
+                            lista: guia,
+                            definir: setGuia,
+                            gravar: () => marcarNoGuia(entrada.id, false),
+                            repor: () => marcarNoGuia(entrada.id, true),
+                          })
                         }
                       />
                     </div>
@@ -596,6 +723,7 @@ export function Salvos() {
           ) : null}
         </>
       )}
+      <Aviso aviso={avisos.aviso} aoSumir={avisos.limpar} />
     </section>
   )
 }

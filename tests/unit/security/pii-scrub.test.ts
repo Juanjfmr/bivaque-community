@@ -1,4 +1,4 @@
-import { scrubEvent, scrubPii } from "@bivaque/domain"
+import { scrubCredentialUrls, scrubEvent, scrubPii } from "@bivaque/domain"
 import { describe, expect, it } from "vitest"
 
 describe("PII scrubbing (D1 Task 6)", () => {
@@ -36,5 +36,75 @@ describe("PII scrubbing (D1 Task 6)", () => {
   it("recurses through arrays and leaves scalars untouched", () => {
     const event = scrubEvent({ tags: ["a@b.com", 42, true] }) as { tags: unknown[] }
     expect(event.tags).toEqual(["[redacted]", 42, true])
+  })
+  it("protege credenciais e limita a redação de code às rotas previstas", () => {
+    const input = {
+      nested: [
+        {
+          access_token: "access-secret",
+          refresh_token: "refresh-secret",
+          provider_token: "provider-secret",
+          provider_refresh_token: "provider-refresh-secret",
+          auth_code: "auth-secret",
+          code_verifier: "verifier-secret",
+          code: "erro-comum",
+        },
+      ],
+      urls: [
+        "bivaque://auth-callback?code=callback-secret&state=ok",
+        "https://example.test/auth/callback?code=auth-callback-secret&state=ok",
+        "https://example.test/api/app/sessao/token?code=session-secret&refresh_token=url-secret",
+        "https://example.test/outro?code=nao-apagar",
+        "https://example.test/outro?code=erro-comum",
+      ],
+    }
+    const result = JSON.stringify(scrubEvent(input))
+    for (const secret of [
+      "access-secret",
+      "refresh-secret",
+      "provider-secret",
+      "provider-refresh-secret",
+      "auth-secret",
+      "verifier-secret",
+      "callback-secret",
+      "auth-callback-secret",
+      "session-secret",
+      "url-secret",
+    ])
+      expect(result).not.toContain(secret)
+    expect(result).toContain("erro-comum")
+    expect(result).toContain("nao-apagar")
+    expect(result).toContain("state=ok")
+  })
+
+  it("remove corpos sensíveis e preserva corpos de outras rotas", () => {
+    for (const path of [
+      "/api/app/sessao/renovar",
+      "/api/app/entry/otp/verify",
+      "/api/app/voce/sair",
+    ]) {
+      expect(
+        scrubEvent({
+          url: `https://example.test${path}`,
+          data: { code: "segredo" },
+          body: "segredo",
+        }),
+      ).toEqual({ url: `https://example.test${path}` })
+    }
+    expect(scrubEvent({ url: "https://example.test/api/outro", data: { code: "erro" } })).toEqual({
+      url: "https://example.test/api/outro",
+      data: { code: "erro" },
+    })
+  })
+})
+
+describe("tokens no fragmento da URL", () => {
+  it("apaga access_token e refresh_token depois do #", () => {
+    const saida = scrubCredentialUrls(
+      "bivaque://auth-callback#access_token=aaa.bbb.ccc&refresh_token=r0&expires_in=3600",
+    )
+    expect(saida).not.toContain("aaa.bbb.ccc")
+    expect(saida).not.toContain("r0&")
+    expect(saida).toContain("expires_in=3600")
   })
 })

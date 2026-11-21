@@ -20,8 +20,7 @@ import {
 import { type InicioDaCidade, lerInicio } from "@/lib/dados/inicio"
 import { listarAnunciosSalvos, marcarSalvoAnuncio } from "@/lib/dados/mercado"
 import type { NomeDeIcone } from "@/lib/icones"
-import { useNavegacao, useRolagemEFoco } from "@/lib/navegacao/react"
-import { CARGA_CONCLUIDA } from "@/lib/navegacao/restauracao"
+import { useCargaDaLista, useNavegacao, useRolagemEFoco } from "@/lib/navegacao/react"
 import { registrarRecente } from "@/src/busca/recentes"
 import { termoAceito } from "@/src/busca/termo-url"
 import { useCasca } from "@/src/contexto/casca"
@@ -83,7 +82,9 @@ export function Inicio() {
   const [erroPresenca, setErroPresenca] = useState(false)
   const [gravando, setGravando] = useState(false)
   const [tentativaPresenca, setTentativaPresenca] = useState(0)
-  useRolagemEFoco(CARGA_CONCLUIDA)
+  // A lista só devolve a rolagem quando o dado chegou (NAV-001).
+  const carga = useCargaDaLista(dados !== null || erro !== null)
+  useRolagemEFoco(carga)
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: rodada solicita nova leitura
   useEffect(() => {

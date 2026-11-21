@@ -86,7 +86,7 @@ export type RotaClassificada = Readonly<{
 }>
 
 /** Quantas rotas o manifesto cobre. Um rota nova exige classificação explícita. */
-export const TOTAL_DE_ROTAS = 117
+export const TOTAL_DE_ROTAS = 119
 
 function teste(arquivo: string, caso: string): ProvaDaRota {
   return { tipo: "teste", arquivo, caso }
@@ -393,6 +393,16 @@ const TOKEN: readonly Linha[] = [
 ]
 
 const PORTA_SEM_SESSAO: readonly Linha[] = [
+  [
+    "/api/app/sessao/token",
+    "trocarSessao(",
+    publica("O código PKCE é a credencial da troca nativa."),
+  ],
+  [
+    "/api/app/sessao/renovar",
+    "trocarSessao(",
+    publica("O token de renovação é a credencial da sessão nativa."),
+  ],
   [
     "/api/app/entry/invite/preview",
     "previewFamilyInviteCode",

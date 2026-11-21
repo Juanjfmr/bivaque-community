@@ -26,6 +26,8 @@ const PUBLICOS = [
   "/icon.svg",
   "/api",
   "/api/qualquer",
+  "/api/app/sessao/token",
+  "/api/app/sessao/renovar",
   "/api/qualquer/rota",
   "/app",
   "/app/entrar",

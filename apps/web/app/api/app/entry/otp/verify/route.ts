@@ -1,6 +1,8 @@
 import { createServerClient } from "@supabase/ssr"
+import { createClient } from "@supabase/supabase-js"
 import type { NextRequest, NextResponse } from "next/server"
 import type { Database } from "supabase/database.generated"
+import { VALOR_DO_CABECALHO_DO_APP } from "../../../../../../lib/app-api/contrato"
 import {
   consumirTentativa,
   invalidarCodigo,
@@ -14,6 +16,7 @@ import {
   SEGUNDOS_DE_REENVIO,
   vereditoDaVerificacao,
 } from "../../../../../../lib/app-api/entrada-otp"
+import { avaliarModoNativo } from "../../../../../../lib/app-api/modo-nativo"
 import {
   aplicarCookies,
   clienteDeServicoOuNulo,
@@ -57,7 +60,12 @@ type CookieParaGravar = Readonly<{
 }>
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
-  const porta = conferirPorta(request, "cookie")
+  const modo = avaliarModoNativo(request)
+  if ("recusa" in modo) return responder(request, { erro: "origem-recusada" }, modo.recusa)
+  const porta = conferirPorta(request, modo.nativo ? "bearer" : "cookie")
+  if (modo.nativo && request.headers.get("x-bivaque-app") !== VALOR_DO_CABECALHO_DO_APP) {
+    return responder(request, { erro: "cabecalho-ausente" }, 403)
+  }
   if (porta !== "ok") return responder(request, { erro: porta }, 403)
 
   const url = process.env["NEXT_PUBLIC_SUPABASE_URL"]
@@ -106,19 +114,23 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   // na resposta depois de o GoTrue validar o código. Guardar a lista e aplicá-la
   // depois monta a resposta já com o corpo certo e os cookies.
   const paraGravar: CookieParaGravar[] = []
-  const cliente = createServerClient<Database>(url, anon, {
-    cookies: {
-      getAll() {
-        return request.cookies.getAll()
-      },
-      setAll(cookies) {
-        for (const cookie of cookies) paraGravar.push(cookie)
-      },
-    },
-    // As mesmas opções do callback do OAuth: `Secure` em produção. Sem isto o
-    // cookie da sessão nascia sem `Secure` e podia viajar em HTTP.
-    cookieOptions: opcoesDoCookieDaSessao(),
-  })
+  const cliente = modo.nativo
+    ? createClient<Database>(url, anon, {
+        auth: { persistSession: false, autoRefreshToken: false },
+      })
+    : createServerClient<Database>(url, anon, {
+        cookies: {
+          getAll() {
+            return request.cookies.getAll()
+          },
+          setAll(cookies) {
+            for (const cookie of cookies) paraGravar.push(cookie)
+          },
+        },
+        // As mesmas opções do callback do OAuth: `Secure` em produção. Sem isto o
+        // cookie da sessão nascia sem `Secure` e podia viajar em HTTP.
+        cookieOptions: opcoesDoCookieDaSessao(),
+      })
 
   const { data, error } = await cliente.auth.verifyOtp({
     email,
@@ -150,6 +162,11 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     return resposta({ erro: "codigo-invalido" }, 400)
   }
 
+  if (modo.nativo) {
+    const { access_token, refresh_token, expires_at } = data.session
+    if (expires_at === undefined) return respostaIndisponivel(request)
+    return resposta({ access_token, refresh_token, expires_at }, 200)
+  }
   return resposta({ autenticado: true }, 200)
 }
 
