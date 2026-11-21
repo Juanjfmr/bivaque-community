@@ -30,7 +30,11 @@ jobs:
           distribution: temurin
           java-version: 21
       - run: pnpm install --frozen-lockfile
+      # Origens fictícias só para compilar; o build de loja recebe as origens reais do dono.
       - run: pnpm --filter @bivaque/app build
+        env:
+          VITE_API_BASE: https://api.example.invalid
+          VITE_SUPABASE_URL: https://storage.example.invalid
       - run: pnpm --filter @bivaque/app exec cap sync android
       - name: Compilar APK de debug
         run: ./gradlew assembleDebug
@@ -70,7 +74,11 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      # Origens fictícias só para compilar; o build de loja recebe as origens reais do dono.
       - run: pnpm --filter @bivaque/app build
+        env:
+          VITE_API_BASE: https://api.example.invalid
+          VITE_SUPABASE_URL: https://storage.example.invalid
       - run: pnpm --filter @bivaque/app exec cap sync ios
       - name: Compilar sem assinatura
         run: xcodebuild -project App.xcodeproj -scheme App -sdk iphonesimulator -configuration Debug -derivedDataPath "$RUNNER_TEMP/ios-build" CODE_SIGNING_ALLOWED=NO build

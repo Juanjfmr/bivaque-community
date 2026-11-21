@@ -11,10 +11,19 @@ function origem(chave) {
   }
 }
 
+const apiConfigurada = Boolean(process.env.VITE_API_BASE?.trim())
+const storageConfigurado = Boolean(process.env.VITE_SUPABASE_URL?.trim())
+const destino = new URL("../dist-nativo/", import.meta.url)
+
+if (!apiConfigurada && !storageConfigurado) {
+  await rm(destino, { recursive: true, force: true })
+  console.log("Build nativo pulado: faltam VITE_API_BASE e VITE_SUPABASE_URL")
+  process.exit(0)
+}
+
 const api = origem("VITE_API_BASE")
 const storage = origem("VITE_SUPABASE_URL")
 const politica = `default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; connect-src 'self' ${api} ${storage}; img-src 'self' data: blob: ${api} ${storage}; object-src 'none'; base-uri 'none'; frame-src 'none'`
-const destino = new URL("../dist-nativo/", import.meta.url)
 await rm(destino, { recursive: true, force: true })
 await mkdir(destino, { recursive: true })
 await cp(new URL("../dist/", import.meta.url), new URL("app/", destino), { recursive: true })

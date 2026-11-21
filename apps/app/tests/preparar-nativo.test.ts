@@ -5,6 +5,48 @@ import { join, resolve } from "node:path"
 import { runInNewContext } from "node:vm"
 import { expect, it, vi } from "vitest"
 
+it("pula o build nativo quando as duas origens estão ausentes", () => {
+  const raiz = mkdtempSync(join(tmpdir(), "bivaque-nativo-"))
+  try {
+    mkdirSync(join(raiz, "dist-nativo"))
+    writeFileSync(join(raiz, "dist-nativo", "antigo"), "remover")
+    mkdirSync(join(raiz, "scripts"))
+    copyFileSync(
+      resolve("scripts/preparar-nativo.mjs"),
+      join(raiz, "scripts", "preparar-nativo.mjs"),
+    )
+    const resultado = execFileSync(process.execPath, [join(raiz, "scripts", "preparar-nativo.mjs")], {
+      cwd: raiz,
+      env: { ...process.env, VITE_API_BASE: "", VITE_SUPABASE_URL: "" },
+      encoding: "utf8",
+    })
+    expect(resultado).toContain("Build nativo pulado")
+    expect(() => readFileSync(join(raiz, "dist-nativo", "antigo"))).toThrow()
+  } finally {
+    rmSync(raiz, { recursive: true, force: true })
+  }
+})
+
+it("falha se apenas uma origem está configurada", () => {
+  const raiz = mkdtempSync(join(tmpdir(), "bivaque-nativo-"))
+  try {
+    mkdirSync(join(raiz, "scripts"))
+    copyFileSync(
+      resolve("scripts/preparar-nativo.mjs"),
+      join(raiz, "scripts", "preparar-nativo.mjs"),
+    )
+    expect(() =>
+      execFileSync(process.execPath, [join(raiz, "scripts", "preparar-nativo.mjs")], {
+        cwd: raiz,
+        env: { ...process.env, VITE_API_BASE: "https://api.example.invalid", VITE_SUPABASE_URL: "" },
+        encoding: "utf8",
+      }),
+    ).toThrow(/Configure VITE_SUPABASE_URL com uma URL absoluta para o build nativo/)
+  } finally {
+    rmSync(raiz, { recursive: true, force: true })
+  }
+})
+
 it("prepara a entrada nativa sem redirecionamento e preserva rotas existentes", () => {
   const raiz = mkdtempSync(join(tmpdir(), "bivaque-nativo-"))
   try {
