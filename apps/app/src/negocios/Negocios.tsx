@@ -7,7 +7,12 @@ import { EsqueletoDeLista } from "@/components/bivaque/esqueleto"
 import { EstadoVazio } from "@/components/bivaque/estado-vazio"
 import { Grade } from "@/components/bivaque/grade"
 import { type ListaDeNegocios, lerNegocios } from "@/lib/dados/negocios"
-import { useCargaDaLista, useEntradaDaTela, useNavegacao, useRolagemEFoco } from "@/lib/navegacao/react"
+import {
+  useCargaDaLista,
+  useEntradaDaTela,
+  useNavegacao,
+  useRolagemEFoco,
+} from "@/lib/navegacao/react"
 import { tituloDaRota } from "@/lib/navegacao/rotas"
 import { type ItemDeSegmento, Segmentos } from "@/src/pecas/segmentos"
 import { FalhaDaLeitura } from "./FalhaDaLeitura"

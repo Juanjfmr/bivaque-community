@@ -121,9 +121,7 @@ export function Comunidade() {
   // A lista só devolve a rolagem quando o dado chegou (NAV-001). Na aba Grupos
   // quem carrega é o Diretorio: a carga espera o aviso dele, não a aba.
   const [gruposProntos, setGruposProntos] = useState(false)
-  const carga = useCargaDaLista(
-    aba === "grp" ? gruposProntos : lista !== null || erro !== null,
-  )
+  const carga = useCargaDaLista(aba === "grp" ? gruposProntos : lista !== null || erro !== null)
   useRolagemEFoco(carga)
 
   useEffect(() => () => controle.abort(), [controle])

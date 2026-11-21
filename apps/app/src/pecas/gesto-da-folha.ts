@@ -53,10 +53,7 @@ export function animacaoDaFolha(reduzido: boolean): AnimacaoDaFolha {
   return reduzido ? "esmaece" : "desliza"
 }
 
-export function duracaoDaAbertura(
-  reduzido: boolean,
-  modo: "folha" | "painel" = "folha",
-): number {
+export function duracaoDaAbertura(reduzido: boolean, modo: "folha" | "painel" = "folha"): number {
   if (reduzido) return GESTO_DA_FOLHA.duracaoReduzida
   return modo === "painel" ? GESTO_DA_FOLHA.duracaoDoMorfo : GESTO_DA_FOLHA.duracaoDaEntrada
 }
