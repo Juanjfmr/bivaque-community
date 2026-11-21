@@ -283,7 +283,7 @@ export function useNavegacao(): Navegacao {
         atual: atual.entrada,
         rotaAtual: atual.rota.nome,
         rotaDestino: destinoRota.nome,
-        replace: opcoes.replace ?? (atual.entrada.sobreposicao !== null),
+        replace: opcoes.replace ?? atual.entrada.sobreposicao !== null,
       })
       // Trocar de rota (ex.: desapegos → imóveis) não leva a busca da tela
       // anterior: cada rota lê só os próprios parâmetros (F06). A aba do
