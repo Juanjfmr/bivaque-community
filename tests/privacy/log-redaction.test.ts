@@ -98,4 +98,45 @@ describe("log redaction", () => {
     expect(output).not.toContain("Fulano")
     expect(output).toContain("ok")
   })
+  it("protege credenciais e preserva c?digos comuns", () => {
+    const calls: string[] = []
+    const original = console.info
+    console.info = (line: string) => calls.push(line)
+    try {
+      log.info("bivaque://auth-callback?code=callback-secret", {
+        nested: [
+          {
+            access_token: "access-secret",
+            refresh_token: "refresh-secret",
+            provider_token: "provider-secret",
+            provider_refresh_token: "provider-refresh-secret",
+            auth_code: "auth-secret",
+            code_verifier: "verifier-secret",
+          },
+        ],
+        request: {
+          url: "/api/app/sessao/renovar?code=url-secret",
+          payload: { code: "body-secret" },
+        },
+        code: "erro-comum",
+        url: "https://example.test/outro?code=erro-comum",
+      })
+    } finally {
+      console.info = original
+    }
+    const output = calls[0] ?? ""
+    for (const secret of [
+      "callback-secret",
+      "access-secret",
+      "refresh-secret",
+      "provider-secret",
+      "provider-refresh-secret",
+      "auth-secret",
+      "verifier-secret",
+      "url-secret",
+      "body-secret",
+    ])
+      expect(output).not.toContain(secret)
+    expect(output).toContain("erro-comum")
+  })
 })

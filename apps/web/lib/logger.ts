@@ -1,3 +1,5 @@
+import { scrubCredentialUrls } from "@bivaque/domain"
+
 /**
  * Minimal structured logger for Bivaque server runtime.
  *
@@ -26,6 +28,12 @@ const SENSITIVE_FIELD_NAMES = new Set([
   "phone",
   "telefone",
   "token",
+  "access_token",
+  "refresh_token",
+  "provider_token",
+  "provider_refresh_token",
+  "auth_code",
+  "code_verifier",
   "api_key",
   "portal_payload",
   "raw_message",
@@ -38,14 +46,19 @@ const SENSITIVE_FIELD_NAMES = new Set([
 const REDACTED = "[REDACTED]"
 
 function redactCPF(value: string): string {
-  return value.replace(/\b\d{3}[.\s-]?\d{3}[.\s-]?\d{3}[.\s-]?\d{2}\b/g, REDACTED)
+  return scrubCredentialUrls(value).replace(
+    /\b\d{3}[.\s-]?\d{3}[.\s-]?\d{3}[.\s-]?\d{2}\b/g,
+    REDACTED,
+  )
 }
 
-function redactObject(obj: Record<string, unknown>): Record<string, unknown> {
+function redactObject(obj: Record<string, unknown>, session = false): Record<string, unknown> {
+  const isSession =
+    session || (typeof obj["url"] === "string" && /\/api\/app\/sessao\//i.test(obj["url"]))
   const result: Record<string, unknown> = {}
   for (const [key, value] of Object.entries(obj)) {
     const lower = key.toLowerCase()
-    if (SENSITIVE_FIELD_NAMES.has(lower)) {
+    if (SENSITIVE_FIELD_NAMES.has(lower) || (isSession && lower === "code")) {
       result[key] = REDACTED
       continue
     }
@@ -54,11 +67,13 @@ function redactObject(obj: Record<string, unknown>): Record<string, unknown> {
     } else if (Array.isArray(value)) {
       result[key] = value.map((item) =>
         typeof item === "object" && item !== null
-          ? redactObject(item as Record<string, unknown>)
-          : item,
+          ? redactObject(item as Record<string, unknown>, isSession)
+          : typeof item === "string"
+            ? redactCPF(item)
+            : item,
       )
     } else if (typeof value === "object" && value !== null) {
-      result[key] = redactObject(value as Record<string, unknown>)
+      result[key] = redactObject(value as Record<string, unknown>, isSession)
     } else {
       result[key] = value
     }
@@ -76,7 +91,7 @@ function formatLine(
   if (!fields) {
     return JSON.stringify({ time: timestamp, level, msg: safeMessage })
   }
-  const safeFields = redactObject(fields)
+  const safeFields = redactObject(fields, /\/api\/app\/sessao\//i.test(message))
   return JSON.stringify({ time: timestamp, level, msg: safeMessage, ...safeFields })
 }
 

@@ -37,4 +37,59 @@ describe("PII scrubbing (D1 Task 6)", () => {
     const event = scrubEvent({ tags: ["a@b.com", 42, true] }) as { tags: unknown[] }
     expect(event.tags).toEqual(["[redacted]", 42, true])
   })
+  it("protege credenciais e limita a reda??o de code ?s rotas previstas", () => {
+    const input = {
+      nested: [
+        {
+          access_token: "access-secret",
+          refresh_token: "refresh-secret",
+          provider_token: "provider-secret",
+          provider_refresh_token: "provider-refresh-secret",
+          auth_code: "auth-secret",
+          code_verifier: "verifier-secret",
+          code: "erro-comum",
+        },
+      ],
+      urls: [
+        "bivaque://auth-callback?code=callback-secret&state=ok",
+        "https://example.test/api/app/sessao/token?code=session-secret&refresh_token=url-secret",
+        "https://example.test/outro?code=erro-comum",
+      ],
+    }
+    const result = JSON.stringify(scrubEvent(input))
+    for (const secret of [
+      "access-secret",
+      "refresh-secret",
+      "provider-secret",
+      "provider-refresh-secret",
+      "auth-secret",
+      "verifier-secret",
+      "callback-secret",
+      "session-secret",
+      "url-secret",
+    ])
+      expect(result).not.toContain(secret)
+    expect(result).toContain("erro-comum")
+    expect(result).toContain("state=ok")
+  })
+
+  it("remove corpos sens?veis e preserva corpos de outras rotas", () => {
+    for (const path of [
+      "/api/app/sessao/renovar",
+      "/api/app/entry/otp/verify",
+      "/api/app/voce/sair",
+    ]) {
+      expect(
+        scrubEvent({
+          url: `https://example.test${path}`,
+          data: { code: "segredo" },
+          body: "segredo",
+        }),
+      ).toEqual({ url: `https://example.test${path}` })
+    }
+    expect(scrubEvent({ url: "https://example.test/api/outro", data: { code: "erro" } })).toEqual({
+      url: "https://example.test/api/outro",
+      data: { code: "erro" },
+    })
+  })
 })
