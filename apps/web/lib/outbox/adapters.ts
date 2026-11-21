@@ -34,12 +34,9 @@ function siteOrigin(): string {
   return configuredOrigin ?? (vercelHost ? `https://${vercelHost}` : "http://127.0.0.1:3000")
 }
 
-// Convite de comunidade: a única rota que aceita o token hoje é a página do
-// servidor `/invite/<token>` (apps/web/app/(shell)/invite/[token]/page.tsx).
-// O `apps/app` só consome convite familiar (`/app/entrar?convite=<CÓDIGO>`), e
-// `/invite` não está na superfície pública do proxy: quem abre o link sem
-// sessão é levado ao login e volta pelo `?redirect=`. Quando o aceite existir
-// no app, o caminho muda aqui — não no e-mail já enviado.
+// Convite de comunidade: a vila sai pelo redesenho da Comunidade (ADR-20261024 §3.4)
+// e `/invite/<token>` agora é 307 para `/app/comunidade` (TROCA-003). E-mails já
+// enviados seguem chegando a um destino válido; o tipo some com a saída da vila no banco.
 const CAMINHO_DO_CONVITE_DE_COMUNIDADE = "/invite/"
 
 // O token é credencial: só entra no link se for exatamente o que o aceite lê

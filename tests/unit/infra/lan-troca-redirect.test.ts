@@ -292,7 +292,7 @@ describe("LAN-TROCA fase 1", () => {
     expect(sobras).toEqual([])
   })
 
-  it("remove as telas da vila e preserva indica??o, grupo e console do dono", async () => {
+  it("remove as telas da vila e preserva indicação, grupo e console do dono", async () => {
     for (const rota of ["communities/[id]/invite", "invite", "gerir-comunidades"]) {
       expect(existsSync(join(shell, rota))).toBe(false)
     }
