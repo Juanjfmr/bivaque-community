@@ -1,0 +1,88 @@
+# NAV-001 — Base de navegacao: folha unica, acao otimista com Desfazer e
+# volta a posicao da lista. Decisao do dono (20/11/2026, thread "Reduzir o
+# excesso de telas"): "Base primeiro, telas depois". As 6 telas que faltam do
+# site viram folhas e abas DEPOIS, usando estas pecas (lotes NAV-002..004).
+#
+# O que ja existe e deve ser REUSADO, nao reescrito:
+# - Folha (apps/app/src/pecas/pecas.tsx:719) — <dialog> com alca de arrasto.
+# - Aviso com Desfazer (apps/app/src/pecas/pecas.tsx:804) — so usado em previas.
+# - useRolagemEFoco (apps/app/lib/navegacao/react.tsx:109) + restauracao.ts.
+# - Otimismo ad hoc: Anuncio.tsx alternarSalvo (vira antes, desfaz na recusa).
+
+task_id: NAV-001
+
+objective: >
+  O app passa a ter tres pecas comuns usadas pelas telas reais: (1) uma unica
+  Folha para toda sobreposicao de acao, que fecha puxando para baixo e volta ao
+  lugar se o gesto for cancelado; (2) uma acao otimista padrao que responde na
+  hora, desfaz sozinha se o servidor recusar (com o motivo) e oferece Desfazer
+  no Aviso quando a acao e reversivel; (3) voltar de um detalhe devolve a lista
+  na mesma posicao, com aba e filtros preservados, em todas as listas reais.
+
+authority:
+  - Decisao do dono em 20/11/2026 na thread do projeto (opcao "Base primeiro, telas depois") e autorizacao de codigo em 21/11/2026 ("Pode comecar")
+  - ANIMATION.md (tempos, curvas, reduced-motion, foco)
+  - apps/app/AGENTS.md (estados async honestos; falha nao vira vazio)
+  - docs/decisions/ADR-20261024-front-react-spa.md (navegacao do app)
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    main f117e42. Folha usada em 1 tela real (guia/SugerirLugar.tsx); MenuCriar,
+    Paleta e voce/Cidade abrem dialogos proprios. Aviso com Desfazer so aparece
+    em previa-grupos e galeria, nenhuma tela real oferece Desfazer. Otimismo
+    existe copiado por tela (Anuncio.tsx:172 alternarSalvo) sem peca comum.
+    useRolagemEFoco cobre parte das telas; Comunidade, Grupo, Desapegos,
+    Imoveis e Negocios precisam ser conferidas na volta do detalhe.
+
+allowed_paths:
+  - docs/agents/tasks/NAV-BASE.task.yml
+  - apps/app/src/pecas
+  - apps/app/src/casca
+  - apps/app/src/telas
+  - apps/app/src/voce
+  - apps/app/src/guia
+  - apps/app/src/grupos
+  - apps/app/src/mercado
+  - apps/app/src/negocios
+  - apps/app/src/conversas
+  - apps/app/src/styles.css
+  - apps/app/lib/navegacao
+  - apps/app/lib/acao-otimista.ts
+  - apps/app/tests
+
+forbidden:
+  - tocar apps/web, supabase, packages/contracts, rotas de API ou o formato dos dados do servidor
+  - mudar o que cada acao grava; so muda como a tela reage antes e depois da resposta
+  - Desfazer em acao irreversivel ou sensivel (apagar conta, bloquear, denunciar, enviar mensagem, publicar); nelas segue a confirmacao atual
+  - gesto de deslizar para voltar, haptico, som ou predictive back (fora do lote por decisao de 20/11)
+  - fundir ou remover telas e rotas (isso e NAV-002..004)
+  - animar height/width/top; valores fora da tabela do ANIMATION.md sem motivo escrito no PR
+  - skip/fixme novo ou afrouxar assercao existente
+  - ler, criar ou editar arquivos de ambiente; imprimir credenciais
+
+acceptance:
+  - "Folha unica: MenuCriar, Paleta, voce/Cidade e SugerirLugar usam a mesma Folha de pecas.tsx. Arrastar a alca (ou o topo do conteudo quando ele esta rolado ate o inicio) acompanha o dedo; soltar abaixo do limite volta a posicao com a curva do ANIMATION.md; acima, fecha. Esc, clique no fundo e o botao Fechar continuam funcionando e o foco volta a quem abriu."
+  - "Com prefers-reduced-motion: reduce, a Folha abre e fecha so com opacidade de ate 120 ms, sem deslocamento."
+  - "Acao otimista: uma peca comum (apps/app/lib/acao-otimista.ts ou equivalente) aplica o estado na hora, reverte se o servidor recusar e mostra o motivo no Aviso. Salvar/remover anuncio (Anuncio e Salvos) e ao menos mais uma acao reversivel ja existente passam a usa-la e oferecem Desfazer no Aviso; o Desfazer grava o estado anterior de verdade."
+  - "Toque repetido durante a gravacao nao gera duas gravacoes nem estado trocado (mesma guarda de concorrencia do CONC-002)."
+  - "Posicao da lista: em Inicio, Comunidade, Grupo, Mercado (abas Desapegos, Imoveis, Negocios), Busca e Salvos, abrir um item, voltar pelo botao do app e pelo voltar do navegador devolve a mesma rolagem, a mesma aba e os mesmos filtros. Rascunhos do Criar continuam como hoje."
+  - "Testes vitest cobrem: a peca otimista (sucesso, recusa com reversao, Desfazer, toque duplo); a Folha (arrasto cancelado volta, arrasto longo fecha, reduced-motion); e a restauracao nas listas citadas. E2E do app em 375, 768 e 1440 nos dois temas para: abrir/fechar Folha por arrasto, salvar com Desfazer, e voltar de um anuncio para Desapegos com filtro na mesma posicao."
+  - "Passam: --filter @bivaque/app test, --filter @bivaque/app typecheck, --filter @bivaque/app test:e2e e gate completo no fechamento."
+
+proof:
+  - npx pnpm@11.18.0 --filter @bivaque/app test
+  - npx pnpm@11.18.0 --filter @bivaque/app typecheck
+  - npx pnpm@11.18.0 --filter @bivaque/app test:e2e
+  - npx pnpm@11.18.0 gate
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/NAV-BASE.task.yml
+
+risk: interacao e navegacao do app; sem dado novo e sem servidor
+risk_level: R1
+
+reviewer_must_differ_from_executor: true
+retry_budget: 2
+on_budget_exhausted: HUMAN_DECISION
+
+closure:
+  requires_runtime_evidence: true
