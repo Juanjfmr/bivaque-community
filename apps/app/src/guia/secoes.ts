@@ -1,4 +1,5 @@
 import type { NomeDeIcone } from "@/lib/icones"
+import type { SubAbaDoMercado } from "@/lib/navegacao/rotas"
 
 /**
  * A estrutura editorial do Guia: os passos de chegada e as seções que os
@@ -16,6 +17,7 @@ export type Passo = Readonly<{
   itens?: readonly string[]
   rotulo: string
   rota: string
+  aba?: SubAbaDoMercado
   icone: NomeDeIcone
 }>
 
@@ -34,7 +36,8 @@ const CHEGADA: readonly Passo[] = [
     texto:
       "Compare o trajeto para o trabalho, escola e serviços que você usa. Faça visitas em horários diferentes e confirme as condições de locação.",
     rotulo: "Ver imóveis da cidade",
-    rota: "imoveis",
+    rota: "mercado",
+    aba: "imoveis",
     icone: "apartment",
   },
   {

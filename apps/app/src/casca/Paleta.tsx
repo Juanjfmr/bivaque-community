@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/command"
 import type { NomeDeIcone } from "@/lib/icones"
 import { useEntradaDaTela, useNavegacao } from "@/lib/navegacao/react"
-import { tituloDaRota } from "@/lib/navegacao/rotas"
+import { type SubAbaDoMercado, tituloDaRota } from "@/lib/navegacao/rotas"
 import { normalizar } from "@/lib/texto"
 import { emComposicao } from "@/src/casca/teclado"
 import { Folha } from "@/src/pecas/pecas"
@@ -38,6 +38,7 @@ type Item = {
   readonly grupo: "Ações" | "Ir para"
   readonly destino: string
   readonly parametros?: Readonly<Record<string, string>>
+  readonly aba?: SubAbaDoMercado
 }
 
 const ITENS: readonly Item[] = [
@@ -61,14 +62,16 @@ const ITENS: readonly Item[] = [
     rotulo: "Anunciar desapego",
     icone: "sell",
     grupo: "Ações",
-    destino: "desapegos",
+    destino: "mercado",
+    aba: "desapegos",
   },
   {
     id: "acao-imovel",
     rotulo: "Anunciar imóvel",
     icone: "apartment",
     grupo: "Ações",
-    destino: "imoveis",
+    destino: "mercado",
+    aba: "imoveis",
   },
   {
     id: "acao-encontro",
@@ -111,9 +114,17 @@ const ITENS: readonly Item[] = [
     rotulo: "Desapegos",
     icone: "sell",
     grupo: "Ir para",
-    destino: "desapegos",
+    destino: "mercado",
+    aba: "desapegos",
   },
-  { id: "ir-imoveis", rotulo: "Imóveis", icone: "apartment", grupo: "Ir para", destino: "imoveis" },
+  {
+    id: "ir-imoveis",
+    rotulo: "Imóveis",
+    icone: "apartment",
+    grupo: "Ir para",
+    destino: "mercado",
+    aba: "imoveis",
+  },
   {
     id: "ir-agenda",
     rotulo: "Agenda da cidade",
@@ -187,7 +198,11 @@ export function Paleta() {
   if (!aberta) return null
 
   const escolher = (item: Item) => {
-    void irPara(item.destino, { parametros: item.parametros ?? {}, replace: true })
+    void irPara(item.destino, {
+      parametros: item.parametros ?? {},
+      replace: true,
+      ...(item.aba === undefined ? {} : { aba: item.aba }),
+    })
   }
 
   return (
