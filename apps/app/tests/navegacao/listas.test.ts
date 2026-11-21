@@ -55,6 +55,7 @@ describe("lista guardada na entrada — as telas reais usam a carga", () => {
     "src/telas/Mercado.tsx",
     "src/telas/Busca.tsx",
     "src/telas/Salvos.tsx",
+    "src/negocios/Negocios.tsx",
   ]
 
   it("cada lista restaura a rolagem depois da carga, e não antes do dado", () => {
