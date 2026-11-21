@@ -96,6 +96,36 @@ for (const tema of ["light", "dark"] as const) {
   })
 }
 
+/** Alfa do fundo pintado: 1 é opaco, 0 deixa o conteúdo da página vazar. */
+function alfaDoFundo(page: Page, seletor: string): Promise<number> {
+  return page
+    .locator(seletor)
+    .first()
+    .evaluate((elemento) => {
+      const canais = (getComputedStyle(elemento).backgroundColor.match(/[\d.]+/g) ?? []).map(Number)
+      return canais.length < 4 ? 1 : (canais[3] ?? 0)
+    })
+}
+
+for (const tema of ["light", "dark"] as const) {
+  test.describe(`Folha e Aviso opacos fora da tela — ${tema}`, () => {
+    test.use({ colorScheme: tema })
+
+    test("o fundo da folha da cidade e do Aviso não deixa a página vazar", async ({ page }) => {
+      await abrirFolhaDaCidade(page)
+      // A folha vai por portal para o body: os tokens precisam viajar com ela.
+      expect(await alfaDoFundo(page, FOLHA_DA_CIDADE)).toBe(1)
+
+      aplicarStubMercado(page)
+      await page.goto("/app/anuncio/a-1")
+      await page.getByRole("button", { name: "Salvar anúncio" }).click()
+      const aviso = page.locator(".pc-aviso").filter({ hasText: "Anúncio salvo." })
+      await expect(aviso).toBeVisible()
+      expect(await alfaDoFundo(page, ".pc-aviso")).toBe(1)
+    })
+  })
+}
+
 const ANUNCIOS = Array.from({ length: 16 }, (_, indice) => ({
   id: `nav-item-${indice + 1}`,
   tipo: "item" as const,

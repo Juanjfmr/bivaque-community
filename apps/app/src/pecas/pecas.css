@@ -13,7 +13,12 @@
  *   do texto ao lado (eixo wght da fonte).
  */
 
-.pc {
+/* Os tokens valem também onde a peça sai da tela: a Folha vai por portal do
+   Radix para o `body` e o Aviso é fixo — sem esta lista, o fundo deles ficaria
+   transparente por falta de `--pc-*`. */
+.pc,
+.pc-folha,
+.pc-aviso {
   --pc-tinta: var(--foreground);
   --pc-suave: var(--muted-foreground);
   --pc-linha: var(--border);
@@ -42,7 +47,9 @@
 
   --pc-toque: 120ms cubic-bezier(0.2, 0, 0, 1);
   --pc-entrada: 280ms cubic-bezier(0.2, 0, 0, 1);
+}
 
+.pc {
   min-height: 100dvh;
   background: var(--pc-fundo);
   color: var(--pc-tinta);
