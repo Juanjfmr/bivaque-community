@@ -49,8 +49,16 @@ function transformDaFolha(page: Page): Promise<string> {
 /** Abre a folha de cidade pelo chip do topo. */
 async function abrirFolhaDaCidade(page: Page): Promise<void> {
   await abrir(page, "/app/inicio")
-  await page.locator('[data-acao="cidade"]').click()
+  const chip = page.locator('[data-acao="cidade"]')
+  await expect(chip).toBeVisible()
   const folha = page.locator(FOLHA_DA_CIDADE)
+  // O clique pode cair na materialização inicial da entrada e não abrir nada;
+  // repetir uma vez cobre esse instante sem afagar a asserção.
+  for (let tentativa = 0; tentativa < 2; tentativa += 1) {
+    await chip.click()
+    if (await folha.isVisible().catch(() => false)) break
+    await page.waitForTimeout(300)
+  }
   await expect(folha).toBeVisible()
   // O gesto é medido depois da entrada: a animação ainda governa o transform.
   await folha.evaluate(async (elemento) => {
