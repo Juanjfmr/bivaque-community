@@ -7,7 +7,7 @@ import { CartaoDeFoto } from "@/components/bivaque/cartao-de-anuncio"
 import { EsqueletoDeLista } from "@/components/bivaque/esqueleto"
 import { EstadoVazio } from "@/components/bivaque/estado-vazio"
 import { LinhaDeLista, Lista } from "@/components/bivaque/lista"
-import { criarAcaoOtimista } from "@/lib/acao-otimista"
+import { type AcaoOtimista, criarAcaoOtimista } from "@/lib/acao-otimista"
 import { FalhaDaApi } from "@/lib/api/cliente"
 import { agirNaPublicacao, lerPublicacoesSalvas, type PublicacaoReal } from "@/lib/dados/grupos"
 import { type EntradaDoGuia, lerSalvosDoGuia, marcarNoGuia } from "@/lib/dados/guia"
@@ -43,6 +43,92 @@ function falhaAoRemover(falha: unknown): string {
     if (falha.mensagem !== null) return falha.mensagem
   }
   return "Não foi possível remover dos salvos. Tente de novo."
+}
+
+/**
+ * O caminho de dessalvar, fora do componente para a prova do toque repetido.
+ *
+ * Um toque já em gravação não é sucesso: nada de confirmar a remoção, tirar o
+ * item de novo nem anunciar "Removido dos salvos.". `executar` devolver
+ * `ignorado` encerra o toque aqui, e o guarda de `gravando` evita até segurar o
+ * item duas vezes no mapa de quem está saindo.
+ */
+export async function removerDosSalvos<T extends { id: string }>({
+  acao,
+  avisos,
+  id,
+  lista,
+  definir,
+  gravar,
+  repor,
+  mesmaSecao = () => true,
+  segurar,
+  largar,
+  confirmar,
+  aoRemovendo,
+  aoRecusar,
+}: {
+  acao: AcaoOtimista
+  avisos: { mostrar(texto: string, desfazer?: () => void): void }
+  id: string
+  lista: readonly T[] | null
+  definir: Dispatch<SetStateAction<readonly T[] | null>>
+  gravar: () => Promise<unknown>
+  /** A gravação inversa: o Desfazer do Aviso grava o estado anterior de verdade. */
+  repor: () => Promise<unknown>
+  mesmaSecao?: () => boolean
+  segurar: () => void
+  largar: () => void
+  confirmar: () => void
+  aoRemovendo: (gravando: boolean) => void
+  aoRecusar: (mensagem: string) => void
+}): Promise<void> {
+  const onde = lista?.findIndex((item) => item.id === id) ?? -1
+  const item = lista?.find((outro) => outro.id === id)
+  const tirar = () => definir((atual) => atual?.filter((outro) => outro.id !== id) ?? atual)
+  // shortcut: repõe no índice original; se um vizinho anterior também saiu,
+  // ela entra depois dele.
+  const recolocar = () => {
+    if (item === undefined || !mesmaSecao()) return
+    definir((atual) => {
+      if (atual === null || atual.some((outro) => outro.id === id)) return atual
+      const comOItem = [...atual]
+      comOItem.splice(onde < 0 ? comOItem.length : Math.min(onde, comOItem.length), 0, item)
+      return comOItem
+    })
+  }
+
+  if (acao.gravando(id)) return
+  segurar()
+  const resultado = await acao.executar(id, {
+    aplicar: tirar,
+    reverter: recolocar,
+    gravar,
+    mensagemDaRecusa: (falha) => (foiAbortada(falha) ? "" : falhaAoRemover(falha)),
+    aoGravando: aoRemovendo,
+  })
+  largar()
+  if (resultado.tipo === "ignorado") return
+  if (resultado.tipo === "recusa") {
+    if (resultado.mensagem !== "") aoRecusar(resultado.mensagem)
+    return
+  }
+  // Sucesso: o item sai também da lista que voltou durante a chamada, e
+  // leituras já começadas que chegarem depois não o repõem.
+  confirmar()
+  tirar()
+  avisos.mostrar("Removido dos salvos.", () => {
+    void acao
+      .executar(id, {
+        aplicar: recolocar,
+        reverter: tirar,
+        gravar: repor,
+        mensagemDaRecusa: (falha) => (foiAbortada(falha) ? "" : falhaAoRemover(falha)),
+      })
+      .then((desfeito) => {
+        if (desfeito.tipo === "recusa" && desfeito.mensagem !== "") aoRecusar(desfeito.mensagem)
+      })
+  })
 }
 
 /**
@@ -282,51 +368,22 @@ export function Salvos() {
     repor: () => Promise<unknown>
     mesmaSecao?: () => boolean
   }) {
-    const onde = lista?.findIndex((item) => item.id === id) ?? -1
-    const item = lista?.find((outro) => outro.id === id)
-    const tirar = () => definir((atual) => atual?.filter((outro) => outro.id !== id) ?? atual)
-    // shortcut: repõe no índice original; se um vizinho anterior também saiu,
-    // ela entra depois dele.
-    const recolocar = () => {
-      if (item === undefined || !mesmaSecao()) return
-      definir((atual) => {
-        if (atual === null || atual.some((outro) => outro.id === id)) return atual
-        const comOItem = [...atual]
-        comOItem.splice(onde < 0 ? comOItem.length : Math.min(onde, comOItem.length), 0, item)
-        return comOItem
-      })
-    }
-
     setAviso(null)
-    segurar(secao, id)
-    const resultado = await acao.executar(id, {
-      aplicar: tirar,
-      reverter: recolocar,
+    await removerDosSalvos({
+      acao,
+      avisos,
+      id,
+      lista,
+      definir,
       gravar,
-      mensagemDaRecusa: (falha) => (foiAbortada(falha) ? "" : falhaAoRemover(falha)),
-      aoGravando: (gravando) =>
+      repor,
+      mesmaSecao,
+      segurar: () => segurar(secao, id),
+      largar: () => largar(secao, id),
+      confirmar: () => confirmar(secao, id),
+      aoRemovendo: (gravando) =>
         setRemovendo((atual) => (gravando ? id : atual === id ? null : atual)),
-    })
-    largar(secao, id)
-    if (resultado.tipo === "recusa") {
-      if (resultado.mensagem !== "") setAviso(resultado.mensagem)
-      return
-    }
-    // Sucesso: o item sai também da lista que voltou durante a chamada, e
-    // leituras já começadas que chegarem depois não o repõem.
-    confirmar(secao, id)
-    tirar()
-    avisos.mostrar("Removido dos salvos.", () => {
-      void acao
-        .executar(id, {
-          aplicar: recolocar,
-          reverter: tirar,
-          gravar: repor,
-          mensagemDaRecusa: (falha) => (foiAbortada(falha) ? "" : falhaAoRemover(falha)),
-        })
-        .then((desfeito) => {
-          if (desfeito.tipo === "recusa" && desfeito.mensagem !== "") setAviso(desfeito.mensagem)
-        })
+      aoRecusar: setAviso,
     })
   }
 
