@@ -1,5 +1,12 @@
 import { describe, expect, it } from "vitest"
-import { conferirPorta, origensPermitidas } from "../../../apps/web/lib/app-api/rota-do-app"
+import {
+  conferirEscrita,
+  conferirPorta,
+  opcoesDoApp,
+  origensNativas,
+  origensPermitidas,
+  responder,
+} from "../../../apps/web/lib/app-api/rota-do-app"
 
 // A checagem de mesma origem das escritas por cookie (SPA ADR §5, RUN-135). A
 // lista é FIXA: as origens locais e as do ambiente. `Host` e `x-forwarded-proto`
@@ -11,6 +18,43 @@ function requisicao(url: string, cabecalhos: Record<string, string>): Request {
 }
 
 describe("origens permitidas", () => {
+  it("separa as origens nativas e aplica CORS e escrita conforme a credencial", () => {
+    for (const origin of origensNativas()) {
+      expect(origensPermitidas()).not.toContain(origin)
+      const pedido = requisicao("http://localhost:3000/api/app/teste", {
+        origin,
+        authorization: "Bearer token",
+        "x-bivaque-app": "bivaque-spa",
+      })
+      const preflight = opcoesDoApp(pedido)
+      expect(preflight.status).toBe(204)
+      expect(preflight.headers.get("access-control-allow-origin")).toBe(origin)
+      expect(preflight.headers.get("access-control-allow-credentials")).toBeNull()
+      for (const nome of ["authorization", "content-type", "x-bivaque-app", "x-bivaque-cliente"]) {
+        expect(preflight.headers.get("access-control-allow-headers")).toContain(nome)
+      }
+      const resposta = responder(pedido, {}, 200)
+      expect(resposta.headers.get("access-control-allow-origin")).toBe(origin)
+      expect(resposta.headers.get("access-control-allow-credentials")).toBeNull()
+      expect(conferirPorta(pedido, "bearer")).toBe("ok")
+      expect(conferirEscrita(pedido, "bearer")).toBe("ok")
+      expect(conferirPorta(pedido, "cookie")).toBe("origem-recusada")
+      expect(conferirEscrita(pedido, "cookie")).toBe("origem-recusada")
+    }
+  })
+
+  it("recusa origem null e preserva CORS web", () => {
+    const nulo = requisicao("http://localhost:3000/api/app/teste", { origin: "null" })
+    expect(opcoesDoApp(nulo).status).toBe(403)
+    expect(conferirPorta(nulo, "bearer")).toBe("origem-recusada")
+    expect(conferirEscrita(nulo, "bearer")).toBe("origem-recusada")
+    const web = requisicao("http://localhost:3000/api/app/teste", {
+      origin: "http://localhost:3000",
+      "x-bivaque-app": "bivaque-spa",
+    })
+    expect(opcoesDoApp(web).headers.get("access-control-allow-credentials")).toBe("true")
+    expect(conferirEscrita(web, "cookie")).toBe("ok")
+  })
   it("contém as origens locais fixas, sem depender de pedido", () => {
     const origens = origensPermitidas()
 

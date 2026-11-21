@@ -103,6 +103,16 @@ describe("CSRF da escrita (ADR §5.2)", () => {
     origensPermitidas: ORIGENS,
   }
 
+  it("aceita origem nativa apenas com bearer", () => {
+    const nativa = { ...base, origem: "https://localhost", origensNativas: ["https://localhost"] }
+    expect(avaliarEscrita({ ...nativa, via: "bearer" })).toEqual({ ok: true })
+    expect(avaliarEscrita(nativa)).toEqual({ ok: false, motivo: "origem-recusada" })
+    expect(avaliarEscrita({ ...nativa, via: "bearer", origem: "null" })).toEqual({
+      ok: false,
+      motivo: "origem-recusada",
+    })
+  })
+
   it("cookie com origem e cabeçalho do app passa", () => {
     expect(avaliarEscrita(base)).toEqual({ ok: true })
   })
