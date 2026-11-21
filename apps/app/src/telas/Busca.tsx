@@ -149,7 +149,7 @@ export function Busca() {
   const comTermo = termo.length >= 2
 
   // A lista só devolve a rolagem quando o dado chegou (NAV-001).
-  const carga = useCargaDaLista(dados !== null || erro !== null)
+  const carga = useCargaDaLista(dados !== null || explorar !== null || erro !== null)
   useRolagemEFoco(carga)
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: rodada solicita nova leitura

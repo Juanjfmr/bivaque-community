@@ -35,9 +35,9 @@ describe("lista guardada na entrada — aba e filtros", () => {
     const antes = entradaPadrao({ chave: "entrada-da-prova" })
     const depois = atualizarEntrada(antes, mudancaDaLista("grupo-ordem", "salvas"))
     expect(depois.chave).toBe(antes.chave)
-    expect(
-      lerDaLista(depois.filtros, "grupo-ordem", ["recentes", "salvas"], "recentes"),
-    ).toBe("salvas")
+    expect(lerDaLista(depois.filtros, "grupo-ordem", ["recentes", "salvas"], "recentes")).toBe(
+      "salvas",
+    )
   })
 
   it("a restauração espera o dado: carregando não está pronta, falha já está", () => {
