@@ -136,7 +136,7 @@ export async function requisitar(caminho: string, init: RequestInit = {}): Promi
   if (!Capacitor.isNativePlatform()) return fetch(caminho, init)
   const publica = caminho.startsWith("/api/app/entry/") || caminho.startsWith("/api/localities")
   const origem = origemDaApi()
-  const token = await acessoAtual()
+  const token = publica ? null : await acessoAtual()
   const fazer = (credencial: string | null) => {
     const headers = new Headers(init.headers)
     headers.set("x-bivaque-app", "bivaque-spa")

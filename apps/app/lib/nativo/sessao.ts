@@ -4,7 +4,7 @@ let acesso: string | null = null
 let expiracao = 0
 let renovacao: string | null = null
 let pendente: Promise<string | null> | null = null
-let respostaPendenteDesde: number | null = null
+let geracao = 0
 
 export function origemDaApi(): string {
   try {
@@ -26,7 +26,8 @@ export function origemDaApi(): string {
 
 export async function acessoAtual(): Promise<string | null> {
   if (pendente) return pendente
-  return acesso ?? renovarSessao()
+  if (!precisaRenovar()) return acesso
+  return renovarSessao().catch(() => acesso)
 }
 
 export function precisaRenovar(): boolean {
@@ -37,11 +38,26 @@ export function limparMemoria(): void {
   acesso = null
   expiracao = 0
   renovacao = null
-  respostaPendenteDesde = null
+  geracao += 1
+}
+
+export async function aceitarPar(par: unknown): Promise<void> {
+  if (typeof par !== "object" || par === null) throw new Error("resposta inv?lida")
+  const dados = par as Record<string, unknown>
+  if (
+    typeof dados["access_token"] !== "string" || !dados["access_token"] ||
+    typeof dados["refresh_token"] !== "string" || !dados["refresh_token"] ||
+    typeof dados["expires_at"] !== "number" || !Number.isFinite(dados["expires_at"])
+  ) throw new Error("resposta inv?lida")
+  acesso = dados["access_token"]
+  renovacao = dados["refresh_token"]
+  expiracao = dados["expires_at"]
+  await gravarRenovacao(renovacao).catch(() => undefined)
 }
 
 export function renovarSessao(): Promise<string | null> {
   if (pendente) return pendente
+  const geracaoInicial = geracao
   pendente = (async () => {
     const token = renovacao ?? (await lerRenovacao())
     if (!token) return null
@@ -63,13 +79,12 @@ export function renovarSessao(): Promise<string | null> {
           signal: AbortSignal.timeout(3000),
         })
       } catch {
-        respostaPendenteDesde ??= inicio
         if (espera > 500 || Date.now() - inicio + espera >= 9000) throw new Error("rede")
         await new Promise((resolve) => setTimeout(resolve, espera))
         espera *= 2
         continue
       }
-      if (resposta.status === 503) respostaPendenteDesde ??= inicio
+      if (geracao !== geracaoInicial) return null
       if (resposta.status === 401) {
         limparMemoria()
         await apagarRenovacao().catch(() => undefined)
@@ -91,19 +106,12 @@ export function renovarSessao(): Promise<string | null> {
       }
       if (!resposta.ok) throw new Error("renovação indisponível")
       const par: unknown = await resposta.json()
-      if (typeof par !== "object" || par === null) throw new Error("resposta inválida")
-      const dados = par as Record<string, unknown>
-      if (
-        typeof dados["access_token"] !== "string" ||
-        typeof dados["refresh_token"] !== "string" ||
-        typeof dados["expires_at"] !== "number"
-      )
-        throw new Error("resposta inválida")
-      respostaPendenteDesde = null
-      acesso = dados["access_token"]
-      renovacao = dados["refresh_token"]
-      expiracao = dados["expires_at"]
-      await gravarRenovacao(renovacao).catch(() => undefined)
+      if (geracao !== geracaoInicial) return null
+      await aceitarPar(par)
+      if (geracao !== geracaoInicial) {
+        await apagarRenovacao().catch(() => undefined)
+        return null
+      }
       return acesso
     }
   })().finally(() => {

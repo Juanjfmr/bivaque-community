@@ -1,3 +1,5 @@
+import { Capacitor } from "@capacitor/core"
+import { aceitarPar } from "@/lib/nativo/sessao"
 import { requisitar } from "@/lib/api/cliente"
 
 /**
@@ -142,7 +144,16 @@ export async function verificarCodigo(email: string, codigo: string): Promise<Ve
   } catch {
     return { estado: "indisponivel" }
   }
-  if (resposta.status === 200) return { estado: "autenticado" }
+  if (resposta.status === 200) {
+    if (Capacitor.isNativePlatform()) {
+      try {
+        await aceitarPar(resposta.corpo)
+      } catch {
+        return { estado: "indisponivel" }
+      }
+    }
+    return { estado: "autenticado" }
+  }
   if (resposta.status === 400) return { estado: "codigo-invalido" }
   if (resposta.status === 429) {
     const reenviarEm = resposta.corpo["reenviarEm"]
