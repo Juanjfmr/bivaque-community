@@ -13,19 +13,19 @@
     "nativo:preparar": "node scripts/preparar-nativo.mjs"
   },
   "dependencies": {
-    "@capacitor/android": "8.5.3",
+    "@capacitor/android": "8.6.2",
     "@capacitor/app": "8.1.2",
-    "@capacitor/camera": "8.2.5",
-    "@capacitor/core": "8.5.3",
-    "@capacitor/ios": "8.5.3",
-    "@tanstack/react-query": "5.104.1",
-    "@tanstack/react-router": "1.170.42",
+    "@capacitor/camera": "8.2.6",
+    "@capacitor/core": "8.6.2",
+    "@capacitor/ios": "8.6.2",
+    "@tanstack/react-query": "5.108.0",
+    "@tanstack/react-router": "1.170.46",
     "class-variance-authority": "0.7.1",
     "clsx": "2.1.1",
     "cmdk": "1.1.1",
-    "radix-ui": "1.7.0",
-    "react": "19.1.0",
-    "react-dom": "19.1.0",
+    "radix-ui": "1.8.1",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
     "tailwind-merge": "3.7.0"
   },
   "devDependencies": {
