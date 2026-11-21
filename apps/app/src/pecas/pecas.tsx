@@ -804,7 +804,8 @@ export function Folha({
       // No conteúdo, o toque em campo, botão ou link é da peça, não da folha —
       // inclusive os seletores nativos, cujo ponteiro sai da página no menu.
       const alvo = evento.target as Element | null
-      if (alvo !== null && alvo.closest("input, select, textarea, button, a, label") !== null) return
+      if (alvo !== null && alvo.closest("input, select, textarea, button, a, label") !== null)
+        return
     }
     inicio.current = { y: evento.clientY, quando: performance.now(), capturado: !noCorpo }
     // A captura no corpo só vem quando o gesto prova que é arrasto: capturar no

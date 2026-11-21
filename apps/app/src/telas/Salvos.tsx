@@ -14,8 +14,13 @@ import { type EntradaDoGuia, lerSalvosDoGuia, marcarNoGuia } from "@/lib/dados/g
 import { type AnuncioDaLista, listarAnunciosSalvos, marcarSalvoAnuncio } from "@/lib/dados/mercado"
 import { lerPerguntasSalvas, marcarSalvaPergunta, type PerguntaSalva } from "@/lib/dados/perguntas"
 import { iconeDeDado } from "@/lib/icones"
-import { useNavegacao, useRolagemEFoco } from "@/lib/navegacao/react"
-import { CARGA_CONCLUIDA } from "@/lib/navegacao/restauracao"
+import { lerDaLista, lerTextoDaLista, mudancaDaLista } from "@/lib/navegacao/listas"
+import {
+  useCargaDaLista,
+  useEntradaDaTela,
+  useNavegacao,
+  useRolagemEFoco,
+} from "@/lib/navegacao/react"
 import { foiAbortada } from "@/src/eventos/formulario"
 import { ICONE_DA_CATEGORIA } from "@/src/guia/comum"
 import { Aviso, Botao as BotaoDaPeca, CampoDeBusca, Chip, useAviso } from "@/src/pecas/pecas"
@@ -52,8 +57,27 @@ function falhaAoRemover(falha: unknown): string {
  */
 export function Salvos() {
   const navegacao = useNavegacao()
-  const [aba, setAba] = useState<AbaDosSalvos>("desapegos")
-  const [busca, setBusca] = useState("")
+  // Aba e busca moram na entrada (NAV-001): voltar de um anúncio devolve a
+  // mesma seção, com o mesmo filtro digitado.
+  const entrada = useEntradaDaTela()
+  const [aba, setAba] = useState<AbaDosSalvos>(
+    () =>
+      lerDaLista(
+        entrada.filtros,
+        "salvos-aba",
+        ["desapegos", "imoveis"],
+        "desapegos",
+      ) as AbaDosSalvos,
+  )
+  const [busca, setBusca] = useState(() => lerTextoDaLista(entrada.filtros, "salvos-busca"))
+  const trocarAba = (nova: AbaDosSalvos) => {
+    setAba(nova)
+    void navegacao.atualizar(mudancaDaLista("salvos-aba", nova))
+  }
+  const trocarBusca = (texto: string) => {
+    setBusca(texto)
+    void navegacao.atualizar(mudancaDaLista("salvos-busca", texto))
+  }
   const [anuncios, setAnuncios] = useState<readonly AnuncioDaLista[] | null>(null)
   const [erroDosAnuncios, setErroDosAnuncios] = useState(false)
   const [rodadaDosAnuncios, setRodadaDosAnuncios] = useState(0)
@@ -73,7 +97,9 @@ export function Salvos() {
   const [erroDasPerguntas, setErroDasPerguntas] = useState(false)
   const [rodadaDasPerguntas, setRodadaDasPerguntas] = useState(0)
 
-  useRolagemEFoco(CARGA_CONCLUIDA)
+  // A lista só devolve a rolagem quando o dado chegou (NAV-001).
+  const carga = useCargaDaLista(anuncios !== null || erroDosAnuncios)
+  useRolagemEFoco(carga)
 
   // A aba em vigor agora, para a volta de um anúncio não cair na lista do
   // segmento seguinte depois de a pessoa trocar de seção.
@@ -338,8 +364,9 @@ export function Salvos() {
 
   // No colapso não há campo de busca na tela: um termo que ficou digitado não
   // pode seguir filtrando as perguntas seguidas por baixo do vazio.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: `trocarBusca` grava na entrada; o colapso é a única condição
   useEffect(() => {
-    if (nadaSalvo) setBusca("")
+    if (nadaSalvo) trocarBusca("")
   }, [nadaSalvo])
 
   // A seção das perguntas seguidas é própria (revisão às cegas, 8): seguir não
@@ -442,7 +469,7 @@ export function Salvos() {
               rotulo="Buscar nos salvos"
               placeholder="Buscar nos salvos"
               value={busca}
-              onChange={(evento) => setBusca(evento.target.value)}
+              onChange={(evento) => trocarBusca(evento.target.value)}
             />
           </div>
 
@@ -462,7 +489,7 @@ export function Salvos() {
                 <Chip
                   key={abaDeAnuncio.id}
                   selecionado={aba === abaDeAnuncio.id}
-                  onClick={() => setAba(abaDeAnuncio.id)}
+                  onClick={() => trocarAba(abaDeAnuncio.id)}
                 >
                   {abaDeAnuncio.rotulo}
                 </Chip>

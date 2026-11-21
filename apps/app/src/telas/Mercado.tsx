@@ -22,12 +22,12 @@ import {
 import { moeda } from "@/lib/formato"
 import { iconeDeDado } from "@/lib/icones"
 import {
+  useCargaDaLista,
   useNavegacao,
   useRolagemEFoco,
   useRotaAtual,
   useSobreposicaoDaEntrada,
 } from "@/lib/navegacao/react"
-import { CARGA_CONCLUIDA } from "@/lib/navegacao/restauracao"
 import { useCasca } from "@/src/contexto/casca"
 import { EstadoDeSessaoVencida, EstadoNegado } from "@/src/eventos/EstadosDeAcesso"
 import { acessoNegado, foiAbortada, sessaoVencida } from "@/src/eventos/formulario"
@@ -100,7 +100,9 @@ export function ListaDeMercado({ inicial }: { inicial: AbaDoMercado }) {
   const { aberto: criandoImovel, aoMudarAberto: setCriandoImovel } =
     useSobreposicaoDaEntrada("rascunho-imovel")
 
-  useRolagemEFoco(CARGA_CONCLUIDA)
+  // A lista só devolve a rolagem quando o dado chegou (NAV-001).
+  const carga = useCargaDaLista(dados !== null || erro !== null)
+  useRolagemEFoco(carga)
 
   // A cidade é a da sessão, devolvida pela rota; `casca.cidade` segue no cabeçalho
   // enquanto a rota não traz nome (vazio honesto, nunca cidade inventada).

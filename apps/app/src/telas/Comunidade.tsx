@@ -16,8 +16,14 @@ import {
   lerPerguntas,
   TOPICOS_DAS_PERGUNTAS,
 } from "@/lib/dados/perguntas"
-import { useNavegacao, useRolagemEFoco, useSobreposicaoDaEntrada } from "@/lib/navegacao/react"
-import { CARGA_CONCLUIDA } from "@/lib/navegacao/restauracao"
+import { lerDaLista, mudancaDaLista } from "@/lib/navegacao/listas"
+import {
+  useCargaDaLista,
+  useEntradaDaTela,
+  useNavegacao,
+  useRolagemEFoco,
+  useSobreposicaoDaEntrada,
+} from "@/lib/navegacao/react"
 import { useCasca } from "@/src/contexto/casca"
 import { Perguntar } from "@/src/criar/Perguntar"
 import { EstadoDeSessaoVencida, EstadoNegado } from "@/src/eventos/EstadosDeAcesso"
@@ -86,9 +92,25 @@ export function Comunidade() {
   const [lista, setLista] = useState<ListaDePerguntas | null>(null)
   const [erro, setErro] = useState<"falhou" | "sessao" | "negado" | null>(null)
   const [rodada, setRodada] = useState(0)
-  const [aba, setAba] = useState("ind")
-  const [filtro, setFiltro] = useState("help")
-  const [topico, setTopico] = useState("todos")
+  // A aba e os filtros moram na entrada do histórico (NAV-001): voltar de uma
+  // pergunta devolve a Comunidade como estava.
+  const entrada = useEntradaDaTela()
+  const [aba, setAba] = useState(() =>
+    lerDaLista(entrada.filtros, "comunidade-aba", ["ind", "grp"], "ind"),
+  )
+  const [filtro, setFiltro] = useState(() =>
+    lerDaLista(entrada.filtros, "comunidade-filtro", ["help", "ok", "mine"], "help"),
+  )
+  const [topico, setTopico] = useState(() =>
+    lerDaLista(
+      entrada.filtros,
+      "comunidade-topico",
+      TOPICOS.map((item) => item.id),
+      "todos",
+    ),
+  )
+  const guardar = (chave: string, valor: string) =>
+    void navegacao.atualizar(mudancaDaLista(chave, valor))
   const [carregandoMais, setCarregandoMais] = useState(false)
   const [erroAoCarregarMais, setErroAoCarregarMais] = useState<string | null>(null)
   const { aberto: criandoPergunta, aoMudarAberto: setCriandoPergunta } =
@@ -96,7 +118,9 @@ export function Comunidade() {
   // Uma sessão de rede por tela: sair cancela a página que ainda estava a caminho.
   const [controle] = useState(() => new AbortController())
 
-  useRolagemEFoco(CARGA_CONCLUIDA)
+  // A lista só devolve a rolagem quando o dado chegou (NAV-001).
+  const carga = useCargaDaLista(aba === "grp" || lista !== null || erro !== null)
+  useRolagemEFoco(carga)
 
   useEffect(() => () => controle.abort(), [controle])
 
@@ -193,7 +217,10 @@ export function Comunidade() {
         <ChipsDeFiltro
           itens={ABAS}
           valor={aba}
-          aoEscolher={setAba}
+          aoEscolher={(nova) => {
+            setAba(nova)
+            guardar("comunidade-aba", nova)
+          }}
           rotulo="Seções da Comunidade"
           className="min-w-0 flex-1"
         />
@@ -256,7 +283,10 @@ export function Comunidade() {
           <ChipsDeFiltro
             itens={FILTROS}
             valor={filtro}
-            aoEscolher={setFiltro}
+            aoEscolher={(novo) => {
+              setFiltro(novo)
+              guardar("comunidade-filtro", novo)
+            }}
             rotulo="Filtrar perguntas"
           />
 
@@ -264,7 +294,10 @@ export function Comunidade() {
             <ChipsDeFiltro
               itens={TOPICOS}
               valor={topico}
-              aoEscolher={setTopico}
+              aoEscolher={(novo) => {
+                setTopico(novo)
+                guardar("comunidade-topico", novo)
+              }}
               rotulo="Filtrar por tópico"
             />
           </div>
