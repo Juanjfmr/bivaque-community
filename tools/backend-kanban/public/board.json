@@ -10423,7 +10423,8 @@
       "links": ["package.json (supabase 2.107.0)", "PR #314"],
       "proof": [
         "20/11: tentados (1) rodar no worktree e no checkout principal; (2) fora do sandbox; (3) HOME/USERPROFILE numa pasta temporária: EPERM em todos. A pasta .supabase aceita escrita pelo bash (touch), e o acesso controlado a pastas do Defender está desligado (EnableControlledFolderAccess=0). As ACLs de ~/.supabase têm uma entrada CodexSandboxUsers (RX) que não nega nada ao usuário juana.",
-        "20/11: o banco local (supabase_db_bivaque-community, de pé há 4 dias) tem supabase_migrations.schema_migrations vazio e não tem as tabelas de 18/11 (push_subscriptions), então está fora de sincronia com a main. Até o card fechar, a prova de banco fica no CI (ci:full), como no #314."
+        "20/11: o banco local (supabase_db_bivaque-community, de pé há 4 dias) tem supabase_migrations.schema_migrations vazio e não tem as tabelas de 18/11 (push_subscriptions), então está fora de sincronia com a main. Até o card fechar, a prova de banco fica no CI (ci:full), como no #314.",
+        "20/11 noite: com DO_NOT_TRACK=1 SUPABASE_TELEMETRY_DISABLED=1 o EPERM some e `supabase migration new` funciona (criou 20261121002331_sessao_nativa_limiter.sql). `supabase status` agora falha em outro ponto: acesso negado ao pipe do Docker Desktop (//./pipe/dockerDesktopLinuxEngine) a partir desta sessão. Próximo passo: rodar status/test:db com a variável num terminal do dono para separar sandbox de permissão do Docker."
       ],
       "id": "INFRA-CLI-SUPABASE-PC",
       "title": "CLI do Supabase falha com EPERM no PC do dono e o banco local está fora de sincronia",
