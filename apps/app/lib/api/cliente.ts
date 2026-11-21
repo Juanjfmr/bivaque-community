@@ -18,6 +18,7 @@
  */
 
 import { Capacitor } from "@capacitor/core"
+import { acessoAtual, origemDaApi, renovarSessao } from "@/lib/nativo/sessao"
 
 const enderecoInicial =
   typeof window === "undefined"
@@ -124,26 +125,24 @@ async function comRede(fazer: () => Promise<Response>): Promise<Record<string, u
   return interpretar(resposta)
 }
 
-function endereco(caminho: string): string {
-  if (!Capacitor.isNativePlatform()) return caminho
-  const base = import.meta.env["VITE_API_BASE"]
-  let url: URL
-  try {
-    url = new URL(base)
-    if (
-      !["http:", "https:"].includes(url.protocol) ||
-      url.username ||
-      url.password ||
-      url.pathname !== "/" ||
-      url.search ||
-      url.hash
-    ) {
-      throw new Error()
-    }
-  } catch {
-    throw new Error("Configure VITE_API_BASE com a origem absoluta da API no app nativo")
+export async function requisitar(caminho: string, init: RequestInit = {}): Promise<Response> {
+  if (!Capacitor.isNativePlatform()) return fetch(caminho, init)
+  const publica = caminho.startsWith("/api/app/entry/") || caminho.startsWith("/api/localities")
+  let token = acessoAtual()
+  if (!token && !publica) token = await renovarSessao()
+  const fazer = (credencial: string | null) => {
+    const headers = new Headers(init.headers)
+    headers.set("x-bivaque-app", "bivaque-spa")
+    headers.set("x-bivaque-cliente", "loja")
+    if (credencial) headers.set("Authorization", `Bearer ${credencial}`)
+    return fetch(`${origemDaApi()}${caminho}`, { ...init, headers, credentials: "omit" })
   }
-  return `${url.origin}${caminho}`
+  const resposta = await fazer(token)
+  if (resposta.status === 401 && (init.method ?? "GET") === "GET" && !publica) {
+    const novo = await renovarSessao()
+    if (novo) return fazer(novo)
+  }
+  return resposta
 }
 
 async function chamar(
@@ -152,9 +151,8 @@ async function chamar(
   corpo: unknown,
   signal: AbortSignal | undefined,
 ): Promise<Record<string, unknown>> {
-  const url = endereco(caminho)
   return comRede(() =>
-    fetch(url, {
+    requisitar(caminho, {
       method: metodo,
       credentials: "include",
       headers:
@@ -195,9 +193,8 @@ export function enviarFormulario(
   formulario: FormData,
   opcoes: { signal?: AbortSignal } = {},
 ) {
-  const url = endereco(caminho)
   return comRede(() =>
-    fetch(url, {
+    requisitar(caminho, {
       method: "POST",
       credentials: "include",
       headers: CABECALHOS_DO_APP,

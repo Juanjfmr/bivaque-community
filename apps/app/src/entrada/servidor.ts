@@ -1,3 +1,5 @@
+import { requisitar } from "@/lib/api/cliente"
+
 /**
  * Cliente do app para as rotas `/api/app/entry/*` (LAN-F01).
  *
@@ -39,7 +41,7 @@ async function pedir(
 ): Promise<Resposta> {
   let resposta: Response
   try {
-    resposta = await fetch(`/api/app/entry/${caminho}`, {
+    resposta = await requisitar(`/api/app/entry/${caminho}`, {
       method: init.metodo ?? "GET",
       credentials: "include",
       headers: CABECALHOS_DO_APP,
@@ -265,7 +267,7 @@ export async function carregarEstados(): Promise<readonly string[]> {
   if (estadosEmCache !== null) return estadosEmCache
   let resposta: Response
   try {
-    resposta = await fetch("/api/localities", { credentials: "include" })
+    resposta = await requisitar("/api/localities", { credentials: "include" })
   } catch {
     throw new FalhaDaEntrada("rede", 0)
   }
@@ -283,7 +285,7 @@ export async function carregarCidades(uf: string): Promise<readonly CidadeDoCata
   if (guardadas !== undefined) return guardadas
   let resposta: Response
   try {
-    resposta = await fetch(`/api/localities/${encodeURIComponent(uf)}`, {
+    resposta = await requisitar(`/api/localities/${encodeURIComponent(uf)}`, {
       credentials: "include",
     })
   } catch {
@@ -382,7 +384,7 @@ export async function enviarDocumento(arquivo: File): Promise<void> {
   formulario.append("documento", arquivo)
   let resposta: Response
   try {
-    resposta = await fetch("/api/app/entry/document", {
+    resposta = await requisitar("/api/app/entry/document", {
       method: "POST",
       credentials: "include",
       headers: { "x-bivaque-app": "bivaque-spa" },
