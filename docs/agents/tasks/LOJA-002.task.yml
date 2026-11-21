@@ -43,7 +43,7 @@ allowed_paths:
 forbidden:
   - apps/app (é o LOJA-003), apps/mobile, apps/prototipo
   - editar migration já aplicada; migration nova só por supabase migration new
-  - service_role nas rotas de sessão ou em sair (sair usa auth.admin.signOut com o JWT da pessoa, que não usa service_role; o signOut() do cliente com persistSession false é proibido, ADR §3)
+  - service_role nas rotas de sessão ou em sair para qualquer coisa além da chamada ao limitador por IP (mesmo padrão de entry/otp/verify, ADR §3 "no mesmo padrão da verificação do código", com comentário de autorização no código); sair usa auth.admin.signOut com o JWT da pessoa, que não usa service_role; o signOut() do cliente com persistSession false é proibido (ADR §3)
   - set-cookie em qualquer resposta do modo nativo; corpo do par com mais que access_token, refresh_token e expires_at
   - aceitar modo nativo vindo de origem web ou de Origin null; aceitar modo nativo com cookie
   - pôr as origens nativas na lista de escrita por cookie ou em origensPermitidas()
