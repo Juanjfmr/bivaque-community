@@ -96,7 +96,7 @@ describe.each(rotas)("sessao/$nome", ({ nome, post, options, corpo }) => {
     expect(preflight.headers.get("access-control-allow-origin")).toBe("https://localhost")
     expect(preflight.headers.get("access-control-allow-credentials")).toBeNull()
   })
-  it("calcula expira??o quando GoTrue s? fornece expires_in", async () => {
+  it("calcula expiração quando GoTrue só fornece expires_in", async () => {
     chamada.mockResolvedValueOnce(
       Response.json({ access_token: "a", refresh_token: "r", expires_in: 60 }),
     )
@@ -104,12 +104,32 @@ describe.each(rotas)("sessao/$nome", ({ nome, post, options, corpo }) => {
     const dados = await (await post(pedido(nome, corpo))).json()
     expect(dados.expires_at).toBeGreaterThanOrEqual(antes + 60)
   })
-  it.each([400, 401, 403, 404, 422])("recusa credencial com status GoTrue %s", async (status) => {
-    chamada.mockResolvedValueOnce(new Response(null, { status }))
-    const resposta = await post(pedido(nome, corpo))
-    expect(resposta.status).toBe(401)
-    expect(await resposta.json()).toEqual({ erro: "credencial-recusada" })
+  it.each([
+    "refresh_token_not_found",
+    "refresh_token_already_used",
+    "session_not_found",
+    "session_expired",
+    "bad_code_verifier",
+    "flow_state_not_found",
+    "flow_state_expired",
+    "invalid_grant",
+    "user_not_found",
+    "user_banned",
+  ])("recusa credencial pelo código %s", async (codigo) => {
+    for (const campo of ["error_code", "error"]) {
+      chamada.mockResolvedValueOnce(Response.json({ [campo]: codigo }, { status: 400 }))
+      expect((await post(pedido(nome, corpo))).status).toBe(401)
+    }
   })
+  it.each([400, 401, 403, 404, 422])(
+    "trata erro desconhecido %s como indisponibilidade",
+    async (status) => {
+      chamada.mockResolvedValueOnce(Response.json({ error: "invalid_api_key" }, { status }))
+      expect((await post(pedido(nome, corpo))).status).toBe(503)
+      chamada.mockResolvedValueOnce(new Response(null, { status }))
+      expect((await post(pedido(nome, corpo))).status).toBe(503)
+    },
+  )
   it.each([429, 500, 503])("trata falha transitória %s como 503", async (status) => {
     chamada.mockResolvedValueOnce(new Response(null, { status }))
     expect((await post(pedido(nome, corpo))).status).toBe(503)
@@ -136,7 +156,9 @@ it("envia o verificador PKCE e recusa verificador errado ou código reutilizado"
   vi.stubGlobal("fetch", chamada)
   vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "http://localhost:54321")
   vi.stubEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY", "anon-sintetico")
-  chamada.mockResolvedValue(new Response(null, { status: 400 }))
+  chamada.mockImplementation(() =>
+    Promise.resolve(Response.json({ error_code: "bad_code_verifier" }, { status: 400 })),
+  )
   const corpo = { code: "codigo-sintetico", code_verifier: "a".repeat(43) }
   for (let i = 0; i < 2; i++) {
     expect((await token(pedido("token", corpo))).status).toBe(401)

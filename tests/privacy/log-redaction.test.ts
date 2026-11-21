@@ -98,7 +98,7 @@ describe("log redaction", () => {
     expect(output).not.toContain("Fulano")
     expect(output).toContain("ok")
   })
-  it("protege credenciais e preserva c?digos comuns", () => {
+  it("protege credenciais e preserva códigos comuns", () => {
     const calls: string[] = []
     const original = console.info
     console.info = (line: string) => calls.push(line)

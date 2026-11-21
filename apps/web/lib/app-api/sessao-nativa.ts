@@ -1,4 +1,5 @@
 import type { NextResponse } from "next/server"
+import { log } from "../logger"
 import { VALOR_DO_CABECALHO_DO_APP } from "./contrato"
 import { ipConfiavel } from "./entrada-limite"
 import { consumirSessaoNativa } from "./limitador-de-sessao"
@@ -10,6 +11,19 @@ import {
   responder,
   respostaIndisponivel,
 } from "./rota-do-app"
+
+const RECUSAS_DEFINITIVAS = new Set([
+  "refresh_token_not_found",
+  "refresh_token_already_used",
+  "session_not_found",
+  "session_expired",
+  "bad_code_verifier",
+  "flow_state_not_found",
+  "flow_state_expired",
+  "invalid_grant",
+  "user_not_found",
+  "user_banned",
+])
 
 export async function trocarSessao(
   request: Request,
@@ -43,7 +57,10 @@ export async function trocarSessao(
     ipConfiavel(request.headers),
   )
   if (limite === "estourou") return responder(request, { erro: "limite" }, 429)
-  if (limite === "indisponivel") return respostaIndisponivel(request)
+  if (limite === "indisponivel") {
+    log.error("session: limiter unavailable")
+    return respostaIndisponivel(request)
+  }
   const url = process.env["NEXT_PUBLIC_SUPABASE_URL"]
   const anon = process.env["NEXT_PUBLIC_SUPABASE_ANON_KEY"]
   if (!url || !anon) return respostaIndisponivel(request)
@@ -59,10 +76,21 @@ export async function trocarSessao(
         signal: AbortSignal.timeout(10_000),
       },
     )
-    if ([400, 401, 403, 404, 422].includes(resposta.status)) {
-      return responder(request, { erro: "credencial-recusada" }, 401)
+    if (!resposta.ok) {
+      if (resposta.status >= 400 && resposta.status < 500 && resposta.status !== 429) {
+        const erro: unknown = await resposta.json().catch(() => null)
+        if (typeof erro === "object" && erro !== null) {
+          const corpo = erro as Record<string, unknown>
+          if (
+            [corpo["error_code"], corpo["error"]].some(
+              (codigo) => typeof codigo === "string" && RECUSAS_DEFINITIVAS.has(codigo),
+            )
+          )
+            return responder(request, { erro: "credencial-recusada" }, 401)
+        }
+      }
+      return respostaIndisponivel(request)
     }
-    if (!resposta.ok) return respostaIndisponivel(request)
     const dados: unknown = await resposta.json()
     if (typeof dados !== "object" || dados === null) return respostaIndisponivel(request)
     const par = dados as Record<string, unknown>

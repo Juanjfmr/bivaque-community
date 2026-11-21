@@ -8,6 +8,15 @@ const CPF = /\b\d{3}[.\s-]?\d{3}[.\s-]?\d{3}[.\s-]?\d{2}\b/g
 const JWT = /\beyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\b/g
 const AUTH_HEADER = /(authorization\s*[:=]\s*).+/gi
 
+export const CREDENTIAL_KEYS = [
+  "access_token",
+  "refresh_token",
+  "provider_token",
+  "provider_refresh_token",
+  "auth_code",
+  "code_verifier",
+] as const
+
 // Fields whose whole value is user content or a credential: replace, never
 // pattern-scrub, because user-generated text can contain anything.
 const REDACTED_KEYS = new Set([
@@ -18,12 +27,7 @@ const REDACTED_KEYS = new Set([
   "password",
   "secret",
   "authorization",
-  "access_token",
-  "refresh_token",
-  "provider_token",
-  "provider_refresh_token",
-  "auth_code",
-  "code_verifier",
+  ...CREDENTIAL_KEYS,
 ])
 
 const SESSION_PATH = /\/api\/app\/sessao\//i
@@ -41,15 +45,7 @@ export function scrubCredentialUrls(value: string): string {
       } catch {
         return param
       }
-      return (REDACTED_KEYS.has(name) &&
-        [
-          "access_token",
-          "refresh_token",
-          "provider_token",
-          "provider_refresh_token",
-          "auth_code",
-          "code_verifier",
-        ].includes(name)) ||
+      return CREDENTIAL_KEYS.some((credential) => credential === name) ||
         (hideCode && name === "code")
         ? `${separator}${key}=[redacted]`
         : param

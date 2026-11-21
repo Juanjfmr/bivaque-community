@@ -1,4 +1,4 @@
-import { scrubCredentialUrls } from "@bivaque/domain"
+import { CREDENTIAL_KEYS, scrubCredentialUrls } from "@bivaque/domain"
 
 /**
  * Minimal structured logger for Bivaque server runtime.
@@ -28,12 +28,7 @@ const SENSITIVE_FIELD_NAMES = new Set([
   "phone",
   "telefone",
   "token",
-  "access_token",
-  "refresh_token",
-  "provider_token",
-  "provider_refresh_token",
-  "auth_code",
-  "code_verifier",
+  ...CREDENTIAL_KEYS,
   "api_key",
   "portal_payload",
   "raw_message",
@@ -45,7 +40,7 @@ const SENSITIVE_FIELD_NAMES = new Set([
 
 const REDACTED = "[REDACTED]"
 
-function redactCPF(value: string): string {
+function redactSensitiveText(value: string): string {
   return scrubCredentialUrls(value).replace(
     /\b\d{3}[.\s-]?\d{3}[.\s-]?\d{3}[.\s-]?\d{2}\b/g,
     REDACTED,
@@ -63,13 +58,13 @@ function redactObject(obj: Record<string, unknown>, session = false): Record<str
       continue
     }
     if (typeof value === "string") {
-      result[key] = redactCPF(value)
+      result[key] = redactSensitiveText(value)
     } else if (Array.isArray(value)) {
       result[key] = value.map((item) =>
         typeof item === "object" && item !== null
           ? redactObject(item as Record<string, unknown>, isSession)
           : typeof item === "string"
-            ? redactCPF(item)
+            ? redactSensitiveText(item)
             : item,
       )
     } else if (typeof value === "object" && value !== null) {
@@ -87,7 +82,7 @@ function formatLine(
   fields?: Record<string, unknown>,
 ): string {
   const timestamp = new Date().toISOString()
-  const safeMessage = redactCPF(message)
+  const safeMessage = redactSensitiveText(message)
   if (!fields) {
     return JSON.stringify({ time: timestamp, level, msg: safeMessage })
   }

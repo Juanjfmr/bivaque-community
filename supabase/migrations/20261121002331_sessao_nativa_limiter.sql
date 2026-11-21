@@ -9,6 +9,8 @@ create table private.sessao_nativa_limits (
   primary key (scope, key_hash)
 );
 
+create index sessao_nativa_limits_updated_at_idx on private.sessao_nativa_limits (updated_at);
+
 alter table private.sessao_nativa_limits enable row level security;
 alter table private.sessao_nativa_limits force row level security;
 revoke all on private.sessao_nativa_limits from public, anon, authenticated, service_role;

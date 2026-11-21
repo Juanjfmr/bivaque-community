@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
 
-const sentry = vi.hoisted(() => ({ init: vi.fn() }))
+const sentry = vi.hoisted(() => ({ init: vi.fn(), httpIntegration: vi.fn((options) => options) }))
 vi.mock("@sentry/nextjs", () => sentry)
 
 describe.each(["server", "edge"])("Sentry %s", (runtime) => {
@@ -26,4 +26,21 @@ describe.each(["server", "edge"])("Sentry %s", (runtime) => {
       expect(result.request.data).toBeUndefined()
     }
   })
+})
+
+it("desativa captura do corpo apenas nas rotas privadas do servidor", async () => {
+  vi.resetModules()
+  await import("../../../apps/web/sentry.server.config")
+  const options = sentry.httpIntegration.mock.calls.at(-1)?.[0]
+  for (const path of [
+    "/api/app/sessao/token",
+    "/api/app/sessao/renovar/?x=1",
+    "/api/app/entry/otp/verify/",
+    "/api/app/voce/sair",
+  ]) {
+    expect(options.ignoreIncomingRequestBody(path)).toBe(true)
+  }
+  for (const path of ["/api/app/entry/otp", "/api/app/voce/sair-outro", "/api/app/sessao-extra"]) {
+    expect(options.ignoreIncomingRequestBody(path)).toBe(false)
+  }
 })

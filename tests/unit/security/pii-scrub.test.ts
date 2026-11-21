@@ -37,7 +37,7 @@ describe("PII scrubbing (D1 Task 6)", () => {
     const event = scrubEvent({ tags: ["a@b.com", 42, true] }) as { tags: unknown[] }
     expect(event.tags).toEqual(["[redacted]", 42, true])
   })
-  it("protege credenciais e limita a reda??o de code ?s rotas previstas", () => {
+  it("protege credenciais e limita a redação de code às rotas previstas", () => {
     const input = {
       nested: [
         {
@@ -73,7 +73,7 @@ describe("PII scrubbing (D1 Task 6)", () => {
     expect(result).toContain("state=ok")
   })
 
-  it("remove corpos sens?veis e preserva corpos de outras rotas", () => {
+  it("remove corpos sensíveis e preserva corpos de outras rotas", () => {
     for (const path of [
       "/api/app/sessao/renovar",
       "/api/app/entry/otp/verify",
