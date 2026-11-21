@@ -26,6 +26,7 @@ const grupo = {
   membro: false,
   pendente: false,
   admin: false,
+  dono: false,
   membros: null,
   fixada: null,
 }

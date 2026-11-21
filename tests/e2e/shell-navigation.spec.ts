@@ -25,7 +25,7 @@ test.describe("BottomNav visibility across viewports", () => {
     await seedSession(context)
 
     // When they open the home route
-    await page.goto("/communities/71000000-0000-4000-8000-000000000001/invite")
+    await page.goto("/communities/71000000-0000-4000-8000-000000000001/indicar-prestador")
 
     // Then all 4 bottom navigation items are visible, in NAV_ITEMS order
     const nav = page.locator(BOTTOM_NAV)
@@ -46,7 +46,7 @@ test.describe("BottomNav visibility across viewports", () => {
     await page.setViewportSize({ width: 768, height: 1024 })
 
     // When they open the home route
-    await page.goto("/communities/71000000-0000-4000-8000-000000000001/invite")
+    await page.goto("/communities/71000000-0000-4000-8000-000000000001/indicar-prestador")
 
     // Then the BottomNav is gone and the sidebar takes over as a 4rem rail.
     // The labels stay in the accessibility tree even though they are not drawn.
@@ -67,7 +67,7 @@ test.describe("BottomNav visibility across viewports", () => {
     await page.setViewportSize({ width: 1440, height: 900 })
 
     // When they open the home route
-    await page.goto("/communities/71000000-0000-4000-8000-000000000001/invite")
+    await page.goto("/communities/71000000-0000-4000-8000-000000000001/indicar-prestador")
 
     // Then the BottomNav is hidden and the sidebar is expanded with labels
     await expect(page.locator(BOTTOM_NAV)).toBeHidden()
@@ -85,7 +85,7 @@ test.describe("Indicações discoverable entry", () => {
     await page.setViewportSize({ width: 375, height: 812 })
 
     // When they open the home route
-    await page.goto("/communities/71000000-0000-4000-8000-000000000001/invite")
+    await page.goto("/communities/71000000-0000-4000-8000-000000000001/indicar-prestador")
 
     // Then Indicações is a labelled header entry, visible at every width — not
     // a BottomNav tab (the ceiling of four containers has no room for it).
@@ -102,7 +102,7 @@ test.describe("Indicações discoverable entry", () => {
     await page.setViewportSize({ width: 768, height: 1024 })
 
     // When they open the home route
-    await page.goto("/communities/71000000-0000-4000-8000-000000000001/invite")
+    await page.goto("/communities/71000000-0000-4000-8000-000000000001/indicar-prestador")
 
     // Then the header entry is still named and reachable
     const indications = page.getByRole("link", { name: "Indicações" })
@@ -116,7 +116,7 @@ test.describe("Indicações discoverable entry", () => {
     await page.setViewportSize({ width: 1440, height: 900 })
 
     // When they open the home route
-    await page.goto("/communities/71000000-0000-4000-8000-000000000001/invite")
+    await page.goto("/communities/71000000-0000-4000-8000-000000000001/indicar-prestador")
 
     // Then Indicações is reachable from the header, where it is a link
     const indications = page.getByRole("link", { name: "Indicações" })
@@ -132,7 +132,7 @@ test.describe("Navigation tab links", () => {
     await page.setViewportSize({ width: 375, height: 812 })
 
     // When they open the home route
-    await page.goto("/communities/71000000-0000-4000-8000-000000000001/invite")
+    await page.goto("/communities/71000000-0000-4000-8000-000000000001/indicar-prestador")
 
     // Then each tab links to the expected route
     const tabs = page.locator(BOTTOM_NAV).getByRole("tab")
@@ -156,7 +156,7 @@ test.describe("Você reachable on mobile", () => {
     await page.setViewportSize({ width: 375, height: 812 })
 
     // When they open the home route
-    await page.goto("/communities/71000000-0000-4000-8000-000000000001/invite")
+    await page.goto("/communities/71000000-0000-4000-8000-000000000001/indicar-prestador")
 
     // Then the header does not repeat Perfil: no celular o avatar repetia a aba
     // Perfil da barra inferior e saiu do cabeçalho (app-shell.tsx).

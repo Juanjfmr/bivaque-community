@@ -8,6 +8,7 @@ import { CartaoDePublicacao } from "@/components/bivaque/cartao-de-publicacao"
 import { EsqueletoDeLista } from "@/components/bivaque/esqueleto"
 import { EstadoVazio } from "@/components/bivaque/estado-vazio"
 import { Etiqueta } from "@/components/bivaque/etiqueta"
+import { Icone } from "@/components/bivaque/icone"
 import {
   buscarGrupo,
   type DetalheDoGrupo,
@@ -19,6 +20,7 @@ import {
 import { useNavegacao, useRolagemEFoco } from "@/lib/navegacao/react"
 import { CARGA_CONCLUIDA } from "@/lib/navegacao/restauracao"
 import { useAcoesDaPublicacao } from "@/src/grupos/AcoesDaPublicacao"
+import { ConviteEAvisos } from "@/src/grupos/ConviteEAvisos"
 import { Escrever } from "@/src/grupos/Escrever"
 import { EstadoDaLeitura } from "@/src/grupos/EstadoDaLeitura"
 import {
@@ -28,7 +30,8 @@ import {
   retemOTopo,
 } from "@/src/grupos/lista-do-grupo"
 import { Participacao } from "@/src/grupos/Participacao"
-import { Pedidos } from "@/src/grupos/Pedidos"
+import { Botao as BotaoPeca } from "@/src/pecas/pecas"
+import "@/src/grupos/grupo-coluna.css"
 import { semConfirmacao } from "@/src/grupos/publicacao"
 import { quandoDe } from "@/src/telas/comum"
 
@@ -269,8 +272,15 @@ export function Grupo() {
   // filtro de salvas seria mentira sobre o grupo.
   const vazio = VAZIO_DO_GRUPO[ordem]
   return (
-    <section data-tela="grupo" className="grid gap-3">
-      <CabecaDePagina titulo={grupo.nome} subtitulo={subtitulo} />
+    <section data-tela="grupo" className="pc pc-embutido grupo-coluna grid min-w-0 gap-3">
+      <CabecaDePagina
+        titulo={grupo.nome}
+        subtitulo={
+          <>
+            {subtitulo} {grupo.admin ? <Etiqueta tom="neutro">Administrador</Etiqueta> : null}
+          </>
+        }
+      />
       <Participacao
         key={grupo.id}
         grupo={grupo}
@@ -303,6 +313,7 @@ export function Grupo() {
       >
         <summary className="min-h-11 cursor-pointer text-sm font-semibold">
           Sobre o grupo e regras
+          <Icone nome="expand_more" />
         </summary>
         <p className="mt-2 whitespace-pre-wrap text-sm">
           {grupo.regras || "Este grupo ainda não informou regras."}
@@ -310,7 +321,7 @@ export function Grupo() {
       </details>
       {/* Chaves distintas de propósito: as duas peças são irmãs e o React recusa
           duas com o mesmo key; o id remonta as duas quando o grupo troca. */}
-      {grupo.admin ? <Pedidos key={`pedidos-${grupo.id}`} id={grupo.id} /> : null}
+      {grupo.membro ? <ConviteEAvisos grupo={grupo} /> : null}
       {grupo.membro ? (
         <Escrever
           key={`escrever-${grupo.id}`}
@@ -367,35 +378,37 @@ export function Grupo() {
         </p>
       ) : (
         <>
-          <fieldset
-            data-ordenacao-grupo="sim"
-            aria-label="Ordenar publicações"
-            className="flex flex-wrap gap-2"
-          >
-            {(
-              [
-                "recentes",
-                "discutidas",
-                ...(grupo.membro ? (["salvas", "ocultadas"] as const) : []),
-              ] as const
-            ).map((chave) => (
-              <Botao
-                key={chave}
-                tom={ordem === chave ? "tonal" : "contornado"}
-                aria-pressed={ordem === chave}
-                onClick={() => setOrdem(chave)}
-              >
-                {
+          <div className="grupo-abas">
+            <fieldset
+              data-ordenacao-grupo="sim"
+              aria-label="Ordenar publicações"
+              className="flex min-w-0 gap-2 overflow-x-auto"
+            >
+              {(
+                [
+                  "recentes",
+                  "discutidas",
+                  ...(grupo.membro ? (["salvas", "ocultadas"] as const) : []),
+                ] as const
+              ).map((chave) => (
+                <BotaoPeca
+                  key={chave}
+                  tom={ordem === chave ? "tom" : "contorno"}
+                  aria-pressed={ordem === chave}
+                  onClick={() => setOrdem(chave)}
+                >
                   {
-                    recentes: "Recentes",
-                    discutidas: "Mais discutidas",
-                    salvas: "Salvas",
-                    ocultadas: "Ocultadas",
-                  }[chave]
-                }
-              </Botao>
-            ))}
-          </fieldset>
+                    {
+                      recentes: "Recentes",
+                      discutidas: "Mais discutidas",
+                      salvas: "Salvas",
+                      ocultadas: "Ocultadas",
+                    }[chave]
+                  }
+                </BotaoPeca>
+              ))}
+            </fieldset>
+          </div>
           {publicacoes.length === 0 ? (
             <EstadoVazio
               titulo={grupo.membro ? vazio.titulo : "Conversas de quem participa"}

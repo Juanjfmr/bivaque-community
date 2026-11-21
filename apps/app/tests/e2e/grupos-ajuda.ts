@@ -254,6 +254,10 @@ export async function simularGrupos(
       await rota.fulfill({ json: { grupo } })
       return
     }
+    if (partes[1] === "membros") {
+      await rota.fulfill({ json: { membros: [] } })
+      return
+    }
     if (partes[1] === "pedidos") {
       await rota.fulfill({
         json: {
