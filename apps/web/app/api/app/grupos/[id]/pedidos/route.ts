@@ -2,7 +2,7 @@ import type { NextRequest, NextResponse } from "next/server"
 import { exigirSessao, opcoesDoApp, responder } from "../../../../../../lib/app-api/rota-do-app"
 import { ehUuid } from "../../../eventos/_comum"
 import { nomesDeAutores } from "../../../perguntas/_comum"
-import { grupoDaSessao, pagina, participacao, registrarFalha } from "../../_comum"
+import { administra, grupoDaSessao, pagina, participacao, registrarFalha } from "../../_comum"
 
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
@@ -20,7 +20,7 @@ export async function GET(request: NextRequest, { params }: Context): Promise<Ne
     const grupo = await grupoDaSessao(client, id)
     if (!grupo) return responder(request, { erro: "grupo-nao-encontrado" }, 404)
     const membro = await participacao(client, id, userId)
-    if (grupo.owner_user_id !== userId || membro?.status !== "approved") {
+    if (!administra(grupo, membro, userId)) {
       return responder(request, { erro: "nao-admin" }, 403)
     }
     const pendentes = await client
