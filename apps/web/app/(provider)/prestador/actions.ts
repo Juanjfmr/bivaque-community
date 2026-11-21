@@ -3,6 +3,11 @@
 import { createServerClient } from "@supabase/ssr"
 import { revalidatePath } from "next/cache"
 import { cookies } from "next/headers"
+import { encerrarPedido, responderPedido } from "../../../lib/service-requests/app-pedidos"
+import {
+  salvarAtendimento,
+  salvarContaDoPrestador,
+} from "../../../lib/providers/prestador-area"
 import {
   validateBio,
   validateCategory,
@@ -406,18 +411,14 @@ export async function deletePortfolioPhotoAction(formData: FormData): Promise<vo
 // nao existe mais: foi absorvido por ele na reconciliacao do RECON-044.
 export async function respondToRequestAction(formData: FormData): Promise<void> {
   const requestId = text(formData, "requestId")
-  const conversationId = text(formData, "conversationId")
   const content = text(formData, "content") ?? ""
   if (!requestId) throw new Error("requestId required")
-  if (!conversationId) throw new Error("conversationId required")
-  if (content.trim().length === 0) throw new Error("Escreva uma resposta antes de enviar.")
 
-  const { client } = await requireAuthClient()
-  const { error } = await client.rpc("send_conversation_message", {
-    p_conversation_id: conversationId,
-    p_content: content,
-  })
-  if (error) throw new Error(`Falha ao responder: ${error.message}`)
+  const { client, userId } = await requireAuthClient()
+  // A conversa sai do PEDIDO no banco, nunca do FormData (TROCA-005): o id
+  // escondido do formulário não conduz mais a escrita para outra conversa.
+  const resultado = await responderPedido(client, userId, requestId, content)
+  if (!resultado.ok) throw new Error(resultado.mensagem)
 
   revalidatePath("/prestador")
   revalidatePath(`/prestador/pedidos/${requestId}`)
@@ -427,9 +428,9 @@ export async function closeRequestAction(formData: FormData): Promise<void> {
   const requestId = text(formData, "requestId")
   if (!requestId) throw new Error("requestId required")
 
-  const { client } = await requireAuthClient()
-  const { error } = await client.rpc("close_service_request", { p_request_id: requestId })
-  if (error) throw new Error(`Falha ao encerrar: ${error.message}`)
+  const { client, userId } = await requireAuthClient()
+  const resultado = await encerrarPedido(client, userId, requestId)
+  if (!resultado.ok) throw new Error("Não foi possível encerrar este pedido.")
 
   revalidatePath("/prestador")
   revalidatePath(`/prestador/pedidos/${requestId}`)
@@ -442,30 +443,8 @@ export async function saveAttendanceAction(formData: FormData): Promise<void> {
   const active = formData.get("active") === "on"
   const { client, userId } = await requireAuthClient()
 
-  const profileId = await requireOwnProfileId(client, userId)
-
-  const serviceClient = createServiceClient()
-  const { data: accountRow, error: accountError } = await serviceClient
-    .from("provider_accounts")
-    .select("community_id")
-    .eq("auth_user_id", userId)
-    .is("revoked_at", null)
-    .maybeSingle()
-  if (accountError) throw new Error(`Falha ao carregar a conta: ${accountError.message}`)
-  const communityId = (accountRow as { community_id: string } | null)?.community_id
-  if (!communityId) throw new Error("Conta de prestador sem comunidade.")
-
-  const { error } = await client.from("provider_reach").upsert(
-    {
-      provider_id: profileId,
-      scope_type: "community",
-      scope_id: communityId,
-      source: "free",
-      active,
-    },
-    { onConflict: "provider_id,scope_type,scope_id" },
-  )
-  if (error) throw new Error(`Falha ao salvar a área de atendimento: ${error.message}`)
+  const resultado = await salvarAtendimento(client, userId, active)
+  if (!resultado.ok) throw new Error(resultado.mensagem)
 
   revalidatePath("/prestador")
   revalidatePath("/prestador/atendimento")
@@ -477,20 +456,12 @@ export async function saveAccountAction(formData: FormData): Promise<void> {
   const contactPhone = text(formData, "contactPhone")
   const contactIsPublic = formData.get("contactIsPublic") === "on"
 
-  const phoneCheck = validateContactPhone(contactPhone)
-  if (!phoneCheck.ok) throw new Error(phoneCheck.message)
-
   const { client, userId } = await requireAuthClient()
-  const profileId = await requireOwnProfileId(client, userId)
-
-  const { error } = await client
-    .from("provider_profiles")
-    .update({
-      contact_phone: contactPhone,
-      contact_is_public: contactIsPublic && contactPhone !== null,
-    })
-    .eq("id", profileId)
-  if (error) throw new Error(`Falha ao salvar a conta: ${error.message}`)
+  const resultado = await salvarContaDoPrestador(client, userId, {
+    telefone: contactPhone,
+    telefonePublico: contactIsPublic,
+  })
+  if (!resultado.ok) throw new Error(resultado.mensagem)
 
   revalidatePath("/prestador")
   revalidatePath("/prestador/conta")

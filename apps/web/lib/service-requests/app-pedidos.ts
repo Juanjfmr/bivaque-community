@@ -85,6 +85,153 @@ export async function pedidoDoMembro(client: Cliente, userId: string, id: string
   return resumoDoPedido(data, userId, await distanciaDoPedido(client, id))
 }
 
+// ── a conversa do pedido (TROCA-005) ─────────────────────────────────────────
+//
+// O prestador responde e vê o estado GRAVADO. A conversa sai do pedido, não do
+// corpo do pedido: o `conversation_id` é o do banco, então um id escolhido pelo
+// cliente nunca conduz a escrita para outra conversa. O envio usa a RPC
+// `send_conversation_message`, que deriva o remetente da sessão e move
+// `open → in_conversation` na mesma transação.
+
+export const CONTEUDO_MAX = 2000
+
+export type MensagemDoPedido = Readonly<{
+  id: string
+  minha: boolean
+  conteudo: string
+  criadoEm: string
+}>
+
+export async function mensagensDoPedido(
+  client: Cliente,
+  userId: string,
+  conversaId: string,
+): Promise<readonly MensagemDoPedido[]> {
+  const { data, error } = await client
+    .from("dm_messages")
+    .select("id,sender_id,content,created_at")
+    .eq("conversation_id", conversaId)
+    .order("created_at", { ascending: true })
+  if (error) throw error
+  return (data ?? []).map((linha) => ({
+    id: linha.id,
+    minha: linha.sender_id === userId,
+    conteudo: linha.content,
+    criadoEm: linha.created_at,
+  }))
+}
+
+export type MotivoDaResposta =
+  | "pedido-nao-encontrado"
+  | "sem-conversa"
+  | "conteudo-vazio"
+  | "conteudo-longo"
+  | "recusado"
+  | "indisponivel"
+
+export type ResultadoDaResposta =
+  | {
+      readonly ok: true
+      readonly pedido: NonNullable<Awaited<ReturnType<typeof pedidoDoMembro>>>
+      readonly mensagens: readonly MensagemDoPedido[]
+    }
+  | { readonly ok: false; readonly motivo: MotivoDaResposta; readonly mensagem: string }
+
+export async function responderPedido(
+  client: Cliente,
+  userId: string,
+  pedidoId: string,
+  conteudo: string,
+): Promise<ResultadoDaResposta> {
+  const texto = conteudo.trim()
+  if (texto.length === 0) {
+    return {
+      ok: false,
+      motivo: "conteudo-vazio",
+      mensagem: "Escreva uma resposta antes de enviar.",
+    }
+  }
+  if (texto.length > CONTEUDO_MAX) {
+    return {
+      ok: false,
+      motivo: "conteudo-longo",
+      mensagem: `A resposta passa de ${CONTEUDO_MAX} caracteres.`,
+    }
+  }
+
+  const pedido = await pedidoDoMembro(client, userId, pedidoId)
+  if (pedido === null) {
+    return {
+      ok: false,
+      motivo: "pedido-nao-encontrado",
+      mensagem: "Este pedido não existe ou não é seu.",
+    }
+  }
+  if (pedido.conversaId === null) {
+    return {
+      ok: false,
+      motivo: "sem-conversa",
+      mensagem: "Este pedido ainda não tem conversa para responder.",
+    }
+  }
+
+  const { error } = await client.rpc("send_conversation_message", {
+    p_conversation_id: pedido.conversaId,
+    p_content: texto,
+  })
+  if (error) {
+    if (error.code === "42501") {
+      return {
+        ok: false,
+        motivo: "recusado",
+        mensagem: "Só quem participa da conversa pode responder.",
+      }
+    }
+    if (error.code === "P0002") {
+      return { ok: false, motivo: "pedido-nao-encontrado", mensagem: "Este pedido não existe." }
+    }
+    return {
+      ok: false,
+      motivo: "indisponivel",
+      mensagem: "Não foi possível enviar a resposta agora. Tente de novo.",
+    }
+  }
+
+  const atualizado = await pedidoDoMembro(client, userId, pedidoId)
+  if (atualizado === null) throw new Error("pedido sumiu depois da resposta")
+  return {
+    ok: true,
+    pedido: atualizado,
+    mensagens: await mensagensDoPedido(client, userId, pedido.conversaId),
+  }
+}
+
+export type ResultadoDoEncerramento =
+  | {
+      readonly ok: true
+      readonly pedido: NonNullable<Awaited<ReturnType<typeof pedidoDoMembro>>>
+    }
+  | {
+      readonly ok: false
+      readonly motivo: "pedido-nao-encontrado" | "situacao-final" | "indisponivel"
+    }
+
+export async function encerrarPedido(
+  client: Cliente,
+  userId: string,
+  pedidoId: string,
+): Promise<ResultadoDoEncerramento> {
+  const pedido = await pedidoDoMembro(client, userId, pedidoId)
+  if (pedido === null) return { ok: false, motivo: "pedido-nao-encontrado" }
+  if (pedido.situacao === "closed") return { ok: true, pedido }
+  if (pedido.situacao === "cancelled") return { ok: false, motivo: "situacao-final" }
+  const { error } = await client.rpc("close_service_request", { p_request_id: pedidoId })
+  if (error) return { ok: false, motivo: "indisponivel" }
+  const atualizado = await pedidoDoMembro(client, userId, pedidoId)
+  if (atualizado === null) return { ok: false, motivo: "pedido-nao-encontrado" }
+  return { ok: true, pedido: atualizado }
+}
+
 /**
  * A recusa das RPCs de cancelar/encerrar traduzida para a porta. O texto do
  * Postgres não sai daqui; o estado final decidido no banco vira 409, não 500.

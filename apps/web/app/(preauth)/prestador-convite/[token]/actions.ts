@@ -3,13 +3,26 @@
 import { createServerClient } from "@supabase/ssr"
 import { cookies } from "next/headers"
 import type { Database } from "supabase/database.generated"
+import {
+  aceitarConviteDePrestador,
+  TOKEN_DO_CONVITE,
+} from "../../../../lib/providers/convite-prestador"
 
 export type ProviderInvitationAcceptanceResult = { ok: true } | { ok: false; message: string }
+
+const MENSAGENS: Readonly<Record<string, string>> = {
+  "convite-nao-encontrado": "Este convite não foi encontrado.",
+  "convite-expirado": "Este convite expirou.",
+  "convite-usado": "Este convite já foi usado.",
+  "conta-recusada": "Esta conta não pode aceitar o convite de prestador.",
+  "outro-email": "O convite não corresponde ao seu e-mail.",
+  indisponivel: "Não foi possível aceitar o convite. Tente novamente.",
+}
 
 export async function acceptProviderInvitationAction(
   token: string,
 ): Promise<ProviderInvitationAcceptanceResult> {
-  if (!/^[0-9a-fA-F]{64}$/.test(token)) {
+  if (!TOKEN_DO_CONVITE.test(token)) {
     return { ok: false, message: "Este convite não foi encontrado." }
   }
 
@@ -35,21 +48,6 @@ export async function acceptProviderInvitationAction(
     return { ok: false, message: "Confirme seu e-mail antes de aceitar o convite." }
   }
 
-  const { error } = await supabase.rpc("accept_provider_invitation", {
-    p_token: token,
-    p_email: user.email,
-  })
-  if (error) {
-    if (error.code === "P0004") return { ok: false, message: "Este convite expirou." }
-    if (error.code === "P0003") return { ok: false, message: "Este convite já foi usado." }
-    if (error.code === "42501") {
-      return { ok: false, message: "Esta conta não pode aceitar o convite de prestador." }
-    }
-    if (error.code === "P0002") {
-      return { ok: false, message: "O convite não corresponde ao seu e-mail." }
-    }
-    return { ok: false, message: "Não foi possível aceitar o convite. Tente novamente." }
-  }
-
-  return { ok: true }
+  const resultado = await aceitarConviteDePrestador(supabase, token, user.email)
+  return resultado.ok ? { ok: true } : { ok: false, message: MENSAGENS[resultado.motivo] ?? "" }
 }
