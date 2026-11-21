@@ -12,6 +12,9 @@ import { routeFromFile } from "../../e2e/helpers/crawl-model"
 const ID = "41000000-0000-4000-8000-000000000051"
 const ORIGEM = "https://bivaque.example.invalid"
 const TROCADAS = [
+  [`/communities/${ID}/invite`, "/app/comunidade"],
+  ["/invite/token", "/app/comunidade"],
+  ["/gerir-comunidades", "/app/comunidade"],
   ["/communities", "/app/comunidade"],
   [`/communities/${ID}?fonte=teste`, "/app/comunidade?fonte=teste"],
   ["/community", "/app/comunidade"],
@@ -23,6 +26,7 @@ const TROCADAS = [
   ["/recommendations?aba=saved", "/app/salvos?aba=saved"],
   ["/recommendations?pedir=1", "/app/comunidade?pedir=1"],
   ["/recommendations?aba=request", "/app/comunidade?aba=request"],
+  [`/groups/${ID}?origem=aviso`, `/app/grupo/${ID}?origem=aviso`],
   ["/groups", "/app/comunidade"],
   [`/indicacoes/${ID}`, `/app/pergunta/${ID}`],
   [`/mercado/${ID}`, `/app/anuncio/${ID}`],
@@ -294,17 +298,15 @@ describe("LAN-TROCA fase 1", () => {
     expect(sobras).toEqual([])
   })
 
-  it("preserva convites, indicação de prestador, detalhe de grupo e console do dono", async () => {
-    expect((await resolver(`/communities/${ID}/invite`)).status).toBe(200)
-    expect((await resolver("/invite/token")).status).toBe(200)
-    expect(existsSync(join(shell, "communities", "[id]", "invite", "page.tsx"))).toBe(true)
-    expect(existsSync(join(shell, "invite", "[token]", "page.tsx"))).toBe(true)
+  it("remove as telas da vila e preserva indicação e console do dono", async () => {
+    for (const rota of ["communities/[id]/invite", "invite", "gerir-comunidades"]) {
+      expect(existsSync(join(shell, rota))).toBe(false)
+    }
     for (const rota of ["communities", "communities/[id]"]) {
       expect(existsSync(join(shell, rota, "page.tsx"))).toBe(false)
     }
     for (const caminho of [
       `/communities/${ID}/indicar-prestador`,
-      `/groups/${ID}`,
       ...["", "/pending", "/moderators", "/providers", "/media"].map(
         (subrota) => `/communities/${ID}/admin${subrota}`,
       ),
@@ -314,7 +316,7 @@ describe("LAN-TROCA fase 1", () => {
     expect(existsSync(join(shell, "communities", "[id]", "indicar-prestador", "page.tsx"))).toBe(
       true,
     )
-    expect(existsSync(join(shell, "groups", "[id]", "page.tsx"))).toBe(true)
+    expect(existsSync(join(shell, "groups"))).toBe(false)
     expect(
       existsSync(join(shell, "..", "(owner)", "communities", "[id]", "admin", "page.tsx")),
     ).toBe(true)

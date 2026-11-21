@@ -191,11 +191,15 @@ const nextConfig: NextConfig = {
       },
       ...(
         [
+          ["/communities/:id/invite", "/app/comunidade"],
+          ["/invite/:token", "/app/comunidade"],
+          ["/gerir-comunidades", "/app/comunidade"],
           ["/communities", "/app/comunidade"],
           ["/communities/:id", "/app/comunidade"],
           ["/community", "/app/comunidade"],
           ["/indicacoes", "/app/comunidade"],
           ["/recommendations", "/app/comunidade"],
+          ["/groups/:id", "/app/grupo/:id"],
           ["/groups", "/app/comunidade"],
           ["/indicacoes/:id", "/app/pergunta/:id"],
           ["/messages", "/app/conversas"],

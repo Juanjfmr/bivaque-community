@@ -120,6 +120,22 @@ interface PortaDeclarada extends AllowedUnreached {
 }
 
 const PORTAS_FORA_DO_LINK: readonly PortaDeclarada[] = [
+  ...(
+    [
+      "/communities/[id]/admin",
+      "/communities/[id]/admin/media",
+      "/communities/[id]/admin/moderators",
+      "/communities/[id]/admin/pending",
+      "/communities/[id]/admin/providers",
+      "/communities/[id]/indicar-prestador",
+    ] as const
+  ).map(
+    (route): PortaDeclarada => ({
+      route,
+      porta:
+        "DÍVIDA LAN-TROCA-ADMIN: a porta era a página antiga /groups/:id, removida no TROCA-003; a tela sai com 307 no TROCA-004",
+    }),
+  ),
   {
     route: "/auth/callback-error",
     porta: "FLUXO: redirect do /auth/callback quando o OAuth falha",
@@ -164,7 +180,6 @@ const PORTAS_FORA_DO_LINK: readonly PortaDeclarada[] = [
     route: "/denuncias/nova",
     porta: "FLUXO: versão endereçável (spec C10) do diálogo que as origens abrem por cima da tela",
   },
-  { route: "/invite/[token]", porta: "EXTERNO: link de convite compartilhado" },
   // RUN-172/176: o perfil web era a única tela da casca a que uma persona chegava, e com ele
   // morreram as portas de Salvos, Configurações, Conta, senha, Comunidades e o detalhe da
   // indicação. Entrar na casca por uma semente devolveu a medida, e estas voltaram a ter link
@@ -313,7 +328,7 @@ async function crawl(
     // de administração apenas no grupo em que esta persona é administradora.
     if (landed.pathname === "/app/comunidade" && persona === "dono de grupo") {
       await page.goto("/app/grupo/60000000-0000-4000-8000-000000000002")
-      await expect(page.getByRole("link", { name: "Aprovar pedidos e convidar" })).toBeVisible()
+      await expect(page.getByRole("button", { name: "Administrar grupo" })).toBeVisible()
       frontier.enter({ target: new URL(page.url()).pathname, from: landed.pathname, persona })
       await page.goto(visit.target, { waitUntil: "load" })
     }

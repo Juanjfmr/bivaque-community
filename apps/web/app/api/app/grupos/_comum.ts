@@ -69,6 +69,7 @@ export function apresentarGrupo(
   membros: number,
 ) {
   const aprovado = membro?.status === "approved"
+  const dono = aprovado && grupo.owner_user_id === userId
   return {
     id: grupo.id,
     nome: grupo.name,
@@ -77,10 +78,17 @@ export function apresentarGrupo(
     fechado: grupo.visibility === "private",
     membro: aprovado,
     pendente: membro?.status === "pending",
-    admin: aprovado && grupo.owner_user_id === userId,
+    // Mesma regra de private.is_group_moderator: dono ou moderador aprovado administram;
+    // só o dono passa a administração e exclui o grupo.
+    admin: dono || (aprovado && (membro?.role === "owner" || membro?.role === "moderator")),
+    dono,
     membros: grupo.visibility === "private" && !aprovado ? null : membros,
     fixada: grupo.pinned_post_id,
   }
+}
+
+export function administra(grupo: Grupo, membro: Participacao, userId: string): boolean {
+  return apresentarGrupo(grupo, membro, userId, 0).admin
 }
 
 export function pagina(request: Request): number | null {

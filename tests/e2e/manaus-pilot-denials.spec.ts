@@ -84,9 +84,15 @@ test.describe("private group admission: denial paths", () => {
   test("an anonymous visitor cannot reach a private group directly", async ({ page }) => {
     // Given an unauthenticated browser
     // When the user navigates to a hypothetical private group URL
-    await page.goto("/groups/some-private-group-id")
+    const redirect = await page.request.get("/groups/some-private-group-id", { maxRedirects: 0 })
+    expect(redirect.status()).toBe(307)
+    expect(new URL(redirect.headers()["location"] ?? "", "http://127.0.0.1:3000").pathname).toBe(
+      "/app/grupo/some-private-group-id",
+    )
+    expect((await page.request.get("/api/app/grupos/some-private-group-id")).status()).toBe(401)
+    await page.goto("/app/grupo/some-private-group-id")
 
-    // Then the proxy refuses antes de o Next tratar a rota — a recusa não
+    // Then the app refuses the anonymous visitor — a recusa não
     // depende de o grupo existir, e por isso não vaza existência
     await page.waitForURL(/\/app\/entrar/)
   })

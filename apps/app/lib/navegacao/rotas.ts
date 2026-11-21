@@ -34,6 +34,7 @@ export type NomeDeRota =
   | "pergunta"
   | "perfil"
   | "grupo"
+  | "grupo-administrar"
   | "publicacao"
   | "evento"
   | "agenda"
@@ -184,6 +185,13 @@ const LINHAS: readonly LinhaDoCatalogo[] = [
   ["perfil", "/perfil/$id", "Perfil", "origem", { parametro: "id", pai: "inicio" }],
   ["grupo", "/grupo/$id", "Grupo", "comunidade", { parametro: "id", pai: "comunidade" }],
   [
+    "grupo-administrar",
+    "/grupo/$id/administrar",
+    "Grupo",
+    "comunidade",
+    { parametro: "id", pai: "grupo" },
+  ],
+  [
     "publicacao",
     "/publicacao/$id",
     "Publicação",
@@ -254,6 +262,7 @@ export const ROTAS: readonly Rota[] = LINHAS.map(([nome, caminho, titulo, dono, 
 /** Os 33 nomes da seção 1 do inventário, sem as rotas internas do app. */
 export const NOMES_DAS_33: readonly NomeDeRota[] = ROTAS.filter(
   (rota) =>
+    rota.nome !== "grupo-administrar" &&
     rota.nome !== "mercado" &&
     rota.nome !== "indisponivel" &&
     rota.nome !== "avisos" &&

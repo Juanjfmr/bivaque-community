@@ -3,7 +3,7 @@ import { beforeEach, expect, it, vi } from "vitest"
 vi.mock("web/lib/app-api/sessao-do-next", () => ({ resolverSessaoDaRequisicao: vi.fn() }))
 
 import { GET } from "web/app/api/app/grupos/[id]/pedidos/route"
-import { autenticar, context, grupo, mockClient, req, semSessao } from "./apoio"
+import { autenticar, context, grupo, membro, mockClient, req, semSessao } from "./apoio"
 
 beforeEach(() => {
   vi.clearAllMocks()
@@ -29,6 +29,22 @@ it("membro comum não lê os motivos", async () => {
   autenticar(mock)
   expect((await GET(req(), context)).status).toBe(403)
   expect(mock.chamadas.some((c) => c.tabela === "group_join_reasons")).toBe(false)
+})
+it("moderador aprovado lê os pedidos, como em private.is_group_moderator", async () => {
+  const mock = mockClient({
+    grupo: { ...grupo, owner_user_id: "outro" },
+    membro: { ...membro, role: "moderator" },
+  })
+  autenticar(mock)
+  expect((await GET(req(), context)).status).toBe(200)
+})
+it("moderador com pedido pendente não lê pedidos", async () => {
+  const mock = mockClient({
+    grupo: { ...grupo, owner_user_id: "outro" },
+    membro: { ...membro, role: "moderator", status: "pending" },
+  })
+  autenticar(mock)
+  expect((await GET(req(), context)).status).toBe(403)
 })
 it("não membro não lê pedidos", async () => {
   const mock = mockClient({ membro: null })

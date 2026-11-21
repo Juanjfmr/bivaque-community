@@ -9,8 +9,10 @@ export type GrupoReal = Readonly<{
   membro: boolean
   pendente: boolean
   admin: boolean
+  dono?: boolean
   membros: number | null
   fixada: string | null
+  aviso: string | null
 }>
 export type PublicacaoReal = Readonly<{
   id: string
@@ -75,8 +77,10 @@ function grupo(valor: unknown): GrupoReal {
     membro: booleano(g["membro"]),
     pendente: booleano(g["pendente"]),
     admin: booleano(g["admin"]),
+    dono: g["dono"] === undefined ? false : booleano(g["dono"]),
     membros: g["membros"] === null ? null : numero(g["membros"]),
     fixada: cursor(g["fixada"]),
+    aviso: g["aviso"] === null || g["aviso"] === undefined ? null : texto(g["aviso"]),
   }
 }
 function publicacao(valor: unknown): PublicacaoReal {
@@ -402,4 +406,38 @@ export async function denunciarPublicacao(
     opcoes,
   )
   return texto(registro(corpo["denuncia"])["id"])
+}
+
+export type MembroDoGrupo = Readonly<{ id: string; nome: string; papel: string }>
+export async function lerMembrosDoGrupo(id: string): Promise<readonly MembroDoGrupo[]> {
+  const corpo = await ler(`/api/app/grupos/${encodeURIComponent(id)}/membros`)
+  return lista(corpo["membros"], (valor) => {
+    const membro = registro(valor)
+    return { id: texto(membro["id"]), nome: texto(membro["nome"]), papel: texto(membro["papel"]) }
+  })
+}
+export function decidirPedido(id: string, usuario: string, decisao: "aprovar" | "recusar") {
+  return enviar(
+    "POST",
+    `/api/app/grupos/${encodeURIComponent(id)}/pedidos/${encodeURIComponent(usuario)}`,
+    { decisao },
+  )
+}
+export function removerMembro(id: string, usuario: string) {
+  return enviar(
+    "DELETE",
+    `/api/app/grupos/${encodeURIComponent(id)}/membros/${encodeURIComponent(usuario)}`,
+  )
+}
+export function transferirGrupo(id: string, para: string) {
+  return enviar("POST", `/api/app/grupos/${encodeURIComponent(id)}/administracao`, { para })
+}
+export function salvarRegras(id: string, regras: string) {
+  return enviar("PUT", `/api/app/grupos/${encodeURIComponent(id)}/regras`, { regras })
+}
+export function salvarAviso(id: string, nivel: string) {
+  return enviar("PUT", `/api/app/grupos/${encodeURIComponent(id)}/aviso`, { nivel })
+}
+export function excluirGrupo(id: string) {
+  return enviar("DELETE", `/api/app/grupos/${encodeURIComponent(id)}`)
 }
