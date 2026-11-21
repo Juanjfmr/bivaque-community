@@ -40,6 +40,10 @@ allowed_paths:
   - tests/integration/**
   - apps/web/tests/**
   - docs/agents/tasks/LOJA-002.task.yml
+  - supabase/database.generated.ts
+  - tests/e2e/**
+  - tools/backend-kanban/public/board.json
+  - tools/backend-kanban/BOARD.md
 forbidden:
   - apps/app (é o LOJA-003), apps/mobile, apps/prototipo
   - editar migration já aplicada; migration nova só por supabase migration new
@@ -54,10 +58,10 @@ forbidden:
   - git stash, reiniciar ou reconstruir o banco local, delegar
   - dado pessoal real ou CPF real; segredo no repositório
 acceptance:
-  - "modo nativo só com x-bivaque-cliente: loja e Origin numa lista nativa própria (https://localhost, capacitor://localhost); origem web pedindo modo nativo e Origin null recebem 403; modo nativo com cookie recebe 400 ou 403 (ADR §2)"
+  - "modo nativo só com x-bivaque-cliente: loja e Origin numa lista nativa própria (https://localhost, capacitor://localhost); origem web pedindo modo nativo e Origin null recebem 403; modo nativo com cookie recebe 400 ou 403; sem cabeçalho Origin o modo nativo é aceito, porque o ADR §2 separa ausência de null e não há credencial ambiente (ADR §2)"
   - "POST /api/app/entry/otp aceita as origens nativas; POST /api/app/entry/otp/verify em modo nativo devolve {access_token, refresh_token, expires_at} no corpo, sem set-cookie, com o limitador SEC-007/008 igual"
   - "POST /api/app/sessao/token troca code mais code_verifier pelo par; verificador errado e código reusado são recusados"
-  - "POST /api/app/sessao/renovar: recusa definitiva do GoTrue vira 401; 5xx, 429 do GoTrue e tempo esgotado viram 503 (ADR §4)"
+  - "POST /api/app/sessao/renovar: recusa definitiva do GoTrue (pelo error_code do corpo: token inexistente, revogado, reusado, verificador errado, fluxo inexistente) vira 401; erro de configuração (apikey ou URL) não vira 401; 5xx, 429 do GoTrue e tempo esgotado viram 503 (ADR §4)"
   - "limitador por IP no banco para sessao/token (20 por IP em 10 min) e sessao/renovar (120 por IP em 10 min), consumido antes do GoTrue, fechando em falha, com balde sem-ip quando ipConfiavel devolve null; estouro responde 429 (ADR §3)"
   - "POST /api/app/voce/sair por Bearer revoga com auth.admin.signOut(jwt, 'local') e não manda Clear-Site-Data; por cookie nada muda"
   - "o ramo nativo de entry/oauth monta a URL de autorização com code_challenge S256 recebido do app e redirect_to constante bivaque://auth-callback, sem cliente SSR com cookie, sem origemDoPedido e sem gravar cookie (ADR §5)"
