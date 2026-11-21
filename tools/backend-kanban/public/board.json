@@ -6374,7 +6374,8 @@
       "links": ["docs/LANCAMENTO.md"],
       "proof": [
         "02/11: aberto na definição do lançamento (docs/LANCAMENTO.md), por mandato do dono.",
-        "20/11 LOJA-001 (#312): Capacitor com android/ e ios/ versionados, base absoluta no nativo, câmera, link profundo, workflow app-loja.yml e inventário da sessão; revisão às cegas PASS no delta e2f069d3. Capturas do emulador em .visual/loja-001/ (camera, criar, link-entrada)."
+        "20/11 LOJA-001 (#312): Capacitor com android/ e ios/ versionados, base absoluta no nativo, câmera, link profundo, workflow app-loja.yml e inventário da sessão; revisão às cegas PASS no delta e2f069d3. Capturas do emulador em .visual/loja-001/ (camera, criar, link-entrada).",
+        "21/11 LOJA-002 (#317): a prova contra o GoTrue local mediu que o reuso de R0 fora da janela recusa só R0 (401, 'Possible abuse attempt' no log); R2 segue válido direto no GoTrue. Emenda de 21/11 no ADR-20261120 por delegação: a revogação da família deixa de ser promessa, resíduo declarado na RATIFICACAO e card SEC-FAMILIA-RENOVACAO pós-lançamento."
       ],
       "id": "LAN-LOJA",
       "title": "Fase 7: app de loja em Capacitor pronto para envio",
@@ -10438,6 +10439,26 @@
         "Banco local ressincronizado com a main (reset --local --no-seed exclusivo) e test:db verde"
       ],
       "dependencies": []
+    },
+    {
+      "id": "SEC-FAMILIA-RENOVACAO",
+      "title": "Revogação própria da família de renovação no reuso",
+      "priority": "P3",
+      "category": "backend",
+      "status": "repo",
+      "description": "O GoTrue recusa o token de renovação reusado fora da janela, mas mantém válidos os descendentes (medido no CI do PR #317, run 44908862984: R2 renovado direto no GoTrue devolve 200). Pós-lançamento: mapear o token para a sessão e chamar signOut global no reuso detectado, ou subir para uma versão do GoTrue que revogue a família. Exige ADR R3 nova (tabela e service_role).",
+      "sourceRevision": "03a0c9fca",
+      "updatedAt": "2026-11-21",
+      "dependencies": [],
+      "checklist": [
+        "[ ] ADR R3 com a estratégia (mapa token→sessão ou versão do GoTrue)",
+        "[ ] Prova contra o GoTrue local: reuso de R0 recusa R2",
+        "[ ] Revisão do security-auditor"
+      ],
+      "links": ["docs/decisions/ADR-20261120-sessao-nativa-do-app-de-loja.md"],
+      "proof": [
+        "21/11: CI do PR #317 (run 44908862984), anotação diagnostico em 1440: rotaR0 401 credencial-recusada, goTrueR2 200, usuarioR2 200."
+      ]
     }
   ],
   "launch": {

@@ -40,6 +40,8 @@ allowed_paths:
   - tests/integration/**
   - apps/web/tests/**
   - docs/agents/tasks/LOJA-002.task.yml
+  - docs/decisions/ADR-20261120-sessao-nativa-do-app-de-loja.md
+  - docs/decisions/RATIFICACAO.md
   - supabase/database.generated.ts
   - tests/e2e/**
   - tools/backend-kanban/public/board.json
