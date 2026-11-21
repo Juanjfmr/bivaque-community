@@ -16,6 +16,7 @@ export const TOKEN_DO_CONVITE = /^[0-9a-fA-F]{64}$/
 export type EstadoDoConvite = "pendente" | "aceito" | "revogado" | "expirado"
 
 export type ConviteDePrestador = Readonly<{
+  comunidadeId: string
   comunidade: string
   estado: EstadoDoConvite
 }>
@@ -42,7 +43,7 @@ export function clientePublico(): SupabaseClient<Database> {
   })
 }
 
-type LinhaDoConvite = { community_name: string; status: string }
+type LinhaDoConvite = { community_id: string; community_name: string; status: string }
 
 export async function lerConviteDePrestador(
   token: string,
@@ -55,7 +56,7 @@ export async function lerConviteDePrestador(
   if (linha === undefined) return null
   const estado = ESTADOS[linha.status]
   if (estado === undefined) return null
-  return { comunidade: linha.community_name, estado }
+  return { comunidadeId: linha.community_id, comunidade: linha.community_name, estado }
 }
 
 export type ResultadoDoAceite =

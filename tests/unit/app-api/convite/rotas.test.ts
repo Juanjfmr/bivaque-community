@@ -77,6 +77,7 @@ describe("TROCA-005 — leitura do convite de prestador", () => {
     const resposta = await GET(req(), contexto(TOKEN))
     expect(resposta.status).toBe(200)
     expect((await resposta.json()).convite).toEqual({
+      comunidadeId: "10000000-0000-4000-8000-0000000000c1",
       comunidade: "Comunidade Manaus",
       estado: "pendente",
     })
@@ -91,7 +92,13 @@ describe("TROCA-005 — leitura do convite de prestador", () => {
   })
 
   it.each(["accepted", "revoked", "expired"])("o estado %s chega traduzido", async (status) => {
-    estado.publico = publico([{ community_name: "Comunidade Manaus", status }])
+    estado.publico = publico([
+      {
+        community_id: "10000000-0000-4000-8000-0000000000c1",
+        community_name: "Comunidade Manaus",
+        status,
+      },
+    ])
     resolver.mockResolvedValue({ estado: "recusada", sessao: {} } as never)
     const resposta = await GET(req(), contexto(TOKEN))
     expect((await resposta.json()).convite.estado).toMatch(/aceito|revogado|expirado/)
