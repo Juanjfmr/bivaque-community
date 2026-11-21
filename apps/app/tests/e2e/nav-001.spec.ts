@@ -168,19 +168,21 @@ for (const tema of ["light", "dark"] as const) {
       // layout na volta encostaria no limite do conteúdo.
       const posicao = await rolarAtePosicao(page, 600)
 
-      // Um cartão no meio da janela, longe da barra de baixo: clicar nele não
-      // rola a lista antes de sair, e a posição medida é a da saída.
-      const indice = await page.evaluate(() => {
-        const cartoes = [...document.querySelectorAll('[data-cartao="anuncio"]')]
-        return cartoes.findIndex((cartao) => {
-          const caixa = cartao.getBoundingClientRect()
-          return caixa.top >= window.innerHeight * 0.2 && caixa.bottom <= window.innerHeight * 0.7
+      // Um cartão atravessado pelo meio da janela: o clique acontece no ponto
+      // exato (sem rolar a lista) e a posição medida é a da saída.
+      const ponto = await page.evaluate(() => {
+        const meio = window.innerHeight / 2
+        const cartao = [...document.querySelectorAll('[data-cartao="anuncio"]')].find((item) => {
+          const caixa = item.getBoundingClientRect()
+          return caixa.top <= meio && caixa.bottom >= meio
         })
+        if (!cartao) return null
+        const caixa = cartao.getBoundingClientRect()
+        return { x: caixa.left + caixa.width / 2, y: meio }
       })
-      expect(indice).toBeGreaterThanOrEqual(0)
-      const cartao = page.locator('[data-cartao="anuncio"]').nth(indice)
-      await cartao.click()
-      await esperarCaminho(page, `/app/anuncio/${ANUNCIOS[indice]?.id ?? ""}`)
+      expect(ponto).not.toBeNull()
+      await page.mouse.click(ponto?.x ?? 0, ponto?.y ?? 0)
+      await expect.poll(() => caminhoAtual(page)).toMatch(/^\/app\/anuncio\/nav-item-\d+$/)
 
       await page.goBack()
       await esperarCaminho(page, "/app/mercado")

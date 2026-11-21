@@ -75,6 +75,9 @@ export function MenuCriar({ aoFechar }: { readonly aoFechar: () => void }) {
   const [encontro, setEncontro] = useState(false)
   const [concluido, setConcluido] = useState(false)
   const lista = useRef<HTMLDivElement | null>(null)
+  // A escolha que abriu um fluxo dentro do menu recebe o foco de volta quando o
+  // fluxo fecha: a Folha foca a origem em vez da primeira escolha.
+  const [origemDoFluxo, setOrigemDoFluxo] = useState<string | null>(null)
 
   const fechar = useCallback(() => {
     aoFechar()
@@ -106,6 +109,7 @@ export function MenuCriar({ aoFechar }: { readonly aoFechar: () => void }) {
           return
         }
         if (escolha.id === "create-event") {
+          setOrigemDoFluxo(escolha.id)
           setEncontro(true)
           return
         }
@@ -185,7 +189,9 @@ export function MenuCriar({ aoFechar }: { readonly aoFechar: () => void }) {
         titulo="Criar no Bivaque"
         descricao={painel ? "O que você quer publicar ou pedir?" : "Escolha o que publicar"}
         modo={painel ? "painel" : "folha"}
-        focoInicial="[data-escolha]"
+        focoInicial={
+          origemDoFluxo === null ? "[data-escolha]" : `[data-escolha="${origemDoFluxo}"]`
+        }
         sobreposicao="menu-criar"
         {...(painel ? { fundoProps: { "data-criar-fundo": "painel" } } : {})}
         className="bv-criar-menu rounded-2xl border border-(--outline-variant) bg-(--surface-lowest) p-3 shadow-[0_28px_64px_-16px_var(--shadow-strong)]"
