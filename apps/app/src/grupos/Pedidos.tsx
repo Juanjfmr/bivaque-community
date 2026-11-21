@@ -62,7 +62,8 @@ export function Pedidos({ id }: { id: string }) {
                   <BotaoPeca
                     key={decisao}
                     compacto
-                    tom={decisao === "aprovar" ? "principal" : "contorno"}
+                    tom={decisao === "aprovar" ? "contorno" : "texto"}
+                    className={decisao === "aprovar" ? "border-(--foreground)!" : "min-h-11!"}
                     disabled={ocupado}
                     onClick={() => {
                       setOcupado(true)

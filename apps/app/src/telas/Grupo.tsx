@@ -307,12 +307,11 @@ export function Grupo() {
           }
         }}
       />
-      <details
-        data-regras-grupo="sim"
-        className="rounded-2xl border border-(--outline-variant) bg-(--surface-lowest) p-3"
-      >
-        <summary className="min-h-11 cursor-pointer text-sm font-semibold">
-          Sobre o grupo e regras
+      <details data-regras-grupo="sim" className="border-y border-(--outline-variant)">
+        <summary className="min-h-16 cursor-pointer text-base font-semibold">
+          <span className="flex items-center gap-3">
+            <Icone nome="gavel" /> Sobre o grupo e regras
+          </span>
           <Icone nome="expand_more" />
         </summary>
         <p className="mt-2 whitespace-pre-wrap text-sm">

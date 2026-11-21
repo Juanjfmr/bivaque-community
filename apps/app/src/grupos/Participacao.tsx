@@ -53,11 +53,7 @@ export function Participacao({
   }
   return (
     <>
-      <div
-        data-controles-grupo="sim"
-        aria-busy={ocupado}
-        className="grid gap-3 rounded-2xl border border-(--outline-variant) bg-(--surface-lowest) p-3"
-      >
+      <div data-controles-grupo="sim" aria-busy={ocupado} className="grid gap-3">
         <p className="text-sm leading-6 text-(--on-surface-variant)">{grupo.descricao}</p>
         {grupo.admin ? (
           <Linha

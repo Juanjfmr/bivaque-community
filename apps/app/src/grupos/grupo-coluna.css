@@ -1,8 +1,17 @@
+:where(:root:not([data-tema="escuro"])) .grupo-coluna {
+  --muted-foreground: rgb(60 70 75);
+  --on-surface-variant: rgb(60 70 75);
+}
+
 .grupo-coluna {
   width: 100%;
   max-width: 63rem;
   margin-inline: auto;
   --pc-coluna: 63rem;
+}
+
+.grupo-administracao {
+  max-width: 640px;
 }
 
 .grupo-coluna,

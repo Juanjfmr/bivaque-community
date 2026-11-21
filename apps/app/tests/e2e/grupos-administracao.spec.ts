@@ -2,6 +2,43 @@ import { resolve } from "node:path"
 import { expect, type Page, test } from "@playwright/test"
 import { simularGrupos } from "./grupos-ajuda"
 
+async function contraste(elemento: ReturnType<Page["getByText"]>) {
+  return elemento.evaluate((el) => {
+    const canvas = document.createElement("canvas")
+    canvas.width = canvas.height = 1
+    const contexto = canvas.getContext("2d")
+    if (!contexto) throw new Error("Canvas indisponivel")
+    const camadas: string[] = []
+    let atual: Element | null = el
+    while (atual) {
+      camadas.unshift(getComputedStyle(atual).backgroundColor)
+      atual = atual.parentElement
+    }
+    contexto.fillStyle = "white"
+    contexto.fillRect(0, 0, 1, 1)
+    for (const camada of camadas) {
+      contexto.fillStyle = camada
+      contexto.fillRect(0, 0, 1, 1)
+    }
+    const fundo = Array.from(contexto.getImageData(0, 0, 1, 1).data)
+    contexto.fillStyle = getComputedStyle(el).color
+    contexto.fillRect(0, 0, 1, 1)
+    const texto = Array.from(contexto.getImageData(0, 0, 1, 1).data)
+    const luminancia = (rgb: number[]) =>
+      rgb.slice(0, 3).reduce((soma, canal, i) => {
+        const c = canal / 255
+        return (
+          soma +
+          (c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4) *
+            ([0.2126, 0.7152, 0.0722][i] ?? 0)
+        )
+      }, 0)
+    const a = luminancia(texto)
+    const b = luminancia(fundo)
+    return (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05)
+  })
+}
+
 for (const tema of ["claro", "escuro"]) {
   test(`administra pedidos e regras e compartilha no tema ${tema}`, async ({ page }) => {
     await simularGrupos(page, { membro: true })
@@ -80,6 +117,15 @@ for (const tema of ["claro", "escuro"]) {
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
         true,
       )
+      for (const texto of [
+        "Manaus · 2 membros · Aberto",
+        "Escreva para conversar com os membros do grupo.",
+        "Quando alguém escrever no grupo, o que importa aparece aqui.",
+      ]) {
+        const valor = await contraste(page.getByText(texto, { exact: false }).first())
+        console.log(`contraste ${tema} ${largura} ${texto}: ${valor.toFixed(2)}`)
+        expect(valor).toBeGreaterThanOrEqual(4.5)
+      }
       await page.screenshot({
         path: resolve(process.cwd(), `../../.visual/troca-003/grupo-${largura}-${tema}.png`),
         fullPage: true,
@@ -89,8 +135,8 @@ for (const tema of ["claro", "escuro"]) {
     await page.getByRole("button", { name: "Convidar" }).click()
     await expect(page.getByText("Link copiado.")).toBeVisible()
     await page.getByRole("button", { name: "Administrar grupo" }).click()
-    await expect(page.getByRole("heading", { name: "Administrar grupo" })).toBeVisible()
-    await expect(page.getByRole("button", { name: "Remover" })).toBeVisible()
+    await expect(page.getByRole("heading", { name: "Futebol" })).toBeVisible()
+    await expect(page.getByRole("button", { name: "Mais ações para Ana" })).toBeVisible()
     if (largura === 375 || largura === 768 || largura === 1440) {
       const viewport = page.viewportSize()
       if (viewport) await page.setViewportSize({ width: viewport.width, height: 1800 })
@@ -99,6 +145,9 @@ for (const tema of ["claro", "escuro"]) {
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
         true,
       )
+      const valor = await contraste(page.getByText("14/600 caracteres"))
+      console.log(`contraste ${tema} ${largura} contador: ${valor.toFixed(2)}`)
+      expect(valor).toBeGreaterThanOrEqual(4.5)
       await page.screenshot({
         path: resolve(process.cwd(), `../../.visual/troca-003/administrar-${largura}-${tema}.png`),
         fullPage: true,
@@ -110,6 +159,9 @@ for (const tema of ["claro", "escuro"]) {
     await page.getByRole("button", { name: "Aprovar" }).click()
     await expect(page.getByText("Pedido aprovado.")).toBeVisible()
     await expect(page.getByRole("button", { name: "Salvar regras" })).toBeDisabled()
+    await expect(page.getByRole("button", { name: "Salvar regras" })).toHaveAccessibleDescription(
+      "Nada para salvar.",
+    )
     await expect(page.getByLabel("Regras do grupo")).toHaveValue("Regra anterior")
     await page.getByLabel("Regras do grupo").fill("Nova regra")
     await expect(page.getByRole("button", { name: "Salvar regras" })).toBeEnabled()
@@ -189,13 +241,13 @@ for (const dono of [true, false]) {
     await page.goto("/app/grupo/g-futebol/administrar")
     await expect(page.getByText("Pedidos de entrada")).toBeVisible()
     await expect(page.getByLabel("Regras do grupo")).toBeVisible()
-    const pessoa = page
-      .locator("div")
-      .filter({ has: page.getByText("Pessoa", { exact: true }) })
-      .filter({ has: page.getByRole("button", { name: "Remover" }) })
-      .last()
-    await expect(pessoa.getByRole("button", { name: "Remover" })).toBeVisible()
-    await expect(page.getByRole("button", { name: /^Mais ações para / })).toHaveCount(dono ? 2 : 0)
+    await page.getByRole("button", { name: "Mais ações para Pessoa" }).click()
+    await expect(page.getByRole("menuitem", { name: "Remover" })).toBeVisible()
+    await expect(page.getByRole("menuitem", { name: "Passar a administração" })).toHaveCount(
+      dono ? 1 : 0,
+    )
+    await page.keyboard.press("Escape")
+    await expect(page.getByRole("button", { name: /^Mais ações para / })).toHaveCount(dono ? 2 : 1)
     await expect(page.getByRole("button", { name: "Excluir grupo" })).toHaveCount(dono ? 1 : 0)
     const proprio = page.getByText(dono ? "Dona" : "Moderadora", { exact: true }).locator("..")
     await expect(proprio.getByRole("button", { name: /Remover|Mais ações para/ })).toHaveCount(0)
@@ -207,19 +259,14 @@ for (const acao of ["Remover", "Passar a administração", "Excluir grupo"]) {
     const chamadas = await administracaoSimulada(page)
     await page.goto("/app/grupo/g-futebol/administrar")
     const abrirMenu = async () => {
-      if (acao === "Passar a administração") {
+      if (acao !== "Excluir grupo") {
         await page.getByRole("button", { name: "Mais ações para Pessoa" }).click()
       }
     }
     const botao =
-      acao === "Passar a administração"
-        ? page.getByRole("menuitem", { name: acao })
-        : acao === "Excluir grupo"
-          ? page.getByRole("button", { name: acao })
-          : page
-              .getByText("Pessoa", { exact: true })
-              .locator("..")
-              .getByRole("button", { name: acao })
+      acao === "Excluir grupo"
+        ? page.getByRole("button", { name: acao })
+        : page.getByRole("menuitem", { name: acao })
     await abrirMenu()
     await botao.click()
     const dialogo = page.getByRole("dialog")
@@ -244,11 +291,8 @@ for (const status of [500, 403]) {
   test(`falha ${status} ao remover preserva a lista`, async ({ page }) => {
     const chamadas = await administracaoSimulada(page, true, status)
     await page.goto("/app/grupo/g-futebol/administrar")
-    await page
-      .getByText("Pessoa", { exact: true })
-      .locator("..")
-      .getByRole("button", { name: "Remover" })
-      .click()
+    await page.getByRole("button", { name: "Mais ações para Pessoa" }).click()
+    await page.getByRole("menuitem", { name: "Remover" }).click()
     const dialogo = page.getByRole("dialog")
     await dialogo.getByRole("button", { name: "Confirmar" }).click()
     await expect(dialogo.getByRole("alert")).toContainText("Não foi possível concluir")

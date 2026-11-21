@@ -106,8 +106,8 @@ export function AdministrarGrupo() {
       </section>
     )
   return (
-    <section className="pc pc-embutido grupo-coluna grid min-w-0 gap-4">
-      <CabecaDePagina titulo="Administrar grupo" subtitulo={grupo.nome} />
+    <section className="pc pc-embutido grupo-coluna grupo-administracao grid min-w-0 gap-4">
+      <CabecaDePagina titulo={grupo.nome} subtitulo="Administrar grupo" />
       {retorno ? <p role="status">{retorno}</p> : null}
       {erro ? (
         <div role="alert">
@@ -137,33 +137,34 @@ export function AdministrarGrupo() {
                     ? "Moderador"
                     : "Membro"}
               </span>
-              <div className="flex w-full flex-wrap gap-2">
-                {m.papel !== "owner" && (grupo.dono || m.papel === "member") ? (
-                  <BotaoPeca
-                    tom="contorno"
-                    className="border-(--destructive)! text-(--destructive)!"
-                    onClick={() => setConfirmacao({ tipo: "remover", membro: m })}
-                  >
-                    Remover
-                  </BotaoPeca>
-                ) : null}
-                {grupo.dono && m.papel !== "owner" ? (
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <BotaoPeca tom="texto" aria-label={`Mais ações para ${m.nome || "Membro"}`}>
-                        ⋯
-                      </BotaoPeca>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent>
+              {m.papel !== "owner" && (grupo.dono || m.papel === "member") ? (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <BotaoPeca
+                      tom="texto"
+                      className="ml-auto"
+                      aria-label={`Mais ações para ${m.nome || "Membro"}`}
+                    >
+                      ⋯
+                    </BotaoPeca>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent>
+                    {grupo.dono ? (
                       <DropdownMenuItem
                         onSelect={() => setConfirmacao({ tipo: "transferir", membro: m })}
                       >
                         Passar a administração
                       </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                ) : null}
-              </div>
+                    ) : null}
+                    <DropdownMenuItem
+                      className="text-(--destructive)!"
+                      onSelect={() => setConfirmacao({ tipo: "remover", membro: m })}
+                    >
+                      Remover
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ) : null}
             </div>
           ))
         )}
@@ -186,6 +187,7 @@ export function AdministrarGrupo() {
           className="w-full max-w-80"
           disabled={ocupado || regras === grupo.regras}
           aria-disabled={ocupado || regras === grupo.regras}
+          aria-describedby={regras === grupo.regras ? "regras-sem-alteracoes" : undefined}
           onClick={() => {
             setOcupado(true)
             setErro("")
@@ -200,6 +202,7 @@ export function AdministrarGrupo() {
         >
           Salvar regras
         </BotaoPeca>
+        {regras === grupo.regras ? <p id="regras-sem-alteracoes">Nada para salvar.</p> : null}
       </section>
       {grupo.dono ? (
         <section className="grid gap-2 border-t border-(--border) pt-6">
