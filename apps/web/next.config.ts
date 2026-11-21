@@ -201,7 +201,10 @@ const nextConfig: NextConfig = {
           ["/messages", "/app/conversas"],
           ["/messages/:id", "/app/conversa/:id"],
           ["/mercado", "/app/mercado"],
-          ["/imoveis", "/app/imoveis"],
+          // NAV-002: o Mercado tem um endereço só e a aba vive na busca; o link
+          // antigo leva direto ao destino final, num salto (o app não
+          // redireciona o que já é canônico).
+          ["/imoveis", "/app/mercado?aba=imoveis"],
           ["/meus-anuncios", "/app/meus-anuncios"],
           // F08: a lista, o verbete e o acompanhamento de correção são do app.
           // As regras de dois segmentos vêm antes da exata.
@@ -226,7 +229,7 @@ const nextConfig: NextConfig = {
           ["/mercado/:id((?!novo/)[^/]+)/editar", "/app/anuncio/:id"],
           ["/mercado/:id((?!novo/?$)[^/]+)", "/app/anuncio/:id"],
           ["/imoveis/alertas", "/app/imoveis/alertas"],
-          ["/imoveis/novo", "/app/imoveis"],
+          ["/imoveis/novo", "/app/mercado?aba=imoveis"],
           ["/imoveis/:id((?!novo/)[^/]+)/editar", "/app/anuncio/:id"],
           ["/imoveis/:id((?!(?:novo|alertas)/?$)[^/]+)", "/app/anuncio/:id"],
           ["/pedidos/novo", "/app/pedidos/novo"],
@@ -315,3 +318,7 @@ const nextConfig: NextConfig = {
 export default withSentryConfig(nextConfig, {
   silent: true,
 })
+
+// As regras de redirecionamento têm prova própria (apps/web/tests): o teste
+// importa a configuração crua, sem o embrulho do Sentry.
+export { nextConfig }
