@@ -134,7 +134,7 @@ async function comRede(
 
 export async function requisitar(caminho: string, init: RequestInit = {}): Promise<Response> {
   if (!Capacitor.isNativePlatform()) return fetch(caminho, init)
-  const publica = caminho.startsWith("/api/app/entry/") || caminho.startsWith("/api/localities")
+  const publica = caminho.startsWith("/api/app/entry/") || caminho.startsWith("/api/localities") || caminho === "/api/app/sessao/token"
   const origem = origemDaApi()
   const token = publica ? null : await acessoAtual()
   const fazer = (credencial: string | null) => {

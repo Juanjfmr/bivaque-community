@@ -323,8 +323,11 @@ export type GrupoDaEntrada = Readonly<{
 }>
 
 /** Inicia o OAuth do Google: devolve a URL de autorização (o PKCE vai em cookie). */
-export async function iniciarGoogle(): Promise<string> {
-  const resposta = await pedir("oauth", { metodo: "POST", corpo: { provedor: "google" } })
+export async function iniciarGoogle(provedor: "google" | "apple" = "google"): Promise<string> {
+  const code_challenge = Capacitor.isNativePlatform()
+    ? await (await import("@/lib/nativo/pkce")).criarPkce()
+    : undefined
+  const resposta = await pedir("oauth", { metodo: "POST", corpo: { provedor, code_challenge } })
   const url = texto(resposta.corpo, "url")
   if (resposta.status !== 200 || url === null) {
     throw new FalhaDaEntrada(texto(resposta.corpo, "erro") ?? "oauth-indisponivel", resposta.status)

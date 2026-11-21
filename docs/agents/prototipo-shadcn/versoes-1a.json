@@ -1,5 +1,10 @@
 [
   {
+    "package": "@capacitor/browser",
+    "version": "8.0.5",
+    "publishedAt": "2026-10-02T16:08:14.335Z"
+  },
+  {
     "package": "capacitor-secure-storage-plugin",
     "version": "0.14.2",
     "publishedAt": "2026-11-14T00:06:31.924Z"

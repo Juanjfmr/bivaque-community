@@ -1,3 +1,5 @@
+import { Capacitor } from "@capacitor/core"
+import { Browser } from "@capacitor/browser"
 import { useEffect, useState } from "react"
 import { Icone } from "@/components/bivaque/icone"
 import { IconeGoogle } from "@/components/bivaque/icone-google"
@@ -70,17 +72,18 @@ export function Porta({ progresso, concluir, erro, avisoDoProvedor }: PropsDaEta
   // Com servidor, o Google começa o OAuth de verdade (o callback da web grava a
   // sessão e o app retoma no aceite). Sem servidor, é a prévia simulada.
   const entrarCom = async (via: Exclude<Via, "email">) => {
-    if (via === "apple" && servidor !== null) {
+    if (via === "apple" && servidor !== null && !Capacitor.isNativePlatform()) {
       setFalhaDoProvedor(
         "Não foi possível entrar com Apple agora. Use o Google ou o código no e-mail.",
       )
       return
     }
-    if (via === "google" && servidor !== null) {
+    if (servidor !== null) {
       setConectando(via)
       try {
-        const url = await servidor.iniciarGoogle()
-        window.location.assign(url)
+        const url = await servidor.iniciarGoogle(via)
+        if (Capacitor.isNativePlatform()) await Browser.open({ url })
+        else window.location.assign(url)
       } catch {
         setConectando(null)
         setFalhaDoProvedor("Não foi possível abrir o Google agora. Tente de novo.")

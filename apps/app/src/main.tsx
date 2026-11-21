@@ -20,6 +20,7 @@ function Aplicacao() {
   useEffect(() => {
     if (Capacitor.isNativePlatform()) {
       void import("@/lib/nativo/ciclo").then(({ iniciarCicloDaSessao }) => iniciarCicloDaSessao())
+      void import("@/src/nativo/autenticacao").then(({ ouvirAutenticacao }) => ouvirAutenticacao())
       void import("@/src/nativo/links").then(({ ouvirLinksNativos }) => ouvirLinksNativos())
     }
   }, [])
