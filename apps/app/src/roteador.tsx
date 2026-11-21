@@ -7,6 +7,7 @@ import { Casca } from "@/src/casca/Casca"
 import { TelaDeEntrada } from "@/src/entrada/TelaDeEntrada"
 import { MercadoLab } from "@/src/galeria/mercado/MercadoLab"
 import { TelaGaleria } from "@/src/galeria/TelaGaleria"
+import { AdministrarGrupo } from "@/src/grupos/AdministrarGrupo"
 import { MeuNegocio } from "@/src/meu-negocio/MeuNegocio"
 import { modoDeProvaAtivo } from "@/src/modo-de-prova"
 import { Negocios } from "@/src/negocios/Negocios"
@@ -126,6 +127,7 @@ const TELAS_REAIS: Readonly<Partial<Record<string, ComponentType>>> = {
   desapegos: Desapegos,
   evento: Evento,
   grupo: Grupo,
+  "grupo-administrar": AdministrarGrupo,
   guia: Guia,
   imoveis: Imoveis,
   inicio: Inicio,

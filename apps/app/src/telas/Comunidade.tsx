@@ -81,6 +81,11 @@ const VAZIO_DA_COMUNIDADE: Readonly<Record<string, { titulo: string; texto: stri
 }
 
 export function Comunidade() {
+  const [grupoExcluido] = useState(() => {
+    const excluido = sessionStorage.getItem("grupo-excluido") === "sim"
+    sessionStorage.removeItem("grupo-excluido")
+    return excluido
+  })
   const casca = useCasca()
   const navegacao = useNavegacao()
   const [lista, setLista] = useState<ListaDePerguntas | null>(null)
@@ -168,6 +173,7 @@ export function Comunidade() {
 
   return (
     <section data-tela="comunidade" className="grid gap-2">
+      {grupoExcluido ? <p role="status">Grupo exclu?do.</p> : null}
       <CabecaDePagina
         titulo="Comunidade"
         subtitulo="O que a comunidade sabe fica disponível para quem chegar depois."

@@ -1,9 +1,11 @@
 import { useEffect, useRef, useState } from "react"
 import { Botao } from "@/components/bivaque/botao"
 import { EsqueletoDeLista } from "@/components/bivaque/esqueleto"
-import { lerPedidosDoGrupo, type PedidosDoGrupo } from "@/lib/dados/grupos"
+import { decidirPedido, lerPedidosDoGrupo, type PedidosDoGrupo } from "@/lib/dados/grupos"
 
 export function Pedidos({ id }: { id: string }) {
+  const [ocupado, setOcupado] = useState(false)
+  const [retorno, setRetorno] = useState("")
   const [dados, setDados] = useState<PedidosDoGrupo | null>(null)
   const [erro, setErro] = useState(false)
   const [erroMais, setErroMais] = useState(false)
@@ -39,6 +41,7 @@ export function Pedidos({ id }: { id: string }) {
       <summary className="min-h-11 cursor-pointer text-sm font-semibold">
         Pedidos de entrada{dados ? ` (${dados.pedidos.length})` : ""}
       </summary>
+      {retorno ? <p role="status">{retorno}</p> : null}
       {erro ? (
         <div role="alert">
           <p>Não foi possível carregar os pedidos.</p>
@@ -56,6 +59,35 @@ export function Pedidos({ id }: { id: string }) {
             <li key={p.id} className="rounded-xl bg-(--surface-low) p-3 text-sm">
               <b>{p.nome || "Membro"}</b>
               <p>{p.motivo || "Sem motivo informado."}</p>
+              {(["aprovar", "recusar"] as const).map((decisao) => (
+                <Botao
+                  key={decisao}
+                  tom="texto"
+                  disabled={ocupado}
+                  onClick={() => {
+                    setOcupado(true)
+                    setRetorno("")
+                    void decidirPedido(id, p.id, decisao)
+                      .then(() => {
+                        setDados((atual) =>
+                          atual
+                            ? {
+                                ...atual,
+                                pedidos: atual.pedidos.filter((item) => item.id !== p.id),
+                              }
+                            : atual,
+                        )
+                        setRetorno(decisao === "aprovar" ? "Pedido aprovado." : "Pedido recusado.")
+                      })
+                      .catch(() =>
+                        setRetorno("N?o foi poss?vel atualizar o pedido. Tente de novo."),
+                      )
+                      .finally(() => setOcupado(false))
+                  }}
+                >
+                  {decisao === "aprovar" ? "Aprovar" : "Recusar"}
+                </Botao>
+              ))}
             </li>
           ))}
         </ul>

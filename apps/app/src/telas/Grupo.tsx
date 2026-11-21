@@ -19,6 +19,7 @@ import {
 import { useNavegacao, useRolagemEFoco } from "@/lib/navegacao/react"
 import { CARGA_CONCLUIDA } from "@/lib/navegacao/restauracao"
 import { useAcoesDaPublicacao } from "@/src/grupos/AcoesDaPublicacao"
+import { ConviteEAvisos } from "@/src/grupos/ConviteEAvisos"
 import { Escrever } from "@/src/grupos/Escrever"
 import { EstadoDaLeitura } from "@/src/grupos/EstadoDaLeitura"
 import {
@@ -28,7 +29,6 @@ import {
   retemOTopo,
 } from "@/src/grupos/lista-do-grupo"
 import { Participacao } from "@/src/grupos/Participacao"
-import { Pedidos } from "@/src/grupos/Pedidos"
 import { semConfirmacao } from "@/src/grupos/publicacao"
 import { quandoDe } from "@/src/telas/comum"
 
@@ -310,7 +310,7 @@ export function Grupo() {
       </details>
       {/* Chaves distintas de propósito: as duas peças são irmãs e o React recusa
           duas com o mesmo key; o id remonta as duas quando o grupo troca. */}
-      {grupo.admin ? <Pedidos key={`pedidos-${grupo.id}`} id={grupo.id} /> : null}
+      {grupo.membro ? <ConviteEAvisos grupo={grupo} /> : null}
       {grupo.membro ? (
         <Escrever
           key={`escrever-${grupo.id}`}
