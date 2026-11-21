@@ -7,6 +7,7 @@ import { CartaoDeFoto } from "@/components/bivaque/cartao-de-anuncio"
 import { EsqueletoDeLista } from "@/components/bivaque/esqueleto"
 import { EstadoVazio } from "@/components/bivaque/estado-vazio"
 import { LinhaDeLista, Lista } from "@/components/bivaque/lista"
+import { criarAcaoOtimista } from "@/lib/acao-otimista"
 import { FalhaDaApi } from "@/lib/api/cliente"
 import { agirNaPublicacao, lerPublicacoesSalvas, type PublicacaoReal } from "@/lib/dados/grupos"
 import { type EntradaDoGuia, lerSalvosDoGuia, marcarNoGuia } from "@/lib/dados/guia"
@@ -17,7 +18,7 @@ import { useNavegacao, useRolagemEFoco } from "@/lib/navegacao/react"
 import { CARGA_CONCLUIDA } from "@/lib/navegacao/restauracao"
 import { foiAbortada } from "@/src/eventos/formulario"
 import { ICONE_DA_CATEGORIA } from "@/src/guia/comum"
-import { Botao as BotaoDaPeca, CampoDeBusca, Chip } from "@/src/pecas/pecas"
+import { Aviso, Botao as BotaoDaPeca, CampoDeBusca, Chip, useAviso } from "@/src/pecas/pecas"
 
 type AbaDosSalvos = "desapegos" | "imoveis"
 
@@ -60,6 +61,8 @@ export function Salvos() {
   const [outroVazio, setOutroVazio] = useState<boolean | null>(null)
   const [aviso, setAviso] = useState<string | null>(null)
   const [removendo, setRemovendo] = useState<string | null>(null)
+  const [acao] = useState(criarAcaoOtimista)
+  const avisos = useAviso()
   const [publicacoes, setPublicacoes] = useState<readonly PublicacaoReal[] | null>(null)
   const [erroDasPublicacoes, setErroDasPublicacoes] = useState(false)
   const [rodadaDasPublicacoes, setRodadaDasPublicacoes] = useState(0)
@@ -235,42 +238,70 @@ export function Salvos() {
    * releitura da seção sai sem o item, e o sucesso também o tira da lista que
    * chegou no meio da chamada.
    */
-  async function remover<T extends { id: string }>(
-    secao: SecaoDosSalvos,
-    id: string,
-    lista: readonly T[] | null,
-    definir: Dispatch<SetStateAction<readonly T[] | null>>,
-    gravar: () => Promise<unknown>,
-    mesmaSecao: () => boolean = () => true,
-  ) {
+  async function remover<T extends { id: string }>({
+    secao,
+    id,
+    lista,
+    definir,
+    gravar,
+    repor,
+    mesmaSecao = () => true,
+  }: {
+    secao: SecaoDosSalvos
+    id: string
+    lista: readonly T[] | null
+    definir: Dispatch<SetStateAction<readonly T[] | null>>
+    gravar: () => Promise<unknown>
+    /** A gravação inversa: o Desfazer do Aviso grava o estado anterior de verdade. */
+    repor: () => Promise<unknown>
+    mesmaSecao?: () => boolean
+  }) {
     const onde = lista?.findIndex((item) => item.id === id) ?? -1
     const item = lista?.find((outro) => outro.id === id)
-    setAviso(null)
-    setRemovendo(id)
-    segurar(secao, id)
-    definir((atual) => atual?.filter((outro) => outro.id !== id) ?? atual)
-    try {
-      await gravar()
-      // Sucesso: o item sai também da lista que voltou durante a chamada, e
-      // leituras já começadas que chegarem depois não o repõem.
-      confirmar(secao, id)
-      definir((atual) => atual?.filter((outro) => outro.id !== id) ?? atual)
-    } catch (falha: unknown) {
-      // shortcut: repõe no índice original; se um vizinho anterior também saiu,
-      // ela entra depois dele.
-      if (item !== undefined && mesmaSecao()) {
-        definir((atual) => {
-          if (atual === null || atual.some((outro) => outro.id === id)) return atual
-          const comOItem = [...atual]
-          comOItem.splice(onde < 0 ? comOItem.length : Math.min(onde, comOItem.length), 0, item)
-          return comOItem
-        })
-      }
-      if (!foiAbortada(falha)) setAviso(falhaAoRemover(falha))
-    } finally {
-      largar(secao, id)
-      setRemovendo((atual) => (atual === id ? null : atual))
+    const tirar = () => definir((atual) => atual?.filter((outro) => outro.id !== id) ?? atual)
+    // shortcut: repõe no índice original; se um vizinho anterior também saiu,
+    // ela entra depois dele.
+    const recolocar = () => {
+      if (item === undefined || !mesmaSecao()) return
+      definir((atual) => {
+        if (atual === null || atual.some((outro) => outro.id === id)) return atual
+        const comOItem = [...atual]
+        comOItem.splice(onde < 0 ? comOItem.length : Math.min(onde, comOItem.length), 0, item)
+        return comOItem
+      })
     }
+
+    setAviso(null)
+    segurar(secao, id)
+    const resultado = await acao.executar(id, {
+      aplicar: tirar,
+      reverter: recolocar,
+      gravar,
+      mensagemDaRecusa: (falha) => (foiAbortada(falha) ? "" : falhaAoRemover(falha)),
+      aoGravando: (gravando) =>
+        setRemovendo((atual) => (gravando ? id : atual === id ? null : atual)),
+    })
+    largar(secao, id)
+    if (resultado.tipo === "recusa") {
+      if (resultado.mensagem !== "") setAviso(resultado.mensagem)
+      return
+    }
+    // Sucesso: o item sai também da lista que voltou durante a chamada, e
+    // leituras já começadas que chegarem depois não o repõem.
+    confirmar(secao, id)
+    tirar()
+    avisos.mostrar("Removido dos salvos.", () => {
+      void acao
+        .executar(id, {
+          aplicar: recolocar,
+          reverter: tirar,
+          gravar: repor,
+          mensagemDaRecusa: (falha) => (foiAbortada(falha) ? "" : falhaAoRemover(falha)),
+        })
+        .then((desfeito) => {
+          if (desfeito.tipo === "recusa" && desfeito.mensagem !== "") setAviso(desfeito.mensagem)
+        })
+    })
   }
 
   const termo = busca.trim().toLocaleLowerCase("pt-BR")
@@ -349,9 +380,14 @@ export function Salvos() {
                 className="bg-(--muted)"
                 disabled={removendo === pergunta.id}
                 onClick={() =>
-                  void remover("perguntas", pergunta.id, perguntas, setPerguntas, () =>
-                    marcarSalvaPergunta(pergunta.id, false),
-                  )
+                  void remover({
+                    secao: "perguntas",
+                    id: pergunta.id,
+                    lista: perguntas,
+                    definir: setPerguntas,
+                    gravar: () => marcarSalvaPergunta(pergunta.id, false),
+                    repor: () => marcarSalvaPergunta(pergunta.id, true),
+                  })
                 }
               />
             </div>
@@ -475,14 +511,15 @@ export function Salvos() {
                       salvo: true,
                     }}
                     aoSalvar={() =>
-                      void remover(
-                        "anuncios",
-                        anuncio.id,
-                        anuncios,
-                        setAnuncios,
-                        () => marcarSalvoAnuncio(anuncio.id, false),
-                        () => abaAtual.current === aba,
-                      )
+                      void remover({
+                        secao: "anuncios",
+                        id: anuncio.id,
+                        lista: anuncios,
+                        definir: setAnuncios,
+                        gravar: () => marcarSalvoAnuncio(anuncio.id, false),
+                        repor: () => marcarSalvoAnuncio(anuncio.id, true),
+                        mesmaSecao: () => abaAtual.current === aba,
+                      })
                     }
                     aoAbrir={() =>
                       void navegacao.irPara("anuncio", { parametros: { id: anuncio.id } })
@@ -532,13 +569,14 @@ export function Salvos() {
                         className="bg-(--muted)"
                         disabled={removendo === publicacao.id}
                         onClick={() =>
-                          void remover(
-                            "publicacoes",
-                            publicacao.id,
-                            publicacoes,
-                            setPublicacoes,
-                            () => agirNaPublicacao(publicacao.id, "salvar", false),
-                          )
+                          void remover({
+                            secao: "publicacoes",
+                            id: publicacao.id,
+                            lista: publicacoes,
+                            definir: setPublicacoes,
+                            gravar: () => agirNaPublicacao(publicacao.id, "salvar", false),
+                            repor: () => agirNaPublicacao(publicacao.id, "salvar", true),
+                          })
                         }
                       />
                     </div>
@@ -583,9 +621,14 @@ export function Salvos() {
                         className="bg-(--muted)"
                         disabled={removendo === entrada.id}
                         onClick={() =>
-                          void remover("guia", entrada.id, guia, setGuia, () =>
-                            marcarNoGuia(entrada.id, false),
-                          )
+                          void remover({
+                            secao: "guia",
+                            id: entrada.id,
+                            lista: guia,
+                            definir: setGuia,
+                            gravar: () => marcarNoGuia(entrada.id, false),
+                            repor: () => marcarNoGuia(entrada.id, true),
+                          })
                         }
                       />
                     </div>
@@ -596,6 +639,7 @@ export function Salvos() {
           ) : null}
         </>
       )}
+      <Aviso aviso={avisos.aviso} aoSumir={avisos.limpar} />
     </section>
   )
 }

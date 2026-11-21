@@ -13,6 +13,7 @@ import { Icone } from "@/components/bivaque/icone"
 import { NomeDeMembro } from "@/components/bivaque/nome-de-membro"
 import { Secao } from "@/components/bivaque/secao"
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog"
+import { criarAcaoOtimista } from "@/lib/acao-otimista"
 import {
   type AnuncioDetalhado,
   abrirInteresse,
@@ -28,6 +29,7 @@ import { useCasca } from "@/src/contexto/casca"
 import { EstadoDeSessaoVencida, EstadoNegado } from "@/src/eventos/EstadosDeAcesso"
 import { acessoNegado, foiAbortada, sessaoVencida } from "@/src/eventos/formulario"
 import { anuncioSumiu, mensagemDaFalha } from "@/src/mercado/falha"
+import { Aviso, useAviso } from "@/src/pecas/pecas"
 import { TelaIndisponivel } from "@/src/telas/TelaIndisponivel"
 
 /**
@@ -54,6 +56,8 @@ export function Anuncio() {
   const [salvo, setSalvo] = useState(false)
   const [gravandoSalvo, setGravandoSalvo] = useState(false)
   const [avisoSalvo, setAvisoSalvo] = useState<string | null>(null)
+  const [acao] = useState(criarAcaoOtimista)
+  const avisos = useAviso()
   const interesse = useSobreposicaoDaEntrada("contato-interesse")
   const oferta = useSobreposicaoDaEntrada("contato-oferta")
   const tipoContato = interesse.aberto ? "interesse" : oferta.aberto ? "oferta" : null
@@ -166,22 +170,23 @@ export function Anuncio() {
   }
 
   /**
-   * O marcador grava de verdade (LAN-F06): a tela vira primeiro (é um toque
-   * rápido) e volta ao estado anterior se o servidor recusar, com o motivo.
+   * O marcador grava de verdade (LAN-F06) pela ação otimista comum do NAV-001:
+   * a tela vira primeiro, o servidor recusou devolve o estado anterior com o
+   * motivo, e o Aviso oferece Desfazer — que grava o estado anterior de novo.
    */
   async function alternarSalvo() {
-    if (gravandoSalvo) return
     const alvo = !salvo
-    setSalvo(alvo)
     setAvisoSalvo(null)
-    setGravandoSalvo(true)
-    try {
-      await marcarSalvoAnuncio(id, alvo, { signal: controle.signal })
-    } catch (falha: unknown) {
-      setSalvo(!alvo)
-      if (!foiAbortada(falha)) setAvisoSalvo(mensagemDaFalha(falha, "salvar"))
-    } finally {
-      setGravandoSalvo(false)
+    const resultado = await acao.executar("salvo", {
+      aplicar: () => setSalvo(alvo),
+      reverter: () => setSalvo(!alvo),
+      gravar: () => marcarSalvoAnuncio(id, alvo, { signal: controle.signal }),
+      mensagemDaRecusa: (falha) => (foiAbortada(falha) ? "" : mensagemDaFalha(falha, "salvar")),
+      aoGravando: setGravandoSalvo,
+    })
+    if (resultado.tipo === "recusa" && resultado.mensagem !== "") setAvisoSalvo(resultado.mensagem)
+    if (resultado.tipo === "sucesso") {
+      avisos.mostrar(alvo ? "Anúncio salvo." : "Removido dos salvos.", () => void alternarSalvo())
     }
   }
 
@@ -249,6 +254,7 @@ export function Anuncio() {
             rotulo={salvo ? "Remover dos salvos" : "Salvar anúncio"}
             nome={salvo ? "bookmark" : "bookmark_border"}
             aria-pressed={salvo}
+            aria-busy={gravandoSalvo ? "true" : undefined}
             onClick={() => void alternarSalvo()}
             className="bg-(--surface-lowest)/85 backdrop-blur"
           />
@@ -462,6 +468,7 @@ export function Anuncio() {
           </DialogContent>
         </Dialog>
       </Secao>
+      <Aviso aviso={avisos.aviso} aoSumir={avisos.limpar} />
     </section>
   )
 }

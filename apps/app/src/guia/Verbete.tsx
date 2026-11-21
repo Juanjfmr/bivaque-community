@@ -8,6 +8,7 @@ import { EsqueletoDeLista } from "@/components/bivaque/esqueleto"
 import { EstadoDeErro, EstadoVazio } from "@/components/bivaque/estado-vazio"
 import { Etiqueta } from "@/components/bivaque/etiqueta"
 import { Icone } from "@/components/bivaque/icone"
+import { criarAcaoOtimista } from "@/lib/acao-otimista"
 import {
   type CorrecaoDoGuia,
   lerMinhasCorrecoes,
@@ -24,6 +25,7 @@ import {
   sessaoVencida,
   validarSugestao,
 } from "@/src/guia/comum"
+import { Aviso, useAviso } from "@/src/pecas/pecas"
 
 /**
  * O verbete do Guia (F08), na tela própria `/app/guia/<id>`.
@@ -43,6 +45,8 @@ export function Verbete({ id }: { readonly id: string }) {
   const [rodada, setRodada] = useState(0)
   const [ocupado, setOcupado] = useState(false)
   const [aviso, setAviso] = useState<string | null>(null)
+  const [acao] = useState(criarAcaoOtimista)
+  const avisos = useAviso()
 
   const [descricao, setDescricao] = useState("")
   const [referencia, setReferencia] = useState("")
@@ -98,19 +102,33 @@ export function Verbete({ id }: { readonly id: string }) {
     return () => controle.abort()
   }, [id, podeSugerir, rodadaDasCorrecoes])
 
+  /**
+   * O marcador pela ação otimista comum (NAV-001): a tela vira na hora, a
+   * recusa devolve o estado com o motivo e o Aviso oferece Desfazer, que grava
+   * o estado anterior de novo.
+   */
   async function alternarSalvo() {
-    if (verbete === null || ocupado) return
-    setOcupado(true)
-    setAviso(null)
+    if (verbete === null) return
     const alvo = !verbete.entrada.salvo
-    try {
-      const salvo = await marcarNoGuia(id, alvo)
-      setVerbete({ ...verbete, entrada: { ...verbete.entrada, salvo } })
-      setAviso(salvo ? "Guardado em Salvos." : "Removido dos salvos.")
-    } catch (falha: unknown) {
-      setAviso(mensagemDaFalha(falha, "Não foi possível mudar o marcador. Tente de novo."))
-    } finally {
-      setOcupado(false)
+    const mostrar = (salvo: boolean) =>
+      setVerbete((atual) =>
+        atual === null ? atual : { ...atual, entrada: { ...atual.entrada, salvo } },
+      )
+    setAviso(null)
+    const resultado = await acao.executar("salvo", {
+      aplicar: () => mostrar(alvo),
+      reverter: () => mostrar(!alvo),
+      gravar: () => marcarNoGuia(id, alvo),
+      mensagemDaRecusa: (falha) =>
+        mensagemDaFalha(falha, "Não foi possível mudar o marcador. Tente de novo."),
+      aoGravando: setOcupado,
+    })
+    if (resultado.tipo === "recusa") setAviso(resultado.mensagem)
+    if (resultado.tipo === "sucesso") {
+      avisos.mostrar(
+        alvo ? "Guardado em Salvos." : "Removido dos salvos.",
+        () => void alternarSalvo(),
+      )
     }
   }
 
@@ -289,6 +307,7 @@ export function Verbete({ id }: { readonly id: string }) {
           ) : null}
         </>
       )}
+      <Aviso aviso={avisos.aviso} aoSumir={avisos.limpar} />
     </div>
   )
 }
