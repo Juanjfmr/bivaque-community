@@ -3,7 +3,11 @@ import { simularGrupos } from "./grupos-ajuda"
 import { aplicarStubMercado } from "./stub-mercado"
 
 for (const caso of [
-  { escolha: "create-property", caminho: "/app/imoveis", painel: '[data-fluxo="rascunho-imovel"]' },
+  {
+    escolha: "create-property",
+    caminho: "/app/mercado\\?aba=imoveis",
+    painel: '[data-fluxo="rascunho-imovel"]',
+  },
   { escolha: "ask", caminho: "/app/comunidade", painel: '[data-fluxo="perguntar"]' },
 ]) {
   test(`Criar > ${caso.escolha} abre uma única entrada de diálogo`, async ({ page }) => {
@@ -21,7 +25,7 @@ for (const caso of [
 
 for (const caso of [
   {
-    caminho: "/app/imoveis",
+    caminho: "/app/mercado\\?aba=imoveis",
     botao: "Anunciar imóvel",
     painel: '[data-fluxo="rascunho-imovel"]',
     campo: "#imovel-titulo",

@@ -44,7 +44,7 @@ test("R72 P0: Busca explora categorias em duas colunas e encontra negócios", as
   await expect(page.locator('[data-tela="busca"] [data-cartao="negocio"]')).not.toHaveCount(0)
   await page.goto("/app/busca")
   await page.locator('[data-explorar-categoria="imoveis"]').click()
-  await expect(page).toHaveURL(/\/app\/imoveis$/)
+  await expect(page).toHaveURL(/\/app\/mercado\?aba=imoveis$/)
 })
 
 test("R72 P0: Perguntar revisa e abre detalhe da resposta simulada da API", async ({ page }) => {
