@@ -45,15 +45,19 @@ export function criarAcaoOtimista(): AcaoOtimista {
     gravando: (chave) => emCurso.has(chave),
     async executar(chave, passo) {
       if (emCurso.has(chave)) return { tipo: "ignorado" }
-      emCurso.add(chave)
-      passo.aoGravando?.(true)
-      passo.aplicar()
+      // A guarda entra no `try`: se `aplicar` lançar, a chave não fica presa e o
+      // toque seguinte da mesma ação continua valendo.
       try {
-        await passo.gravar()
-        return { tipo: "sucesso" }
-      } catch (falha) {
-        passo.reverter()
-        return { tipo: "recusa", mensagem: passo.mensagemDaRecusa(falha) }
+        emCurso.add(chave)
+        passo.aoGravando?.(true)
+        passo.aplicar()
+        try {
+          await passo.gravar()
+          return { tipo: "sucesso" }
+        } catch (falha) {
+          passo.reverter()
+          return { tipo: "recusa", mensagem: passo.mensagemDaRecusa(falha) }
+        }
       } finally {
         emCurso.delete(chave)
         passo.aoGravando?.(false)

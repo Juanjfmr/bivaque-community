@@ -136,6 +136,40 @@ describe("ação otimista — toque repetido", () => {
   })
 })
 
+describe("ação otimista — aplicar que lança", () => {
+  it("libera a chave e não grava: o toque seguinte continua valendo", async () => {
+    const acao = criarAcaoOtimista()
+    let gravacoes = 0
+
+    await expect(
+      acao.executar("salvo", {
+        aplicar: () => {
+          throw new Error("estado inconsistente")
+        },
+        reverter: () => {},
+        gravar: async () => {
+          gravacoes += 1
+        },
+        mensagemDaRecusa: () => "",
+      }),
+    ).rejects.toThrow("estado inconsistente")
+
+    expect(acao.gravando("salvo")).toBe(false)
+    expect(gravacoes).toBe(0)
+    expect(
+      await acao.executar("salvo", {
+        aplicar: () => {},
+        reverter: () => {},
+        gravar: async () => {
+          gravacoes += 1
+        },
+        mensagemDaRecusa: () => "",
+      }),
+    ).toEqual({ tipo: "sucesso" })
+    expect(gravacoes).toBe(1)
+  })
+})
+
 describe("ação otimista — Desfazer", () => {
   it("o Desfazer repete a ação com o estado anterior e o grava de verdade", async () => {
     const acao = criarAcaoOtimista()
