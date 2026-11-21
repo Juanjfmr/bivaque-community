@@ -3,12 +3,7 @@ import { createRootRoute, createRoute, createRouter, redirect } from "@tanstack/
 import type { ComponentType } from "react"
 
 import { esquecerEntradaDeOutroDocumento } from "@/lib/navegacao/dom"
-import {
-  buscaDoEnderecoAntigo,
-  ENDERECOS_ANTIGOS_DO_MERCADO,
-  lerAbaDaUrl,
-  ROTAS,
-} from "@/lib/navegacao/rotas"
+import { buscaDoEnderecoAntigo, ENDERECOS_ANTIGOS_DO_MERCADO, ROTAS } from "@/lib/navegacao/rotas"
 import { Casca } from "@/src/casca/Casca"
 import { TelaDeEntrada } from "@/src/entrada/TelaDeEntrada"
 import { MercadoLab } from "@/src/galeria/mercado/MercadoLab"
@@ -210,16 +205,12 @@ const enderecosAntigos = Object.entries(ENDERECOS_ANTIGOS_DO_MERCADO).flatMap(([
 
 // O Mercado tem um endereço só (NAV-002): a aba (desapegos, imóveis, negócios)
 // e os filtros vivem na busca. Negócios é a tela do Mercado da cidade, que
-// continua em `/negocios`; `?aba=negocios` chega lá em replace.
+// continua em `/negocios`; a tela resolve `?aba=negocios` em replace.
 const mercado = createRoute({
   getParentRoute: () => raiz,
   path: "/mercado",
   component: () => <TelaDaRota nome="mercado" />,
   search: BUSCA_PERSISTENTE,
-  beforeLoad: ({ search }) => {
-    if (lerAbaDaUrl(search as Record<string, unknown>) !== "negocios") return
-    throw redirect({ to: "/negocios", replace: true })
-  },
 })
 
 /**

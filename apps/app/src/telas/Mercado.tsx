@@ -42,6 +42,7 @@ import {
 } from "@/src/mercado/cartao"
 import { mensagemDaFalha } from "@/src/mercado/falha"
 import { type FiltrosDaUrl, lerFiltrosDaUrl, mudarFiltroNaUrl } from "@/src/mercado/filtros-url"
+import { Negocios } from "@/src/negocios/Negocios"
 import { Segmentos } from "@/src/pecas/segmentos"
 
 /**
@@ -69,7 +70,7 @@ const SUBABAS: readonly ItemDeFiltro[] = [
   { id: "negocios", rotulo: "Negócios" },
 ]
 
-export function ListaDeMercado() {
+export function ListaDeMercado({ inicial }: { inicial: AbaDoMercado }) {
   const casca = useCasca()
   const navegacao = useNavegacao()
   const [dados, setDados] = useState<ListaDoMercado | null>(null)
@@ -81,10 +82,6 @@ export function ListaDeMercado() {
   // filtrado, recarregar mantém a seleção, e o Voltar do roteador a devolve.
   const busca = useLocation({ select: (l) => l.search as Record<string, unknown> })
   const filtros = useMemo(() => lerFiltrosDaUrl(busca), [busca])
-  // A aba também mora no endereço (NAV-002). `negocios` é a tela do Mercado da
-  // cidade e o roteador já redirecionou para `/negocios`; aqui só há lista.
-  const aba = lerAbaDaUrl(busca)
-  const inicial: AbaDoMercado = aba === "negocios" ? "desapegos" : aba
   const navegar = useNavigate()
   const rota = useRotaAtual()
   const gravarFiltros = (novos: Partial<FiltrosDaUrl>) => {
@@ -506,5 +503,11 @@ export function ListaDeMercado() {
 }
 
 export function Mercado() {
-  return <ListaDeMercado />
+  const busca = useLocation({ select: (l) => l.search as Record<string, unknown> })
+  const aba = lerAbaDaUrl(busca)
+  // Negócios é a tela do Mercado da cidade (NAV-002): a aba abre a mesma tela
+  // que mora em `/app/negocios`, que continua como está. Sem salto e sem mudar
+  // a rota antiga.
+  if (aba === "negocios") return <Negocios />
+  return <ListaDeMercado inicial={aba} />
 }

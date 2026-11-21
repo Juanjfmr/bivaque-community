@@ -91,7 +91,7 @@ export function TelaDeProva({ nome }: { nome: string }) {
               type="button"
               data-subaba={aba}
               aria-current={subAba === aba ? "page" : false}
-              onClick={() => void navegacao.irPara("mercado", { aba })}
+              onClick={() => void navegacao.irPara("mercado", { aba, replace: true })}
               className="min-h-11 rounded-xl px-3 text-sm font-medium aria-[current=page]:bg-(--secondary-container)"
             >
               {tituloDaRota(aba)}
