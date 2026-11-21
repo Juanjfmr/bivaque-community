@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState } from "react"
 import { Botao } from "@/components/bivaque/botao"
 import { Campo } from "@/components/bivaque/campos"
-import { Etiqueta } from "@/components/bivaque/etiqueta"
+import { Icone } from "@/components/bivaque/icone"
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog"
 import { FalhaDaApi } from "@/lib/api/cliente"
 import { type GrupoReal, mudarParticipacao } from "@/lib/dados/grupos"
-import { useSobreposicaoDaEntrada } from "@/lib/navegacao/react"
+import { useNavegacao, useSobreposicaoDaEntrada } from "@/lib/navegacao/react"
+import { Linha } from "@/src/pecas/pecas"
 
 export function Participacao({
   grupo,
@@ -14,6 +15,7 @@ export function Participacao({
   grupo: GrupoReal
   aoMudar: (grupo: GrupoReal) => void
 }) {
+  const navegacao = useNavegacao()
   const { aberto: pedindo, aoMudarAberto: setPedindo } = useSobreposicaoDaEntrada("grupo-pedir")
   const { aberto: saindo, aoMudarAberto: setSaindo } = useSobreposicaoDaEntrada("grupo-sair")
   const [motivo, setMotivo] = useState("")
@@ -51,19 +53,16 @@ export function Participacao({
   }
   return (
     <>
-      <div
-        data-controles-grupo="sim"
-        aria-busy={ocupado}
-        className="grid gap-3 rounded-2xl border border-(--outline-variant) bg-(--surface-lowest) p-3"
-      >
+      <div data-controles-grupo="sim" aria-busy={ocupado} className="grid gap-3">
         <p className="text-sm leading-6 text-(--on-surface-variant)">{grupo.descricao}</p>
         {grupo.admin ? (
-          <>
-            <Etiqueta tom="neutro">Administrador</Etiqueta>
-            <a className="text-sm font-semibold underline" href={`/groups/${grupo.id}`}>
-              Aprovar pedidos e convidar
-            </a>
-          </>
+          <Linha
+            marca={<Icone nome="settings" />}
+            titulo="Administrar grupo"
+            onClick={() =>
+              void navegacao.irPara("grupo-administrar", { parametros: { id: grupo.id } })
+            }
+          />
         ) : grupo.membro ? (
           <div className="flex flex-wrap items-center justify-between gap-2">
             <span data-estado-participacao="membro">Participando</span>

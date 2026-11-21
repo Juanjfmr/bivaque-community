@@ -52,7 +52,7 @@ test.describe("jornada simulada: quando algo falha", { tag: "@stateful" }, () =>
       await page.unroute("**/rest/v1/posts**")
       await lost.getByRole("button", { name: "Tentar novamente" }).click()
       await expect(editor).toBeHidden({ timeout: 20_000 })
-      await page.goto(`/groups/${TEST_GROUP_ID}`, { waitUntil: "load" })
+      await page.goto(`/app/grupo/${TEST_GROUP_ID}`, { waitUntil: "load" })
       await expect(page.getByRole("article").filter({ hasText: text })).toBeVisible({
         timeout: 25_000,
       })

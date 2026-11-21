@@ -26,8 +26,10 @@ const grupo = {
   membro: false,
   pendente: false,
   admin: false,
+  dono: false,
   membros: null,
   fixada: null,
+  aviso: null,
 }
 function resposta(corpo: unknown, status = 200) {
   const fetch = vi.fn(async () => new Response(JSON.stringify(corpo), { status }))

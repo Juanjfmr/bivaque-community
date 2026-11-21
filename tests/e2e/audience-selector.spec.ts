@@ -1,10 +1,4 @@
-// Onda E Task 4 — composer shows reach before submit, and a post of a group
-// carries its reach chip in the group feed.
-//
-// Reescrito no lote 5, tarefa N2 (ADR-20261023): publicação passou a existir SÓ
-// dentro de um grupo. Cidade inteira e vila saíram do seletor, então o chip
-// provado é o de GRUPO, no feed do grupo — não há mais publicação de cidade
-// para carregar chip de cidade.
+// O compositor informa o alcance; o feed do grupo mostra a publicação.
 
 import type { Page } from "@playwright/test"
 import { expect, test } from "@playwright/test"
@@ -58,7 +52,7 @@ async function signInAs(page: Page, email: string): Promise<void> {
   ])
 }
 
-test.describe("audience selector and reach chip", () => {
+test.describe("audience selector and group feed", () => {
   test("the audience notice describes who will read", async ({ page }) => {
     // Given an authenticated member who belongs to a group
     await signInAs(page, MEMBER_EMAIL)
@@ -73,7 +67,7 @@ test.describe("audience selector and reach chip", () => {
     await expect(dialog.getByText(/aprovados deste grupo vão ler/i)).toBeVisible()
   })
 
-  test("group post carries a chip with the group reach in the group feed", async ({ page }) => {
+  test("group feed shows a post without a city-reach chip", async ({ page }) => {
     // Given a member of Manaus (any verified member reads a public group)
     await signInAs(page, MEMBER_EMAIL)
 
@@ -81,14 +75,10 @@ test.describe("audience selector and reach chip", () => {
     // existe desde o lote 5 N2
     await page.goto(TEST_GROUP_FEED_URL, { waitUntil: "load" })
 
-    // Then a post of the group carries the group chip. The chip
-    // (feed-post-card) is a static HeroUI Chip, not an interactive
-    // control — it carries no button role, so a byRole("button") locator
-    // never matched even though the chip renders.
-    await expect(page.locator("article").first()).toBeVisible({ timeout: 20000 })
-    await expect(page.locator('[aria-label="Alcance: só o grupo"]').first()).toBeVisible()
-    // And no city-reach chip is offered: publicar para a cidade inteira deixou
-    // de existir.
+    // O cartão do app não mostra chip de alcance no feed do grupo.
+    await expect(page.locator('article[data-cartao="publicacao"]').first()).toBeVisible({
+      timeout: 20000,
+    })
     await expect(page.locator('[aria-label$="inteira"]')).toHaveCount(0)
   })
 })

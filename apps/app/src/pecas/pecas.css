@@ -227,8 +227,8 @@
 /* Ligado (entrou, marcado): seleção é Grafite. No botão de texto (Útil),
    ligado é tinta cheia com o ícone cheio, sem fundo. */
 .pc-botao[aria-pressed="true"] {
-  background: var(--pc-tinta);
-  color: var(--pc-fundo);
+  background: var(--grafite);
+  color: var(--grafite-texto);
 }
 
 .pc-botao[data-tom="texto"][aria-pressed="true"] {

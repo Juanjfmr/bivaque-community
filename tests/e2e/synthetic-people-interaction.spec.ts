@@ -195,56 +195,49 @@ test.describe("cinco pessoas sintéticas interagindo", { tag: "@stateful" }, () 
       await expect(page.locator("article", { hasText: postText })).toBeVisible({ timeout: 20_000 })
     })
 
-    // 2. A comentarista curte e comenta
+    // 2. A comentarista participa, marca Útil e comenta no detalhe.
     await withPersona(browser, COMMENTER_EMAIL, async (page) => {
       await page.goto(`${APP_URL}${GROUP_FEED_URL}`, { waitUntil: "load" })
+      await expect(page.locator('[data-controles-grupo="sim"]')).toBeVisible()
+      const participar = page.getByRole("button", { name: "Participar do grupo" })
+      if (await participar.isVisible()) {
+        await participar.click()
+        await expect(page.getByText("Participando", { exact: true })).toBeVisible()
+      }
       const post = page.locator("article", { hasText: postText })
-      await post.getByRole("button", { name: "Curtir publicação" }).click()
-      await expect(post.getByRole("button", { name: "Descurtir publicação" })).toBeVisible({
-        timeout: 10_000,
-      })
-      // O campo de resposta abre por "Responder" desde a reconstrução do cartão
-      // (25/09/2026): ele não ocupa mais todo cartão fechado.
-      await post.getByRole("button", { name: /Responder|resposta/ }).click()
-      await post.getByLabel("Comentário", { exact: true }).fill(commentText)
-      await post.getByRole("button", { name: "Enviar comentário" }).click()
-      await expect(post.getByText(commentText)).toBeVisible({ timeout: 10_000 })
+      const util = post.getByRole("button", { name: /Útil/ })
+      await util.click()
+      await expect(util).toHaveAttribute("aria-pressed", "true")
+      await post.getByRole("button", { name: /Comentar|comentários/ }).click()
+      await page.getByLabel("Seu comentário").fill(commentText)
+      await page.getByRole("button", { name: "Comentar", exact: true }).last().click()
+      await expect(page.getByText(commentText)).toBeVisible({ timeout: 10_000 })
     })
 
-    // 3. A segunda pessoa também curte
+    // 3. A segunda pessoa participa e também marca Útil.
     await withPersona(browser, SECOND_REACTOR_EMAIL, async (page) => {
       await page.goto(`${APP_URL}${GROUP_FEED_URL}`, { waitUntil: "load" })
-      const post = page.locator("article", { hasText: postText })
-      const reactionCreated = page.waitForResponse(
-        (response) =>
-          response.url().includes("/rest/v1/post_reactions") &&
-          response.request().method() === "POST" &&
-          response.status() === 201,
-      )
-      await post.getByRole("button", { name: "Curtir publicação" }).click()
-      await expect(post.getByRole("button", { name: "Descurtir publicação" })).toBeVisible({
-        timeout: 10_000,
-      })
-      await reactionCreated
-
-      // A reação persiste no servidor (recarregar e ver "Descurtir" de novo),
-      // o que garante que a primeira também já commitou.
+      await expect(page.locator('[data-controles-grupo="sim"]')).toBeVisible()
+      const participar = page.getByRole("button", { name: "Participar do grupo" })
+      if (await participar.isVisible()) {
+        await participar.click()
+        await expect(page.getByText("Participando", { exact: true })).toBeVisible()
+      }
+      const util = page
+        .locator("article", { hasText: postText })
+        .getByRole("button", { name: /Útil/ })
+      await util.click()
+      await expect(util).toHaveAttribute("aria-pressed", "true")
       await page.reload({ waitUntil: "load" })
-      await expect(
-        page.locator("article", { hasText: postText }).getByRole("button", {
-          name: "Descurtir publicação",
-        }),
-      ).toBeVisible({ timeout: 15_000 })
+      await expect(util).toHaveAttribute("aria-pressed", "true", { timeout: 15_000 })
     })
 
-    // 4. A autora volta e vê a contagem de duas curtidas
+    // 4. A autora vê as duas marcações persistidas.
     await withPersona(browser, AUTHOR_EMAIL, async (page) => {
       await page.goto(`${APP_URL}${GROUP_FEED_URL}`, { waitUntil: "load" })
       await expect(
-        page.locator("article", { hasText: postText }).getByRole("button", {
-          name: "Curtir publicação",
-        }),
-      ).toContainText("2", { timeout: 15_000 })
+        page.locator("article", { hasText: postText }).getByRole("button", { name: "Útil (2)" }),
+      ).toBeVisible({ timeout: 15_000 })
     })
 
     // 5. O comentário disparou uma notificação para a autora. Verificamos
@@ -275,21 +268,36 @@ test.describe("cinco pessoas sintéticas interagindo", { tag: "@stateful" }, () 
     expect(notifs.some((n) => n.type === "comment" && n.target_id === postId)).toBe(true)
   })
 
-  test("grupo privado: membro vê a lista, não-membro vê só os metadados", async ({ browser }) => {
+  test("grupo privado: membro participa e não-membro não lê conteúdo", async ({ browser }) => {
     desktopOnly()
-
-    // 1. O membro aprovado vê a lista de membros
     await withPersona(browser, GROUP_MEMBER_EMAIL, async (page) => {
-      await page.goto(`${APP_URL}/groups/${PRIVATE_GROUP_ID}`, { waitUntil: "load" })
+      const redirect = await page.request.get(`${APP_URL}/groups/${PRIVATE_GROUP_ID}`, {
+        maxRedirects: 0,
+      })
+      expect(redirect.status()).toBe(307)
+      expect(new URL(redirect.headers()["location"] ?? "", "http://127.0.0.1:3000").pathname).toBe(
+        `/app/grupo/${PRIVATE_GROUP_ID}`,
+      )
+      await page.goto(`${APP_URL}/app/grupo/${PRIVATE_GROUP_ID}`, { waitUntil: "load" })
       await expect(page.getByRole("heading", { name: PRIVATE_GROUP_NAME })).toBeVisible()
-      await expect(page.getByRole("heading", { name: "Membros" })).toBeVisible()
+      await expect(page.locator('[data-estado-participacao="membro"]')).toBeVisible()
+      await expect(page.getByText("Administrar grupo")).toHaveCount(0)
     })
-
-    // 2. O não-membro vê só os metadados
     await withPersona(browser, GROUP_OUTSIDER_EMAIL, async (page) => {
-      await page.goto(`${APP_URL}/groups/${PRIVATE_GROUP_ID}`, { waitUntil: "load" })
+      const api = await page.request.get(`${APP_URL}/api/app/grupos/${PRIVATE_GROUP_ID}`)
+      expect(api.status()).toBe(200)
+      expect((await api.json()).publicacoes).toEqual([])
+      expect(
+        (await page.request.get(`${APP_URL}/api/app/grupos/${PRIVATE_GROUP_ID}/membros`)).status(),
+      ).toBe(403)
+      await page.goto(`${APP_URL}/app/grupo/${PRIVATE_GROUP_ID}`, { waitUntil: "load" })
       await expect(page.getByRole("heading", { name: PRIVATE_GROUP_NAME })).toBeVisible()
-      await expect(page.getByRole("heading", { name: "Membros" })).toHaveCount(0)
+      await expect(
+        page.getByText("O conteúdo dos grupos fechados é reservado aos membros."),
+      ).toBeVisible()
+      await expect(page.locator('[data-publicacao-na-lista="sim"]')).toHaveCount(0)
+      await expect(page.getByText("Administrar grupo")).toHaveCount(0)
+      await expect(page.getByRole("button", { name: "Sair do grupo" })).toHaveCount(0)
     })
   })
 })

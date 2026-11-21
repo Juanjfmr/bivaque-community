@@ -41,6 +41,7 @@ export function Publicacao() {
   const [controle] = useState(() => new AbortController())
   const acoes = useAcoesDaPublicacao({
     admin: dados?.grupo.admin ?? false,
+    dono: dados?.grupo.dono ?? false,
     fixada: dados?.grupo.fixada ?? null,
     aoMudar: ({ publicacao, fixada }) =>
       setDados((atual) =>

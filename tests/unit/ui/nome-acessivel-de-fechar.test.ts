@@ -119,13 +119,13 @@ describe("o rótulo de fechar não volta a ser herdado em inglês", () => {
     // dele significa que um modal deixou de passar pelo wrapper. Saiu de 12 para
     // 10 no RUN-184 (tela de conta da web: sair e excluir) e de 10 para 8 em
     // 18/11, com a saída de indication-detail (troca para /app/pergunta/:id).
-    // O detalhe de grupo continua na web; restam sete pontos.
+    // O detalhe de grupo saiu da web; restam seis pontos.
     const sites = callers.reduce(
       (total, file) =>
         total + (readFileSync(file, "utf8").match(/<ModalCloseTrigger/g) ?? []).length,
       0,
     )
-    expect(sites, "algum modal deixou de passar pelo wrapper").toBeGreaterThanOrEqual(7)
+    expect(sites, "algum modal deixou de passar pelo wrapper").toBeGreaterThanOrEqual(6)
     for (const file of callers) {
       expect(readFileSync(file, "utf8"), file.slice(root.length + 1)).toMatch(
         /from "[^"]*close-button"/,

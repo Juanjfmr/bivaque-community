@@ -23,8 +23,6 @@ async function comRegistro(page: Page, aoVisitar: () => Promise<void>) {
   return { pedidos, respostas }
 }
 
-const ORIGEM_LOCAL = "http://127.0.0.1:3200"
-
 test.describe("fontes locais", () => {
   test("as três famílias carregam do próprio app, sem rede externa", async ({ page }) => {
     const { pedidos, respostas } = await comRegistro(page, async () => {
@@ -54,7 +52,9 @@ test.describe("fontes locais", () => {
     const deFonte = pedidos.filter((pedido) => pedido.tipo === "font")
     expect(deFonte.length).toBeGreaterThan(0)
     for (const pedido of deFonte) {
-      expect(pedido.url.startsWith(`${ORIGEM_LOCAL}/app/fonts/`), pedido.url).toBe(true)
+      expect(pedido.url.startsWith(`${new URL(page.url()).origin}/app/fonts/`), pedido.url).toBe(
+        true,
+      )
     }
     for (const resposta of respostas) {
       expect(resposta.status, resposta.url).toBe(200)
