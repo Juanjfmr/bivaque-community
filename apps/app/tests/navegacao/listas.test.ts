@@ -40,6 +40,14 @@ describe("lista guardada na entrada — aba e filtros", () => {
     )
   })
 
+  it("dois filtros numa reescrita só chegam juntos na entrada", () => {
+    const depois = atualizarEntrada(entradaPadrao({ chave: "entrada-da-prova" }), {
+      filtros: { "busca-categoria": "saude", "busca-escopo": "negocios" },
+    })
+    expect(depois.filtros["busca-categoria"]).toBe("saude")
+    expect(depois.filtros["busca-escopo"]).toBe("negocios")
+  })
+
   it("a restauração espera o dado: carregando não está pronta, falha já está", () => {
     expect(listaPronta(true, false)).toBe(false)
     expect(listaPronta(false, false)).toBe(true)
@@ -92,5 +100,13 @@ describe("lista guardada na entrada — as telas reais usam a carga", () => {
     expect(comunidade).toContain('aba === "grp" ? gruposProntos')
     expect(comunidade).toContain("<Diretorio aoPronto={() => setGruposProntos(true)} />")
     expect(diretorio).toContain("aoPronto?.()")
+  })
+
+  it("a grade Explorar guarda a categoria e o escopo na entrada", () => {
+    const fonte = readFileSync(join(RAIZ, "src/telas/Busca.tsx"), "utf8")
+    // A troca de escopo e categoria vai junta, e o clique da grade usa a função.
+    expect(fonte).toContain('"busca-categoria": categoria')
+    expect(fonte).toContain('"busca-escopo": "negocios"')
+    expect(fonte).toContain("guardarExplorar(item.id)")
   })
 })

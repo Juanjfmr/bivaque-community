@@ -111,6 +111,15 @@ export function Busca() {
   )
   const guardar = (chave: string, valor: string) =>
     void navegacao.atualizar(mudancaDaLista(chave, valor))
+  // A categoria tocada na grade Explorar também mora na entrada, com o escopo:
+  // abrir um resultado e voltar devolve a grade filtrada como estava.
+  const guardarExplorar = (categoria: string) => {
+    setCategoriaAtiva(categoria)
+    setEscopo("negocios")
+    void navegacao.atualizar({
+      filtros: { "busca-categoria": categoria, "busca-escopo": "negocios" },
+    })
+  }
   const [recentes, setRecentes] = useState<readonly string[]>([])
   const { consulta, definirConsulta: setConsulta } = casca
 
@@ -354,10 +363,7 @@ export function Busca() {
                         key={item.id}
                         type="button"
                         data-explorar-categoria={item.id}
-                        onClick={() => {
-                          setCategoriaAtiva(item.id)
-                          setEscopo("negocios")
-                        }}
+                        onClick={() => guardarExplorar(item.id)}
                         className="bv-press flex min-h-20 items-center gap-2 rounded-xl bg-(--surface-lowest) px-3 text-left ring-1 ring-(--outline-variant) hover:bg-(--muted)"
                       >
                         <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-(--secondary-container)">
