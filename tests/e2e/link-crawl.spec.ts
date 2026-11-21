@@ -120,6 +120,22 @@ interface PortaDeclarada extends AllowedUnreached {
 }
 
 const PORTAS_FORA_DO_LINK: readonly PortaDeclarada[] = [
+  ...(
+    [
+      "/communities/[id]/admin",
+      "/communities/[id]/admin/media",
+      "/communities/[id]/admin/moderators",
+      "/communities/[id]/admin/pending",
+      "/communities/[id]/admin/providers",
+      "/communities/[id]/indicar-prestador",
+    ] as const
+  ).map(
+    (route): PortaDeclarada => ({
+      route,
+      porta:
+        "DÍVIDA LAN-TROCA-ADMIN: a porta era a página antiga /groups/:id, removida no TROCA-003; a tela sai com 307 no TROCA-004",
+    }),
+  ),
   {
     route: "/auth/callback-error",
     porta: "FLUXO: redirect do /auth/callback quando o OAuth falha",
