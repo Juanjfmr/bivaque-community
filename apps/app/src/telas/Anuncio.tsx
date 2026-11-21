@@ -174,8 +174,7 @@ export function Anuncio() {
    * a tela vira primeiro, o servidor recusou devolve o estado anterior com o
    * motivo, e o Aviso oferece Desfazer — que grava o estado anterior de novo.
    */
-  async function alternarSalvo() {
-    const alvo = !salvo
+  async function gravarSalvo(alvo: boolean) {
     setAvisoSalvo(null)
     const resultado = await acao.executar("salvo", {
       aplicar: () => setSalvo(alvo),
@@ -186,9 +185,16 @@ export function Anuncio() {
     })
     if (resultado.tipo === "recusa" && resultado.mensagem !== "") setAvisoSalvo(resultado.mensagem)
     if (resultado.tipo === "sucesso") {
-      avisos.mostrar(alvo ? "Anúncio salvo." : "Removido dos salvos.", () => void alternarSalvo())
+      // O Desfazer pede o estado anterior explícito: o `salvo` deste render já
+      // não é o que a tela mostra depois da gravação.
+      avisos.mostrar(
+        alvo ? "Anúncio salvo." : "Removido dos salvos.",
+        () => void gravarSalvo(!alvo),
+      )
     }
   }
+
+  const alternarSalvo = () => gravarSalvo(!salvo)
 
   const validacao = validarParametros("anuncio", { id })
   if (!validacao.ok) return <TelaIndisponivel motivo={validacao.motivo} />

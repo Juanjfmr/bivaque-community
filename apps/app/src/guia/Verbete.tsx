@@ -107,9 +107,7 @@ export function Verbete({ id }: { readonly id: string }) {
    * recusa devolve o estado com o motivo e o Aviso oferece Desfazer, que grava
    * o estado anterior de novo.
    */
-  async function alternarSalvo() {
-    if (verbete === null) return
-    const alvo = !verbete.entrada.salvo
+  async function gravarSalvo(alvo: boolean) {
     const mostrar = (salvo: boolean) =>
       setVerbete((atual) =>
         atual === null ? atual : { ...atual, entrada: { ...atual.entrada, salvo } },
@@ -125,11 +123,16 @@ export function Verbete({ id }: { readonly id: string }) {
     })
     if (resultado.tipo === "recusa") setAviso(resultado.mensagem)
     if (resultado.tipo === "sucesso") {
+      // O Desfazer pede o estado anterior explícito, não o do render atual.
       avisos.mostrar(
         alvo ? "Guardado em Salvos." : "Removido dos salvos.",
-        () => void alternarSalvo(),
+        () => void gravarSalvo(!alvo),
       )
     }
+  }
+
+  const alternarSalvo = () => {
+    if (verbete !== null) void gravarSalvo(!verbete.entrada.salvo)
   }
 
   async function enviarSugestao() {

@@ -1083,10 +1083,6 @@
     top: 50%;
     bottom: auto;
   }
-
-  .pc-folha-alca {
-    display: none;
-  }
 }
 
 .pc-folha-alca {
@@ -1099,6 +1095,14 @@
   background: none;
   cursor: grab;
   touch-action: none;
+}
+
+/* A alça é do gesto no celular; a partir de 768 px o arrasto é pelo conteúdo.
+   A regra vem depois da base para vencer a cascata. */
+@media (min-width: 768px) {
+  .pc-folha-alca {
+    display: none;
+  }
 }
 
 .pc-folha-alca::before {

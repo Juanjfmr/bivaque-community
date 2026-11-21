@@ -807,6 +807,11 @@ export function Folha({
       if (alvo !== null && alvo.closest("input, select, textarea, button, a, label") !== null)
         return
     }
+    // O arrasto interrompe a abertura no estado atual (ANIMATION §4): a
+    // animação de entrada não pode segurar o dedo.
+    if (typeof folha.getAnimations === "function") {
+      for (const animacao of folha.getAnimations()) animacao.finish()
+    }
     inicio.current = { y: evento.clientY, quando: performance.now(), capturado: !noCorpo }
     // A captura no corpo só vem quando o gesto prova que é arrasto: capturar no
     // toque desviaria o clique dos botões para o corpo.

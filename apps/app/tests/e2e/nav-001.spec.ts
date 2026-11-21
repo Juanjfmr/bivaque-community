@@ -1,4 +1,4 @@
-import type { Page } from "@playwright/test"
+import { expect, type Page, test } from "@playwright/test"
 
 import {
   abrir,
@@ -6,12 +6,15 @@ import {
   conteudo,
   esperarCaminho,
   esperarRolagem,
-  expect,
   rolagemReal,
-  test,
   tituloDaTela,
 } from "./apoio"
+import { simularInicio } from "./inicio-ajuda"
 import { aplicarStubMercado } from "./stub-mercado"
+
+test.beforeEach(async ({ page }) => {
+  await simularInicio(page)
+})
 
 /**
  * NAV-001: a Folha única (arrasto, cancelamento e fechamento), o Desfazer da
@@ -47,10 +50,15 @@ function transformDaFolha(page: Page): Promise<string> {
 async function abrirFolhaDaCidade(page: Page): Promise<void> {
   await abrir(page, "/app/inicio")
   await page.locator('[data-acao="cidade"]').click()
-  await expect(page.locator(FOLHA_DA_CIDADE)).toBeVisible()
+  const folha = page.locator(FOLHA_DA_CIDADE)
+  await expect(folha).toBeVisible()
+  // O gesto é medido depois da entrada: a animação ainda governa o transform.
+  await folha.evaluate(async (elemento) => {
+    await Promise.all(elemento.getAnimations().map((animacao) => animacao.finished))
+  })
 }
 
-for (const tema of ["claro", "escuro"] as const) {
+for (const tema of ["light", "dark"] as const) {
   test.describe(`Folha única — ${tema}`, () => {
     test.use({ colorScheme: tema })
 
@@ -65,9 +73,7 @@ for (const tema of ["claro", "escuro"] as const) {
       // Arrasto curto: a folha volta e continua aberta.
       await expect.poll(() => transformDaFolha(page)).toBe("")
       await expect(page.locator(FOLHA_DA_CIDADE)).toBeVisible()
-      await expect(page.locator(ALCA)).toHaveCount(
-        (page.viewportSize()?.width ?? 0) < 768 ? 1 : 0,
-      )
+      expect(await page.locator(ALCA).isVisible()).toBe((page.viewportSize()?.width ?? 0) < 768)
     })
 
     test("arrastar além do limite fecha a folha", async ({ page }) => {
@@ -115,7 +121,7 @@ async function simularListaLonga(page: Page): Promise<void> {
   })
 }
 
-for (const tema of ["claro", "escuro"] as const) {
+for (const tema of ["light", "dark"] as const) {
   test.describe(`Ação otimista e posição da lista — ${tema}`, () => {
     test.use({ colorScheme: tema })
 
@@ -138,7 +144,7 @@ for (const tema of ["claro", "escuro"] as const) {
         "aria-pressed",
         "true",
       )
-      const aviso = page.getByRole("status").filter({ hasText: "Anúncio salvo." })
+      const aviso = page.locator(".pc-aviso").filter({ hasText: "Anúncio salvo." })
       await expect(aviso).toBeVisible()
       await aviso.getByRole("button", { name: "Desfazer" }).click()
 
@@ -157,32 +163,48 @@ for (const tema of ["claro", "escuro"] as const) {
       await simularListaLonga(page)
 
       await abrir(page, "/app/mercado?q=desapego")
-      await expect(page.locator('[data-chips="filtros-mercado"]')).toContainText(
-        "Busca: desapego",
-      )
-      await rolarAtePosicao(page, 900)
+      await expect(page.locator('[data-chips="filtros-mercado"]')).toContainText("Busca: desapego")
+      // Uma posição no meio da lista: perto do fim, a diferença de um pixel de
+      // layout na volta encostaria no limite do conteúdo.
+      const posicao = await rolarAtePosicao(page, 600)
 
-      const cartao = page.locator('[data-cartao="anuncio"]').nth(3)
+      // Um cartão no meio da janela, longe da barra de baixo: clicar nele não
+      // rola a lista antes de sair, e a posição medida é a da saída.
+      const indice = await page.evaluate(() => {
+        const cartoes = [...document.querySelectorAll('[data-cartao="anuncio"]')]
+        return cartoes.findIndex((cartao) => {
+          const caixa = cartao.getBoundingClientRect()
+          return caixa.top >= window.innerHeight * 0.2 && caixa.bottom <= window.innerHeight * 0.7
+        })
+      })
+      expect(indice).toBeGreaterThanOrEqual(0)
+      const cartao = page.locator('[data-cartao="anuncio"]').nth(indice)
       await cartao.click()
-      await esperarCaminho(page, `/app/anuncio/${ANUNCIOS[3]?.id ?? ""}`)
+      await esperarCaminho(page, `/app/anuncio/${ANUNCIOS[indice]?.id ?? ""}`)
 
       await page.goBack()
       await esperarCaminho(page, "/app/mercado")
       // O filtro continua na tela e no endereço…
-      await expect(page.locator('[data-chips="filtros-mercado"]')).toContainText(
-        "Busca: desapego",
-      )
+      await expect(page.locator('[data-chips="filtros-mercado"]')).toContainText("Busca: desapego")
       expect(new URL(page.url()).searchParams.get("q")).toBe("desapego")
       // …e a rolagem volta onde estava, depois de a lista carregar.
-      await esperarRolagem(page, 900)
+      await esperarRolagem(page, posicao)
       await expect(tituloDaTela(page)).toHaveText("Desapegos")
     })
   })
 }
 
-/** Rola como a pessoa rola: roda do mouse sobre o conteúdo (dispara o registro). */
-async function rolarAtePosicao(page: Page, posicao: number): Promise<void> {
+/**
+ * Rola como a pessoa rola (roda do mouse sobre o conteúdo, que dispara o
+ * registro da entrada) e devolve a posição alcançada — o mesmo pedido pode ser
+ * maior que o conteúdo no tamanho em teste.
+ */
+async function rolarAtePosicao(page: Page, desejada: number): Promise<number> {
   const alvo = conteudo(page)
+  const teto = await alvo.evaluate((elemento) =>
+    Math.max(0, elemento.scrollHeight - elemento.clientHeight),
+  )
+  const posicao = Math.min(desejada, teto)
   for (let tentativa = 0; tentativa < 40; tentativa += 1) {
     const atual = await rolagemReal(page)
     if (atual === posicao) break
@@ -191,5 +213,7 @@ async function rolarAtePosicao(page: Page, posicao: number): Promise<void> {
     await page.waitForTimeout(30)
   }
   expect(await rolagemReal(page)).toBe(posicao)
+  expect(posicao).toBeGreaterThan(0)
   expect(await caminhoAtual(page)).toBe("/app/mercado")
+  return posicao
 }
