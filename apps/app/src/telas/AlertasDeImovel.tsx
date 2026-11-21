@@ -258,8 +258,8 @@ export function AlertasDeImovel() {
                     data-valor={alerta.id}
                     onClick={() =>
                       void navegar({
-                        to: "/imoveis",
-                        search: alerta.busca,
+                        to: "/mercado",
+                        search: { ...alerta.busca, aba: "imoveis" },
                         replace: true,
                         state: true,
                         resetScroll: false,

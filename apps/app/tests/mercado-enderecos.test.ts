@@ -18,6 +18,9 @@ const USO = [
   /irPara\(\s*["'](?:desapegos|catalogo|imoveis)["']/,
   /rota:\s*["'](?:desapegos|catalogo|imoveis)["']/,
   /destino:\s*["'](?:desapegos|catalogo|imoveis)["']/,
+  // Navegação direta do roteador (`navegar`, `useNavigate`, `Link`): o caminho
+  // com a barra e fechado logo depois do nome — `/imoveis/alertas` é outra rota.
+  /to:\s*["'`]\/(?:desapegos|catalogo|imoveis)["'`]/,
 ]
 
 function arquivos(pasta: string): string[] {
@@ -50,6 +53,9 @@ describe("nenhum link interno usa os endereços antigos do Mercado (NAV-002)", (
       'irPara("desapegos")',
       '{ rota: "catalogo", icone: "sell", rotulo: "Desapegos" }',
       'destino: "imoveis",',
+      'void navegar({ to: "/imoveis", search: alerta.busca, replace: true })',
+      "to: '/catalogo',",
+      "to: `/desapegos`,",
     ]
     for (const exemplo of exemplos) {
       expect(
@@ -60,5 +66,8 @@ describe("nenhum link interno usa os endereços antigos do Mercado (NAV-002)", (
     // O endereço novo não é violação, e a aba como dado também não.
     expect(USO.some((padrao) => padrao.test('irPara("mercado", { aba: "imoveis" })'))).toBe(false)
     expect(USO.some((padrao) => padrao.test('{ id: "imoveis", rotulo: "Imóveis" }'))).toBe(false)
+    expect(USO.some((padrao) => padrao.test('to: "/mercado",'))).toBe(false)
+    // `/app/imoveis/alertas` é outra rota, não o endereço antigo do Mercado.
+    expect(USO.some((padrao) => padrao.test('to: "/imoveis/alertas",'))).toBe(false)
   })
 })
