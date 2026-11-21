@@ -146,6 +146,45 @@ for (const tema of ["light", "dark"] as const) {
   })
 }
 
+/**
+ * NAV-001, segunda correção: a categoria tocada na grade Explorar fica na
+ * entrada, mas só dentro dela. Voltar de um detalhe devolve a grade filtrada;
+ * abrir `/app/busca` numa navegação nova começa no Explorar.
+ */
+test.describe("Busca: a categoria da grade mora na entrada", () => {
+  test("voltar de um negócio devolve a grade filtrada, com o escopo Negócios", async ({ page }) => {
+    await abrir(page, "/app/busca")
+    const grade = page.locator('[data-explorar="categorias"]')
+    await expect(grade).toBeVisible()
+
+    await grade.locator('[data-explorar-categoria="saude"]').click()
+    const cartoes = page.locator('[data-tela="busca"] [data-cartao="negocio"]')
+    await expect(cartoes.first()).toBeVisible()
+
+    await cartoes.first().click()
+    await expect.poll(() => caminhoAtual(page)).toMatch(/^\/app\/negocio\//)
+
+    await page.goBack()
+    await esperarCaminho(page, "/app/busca")
+    // A entrada devolve a categoria e o escopo: a grade não reaparece.
+    await expect(cartoes.first()).toBeVisible()
+    await expect(grade).toHaveCount(0)
+    await expect(page.locator('[data-chip="negocios"]')).toHaveAttribute("data-estado", "on")
+  })
+
+  test("abrir /app/busca numa navegação nova começa limpa no Explorar", async ({ page }) => {
+    await abrir(page, "/app/busca")
+    const grade = page.locator('[data-explorar="categorias"]')
+    await grade.locator('[data-explorar-categoria="saude"]').click()
+    await expect(page.locator('[data-tela="busca"] [data-cartao="negocio"]').first()).toBeVisible()
+
+    // Endereço de novo: a entrada que o navegador reusa não é desta navegação.
+    await page.goto("/app/busca")
+    await expect(grade).toBeVisible()
+    await expect(page.locator('[data-chip="all"]')).toHaveAttribute("data-estado", "on")
+  })
+})
+
 const ANUNCIOS = Array.from({ length: 16 }, (_, indice) => ({
   id: `nav-item-${indice + 1}`,
   tipo: "item" as const,

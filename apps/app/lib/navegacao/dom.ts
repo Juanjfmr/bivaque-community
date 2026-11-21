@@ -1,4 +1,10 @@
-import { type DescritorDeFoco, descritorDoElemento } from "./entrada"
+import {
+  CHAVE_DA_ENTRADA,
+  type DescritorDeFoco,
+  descritorDoElemento,
+  entradaPadrao,
+  temEntrada,
+} from "./entrada"
 import type { AmbienteDeRestauracao } from "./restauracao"
 
 /**
@@ -7,6 +13,25 @@ import type { AmbienteDeRestauracao } from "./restauracao"
  */
 
 export const ID_DO_CONTEUDO = "conteudo"
+
+/**
+ * Uma navegação nova para o endereço em que a pessoa já estava (endereço
+ * digitado, link, aba) reusa a entrada do histórico, e o navegador traz junto o
+ * estado que o documento anterior gravou nela. Só recarregar e voltar/avançar
+ * entre documentos devolvem a mesma entrada; em qualquer outra navegação ela
+ * começa padrão, sem os filtros de antes (NAV-001).
+ *
+ * Roda uma vez, antes de o roteador ler a localização inicial.
+ */
+export function esquecerEntradaDeOutroDocumento(): void {
+  if (typeof performance === "undefined" || typeof history === "undefined") return
+  const [navegacao] = performance.getEntriesByType("navigation") as PerformanceNavigationTiming[]
+  if (navegacao?.type !== "navigate") return
+  const estado: unknown = history.state
+  if (!temEntrada(estado)) return
+  const bruto = estado as Record<string, unknown>
+  history.replaceState({ ...bruto, [CHAVE_DA_ENTRADA]: entradaPadrao() }, "")
+}
 
 export function conteudoDoDocumento(): HTMLElement | null {
   if (typeof document === "undefined") return null
