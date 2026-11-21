@@ -772,7 +772,6 @@ export function Folha({
     quando: number
     capturado: boolean
   } | null>(null)
-  const idTitulo = useId()
   const reduzido = useMovimentoReduzido()
 
   const deslocar = (deslocamento: number) => {
@@ -800,7 +799,13 @@ export function Folha({
     // O corpo só arrasta a folha quando o conteúdo está no início; rolado no
     // meio, o gesto é da lista.
     const noCorpo = evento.currentTarget.classList.contains("pc-folha-corpo")
-    if (noCorpo && !comecaArrasto(folha.scrollTop)) return
+    if (noCorpo) {
+      if (!comecaArrasto(folha.scrollTop)) return
+      // No conteúdo, o toque em campo, botão ou link é da peça, não da folha —
+      // inclusive os seletores nativos, cujo ponteiro sai da página no menu.
+      const alvo = evento.target as Element | null
+      if (alvo !== null && alvo.closest("input, select, textarea, button, a, label") !== null) return
+    }
     inicio.current = { y: evento.clientY, quando: performance.now(), capturado: !noCorpo }
     // A captura no corpo só vem quando o gesto prova que é arrasto: capturar no
     // toque desviaria o clique dos botões para o corpo.
@@ -873,9 +878,7 @@ export function Folha({
         ) : null}
         <div className="pc-folha-cabeca">
           <div className="grid min-w-0 gap-0.5">
-            <DialogTitle id={idTitulo} className="pc-subtitulo">
-              {titulo}
-            </DialogTitle>
+            <DialogTitle className="pc-subtitulo">{titulo}</DialogTitle>
             {descricao === undefined ? null : (
               <DialogDescription className="pc-apoio">{descricao}</DialogDescription>
             )}

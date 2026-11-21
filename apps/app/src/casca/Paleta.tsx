@@ -136,6 +136,37 @@ const ITENS: readonly Item[] = [
 const DESKTOP = "(min-width: 1024px)"
 const GRUPOS = ["Ações", "Ir para"] as const
 
+/**
+ * O atalho não pode depender do primeiro commit do React: entre o `load` e a
+ * montagem a pessoa (e a prova) já consegue digitar. O ouvinte mora no módulo,
+ * que o navegador avalia antes de pintar, e chama quem estiver montado; sem
+ * ninguém montado, não faz nada.
+ */
+let abrirPaleta: (() => void) | null = null
+let atalhoInstalado = false
+
+function aoTeclarPaleta(evento: KeyboardEvent): void {
+  if (abrirPaleta === null) return
+  if (evento.defaultPrevented || emComposicao(evento) || evento.repeat) return
+  const alvo = evento.target as HTMLElement | null
+  const emCampo = alvo !== null && ["INPUT", "TEXTAREA", "SELECT"].includes(alvo.tagName)
+  const tecla = evento.key.toLowerCase()
+  const combo =
+    (evento.ctrlKey || evento.metaKey) && !evento.altKey && !evento.shiftKey && tecla === "k"
+  const barra = tecla === "/" && !evento.ctrlKey && !evento.metaKey && !evento.altKey && !emCampo
+  if (!combo && !barra) return
+  evento.preventDefault()
+  abrirPaleta()
+}
+
+function instalarAtalhoDaPaleta(): void {
+  if (atalhoInstalado || typeof document === "undefined") return
+  atalhoInstalado = true
+  document.addEventListener("keydown", aoTeclarPaleta)
+}
+
+instalarAtalhoDaPaleta()
+
 export function Paleta() {
   const { abrir: abrirSobreposicao, fecharSobreposicao: fechar, irPara } = useNavegacao()
   const aberta = useEntradaDaTela().sobreposicao === "paleta"
@@ -147,22 +178,10 @@ export function Paleta() {
   }, [abrirSobreposicao])
 
   useEffect(() => {
-    if (typeof document === "undefined") return
-    const aoTeclar = (evento: KeyboardEvent) => {
-      if (evento.defaultPrevented || emComposicao(evento) || evento.repeat) return
-      const alvo = evento.target as HTMLElement | null
-      const emCampo = alvo !== null && ["INPUT", "TEXTAREA", "SELECT"].includes(alvo.tagName)
-      const tecla = evento.key.toLowerCase()
-      const combo =
-        (evento.ctrlKey || evento.metaKey) && !evento.altKey && !evento.shiftKey && tecla === "k"
-      const barra =
-        tecla === "/" && !evento.ctrlKey && !evento.metaKey && !evento.altKey && !emCampo
-      if (!combo && !barra) return
-      evento.preventDefault()
-      abrir()
+    abrirPaleta = abrir
+    return () => {
+      if (abrirPaleta === abrir) abrirPaleta = null
     }
-    document.addEventListener("keydown", aoTeclar)
-    return () => document.removeEventListener("keydown", aoTeclar)
   }, [abrir])
 
   if (!aberta) return null
