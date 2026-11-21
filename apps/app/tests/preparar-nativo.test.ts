@@ -15,10 +15,12 @@ it("prepara a entrada nativa sem redirecionamento e preserva rotas existentes", 
       resolve("scripts/preparar-nativo.mjs"),
       join(raiz, "scripts", "preparar-nativo.mjs"),
     )
-    execFileSync(process.execPath, [join(raiz, "scripts", "preparar-nativo.mjs")])
+    execFileSync(process.execPath, [join(raiz, "scripts", "preparar-nativo.mjs")], { env: { ...process.env, VITE_API_BASE: "https://api.example.invalid", VITE_SUPABASE_URL: "https://storage.example.invalid" } })
     const html = readFileSync(join(raiz, "dist-nativo", "index.html"), "utf8")
-    const script = html.match(/<script>(.*?)<\/script>/)?.[1]
-    expect(script).toBeDefined()
+    const script = readFileSync(join(raiz, "dist-nativo", "raiz.js"), "utf8")
+    expect(html).toContain(`content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; connect-src 'self' https://api.example.invalid https://storage.example.invalid; img-src 'self' data: blob: https://api.example.invalid https://storage.example.invalid; object-src 'none'; base-uri 'none'; frame-src 'none'"`)
+    expect(html).not.toMatch(/<script(?:\s[^>]*)?>\s*[^<\s]/)
+    expect(html).not.toContain("unsafe-eval")
     const replaceState = vi.fn()
     runInNewContext(script ?? "", { location: { pathname: "/" }, history: { replaceState } })
     expect(replaceState).toHaveBeenCalledWith(null, "", "/app/")
