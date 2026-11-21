@@ -5,9 +5,11 @@ import {
   comecaArrasto,
   deslocamentoVisivel,
   duracaoDaAbertura,
+  duracaoDoFechamento,
   duracaoDoRetorno,
   fechaAoSoltar,
   GESTO_DA_FOLHA,
+  transicaoDoFechamento,
   transicaoDoRetorno,
 } from "../src/pecas/gesto-da-folha"
 
@@ -24,6 +26,17 @@ describe("Folha — arrasto", () => {
   it("o arrasto longo fecha", () => {
     expect(fechaAoSoltar(97, 0)).toBe(true)
     expect(fechaAoSoltar(200, 0)).toBe(true)
+  })
+
+  it("o fechamento por arrasto desce do lugar atual, sem voltar ao topo", () => {
+    expect(duracaoDoFechamento(false)).toBe(GESTO_DA_FOLHA.duracaoDoFechamento)
+    const transicao = transicaoDoFechamento(false)
+    expect(transicao).toContain(`${GESTO_DA_FOLHA.duracaoDoFechamento}ms`)
+    expect(transicao).toContain("transform")
+    expect(transicao).toContain("opacity")
+    expect(transicao).toContain(GESTO_DA_FOLHA.curva)
+    expect(duracaoDoFechamento(true)).toBe(0)
+    expect(transicaoDoFechamento(true)).toBe("none")
   })
 
   it("um gesto curto e rápido também fecha; um curto e lento, não", () => {

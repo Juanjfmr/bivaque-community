@@ -66,6 +66,21 @@ export function duracaoDoRetorno(reduzido: boolean): number {
   return reduzido ? 0 : GESTO_DA_FOLHA.duracaoDoRetorno
 }
 
+/** Quanto a saída do arrasto leva para descer até sumir (0 = na hora). */
+export function duracaoDoFechamento(reduzido: boolean): number {
+  return reduzido ? 0 : GESTO_DA_FOLHA.duracaoDoFechamento
+}
+
+/**
+ * A saída depois de passar do limite: desce do lugar em que o dedo deixou a
+ * folha, sem voltar ao topo antes de desmontar.
+ */
+export function transicaoDoFechamento(reduzido: boolean): string {
+  const duracao = duracaoDoFechamento(reduzido)
+  if (duracao === 0) return "none"
+  return `transform ${duracao}ms ${GESTO_DA_FOLHA.curva}, opacity ${duracao}ms ${GESTO_DA_FOLHA.curva}`
+}
+
 export function transicaoDoRetorno(reduzido: boolean): string {
   const duracao = duracaoDoRetorno(reduzido)
   if (duracao === 0) return "none"

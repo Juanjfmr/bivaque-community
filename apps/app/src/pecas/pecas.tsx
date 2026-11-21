@@ -20,7 +20,9 @@ import {
   comecaArrasto,
   deslocamentoVisivel,
   duracaoDaAbertura,
+  duracaoDoFechamento,
   fechaAoSoltar,
+  transicaoDoFechamento,
   transicaoDoRetorno,
 } from "./gesto-da-folha"
 import "./pecas.css"
@@ -777,6 +779,15 @@ export function Folha({
     capturado: boolean
   } | null>(null)
   const reduzido = useMovimentoReduzido()
+  // O fechamento por arrasto termina depois da animação de saída; sair da tela
+  // antes disso não pode deixar um `aoFechar` atrasado na fila.
+  const saida = useRef<number | null>(null)
+  useEffect(
+    () => () => {
+      if (saida.current !== null) window.clearTimeout(saida.current)
+    },
+    [],
+  )
 
   const deslocar = (deslocamento: number) => {
     const folha = caixa.current
@@ -788,8 +799,22 @@ export function Folha({
     inicio.current = null
     const folha = caixa.current
     if (fechaAoSoltar(deslocamento, velocidade)) {
-      if (folha !== null) folha.style.transform = ""
-      aoFechar()
+      if (folha === null) {
+        aoFechar()
+        return
+      }
+      // A saída parte da posição atual e desce até sumir; só então a caixa
+      // desmonta. Voltar ao topo antes de fechar dava um salto para cima.
+      const duracao = duracaoDoFechamento(reduzido)
+      folha.style.transition = transicaoDoFechamento(reduzido)
+      folha.style.transform = "translateY(100%)"
+      folha.style.opacity = "0"
+      if (duracao === 0) {
+        aoFechar()
+        return
+      }
+      if (saida.current !== null) window.clearTimeout(saida.current)
+      saida.current = window.setTimeout(aoFechar, duracao)
       return
     }
     if (folha !== null) {
