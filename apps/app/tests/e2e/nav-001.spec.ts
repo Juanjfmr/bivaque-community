@@ -7,6 +7,7 @@ import {
   esperarCaminho,
   esperarRolagem,
   rolagemReal,
+  simularGuia,
   tituloDaTela,
 } from "./apoio"
 import { simularInicio } from "./inicio-ajuda"
@@ -95,6 +96,25 @@ for (const tema of ["light", "dark"] as const) {
     })
   })
 }
+
+/**
+ * H4 do lote: a Folha aberta por estado local (Sugerir lugar) não tem
+ * `DialogTrigger`, e o Radix não tem a quem devolver o foco. Sem o registro de
+ * quem abriu, o foco ficava no body depois do Esc.
+ */
+test("fechar Sugerir um lugar pelo Esc devolve o foco ao botão que abriu", async ({ page }) => {
+  await simularGuia(page)
+  await page.goto("/app/guia")
+
+  const abrir = page.locator('[data-acao="sugerir-lugar"]')
+  await abrir.focus()
+  await abrir.press("Enter")
+  await expect(page.locator("#sugestao-nome")).toBeFocused()
+
+  await page.keyboard.press("Escape")
+  await expect(page.getByRole("dialog")).toHaveCount(0)
+  await expect(abrir).toBeFocused()
+})
 
 /** Alfa do fundo pintado: 1 é opaco, 0 deixa o conteúdo da página vazar. */
 function alfaDoFundo(page: Page, seletor: string): Promise<number> {

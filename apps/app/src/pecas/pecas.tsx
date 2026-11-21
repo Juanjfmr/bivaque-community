@@ -767,6 +767,10 @@ export function Folha({
   children: ReactNode
 }) {
   const caixa = useRef<HTMLDivElement>(null)
+  // Quem abriu a Folha: o Radix devolve o foco ao gatilho, e a Folha não tem
+  // `DialogTrigger` — sem isto, SugerirLugar (aberta por estado local) perde o
+  // foco no fechamento.
+  const quemAbriu = useRef<HTMLElement | null>(null)
   const inicio = useRef<{
     y: number
     quando: number
@@ -863,9 +867,21 @@ export function Folha({
         }
         {...(fundoProps === undefined ? {} : { overlayProps: fundoProps })}
         onOpenAutoFocus={(evento) => {
+          // Antes de o Radix mover o foco: aqui ainda é quem abriu.
+          const ativo = document.activeElement
+          quemAbriu.current = ativo instanceof HTMLElement ? ativo : null
           if (focoInicial === undefined) return
           const alvo = caixa.current?.querySelector<HTMLElement>(focoInicial)
           if (!alvo) return
+          evento.preventDefault()
+          alvo.focus()
+        }}
+        onCloseAutoFocus={(evento) => {
+          // Sobreposição de histórico: a volta da entrada já devolve o foco.
+          if (sobreposicao !== undefined) return
+          const alvo = quemAbriu.current
+          quemAbriu.current = null
+          if (alvo === null || alvo === document.body || !alvo.isConnected) return
           evento.preventDefault()
           alvo.focus()
         }}
