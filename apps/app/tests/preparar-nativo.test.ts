@@ -15,11 +15,15 @@ it("pula o build nativo quando as duas origens estão ausentes", () => {
       resolve("scripts/preparar-nativo.mjs"),
       join(raiz, "scripts", "preparar-nativo.mjs"),
     )
-    const resultado = execFileSync(process.execPath, [join(raiz, "scripts", "preparar-nativo.mjs")], {
-      cwd: raiz,
-      env: { ...process.env, VITE_API_BASE: "", VITE_SUPABASE_URL: "" },
-      encoding: "utf8",
-    })
+    const resultado = execFileSync(
+      process.execPath,
+      [join(raiz, "scripts", "preparar-nativo.mjs")],
+      {
+        cwd: raiz,
+        env: { ...process.env, VITE_API_BASE: "", VITE_SUPABASE_URL: "" },
+        encoding: "utf8",
+      },
+    )
     expect(resultado).toContain("Build nativo pulado")
     expect(() => readFileSync(join(raiz, "dist-nativo", "antigo"))).toThrow()
   } finally {
@@ -38,7 +42,11 @@ it("falha se apenas uma origem está configurada", () => {
     expect(() =>
       execFileSync(process.execPath, [join(raiz, "scripts", "preparar-nativo.mjs")], {
         cwd: raiz,
-        env: { ...process.env, VITE_API_BASE: "https://api.example.invalid", VITE_SUPABASE_URL: "" },
+        env: {
+          ...process.env,
+          VITE_API_BASE: "https://api.example.invalid",
+          VITE_SUPABASE_URL: "",
+        },
         encoding: "utf8",
       }),
     ).toThrow(/Configure VITE_SUPABASE_URL com uma URL absoluta para o build nativo/)
