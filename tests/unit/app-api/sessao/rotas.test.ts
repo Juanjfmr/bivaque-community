@@ -55,7 +55,7 @@ describe.each(rotas)("sessao/$nome", ({ nome, post, options, corpo }) => {
       }),
     )
   })
-  it("recusa modo, origens, cookie e cabe?alho inv?lidos antes do limitador", async () => {
+  it("recusa modo, origens, cookie e cabeçalho inválidos antes do limitador", async () => {
     for (const headers of [
       { "x-bivaque-cliente": "web" },
       { origin: "http://localhost:3000" },
@@ -110,7 +110,7 @@ describe.each(rotas)("sessao/$nome", ({ nome, post, options, corpo }) => {
     expect(resposta.status).toBe(401)
     expect(await resposta.json()).toEqual({ erro: "credencial-recusada" })
   })
-  it.each([429, 500, 503])("trata falha transit?ria %s como 503", async (status) => {
+  it.each([429, 500, 503])("trata falha transitória %s como 503", async (status) => {
     chamada.mockResolvedValueOnce(new Response(null, { status }))
     expect((await post(pedido(nome, corpo))).status).toBe(503)
   })
@@ -123,7 +123,7 @@ describe.each(rotas)("sessao/$nome", ({ nome, post, options, corpo }) => {
   })
 })
 
-it("recusa verificador PKCE inv?lido antes do limitador", async () => {
+it("recusa verificador PKCE inválido antes do limitador", async () => {
   vi.clearAllMocks()
   expect((await token(pedido("token", { code: "codigo", code_verifier: "curto" }))).status).toBe(
     400,
@@ -131,7 +131,7 @@ it("recusa verificador PKCE inv?lido antes do limitador", async () => {
   expect(limite).not.toHaveBeenCalled()
 })
 
-it("envia o verificador PKCE e recusa verificador errado ou c?digo reutilizado", async () => {
+it("envia o verificador PKCE e recusa verificador errado ou código reutilizado", async () => {
   limite.mockResolvedValue("liberado")
   vi.stubGlobal("fetch", chamada)
   vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "http://localhost:54321")

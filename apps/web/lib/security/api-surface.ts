@@ -390,12 +390,12 @@ const PORTA_SEM_SESSAO: readonly Linha[] = [
   [
     "/api/app/sessao/token",
     "trocarSessao(",
-    publica("O c?digo PKCE ? a credencial da troca nativa."),
+    publica("O código PKCE é a credencial da troca nativa."),
   ],
   [
     "/api/app/sessao/renovar",
     "trocarSessao(",
-    publica("O token de renova??o ? a credencial da sess?o nativa."),
+    publica("O token de renovação é a credencial da sessão nativa."),
   ],
   [
     "/api/app/entry/invite/preview",

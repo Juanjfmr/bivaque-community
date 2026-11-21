@@ -687,7 +687,7 @@ describe("entrada nativa", () => {
     ).toBe(200)
   })
 
-  it("devolve somente o par sem cookies e usa cliente sem persist?ncia", async () => {
+  it("devolve somente o par sem cookies e usa cliente sem persistência", async () => {
     mockVerificarOtp.mockResolvedValue({
       data: {
         session: {
@@ -721,7 +721,7 @@ describe("entrada nativa", () => {
     )
   })
 
-  it("recusa origem web e cookie de sess?o antes de verificar", async () => {
+  it("recusa origem web e cookie de sessão antes de verificar", async () => {
     expect((await VERIFICAR(requisicao(URL_VERIFICACAO, "POST", { extras, corpo }))).status).toBe(
       403,
     )
