@@ -3,9 +3,9 @@
  *
  * A folha segue o dedo enquanto se arrasta para baixo, volta ao lugar quando o
  * arrasto é curto e fecha quando passa do limite ou quando o gesto é rápido.
- * Os tempos e a curva são os do ANIMATION.md: a entrada é a de sempre (280 ms);
- * a volta assenta em `slow` (240 ms), e o fechamento usa ~64% da entrada
- * (180 ms), porque sair é mais rápido que entrar.
+ * Os tempos e a curva são os do ANIMATION.md: a entrada usa `expand` (480 ms);
+ * o painel do Criar, `morph` (420 ms); a volta assenta em `slow` (240 ms), e o
+ * fechamento usa 180 ms, porque sair é mais rápido que entrar.
  *
  * Movimento reduzido não impede o gesto: o que acaba é o deslocamento animado.
  * A abertura vira opacidade de 120 ms e a volta é imediata, sem deslizar.
@@ -17,7 +17,10 @@ export const GESTO_DA_FOLHA = {
   /** Um gesto curto, mas rápido, também fecha. */
   limiteComVelocidade: 24,
   velocidadeParaFechar: 0.5,
-  duracaoDaEntrada: 280,
+  /** `expand`: a folha que sobe (ANIMATION §2, 450–500 ms). */
+  duracaoDaEntrada: 480,
+  /** `morph`: o contêiner que muda de forma — o Criar em painel (380–420 ms). */
+  duracaoDoMorfo: 420,
   duracaoDoRetorno: 240,
   duracaoDoFechamento: 180,
   duracaoReduzida: 120,
@@ -50,8 +53,12 @@ export function animacaoDaFolha(reduzido: boolean): AnimacaoDaFolha {
   return reduzido ? "esmaece" : "desliza"
 }
 
-export function duracaoDaAbertura(reduzido: boolean): number {
-  return reduzido ? GESTO_DA_FOLHA.duracaoReduzida : GESTO_DA_FOLHA.duracaoDaEntrada
+export function duracaoDaAbertura(
+  reduzido: boolean,
+  modo: "folha" | "painel" = "folha",
+): number {
+  if (reduzido) return GESTO_DA_FOLHA.duracaoReduzida
+  return modo === "painel" ? GESTO_DA_FOLHA.duracaoDoMorfo : GESTO_DA_FOLHA.duracaoDaEntrada
 }
 
 /** Quanto o arrasto cancelado leva para voltar ao lugar (0 = na hora). */

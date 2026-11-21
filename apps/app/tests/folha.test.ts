@@ -53,8 +53,13 @@ describe("Folha — movimento reduzido", () => {
     expect(transicaoDoRetorno(true)).toBe("none")
   })
 
-  it("sem o pedido, a Folha desliza com a entrada de sempre", () => {
+  it("sem o pedido, a Folha desliza com a entrada de expansão da tabela", () => {
     expect(animacaoDaFolha(false)).toBe("desliza")
-    expect(duracaoDaAbertura(false)).toBe(GESTO_DA_FOLHA.duracaoDaEntrada)
+    // `expand` (folha/painel que abre) é 450–500 ms no ANIMATION §2.
+    expect(duracaoDaAbertura(false)).toBeGreaterThanOrEqual(450)
+    expect(duracaoDaAbertura(false)).toBeLessThanOrEqual(500)
+    // O Criar em painel é `morph` (380–420 ms): muda de forma, não sobe.
+    expect(duracaoDaAbertura(false, "painel")).toBeGreaterThanOrEqual(380)
+    expect(duracaoDaAbertura(false, "painel")).toBeLessThanOrEqual(420)
   })
 })

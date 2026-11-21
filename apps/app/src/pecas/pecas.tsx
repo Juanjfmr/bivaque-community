@@ -862,7 +862,7 @@ export function Folha({
         data-sobreposicao={sobreposicao}
         style={
           {
-            "--pc-folha-entrada": `${duracaoDaAbertura(reduzido)}ms`,
+            "--pc-folha-entrada": `${duracaoDaAbertura(reduzido, modo)}ms`,
           } as CSSProperties
         }
         {...(fundoProps === undefined ? {} : { overlayProps: fundoProps })}
