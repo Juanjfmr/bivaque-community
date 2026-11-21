@@ -1,4 +1,4 @@
-import { scrubEvent, scrubPii } from "@bivaque/domain"
+import { scrubCredentialUrls, scrubEvent, scrubPii } from "@bivaque/domain"
 import { describe, expect, it } from "vitest"
 
 describe("PII scrubbing (D1 Task 6)", () => {
@@ -91,5 +91,16 @@ describe("PII scrubbing (D1 Task 6)", () => {
       url: "https://example.test/api/outro",
       data: { code: "erro" },
     })
+  })
+})
+
+describe("tokens no fragmento da URL", () => {
+  it("apaga access_token e refresh_token depois do #", () => {
+    const saida = scrubCredentialUrls(
+      "bivaque://auth-callback#access_token=aaa.bbb.ccc&refresh_token=r0&expires_in=3600",
+    )
+    expect(saida).not.toContain("aaa.bbb.ccc")
+    expect(saida).not.toContain("r0&")
+    expect(saida).toContain("expires_in=3600")
   })
 })
