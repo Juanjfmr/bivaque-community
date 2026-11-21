@@ -80,10 +80,10 @@ const manterBusca: SearchMiddleware<Record<string, unknown>> = (ctx) => {
 }
 
 const BUSCA_PERSISTENTE = { middlewares: [manterBusca] }
+// Só rotas vivas: os endereços antigos do Mercado (desapegos, imóveis, catálogo)
+// não estão aqui porque não são páginas — são redirecionamento, declarados com
+// `search: BUSCA_PERSISTENTE` nos próprios (`enderecosAntigos`).
 const ROTAS_COM_BUSCA = new Set([
-  "desapegos",
-  "imoveis",
-  "catalogo",
   "mercado",
   "busca",
   "guia",
@@ -204,8 +204,9 @@ const enderecosAntigos = Object.entries(ENDERECOS_ANTIGOS_DO_MERCADO).flatMap(([
 })
 
 // O Mercado tem um endereço só (NAV-002): a aba (desapegos, imóveis, negócios)
-// e os filtros vivem na busca. Negócios é a tela do Mercado da cidade, que
-// continua em `/negocios`; a tela resolve `?aba=negocios` em replace.
+// e os filtros vivem na busca. Negócios é a tela do Mercado da cidade: com
+// `?aba=negocios` o próprio Mercado a renderiza, e `/negocios` continua como
+// está — sem salto e sem trocar o endereço.
 const mercado = createRoute({
   getParentRoute: () => raiz,
   path: "/mercado",
