@@ -1,6 +1,6 @@
 import { Capacitor } from "@capacitor/core"
-import { aceitarPar } from "@/lib/nativo/sessao"
 import { requisitar } from "@/lib/api/cliente"
+import { aceitarPar } from "@/lib/nativo/sessao"
 
 /**
  * Cliente do app para as rotas `/api/app/entry/*` (LAN-F01).
@@ -64,7 +64,7 @@ function texto(corpo: Record<string, unknown>, chave: string): string | null {
 export type RespostaDeProgresso = Readonly<{
   autenticado: boolean
   via?: string
-  provedor?: "google" | "email"
+  provedor?: "google" | "apple" | "email"
   progresso?: unknown
 }>
 
@@ -80,7 +80,9 @@ export async function lerProgresso(): Promise<RespostaDeProgresso> {
   return {
     autenticado: resposta.corpo["autenticado"] === true,
     ...(typeof resposta.corpo["via"] === "string" ? { via: resposta.corpo["via"] } : {}),
-    ...(resposta.corpo["provedor"] === "google" || resposta.corpo["provedor"] === "email"
+    ...(resposta.corpo["provedor"] === "google" ||
+    resposta.corpo["provedor"] === "apple" ||
+    resposta.corpo["provedor"] === "email"
       ? { provedor: resposta.corpo["provedor"] }
       : {}),
     progresso: resposta.corpo["progresso"],

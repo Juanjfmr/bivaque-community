@@ -15,30 +15,43 @@ export async function receberAutenticacao(link: string): Promise<void> {
   }
   if (url.protocol !== "bivaque:" || url.host !== "auth-callback" || processando) return
   processando = true
+  let trocou = false
   try {
     const fluxo = await lerPkce()
-    await apagarPkce().catch(() => undefined)
+    await apagarPkce()
     const code = url.searchParams.get("code")
-    if (fluxo && Date.now() - fluxo.criadoEm >= 0 && Date.now() - fluxo.criadoEm < 600_000 && code && !url.searchParams.has("error")) {
+    if (
+      fluxo &&
+      Date.now() - fluxo.criadoEm >= 0 &&
+      Date.now() - fluxo.criadoEm < 600_000 &&
+      code &&
+      !url.searchParams.has("error")
+    ) {
       const resposta = await requisitar("/api/app/sessao/token", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ code, code_verifier: fluxo.verificador }),
       })
-      if (resposta.ok) await aceitarPar(await resposta.json())
+      if (resposta.ok) {
+        await aceitarPar(await resposta.json())
+        trocou = true
+      }
     }
   } catch {
     // A entrada permite tentar novamente quando a troca falha.
   } finally {
     await Browser.close().catch(() => undefined)
     window.history.replaceState(null, "", "/app/entrar")
-    window.location.reload()
+    window.dispatchEvent(new PopStateEvent("popstate"))
+    if (trocou) window.dispatchEvent(new Event("bivaque:autenticacao"))
     processando = false
   }
 }
 
 export async function ouvirAutenticacao(): Promise<void> {
-  await App.addListener("appUrlOpen", ({ url }) => { void receberAutenticacao(url) })
+  await App.addListener("appUrlOpen", ({ url }) => {
+    void receberAutenticacao(url)
+  })
   const inicial = await App.getLaunchUrl()
   if (inicial) await receberAutenticacao(inicial.url)
 }

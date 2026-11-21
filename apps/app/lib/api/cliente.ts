@@ -18,7 +18,7 @@
  */
 
 import { Capacitor } from "@capacitor/core"
-import { acessoAtual, origemDaApi, renovarSessao } from "@/lib/nativo/sessao"
+import { acessoAtual, acessoEmMemoria, origemDaApi, renovarSessao } from "@/lib/nativo/sessao"
 
 const enderecoInicial =
   typeof window === "undefined"
@@ -134,9 +134,13 @@ async function comRede(
 
 export async function requisitar(caminho: string, init: RequestInit = {}): Promise<Response> {
   if (!Capacitor.isNativePlatform()) return fetch(caminho, init)
-  const publica = caminho.startsWith("/api/app/entry/") || caminho.startsWith("/api/localities") || caminho === "/api/app/sessao/token"
+  const publica =
+    caminho.startsWith("/api/app/entry/") ||
+    caminho.startsWith("/api/localities") ||
+    caminho === "/api/app/sessao/token"
   const origem = origemDaApi()
-  const token = publica ? null : await acessoAtual()
+  const token =
+    publica && caminho !== "/api/app/entry/progress" ? acessoEmMemoria() : await acessoAtual()
   const fazer = (credencial: string | null) => {
     const headers = new Headers(init.headers)
     headers.set("x-bivaque-app", "bivaque-spa")

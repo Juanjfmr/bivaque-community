@@ -128,7 +128,7 @@ export function estadoDoServidor(valor: unknown): EstadoDoServidor {
 
 export type RespostaDeProgressoDoServidor = Readonly<{
   autenticado: boolean
-  provedor?: "google" | "email"
+  provedor?: "google" | "apple" | "email"
   progresso?: unknown
 }>
 
@@ -156,13 +156,12 @@ export function progressoDoServidor(resposta: RespostaDeProgressoDoServidor): Pr
   // não confia nisso (cache, resposta antiga) e confere a versão também.
   if (dados["versao"] !== VERSAO_DO_FLUXO) return inicial
   const etapa = etapaValida(dados["etapa"]) ?? "porta"
-  const doGoogle = resposta.provedor === "google"
+  const provedor =
+    resposta.provedor === "google" || resposta.provedor === "apple" ? resposta.provedor : null
   return {
     ...inicial,
     versao: VERSAO_DO_FLUXO,
-    ...(doGoogle && etapa === "porta"
-      ? { via: "google" as const, etapa: "aceite" as const }
-      : { etapa }),
+    ...(provedor && etapa === "porta" ? { via: provedor, etapa: "aceite" as const } : { etapa }),
     ...estadoDoServidor(dados["estado"]),
   }
 }

@@ -1,5 +1,5 @@
-import { Capacitor } from "@capacitor/core"
 import { Browser } from "@capacitor/browser"
+import { Capacitor } from "@capacitor/core"
 import { useEffect, useState } from "react"
 import { Icone } from "@/components/bivaque/icone"
 import { IconeGoogle } from "@/components/bivaque/icone-google"
@@ -82,8 +82,10 @@ export function Porta({ progresso, concluir, erro, avisoDoProvedor }: PropsDaEta
       setConectando(via)
       try {
         const url = await servidor.iniciarGoogle(via)
-        if (Capacitor.isNativePlatform()) await Browser.open({ url })
-        else window.location.assign(url)
+        if (Capacitor.isNativePlatform()) {
+          await Browser.open({ url })
+          setConectando(null)
+        } else window.location.assign(url)
       } catch {
         setConectando(null)
         setFalhaDoProvedor("Não foi possível abrir o Google agora. Tente de novo.")

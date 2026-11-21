@@ -8,7 +8,8 @@ vi.mock("@capacitor/app", () => ({ App: app }))
 
 import { enviar, ler } from "@/lib/api/cliente"
 import { iniciarCicloDaSessao } from "@/lib/nativo/ciclo"
-import { limparMemoria, renovarSessao } from "@/lib/nativo/sessao"
+import { aceitarPar, acessoAtual, limparMemoria, renovarSessao } from "@/lib/nativo/sessao"
+import { verificarCodigo } from "@/src/entrada/servidor"
 
 const par = () =>
   new Response(
@@ -111,4 +112,114 @@ describe("sessão nativa", () => {
     app.addListener.mock.calls[0]?.[1]({ isActive: true })
     await vi.waitFor(() => expect(buscar).toHaveBeenCalledTimes(2))
   })
+})
+
+it("tenta novamente em outra renovação após falha de rede", async () => {
+  vi.useFakeTimers()
+  vi.stubEnv("VITE_API_BASE", "https://api.example.invalid")
+  limparMemoria()
+  cofre.get.mockResolvedValue({ value: "renovacao" })
+  cofre.set.mockResolvedValue({ value: true })
+  const buscar = vi.fn().mockRejectedValue(new Error("rede"))
+  vi.stubGlobal("fetch", buscar)
+  const primeira = renovarSessao().catch(() => null)
+  await vi.runAllTimersAsync()
+  await primeira
+  await vi.advanceTimersByTimeAsync(11_000)
+  buscar.mockResolvedValue(par())
+  expect(await renovarSessao()).toBe("acesso-sintetico")
+  vi.useRealTimers()
+})
+
+it("descarta renovação concluída após a limpeza", async () => {
+  limparMemoria()
+  cofre.get.mockResolvedValue({ value: "renovacao" })
+  let resolver: (resposta: Response) => void = () => undefined
+  vi.stubGlobal(
+    "fetch",
+    vi.fn().mockImplementation(
+      () =>
+        new Promise<Response>((resolve) => {
+          resolver = resolve
+        }),
+    ),
+  )
+  const promessa = renovarSessao()
+  await vi.waitFor(() => expect(fetch).toHaveBeenCalled())
+  limparMemoria()
+  cofre.get.mockResolvedValue({ value: null })
+  resolver(par())
+  expect(await promessa).toBeNull()
+  expect(await acessoAtual()).toBeNull()
+})
+
+it("usa o acesso próximo do vencimento se a renovação falhar", async () => {
+  vi.useFakeTimers()
+  limparMemoria()
+  cofre.set.mockResolvedValue({ value: true })
+  await aceitarPar({
+    access_token: "anterior",
+    refresh_token: "renovacao",
+    expires_at: Math.floor(Date.now() / 1000) + 20,
+  })
+  vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("rede")))
+  const resultado = acessoAtual()
+  await vi.runAllTimersAsync()
+  expect(await resultado).toBe("anterior")
+  vi.useRealTimers()
+})
+
+it("guarda o par devolvido pela verificação de código nativa", async () => {
+  limparMemoria()
+  vi.stubEnv("VITE_API_BASE", "https://api.example.invalid")
+  cofre.set.mockResolvedValue({ value: true })
+  vi.stubGlobal("fetch", vi.fn().mockResolvedValue(par()))
+  expect(await verificarCodigo("pessoa@example.invalid", "123456")).toEqual({
+    estado: "autenticado",
+  })
+  expect(await acessoAtual()).toBe("acesso-sintetico")
+  expect(cofre.set).toHaveBeenCalledWith({ key: "sessao.renovacao", value: "renovacao-sintetica" })
+})
+
+it("não bloqueia pedido público por falha na renovação", async () => {
+  limparMemoria()
+  vi.stubEnv("VITE_API_BASE", "https://api.example.invalid")
+  const buscar = vi.fn().mockResolvedValue(new Response("{}"))
+  vi.stubGlobal("fetch", buscar)
+  await ler("/api/localities")
+  expect(buscar).toHaveBeenCalledTimes(1)
+  expect(String(buscar.mock.calls[0]?.[0])).toContain("/api/localities")
+})
+
+it("401 de renovação limpa e encaminha ? entrada com retorno", async () => {
+  limparMemoria()
+  vi.stubEnv("VITE_API_BASE", "https://api.example.invalid")
+  cofre.get.mockResolvedValue({ value: "renovacao" })
+  cofre.remove.mockResolvedValue({ value: true })
+  const assign = vi.fn()
+  vi.stubGlobal("window", {
+    location: { pathname: "/app/mercado", search: "?f=1", origin: "https://local.invalid", assign },
+  })
+  vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response("", { status: 401 })))
+  expect(await renovarSessao()).toBeNull()
+  expect(cofre.remove).toHaveBeenCalled()
+  expect(assign).toHaveBeenCalledWith(
+    "https://local.invalid/app/entrar?redirect=%2Fapp%2Fmercado%3Ff%3D1",
+  )
+  vi.unstubAllGlobals()
+})
+
+it("envia a sessão em memória nas rotas públicas autenticadas", async () => {
+  limparMemoria()
+  vi.stubEnv("VITE_API_BASE", "https://api.example.invalid")
+  cofre.set.mockResolvedValue({ value: true })
+  await aceitarPar({
+    access_token: "acesso",
+    refresh_token: "renovacao",
+    expires_at: Math.floor(Date.now() / 1000) + 3600,
+  })
+  const buscar = vi.fn().mockResolvedValue(new Response("{}"))
+  vi.stubGlobal("fetch", buscar)
+  await ler("/api/app/entry/progress")
+  expect(buscar.mock.calls[0]?.[1].headers.get("Authorization")).toBe("Bearer acesso")
 })

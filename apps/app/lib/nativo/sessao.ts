@@ -25,9 +25,13 @@ export function origemDaApi(): string {
 }
 
 export async function acessoAtual(): Promise<string | null> {
-  if (pendente) return pendente
+  if (pendente) return pendente.catch(() => acesso)
   if (!precisaRenovar()) return acesso
   return renovarSessao().catch(() => acesso)
+}
+
+export function acessoEmMemoria(): string | null {
+  return acesso
 }
 
 export function precisaRenovar(): boolean {
@@ -42,13 +46,17 @@ export function limparMemoria(): void {
 }
 
 export async function aceitarPar(par: unknown): Promise<void> {
-  if (typeof par !== "object" || par === null) throw new Error("resposta inv?lida")
+  if (typeof par !== "object" || par === null) throw new Error("resposta inválida")
   const dados = par as Record<string, unknown>
   if (
-    typeof dados["access_token"] !== "string" || !dados["access_token"] ||
-    typeof dados["refresh_token"] !== "string" || !dados["refresh_token"] ||
-    typeof dados["expires_at"] !== "number" || !Number.isFinite(dados["expires_at"])
-  ) throw new Error("resposta inv?lida")
+    typeof dados["access_token"] !== "string" ||
+    !dados["access_token"] ||
+    typeof dados["refresh_token"] !== "string" ||
+    !dados["refresh_token"] ||
+    typeof dados["expires_at"] !== "number" ||
+    !Number.isFinite(dados["expires_at"])
+  )
+    throw new Error("resposta inválida")
   acesso = dados["access_token"]
   renovacao = dados["refresh_token"]
   expiracao = dados["expires_at"]
@@ -60,9 +68,8 @@ export function renovarSessao(): Promise<string | null> {
   const geracaoInicial = geracao
   pendente = (async () => {
     const token = renovacao ?? (await lerRenovacao())
-    if (!token) return null
-    const inicio = respostaPendenteDesde ?? Date.now()
-    if (Date.now() - inicio >= 9000) throw new Error("renovação sem resposta")
+    if (!token || geracao !== geracaoInicial) return null
+    const inicio = Date.now()
     let espera = 250
     while (true) {
       let resposta: Response
@@ -98,12 +105,7 @@ export function renovarSessao(): Promise<string | null> {
         }
         return null
       }
-      if (resposta.status === 429 || resposta.status === 503) {
-        if (espera > 500 || Date.now() - inicio + espera >= 9000) throw new Error("indisponivel")
-        await new Promise((resolve) => setTimeout(resolve, espera))
-        espera *= 2
-        continue
-      }
+      if (resposta.status === 429 || resposta.status === 503) throw new Error("indisponivel")
       if (!resposta.ok) throw new Error("renovação indisponível")
       const par: unknown = await resposta.json()
       if (geracao !== geracaoInicial) return null

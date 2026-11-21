@@ -3,7 +3,8 @@ import { cp, mkdir, readFile, rm, writeFile } from "node:fs/promises"
 function origem(chave) {
   try {
     const url = new URL(process.env[chave])
-    if (!["http:", "https:"].includes(url.protocol) || url.username || url.password) throw new Error()
+    if (!["http:", "https:"].includes(url.protocol) || url.username || url.password)
+      throw new Error()
     return url.origin
   } catch {
     throw new Error(`Configure ${chave} com uma URL absoluta para o build nativo`)
@@ -20,5 +21,11 @@ await cp(new URL("../dist/", import.meta.url), new URL("app/", destino), { recur
 const pagina = await readFile(new URL("../dist/index.html", import.meta.url), "utf8")
 const meta = `<meta http-equiv="Content-Security-Policy" content="${politica}">`
 await writeFile(new URL("app/index.html", destino), pagina.replace("<head>", `<head>${meta}`))
-await writeFile(new URL("raiz.js", destino), 'if(location.pathname==="/")history.replaceState(null,"","/app/")\n')
-await writeFile(new URL("index.html", destino), pagina.replace("<head>", `<head>${meta}<script src="/raiz.js"></script>`))
+await writeFile(
+  new URL("raiz.js", destino),
+  'if(location.pathname==="/")history.replaceState(null,"","/app/")\n',
+)
+await writeFile(
+  new URL("index.html", destino),
+  pagina.replace("<head>", `<head>${meta}<script src="/raiz.js"></script>`),
+)
