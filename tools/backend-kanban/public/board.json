@@ -10348,7 +10348,8 @@
       "blockers": [],
       "proof": [
         "20/11: aberto por decisão do dono (opção 1 do #309: porta provisória no app e nenhuma tela antiga sobrevive). Contrato TROCA-003 pronto para o Codex; começa depois do merge do TROCA-002 (#309).",
-        "20/11: escopo revisto. A1 (6489eb3e, RPCs de convite de comunidade) e A2 (2abddb89, rotas) revertidas em 682e2a78 e 1fbd5a65 por contrariarem o redesenho §3.4; migration nunca chegou à main. Contrato TROCA-003 reescrito."
+        "20/11: escopo revisto. A1 (6489eb3e, RPCs de convite de comunidade) e A2 (2abddb89, rotas) revertidas em 682e2a78 e 1fbd5a65 por contrariarem o redesenho §3.4; migration nunca chegou à main. Contrato TROCA-003 reescrito.",
+        "21/11: correção c698ccad7 no #314: regras e fixar só para o dono, remover membro pela API não apaga o dono (neq role owner, teste unitário), aviso abre com o nível salvo, falha ao ler membros com Tentar de novo. Local: typecheck, vitest grupos-admin e grupos (8), Playwright grupos-administracao (102) verdes. Pendências no card GRUPOS-ADMIN-RESSALVAS."
       ],
       "updatedAt": "2026-11-20",
       "sourceRevision": "1bd9c7f8",
@@ -10549,6 +10550,41 @@
       "proof": [
         "21/11: .visual/troca-003/revisao-visual-3.md (H2 e H4), capturas administrar|grupo-375|768|1440."
       ]
+    },
+    {
+      "id": "GRUPOS-ADMIN-RESSALVAS",
+      "title": "Administração de grupos no app: prova contra banco real e ressalvas da revisão do TROCA-003",
+      "phase": "Lançamento",
+      "priority": "P2",
+      "category": "frontend",
+      "status": "next",
+      "description": "Restos da revisão de código, da auditoria de segurança e da 4ª revisão visual do PR #314 que ficaram fora do lote. O E2E da administração no app usa API simulada; o ciclo real (aprovar pedido, salvar regras relidas) contra a pilha com seed saiu com group-admin-cycle.spec.ts e precisa voltar como E2E do app.",
+      "checklist": [
+        "[ ] E2E do app contra a pilha com seed: aprovar pedido grava approved; salvar regras é relido após recarregar",
+        "[ ] Recusa de remover/recusar por não moderador responde 403 (hoje 404), igual a aprovar",
+        "[ ] membros/route.ts usa administra() em vez de repetir o papel",
+        "[ ] Moderador remove co-moderador quando o banco permite; etiqueta Administrador só para o dono",
+        "[ ] Guarda equivalente na policy group_memberships_delete_moderator contra apagar o dono (migration nova, R3)",
+        "[ ] Server action órfã (shell)/communities/community-invite-actions.ts removida",
+        "[ ] scripts/visual/capture.mjs e scripts/port/compare-groups.mjs apontam para /app/grupo/:id",
+        "[ ] Link de convite sem window.location.origin quando o app rodar no Capacitor",
+        "[ ] Visual: filtros cortados a 375/768, largura de coluna igual entre telas, níveis de título, estado vazio fora de card",
+        "[ ] grupo-coluna.css não redefine tipografia de peça nem --muted-foreground"
+      ],
+      "dependencies": [],
+      "links": [
+        "PR #314",
+        ".visual/troca-003/revisao-codigo.md",
+        ".visual/troca-003/auditoria-seguranca.md",
+        ".visual/troca-003/revisao-visual-4.md"
+      ],
+      "tests": [],
+      "blockers": [],
+      "proof": [
+        "21/11: aberto a partir das revisões do #314 (código: PASS-COM-RESSALVA; segurança: LIBERA COM RESSALVAS; visual 4: PASS COM RESSALVAS). Os dois achados altos e dois médios foram corrigidos no próprio #314 (c698ccad7)."
+      ],
+      "updatedAt": "2026-11-21",
+      "sourceRevision": "c698ccad7"
     }
   ],
   "launch": {
