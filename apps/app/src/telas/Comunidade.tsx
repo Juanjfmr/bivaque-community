@@ -185,10 +185,6 @@ export function Comunidade() {
         }
       />
 
-      <a href="/gerir-comunidades" className="text-sm text-(--primary) underline">
-        Gerenciar comunidades
-      </a>
-
       <div className="flex items-center justify-between gap-2">
         <ChipsDeFiltro
           itens={ABAS}

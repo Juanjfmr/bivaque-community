@@ -12,6 +12,9 @@ import { routeFromFile } from "../../e2e/helpers/crawl-model"
 const ID = "41000000-0000-4000-8000-000000000051"
 const ORIGEM = "https://bivaque.example.invalid"
 const TROCADAS = [
+  [`/communities/${ID}/invite`, "/app/comunidade"],
+  ["/invite/token", "/app/comunidade"],
+  ["/gerir-comunidades", "/app/comunidade"],
   ["/communities", "/app/comunidade"],
   [`/communities/${ID}?fonte=teste`, "/app/comunidade?fonte=teste"],
   ["/community", "/app/comunidade"],
@@ -289,11 +292,10 @@ describe("LAN-TROCA fase 1", () => {
     expect(sobras).toEqual([])
   })
 
-  it("preserva convites, indicação de prestador, detalhe de grupo e console do dono", async () => {
-    expect((await resolver(`/communities/${ID}/invite`)).status).toBe(200)
-    expect((await resolver("/invite/token")).status).toBe(200)
-    expect(existsSync(join(shell, "communities", "[id]", "invite", "page.tsx"))).toBe(true)
-    expect(existsSync(join(shell, "invite", "[token]", "page.tsx"))).toBe(true)
+  it("remove as telas da vila e preserva indica??o, grupo e console do dono", async () => {
+    for (const rota of ["communities/[id]/invite", "invite", "gerir-comunidades"]) {
+      expect(existsSync(join(shell, rota))).toBe(false)
+    }
     for (const rota of ["communities", "communities/[id]"]) {
       expect(existsSync(join(shell, rota, "page.tsx"))).toBe(false)
     }

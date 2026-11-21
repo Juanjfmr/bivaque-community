@@ -191,6 +191,9 @@ const nextConfig: NextConfig = {
       },
       ...(
         [
+          ["/communities/:id/invite", "/app/comunidade"],
+          ["/invite/:token", "/app/comunidade"],
+          ["/gerir-comunidades", "/app/comunidade"],
           ["/communities", "/app/comunidade"],
           ["/communities/:id", "/app/comunidade"],
           ["/community", "/app/comunidade"],
