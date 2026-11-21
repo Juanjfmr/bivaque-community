@@ -140,6 +140,9 @@ test.describe("F07 — Meu negócio", () => {
     await page.getByRole("button", { name: "Salvar alterações" }).click()
     await expect(page.getByText("Sua página foi salva.")).toBeVisible()
 
+    // TROCA-005: catálogo e fotos vivem na aba Catálogo; a ficha fica na Ficha.
+    await page.getByRole("button", { name: "Catálogo", exact: true }).click()
+    await expect(page).toHaveURL(/\/app\/meu-negocio\?aba=catalogo$/)
     await page.getByLabel("Título do item").fill("Orientação para mudança")
     await page.getByRole("button", { name: "Publicar item", exact: true }).click()
     await expect(page.getByText("Serviço publicado.")).toBeVisible()
@@ -161,6 +164,8 @@ test.describe("F07 — Meu negócio", () => {
     await rolarAte(page, "fim")
     await capturar(page, testInfo, "populado-02-gestao")
 
+    await page.getByRole("button", { name: "Ficha", exact: true }).click()
+    await expect(page).toHaveURL(/\/app\/meu-negocio$/)
     await page.getByRole("button", { name: "Ver página pública" }).click()
     await expect(page).toHaveURL(new RegExp(`/app/negocio/${FICHA}$`))
     await expect(page.getByRole("heading", { level: 1, name: NEGOCIO })).toBeVisible()

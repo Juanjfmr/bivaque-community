@@ -110,7 +110,7 @@ function resumo(valor: unknown): ResumoDoNegocio {
     descricao: opcional(corpo, "descricao"),
   }
 }
-function pedidoDe(valor: unknown): PedidoDeServico {
+export function pedidoDe(valor: unknown): PedidoDeServico {
   const corpo = registro(valor)
   const situacao = corpo["situacao"]
   if (

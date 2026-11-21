@@ -93,6 +93,10 @@ const ROTAS_COM_BUSCA = new Set([
   // F07 (RUN-177): `/app/pedidos/novo?destino=<negocio>` é a folha do pedido
   // aberta por URL. Sem a busca declarada o destino se perderia na recarga.
   "pedido-novo",
+  // TROCA-005: a aba de Meu negócio e a seção da Ajuda vivem na URL; a busca
+  // precisa sobreviver às regravações de estado da entrada.
+  "meu-negocio",
+  "ajuda",
 ])
 
 /**
