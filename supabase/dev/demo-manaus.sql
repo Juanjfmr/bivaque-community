@@ -29,6 +29,12 @@
 
 begin;
 
+-- O seed do CLI escreve como supabase_admin: o papel postgres local tem
+-- BYPASSRLS, mas só SELECT em auth.users. A demo cria contas no Auth, então
+-- sobe para o mesmo papel do seed dentro desta transação, sem mexer em grant
+-- nenhum. `set local` volta sozinho no commit.
+set local role supabase_admin;
+
 -- A data de ocorrência do RSVP é derivada de starts_at pelo gatilho; fixar o
 -- fuso da sessão faz a derivação bater com o recorte UTC que o app usa.
 set local timezone = 'UTC';

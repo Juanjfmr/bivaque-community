@@ -37,10 +37,13 @@ const inspecao = spawnSync(
     "{{json .State}}|{{json .Config.Labels}}",
     CONTAINER,
   ],
-  { encoding: "utf8" },
+  { encoding: "utf8", timeout: 20_000 },
 )
 
-if (inspecao.error) recusar(`docker indisponível (${inspecao.error.message})`)
+if (inspecao.error) {
+  const detalhe = inspecao.error.message ?? String(inspecao.error)
+  recusar(`docker indisponível (${detalhe})`)
+}
 if (inspecao.status !== 0) {
   recusar(`o contêiner ${CONTAINER} não existe — suba a stack local antes (supabase start)`)
 }
