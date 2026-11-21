@@ -170,6 +170,19 @@ for (const tema of ["light", "dark"] as const) {
       await expect(page.locator('[data-topo="barra"]')).toHaveAttribute("data-rota", "inicio")
     })
 
+    test("o endereço antigo redireciona sem criar entrada extra no histórico", async ({ page }) => {
+      await servirImoveis(page)
+      await page.goto("/app/inicio")
+      await page.goto("/app/imoveis?quartos=2")
+      await expect(subAbaAtiva(page)).toHaveAttribute("data-subaba", "imoveis")
+
+      // Se o redirecionamento empilhasse, o Voltar cairia nele de novo e o
+      // endereço voltaria ao Mercado.
+      await page.goBack()
+      await esperarCaminho(page, "/app/inicio")
+      await expect(page.locator('[data-topo="barra"]')).toHaveAttribute("data-rota", "inicio")
+    })
+
     test("a aba Negócios abre o Mercado da cidade no mesmo endereço", async ({ page }) => {
       await servirImoveis(page)
       await simularNegocios(page)
