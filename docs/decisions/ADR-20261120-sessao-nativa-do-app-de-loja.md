@@ -299,3 +299,9 @@ pública do proxy (ADR-20261110), e tem teste positivo e negativo.
   sessão em dois lugares.
 - **ASWebAuthenticationSession no iOS.** Recusada agora: exigiria um segundo plugin de terceiros. Com PKCE
   S256, o SFSafariViewController basta.
+
+### Emenda de 21/11 — escolha do cofre (revisão pendente)
+
+O lote LOJA-003 propõe `capacitor-secure-storage-plugin` 0.14.2, de código aberto (MIT),
+com peer `@capacitor/core >=8.0.0`, para usar Keystore no Android e Keychain no iOS.
+A integração e a escolha aguardam revisão independente e parecer de segurança antes do aceite.

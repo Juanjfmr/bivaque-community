@@ -1,5 +1,10 @@
 [
   {
+    "package": "capacitor-secure-storage-plugin",
+    "version": "0.14.2",
+    "publishedAt": "2026-11-14T00:06:31.924Z"
+  },
+  {
     "package": "@capacitor/ios",
     "version": "8.5.3",
     "publishedAt": "2026-10-07T14:19:29.006Z"
