@@ -4,6 +4,12 @@ import { Botao } from "@/components/bivaque/botao"
 import { CabecaDePagina } from "@/components/bivaque/cabeca-de-pagina"
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog"
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import {
   buscarGrupo,
   excluirGrupo,
   type GrupoReal,
@@ -142,12 +148,20 @@ export function AdministrarGrupo() {
                   </BotaoPeca>
                 ) : null}
                 {grupo.dono && m.papel !== "owner" ? (
-                  <BotaoPeca
-                    tom="contorno"
-                    onClick={() => setConfirmacao({ tipo: "transferir", membro: m })}
-                  >
-                    Passar a administração
-                  </BotaoPeca>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <BotaoPeca tom="texto" aria-label={`Mais ações para ${m.nome || "Membro"}`}>
+                        ⋯
+                      </BotaoPeca>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent>
+                      <DropdownMenuItem
+                        onSelect={() => setConfirmacao({ tipo: "transferir", membro: m })}
+                      >
+                        Passar a administração
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 ) : null}
               </div>
             </div>
@@ -169,6 +183,7 @@ export function AdministrarGrupo() {
         </p>
         <BotaoPeca
           tom="principal"
+          className="w-full max-w-80"
           disabled={ocupado || regras === grupo.regras}
           aria-disabled={ocupado || regras === grupo.regras}
           onClick={() => {

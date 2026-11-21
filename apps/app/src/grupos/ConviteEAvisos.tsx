@@ -29,7 +29,7 @@ export function ConviteEAvisos({ grupo }: { grupo: GrupoReal }) {
   }
   return (
     <section className="grid gap-2" aria-label="Convite e avisos">
-      <Botao tom="contorno" onClick={() => void convidar()}>
+      <Botao tom="contorno" compacto className="justify-self-start" onClick={() => void convidar()}>
         Convidar
       </Botao>
       <CampoDeEscolha

@@ -92,6 +92,10 @@ for (const tema of ["claro", "escuro"]) {
     await expect(page.getByRole("heading", { name: "Administrar grupo" })).toBeVisible()
     await expect(page.getByRole("button", { name: "Remover" })).toBeVisible()
     if (largura === 375 || largura === 768 || largura === 1440) {
+      const viewport = page.viewportSize()
+      if (viewport) await page.setViewportSize({ width: viewport.width, height: 1800 })
+      await page.getByRole("button", { name: "Excluir grupo" }).scrollIntoViewIfNeeded()
+      await expect(page.getByRole("button", { name: "Excluir grupo" })).toBeInViewport()
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
         true,
       )
@@ -100,6 +104,7 @@ for (const tema of ["claro", "escuro"]) {
         fullPage: true,
         animations: "disabled",
       })
+      if (viewport) await page.setViewportSize(viewport)
     }
     await expect(page.getByText("Quero participar")).toBeVisible()
     await page.getByRole("button", { name: "Aprovar" }).click()
@@ -190,14 +195,10 @@ for (const dono of [true, false]) {
       .filter({ has: page.getByRole("button", { name: "Remover" }) })
       .last()
     await expect(pessoa.getByRole("button", { name: "Remover" })).toBeVisible()
-    await expect(page.getByRole("button", { name: "Passar a administração" })).toHaveCount(
-      dono ? 2 : 0,
-    )
+    await expect(page.getByRole("button", { name: /^Mais ações para / })).toHaveCount(dono ? 2 : 0)
     await expect(page.getByRole("button", { name: "Excluir grupo" })).toHaveCount(dono ? 1 : 0)
     const proprio = page.getByText(dono ? "Dona" : "Moderadora", { exact: true }).locator("..")
-    await expect(
-      proprio.getByRole("button", { name: /Remover|Passar a administração/ }),
-    ).toHaveCount(0)
+    await expect(proprio.getByRole("button", { name: /Remover|Mais ações para/ })).toHaveCount(0)
   })
 }
 
@@ -205,18 +206,27 @@ for (const acao of ["Remover", "Passar a administração", "Excluir grupo"]) {
   test(`${acao}: cancelar não envia e confirmar envia uma vez`, async ({ page }) => {
     const chamadas = await administracaoSimulada(page)
     await page.goto("/app/grupo/g-futebol/administrar")
+    const abrirMenu = async () => {
+      if (acao === "Passar a administração") {
+        await page.getByRole("button", { name: "Mais ações para Pessoa" }).click()
+      }
+    }
     const botao =
-      acao === "Excluir grupo"
-        ? page.getByRole("button", { name: acao })
-        : page
-            .getByText("Pessoa", { exact: true })
-            .locator("..")
-            .getByRole("button", { name: acao })
+      acao === "Passar a administração"
+        ? page.getByRole("menuitem", { name: acao })
+        : acao === "Excluir grupo"
+          ? page.getByRole("button", { name: acao })
+          : page
+              .getByText("Pessoa", { exact: true })
+              .locator("..")
+              .getByRole("button", { name: acao })
+    await abrirMenu()
     await botao.click()
     const dialogo = page.getByRole("dialog")
     await expect(dialogo).toBeVisible()
     await dialogo.getByRole("button", { name: "Cancelar" }).click()
     expect(chamadas).toHaveLength(0)
+    await abrirMenu()
     await botao.click()
     await dialogo.getByRole("button", { name: "Confirmar" }).click()
     await expect.poll(() => chamadas.length).toBe(1)

@@ -159,13 +159,13 @@
   --success-foreground: rgb(23 30 32);
   /* Concluir continua ardósia no escuro, um degrau mais claro (D7, revisão
      18/11): branco puro disputava com a Brasa do Criar. */
-  --acao: rgb(88 122 144);
+  --acao: rgb(55 80 94);
   --acao-foreground: rgb(255 255 255);
   --brasa: rgb(224 122 90);
   --brasa-foreground: rgb(23 30 32);
   --accent-text: rgb(224 122 90);
-  --grafite: rgb(96 108 118);
-  --grafite-texto: rgb(232 236 238);
+  --grafite: rgb(55 80 94);
+  --grafite-texto: rgb(255 255 255);
 
   --surface: rgb(16 20 23);
   --surface-lowest: rgb(26 32 36);
@@ -3622,4 +3622,17 @@ body[data-profundidade="sim"] [data-casca="app"] {
 .bv-pular-conteudo:focus {
   transform: none;
   outline: 2px solid Highlight;
+}
+
+@media (max-width: 1023.98px) {
+  [data-topo="barra"]:is([data-rota="grupo"], [data-rota="grupo-administrar"])
+    [data-titulo="topo"] {
+    opacity: 1;
+    transform: none;
+  }
+}
+@media (min-width: 1024px) {
+  [data-topo="barra"]:is([data-rota="grupo"], [data-rota="grupo-administrar"]) {
+    padding-left: max(8px, calc((100% + 96px - 63rem) / 2));
+  }
 }

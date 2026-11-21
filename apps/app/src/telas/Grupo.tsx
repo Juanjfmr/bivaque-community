@@ -8,6 +8,7 @@ import { CartaoDePublicacao } from "@/components/bivaque/cartao-de-publicacao"
 import { EsqueletoDeLista } from "@/components/bivaque/esqueleto"
 import { EstadoVazio } from "@/components/bivaque/estado-vazio"
 import { Etiqueta } from "@/components/bivaque/etiqueta"
+import { Icone } from "@/components/bivaque/icone"
 import {
   buscarGrupo,
   type DetalheDoGrupo,
@@ -312,6 +313,7 @@ export function Grupo() {
       >
         <summary className="min-h-11 cursor-pointer text-sm font-semibold">
           Sobre o grupo e regras
+          <Icone nome="expand_more" />
         </summary>
         <p className="mt-2 whitespace-pre-wrap text-sm">
           {grupo.regras || "Este grupo ainda não informou regras."}
@@ -376,35 +378,37 @@ export function Grupo() {
         </p>
       ) : (
         <>
-          <fieldset
-            data-ordenacao-grupo="sim"
-            aria-label="Ordenar publicações"
-            className="flex min-w-0 gap-2 overflow-x-auto"
-          >
-            {(
-              [
-                "recentes",
-                "discutidas",
-                ...(grupo.membro ? (["salvas", "ocultadas"] as const) : []),
-              ] as const
-            ).map((chave) => (
-              <BotaoPeca
-                key={chave}
-                tom={ordem === chave ? "tom" : "contorno"}
-                aria-pressed={ordem === chave}
-                onClick={() => setOrdem(chave)}
-              >
-                {
+          <div className="grupo-abas">
+            <fieldset
+              data-ordenacao-grupo="sim"
+              aria-label="Ordenar publicações"
+              className="flex min-w-0 gap-2 overflow-x-auto"
+            >
+              {(
+                [
+                  "recentes",
+                  "discutidas",
+                  ...(grupo.membro ? (["salvas", "ocultadas"] as const) : []),
+                ] as const
+              ).map((chave) => (
+                <BotaoPeca
+                  key={chave}
+                  tom={ordem === chave ? "tom" : "contorno"}
+                  aria-pressed={ordem === chave}
+                  onClick={() => setOrdem(chave)}
+                >
                   {
-                    recentes: "Recentes",
-                    discutidas: "Mais discutidas",
-                    salvas: "Salvas",
-                    ocultadas: "Ocultadas",
-                  }[chave]
-                }
-              </BotaoPeca>
-            ))}
-          </fieldset>
+                    {
+                      recentes: "Recentes",
+                      discutidas: "Mais discutidas",
+                      salvas: "Salvas",
+                      ocultadas: "Ocultadas",
+                    }[chave]
+                  }
+                </BotaoPeca>
+              ))}
+            </fieldset>
+          </div>
           {publicacoes.length === 0 ? (
             <EstadoVazio
               titulo={grupo.membro ? vazio.titulo : "Conversas de quem participa"}

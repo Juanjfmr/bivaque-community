@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react"
 import { Botao } from "@/components/bivaque/botao"
 import { EsqueletoDeLista } from "@/components/bivaque/esqueleto"
 import { decidirPedido, lerPedidosDoGrupo, type PedidosDoGrupo } from "@/lib/dados/grupos"
+import { Botao as BotaoPeca } from "@/src/pecas/pecas"
 
 export function Pedidos({ id }: { id: string }) {
   const [ocupado, setOcupado] = useState(false)
@@ -34,10 +35,7 @@ export function Pedidos({ id }: { id: string }) {
   }, [id, rodada])
 
   return (
-    <section
-      data-pedidos-entrada="sim"
-      className="rounded-2xl border border-(--outline-variant) bg-(--surface-lowest) p-3"
-    >
+    <section data-pedidos-entrada="sim" className="grid gap-2">
       <h2 className="min-h-11 text-sm font-semibold">
         Pedidos de entrada{dados ? ` (${dados.pedidos.length})` : ""}
       </h2>
@@ -54,40 +52,45 @@ export function Pedidos({ id }: { id: string }) {
       ) : dados.pedidos.length === 0 ? (
         <p className="text-sm">Nenhum pedido pendente.</p>
       ) : (
-        <ul className="grid gap-2">
+        <ul>
           {dados.pedidos.map((p) => (
-            <li key={p.id} className="rounded-xl bg-(--surface-low) p-3 text-sm">
+            <li key={p.id} className="border-b border-(--border) py-3 text-sm">
               <b>{p.nome || "Membro"}</b>
               <p>{p.motivo || "Sem motivo informado."}</p>
-              {(["aprovar", "recusar"] as const).map((decisao) => (
-                <Botao
-                  key={decisao}
-                  tom="texto"
-                  disabled={ocupado}
-                  onClick={() => {
-                    setOcupado(true)
-                    setRetorno("")
-                    void decidirPedido(id, p.id, decisao)
-                      .then(() => {
-                        setDados((atual) =>
-                          atual
-                            ? {
-                                ...atual,
-                                pedidos: atual.pedidos.filter((item) => item.id !== p.id),
-                              }
-                            : atual,
+              <div className="flex gap-2 py-2">
+                {(["aprovar", "recusar"] as const).map((decisao) => (
+                  <BotaoPeca
+                    key={decisao}
+                    compacto
+                    tom={decisao === "aprovar" ? "principal" : "contorno"}
+                    disabled={ocupado}
+                    onClick={() => {
+                      setOcupado(true)
+                      setRetorno("")
+                      void decidirPedido(id, p.id, decisao)
+                        .then(() => {
+                          setDados((atual) =>
+                            atual
+                              ? {
+                                  ...atual,
+                                  pedidos: atual.pedidos.filter((item) => item.id !== p.id),
+                                }
+                              : atual,
+                          )
+                          setRetorno(
+                            decisao === "aprovar" ? "Pedido aprovado." : "Pedido recusado.",
+                          )
+                        })
+                        .catch(() =>
+                          setRetorno("Não foi possível atualizar o pedido. Tente de novo."),
                         )
-                        setRetorno(decisao === "aprovar" ? "Pedido aprovado." : "Pedido recusado.")
-                      })
-                      .catch(() =>
-                        setRetorno("Não foi possível atualizar o pedido. Tente de novo."),
-                      )
-                      .finally(() => setOcupado(false))
-                  }}
-                >
-                  {decisao === "aprovar" ? "Aprovar" : "Recusar"}
-                </Botao>
-              ))}
+                        .finally(() => setOcupado(false))
+                    }}
+                  >
+                    {decisao === "aprovar" ? "Aprovar" : "Recusar"}
+                  </BotaoPeca>
+                ))}
+              </div>
             </li>
           ))}
         </ul>
