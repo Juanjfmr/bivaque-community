@@ -509,5 +509,7 @@ export function Mercado() {
   // que mora em `/app/negocios`, que continua como está. Sem salto e sem mudar
   // a rota antiga.
   if (aba === "negocios") return <Negocios />
-  return <ListaDeMercado inicial={aba} />
+  // `key={aba}`: cada aba é uma lista própria — carregando, erro, aviso e modo
+  // de visualização não atravessam a troca.
+  return <ListaDeMercado key={aba} inicial={aba} />
 }
