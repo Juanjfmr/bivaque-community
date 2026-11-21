@@ -1,4 +1,10 @@
-import { type Aba, rotaPorNome, SUBABAS_DO_MERCADO, type SubAbaDoMercado } from "./rotas"
+import {
+  type Aba,
+  lerAbaDaUrl,
+  rotaPorNome,
+  SUBABAS_DO_MERCADO,
+  type SubAbaDoMercado,
+} from "./rotas"
 
 /**
  * A aba que a tela acende (ADR §3.2).
@@ -21,8 +27,15 @@ export function abaAtiva(nome: string, origem: Aba): Aba | null {
   }
 }
 
-/** A sub-aba do Mercado que a rota representa. */
-export function subAbaDoMercado(nome: string): SubAbaDoMercado | null {
-  if (nome === "catalogo" || nome === "mercado") return "desapegos"
+/**
+ * A sub-aba do Mercado que a rota representa. No Mercado (NAV-002) a aba está
+ * na busca do endereço; os endereços antigos continuam dizendo a sua.
+ */
+export function subAbaDoMercado(
+  nome: string,
+  busca: Readonly<Record<string, unknown>> = {},
+): SubAbaDoMercado | null {
+  if (nome === "mercado") return lerAbaDaUrl(busca)
+  if (nome === "catalogo" || nome === "desapegos") return "desapegos"
   return (SUBABAS_DO_MERCADO as readonly string[]).includes(nome) ? (nome as SubAbaDoMercado) : null
 }

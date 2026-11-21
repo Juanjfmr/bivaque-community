@@ -26,7 +26,16 @@ import {
   registrarRolagem,
   restaurarEntrada,
 } from "./restauracao"
-import { type Aba, ROTA_INDISPONIVEL, type Rota, rotaPeloCaminho, rotaPorNome } from "./rotas"
+import {
+  type Aba,
+  ENDERECOS_ANTIGOS_DO_MERCADO,
+  ROTA_INDISPONIVEL,
+  type Rota,
+  rotaCanonica,
+  rotaPeloCaminho,
+  rotaPorNome,
+  type SubAbaDoMercado,
+} from "./rotas"
 import {
   abrirSobreposicao,
   buscaAoTrocarDeRota,
@@ -174,6 +183,8 @@ export type OpcoesDeNavegacao = {
   readonly replace?: boolean
   /** Descritor que a entrada de baixo guarda; sem ele, o foco atual. */
   readonly foco?: DescritorDeFoco
+  /** Aba do Mercado no endereço (`?aba=`), quando o destino é o Mercado. */
+  readonly aba?: SubAbaDoMercado
 }
 
 /**
@@ -258,7 +269,9 @@ export function useNavegacao(): Navegacao {
 
   const irPara = useCallback(
     async (destino: string, opcoes: OpcoesDeNavegacao = {}): Promise<void> => {
-      const destinoRota = rotaPorNome(destino)
+      // Endereço antigo do Mercado não se navega: vai direto ao Mercado, na aba
+      // que ele representava (NAV-002).
+      const destinoRota = rotaPorNome(rotaCanonica(destino))
       if (!destinoRota) return
       // Foco e rolagem pertencem ao clique original, antes de aguardar o
       // registro inicial e possíveis commits da casca.
@@ -268,8 +281,15 @@ export function useNavegacao(): Navegacao {
       const atual = lerEstadoDaRota(roteador)
       const decisao = entrarEmRota({ atual: atual.entrada, rotaAtual: atual.rota.nome })
       // Trocar de rota (ex.: desapegos → imóveis) não leva a busca da tela
-      // anterior: cada rota lê só os próprios parâmetros (F06).
-      const busca = buscaAoTrocarDeRota(atual.rota.nome, destinoRota.nome)
+      // anterior: cada rota lê só os próprios parâmetros (F06). A aba do
+      // Mercado substitui a busca pela aba pedida.
+      const abaDoDestino = ENDERECOS_ANTIGOS_DO_MERCADO[destino]
+      const busca =
+        opcoes.aba !== undefined
+          ? { aba: opcoes.aba }
+          : abaDoDestino === undefined
+            ? buscaAoTrocarDeRota(atual.rota.nome, destinoRota.nome)
+            : { aba: abaDoDestino }
       // A entrada que fica para trás guarda onde a pessoa parou e o que abriu
       // a próxima tela; é o que o Voltar devolve.
       await gravar(

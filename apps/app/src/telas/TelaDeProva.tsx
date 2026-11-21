@@ -1,4 +1,4 @@
-import { useParams } from "@tanstack/react-router"
+import { useLocation, useParams } from "@tanstack/react-router"
 import { useEffect, useMemo, useState } from "react"
 
 import { CabecaDePagina } from "@/components/bivaque/cabeca-de-pagina"
@@ -31,6 +31,7 @@ const PERGUNTA_DIFICIL = "mudança de cidade/2026 ?!"
  */
 export function TelaDeProva({ nome }: { nome: string }) {
   const parametros = useParams({ strict: false }) as Record<string, string | undefined>
+  const busca = useLocation({ select: (l) => l.search as Record<string, unknown> })
   const entrada = useEntradaDaTela()
   const navegacao = useNavegacao()
   const porta = usePortaDeCargas()
@@ -66,7 +67,7 @@ export function TelaDeProva({ nome }: { nome: string }) {
   const validacao = validarParametros(nome, parametros)
   if (!validacao.ok) return <TelaIndisponivel motivo={validacao.motivo} />
 
-  const subAba = subAbaDoMercado(nome)
+  const subAba = subAbaDoMercado(nome, busca)
 
   return (
     <section data-tela={nome} className="grid gap-2">
@@ -90,7 +91,7 @@ export function TelaDeProva({ nome }: { nome: string }) {
               type="button"
               data-subaba={aba}
               aria-current={subAba === aba ? "page" : false}
-              onClick={() => void navegacao.irPara(aba)}
+              onClick={() => void navegacao.irPara("mercado", { aba })}
               className="min-h-11 rounded-xl px-3 text-sm font-medium aria-[current=page]:bg-(--secondary-container)"
             >
               {tituloDaRota(aba)}

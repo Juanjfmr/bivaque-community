@@ -28,6 +28,7 @@ import {
   useRotaAtual,
   useSobreposicaoDaEntrada,
 } from "@/lib/navegacao/react"
+import { lerAbaDaUrl, type SubAbaDoMercado } from "@/lib/navegacao/rotas"
 import { useCasca } from "@/src/contexto/casca"
 import { EstadoDeSessaoVencida, EstadoNegado } from "@/src/eventos/EstadosDeAcesso"
 import { acessoNegado, foiAbortada, sessaoVencida } from "@/src/eventos/formulario"
@@ -68,7 +69,7 @@ const SUBABAS: readonly ItemDeFiltro[] = [
   { id: "negocios", rotulo: "Negócios" },
 ]
 
-export function ListaDeMercado({ inicial }: { inicial: AbaDoMercado }) {
+export function ListaDeMercado() {
   const casca = useCasca()
   const navegacao = useNavegacao()
   const [dados, setDados] = useState<ListaDoMercado | null>(null)
@@ -80,6 +81,10 @@ export function ListaDeMercado({ inicial }: { inicial: AbaDoMercado }) {
   // filtrado, recarregar mantém a seleção, e o Voltar do roteador a devolve.
   const busca = useLocation({ select: (l) => l.search as Record<string, unknown> })
   const filtros = useMemo(() => lerFiltrosDaUrl(busca), [busca])
+  // A aba também mora no endereço (NAV-002). `negocios` é a tela do Mercado da
+  // cidade e o roteador já redirecionou para `/negocios`; aqui só há lista.
+  const aba = lerAbaDaUrl(busca)
+  const inicial: AbaDoMercado = aba === "negocios" ? "desapegos" : aba
   const navegar = useNavigate()
   const rota = useRotaAtual()
   const gravarFiltros = (novos: Partial<FiltrosDaUrl>) => {
@@ -292,7 +297,14 @@ export function ListaDeMercado({ inicial }: { inicial: AbaDoMercado }) {
       <Segmentos
         itens={SUBABAS}
         valor={inicial}
-        aoEscolher={(aba) => void navegacao.irPara(aba)}
+        // Trocar de aba reescreve o endereço do Mercado em replace: o Voltar do
+        // navegador sai do Mercado, não percorre as abas.
+        aoEscolher={(destino) =>
+          void navegacao.irPara("mercado", {
+            aba: destino as SubAbaDoMercado,
+            replace: true,
+          })
+        }
         rotulo="Seções do Mercado"
         grupo="mercado"
       />
@@ -494,17 +506,5 @@ export function ListaDeMercado({ inicial }: { inicial: AbaDoMercado }) {
 }
 
 export function Mercado() {
-  return <ListaDeMercado inicial="desapegos" />
-}
-
-export function Desapegos() {
-  return <ListaDeMercado inicial="desapegos" />
-}
-
-export function Catalogo() {
-  return <ListaDeMercado inicial="desapegos" />
-}
-
-export function Imoveis() {
-  return <ListaDeMercado inicial="imoveis" />
+  return <ListaDeMercado />
 }

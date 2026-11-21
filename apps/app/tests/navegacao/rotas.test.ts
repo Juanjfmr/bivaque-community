@@ -2,10 +2,14 @@ import { describe, expect, it } from "vitest"
 
 import {
   BASE_PUBLICA,
+  buscaDoEnderecoAntigo,
   caminhoComParametros,
+  ENDERECOS_ANTIGOS_DO_MERCADO,
   ESTADOS_DA_ENTRADA,
+  lerAbaDaUrl,
   NOMES_DAS_33,
   ROTAS,
+  rotaCanonica,
   rotaPorNome,
   SUBABAS_DO_MERCADO,
   tituloDaRota,
@@ -133,12 +137,49 @@ describe("catálogo de rotas", () => {
     expect(urlPublica("publicacao", { id: "g-1~p-1" })).toBe("/app/publicacao/g-1~p-1")
   })
 
-  it("mantém o Mercado como rota adicional com as três sub-abas", () => {
+  it("mantém o Mercado como a rota das três sub-abas, com a aba na busca", () => {
     expect(rotaPorNome("mercado")?.caminho).toBe("/mercado")
     expect(rotaPorNome("mercado")?.dono).toBe("mercado")
     expect([...SUBABAS_DO_MERCADO]).toEqual(["desapegos", "imoveis", "negocios"])
-    for (const subAba of SUBABAS_DO_MERCADO) {
-      expect(urlPublica(subAba)).toBe(`/app/${subAba}`)
+    expect(lerAbaDaUrl({})).toBe("desapegos")
+    expect(lerAbaDaUrl({ aba: "desapegos" })).toBe("desapegos")
+    expect(lerAbaDaUrl({ aba: "imoveis" })).toBe("imoveis")
+    expect(lerAbaDaUrl({ aba: "negocios" })).toBe("negocios")
+    expect(lerAbaDaUrl({ aba: "fora-da-lista" })).toBe("desapegos")
+    expect(urlPublica("mercado")).toBe("/app/mercado")
+  })
+
+  it("cada endereço antigo do Mercado leva à aba que representava (NAV-002)", () => {
+    expect(buscaDoEnderecoAntigo("catalogo", {})).toEqual({ aba: "desapegos" })
+    expect(buscaDoEnderecoAntigo("desapegos", {})).toEqual({ aba: "desapegos" })
+    expect(buscaDoEnderecoAntigo("imoveis", {})).toEqual({ aba: "imoveis" })
+    // Os filtros que vieram na URL seguem para o destino.
+    expect(buscaDoEnderecoAntigo("desapegos", { q: "mesa", preco_min: "10000" })).toEqual({
+      aba: "desapegos",
+      q: "mesa",
+      preco_min: "10000",
+    })
+    expect(buscaDoEnderecoAntigo("imoveis", { bairro: "Centro", quartos: "2" })).toEqual({
+      aba: "imoveis",
+      bairro: "Centro",
+      quartos: "2",
+    })
+    // O Mercado e as demais rotas não redirecionam.
+    expect(buscaDoEnderecoAntigo("mercado", { aba: "imoveis" })).toBeNull()
+    expect(buscaDoEnderecoAntigo("inicio", {})).toBeNull()
+  })
+
+  it("o destino dos endereços antigos é o Mercado, sem ciclo nem volta", () => {
+    for (const nome of Object.keys(ENDERECOS_ANTIGOS_DO_MERCADO)) {
+      expect(rotaPorNome(nome)?.dono, `aba de ${nome}`).toBe("mercado")
+      expect(rotaCanonica(nome), `destino de ${nome}`).toBe("mercado")
+      expect(rotaCanonica("mercado")).toBe("mercado")
+    }
+    expect(rotaCanonica("inicio")).toBe("inicio")
+    // Nenhuma rota declara um endereço antigo como pai: o Voltar interno nunca
+    // monta um endereço que não existe mais.
+    for (const rota of ROTAS) {
+      expect(ENDERECOS_ANTIGOS_DO_MERCADO[rota.pai ?? ""], `pai de ${rota.nome}`).toBe(undefined)
     }
   })
 

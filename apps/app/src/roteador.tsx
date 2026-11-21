@@ -1,9 +1,14 @@
 import type { SearchMiddleware } from "@tanstack/react-router"
-import { createRootRoute, createRoute, createRouter } from "@tanstack/react-router"
+import { createRootRoute, createRoute, createRouter, redirect } from "@tanstack/react-router"
 import type { ComponentType } from "react"
 
 import { esquecerEntradaDeOutroDocumento } from "@/lib/navegacao/dom"
-import { ROTAS } from "@/lib/navegacao/rotas"
+import {
+  buscaDoEnderecoAntigo,
+  ENDERECOS_ANTIGOS_DO_MERCADO,
+  lerAbaDaUrl,
+  ROTAS,
+} from "@/lib/navegacao/rotas"
 import { Casca } from "@/src/casca/Casca"
 import { TelaDeEntrada } from "@/src/entrada/TelaDeEntrada"
 import { MercadoLab } from "@/src/galeria/mercado/MercadoLab"
@@ -32,7 +37,7 @@ import { Evento } from "@/src/telas/Evento"
 import { Grupo } from "@/src/telas/Grupo"
 import { Guia } from "@/src/telas/Guia"
 import { Inicio } from "@/src/telas/Inicio"
-import { Catalogo, Desapegos, Imoveis, Mercado } from "@/src/telas/Mercado"
+import { Mercado } from "@/src/telas/Mercado"
 import { MeusAnuncios } from "@/src/telas/MeusAnuncios"
 import { Minhas } from "@/src/telas/Minhas"
 import { Negocio } from "@/src/telas/Negocio"
@@ -122,13 +127,10 @@ const TELAS_REAIS: Readonly<Partial<Record<string, ComponentType>>> = {
   negocio: Negocio,
   agenda: Agenda,
   busca: Busca,
-  catalogo: Catalogo,
   comunidade: Comunidade,
-  desapegos: Desapegos,
   evento: Evento,
   grupo: Grupo,
   guia: Guia,
-  imoveis: Imoveis,
   inicio: Inicio,
   mercado: Mercado,
   "meus-anuncios": MeusAnuncios,
@@ -158,7 +160,10 @@ const indice = createRoute({
 })
 
 const paginas = ROTAS.filter(
-  (rota) => rota.nome !== "mercado" && rota.nome !== "indisponivel",
+  (rota) =>
+    rota.nome !== "mercado" &&
+    rota.nome !== "indisponivel" &&
+    ENDERECOS_ANTIGOS_DO_MERCADO[rota.nome] === undefined,
 ).flatMap((rota) => {
   const Tela = () => <TelaDaRota nome={rota.nome} />
   const busca = ROTAS_COM_BUSCA.has(rota.nome) ? { search: BUSCA_PERSISTENTE } : {}
@@ -178,13 +183,43 @@ const paginas = ROTAS.filter(
   return definicoes
 })
 
-// Mercado é rota adicional: mostra as sub-abas com Desapegos selecionado, sem
-// tirar a pessoa do endereço /app/mercado.
+/**
+ * Os endereços antigos do Mercado (NAV-002: `/desapegos`, `/catalogo`,
+ * `/imoveis`) redirecionam em replace para `/mercado`, na aba que
+ * representavam, com os filtros que vieram na URL. O `beforeLoad` roda antes de
+ * a tela montar: a lista certa é lida uma vez, no endereço novo, e o histórico
+ * não ganha entrada.
+ */
+const enderecosAntigos = Object.entries(ENDERECOS_ANTIGOS_DO_MERCADO).flatMap(([nome]) => {
+  const rota = ROTAS.find((linha) => linha.nome === nome)
+  if (rota === undefined) return []
+  return [
+    createRoute({
+      getParentRoute: () => raiz,
+      path: rota.caminho,
+      search: BUSCA_PERSISTENTE,
+      beforeLoad: ({ search }) => {
+        const busca = buscaDoEnderecoAntigo(nome, search as Record<string, unknown>)
+        if (busca === null) return
+        throw redirect({ to: "/mercado", search: busca, replace: true })
+      },
+      component: () => null,
+    }),
+  ]
+})
+
+// O Mercado tem um endereço só (NAV-002): a aba (desapegos, imóveis, negócios)
+// e os filtros vivem na busca. Negócios é a tela do Mercado da cidade, que
+// continua em `/negocios`; `?aba=negocios` chega lá em replace.
 const mercado = createRoute({
   getParentRoute: () => raiz,
   path: "/mercado",
   component: () => <TelaDaRota nome="mercado" />,
   search: BUSCA_PERSISTENTE,
+  beforeLoad: ({ search }) => {
+    if (lerAbaDaUrl(search as Record<string, unknown>) !== "negocios") return
+    throw redirect({ to: "/negocios", replace: true })
+  },
 })
 
 /**
@@ -206,7 +241,14 @@ const mercadoLab = createRoute({
     import.meta.env.DEV || modoDeProvaAtivo() ? <MercadoLab /> : <TelaIndisponivel />,
 })
 
-const arvore = raiz.addChildren([indice, ...paginas, mercado, galeria, mercadoLab])
+const arvore = raiz.addChildren([
+  indice,
+  ...paginas,
+  ...enderecosAntigos,
+  mercado,
+  galeria,
+  mercadoLab,
+])
 
 // Antes de o roteador ler a localização inicial: a entrada que veio de outro
 // documento só vale quando a pessoa recarregou ou voltou/avançou.
