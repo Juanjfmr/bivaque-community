@@ -209,10 +209,12 @@ test.describe("F04 — grupos reais", { tag: "@stateful" }, () => {
           ESPERA,
         )
         grupoCriado = new URL(page.url()).pathname.split("/").at(-1) ?? ""
-        // O painel de pedidos é do administrador do grupo: é a tela dizendo que
-        // quem criou é o dono, e a linha do vínculo confirma no banco.
+        await page.getByRole("button", { name: "Administrar grupo" }).click(ESPERA)
+        await expect(page).toHaveURL(new RegExp(`/app/grupo/${grupoCriado}/administrar$`), ESPERA)
         await expect(
-          page.locator("[data-pedidos-entrada]"),
+          page
+            .locator("[data-pedidos-entrada]")
+            .getByRole("heading", { name: /Pedidos de entrada/ }),
           "quem criou administra o grupo",
         ).toBeVisible(ESPERA)
         const sessoes = await apiForSession(context)

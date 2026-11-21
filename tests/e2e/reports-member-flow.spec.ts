@@ -181,6 +181,12 @@ test.describe("report flow: membro denuncia e recebe retorno", { tag: "@stateful
       // publicação vive dentro de um grupo).
       await page.goto(`${APP_BASE}${GROUP_FEED_URL}`, { waitUntil: "load" })
       await expect(page).toHaveURL(/\/app\/grupo\//)
+      await expect(page.locator('[data-controles-grupo="sim"]')).toBeVisible()
+      const participar = page.getByRole("button", { name: "Participar do grupo" })
+      if (await participar.isVisible()) {
+        await participar.click()
+        await expect(page.getByText("Participando", { exact: true })).toBeVisible()
+      }
 
       // O post municipal fixo pertence ao proprio dono-vila e nao pode ser
       // denunciado por ele. Este texto vem dos posts gerados por outros

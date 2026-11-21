@@ -313,7 +313,7 @@ async function crawl(
     // de administração apenas no grupo em que esta persona é administradora.
     if (landed.pathname === "/app/comunidade" && persona === "dono de grupo") {
       await page.goto("/app/grupo/60000000-0000-4000-8000-000000000002")
-      await expect(page.getByRole("link", { name: "Aprovar pedidos e convidar" })).toBeVisible()
+      await expect(page.getByRole("button", { name: "Administrar grupo" })).toBeVisible()
       frontier.enter({ target: new URL(page.url()).pathname, from: landed.pathname, persona })
       await page.goto(visit.target, { waitUntil: "load" })
     }
