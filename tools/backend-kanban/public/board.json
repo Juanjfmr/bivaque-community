@@ -10317,19 +10317,19 @@
     },
     {
       "id": "LAN-TROCA-CONVITE",
-      "title": "Troca: convite de membros, aceite do convite e grupo saem do site para o app",
+      "title": "Troca: grupo e sua administração saem do site para o app; convite e lista da vila saem sem substituto",
       "priority": "P1",
       "category": "frontend",
       "status": "next",
       "phase": "Lançamento",
-      "description": "Depois do #309 seguem servindo tela no site /communities/[id]/invite, /invite/[token] e /groups/[id] (este sem regra 307, embora o app já tenha /app/grupo/:id).",
+      "description": "Revisto em 20/11 contra o ADR-20261024 do redesenho (§3.4: a vila sai) e o ADR-20261023 (convite de grupo é link para a tela do grupo). Refeito no app: a administração de /groups/:id (aprovar/recusar pedido, remover membro, passar a administração, regras, fixar, aviso por grupo, excluir) e o Convidar que compartilha o link do grupo. Sai sem substituto, com 307 para /app/comunidade: /communities/:id/invite, /invite/:token e /gerir-comunidades. /groups/:id passa a 307 para /app/grupo/:id.",
       "checklist": [
-        "Começa depois do merge do TROCA-002 (#309)",
-        "Tela no app com entrada, ação, persistência, retorno, acompanhamento e falha principal em 375/768/1440",
+        "307: /communities/:id/invite, /invite/:token e /gerir-comunidades para /app/comunidade (redesenho §3.4), com páginas e testes removidos",
+        "Administração do grupo no app com as ações de hoje, em 375/768/1440 nos dois temas",
+        "Convidar no app compartilha o link do grupo (ADR-20261023)",
         "API pelo ADR SPA §5 com testes positivos e negativos de permissão",
-        "Revisão às cegas PASS e security-auditor (R3) antes de apagar a versão do site",
-        "Rotas antigas em 307 para o /app (ID, token e query preservados), páginas, componentes e testes antigos removidos",
-        "Porta provisória do #309 aponta para a tela nova; link-crawl no rigor normal"
+        "Revisão às cegas PASS e security-auditor (R3) antes de apagar /groups/[id]",
+        "/groups/:id em 307 para /app/grupo/:id; porta de Participacao.tsx e link de /gerir-comunidades apontam para o app; link-crawl no rigor normal"
       ],
       "dependencies": [],
       "links": [
@@ -10341,7 +10341,8 @@
       "tests": [],
       "blockers": [],
       "proof": [
-        "20/11: aberto por decisão do dono (opção 1 do #309: porta provisória no app e nenhuma tela antiga sobrevive). Contrato TROCA-003 pronto para o Codex; começa depois do merge do TROCA-002 (#309)."
+        "20/11: aberto por decisão do dono (opção 1 do #309: porta provisória no app e nenhuma tela antiga sobrevive). Contrato TROCA-003 pronto para o Codex; começa depois do merge do TROCA-002 (#309).",
+        "20/11: escopo revisto. A1 (6489eb3e, RPCs de convite de comunidade) e A2 (2abddb89, rotas) revertidas em 682e2a78 e 1fbd5a65 por contrariarem o redesenho §3.4; migration nunca chegou à main. Contrato TROCA-003 reescrito."
       ],
       "updatedAt": "2026-11-20",
       "sourceRevision": "1bd9c7f8",
@@ -10352,19 +10353,18 @@
     },
     {
       "id": "LAN-TROCA-ADMIN",
-      "title": "Troca: indicar prestador e painel do administrador da comunidade saem do site para o app",
+      "title": "Troca: indicar prestador e painel da vila saem do site sem substituto (307)",
       "priority": "P1",
       "category": "frontend",
       "status": "next",
       "phase": "Lançamento",
-      "description": "Depois do #309 seguem servindo tela no site /communities/[id]/indicar-prestador e as cinco páginas de (owner)/communities/[id]/admin (início, pendentes, moderadores, prestadores, mídia).",
+      "description": "Revisto em 20/11 contra o ADR-20261024 do redesenho: a vila sai (§3.4) e só o operador convida e atesta prestador (§6). /communities/:id/indicar-prestador passa a 307 para /app/negocios; /communities/:id/admin e subrotas passam a 307 para /app/comunidade; páginas (owner) e testes saem. A área do operador em (admin) fica.",
       "checklist": [
-        "Começa depois do merge do TROCA-002 (#309)",
-        "Tela no app com entrada, ação, persistência, retorno, acompanhamento e falha principal em 375/768/1440",
-        "API pelo ADR SPA §5 com testes positivos e negativos de permissão",
-        "Revisão às cegas PASS e security-auditor (R3) antes de apagar a versão do site",
-        "Rotas antigas em 307 para o /app (ID, token e query preservados), páginas, componentes e testes antigos removidos",
-        "Porta provisória do #309 aponta para a tela nova; link-crawl no rigor normal"
+        "307 de /communities/:id/indicar-prestador para /app/negocios (redesenho §6)",
+        "307 de /communities/:id/admin e subrotas para /app/comunidade (redesenho §3.4)",
+        "Páginas, layouts, actions, componentes e testes do (owner) e do indicar-prestador removidos",
+        "Nenhum link vivo para as rotas removidas; link-crawl no rigor normal",
+        "Área do operador (admin) com testes verdes"
       ],
       "dependencies": [],
       "links": [
@@ -10375,7 +10375,8 @@
       "tests": [],
       "blockers": [],
       "proof": [
-        "20/11: aberto por decisão do dono (opção 1 do #309: porta provisória no app e nenhuma tela antiga sobrevive). Contrato TROCA-004 pronto para o Codex; começa depois do merge do TROCA-002 (#309)."
+        "20/11: aberto por decisão do dono (opção 1 do #309: porta provisória no app e nenhuma tela antiga sobrevive). Contrato TROCA-004 pronto para o Codex; começa depois do merge do TROCA-002 (#309).",
+        "20/11: contrato TROCA-004 reescrito para só redirecionamento e remoção (R2), pelo redesenho §3.4 e §6."
       ],
       "updatedAt": "2026-11-20",
       "sourceRevision": "1bd9c7f8"
