@@ -4,7 +4,6 @@ import { useCallback, useEffect } from "react"
 import { Icone } from "@/components/bivaque/icone"
 import {
   Command,
-  CommandDialog,
   CommandEmpty,
   CommandGroup,
   CommandInput,
@@ -16,6 +15,7 @@ import { useEntradaDaTela, useNavegacao } from "@/lib/navegacao/react"
 import { tituloDaRota } from "@/lib/navegacao/rotas"
 import { normalizar } from "@/lib/texto"
 import { emComposicao } from "@/src/casca/teclado"
+import { Folha } from "@/src/pecas/pecas"
 
 /**
  * A paleta de comandos da onda 2 (protótipo: shell/command-palette.js), só no
@@ -25,7 +25,8 @@ import { emComposicao } from "@/src/casca/teclado"
  *
  * A peça é o `Command` do shadcn, sobre `cmdk` (achado S02 da auditoria de
  * 26/10): a filtragem, a seleção e as teclas são da peça, e não uma lista
- * manual sobre Radix. O que continua sendo do app é o histórico: abrir e
+ * manual sobre Radix. A caixa é a Folha única (NAV-001), em painel, com o
+ * campo focado ao abrir. O que continua sendo do app é o histórico: abrir e
  * fechar passam por `useSobreposicaoDaEntrada`, então o Voltar do sistema
  * fecha a paleta antes de sair da tela.
  */
@@ -171,14 +172,14 @@ export function Paleta() {
   }
 
   return (
-    <CommandDialog
-      open
-      onOpenChange={(valor) => {
-        if (!valor) fechar()
-      }}
-      title="Buscar e ir para"
-      description="Busque um destino ou escolha uma ação."
-      className="w-[calc(100%-32px)] max-w-xl"
+    <Folha
+      aberta
+      aoFechar={fechar}
+      titulo="Buscar e ir para"
+      descricao="Busque um destino ou escolha uma ação."
+      modo="painel"
+      sobreposicao="paleta"
+      focoInicial="#paleta-busca"
     >
       <Command
         onKeyDownCapture={(evento) => {
@@ -190,7 +191,7 @@ export function Paleta() {
       >
         {/* O `label` da peça nomeia o campo: o cmdk liga o `aria-labelledby` do
             input a ele, e o placeholder é só a dica visual. */}
-        <CommandInput autoFocus placeholder="Buscar ou ir para…" />
+        <CommandInput id="paleta-busca" placeholder="Buscar ou ir para…" />
         <CommandList data-sobreposicao="paleta" label="Destinos e ações">
           <CommandEmpty>Nada encontrado.</CommandEmpty>
           {GRUPOS.map((grupo) => (
@@ -213,6 +214,6 @@ export function Paleta() {
           ↑ ↓ navegar · ↵ abrir · Esc fechar
         </p>
       </Command>
-    </CommandDialog>
+    </Folha>
   )
 }

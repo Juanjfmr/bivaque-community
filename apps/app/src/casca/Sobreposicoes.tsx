@@ -3,6 +3,7 @@ import { Sobreposicao } from "@/components/bivaque/sobreposicao"
 import { useEntradaDaTela, useNavegacao } from "@/lib/navegacao/react"
 import { MenuCriar } from "@/src/casca/MenuCriar"
 import { PainelDeCidade } from "@/src/casca/PainelDeCidade"
+import { Folha } from "@/src/pecas/pecas"
 
 /**
  * Quem desenha a sobreposição aberta sobre a entrada.
@@ -53,14 +54,15 @@ export function Sobreposicoes() {
 
   if (aberta === "cidade") {
     return (
-      <Sobreposicao
-        id="cidade"
+      <Folha
+        aberta
+        aoFechar={aoFechar}
+        sobreposicao="cidade"
         titulo="Trocar de cidade"
         descricao="Veja o Guia, os encontros e os anúncios de outra cidade. Sua cidade continua a mesma."
-        aoFechar={aoFechar}
       >
         <PainelDeCidade aoFechar={aoFechar} />
-      </Sobreposicao>
+      </Folha>
     )
   }
 

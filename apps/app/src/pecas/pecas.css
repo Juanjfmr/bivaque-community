@@ -1011,11 +1011,18 @@
 }
 
 /* ── folha que sobe de baixo ───────────────────────────────────────────── */
+/* A caixa é um `DialogContent` do Radix em modo sem estilo: as medidas da
+   folha moram aqui, e o fundo animado é o `.bv-scrim` do overlay. */
 .pc-folha {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 50;
   width: 100%;
   max-width: 34rem;
   max-height: 88dvh;
-  margin: auto auto 0;
+  margin: 0 auto;
   padding: 0 0 env(safe-area-inset-bottom);
   overflow: auto;
   border: 0;
@@ -1025,21 +1032,59 @@
   font-family: var(--font-plain);
   box-shadow: 0 -8px 32px rgb(0 0 0 / 0.18);
   transition: transform var(--pc-entrada);
+  outline: none;
 }
 
-.pc-folha[open] {
-  animation: pc-folha-sobe var(--pc-entrada);
+.pc-folha[data-animacao="desliza"] {
+  animation: pc-folha-sobe var(--pc-folha-entrada, 280ms) cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.pc-folha::backdrop {
-  background: rgb(15 20 22 / 0.42);
-  animation: pc-esmaece var(--pc-entrada);
+/* Movimento reduzido: opacidade de até 120 ms, sem deslocamento (ANIMATION §4). */
+.pc-folha[data-animacao="esmaece"] {
+  animation: pc-esmaece var(--pc-folha-entrada, 120ms) ease-out;
+}
+
+/* O painel é a mesma Folha em caixa central, para o Criar e a paleta no
+   computador: sem alça, com largura de leitura. */
+.pc-folha[data-modo="painel"] {
+  top: 50%;
+  right: auto;
+  bottom: auto;
+  left: 50%;
+  width: min(40rem, calc(100vw - 24px));
+  max-height: 84dvh;
+  margin: 0;
+  border-radius: 24px;
+  transform: translate(-50%, -50%);
+}
+
+.pc-folha[data-modo="painel"][data-animacao="desliza"] {
+  animation: pc-painel-entra var(--pc-folha-entrada, 280ms) cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* O fundo esmaece sempre: é a parte que o movimento reduzido permite. */
+.bv-scrim {
+  animation: pc-esmaece 120ms ease-out;
+}
+
+@keyframes pc-painel-entra {
+  from {
+    opacity: 0;
+    transform: translate(-50%, calc(-50% + 12px));
+  }
 }
 
 @media (min-width: 768px) {
   .pc-folha {
+    top: 0;
+    bottom: 0;
     margin: auto;
     border-radius: 24px;
+  }
+
+  .pc-folha[data-modo="painel"] {
+    top: 50%;
+    bottom: auto;
   }
 
   .pc-folha-alca {
