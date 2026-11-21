@@ -30,7 +30,6 @@ export const dynamic = "force-dynamic"
 // começa um fluxo em nome de ninguém.
 
 const DESTINO_DO_APP = "/app/entrar"
-const PROVEDOR = "google"
 const REDIRECT_NATIVO = "bivaque://auth-callback"
 
 function provedorPedido(corpo: unknown): unknown {
@@ -54,7 +53,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     return responder(request, { erro: "corpo-invalido" }, 400)
   }
 
-  if (provedorPedido(bruto) !== PROVEDOR) {
+  const provedor = provedorPedido(bruto)
+  if (provedor !== "google" && provedor !== "apple") {
     return responder(request, { erro: "provedor-invalido" }, 400)
   }
 
@@ -69,7 +69,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
   if (modo.nativo) {
     const parametros = new URLSearchParams({
-      provider: PROVEDOR,
+      provider: provedor,
       redirect_to: REDIRECT_NATIVO,
       code_challenge: desafio as string,
       code_challenge_method: "s256",
@@ -96,7 +96,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   )}`
 
   const { data, error } = await supabase.auth.signInWithOAuth({
-    provider: PROVEDOR,
+    provider: provedor,
     options: { redirectTo, skipBrowserRedirect: true },
   })
 

@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest"
 
 // A porta do Google no app (RUN-002). A rota não fala com o Google: pede a URL
 // de autorização ao Supabase e devolve para o app navegar. O teste troca o
-// cliente SSR e prova o contrato: origem e cabeçalho do app, só Google, o
+// cliente SSR e prova o contrato de origem, cabeçalho, provedores e
 // `next` do callback e o PKCE em cookie (nunca na resposta).
 
 const { criarClienteSSR, iniciarOAuth } = vi.hoisted(() => ({
@@ -78,7 +78,7 @@ describe("POST /api/app/entry/oauth", () => {
     [{ provedor: "google" }, 400],
     [{ provedor: "google", code_challenge: "curto" }, 400],
     [{ provedor: "google", code_challenge: "!".repeat(43) }, 400],
-    [{ provedor: "apple", code_challenge: "a".repeat(43) }, 400],
+    [{ provedor: "desconhecido", code_challenge: "a".repeat(43) }, 400],
   ])("recusa corpo nativo invalido", async (corpo, status) => {
     const resposta = await POST(
       new NextRequest(URL_DA_ROTA, {
@@ -130,14 +130,34 @@ describe("POST /api/app/entry/oauth", () => {
     expect(iniciarOAuth).not.toHaveBeenCalled()
   })
 
-  it("só começa o provedor Google", async () => {
+  it("recusa provedor desconhecido", async () => {
     const resposta = await POST(
-      requisicao({ cabecalho: "bivaque-spa", corpo: { provedor: "apple" } }),
+      requisicao({ cabecalho: "bivaque-spa", corpo: { provedor: "desconhecido" } }),
     )
 
     expect(resposta.status).toBe(400)
     expect(await resposta.json()).toEqual({ erro: "provedor-invalido" })
     expect(iniciarOAuth).not.toHaveBeenCalled()
+  })
+
+  it("aceita Apple na web e no nativo", async () => {
+    const web = await POST(requisicao({ cabecalho: "bivaque-spa", corpo: { provedor: "apple" } }))
+    expect(web.status).toBe(200)
+    expect(iniciarOAuth).toHaveBeenCalledWith(expect.objectContaining({ provider: "apple" }))
+
+    const nativo = await POST(
+      new NextRequest(URL_DA_ROTA, {
+        method: "POST",
+        headers: {
+          origin: "https://localhost",
+          "x-bivaque-cliente": "loja",
+          "x-bivaque-app": "bivaque-spa",
+        },
+        body: JSON.stringify({ provedor: "apple", code_challenge: "a".repeat(43) }),
+      }),
+    )
+    expect(nativo.status).toBe(200)
+    expect(new URL((await nativo.json()).url).searchParams.get("provider")).toBe("apple")
   })
 
   it("devolve a URL e manda o callback de volta para a entrada do app", async () => {
