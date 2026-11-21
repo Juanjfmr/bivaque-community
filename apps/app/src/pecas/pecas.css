@@ -1082,6 +1082,8 @@
   .pc-folha {
     top: 0;
     bottom: 0;
+    /* Centralizada sem esticar: a caixa tem a altura do conteúdo. */
+    height: fit-content;
     margin: auto;
     border-radius: 24px;
   }
