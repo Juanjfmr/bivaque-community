@@ -1,5 +1,3 @@
-import { createHash, randomBytes } from "node:crypto"
-
 // Serialização de digest sha256 para parâmetros `bytea` via PostgREST.
 //
 // O PostgREST converte um argumento JSON string em `bytea` usando a entrada
@@ -14,13 +12,4 @@ export function byteaDigestParam(hexDigest: string): string {
     throw new Error("digest must be 64 hex chars (sha256)")
   }
   return `\\x${hexDigest}`
-}
-
-export function gerarTokenDeConvite(): string {
-  return randomBytes(32).toString("hex")
-}
-
-export function digestDoConvite(token: string): string | null {
-  if (!/^[0-9a-f]{64}$/.test(token)) return null
-  return byteaDigestParam(createHash("sha256").update(Buffer.from(token, "hex")).digest("hex"))
 }

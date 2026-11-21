@@ -123,8 +123,6 @@ const SESSAO: readonly Linha[] = [
     ),
   ],
   ["/api/app/conversas", "exigirSessao(", PORTA],
-  ["/api/app/comunidades/[id]/convites", "exigirSessao(", PORTA],
-  ["/api/app/convites/[token]/aceitar", "exigirSessao(", PORTA],
   ["/api/app/conversas/[id]", "exigirSessao(", PORTA],
   ["/api/app/conversas/[id]/lida", "exigirSessao(", PORTA],
   ["/api/app/conversas/[id]/mensagens", "exigirSessao(", PORTA],

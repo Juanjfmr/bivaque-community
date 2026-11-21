@@ -12,7 +12,7 @@ import { createServerClient } from "@supabase/ssr"
 import { revalidatePath } from "next/cache"
 import { cookies } from "next/headers"
 import { callCommunityInviteRpc } from "../../../lib/community-invite-rpcs"
-import { digestDoConvite, gerarTokenDeConvite } from "../../../lib/invites-bytea"
+import { byteaDigestParam } from "../../../lib/invites-bytea"
 import { createLimiterStore } from "../../../lib/limits"
 import { createServerClient as createServiceClient } from "../../../lib/supabase/server"
 
@@ -108,9 +108,9 @@ export async function sendCommunityInviteAction(
 
   const supabase = createServiceClient()
 
-  const token = gerarTokenDeConvite()
-  const tokenDigest = digestDoConvite(token)
-  if (!tokenDigest) throw new Error("token inválido")
+  const { createHash, randomBytes } = await import("node:crypto")
+  const token = randomBytes(32)
+  const tokenDigest = createHash("sha256").update(token).digest()
   const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
 
   const { data: inviteId, error } = await callCommunityInviteRpc(
@@ -119,7 +119,7 @@ export async function sendCommunityInviteAction(
     {
       p_community_id: communityId,
       p_inviter_user_id: userId,
-      p_token_digest: tokenDigest,
+      p_token_digest: byteaDigestParam(tokenDigest.toString("hex")),
       p_expires_at: expiresAt.toISOString(),
     },
   )
@@ -140,7 +140,7 @@ export async function sendCommunityInviteAction(
   // app continua no convite pendente.
   revalidatePath(`/communities/${communityId}`)
 
-  return { token, inviteId: inviteId ?? "" }
+  return { token: token.toString("hex"), inviteId: inviteId ?? "" }
 }
 
 export async function revokeCommunityInviteAction(formData: FormData) {
@@ -182,15 +182,15 @@ export async function acceptCommunityInviteAction(
   const userId = await readSessionUserId()
   if (!userId) throw new Error("não autenticado")
 
-  const tokenDigest = digestDoConvite(token)
-  if (!tokenDigest) throw new Error("token inválido")
+  const { createHash } = await import("node:crypto")
+  const tokenDigest = createHash("sha256").update(Buffer.from(token, "hex")).digest()
 
   const supabase = createServiceClient()
   const { data: communityId, error } = await callCommunityInviteRpc(
     supabase,
     "accept_community_invitation",
     {
-      p_token_digest: tokenDigest,
+      p_token_digest: byteaDigestParam(tokenDigest.toString("hex")),
       p_user_id: userId,
     },
   )
