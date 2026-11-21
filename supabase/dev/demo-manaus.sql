@@ -164,7 +164,7 @@ select
   m.id,
   m.nome,
   'locality_members',
-  1,
+  2,
   now() - make_interval(days => m.dias),
   m.bio,
   m.cep,
@@ -177,6 +177,19 @@ left join public.neighborhoods n
   on n.locality_id = '00000000-0000-4000-8000-000000000001'
  and n.name = m.bairro
 on conflict (user_id) do nothing;
+
+-- O app só deixa entrar quem aceitou a versão vigente do termo e do código de
+-- conduta (hoje 2 e 2). Quem rodou uma versão anterior deste script tem o
+-- profile na versão 1: atualiza só as contas de demonstração.
+update public.profiles p
+set consent_version = 2
+from demo_membros m
+where p.user_id = m.id and p.consent_version < 2;
+
+insert into public.consent_acceptances (user_id, consent_version, code_of_conduct_version, accepted_at)
+select m.id, 2, 2, now() - make_interval(days => m.dias)
+from demo_membros m
+on conflict do nothing;
 
 -- ══════════════════════════════════════════════════════════════════════════
 -- 2. Família
