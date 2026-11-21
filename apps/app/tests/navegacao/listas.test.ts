@@ -83,4 +83,14 @@ describe("lista guardada na entrada — as telas reais usam a carga", () => {
       expect(readFileSync(join(RAIZ, tela), "utf8"), tela).not.toContain("CARGA_CONCLUIDA")
     }
   })
+
+  it("a aba Grupos espera o Diretório carregar antes de restaurar", () => {
+    const comunidade = readFileSync(join(RAIZ, "src/telas/Comunidade.tsx"), "utf8")
+    const diretorio = readFileSync(join(RAIZ, "src/grupos/Diretorio.tsx"), "utf8")
+    // A aba já não confirma a carga por si: quem confirma é a leitura do diretório.
+    expect(comunidade).not.toContain('aba === "grp" ||')
+    expect(comunidade).toContain('aba === "grp" ? gruposProntos')
+    expect(comunidade).toContain("<Diretorio aoPronto={() => setGruposProntos(true)} />")
+    expect(diretorio).toContain("aoPronto?.()")
+  })
 })

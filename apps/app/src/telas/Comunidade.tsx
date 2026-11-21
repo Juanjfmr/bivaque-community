@@ -118,8 +118,12 @@ export function Comunidade() {
   // Uma sessão de rede por tela: sair cancela a página que ainda estava a caminho.
   const [controle] = useState(() => new AbortController())
 
-  // A lista só devolve a rolagem quando o dado chegou (NAV-001).
-  const carga = useCargaDaLista(aba === "grp" || lista !== null || erro !== null)
+  // A lista só devolve a rolagem quando o dado chegou (NAV-001). Na aba Grupos
+  // quem carrega é o Diretorio: a carga espera o aviso dele, não a aba.
+  const [gruposProntos, setGruposProntos] = useState(false)
+  const carga = useCargaDaLista(
+    aba === "grp" ? gruposProntos : lista !== null || erro !== null,
+  )
   useRolagemEFoco(carga)
 
   useEffect(() => () => controle.abort(), [controle])
@@ -218,6 +222,8 @@ export function Comunidade() {
           itens={ABAS}
           valor={aba}
           aoEscolher={(nova) => {
+            // Cada visita aos Grupos é uma leitura nova: a carga volta a esperar.
+            setGruposProntos(false)
             setAba(nova)
             guardar("comunidade-aba", nova)
           }}
@@ -250,7 +256,7 @@ export function Comunidade() {
       </Dialog>
 
       {aba === "grp" ? (
-        <Diretorio />
+        <Diretorio aoPronto={() => setGruposProntos(true)} />
       ) : erro === "sessao" ? (
         <EstadoDeSessaoVencida />
       ) : erro === "negado" ? (
