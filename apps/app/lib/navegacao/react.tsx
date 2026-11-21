@@ -279,7 +279,12 @@ export function useNavegacao(): Navegacao {
       const rolagem = rolagemAtual()
       await esperarMaterializacao(roteador)
       const atual = lerEstadoDaRota(roteador)
-      const decisao = entrarEmRota({ atual: atual.entrada, rotaAtual: atual.rota.nome })
+      const decisao = entrarEmRota({
+        atual: atual.entrada,
+        rotaAtual: atual.rota.nome,
+        rotaDestino: destinoRota.nome,
+        replace: opcoes.replace ?? (atual.entrada.sobreposicao !== null),
+      })
       // Trocar de rota (ex.: desapegos → imóveis) não leva a busca da tela
       // anterior: cada rota lê só os próprios parâmetros (F06). A aba do
       // Mercado substitui a busca pela aba pedida.

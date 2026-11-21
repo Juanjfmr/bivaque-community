@@ -36,6 +36,40 @@ describe("transições de navegação", () => {
     expect(decisao.entrada.pai).toBe("conversa")
   })
 
+  it("trocar de aba em replace mantém o pai e a origem da entrada", () => {
+    // Primeira entrada (link direto): sem pai, o Voltar do app usa o pai
+    // declarado da rota — trocar de aba não pode dizer que veio do Mercado.
+    const direta = entradaPadrao({ origem: "inicio", pai: null, chave: "e-direta" })
+    const decisao = entrarEmRota({
+      atual: direta,
+      rotaAtual: "mercado",
+      rotaDestino: "mercado",
+      replace: true,
+    })
+    expect(decisao.replace).toBe(true)
+    expect(decisao.entrada).toMatchObject({
+      origem: "inicio",
+      pai: null,
+      rolagem: 0,
+      foco: null,
+      filtros: {},
+      sobreposicao: null,
+    })
+    expect(decisao.entrada.chave).not.toBe(direta.chave)
+  })
+
+  it("a mesma rota empilhada continua guardando de onde veio", () => {
+    const daLista = entradaPadrao({ origem: "comunidade", pai: "conversas", chave: "e-1" })
+    const decisao = entrarEmRota({
+      atual: daLista,
+      rotaAtual: "conversa",
+      rotaDestino: "conversa",
+      replace: false,
+    })
+    expect(decisao.replace).toBe(false)
+    expect(decisao.entrada.pai).toBe("conversa")
+  })
+
   it("substitui a entrada em vez de empilhar quando a sobreposição está aberta", () => {
     const comSobreposicao = abrirSobreposicao(BASE, "dialogo")
     expect(comSobreposicao.sobreposicao).toBe("dialogo")

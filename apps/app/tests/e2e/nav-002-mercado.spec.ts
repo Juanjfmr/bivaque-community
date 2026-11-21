@@ -151,6 +151,25 @@ for (const tema of ["light", "dark"] as const) {
       await esperarCaminho(page, "/app/inicio")
     })
 
+    test("a troca de aba não inventa pai: o Voltar do app sai de um link direto ao Início", async ({
+      page,
+    }) => {
+      await servirImoveis(page)
+      // Link direto: uma entrada só no histórico, e sem pai.
+      await page.goto("/app/imoveis")
+      await expect(subAbaAtiva(page)).toHaveAttribute("data-subaba", "imoveis")
+
+      await page.locator('[data-subaba="desapegos"]').click()
+      await expect(page).toHaveURL(/\/app\/mercado\?aba=desapegos$/)
+      await expect(subAbaAtiva(page)).toHaveAttribute("data-subaba", "desapegos")
+
+      // O Voltar da barra do topo leva ao pai declarado do Mercado, dentro do
+      // app: a troca de aba em replace preserva o `pai` da entrada.
+      await page.locator('[data-acao="voltar"]').click()
+      await esperarCaminho(page, "/app/inicio")
+      await expect(page.locator('[data-topo="barra"]')).toHaveAttribute("data-rota", "inicio")
+    })
+
     test("a aba Negócios abre o Mercado da cidade no mesmo endereço", async ({ page }) => {
       await servirImoveis(page)
       await simularNegocios(page)
