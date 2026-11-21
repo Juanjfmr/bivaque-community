@@ -1,12 +1,33 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
 
-const cofre = vi.hoisted(() => ({ get: vi.fn(), set: vi.fn(), remove: vi.fn() }))
-vi.mock("capacitor-secure-storage-plugin", () => ({ SecureStoragePlugin: cofre }))
+const cofre = vi.hoisted(() => ({
+  get: vi.fn(),
+  set: vi.fn(),
+  remove: vi.fn(),
+  setSynchronize: vi.fn(),
+  setDefaultKeychainAccess: vi.fn(),
+  setKeyPrefix: vi.fn(),
+}))
+vi.mock("@aparajita/capacitor-secure-storage", () => ({
+  SecureStorage: cofre,
+  KeychainAccess: { afterFirstUnlockThisDeviceOnly: 3 },
+}))
 
 import { gravarPkce, gravarRenovacao, lerPkce, lerRenovacao } from "@/lib/nativo/cofre"
 
 describe("cofre nativo", () => {
   beforeEach(() => vi.resetAllMocks())
+
+  it("configura as proteções antes da primeira leitura", async () => {
+    cofre.get.mockResolvedValue(null)
+    await lerRenovacao()
+    expect(cofre.setSynchronize).toHaveBeenCalledWith(false)
+    expect(cofre.setDefaultKeychainAccess).toHaveBeenCalledWith(3)
+    expect(cofre.setKeyPrefix).toHaveBeenCalledWith("bivaque.")
+    const configuracao = cofre.setSynchronize.mock.invocationCallOrder[0] ?? 0
+    const leitura = cofre.get.mock.invocationCallOrder[0] ?? 0
+    expect(leitura).toBeGreaterThan(configuracao)
+  })
 
   it("trata falha de leitura como ausência de sessão", async () => {
     cofre.get.mockRejectedValue(new Error())
@@ -15,17 +36,17 @@ describe("cofre nativo", () => {
   })
 
   it("guarda e lê o fluxo pelo plugin", async () => {
-    cofre.set.mockResolvedValue({ value: true })
+    cofre.set.mockResolvedValue(undefined)
     await gravarPkce({ verificador: "sintetico", criadoEm: 42 })
-    const valor = cofre.set.mock.calls[0]?.[0].value
-    cofre.get.mockResolvedValue({ value: valor })
+    const valor = cofre.set.mock.calls[0]?.[1]
+    cofre.get.mockResolvedValue(valor)
     expect(await lerPkce()).toEqual({ verificador: "sintetico", criadoEm: 42 })
   })
 
   it("não grava credenciais no armazenamento local", async () => {
     const setItem = vi.fn()
     vi.stubGlobal("localStorage", { setItem })
-    cofre.set.mockResolvedValue({ value: true })
+    cofre.set.mockResolvedValue(undefined)
     await gravarRenovacao("sintetico")
     await gravarPkce({ verificador: "sintetico", criadoEm: 42 })
     expect(setItem).not.toHaveBeenCalled()
@@ -33,7 +54,7 @@ describe("cofre nativo", () => {
   })
 
   it("propaga falha de gravação", async () => {
-    cofre.set.mockResolvedValue({ value: false })
+    cofre.set.mockRejectedValue(new Error("falha"))
     await expect(gravarRenovacao("sintetico")).rejects.toThrow()
   })
 })

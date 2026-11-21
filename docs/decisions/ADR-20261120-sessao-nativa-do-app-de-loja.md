@@ -300,8 +300,11 @@ pública do proxy (ADR-20261110), e tem teste positivo e negativo.
 - **ASWebAuthenticationSession no iOS.** Recusada agora: exigiria um segundo plugin de terceiros. Com PKCE
   S256, o SFSafariViewController basta.
 
-### Emenda de 21/11 — escolha do cofre (revisão pendente)
+### Emenda de 21/11 — escolha do cofre
 
-O lote LOJA-003 propõe `capacitor-secure-storage-plugin` 0.14.2, de código aberto (MIT),
-com peer `@capacitor/core >=8.0.0`, para usar Keystore no Android e Keychain no iOS.
-A integração e a escolha aguardam revisão independente e parecer de segurança antes do aceite.
+O plugin escolhido é `@aparajita/capacitor-secure-storage` 8.0.1 (MIT), configurado com Keychain
+`afterFirstUnlockThisDeviceOnly` e sem sincronização com iCloud; usa Keystore no Android e
+`allowBackup=false`. O `capacitor-secure-storage-plugin` 0.14.2 foi recusado por ser publicado
+depois do corte de 11/10 da regra de versões, e o 0.13.0 por depender do SwiftKeychainWrapper sem
+acesso configurável. Ressalva: o pacote SPM `keychain-swift` entra com faixa "from 21.0.0" e fica
+fixado pelo `Package.resolved` do build.

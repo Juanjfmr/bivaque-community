@@ -94,7 +94,11 @@ test("só o cliente único chama /api/app", () => {
   // A entrada tem o cliente próprio dela, que migra para o único depois do #128
   // (pendência registrada no ADR). É a ÚNICA exceção aceita: se aparecer outra,
   // o molde já nasceu com duas portas.
-  const EXCECOES = new Set(["apps/app/src/entrada/servidor.ts"])
+  const EXCECOES = new Set([
+    "apps/app/src/entrada/servidor.ts",
+    // Renovação chama esta rota; passar pelo cliente único criaria recursão (ADR-20261120 §7).
+    "apps/app/lib/nativo/sessao.ts",
+  ])
   const infratores = arquivos("apps/app")
     .filter(
       (caminho) =>

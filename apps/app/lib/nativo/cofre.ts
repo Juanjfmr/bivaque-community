@@ -1,25 +1,39 @@
-import { SecureStoragePlugin } from "capacitor-secure-storage-plugin"
+import { KeychainAccess, SecureStorage } from "@aparajita/capacitor-secure-storage"
 
 const RENOVACAO = "sessao.renovacao"
 const PKCE = "sessao.pkce"
 
 type FluxoPkce = Readonly<{ verificador: string; criadoEm: number }>
 
+let configuracao: Promise<void> | null = null
+
+function configurar(): Promise<void> {
+  configuracao ??= Promise.all([
+    SecureStorage.setSynchronize(false),
+    SecureStorage.setDefaultKeychainAccess(KeychainAccess.afterFirstUnlockThisDeviceOnly),
+    SecureStorage.setKeyPrefix("bivaque."),
+  ]).then(() => undefined)
+  return configuracao
+}
+
 async function ler(chave: string): Promise<string | null> {
   try {
-    return (await SecureStoragePlugin.get({ key: chave })).value || null
+    await configurar()
+    const valor = await SecureStorage.get(chave)
+    return typeof valor === "string" && valor ? valor : null
   } catch {
     return null
   }
 }
 
 async function gravar(chave: string, valor: string): Promise<void> {
-  const resultado = await SecureStoragePlugin.set({ key: chave, value: valor })
-  if (!resultado.value) throw new Error("Falha ao gravar no cofre")
+  await configurar()
+  await SecureStorage.set(chave, valor)
 }
 
 async function apagar(chave: string): Promise<void> {
-  await SecureStoragePlugin.remove({ key: chave })
+  await configurar()
+  await SecureStorage.remove(chave)
 }
 
 export const lerRenovacao = () => ler(RENOVACAO)
