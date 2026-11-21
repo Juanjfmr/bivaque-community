@@ -18,7 +18,7 @@
  */
 
 import { Capacitor } from "@capacitor/core"
-import { acessoAtual, acessoEmMemoria, origemDaApi, renovarSessao } from "@/lib/nativo/sessao"
+import { acessoAtual, acessoEmMemoria, origemDaApi, renovarSessao } from "../nativo/sessao"
 
 const enderecoInicial =
   typeof window === "undefined"
