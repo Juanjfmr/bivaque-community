@@ -125,7 +125,9 @@ beforeEach(() => {
   } as never)
   mockEnviarOtp.mockResolvedValue({ error: null })
   mockVerificarOtp.mockResolvedValue({ data: { session: { access_token: "t" } }, error: null })
-  criarAnonimo.mockReturnValue({ auth: { signInWithOtp: mockEnviarOtp } } as never)
+  criarAnonimo.mockReturnValue({
+    auth: { signInWithOtp: mockEnviarOtp, verifyOtp: mockVerificarOtp },
+  } as never)
   criarComCookies.mockImplementation(((_url: string, _chave: string, opcoes: never) => {
     const configuracao = opcoes as unknown as {
       cookies: { setAll: (cookies: readonly unknown[]) => void }
@@ -668,5 +670,72 @@ describe("POST /api/app/entry/otp/verify", () => {
       error: { code: "unexpected_failure", status: 500 },
     })
     expect((await pedido()).status).toBe(503)
+  })
+})
+
+describe("entrada nativa", () => {
+  const extras = { "x-bivaque-cliente": "loja" }
+  const corpo = { email: "a@b.invalid", codigo: "123456" }
+
+  it("envia para origem nativa somente com modo nativo", async () => {
+    expect(
+      (await ENVIAR(requisicao(URL_ENVIO, "POST", { origem: "https://localhost", corpo }))).status,
+    ).toBe(403)
+    expect(
+      (await ENVIAR(requisicao(URL_ENVIO, "POST", { origem: "https://localhost", extras, corpo })))
+        .status,
+    ).toBe(200)
+  })
+
+  it("devolve somente o par sem cookies e usa cliente sem persistência", async () => {
+    mockVerificarOtp.mockResolvedValue({
+      data: {
+        session: {
+          access_token: "a",
+          refresh_token: "r",
+          expires_at: 123,
+          provider_token: "p",
+          user: {},
+        },
+      },
+      error: null,
+    })
+    const resposta = await VERIFICAR(
+      requisicao(URL_VERIFICACAO, "POST", { origem: "capacitor://localhost", extras, corpo }),
+    )
+    expect(resposta.status).toBe(200)
+    expect(await resposta.json()).toEqual({
+      access_token: "a",
+      refresh_token: "r",
+      expires_at: 123,
+    })
+    expect(resposta.headers.get("set-cookie")).toBeNull()
+    expect(resposta.headers.get("clear-site-data")).toBeNull()
+    expect(resposta.headers.get("cache-control")).toBe("no-store")
+    expect(criarAnonimo).toHaveBeenCalledWith(expect.anything(), expect.anything(), {
+      auth: { persistSession: false, autoRefreshToken: false },
+    })
+    expect(criarComCookies).not.toHaveBeenCalled()
+    expect(mockRpc.mock.invocationCallOrder[0]).toBeLessThan(
+      mockVerificarOtp.mock.invocationCallOrder[0] ?? 0,
+    )
+  })
+
+  it("recusa origem web e cookie de sessão antes de verificar", async () => {
+    expect((await VERIFICAR(requisicao(URL_VERIFICACAO, "POST", { extras, corpo }))).status).toBe(
+      403,
+    )
+    expect(
+      (
+        await VERIFICAR(
+          requisicao(URL_VERIFICACAO, "POST", {
+            origem: "https://localhost",
+            extras: { ...extras, cookie: "sb-projeto=valor" },
+            corpo,
+          }),
+        )
+      ).status,
+    ).toBe(400)
+    expect(mockVerificarOtp).not.toHaveBeenCalled()
   })
 })

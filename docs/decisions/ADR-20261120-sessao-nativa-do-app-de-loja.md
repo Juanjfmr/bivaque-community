@@ -3,11 +3,11 @@ id: ADR-20261120-sessao-nativa-do-app-de-loja
 status: Aceito por delegação — aguarda ratificação
 risk: R3
 owner: Juan
-approved_at: 2026-11-20 (por delegação; mandato do lançamento de 02/11)
+approved_at: 2026-11-20 (por delegação; mandato do lançamento de 02/11); emenda de 21/11 por delegação (§4 e §7, reuso da renovação medido no GoTrue)
 linked_plan: docs/LANCAMENTO.md
 amends: ADR-20261024-front-react-spa (§5, modo Bearer do app de loja); ADR-20261105-porta-de-dados-do-app (§1, credenciais e repetição de leitura no nativo); ADR-20261105-entrada-enxuta-e-r3-sem-parada (entrada congelada, só o modo nativo da verificação do código)
 critic_verdict: pass
-critic_review: 3 rodadas — 1ª (54e66389) security-auditor BLOQUEIA e revisão FAIL; 2ª (4b6321bd) LIBERA COM RESSALVAS e PASS-COM-RESSALVA; 3ª (1e09fca0) LIBERA e PASS-COM-RESSALVA (style-src, renovação na volta do segundo plano). Todas as ressalvas incorporadas neste texto.
+critic_review: 3 rodadas — 1ª (54e66389) security-auditor BLOQUEIA e revisão FAIL; 2ª (4b6321bd) LIBERA COM RESSALVAS e PASS-COM-RESSALVA; 3ª (1e09fca0) LIBERA e PASS-COM-RESSALVA (style-src, renovação na volta do segundo plano). Todas as ressalvas incorporadas neste texto. Emenda de 21/11 (40850d7b4): security-auditor LIBERA COM RESSALVAS (reuso não revoga a família, aceito como resíduo; sem CRITICAL/HIGH) e revisão independente PASS-COM-RESSALVA; ressalvas incorporadas no §4, no §8 e nas Consequências.
 ---
 
 # Sessão nativa do app de loja: token no cofre do aparelho, servidor como porta
@@ -87,11 +87,14 @@ pública do proxy (ADR-20261110), e tem teste positivo e negativo.
 - **Falha passageira → 429, 503 ou erro de rede:** 429 do limitador ou do GoTrue, 5xx, tempo esgotado ou falta de rede. O cofre
   fica intacto e o app tenta de novo com espera crescente. Abrir o app sem rede não derruba a sessão.
 - **Rotação:** fica ligada, com a janela de reuso do `supabase/config.toml` (`refresh_token_reuse_interval
-  = 10` s). Dentro da janela, o token anterior ainda devolve sessão; fora dela, o GoTrue revoga a família
-  inteira, e o app trata isso como sessão encerrada. A janela não é zerada só no ambiente local para
-  facilitar prova.
+  = 10` s). Dentro da janela, o token anterior ainda devolve sessão; fora dela, o GoTrue recusa o token
+  reusado (401) e registra a tentativa de abuso, e o app trata isso como sessão encerrada. **Emenda de
+  21/11:** a prova contra o GoTrue local (CI do PR #317, run 44908862984) mediu que os descendentes do token
+  reusado continuam válidos: R2 renovado direto no GoTrue devolve 200 e lê `/auth/v1/user`. A revogação
+  da família não é garantida pelo provedor e deixa de ser promessa deste ADR. A janela não é zerada só
+  no ambiente local para facilitar prova.
 - **Tempo de vida:** no lançamento, a sessão não tem limite de duração (`[auth.sessions]` sem timebox). A
-  contenção é a revogação ao sair, a revogação da família no reuso e a exclusão de conta. Um limite por
+  contenção é a revogação ao sair, a recusa do token reusado e a exclusão de conta. Um limite por
   inatividade fica para depois do lançamento, num card próprio.
 
 ### 5. Google e Apple pelo navegador do sistema com PKCE
@@ -172,7 +175,7 @@ pública do proxy (ADR-20261110), e tem teste positivo e negativo.
      o app limpa sozinho.
 - **Sair sem rede:** o passo 4 acontece mesmo sem resposta, como no ADR-20261118 §2: o app não guarda
   credencial para revogar depois. O token de renovação continua válido no servidor até a pessoa excluir a
-  conta ou a família ser revogada por reuso. Esse resíduo é aceito e declarado.
+  conta. Esse resíduo é aceito e declarado.
 - **Exclusão de conta:** o servidor já responde 401 pelo token (provado na revisão do F10), e o app trata
   como sessão encerrada.
 - **Suspensão:** é aplicada pelas regras do banco em cada leitura e escrita, não pelo token. O token continua
@@ -187,8 +190,11 @@ pública do proxy (ADR-20261110), e tem teste positivo e negativo.
 - No nativo, o cliente do app (`cliente.ts`) e a entrada (`apps/app/src/entrada/servidor.ts`) usam a base
   absoluta e `credentials: "omit"`. A entrada passa a usar o cliente único, em vez de montar o próprio
   `fetch`.
-- A exigência do cabeçalho do app em escrita continua valendo só para sessão por cookie, como hoje. Pedido
-  com Bearer não carrega credencial ambiente, então não há CSRF a barrar.
+- A exigência do cabeçalho do app em escrita vale para sessão por cookie, como hoje. **Emenda de 21/11:**
+  as rotas de entrada e de sessão em modo nativo (`entry/oauth`, `entry/otp`, `entry/otp/verify`,
+  `sessao/token`, `sessao/renovar`) também exigem o cabeçalho do app, e o cliente do LOJA-003 o envia em
+  todo pedido. As demais rotas com Bearer não o exigem: Bearer não carrega credencial ambiente, então não há
+  CSRF a barrar.
 - **Escrita por Bearer vinda da origem nativa:** `avaliarEscrita` e `conferirPorta` hoje recusam com 403
   uma `Origin` presente fora de `origensPermitidas()`, também para Bearer. Passam a conferir a `Origin`
   presente de um pedido Bearer contra a lista web mais a nativa. A lista de escrita por cookie continua sem
@@ -213,8 +219,8 @@ pública do proxy (ADR-20261110), e tem teste positivo e negativo.
   - token de acesso válido lê; token inválido não volta ao cookie; cookie mais Bearer é recusado.
   - **Integração contra o GoTrue local, sem mock:** depois de sair por Bearer, o mesmo token de acesso é
     recusado pelo resolvedor e o token de renovação é recusado.
-  - **Rotação:** R0 vira R1 e R1 vira R2; reusar R0 depois da janela de 10 s é recusado, e R2 também
-    passa a ser recusado (família revogada).
+  - **Rotação:** R0 vira R1 e R1 vira R2; reusar R0 depois da janela de 10 s é recusado (401). R2 seguir
+    válido é o comportamento medido do GoTrue (emenda de 21/11) e não é asserção do lote.
   - `renovar` com GoTrue em 5xx responde 503, não 401.
   - Limitador de `token` e de `renovar` responde 429 antes de chamar o GoTrue, inclusive com IP
     indisponível (balde `sem-ip`).
@@ -263,10 +269,21 @@ pública do proxy (ADR-20261110), e tem teste positivo e negativo.
   para manter.
 - O teto de 120 renovações por IP em 10 minutos pode apertar num CGNAT grande de operadora. O 429 não
   derruba a sessão, então fica aceito no lançamento, e a medição em produção entra num card próprio.
-- O par de tokens existe no aparelho. O risco fica contido pelo cofre do sistema, pela rotação com revogação
-  da família, pela revogação real ao sair e pelo CSP do build nativo. Contra XSS no próprio app, o cofre não
+- O par de tokens existe no aparelho. O risco fica contido pelo cofre do sistema, pela rotação com recusa do token
+  reusado, pela revogação real ao sair e pelo CSP do build nativo. Contra XSS no próprio app, o cofre não
   protege mais do que o cookie protege na web.
 - Sair sem rede deixa o token de renovação vivo no servidor até a próxima abertura com rede.
+- **Tempo esgotado depois da rotação (emenda de 21/11):** se o GoTrue rotacionar R_n e a resposta não chegar
+  antes dos 10 s do `renovar`, o servidor responde 503 e o app guarda R_n; uma nova tentativa depois da janela
+  recebe 401 e a sessão cai. O LOJA-003 só repete dentro da janela de reuso; fora dela, a queda é aceita como
+  resíduo raro.
+- **Apple:** o `entry/oauth` do LOJA-002 aceita só Google. Apple (pelo navegador ou nativa no iOS) entra no
+  LOJA-003 ou no adendo do §5.
+- **Resíduo da emenda de 21/11:** quem copiar um token de renovação e usá-lo antes do dono mantém a cadeia
+  dele viva mesmo depois que o dono reusar o antigo; o reuso só derruba o token reusado. Fica aceito no
+  lançamento porque exige roubo do cofre do aparelho, e a revogação ao sair e a exclusão de conta seguem
+  derrubando tudo. Revogação própria da família (mapa do token para a sessão e `signOut` global no reuso)
+  entra num card pós-lançamento.
 - Google e Apple dependem das credenciais dos provedores e do registro da URI de retorno no projeto
   hospedado, que são atos do dono. O código e a prova com provedor falso ficam prontos antes.
 

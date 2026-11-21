@@ -6374,7 +6374,9 @@
       "links": ["docs/LANCAMENTO.md"],
       "proof": [
         "02/11: aberto na definição do lançamento (docs/LANCAMENTO.md), por mandato do dono.",
-        "20/11 LOJA-001 (#312): Capacitor com android/ e ios/ versionados, base absoluta no nativo, câmera, link profundo, workflow app-loja.yml e inventário da sessão; revisão às cegas PASS no delta e2f069d3. Capturas do emulador em .visual/loja-001/ (camera, criar, link-entrada)."
+        "20/11 LOJA-001 (#312): Capacitor com android/ e ios/ versionados, base absoluta no nativo, câmera, link profundo, workflow app-loja.yml e inventário da sessão; revisão às cegas PASS no delta e2f069d3. Capturas do emulador em .visual/loja-001/ (camera, criar, link-entrada).",
+        "21/11 LOJA-002 (#317): a prova contra o GoTrue local mediu que o reuso de R0 fora da janela recusa só R0 (401, 'Possible abuse attempt' no log); R2 segue válido direto no GoTrue. Emenda de 21/11 no ADR-20261120 por delegação: a revogação da família deixa de ser promessa, resíduo declarado na RATIFICACAO e card SEC-FAMILIA-RENOVACAO pós-lançamento.",
+        "21/11 LOJA-002 (#317, 40850d7b4): CI completo verde (run 44910688304, stateful 375/768/1440); security-auditor LIBERA COM RESSALVAS e revisão independente PASS-COM-RESSALVA. Herdado pelo LOJA-003: cofre, PKCE no app, CSP nativa e retorno com auditoria própria; cabeçalho do app em todo pedido nativo; repetir renovar só dentro da janela de 10 s; Apple no entry/oauth."
       ],
       "id": "LAN-LOJA",
       "title": "Fase 7: app de loja em Capacitor pronto para envio",
@@ -10423,7 +10425,8 @@
       "links": ["package.json (supabase 2.107.0)", "PR #314"],
       "proof": [
         "20/11: tentados (1) rodar no worktree e no checkout principal; (2) fora do sandbox; (3) HOME/USERPROFILE numa pasta temporária: EPERM em todos. A pasta .supabase aceita escrita pelo bash (touch), e o acesso controlado a pastas do Defender está desligado (EnableControlledFolderAccess=0). As ACLs de ~/.supabase têm uma entrada CodexSandboxUsers (RX) que não nega nada ao usuário juana.",
-        "20/11: o banco local (supabase_db_bivaque-community, de pé há 4 dias) tem supabase_migrations.schema_migrations vazio e não tem as tabelas de 18/11 (push_subscriptions), então está fora de sincronia com a main. Até o card fechar, a prova de banco fica no CI (ci:full), como no #314."
+        "20/11: o banco local (supabase_db_bivaque-community, de pé há 4 dias) tem supabase_migrations.schema_migrations vazio e não tem as tabelas de 18/11 (push_subscriptions), então está fora de sincronia com a main. Até o card fechar, a prova de banco fica no CI (ci:full), como no #314.",
+        "20/11 noite: com DO_NOT_TRACK=1 SUPABASE_TELEMETRY_DISABLED=1 o EPERM some e `supabase migration new` funciona (criou 20261121002331_sessao_nativa_limiter.sql). `supabase status` agora falha em outro ponto: acesso negado ao pipe do Docker Desktop (//./pipe/dockerDesktopLinuxEngine) a partir desta sessão. Próximo passo: rodar status/test:db com a variável num terminal do dono para separar sandbox de permissão do Docker."
       ],
       "id": "INFRA-CLI-SUPABASE-PC",
       "title": "CLI do Supabase falha com EPERM no PC do dono e o banco local está fora de sincronia",
@@ -10437,6 +10440,26 @@
         "Banco local ressincronizado com a main (reset --local --no-seed exclusivo) e test:db verde"
       ],
       "dependencies": []
+    },
+    {
+      "id": "SEC-FAMILIA-RENOVACAO",
+      "title": "Revogação própria da família de renovação no reuso",
+      "priority": "P3",
+      "category": "backend",
+      "status": "repo",
+      "description": "O GoTrue recusa o token de renovação reusado fora da janela, mas mantém válidos os descendentes (medido no CI do PR #317, run 44908862984: R2 renovado direto no GoTrue devolve 200). Pós-lançamento: mapear o token para a sessão e chamar signOut global no reuso detectado, ou subir para uma versão do GoTrue que revogue a família. Exige ADR R3 nova (tabela e service_role).",
+      "sourceRevision": "03a0c9fca",
+      "updatedAt": "2026-11-21",
+      "dependencies": [],
+      "checklist": [
+        "[ ] ADR R3 com a estratégia (mapa token→sessão ou versão do GoTrue)",
+        "[ ] Prova contra o GoTrue local: reuso de R0 recusa R2",
+        "[ ] Revisão do security-auditor"
+      ],
+      "links": ["docs/decisions/ADR-20261120-sessao-nativa-do-app-de-loja.md"],
+      "proof": [
+        "21/11: CI do PR #317 (run 44908862984), anotação diagnostico em 1440: rotaR0 401 credencial-recusada, goTrueR2 200, usuarioR2 200."
+      ]
     }
   ],
   "launch": {

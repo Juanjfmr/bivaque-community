@@ -90,21 +90,27 @@ export function avaliarEscrita(entrada: {
   readonly origem: string | null | undefined
   readonly cabecalhoDoApp: string | null | undefined
   readonly origensPermitidas: readonly string[]
+  readonly origensNativas?: readonly string[]
 }): VereditoDeEscrita {
-  if (entrada.via === "cookie" && !origemPermitida(entrada.origem, entrada.origensPermitidas)) {
+  if (
+    entrada.via === "cookie" &&
+    (origemPermitida(entrada.origem, entrada.origensNativas ?? []) ||
+      !origemPermitida(entrada.origem, entrada.origensPermitidas))
+  ) {
     return { ok: false, motivo: "origem-recusada" }
   }
   if (entrada.via === "cookie" && entrada.cabecalhoDoApp !== VALOR_DO_CABECALHO_DO_APP) {
     return { ok: false, motivo: "cabecalho-ausente" }
   }
-  // Bearer vindo de navegador traz `Origin`; se trouxer, ele passa pela mesma
-  // lista. O app de loja não manda origem, e a ausência não é falha — o token
-  // não é anexado sozinho por página nenhuma.
+  // Bearer aceita origem web ou nativa; a ausência de Origin também é válida.
   const origemDoApp =
     entrada.via === "bearer" &&
     entrada.origem !== null &&
     entrada.origem !== undefined &&
-    !origemPermitida(entrada.origem, entrada.origensPermitidas)
+    !origemPermitida(entrada.origem, [
+      ...entrada.origensPermitidas,
+      ...(entrada.origensNativas ?? []),
+    ])
   if (origemDoApp) return { ok: false, motivo: "origem-recusada" }
   return { ok: true }
 }
@@ -117,7 +123,11 @@ export function avaliarEscrita(entrada: {
 export function cabecalhosDeCors(
   origem: string | null | undefined,
   permitidas: readonly string[],
+  nativas: readonly string[] = [],
 ): Readonly<Record<string, string>> {
+  if (origemPermitida(origem, nativas)) {
+    return { "access-control-allow-origin": String(origem), vary: "Origin" }
+  }
   if (!origemPermitida(origem, permitidas)) return {}
   return {
     "access-control-allow-origin": String(origem),
@@ -130,13 +140,14 @@ export function cabecalhosDeCors(
 export function cabecalhosDePreflight(
   origem: string | null | undefined,
   permitidas: readonly string[],
+  nativas: readonly string[] = [],
 ): Readonly<Record<string, string>> {
-  const cors = cabecalhosDeCors(origem, permitidas)
+  const cors = cabecalhosDeCors(origem, permitidas, nativas)
   if (Object.keys(cors).length === 0) return {}
   return {
     ...cors,
     "access-control-allow-methods": "GET, POST, PUT, PATCH, DELETE, OPTIONS",
-    "access-control-allow-headers": `authorization, content-type, ${CABECALHO_DO_APP}`,
+    "access-control-allow-headers": `authorization, content-type, ${CABECALHO_DO_APP}${origemPermitida(origem, nativas) ? ", x-bivaque-cliente" : ""}`,
     "access-control-max-age": "600",
   }
 }

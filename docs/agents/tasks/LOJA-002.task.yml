@@ -1,0 +1,87 @@
+task_id: LOJA-002
+objective: >
+  Lado do servidor da sessão nativa do app de loja, como decide o ADR-20261120 (§2, §3, §4, §8, §9):
+  modo nativo declarado, emissão do par de tokens no corpo, as rotas novas /api/app/sessao/token e
+  /api/app/sessao/renovar com limitador por IP no banco, sair por Bearer que revoga de verdade no
+  GoTrue, CORS e Origin das origens nativas, e a redação de tokens no logger, no scrubber e no
+  Sentry. O app nativo (cofre, ciclo de vida, entrada nativa, PKCE no app, CSP do build nativo) é o
+  LOJA-003 e não muda aqui.
+authority:
+  - docs/decisions/ADR-20261120-sessao-nativa-do-app-de-loja.md (a fonte deste lote; cada seção citada)
+  - docs/decisions/ADR-20261024-front-react-spa.md (§5 contrato de API)
+  - docs/decisions/ADR-20261105-porta-de-dados-do-app.md (§1)
+  - docs/decisions/ADR-20261110-superficie-publica-do-proxy.md
+  - "card LAN-LOJA em tools/backend-kanban/public/board.json"
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    Em origin/main f117e427 não existem apps/web/app/api/app/sessao/ nem um modo nativo nas rotas de
+    entrada; POST /api/app/voce/sair por Bearer não revoga no GoTrue; origensPermitidas() não conhece
+    https://localhost nem capacitor://localhost; o logger e o scrubber não apagam refresh_token nem
+    code_verifier.
+allowed_paths:
+  - apps/web/app/api/app/sessao/**
+  - apps/web/app/api/app/entry/otp/**
+  - apps/web/app/api/app/entry/oauth/**
+  - apps/web/app/api/app/voce/sair/**
+  - apps/web/lib/app-api/**
+  - apps/web/lib/security/api-surface.ts
+  - apps/web/lib/security/route-surface.ts
+  - apps/web/lib/logger.ts
+  - apps/web/proxy.ts
+  - apps/web/instrumentation.ts
+  - apps/web/sentry.server.config.ts
+  - apps/web/sentry.edge.config.ts
+  - packages/domain/src/pii-scrub.ts
+  - packages/domain/src/rate-limit.ts
+  - supabase/migrations/**
+  - supabase/tests/**
+  - tests/unit/**
+  - tests/integration/**
+  - apps/web/tests/**
+  - docs/agents/tasks/LOJA-002.task.yml
+  - docs/decisions/ADR-20261120-sessao-nativa-do-app-de-loja.md
+  - docs/decisions/RATIFICACAO.md
+  - supabase/database.generated.ts
+  - tests/e2e/**
+  - tools/backend-kanban/public/board.json
+  - tools/backend-kanban/BOARD.md
+forbidden:
+  - apps/app (é o LOJA-003), apps/mobile, apps/prototipo
+  - editar migration já aplicada; migration nova só por supabase migration new
+  - service_role nas rotas de sessão ou em sair para qualquer coisa além da chamada ao limitador por IP (mesmo padrão de entry/otp/verify, ADR §3 "no mesmo padrão da verificação do código", com comentário de autorização no código); sair usa auth.admin.signOut com o JWT da pessoa, que não usa service_role; o signOut() do cliente com persistSession false é proibido (ADR §3)
+  - set-cookie em qualquer resposta do modo nativo; corpo do par com mais que access_token, refresh_token e expires_at
+  - aceitar modo nativo vindo de origem web ou de Origin null; aceitar modo nativo com cookie
+  - pôr as origens nativas na lista de escrita por cookie ou em origensPermitidas()
+  - Access-Control-Allow-Credentials para as origens nativas; curinga no CORS
+  - apagar a chave genérica code no logger ou no scrubber fora do alcance do ADR §9
+  - mudar o comportamento das rotas para a web (cookie) além do que o ADR manda
+  - token, code, code_verifier ou e-mail em log, teste impresso ou snapshot
+  - git stash, reiniciar ou reconstruir o banco local, delegar
+  - dado pessoal real ou CPF real; segredo no repositório
+acceptance:
+  - "modo nativo só com x-bivaque-cliente: loja e Origin numa lista nativa própria (https://localhost, capacitor://localhost); origem web pedindo modo nativo e Origin null recebem 403; modo nativo com cookie recebe 400 ou 403; sem cabeçalho Origin o modo nativo é aceito, porque o ADR §2 separa ausência de null e não há credencial ambiente (ADR §2)"
+  - "POST /api/app/entry/otp aceita as origens nativas; POST /api/app/entry/otp/verify em modo nativo devolve {access_token, refresh_token, expires_at} no corpo, sem set-cookie, com o limitador SEC-007/008 igual"
+  - "POST /api/app/sessao/token troca code mais code_verifier pelo par; verificador errado e código reusado são recusados"
+  - "POST /api/app/sessao/renovar: recusa definitiva do GoTrue (pelo error_code do corpo: token inexistente, revogado, reusado, verificador errado, fluxo inexistente) vira 401; erro de configuração (apikey ou URL) não vira 401; 5xx, 429 do GoTrue e tempo esgotado viram 503 (ADR §4)"
+  - "limitador por IP no banco para sessao/token (20 por IP em 10 min) e sessao/renovar (120 por IP em 10 min), consumido antes do GoTrue, fechando em falha, com balde sem-ip quando ipConfiavel devolve null; estouro responde 429 (ADR §3)"
+  - "POST /api/app/voce/sair por Bearer revoga com auth.admin.signOut(jwt, 'local') e não manda Clear-Site-Data; por cookie nada muda"
+  - "o ramo nativo de entry/oauth monta a URL de autorização com code_challenge S256 recebido do app e redirect_to constante bivaque://auth-callback, sem cliente SSR com cookie, sem origemDoPedido e sem gravar cookie (ADR §5)"
+  - "CORS das origens nativas: Allow-Origin exato, sem Allow-Credentials; preflight libera authorization, x-bivaque-app, x-bivaque-cliente e content-type; avaliarEscrita e conferirPorta aceitam Origin nativa só para Bearer (ADR §8)"
+  - "logger e pii-scrub apagam access_token, refresh_token, provider_token, provider_refresh_token, auth_code e code_verifier, também em URL e breadcrumbs; code só como parâmetro de bivaque://auth-callback e nos corpos de /api/app/sessao/*; o Sentry ignora o corpo de /api/app/sessao/*, entry/otp/verify e voce/sair (ADR §9)"
+  - "as rotas novas entram em api-surface.ts e na superfície pública do proxy"
+  - "provas do ADR, seção Provas exigidas, itens Servidor e Redação: cada uma com teste positivo e negativo"
+proof:
+  - npx pnpm@11.18.0 gate --fast
+  - npx pnpm@11.18.0 test
+  - npx pnpm@11.18.0 test:scope
+  - "teste de integração contra o GoTrue local, sem mock: sair por Bearer recusa depois o mesmo token de acesso e o de renovação; rotação R0→R1→R2 e reuso de R0 depois de 10 s recusa R0 com 401 (R2 não é asserção do lote, emenda de 21/11 do ADR) (no CI, ci:full, se o banco local do PC estiver indisponível; ver INFRA-CLI-SUPABASE-PC)"
+  - "npx pnpm@11.18.0 test:db para o pgTAP do limitador (no CI, ci:full, enquanto o card INFRA-CLI-SUPABASE-PC estiver aberto)"
+risk: security
+risk_level: R3
+adr: docs/decisions/ADR-20261120-sessao-nativa-do-app-de-loja.md
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: HUMAN_DECISION
+closure:
+  requires_runtime_evidence: true

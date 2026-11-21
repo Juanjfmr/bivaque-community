@@ -2,6 +2,8 @@ import { createServerClient } from "@supabase/ssr"
 import { cookies } from "next/headers"
 import type { NextRequest, NextResponse } from "next/server"
 import type { Database } from "supabase/database.generated"
+import { VALOR_DO_CABECALHO_DO_APP } from "../../../../../lib/app-api/contrato"
+import { avaliarModoNativo } from "../../../../../lib/app-api/modo-nativo"
 import {
   conferirPorta,
   opcoesDoApp,
@@ -29,6 +31,7 @@ export const dynamic = "force-dynamic"
 
 const DESTINO_DO_APP = "/app/entrar"
 const PROVEDOR = "google"
+const REDIRECT_NATIVO = "bivaque://auth-callback"
 
 function provedorPedido(corpo: unknown): unknown {
   if (typeof corpo !== "object" || corpo === null) return undefined
@@ -36,7 +39,12 @@ function provedorPedido(corpo: unknown): unknown {
 }
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
-  const porta = conferirPorta(request, "cookie")
+  const modo = avaliarModoNativo(request)
+  if ("recusa" in modo) return responder(request, { erro: "origem-recusada" }, modo.recusa)
+  const porta = conferirPorta(request, modo.nativo ? "bearer" : "cookie")
+  if (modo.nativo && request.headers.get("x-bivaque-app") !== VALOR_DO_CABECALHO_DO_APP) {
+    return responder(request, { erro: "cabecalho-ausente" }, 403)
+  }
   if (porta !== "ok") return responder(request, { erro: porta }, 403)
 
   let bruto: unknown
@@ -50,9 +58,24 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     return responder(request, { erro: "provedor-invalido" }, 400)
   }
 
+  const desafio = (bruto as { code_challenge?: unknown }).code_challenge
+  if (modo.nativo && (typeof desafio !== "string" || !/^[A-Za-z0-9_-]{43}$/.test(desafio))) {
+    return responder(request, { erro: "corpo-invalido" }, 400)
+  }
+
   const url = process.env["NEXT_PUBLIC_SUPABASE_URL"]
   const anon = process.env["NEXT_PUBLIC_SUPABASE_ANON_KEY"]
   if (!url || !anon) return respostaIndisponivel(request)
+
+  if (modo.nativo) {
+    const parametros = new URLSearchParams({
+      provider: PROVEDOR,
+      redirect_to: REDIRECT_NATIVO,
+      code_challenge: desafio as string,
+      code_challenge_method: "s256",
+    })
+    return responder(request, { url: `${url}/auth/v1/authorize?${parametros}` }, 200)
+  }
 
   const cookieStore = await cookies()
   const supabase = createServerClient<Database>(url, anon, {
