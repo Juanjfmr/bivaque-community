@@ -12,11 +12,13 @@ import {
 import { useSobreposicaoDaEntrada } from "@/lib/navegacao/react"
 
 export function useAcoesDaPublicacao({
-  admin,
+  admin: _admin,
+  dono,
   fixada,
   aoMudar,
 }: {
   admin: boolean
+  dono: boolean
   fixada: string | null
   aoMudar: (resultado: { publicacao: PublicacaoReal; fixada: string | null }) => void
 }) {
@@ -195,7 +197,7 @@ export function useAcoesDaPublicacao({
                     Denunciar publicação
                   </Botao>
                 ) : null}
-                {admin ? (
+                {dono ? (
                   <Botao
                     tom="texto"
                     disabled={ocupado}

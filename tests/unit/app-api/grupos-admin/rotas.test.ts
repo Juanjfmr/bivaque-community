@@ -91,6 +91,12 @@ it("remoção e recusa filtram o estado", async () => {
       metodo: "eq",
       args: ["status", status],
     })
+    if (fn === remover)
+      expect(mock.chamadas).toContainEqual({
+        tabela: "group_memberships",
+        metodo: "neq",
+        args: ["role", "owner"],
+      })
     autenticar(mockClient({ erroEscrita: "group_memberships", codigo: "42501" }))
     expect((await fn(req(metodo, undefined, corpo), alvo)).status).toBe(403)
   }

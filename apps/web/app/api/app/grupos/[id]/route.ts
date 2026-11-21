@@ -42,7 +42,16 @@ export async function GET(request: NextRequest, { params }: Context): Promise<Ne
     const cidade = await cidadeDoGrupo(client, grupo.locality_id)
     const membro = await participacao(client, id, userId)
     const membros = (await contarMembrosAprovados(client, [id])).get(id) ?? 0
-    const resumo = apresentarGrupo(grupo, membro, userId, membros)
+    let aviso: string | null = null
+    if (membro?.status === "approved") {
+      try {
+        const resultadoAviso = await client.rpc("my_group_notify_level", { p_group_id: id })
+        if (!resultadoAviso.error) aviso = resultadoAviso.data
+      } catch {
+        // O detalhe do grupo continua útil se a preferência de aviso falhar.
+      }
+    }
+    const resumo = { ...apresentarGrupo(grupo, membro, userId, membros), aviso }
     if (resumo.fechado && !resumo.membro) {
       return responder(request, { grupo: resumo, cidade, publicacoes: [], proximo: null }, 200)
     }

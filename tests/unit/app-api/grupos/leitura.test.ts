@@ -89,6 +89,19 @@ describe("grupos — diretório e detalhe sob RLS", () => {
       args: ["group_id"],
     })
   })
+  it("devolve o aviso salvo ao membro e tolera falha do RPC", async () => {
+    const mock = mockClient({ aviso: "highlights" })
+    autenticar(mock)
+    const r = await detalhe(req(), context)
+    expect(r.status).toBe(200)
+    expect((await r.json()).grupo.aviso).toBe("highlights")
+    expect(mock.rpc).toHaveBeenCalledWith("my_group_notify_level", { p_group_id: ID })
+
+    autenticar(mockClient({ rpcErro: "my_group_notify_level" }))
+    const falha = await detalhe(req(), context)
+    expect(falha.status).toBe(200)
+    expect((await falha.json()).grupo.aviso).toBeNull()
+  })
   it("detalhe devolve somente publicações visíveis e URLs assinadas, sem caminho bruto", async () => {
     const mock = mockClient({ posts: [{ ...post, photo_path: USER + "/foto.jpg" }] })
     autenticar(mock)

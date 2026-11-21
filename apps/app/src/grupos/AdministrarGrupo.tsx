@@ -33,10 +33,12 @@ export function AdministrarGrupo() {
   const navegacao = useNavegacao()
   const [grupo, setGrupo] = useState<GrupoReal | null>(null)
   const [membros, setMembros] = useState<readonly MembroDoGrupo[] | null>(null)
+  const [erroMembros, setErroMembros] = useState(false)
   const [regras, setRegras] = useState("")
   const [erro, setErro] = useState("")
   const [retorno, setRetorno] = useState("")
   const [rodada, setRodada] = useState(0)
+  const [rodadaMembros, setRodadaMembros] = useState(0)
   const [ocupado, setOcupado] = useState(false)
   const [confirmacao, setConfirmacao] = useState<Confirmacao | null>(null)
   // biome-ignore lint/correctness/useExhaustiveDependencies: rodada solicita nova leitura
@@ -48,10 +50,6 @@ export function AdministrarGrupo() {
         if (!ativo) return
         setGrupo(dados.grupo)
         setRegras(dados.grupo.regras)
-        if (dados.grupo.admin) {
-          const lista = await lerMembrosDoGrupo(id)
-          if (ativo) setMembros(lista)
-        }
       })
       .catch(() => {
         if (ativo) setErro("Não foi possível carregar a administração. Tente de novo.")
@@ -60,6 +58,23 @@ export function AdministrarGrupo() {
       ativo = false
     }
   }, [id, rodada])
+  // biome-ignore lint/correctness/useExhaustiveDependencies: rodadaMembros solicita nova leitura
+  useEffect(() => {
+    let ativo = true
+    setMembros(null)
+    setErroMembros(false)
+    if (!grupo?.admin) return
+    void lerMembrosDoGrupo(id)
+      .then((lista) => {
+        if (ativo) setMembros(lista)
+      })
+      .catch(() => {
+        if (ativo) setErroMembros(true)
+      })
+    return () => {
+      ativo = false
+    }
+  }, [id, grupo?.admin, rodadaMembros])
   async function executar() {
     if (!confirmacao) return
     setOcupado(true)
@@ -120,7 +135,12 @@ export function AdministrarGrupo() {
       <Pedidos id={id} />
       <section className="grid gap-2">
         <h2>Membros</h2>
-        {!membros ? (
+        {erroMembros ? (
+          <div role="alert">
+            <p>Não foi possível carregar os membros.</p>
+            <Botao onClick={() => setRodadaMembros((r) => r + 1)}>Tentar de novo</Botao>
+          </div>
+        ) : !membros ? (
           <p>Carregando membros…</p>
         ) : (
           membros.map((m) => (
@@ -169,41 +189,43 @@ export function AdministrarGrupo() {
           ))
         )}
       </section>
-      <section className="grid gap-2">
-        <h2>Regras</h2>
-        <AreaDeTexto
-          id="regras-grupo"
-          rotulo="Regras do grupo"
-          value={regras}
-          onChange={(evento) => setRegras(evento.target.value)}
-          aria-describedby="regras-contagem"
-          maxLength={600}
-        />
-        <p id="regras-contagem" className="text-[13px] text-(--muted-foreground)">
-          {regras.length}/600 caracteres
-        </p>
-        <BotaoPeca
-          tom="principal"
-          className="w-full max-w-80"
-          disabled={ocupado || regras === grupo.regras}
-          aria-disabled={ocupado || regras === grupo.regras}
-          aria-describedby={regras === grupo.regras ? "regras-sem-alteracoes" : undefined}
-          onClick={() => {
-            setOcupado(true)
-            setErro("")
-            void salvarRegras(id, regras)
-              .then(() => {
-                setGrupo((atual) => (atual ? { ...atual, regras } : atual))
-                setRetorno("Regras salvas.")
-              })
-              .catch(() => setErro("Não foi possível salvar as regras. Tente de novo."))
-              .finally(() => setOcupado(false))
-          }}
-        >
-          Salvar regras
-        </BotaoPeca>
-        {regras === grupo.regras ? <p id="regras-sem-alteracoes">Nada para salvar.</p> : null}
-      </section>
+      {grupo.dono ? (
+        <section className="grid gap-2">
+          <h2>Regras</h2>
+          <AreaDeTexto
+            id="regras-grupo"
+            rotulo="Regras do grupo"
+            value={regras}
+            onChange={(evento) => setRegras(evento.target.value)}
+            aria-describedby="regras-contagem"
+            maxLength={600}
+          />
+          <p id="regras-contagem" className="text-[13px] text-(--muted-foreground)">
+            {regras.length}/600 caracteres
+          </p>
+          <BotaoPeca
+            tom="principal"
+            className="w-full max-w-80"
+            disabled={ocupado || regras === grupo.regras}
+            aria-disabled={ocupado || regras === grupo.regras}
+            aria-describedby={regras === grupo.regras ? "regras-sem-alteracoes" : undefined}
+            onClick={() => {
+              setOcupado(true)
+              setErro("")
+              void salvarRegras(id, regras)
+                .then(() => {
+                  setGrupo((atual) => (atual ? { ...atual, regras } : atual))
+                  setRetorno("Regras salvas.")
+                })
+                .catch(() => setErro("Não foi possível salvar as regras. Tente de novo."))
+                .finally(() => setOcupado(false))
+            }}
+          >
+            Salvar regras
+          </BotaoPeca>
+          {regras === grupo.regras ? <p id="regras-sem-alteracoes">Nada para salvar.</p> : null}
+        </section>
+      ) : null}
       {grupo.dono ? (
         <section className="grid gap-2 border-t border-(--border) pt-6">
           <h2>Excluir grupo</h2>

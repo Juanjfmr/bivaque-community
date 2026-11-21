@@ -12,6 +12,7 @@ export type GrupoReal = Readonly<{
   dono?: boolean
   membros: number | null
   fixada: string | null
+  aviso: string | null
 }>
 export type PublicacaoReal = Readonly<{
   id: string
@@ -79,6 +80,7 @@ function grupo(valor: unknown): GrupoReal {
     dono: g["dono"] === undefined ? false : booleano(g["dono"]),
     membros: g["membros"] === null ? null : numero(g["membros"]),
     fixada: cursor(g["fixada"]),
+    aviso: g["aviso"] === null || g["aviso"] === undefined ? null : texto(g["aviso"]),
   }
 }
 function publicacao(valor: unknown): PublicacaoReal {

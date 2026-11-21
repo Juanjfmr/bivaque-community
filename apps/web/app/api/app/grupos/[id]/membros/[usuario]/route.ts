@@ -26,6 +26,7 @@ export async function DELETE(request: NextRequest, { params }: Context): Promise
       .eq("group_id", id)
       .eq("user_id", usuario)
       .eq("status", "approved")
+      .neq("role", "owner")
       .select("user_id")
     if (!error && data.length === 0) return responder(request, { erro: "nao-encontrado" }, 404)
     return resultado(request, error)

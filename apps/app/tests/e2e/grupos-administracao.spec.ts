@@ -97,6 +97,7 @@ for (const tema of ["claro", "escuro"]) {
               dono: true,
               membros: 2,
               fixada: null,
+              aviso: "highlights",
             },
             cidade: "Manaus",
             publicacoes: [],
@@ -108,6 +109,7 @@ for (const tema of ["claro", "escuro"]) {
       await route.fallback()
     })
     await page.goto("/app/grupo/g-futebol")
+    await expect(page.getByLabel("Avisos do grupo")).toHaveValue("highlights")
     await page.evaluate((valor) => {
       document.documentElement.dataset["tema"] = valor
     }, tema)
@@ -220,6 +222,7 @@ async function administracaoSimulada(page: Page, dono = true, falha = 0) {
             dono,
             membros: 3,
             fixada: null,
+            aviso: "all",
           },
           cidade: "Manaus",
           publicacoes: [],
@@ -240,7 +243,8 @@ for (const dono of [true, false]) {
     await administracaoSimulada(page, dono)
     await page.goto("/app/grupo/g-futebol/administrar")
     await expect(page.getByText("Pedidos de entrada")).toBeVisible()
-    await expect(page.getByLabel("Regras do grupo")).toBeVisible()
+    await expect(page.getByLabel("Regras do grupo")).toHaveCount(dono ? 1 : 0)
+    await expect(page.getByRole("button", { name: "Salvar regras" })).toHaveCount(dono ? 1 : 0)
     await page.getByRole("button", { name: "Mais ações para Pessoa" }).click()
     await expect(page.getByRole("menuitem", { name: "Remover" })).toBeVisible()
     await expect(page.getByRole("menuitem", { name: "Passar a administração" })).toHaveCount(
@@ -253,6 +257,27 @@ for (const dono of [true, false]) {
     await expect(proprio.getByRole("button", { name: /Remover|Mais ações para/ })).toHaveCount(0)
   })
 }
+
+test("falha ao carregar membros permite tentar novamente", async ({ page }) => {
+  await administracaoSimulada(page)
+  let tentativas = 0
+  await page.route("**/api/app/grupos/g-futebol/membros", async (route) => {
+    tentativas++
+    if (tentativas === 1) {
+      await route.fulfill({ status: 500, json: { erro: "falha" } })
+      return
+    }
+    await route.fulfill({
+      json: { membros: [{ id: "membro", nome: "Pessoa", papel: "member" }] },
+    })
+  })
+  await page.goto("/app/grupo/g-futebol/administrar")
+  await expect(page.getByRole("alert")).toContainText("Não foi possível carregar os membros.")
+  await expect(page.getByText("Carregando membros…")).toHaveCount(0)
+  await page.getByRole("alert").getByRole("button", { name: "Tentar de novo" }).click()
+  await expect(page.getByText("Pessoa", { exact: true })).toBeVisible()
+  expect(tentativas).toBe(2)
+})
 
 for (const acao of ["Remover", "Passar a administração", "Excluir grupo"]) {
   test(`${acao}: cancelar não envia e confirmar envia uma vez`, async ({ page }) => {

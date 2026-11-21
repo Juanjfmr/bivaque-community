@@ -6,7 +6,7 @@ import { Botao, CampoDeEscolha } from "@/src/pecas/pecas"
 export function ConviteEAvisos({ grupo }: { grupo: GrupoReal }) {
   const [mensagem, setMensagem] = useState("")
   const [link, setLink] = useState("")
-  const [nivel, setNivel] = useState("")
+  const [nivel, setNivel] = useState(grupo.aviso ?? "")
   const [ocupado, setOcupado] = useState(false)
   async function convidar() {
     const url = new URL(`/app/grupo/${encodeURIComponent(grupo.id)}`, window.location.origin).href
@@ -55,7 +55,9 @@ export function ConviteEAvisos({ grupo }: { grupo: GrupoReal }) {
             .finally(() => setOcupado(false))
         }}
       />
-      {mensagem ? <p role="status">{mensagem}</p> : null}
+      {mensagem ? (
+        <p role={mensagem.startsWith("Não foi possível") ? "alert" : "status"}>{mensagem}</p>
+      ) : null}
       {link ? (
         <input
           aria-label="Link do grupo"
