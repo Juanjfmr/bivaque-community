@@ -1,4 +1,4 @@
-﻿import { expect, test } from "@playwright/test"
+import { expect, test } from "@playwright/test"
 import { simularGrupos } from "./grupos-ajuda"
 
 for (const tema of ["claro", "escuro"]) {

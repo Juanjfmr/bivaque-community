@@ -80,7 +80,7 @@ export function Pedidos({ id }: { id: string }) {
                         setRetorno(decisao === "aprovar" ? "Pedido aprovado." : "Pedido recusado.")
                       })
                       .catch(() =>
-                        setRetorno("N?o foi poss?vel atualizar o pedido. Tente de novo."),
+                        setRetorno("Não foi possível atualizar o pedido. Tente de novo."),
                       )
                       .finally(() => setOcupado(false))
                   }}

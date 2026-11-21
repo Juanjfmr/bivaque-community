@@ -1,4 +1,4 @@
-﻿import { useState } from "react"
+import { useState } from "react"
 import { Botao } from "@/components/bivaque/botao"
 import { type GrupoReal, salvarAviso } from "@/lib/dados/grupos"
 

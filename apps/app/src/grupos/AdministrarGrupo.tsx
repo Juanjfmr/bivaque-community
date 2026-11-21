@@ -1,4 +1,4 @@
-﻿import { useParams } from "@tanstack/react-router"
+import { useParams } from "@tanstack/react-router"
 import { useEffect, useState } from "react"
 import { Botao } from "@/components/bivaque/botao"
 import { CabecaDePagina } from "@/components/bivaque/cabeca-de-pagina"
