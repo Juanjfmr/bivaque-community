@@ -737,5 +737,371 @@ values
    'Serviço de elétrica', 'Farol, bateria e alternador, com teste na hora.', 15000, 2)
 on conflict (id) do nothing;
 
+-- ══════════════════════════════════════════════════════════════════════════
+-- 6. Grupos, publicações e respostas
+--
+-- Sem vila e sem comunidade: grupos de cidade (`locality_id`), `community_id`
+-- nulo. Publicação só existe dentro de grupo — é a regra vigente do produto.
+-- ══════════════════════════════════════════════════════════════════════════
+
+insert into public.groups (
+  id, name, description, rules, visibility, locality_id, created_by, owner_user_id, created_at
+)
+values
+  ('dd200000-0000-4000-8000-000000000001', 'Caminhada do Mindu',
+   'Combinamos caminhada cedo, antes do calor apertar.',
+   'Avisar no grupo quando não puder ir. Ritmo leve, todos caminham juntos.',
+   'public', '00000000-0000-4000-8000-000000000001',
+   'dd000000-0000-4000-8000-000000000004', 'dd000000-0000-4000-8000-000000000004',
+   now() - interval '120 days'),
+  ('dd200000-0000-4000-8000-000000000002', 'Pais e mães do Parque 10',
+   'Escola, atividades e passeios com as crianças do bairro.',
+   'Nada de discussão política. Dúvida sobre escola é sempre bem-vinda.',
+   'public', '00000000-0000-4000-8000-000000000001',
+   'dd000000-0000-4000-8000-000000000008', 'dd000000-0000-4000-8000-000000000008',
+   now() - interval '110 days'),
+  ('dd200000-0000-4000-8000-000000000003', 'Corrida ao amanhecer',
+   'Treino leve às terças e quintas, para quem está começando.',
+   'Sem competição no grupo. Cada um no seu pace.',
+   'public', '00000000-0000-4000-8000-000000000001',
+   'dd000000-0000-4000-8000-000000000006', 'dd000000-0000-4000-8000-000000000006',
+   now() - interval '100 days'),
+  ('dd200000-0000-4000-8000-000000000004', 'Trocas de livro e gibis',
+   'Cada um traz um livro lido e leva outro para casa.',
+   'Combinar a troca pelo grupo antes de sair de casa.',
+   'public', '00000000-0000-4000-8000-000000000001',
+   'dd000000-0000-4000-8000-000000000011', 'dd000000-0000-4000-8000-000000000011',
+   now() - interval '95 days'),
+  ('dd200000-0000-4000-8000-000000000005', 'Reformas e reparos em casa',
+   'Indicação de quem faz bem feito e socorro para o que quebrou.',
+   'Quem indicar serviço conta como foi a experiência.',
+   'public', '00000000-0000-4000-8000-000000000001',
+   'dd000000-0000-4000-8000-000000000010', 'dd000000-0000-4000-8000-000000000010',
+   now() - interval '90 days'),
+  ('dd200000-0000-4000-8000-000000000006', 'Cozinha de domingo',
+   'Receitas, panelas e o almoço que junta a família.',
+   'Grupo fechado, só por convite. Receita boa se compartilha.',
+   'private', '00000000-0000-4000-8000-000000000001',
+   'dd000000-0000-4000-8000-000000000025', 'dd000000-0000-4000-8000-000000000025',
+   now() - interval '80 days')
+on conflict (id) do nothing;
+
+-- Cada membro entra em parte dos grupos (o resto da cidade fica de fora, como
+-- na vida real). A persona principal entra em todos; o grupo fechado só recebe
+-- quem foi convidado.
+insert into public.group_memberships (group_id, user_id, role, status, joined_at)
+select
+  g.id,
+  m.id,
+  'member'::public.group_membership_role,
+  'approved'::public.group_membership_status,
+  now() - make_interval(days => 60 - (m.i % 20) - g.n)
+from (
+  values
+    (1, 'dd200000-0000-4000-8000-000000000001'::uuid, 4),
+    (2, 'dd200000-0000-4000-8000-000000000002'::uuid, 8),
+    (3, 'dd200000-0000-4000-8000-000000000003'::uuid, 6),
+    (4, 'dd200000-0000-4000-8000-000000000004'::uuid, 11),
+    (5, 'dd200000-0000-4000-8000-000000000005'::uuid, 10),
+    (6, 'dd200000-0000-4000-8000-000000000006'::uuid, 25)
+) as g(n, id, dono)
+cross join demo_membros m
+where (
+       (m.i + g.n) % 3 <> 0
+    or m.i = 1
+    or m.i = g.dono
+  )
+  and (g.n < 6 or m.i in (1, 7, 12, 25))
+on conflict (group_id, user_id) do nothing;
+
+-- Entradas que as conversas de grupo em comum pressupõem (quem conversa sobre
+-- o grupo participa dele).
+insert into public.group_memberships (group_id, user_id, role, status)
+values
+  ('dd200000-0000-4000-8000-000000000001', 'dd000000-0000-4000-8000-000000000002', 'member', 'approved')
+on conflict (group_id, user_id) do nothing;
+
+-- Dono de cada grupo, explícito (o UPDATE cobre quem já entrou acima).
+insert into public.group_memberships (group_id, user_id, role, status)
+values
+  ('dd200000-0000-4000-8000-000000000001', 'dd000000-0000-4000-8000-000000000004', 'owner', 'approved'),
+  ('dd200000-0000-4000-8000-000000000002', 'dd000000-0000-4000-8000-000000000008', 'owner', 'approved'),
+  ('dd200000-0000-4000-8000-000000000003', 'dd000000-0000-4000-8000-000000000006', 'owner', 'approved'),
+  ('dd200000-0000-4000-8000-000000000004', 'dd000000-0000-4000-8000-000000000011', 'owner', 'approved'),
+  ('dd200000-0000-4000-8000-000000000005', 'dd000000-0000-4000-8000-000000000010', 'owner', 'approved'),
+  ('dd200000-0000-4000-8000-000000000006', 'dd000000-0000-4000-8000-000000000025', 'owner', 'approved')
+on conflict (group_id, user_id) do update set role = 'owner', status = 'approved';
+
+insert into public.posts (
+  id, locality_id, user_id, group_id, post_type, content, created_at
+)
+values
+  ('dd300000-0000-4000-8000-000000000001', '00000000-0000-4000-8000-000000000001',
+   'dd000000-0000-4000-8000-000000000001', 'dd200000-0000-4000-8000-000000000001',
+   'text', 'Saí às cinco e meia hoje e o parque estava fresco, com pouca gente. Quem quiser, encontro no portão principal amanhã.', now() - interval '2 days'),
+  ('dd300000-0000-4000-8000-000000000002', '00000000-0000-4000-8000-000000000001',
+   'dd000000-0000-4000-8000-000000000004', 'dd200000-0000-4000-8000-000000000001',
+   'text', 'Combinado para sábado: saída às seis, uma hora de caminhada e café na padaria depois.', now() - interval '5 days'),
+  ('dd300000-0000-4000-8000-000000000003', '00000000-0000-4000-8000-000000000001',
+   'dd000000-0000-4000-8000-000000000008', 'dd200000-0000-4000-8000-000000000002',
+   'text', 'A escola do bairro abriu inscrição para a turma de reforço no contraturno. Fui hoje cedo e a fila estava tranquila.', now() - interval '1 day'),
+  ('dd300000-0000-4000-8000-000000000004', '00000000-0000-4000-8000-000000000001',
+   'dd000000-0000-4000-8000-000000000005', 'dd200000-0000-4000-8000-000000000002',
+   'text', 'Alguém já levou as crianças no passeio do fim de semana? Queria saber se precisa levar lanche.', now() - interval '4 days'),
+  ('dd300000-0000-4000-8000-000000000005', '00000000-0000-4000-8000-000000000001',
+   'dd000000-0000-4000-8000-000000000002', 'dd200000-0000-4000-8000-000000000003',
+   'text', 'Primeiro treino feito. Corri menos do que imaginei, mas terminei inteiro. Obrigado pelo apoio de vocês.', now() - interval '3 days'),
+  ('dd300000-0000-4000-8000-000000000006', '00000000-0000-4000-8000-000000000001',
+   'dd000000-0000-4000-8000-000000000006', 'dd200000-0000-4000-8000-000000000003',
+   'text', 'Terça e quinta, seis da manhã, no mesmo ponto. Quem chegar depois a gente espera dois minutos e sai.', now() - interval '7 days'),
+  ('dd300000-0000-4000-8000-000000000007', '00000000-0000-4000-8000-000000000001',
+   'dd000000-0000-4000-8000-000000000011', 'dd200000-0000-4000-8000-000000000004',
+   'text', 'Separei duas caixas de livro infantil e uma de romance. Deixo na biblioteca na quinta para quem quiser passar.', now() - interval '6 days'),
+  ('dd300000-0000-4000-8000-000000000008', '00000000-0000-4000-8000-000000000001',
+   'dd000000-0000-4000-8000-000000000004', 'dd200000-0000-4000-8000-000000000004',
+   'text', 'Peguei dois livros na troca do mês passado e já terminei os dois. Volto com eles na próxima.', now() - interval '9 days'),
+  ('dd300000-0000-4000-8000-000000000009', '00000000-0000-4000-8000-000000000001',
+   'dd000000-0000-4000-8000-000000000010', 'dd200000-0000-4000-8000-000000000005',
+   'text', 'Torneira da cozinha trocada em vinte minutos, sem quebrar nada. Serviço simples e bem feito.', now() - interval '2 days'),
+  ('dd300000-0000-4000-8000-000000000010', '00000000-0000-4000-8000-000000000001',
+   'dd000000-0000-4000-8000-000000000002', 'dd200000-0000-4000-8000-000000000005',
+   'text', 'Alguém conhece quem faça instalação de prateleira em parede de alvenaria? Tenho três para pendurar.', now() - interval '8 days'),
+  ('dd300000-0000-4000-8000-000000000011', '00000000-0000-4000-8000-000000000001',
+   'dd000000-0000-4000-8000-000000000025', 'dd200000-0000-4000-8000-000000000006',
+   'text', 'Testei o bolo de macaxeira com coco e ficou melhor que o da feira. Passo a receita para quem pedir aqui.', now() - interval '3 days'),
+  ('dd300000-0000-4000-8000-000000000012', '00000000-0000-4000-8000-000000000001',
+   'dd000000-0000-4000-8000-000000000007', 'dd200000-0000-4000-8000-000000000006',
+   'text', 'Almoço de domingo confirmado aqui em casa. Cada um traz um prato e eu faço o arroz.', now() - interval '5 days')
+on conflict (id) do nothing;
+
+insert into public.comments (id, post_id, user_id, content, created_at)
+values
+  ('dd400000-0000-4000-8000-000000000001', 'dd300000-0000-4000-8000-000000000001',
+   'dd000000-0000-4000-8000-000000000003', 'Vou com você. Levo água para dividir.', now() - interval '1 day'),
+  ('dd400000-0000-4000-8000-000000000002', 'dd300000-0000-4000-8000-000000000001',
+   'dd000000-0000-4000-8000-000000000007', 'Também vou, se não chover.', now() - interval '20 hours'),
+  ('dd400000-0000-4000-8000-000000000003', 'dd300000-0000-4000-8000-000000000003',
+   'dd000000-0000-4000-8000-000000000003', 'Obrigada por avisar. Vou tentar ir amanhã cedo.', now() - interval '22 hours'),
+  ('dd400000-0000-4000-8000-000000000004', 'dd300000-0000-4000-8000-000000000005',
+   'dd000000-0000-4000-8000-000000000005', 'Começar é o mais difícil. Na próxima semana já fica mais leve.', now() - interval '2 days'),
+  ('dd400000-0000-4000-8000-000000000005', 'dd300000-0000-4000-8000-000000000007',
+   'dd000000-0000-4000-8000-000000000010', 'Passo na quinta para pegar um de romance.', now() - interval '5 days'),
+  ('dd400000-0000-4000-8000-000000000006', 'dd300000-0000-4000-8000-000000000009',
+   'dd000000-0000-4000-8000-000000000012', 'Se precisar de prateleira sob medida, eu faço.', now() - interval '1 day'),
+  ('dd400000-0000-4000-8000-000000000007', 'dd300000-0000-4000-8000-000000000011',
+   'dd000000-0000-4000-8000-000000000012', 'Quero a receita. Faço no domingo para a família toda.', now() - interval '2 days'),
+  ('dd400000-0000-4000-8000-000000000008', 'dd300000-0000-4000-8000-000000000012',
+   'dd000000-0000-4000-8000-000000000001', 'Levo uma sobremesa. Aviso se não conseguir ir.', now() - interval '4 days')
+on conflict (id) do nothing;
+
+-- ══════════════════════════════════════════════════════════════════════════
+-- 7. Conversas e mensagens
+--
+-- Par único por conversa (constraint do esquema) e contexto verdadeiro: grupo
+-- em comum, ficha de negócio ou anúncio do qual os dois participam.
+-- ══════════════════════════════════════════════════════════════════════════
+
+insert into public.dm_conversations (
+  id, participant_a, participant_b, context_type, context_id, created_at
+)
+values
+  ('dd900000-0000-4000-8000-000000000001', 'dd000000-0000-4000-8000-000000000001',
+   'dd000000-0000-4000-8000-000000000002', 'shared_group',
+   'dd200000-0000-4000-8000-000000000001', now() - interval '6 days'),
+  ('dd900000-0000-4000-8000-000000000002', 'dd000000-0000-4000-8000-000000000001',
+   'dd000000-0000-4000-8000-000000000003', 'provider',
+   'dd800000-0000-4000-8000-000000000001', now() - interval '4 days'),
+  ('dd900000-0000-4000-8000-000000000003', 'dd000000-0000-4000-8000-000000000001',
+   'dd000000-0000-4000-8000-000000000004', 'listing',
+   'dd500000-0000-4000-8000-000000000005', now() - interval '2 days'),
+  ('dd900000-0000-4000-8000-000000000004', 'dd000000-0000-4000-8000-000000000009',
+   'dd000000-0000-4000-8000-000000000010', 'provider',
+   'dd800000-0000-4000-8000-000000000003', now() - interval '8 days'),
+  ('dd900000-0000-4000-8000-000000000005', 'dd000000-0000-4000-8000-000000000006',
+   'dd000000-0000-4000-8000-000000000007', 'shared_group',
+   'dd200000-0000-4000-8000-000000000001', now() - interval '9 days'),
+  ('dd900000-0000-4000-8000-000000000006', 'dd000000-0000-4000-8000-000000000005',
+   'dd000000-0000-4000-8000-000000000008', 'shared_group',
+   'dd200000-0000-4000-8000-000000000002', now() - interval '5 days'),
+  ('dd900000-0000-4000-8000-000000000007', 'dd000000-0000-4000-8000-000000000011',
+   'dd000000-0000-4000-8000-000000000012', 'shared_group',
+   'dd200000-0000-4000-8000-000000000005', now() - interval '7 days'),
+  ('dd900000-0000-4000-8000-000000000008', 'dd000000-0000-4000-8000-000000000013',
+   'dd000000-0000-4000-8000-000000000015', 'provider',
+   'dd800000-0000-4000-8000-000000000005', now() - interval '3 days'),
+  ('dd900000-0000-4000-8000-000000000009', 'dd000000-0000-4000-8000-000000000014',
+   'dd000000-0000-4000-8000-000000000017', 'listing',
+   'dd500000-0000-4000-8000-000000000020', now() - interval '1 day'),
+  ('dd900000-0000-4000-8000-000000000010', 'dd000000-0000-4000-8000-000000000023',
+   'dd000000-0000-4000-8000-000000000024', 'shared_group',
+   'dd200000-0000-4000-8000-000000000002', now() - interval '12 days')
+on conflict (id) do nothing;
+
+insert into public.dm_messages (id, conversation_id, sender_id, content, created_at)
+values
+  ('dd910000-0000-4000-8000-000000000001', 'dd900000-0000-4000-8000-000000000001',
+   'dd000000-0000-4000-8000-000000000002', 'Vai na caminhada de sábado?', now() - interval '6 days'),
+  ('dd910000-0000-4000-8000-000000000002', 'dd900000-0000-4000-8000-000000000001',
+   'dd000000-0000-4000-8000-000000000001', 'Vou sim, chego um pouco antes das seis.', now() - interval '6 days' + interval '20 minutes'),
+  ('dd910000-0000-4000-8000-000000000003', 'dd900000-0000-4000-8000-000000000001',
+   'dd000000-0000-4000-8000-000000000002', 'Levo água a mais, então.', now() - interval '6 days' + interval '35 minutes'),
+  ('dd910000-0000-4000-8000-000000000004', 'dd900000-0000-4000-8000-000000000002',
+   'dd000000-0000-4000-8000-000000000001', 'Oi! Tem almoço por encomenda para sexta?', now() - interval '4 days'),
+  ('dd910000-0000-4000-8000-000000000005', 'dd900000-0000-4000-8000-000000000002',
+   'dd000000-0000-4000-8000-000000000003', 'Tenho sim, fecho o cardápio na quinta.', now() - interval '4 days' + interval '40 minutes'),
+  ('dd910000-0000-4000-8000-000000000006', 'dd900000-0000-4000-8000-000000000002',
+   'dd000000-0000-4000-8000-000000000001', 'Perfeito, quero duas marmitas sem pimenta.', now() - interval '3 days'),
+  ('dd910000-0000-4000-8000-000000000007', 'dd900000-0000-4000-8000-000000000003',
+   'dd000000-0000-4000-8000-000000000001', 'O carrinho ainda está disponível?', now() - interval '2 days'),
+  ('dd910000-0000-4000-8000-000000000008', 'dd900000-0000-4000-8000-000000000003',
+   'dd000000-0000-4000-8000-000000000004', 'Está sim, posso mostrar hoje à tarde.', now() - interval '2 days' + interval '25 minutes'),
+  ('dd910000-0000-4000-8000-000000000009', 'dd900000-0000-4000-8000-000000000004',
+   'dd000000-0000-4000-8000-000000000009', 'O ar-condicionado está pingando. Consegue olhar esta semana?', now() - interval '8 days'),
+  ('dd910000-0000-4000-8000-000000000010', 'dd900000-0000-4000-8000-000000000004',
+   'dd000000-0000-4000-8000-000000000010', 'Consigo na quinta pela manhã.', now() - interval '8 days' + interval '15 minutes'),
+  ('dd910000-0000-4000-8000-000000000011', 'dd900000-0000-4000-8000-000000000004',
+   'dd000000-0000-4000-8000-000000000009', 'Fechado, quinta às nove.', now() - interval '7 days'),
+  ('dd910000-0000-4000-8000-000000000012', 'dd900000-0000-4000-8000-000000000005',
+   'dd000000-0000-4000-8000-000000000006', 'O grupo combinou o café da manhã para domingo?', now() - interval '9 days'),
+  ('dd910000-0000-4000-8000-000000000013', 'dd900000-0000-4000-8000-000000000005',
+   'dd000000-0000-4000-8000-000000000007', 'Combinou, às oito, no mesmo lugar de sempre.', now() - interval '9 days' + interval '30 minutes'),
+  ('dd910000-0000-4000-8000-000000000014', 'dd900000-0000-4000-8000-000000000006',
+   'dd000000-0000-4000-8000-000000000008', 'Conseguiu falar com a escola?', now() - interval '5 days'),
+  ('dd910000-0000-4000-8000-000000000015', 'dd900000-0000-4000-8000-000000000006',
+   'dd000000-0000-4000-8000-000000000005', 'Consegui, marcaram a visita para quinta.', now() - interval '5 days' + interval '45 minutes'),
+  ('dd910000-0000-4000-8000-000000000016', 'dd900000-0000-4000-8000-000000000007',
+   'dd000000-0000-4000-8000-000000000011', 'Você tem prateleira sobrando para doar?', now() - interval '7 days'),
+  ('dd910000-0000-4000-8000-000000000017', 'dd900000-0000-4000-8000-000000000007',
+   'dd000000-0000-4000-8000-000000000012', 'Tenho duas, posso levar no fim de semana.', now() - interval '7 days' + interval '10 minutes'),
+  ('dd910000-0000-4000-8000-000000000018', 'dd900000-0000-4000-8000-000000000007',
+   'dd000000-0000-4000-8000-000000000011', 'Ótimo, aviso no grupo quando passar.', now() - interval '6 days'),
+  ('dd910000-0000-4000-8000-000000000019', 'dd900000-0000-4000-8000-000000000008',
+   'dd000000-0000-4000-8000-000000000015', 'Tem horário para corte na sexta?', now() - interval '3 days'),
+  ('dd910000-0000-4000-8000-000000000020', 'dd900000-0000-4000-8000-000000000008',
+   'dd000000-0000-4000-8000-000000000013', 'Tenho às quatro e às cinco e meia.', now() - interval '3 days' + interval '20 minutes'),
+  ('dd910000-0000-4000-8000-000000000021', 'dd900000-0000-4000-8000-000000000009',
+   'dd000000-0000-4000-8000-000000000017', 'A bicicleta infantil ainda está disponível?', now() - interval '1 day'),
+  ('dd910000-0000-4000-8000-000000000022', 'dd900000-0000-4000-8000-000000000009',
+   'dd000000-0000-4000-8000-000000000014', 'Está sim, as rodinhas vão junto.', now() - interval '1 day' + interval '15 minutes'),
+  ('dd910000-0000-4000-8000-000000000023', 'dd900000-0000-4000-8000-000000000009',
+   'dd000000-0000-4000-8000-000000000017', 'Combinamos a retirada no sábado?', now() - interval '20 hours'),
+  ('dd910000-0000-4000-8000-000000000024', 'dd900000-0000-4000-8000-000000000010',
+   'dd000000-0000-4000-8000-000000000023', 'Meu notebook está reiniciando sozinho. Consegue olhar esta semana?', now() - interval '12 days'),
+  ('dd910000-0000-4000-8000-000000000025', 'dd900000-0000-4000-8000-000000000010',
+   'dd000000-0000-4000-8000-000000000024', 'Consigo sim, me chama no fim do dia.', now() - interval '12 days' + interval '1 hour'),
+  ('dd910000-0000-4000-8000-000000000026', 'dd900000-0000-4000-8000-000000000010',
+   'dd000000-0000-4000-8000-000000000023', 'Pode ser amanhã às seis.', now() - interval '11 days')
+on conflict (id) do nothing;
+
+-- Uma conversa lida e duas por ler: o contador da casca precisa dos dois
+-- estados para não parecer que sempre mostra um.
+insert into public.dm_read_states (conversation_id, user_id, last_read_at)
+values
+  ('dd900000-0000-4000-8000-000000000001', 'dd000000-0000-4000-8000-000000000001',
+   now() - interval '5 days'),
+  ('dd900000-0000-4000-8000-000000000003', 'dd000000-0000-4000-8000-000000000004',
+   now() - interval '1 day')
+on conflict (conversation_id, user_id) do nothing;
+
+-- Pedido de serviço dentro da conversa com a Cantina: é o contexto que a tela
+-- de pedidos do app lê.
+insert into public.service_requests (
+  id, requester_user_id, provider_id, provider_user_id, description, when_text,
+  status, conversation_id, category, first_responded_at, created_at, updated_at
+)
+values
+  ('dd940000-0000-4000-8000-000000000001', 'dd000000-0000-4000-8000-000000000001',
+   'dd800000-0000-4000-8000-000000000001', 'dd000000-0000-4000-8000-000000000003',
+   'Duas marmitas para sexta, sem pimenta.', 'Sexta ao meio-dia', 'in_conversation',
+   'dd900000-0000-4000-8000-000000000002', 'alimentacao',
+   now() - interval '4 days' + interval '40 minutes', now() - interval '4 days', now() - interval '3 days')
+on conflict (id) do nothing;
+
+-- ══════════════════════════════════════════════════════════════════════════
+-- 8. Agenda
+--
+-- Três encontros futuros (um deles com presenças confirmadas, para o card
+-- "seu próximo encontro" não sair vazio) e um já concluído.
+-- ══════════════════════════════════════════════════════════════════════════
+
+insert into public.events (
+  id, organizer_id, locality_id, title, description, starts_at, ends_at,
+  venue, status, created_at
+)
+values
+  ('dd920000-0000-4000-8000-000000000001', 'dd000000-0000-4000-8000-000000000004',
+   '00000000-0000-4000-8000-000000000001',
+   'Caminhada no Parque do Mindu',
+   'Saída do portão principal, ritmo leve, uma hora de caminhada. Levar água.',
+   now() + interval '3 days', now() + interval '3 days' + interval '1 hour 30 minutes',
+   'Parque do Mindu', 'upcoming', now() - interval '20 days'),
+  ('dd920000-0000-4000-8000-000000000002', 'dd000000-0000-4000-8000-000000000011',
+   '00000000-0000-4000-8000-000000000001',
+   'Feira de troca de livros',
+   'Cada um traz um livro lido e leva outro. Tem mesa para as crianças desenharem.',
+   now() + interval '9 days', now() + interval '9 days' + interval '3 hours',
+   'Biblioteca Pública', 'upcoming', now() - interval '15 days'),
+  ('dd920000-0000-4000-8000-000000000003', 'dd000000-0000-4000-8000-000000000008',
+   '00000000-0000-4000-8000-000000000001',
+   'Café da manhã das famílias',
+   'Cada família leva uma fruta ou um bolo. O café e o suco ficam por conta do grupo.',
+   now() + interval '16 days', now() + interval '16 days' + interval '2 hours',
+   'Praça da Saudade', 'upcoming', now() - interval '10 days'),
+  ('dd920000-0000-4000-8000-000000000004', 'dd000000-0000-4000-8000-000000000010',
+   '00000000-0000-4000-8000-000000000001',
+   'Mutirão de limpeza do campinho',
+   'Foi no dia de folga de todo mundo e rendeu: o campinho voltou a receber jogo.',
+   now() - interval '9 days', now() - interval '9 days' + interval '4 hours',
+   'Campinho do Coroado', 'completed', now() - interval '30 days')
+on conflict (id) do nothing;
+
+-- A `occurrence_date` é derivada do `starts_at` pelo gatilho; a sessão está em
+-- UTC, o mesmo recorte que o app usa para ler a presença.
+insert into public.event_rsvps (event_id, user_id, status)
+values
+  ('dd920000-0000-4000-8000-000000000001', 'dd000000-0000-4000-8000-000000000001', 'going'),
+  ('dd920000-0000-4000-8000-000000000001', 'dd000000-0000-4000-8000-000000000002', 'going'),
+  ('dd920000-0000-4000-8000-000000000001', 'dd000000-0000-4000-8000-000000000003', 'going'),
+  ('dd920000-0000-4000-8000-000000000001', 'dd000000-0000-4000-8000-000000000005', 'going'),
+  ('dd920000-0000-4000-8000-000000000001', 'dd000000-0000-4000-8000-000000000008', 'going'),
+  ('dd920000-0000-4000-8000-000000000002', 'dd000000-0000-4000-8000-000000000001', 'going'),
+  ('dd920000-0000-4000-8000-000000000002', 'dd000000-0000-4000-8000-000000000007', 'interested'),
+  ('dd920000-0000-4000-8000-000000000003', 'dd000000-0000-4000-8000-000000000001', 'going'),
+  ('dd920000-0000-4000-8000-000000000003', 'dd000000-0000-4000-8000-000000000009', 'going'),
+  ('dd920000-0000-4000-8000-000000000003', 'dd000000-0000-4000-8000-000000000021', 'going')
+on conflict (event_id, user_id, occurrence_date) do nothing;
+
+-- ══════════════════════════════════════════════════════════════════════════
+-- 9. Avisos da persona principal
+--
+-- Cada linha aponta para conteúdo que existe e é legível pela Ana sob RLS —
+-- aviso que leva a tela vazia é pior que aviso nenhum.
+-- ══════════════════════════════════════════════════════════════════════════
+
+insert into public.notifications (
+  id, recipient_user_id, actor_user_id, type, action, target_type, target_id, read_at, created_at
+)
+values
+  ('dd930000-0000-4000-8000-000000000001', 'dd000000-0000-4000-8000-000000000001',
+   'dd000000-0000-4000-8000-000000000003', 'comment', 'commented', 'post',
+   'dd300000-0000-4000-8000-000000000001', null, now() - interval '20 hours'),
+  ('dd930000-0000-4000-8000-000000000002', 'dd000000-0000-4000-8000-000000000001',
+   'dd000000-0000-4000-8000-000000000003', 'direct_message', 'sent', 'conversation',
+   'dd900000-0000-4000-8000-000000000002', null, now() - interval '3 days'),
+  ('dd930000-0000-4000-8000-000000000003', 'dd000000-0000-4000-8000-000000000001',
+   'dd000000-0000-4000-8000-000000000005', 'recommendation_reply', 'replied',
+   'recommendation_request', 'dd600000-0000-4000-8000-000000000001', null,
+   now() - interval '5 days'),
+  ('dd930000-0000-4000-8000-000000000004', 'dd000000-0000-4000-8000-000000000001',
+   'dd000000-0000-4000-8000-000000000004', 'group_post', 'published', 'group',
+   'dd200000-0000-4000-8000-000000000001', now() - interval '1 hour',
+   now() - interval '5 days'),
+  ('dd930000-0000-4000-8000-000000000005', 'dd000000-0000-4000-8000-000000000001',
+   'dd000000-0000-4000-8000-000000000002', 'event_rsvp', 'going', 'event',
+   'dd920000-0000-4000-8000-000000000001', null, now() - interval '2 days'),
+  ('dd930000-0000-4000-8000-000000000006', 'dd000000-0000-4000-8000-000000000001',
+   null, 'service_request', 'provider_first_reply', 'service_request',
+   'dd940000-0000-4000-8000-000000000001', null, now() - interval '4 days' + interval '40 minutes')
+on conflict (id) do nothing;
 
 commit;
