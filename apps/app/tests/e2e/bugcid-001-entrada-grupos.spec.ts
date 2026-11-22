@@ -183,6 +183,58 @@ async function simularEntrada(page: Page): Promise<EstadoDaProva> {
   return estado
 }
 
+type OpcoesDaCasca = { perfil: "erro" } | { perfil: "aguardando"; portao: Promise<void> }
+
+/** Só as leituras necessárias para provar o estado inicial e a reserva da casca. */
+async function simularCasca(page: Page, opcoes: OpcoesDaCasca): Promise<void> {
+  await page.route(/\/api\/app\/entry\/progress(?:\?|$)/, async (rota) => {
+    await rota.fulfill({
+      json: {
+        autenticado: true,
+        via: "cookie",
+        progresso: { versao: 2, etapa: "interesses", estado: {} },
+      },
+    })
+  })
+
+  await page.route(/\/api\/app\/voce(?:\?|$)/, async (rota) => {
+    if (opcoes.perfil === "erro") {
+      await rota.fulfill({ status: 500, json: { erro: "falha ao ler perfil" } })
+      return
+    }
+    await opcoes.portao
+    await rota.fulfill({
+      json: {
+        perfil: {
+          nome: "Ana Demo",
+          bio: null,
+          cidade: { id: "10000000-0000-4000-8000-000000000777", nome: CIDADE_DA_SESSAO },
+          outbound: null,
+          localizacao: { cep: null, definida: false },
+          distanciaDisponivel: false,
+        },
+        contagens: { salvos: 0, anuncios: 0, perguntas: 0, grupos: 0 },
+        conta: { exclusaoPendente: false },
+      },
+    })
+  })
+
+  await page.route(/\/api\/app\/inicio(?:\?|$)/, async (rota) => {
+    if (opcoes.perfil === "aguardando") await opcoes.portao
+    await rota.fulfill({
+      json: {
+        cidade: CIDADE_DA_SESSAO,
+        perguntas: [],
+        eventos: [],
+        anuncios: [],
+        negocios: [],
+        grupos: [],
+        proximo: null,
+      },
+    })
+  })
+}
+
 async function irAteOsInteresses(page: Page, tema: "claro" | "escuro"): Promise<void> {
   await page.goto("/app/entrar")
   // O escuro é o tema dormente: acende por atributo no documento (mesmo caminho
@@ -275,3 +327,31 @@ for (const tema of ["claro", "escuro"] as const) {
     })
   })
 }
+
+test.describe("BUG-CIDADE-GRUPOS: cidade da casca", () => {
+  test("usa a cidade da Início quando a leitura do perfil falha", async ({ page }) => {
+    await simularCasca(page, { perfil: "erro" })
+    await page.goto("/app/inicio")
+
+    const chip = page.locator('[data-acao="cidade"]')
+    await expect(chip).toContainText(CIDADE_DA_SESSAO)
+    await expect(chip).not.toContainText("Manaus")
+  })
+
+  test("mantém o placeholder até a leitura do perfil ser concluída", async ({ page }) => {
+    let liberar!: () => void
+    const portao = new Promise<void>((ok) => {
+      liberar = ok
+    })
+    await simularCasca(page, { perfil: "aguardando", portao })
+    await page.goto("/app/inicio")
+
+    const chip = page.locator('[data-acao="cidade"]')
+    await expect(chip).toContainText("Sua cidade", { timeout: 15_000 })
+    await expect(chip).not.toContainText("Manaus")
+
+    liberar()
+    await expect(chip).toContainText(CIDADE_DA_SESSAO)
+    await expect(chip).not.toContainText("Manaus")
+  })
+})
