@@ -46,9 +46,12 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
 export function PedidosRecebidos({
   tipoDaConta,
+  temFicha,
   irParaFicha,
 }: {
   readonly tipoDaConta: "membro" | "prestador"
+  /** Vem de Meu negócio (`ficha !== null`); `null` enquanto ela ainda chega. */
+  readonly temFicha: boolean | null
   readonly irParaFicha: () => void
 }) {
   const navegacao = useNavegacao()
@@ -66,7 +69,6 @@ export function PedidosRecebidos({
   const [alcance, setAlcance] = useState<boolean | null>(null)
   const [comunidade, setComunidade] = useState<string | null>(null)
   const [cidade, setCidade] = useState<string | null>(null)
-  const [temFicha, setTemFicha] = useState(true)
   const [erroDoAtendimento, setErroDoAtendimento] = useState<unknown>(null)
   const [salvandoAlcance, setSalvandoAlcance] = useState(false)
   const [mensagemDoAlcance, setMensagemDoAlcance] = useState<string | null>(null)
@@ -126,7 +128,6 @@ export function PedidosRecebidos({
     void lerAtendimento({ signal: controle.signal })
       .then((lido) => {
         if (controle.signal.aborted) return
-        setTemFicha(lido.temFicha)
         setAlcance(lido.alcanceAtivo)
         setComunidade(lido.comunidade)
         setCidade(lido.cidade)
@@ -160,6 +161,8 @@ export function PedidosRecebidos({
   // `/app/meu-negocio?aba=pedidos&pedido=<id>` abre a Folha do pedido — e a
   // recarga reabre. A guarda evita reabrir quando a pessoa fecha.
   const abertoPelaUrl = useRef<string | null>(null)
+  /** Marca o fechamento de gente: é o que autoriza limpar a URL. */
+  const fechou = useRef(false)
   // biome-ignore lint/correctness/useExhaustiveDependencies: a guarda é o que evita reabrir
   useEffect(() => {
     const id = busca["pedido"]
@@ -168,6 +171,20 @@ export function PedidosRecebidos({
     setDetalheId(id)
     folha.aoMudarAberto(true)
   }, [busca])
+
+  // B2 da revisão da correção 1: fechar a Folha tira o `?pedido=` da URL, senão
+  // recarregar reabriria o que a pessoa fechou. Só depois de um fechamento DE
+  // GENTE (`fechou`, marco do clique): no primeiro quadro a URL e o estado da
+  // entrada discordam, e limpar ali mataria a Folha que a URL abriu.
+  useEffect(() => {
+    if (!fechou.current) return
+    if (folha.aberto || detalheId !== null) return
+    if (busca["pedido"] === undefined) {
+      fechou.current = false
+      return
+    }
+    void trocarBusca({ aba: "pedidos" })
+  }, [folha.aberto, detalheId, busca, trocarBusca])
 
   function abrir(pedido: PedidoDeServico) {
     setSelecionado(pedido)
@@ -185,6 +202,7 @@ export function PedidosRecebidos({
     setMensagens(null)
     setErroDaConversa(null)
     folha.aoMudarAberto(false)
+    fechou.current = true
   }
 
   function atualizarNaLista(pedido: PedidoDeServico) {
@@ -310,7 +328,7 @@ export function PedidosRecebidos({
               falha={erroDoAtendimento}
               aoTentar={() => setRodada((atual) => atual + 1)}
             />
-          ) : !temFicha ? (
+          ) : temFicha === false ? (
             <Nota>Crie a página do negócio antes de definir a área de atendimento.</Nota>
           ) : alcance === null ? (
             <EsqueletoDeLista linhas={1} />
@@ -345,7 +363,7 @@ export function PedidosRecebidos({
         </Secao>
       ) : null}
 
-      {!temFicha ? (
+      {temFicha === false ? (
         <div className="flex justify-start">
           <Botao tom="texto" onClick={irParaFicha}>
             Ir para a ficha

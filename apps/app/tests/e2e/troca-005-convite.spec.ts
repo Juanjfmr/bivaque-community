@@ -93,7 +93,9 @@ for (const tema of TEMAS) {
 
       await ir(page, url(), tema)
       await page.getByRole("button", { name: "Entrar com e-mail" }).click()
-      await expect(page).toHaveURL(/\/app\/entrar\?redirect=/)
+      // M1: o token do convite não aparece nem no endereço de e-mail.
+      await expect(page).toHaveURL(/\/app\/entrar$/)
+      expect(page.url()).not.toContain(TOKEN)
       await page.getByLabel("E-mail").fill("prestador@example.invalid")
       await page.getByRole("button", { name: "Enviar código" }).click()
       await expect(page.getByText("Digite o código")).toBeVisible()

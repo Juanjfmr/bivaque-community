@@ -112,6 +112,8 @@ export function Ajuda() {
   const alvoDaUrl = alvoDaBusca(busca["denunciar"])
   // O que já foi aberto pela URL: uma recarga reabre; a volta a esta entrada não.
   const abertoPelaUrl = useRef<string | null>(null)
+  /** Marca o fechamento de gente: é o que autoriza limpar a URL. */
+  const fechou = useRef(false)
   const novaPelaUrl = useRef<string | null>(null)
   // biome-ignore lint/correctness/useExhaustiveDependencies: aba e rodada comandam a leitura
   useEffect(() => {
@@ -140,15 +142,31 @@ export function Ajuda() {
     setSelecionada(id)
     abertoPelaUrl.current = id
     detalhe.aoMudarAberto(true)
-    // A Folha também vive na URL: a recarga reabre o acompanhamento.
-    void trocarBusca({ ...busca, aba: "denuncias", denuncia: id })
+    // A Folha também vive na URL: a recarga reabre o acompanhamento. O
+    // `?denunciar=` do formulário não é espalhado para cá (B2 da correção 1).
+    void trocarBusca({ aba: "denuncias", denuncia: id })
   }
 
   function fecharDetalhe() {
     setSelecionada(null)
     setAberta(null)
     detalhe.aoMudarAberto(false)
+    fechou.current = true
   }
+
+  // B2 da revisão da correção 1: fechar a Folha tira o `?denuncia=` da URL,
+  // senão recarregar reabriria o acompanhamento que a pessoa fechou. Só depois
+  // de um fechamento de gente: no primeiro quadro a URL e o estado da entrada
+  // discordam, e limpar ali mataria a Folha que a URL abriu.
+  useEffect(() => {
+    if (!fechou.current) return
+    if (detalhe.aberto || selecionada !== null) return
+    if (busca["denuncia"] === undefined) {
+      fechou.current = false
+      return
+    }
+    void trocarBusca({ aba: "denuncias" })
+  }, [detalhe.aberto, selecionada, busca, trocarBusca])
 
   // `?denuncia=<id>` e `?denunciar=<tipo>:<id>` abrem a Folha certa na carga.
   // biome-ignore lint/correctness/useExhaustiveDependencies: os refs guardam o que já abriu

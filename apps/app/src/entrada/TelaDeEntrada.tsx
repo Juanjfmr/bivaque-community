@@ -158,12 +158,15 @@ export function TelaDeEntrada() {
   }, [conviteDaUrl])
 
   // O token é credencial, como o código do convite de família: some da barra
-  // assim que é lido, e o caminho do aceite segue na memória.
+  // assim que é lido, e o caminho do aceite segue na memória. O `redirect` que
+  // trouxe a pessoa de volta ao aceite carrega o mesmo token, então sai junto —
+  // nem a barra nem o histórico ficam com ele (M1 da revisão da correção 1).
   useEffect(() => {
     if (tokenDoPrestador === null) return
     const url = new URL(window.location.href)
-    if (!url.searchParams.has("prestador")) return
+    if (!url.searchParams.has("prestador") && !url.searchParams.has("redirect")) return
     url.searchParams.delete("prestador")
+    url.searchParams.delete("redirect")
     window.history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`)
   }, [])
 
@@ -379,13 +382,12 @@ export function TelaDeEntrada() {
       const atual = progressoRef.current
       if (atual === null) return
       // O código do convite de prestador fecha a entrada: a sessão nasceu no
-      // `verify` e a volta é o estado de aceite, pela URL de retorno — nunca o
-      // funil de membro (CPF, cidade, provisionamento).
+      // `verify` e a volta é o estado de aceite, na memória — nunca o funil de
+      // membro (CPF, cidade, provisionamento) e nunca o token de volta à barra.
       if (tokenDoPrestador !== null && atual.etapa === "codigo") {
         setFalha(null)
         setTentar(null)
         setEntrandoNoConvite(false)
-        if (retornoDoConvite !== null) window.location.replace(retornoDoConvite)
         return
       }
       if (mudancas?.via === "google" || mudancas?.via === "apple") {
@@ -489,13 +491,11 @@ export function TelaDeEntrada() {
       <AceiteDeConviteDePrestador
         token={tokenDoPrestador}
         aoEntrar={() => {
-          // O token não pode se perder ao entrar: o retorno da entrada aponta de
-          // volta para o aceite, e é ele que a pessoa reabre depois do código.
-          if (retornoDoConvite === null) {
-            setEntrandoNoConvite(true)
-            return
-          }
-          window.location.assign(`/app/entrar?redirect=${encodeURIComponent(retornoDoConvite)}`)
+          // O aceite é um estado da ENTRADA, não um endereço novo: o token fica
+          // na memória (constante do módulo e o retorno já lido) para não viajar
+          // na barra nem no histórico (M1 da revisão da correção 1).
+          setProgresso({ ...progressoInicial(), via: "email", etapa: "email", convite: false })
+          setEntrandoNoConvite(true)
         }}
       />
     )

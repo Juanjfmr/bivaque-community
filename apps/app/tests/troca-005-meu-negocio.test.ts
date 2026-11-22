@@ -68,10 +68,22 @@ describe("TROCA-005 — Meu negócio em abas", () => {
     expect(pedidos).not.toContain('filter((pedido) => pedido.lado === "dono")')
   })
 
-  it("o detalhe do pedido abre pela URL e a recarga reabre a Folha", () => {
+  it("o detalhe do pedido abre pela URL, a recarga reabre e fechar tira o id", () => {
     expect(pedidos).toContain('busca["pedido"]')
     expect(pedidos).toContain("pedido: pedido.id")
     expect(pedidos).toContain("abertoPelaUrl")
+    // B2 da revisão da correção 1: fechar não deixa `?pedido=` para trás.
+    expect(pedidos).toContain('busca["pedido"] === undefined')
+    expect(pedidos).toContain('void trocarBusca({ aba: "pedidos" })')
+  })
+
+  it("a ficha de quem não tem página é a do Meu negócio, não um palpite da aba", () => {
+    // B3 da revisão da correção 1: `temFicha` vem do pai (`ficha !== null`);
+    // a aba não inventa estado próprio a partir da leitura de atendimento.
+    expect(meuNegocio).toContain("temFicha={carregado ? ficha !== null : null}")
+    expect(pedidos).toContain("readonly temFicha: boolean | null")
+    expect(pedidos).not.toContain("setTemFicha(")
+    expect(pedidos).toContain("temFicha === false")
   })
 
   it("a conta mostra o e-mail da sessão e o telefone opcional", () => {

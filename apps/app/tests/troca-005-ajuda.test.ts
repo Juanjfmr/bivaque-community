@@ -32,8 +32,12 @@ describe("TROCA-005 — Ajuda com chamados e denúncias", () => {
     expect(ajuda).toContain('busca["denuncia"]')
     expect(ajuda).toContain('busca["denunciar"]')
     expect(ajuda).toContain("alvoDaBusca")
-    // A Folha fica na URL do detalhe; abrir escreve o id na busca.
+    // A Folha fica na URL do detalhe; abrir escreve o id na busca e não
+    // espalha o `?denunciar=` do formulário (B2 da correção 1).
     expect(ajuda).toContain("denuncia: id")
+    expect(ajuda).not.toContain("...busca")
+    // Fechar tira o id, senão a recarga reabriria a Folha fechada.
+    expect(ajuda).toContain('busca["denuncia"] === undefined')
     // O alvo da URL chega ao formulário como opção escolhida.
     expect(ajuda).toContain("alvoInicial={alvoDaUrl}")
   })

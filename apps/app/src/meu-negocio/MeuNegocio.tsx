@@ -284,7 +284,13 @@ export function MeuNegocio() {
         grupo="meu-negocio"
       />
       {aba === "pedidos" ? (
-        <PedidosRecebidos tipoDaConta={tipoDaConta} irParaFicha={() => irParaAba("ficha")} />
+        <PedidosRecebidos
+          tipoDaConta={tipoDaConta}
+          // B3 da revisão da correção 1: quem sabe se a ficha existe é esta
+          // tela; a aba de pedidos não pode afirmar "sem ficha" por conta própria.
+          temFicha={carregado ? ficha !== null : null}
+          irParaFicha={() => irParaAba("ficha")}
+        />
       ) : null}
       {aba === "conta" ? <ContaDoNegocio irParaFicha={() => irParaAba("ficha")} /> : null}
       {aba === "ficha" || aba === "catalogo" ? (

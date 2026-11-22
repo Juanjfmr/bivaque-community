@@ -190,6 +190,30 @@ for (const tema of TEMAS) {
 
       await page.reload()
       await expect(page.locator('[data-sobreposicao="pedido-do-negocio"]')).toBeVisible()
+
+      // B2 da revisão da correção 1: fechar tira o id da URL, e a recarga
+      // seguinte não reabre a Folha que a pessoa fechou.
+      await page.getByRole("button", { name: "Fechar", exact: true }).click()
+      await expect(page).toHaveURL(/\/app\/meu-negocio\?aba=pedidos$/)
+      await page.reload()
+      await expect(page.locator('[data-sobreposicao="pedido-do-negocio"]')).toHaveCount(0)
+    })
+
+    test("o membro sem página vê o caminho para a ficha, não um vazio", async ({ page }) => {
+      // B3 da revisão da correção 1: `temFicha` é o da ficha lida em Meu negócio.
+      await page.route(/\/api\/app\/negocio(?:\?|$)/, (rota) =>
+        rota.fulfill({ json: { negocio: null, categorias: CATEGORIAS, tipoDaConta: "membro" } }),
+      )
+      await page.route(/\/api\/app\/pedidos(?:\?|$)/, (rota) =>
+        rota.fulfill({ json: { pedidos: [], proximo: null } }),
+      )
+      await ir(page, "/app/meu-negocio?aba=pedidos", tema)
+      await expect(page.getByRole("button", { name: "Ir para a ficha" })).toBeVisible()
+      // A área de atendimento não é desta conta.
+      await expect(page.getByText("Área de atendimento")).toHaveCount(0)
+      await page.getByRole("button", { name: "Ir para a ficha" }).click()
+      await expect(page).toHaveURL(/\/app\/meu-negocio$/)
+      await expect(page.getByRole("heading", { name: "Criar a página" })).toBeVisible()
     })
 
     test("a aba Conta mostra o e-mail da sessão e salva o telefone", async ({ page }) => {

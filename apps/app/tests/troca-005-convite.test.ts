@@ -21,18 +21,21 @@ describe("TROCA-005 — convite de prestador na entrada", () => {
     expect(convite).toContain("aceitarConviteDePrestador")
   })
 
-  it("o botão sem sessão preserva o token pelo retorno da entrada", () => {
+  it("o botão sem sessão preserva o token na memória, sem pôr o token no endereço", () => {
     // Nada de `location.assign("/app/entrar")` cru: sem o token, o convite morre.
     expect(convite).toContain("aoEntrar")
-    expect(entrada).toContain("?redirect=")
-    expect(entrada).toContain("retornoDoConvite")
+    // E nada de `location.assign` com o token no `redirect`: o aceite é estado da
+    // entrada, e a barra e o histórico nunca recebem o token (M1 da correção 1).
+    expect(entrada).not.toContain("/app/entrar?redirect=${")
+    expect(entrada).not.toContain("window.location.replace(retornoDoConvite)")
+    expect(entrada).toContain("setEntrandoNoConvite(true)")
     expect(entrada).toContain("retornoValido")
-    // O token é credencial: sai da barra assim que é lido.
+    // O token é credencial: sai da barra assim que é lido, e o `redirect` junto.
     expect(entrada).toContain('searchParams.delete("prestador")')
+    expect(entrada).toContain('searchParams.delete("redirect")')
     expect(entrada).toContain("replaceState")
     // Depois do código, o aceite — não o funil de membro.
     expect(entrada).toContain('atual.etapa === "codigo"')
-    expect(entrada).toContain("window.location.replace(retornoDoConvite)")
   })
 
   it("token inválido, expirado e usado têm frase própria", () => {

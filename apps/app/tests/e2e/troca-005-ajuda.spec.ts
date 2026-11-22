@@ -145,6 +145,13 @@ for (const tema of TEMAS) {
 
       await page.reload()
       await expect(page.locator('[data-sobreposicao="denuncia-detalhe"]')).toBeVisible()
+
+      // B2 da revisão da correção 1: fechar tira o id da URL, e a recarga
+      // seguinte não reabre o acompanhamento que a pessoa fechou.
+      await page.getByRole("button", { name: "Fechar", exact: true }).click()
+      await expect(page).toHaveURL(/\/app\/ajuda\?aba=denuncias$/)
+      await page.reload()
+      await expect(page.locator('[data-sobreposicao="denuncia-detalhe"]')).toHaveCount(0)
     })
 
     test("a nova denúncia abre pelo alvo da URL, ainda que ele não esteja na lista", async ({
