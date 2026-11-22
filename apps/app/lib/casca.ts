@@ -70,3 +70,42 @@ export function mostraFaixaDeVisita(vendoOutraCidade: boolean): boolean {
 export function textoDaFaixaDeVisita(cidadeVista: string, cidadeDaPessoa: string): string {
   return `Você está conhecendo ${cidadeVista}. Sua cidade atual é ${cidadeDaPessoa}.`
 }
+
+/**
+ * A cidade do chip e a cidade de casa (BUG-CIDADE-GRUPOS).
+ *
+ * A cidade é a da SESSÃO — vínculo `kind = 'current'` —, não um valor de
+ * demonstração: o chip dizia "Manaus" enquanto o Início dizia "Rio de Janeiro".
+ * O padrão fica só para quem ainda não tem cidade, e a semente da prova manda
+ * em modo de prova (é entrada da prova, não medida).
+ */
+export type CidadeDaCasca = Readonly<{ cidade: string; cidadeDeCasa: string }>
+
+export function cidadesDaCasca(
+  cidadeDaSessao: string | null,
+  semente: Partial<CidadeDaCasca>,
+  padrao: string,
+): CidadeDaCasca {
+  const daSessao = cidadeDaSessao !== null && cidadeDaSessao.trim() !== "" ? cidadeDaSessao : null
+  return {
+    cidade: semente.cidade ?? daSessao ?? padrao,
+    cidadeDeCasa: semente.cidadeDeCasa ?? daSessao ?? padrao,
+  }
+}
+
+/** O chip consulta outra cidade: a vista muda, a de casa continua a da sessão. */
+export function comCidadeTrocada(atual: CidadeDaCasca, cidade: string): CidadeDaCasca {
+  const limpa = cidade.trim()
+  if (limpa === "") return atual
+  return { cidade: limpa, cidadeDeCasa: atual.cidadeDeCasa }
+}
+
+/**
+ * A cidade que a Início nomeia. Em casa é a que a consulta confirmou (a mesma
+ * do chip); consultando outra, é a do chip — a faixa de visita diz de onde é o
+ * que está na tela.
+ */
+export function cidadeDoInicio(casca: CidadeDaCasca, cidadeDosDados: string | null): string {
+  if (casca.cidade !== casca.cidadeDeCasa) return casca.cidade
+  return cidadeDosDados !== null && cidadeDosDados !== "" ? cidadeDosDados : casca.cidade
+}

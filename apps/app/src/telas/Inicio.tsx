@@ -11,6 +11,7 @@ import { Grade } from "@/components/bivaque/grade"
 import { Icone } from "@/components/bivaque/icone"
 import { LinhaDeLista } from "@/components/bivaque/lista"
 import { Secao } from "@/components/bivaque/secao"
+import { cidadeDoInicio } from "@/lib/casca"
 import {
   buscarEncontro,
   cancelarPresenca,
@@ -208,7 +209,7 @@ export function Inicio() {
     })
   }
 
-  const cidade = dados?.cidade ?? casca.cidade
+  const cidade = cidadeDoInicio(casca, dados?.cidade ?? null)
   const negocios = dados?.negocios.slice(0, 4) ?? []
   const anuncios = dados?.anuncios.slice(0, 4) ?? []
   const grupos = dados?.grupos.slice(0, 2) ?? []
