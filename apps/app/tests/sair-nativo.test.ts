@@ -70,6 +70,7 @@ it.each([false, true])("limpa os dados ao sair, mesmo sem rede: %s", async (semR
   )
   expect(deletarBanco).toHaveBeenCalledWith("banco")
   expect(apagarCache).toHaveBeenCalledWith("cache")
+  expect(local.has("bivaque.saiu")).toBe(false)
   vi.unstubAllGlobals()
 })
 
