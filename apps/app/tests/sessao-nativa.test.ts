@@ -95,6 +95,73 @@ describe("sessão nativa", () => {
     expect(buscar).toHaveBeenCalledTimes(5)
   })
 
+  it("encaminha leitura com 401 definitivo quando o cofre está vazio", async () => {
+    cofre.get.mockResolvedValue(null)
+    const assign = vi.fn()
+    vi.stubGlobal("window", {
+      location: {
+        pathname: "/app/comunidade",
+        search: "?cidade=manaus",
+        origin: "https://local.invalid",
+        assign,
+      },
+    })
+    const buscar = vi.fn().mockResolvedValue(new Response("{}", { status: 401 }))
+    vi.stubGlobal("fetch", buscar)
+
+    await expect(ler("/api/app/exemplo")).rejects.toMatchObject({ status: 401 })
+
+    expect(assign).toHaveBeenCalledWith(
+      "https://local.invalid/app/entrar?redirect=%2Fapp%2Fcomunidade%3Fcidade%3Dmanaus",
+    )
+    expect(buscar).toHaveBeenCalledTimes(1)
+  })
+
+  it("preserva a sessão e não encaminha leitura quando renovar responde 503", async () => {
+    vi.useFakeTimers()
+    cofre.set.mockResolvedValue(undefined)
+    await aceitarPar({
+      access_token: "acesso-valido",
+      refresh_token: "renovacao",
+      expires_at: Math.floor(Date.now() / 1000) + 3600,
+    })
+    const assign = vi.fn()
+    vi.stubGlobal("window", {
+      location: { pathname: "/app/mercado", search: "", origin: "https://local.invalid", assign },
+    })
+    const buscar = vi
+      .fn()
+      .mockResolvedValueOnce(new Response("{}", { status: 401 }))
+      .mockResolvedValue(new Response(null, { status: 503 }))
+    vi.stubGlobal("fetch", buscar)
+
+    const resultado = ler("/api/app/exemplo").catch((erro: unknown) => erro)
+    await vi.runAllTimersAsync()
+
+    expect(await resultado).toMatchObject({ codigo: "indisponivel" })
+    expect(buscar).toHaveBeenCalledTimes(4)
+    expect(assign).not.toHaveBeenCalled()
+    expect(cofre.remove).not.toHaveBeenCalled()
+    vi.useRealTimers()
+  })
+
+  it("não redireciona nem repete POST com 401", async () => {
+    cofre.get.mockResolvedValue(null)
+    const assign = vi.fn()
+    vi.stubGlobal("window", {
+      location: { pathname: "/app/criar", search: "", origin: "https://local.invalid", assign },
+    })
+    const buscar = vi.fn().mockResolvedValue(new Response("{}", { status: 401 }))
+    vi.stubGlobal("fetch", buscar)
+
+    await expect(enviar("POST", "/api/app/exemplo", { valor: true })).rejects.toMatchObject({
+      status: 401,
+    })
+
+    expect(buscar).toHaveBeenCalledTimes(1)
+    expect(assign).not.toHaveBeenCalled()
+  })
+
   it("renova ao abrir e só renova na volta perto do vencimento", async () => {
     const buscar = vi.fn().mockResolvedValue(par())
     vi.stubGlobal("fetch", buscar)

@@ -191,7 +191,7 @@ async function chamar(
         ...(corpo === undefined ? {} : { body: JSON.stringify(corpo) }),
         ...(signal === undefined ? {} : { signal }),
       }),
-    !Capacitor.isNativePlatform(),
+    !Capacitor.isNativePlatform() || metodo === "GET",
   )
 }
 
