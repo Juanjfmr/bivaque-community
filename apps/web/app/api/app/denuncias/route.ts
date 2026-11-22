@@ -51,12 +51,13 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   if (!auth.ok) return auth.resposta
   const depois = new URL(request.url).searchParams.get("depois")
   // O cursor é o `created_at` da última linha da página anterior, como em
-  // `/api/app/pedidos`. Valor que não é data ISO é 400 antes do banco:
-  // `Date.parse` sozinho aceita "1" e "2026", e o PostgREST transformaria isso
-  // em erro de consulta (503) em vez de recusa de entrada.
-  const dataValida =
-    depois === null ||
-    (/^\d{4}-\d{2}-\d{2}(?:[T ]|$)/.test(depois) && !Number.isNaN(Date.parse(depois)))
+  // `/api/app/pedidos`. Valor que não é data ISO é 400 antes do banco: a forma
+  // é ancorada nas duas pontas de propósito. Aceitar prefixo (`T` ou espaço
+  // depois do dia) deixava passar `2026-01-01 10:00 GMT+0300 (…)`, que o
+  // PostgREST interpolava como filtro `created_at=lt.…,or=(…)` — ou seja, um
+  // cursor virava operador de filtro. `Date.parse` sozinho aceita "1" e "2026".
+  const dataIso = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{1,6})?(Z|[+-]\d{2}:\d{2})$/
+  const dataValida = depois === null || (dataIso.test(depois) && !Number.isNaN(Date.parse(depois)))
   if (!dataValida) return responder(request, { erro: "dados-invalidos" }, 400)
   try {
     const pagina = await listOwnReports(auth.sessao.cliente, depois)

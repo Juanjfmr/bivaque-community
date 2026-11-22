@@ -379,8 +379,18 @@ describe("TROCA-005 — a denúncia não identifica o denunciante", () => {
 
     const invalido = cliente()
     autenticar(invalido)
-    for (const valor of ["ontem", "1", "2026"]) {
-      expect((await lista(req(`denuncias?depois=${valor}`))).status, valor).toBe(400)
+    // O formato é ancorado nas duas pontas: data com hora mas sem fuso, e um
+    // cursor com injeção de filtro do PostgREST, são recusa de entrada (400)
+    // antes do banco — nunca um `created_at=lt.…,or=(…)` montado pelo driver.
+    for (const valor of [
+      "ontem",
+      "1",
+      "2026",
+      "2026-01-01 10:00 (x)",
+      "2026-01-01 10:00 GMT+0300 (pwn,or=(a.eq.1))",
+    ]) {
+      const resposta = await lista(req(`denuncias?depois=${encodeURIComponent(valor)}`))
+      expect(resposta.status, valor).toBe(400)
     }
     expect(invalido.from).not.toHaveBeenCalled()
   })
