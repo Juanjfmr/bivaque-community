@@ -18,6 +18,8 @@ permissions:
 
 jobs:
   android:
+    env:
+      VITE_SUPABASE_URL: http://localhost:54321
     runs-on: ubuntu-24.04
     timeout-minutes: 60
     steps:
@@ -108,7 +110,6 @@ jobs:
       - name: Compilar APK de depuração
         env:
           VITE_API_BASE: http://localhost:3000
-          VITE_SUPABASE_URL: http://localhost:54321
         run: |
           pnpm --filter @bivaque/app build
           pnpm --filter @bivaque/app exec cap sync android

@@ -284,12 +284,21 @@ try {
     await page.getByRole("button", { name: "Continuar com Google" }).click()
     const corpo = await (await resposta).json()
     const url = new URL(corpo.url)
+    const origemEsperada = new URL(process.env.VITE_SUPABASE_URL).origin
+    const provider = url.searchParams.get("provider")
+    const metodo = url.searchParams.get("code_challenge_method")
+    const desafio = url.searchParams.get("code_challenge") ?? ""
+    const formatoValido = /^[\w-]{43}$/.test(desafio)
+    const campoSeguro = (valor) => (/^[a-z0-9_-]{1,20}$/i.test(valor ?? "") ? valor : "inválido")
+    log(
+      `OAuth: origem=${url.origin} caminho=${url.pathname} provider=${campoSeguro(provider)} metodo=${campoSeguro(metodo)} desafio_comprimento=${desafio.length} desafio_formato_valido=${formatoValido}`,
+    )
     if (
-      !["http://localhost:54321", "http://127.0.0.1:54321"].includes(url.origin) ||
+      url.origin !== origemEsperada ||
       url.pathname !== "/auth/v1/authorize" ||
-      url.searchParams.get("provider") !== "google" ||
-      url.searchParams.get("code_challenge_method")?.toLowerCase() !== "s256" ||
-      !/^[\w-]{43}$/.test(url.searchParams.get("code_challenge") ?? "")
+      provider !== "google" ||
+      metodo?.toLowerCase() !== "s256" ||
+      !formatoValido
     )
       throw new Error("URL OAuth ou PKCE inválido")
     await esperar(5000)
