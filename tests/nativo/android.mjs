@@ -163,7 +163,7 @@ try {
     const corpo = await (await resposta).json()
     const url = new URL(corpo.url)
     if (
-      url.origin !== "http://localhost:54321" ||
+      !["http://localhost:54321", "http://127.0.0.1:54321"].includes(url.origin) ||
       url.pathname !== "/auth/v1/authorize" ||
       url.searchParams.get("provider") !== "google" ||
       url.searchParams.get("code_challenge_method")?.toLowerCase() !== "s256" ||
@@ -189,6 +189,6 @@ try {
   log(erro instanceof Error ? erro.message : "Falha inesperada")
   process.exitCode = 1
 } finally {
-  if (page) diagnostico()
+  diagnostico(Boolean(page))
   await device?.close()
 }
