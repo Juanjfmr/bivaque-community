@@ -108,11 +108,23 @@ export async function salvarFichaDoPrestador(
   }
 
   const ficha = existente as LinhaDaFicha | null
-  const { error } =
-    ficha === null
-      ? await client.from("provider_profiles").insert({ ...valores, owner_user_id: userId })
-      : await client.from("provider_profiles").update(valores).eq("id", ficha.id)
+  if (ficha === null) {
+    const { error } = await client
+      .from("provider_profiles")
+      .insert({ ...valores, owner_user_id: userId })
+    if (error) return { ok: false, ...falhaDaFicha(error.code) }
+    return { ok: true }
+  }
+  // `.select("id")` + contagem na escrita de quem já tem ficha: update que não
+  // toca linha nenhuma (policy, linha removida entre a leitura e a escrita) é
+  // recusa, nunca sucesso silencioso (B1 da revisão da correção 1).
+  const { data: gravadas, error } = await client
+    .from("provider_profiles")
+    .update(valores)
+    .eq("id", ficha.id)
+    .select("id")
   if (error) return { ok: false, ...falhaDaFicha(error.code) }
+  if ((gravadas ?? []).length === 0) return { ok: false, ...falhaDaFicha("42501") }
   return { ok: true }
 }
 

@@ -18,6 +18,8 @@ const headers = {
 
 type Opcoes = {
   semFicha?: boolean
+  /** A escrita não devolve linha: o `.select("id")` volta vazio. */
+  semLinhaGravada?: boolean
   erroDoInsert?: { code: string; message: string }
   erroDoUpdate?: { code: string; message: string }
   erroDeTabela?: string
@@ -76,8 +78,18 @@ function cliente(opcoes: Opcoes = {}) {
     }
     // biome-ignore lint/suspicious/noThenProperty: o builder PostgREST é awaitable
     Object.defineProperty(consulta, "then", {
-      value: (fn: (valor: unknown) => unknown) =>
-        Promise.resolve(fn(pendente ?? resposta(tabela, false))),
+      value: (fn: (valor: unknown) => unknown) => {
+        // A escrita com `.select("id")` devolve a linha gravada; o caso vazio é
+        // o update que não toca nada (B1).
+        const escrita =
+          pendente === null
+            ? null
+            : {
+                data: opcoes.semLinhaGravada === true ? [] : [{ id: FICHA }],
+                error: pendente.error,
+              }
+        return Promise.resolve(fn(escrita ?? resposta(tabela, false)))
+      },
     })
     return consulta
   })
@@ -250,6 +262,14 @@ describe("TROCA-005 — leitura e gravação da ficha", () => {
     const texto = await resposta.text()
     expect(texto).toContain("não pode gerenciar a página do negócio")
     expect(texto).not.toContain("segredo")
+  })
+
+  it("update que não toca linha nenhuma é recusa (403), não sucesso mudo", async () => {
+    const mock = cliente({ semLinhaGravada: true })
+    autenticar(mock)
+    const resposta = await salvar(req(undefined, "PATCH", corpo))
+    expect(resposta.status).toBe(403)
+    expect(await resposta.text()).toContain("não pode gerenciar a página do negócio")
   })
 
   it("falha do banco é 503 sem eco", async () => {
