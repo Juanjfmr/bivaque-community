@@ -217,6 +217,19 @@ delete from public.locality_memberships lm
  where lm.user_id = m.id
    and lm.locality_id <> '00000000-0000-4000-8000-000000000001';
 
+-- A persona é de Manaus; participação e interesse em grupos do Rio são resíduos de cadastro no Rio.
+delete from public.group_memberships gm
+ using demo_membros m, public.groups g
+ where gm.user_id = m.id
+   and gm.group_id = g.id
+   and g.locality_id = (select id from public.localities where ibge_code = '3304557');
+
+delete from public.user_group_interests ugi
+ using demo_membros m, public.groups g
+ where ugi.user_id = m.id
+   and ugi.group_id = g.id
+   and g.locality_id = (select id from public.localities where ibge_code = '3304557');
+
 update public.locality_memberships lm
    set kind = 'current', leaving_at = null
  from demo_membros m
@@ -810,23 +823,17 @@ on conflict (id) do nothing;
 -- daqui, só no banco local e de forma idempotente.
 -- ══════════════════════════════════════════════════════════════════════════
 
--- Publicações de versões anteriores apontavam para as quase-duplicatas (ids
--- dd2…) e para os grupos de prova ("Grupo COM-00…"), que saem logo abaixo. O
--- mapa é o mesmo que vale para conversas e avisos: antes de apagar o grupo, a
--- publicação vai para o grupo do seed do mesmo tema. Publicação em grupo de
--- prova não tem equivalente — sai junto com o grupo, porque publicação sem
--- grupo não existe no produto.
-update public.posts p
-   set group_id = g.novo
-  from (values
-    ('dd200000-0000-4000-8000-000000000001'::uuid, '60000000-0000-4000-8000-000000000001'::uuid),
-    ('dd200000-0000-4000-8000-000000000002'::uuid, '60000000-0000-4000-8000-000000000002'::uuid),
-    ('dd200000-0000-4000-8000-000000000003'::uuid, '60000000-0000-4000-8000-000000000003'::uuid),
-    ('dd200000-0000-4000-8000-000000000004'::uuid, '60000000-0000-4000-8000-000000000004'::uuid),
-    ('dd200000-0000-4000-8000-000000000005'::uuid, '60000000-0000-4000-8000-000000000007'::uuid),
-    ('dd200000-0000-4000-8000-000000000006'::uuid, '60000000-0000-4000-8000-000000000006'::uuid)
-  ) as g(antigo, novo)
- where p.group_id = g.antigo;
+-- O gatilho recusa trocar group_id; as linhas dd2… saem e voltam pelo insert abaixo,
+-- já no grupo do seed do mesmo tema.
+delete from public.posts
+ where group_id in (
+   'dd200000-0000-4000-8000-000000000001',
+   'dd200000-0000-4000-8000-000000000002',
+   'dd200000-0000-4000-8000-000000000003',
+   'dd200000-0000-4000-8000-000000000004',
+   'dd200000-0000-4000-8000-000000000005',
+   'dd200000-0000-4000-8000-000000000006'
+ );
 
 delete from public.posts p
  using public.groups g
