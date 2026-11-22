@@ -7898,17 +7898,18 @@
     },
     {
       "phase": "Lançamento",
-      "status": "repo",
+      "status": "done",
       "dependencies": ["F10-R3-SESSION-DERIVED"],
       "tests": [],
       "blockers": [],
       "proof": [
         "13/11: reconciliado pelo coordenador — o cartão estava desatualizado (06/11). A jornada JÁ está ligada e provada: rotas GET/POST/DELETE /api/app/voce/familia + tela Familia.tsx pela sessão (RUN-018, PR #147, merge 3093390f); service_role só no servidor após exigirSessao, id sempre da sessão, nunca do corpo. pgTAP positivo/negativo (plan 20) + revisão R3 sem CRÍTICO/ALTO (RUN-030/031, PR #194, ef72c839; docs/agents/reviews/2026-11-11-revisao-r3-f10-familia.md). E2E real f10-voce-real.spec.ts:180 (convite entra na lista, revogação some) em 375/768/1440. ADR-20261111-convite-familiar-pela-sessao listado em RATIFICACAO.md. Limite de envio (5704b78d) e corrida de convites (261a1ab5) corrigidos.",
         "Pendência que impede fechar como 'posse derivada da sessão' (ADR-20261111): o banco ainda aceita o id do titular por parâmetro; a posse é verificada na rota, não derivada de auth.uid() no banco. O hardening F10-R3-SESSION-DERIVED não é trivial: o caminho usa service_role, que não carrega o JWT do usuário, então auth.uid() seria nulo — exige redesenhar como a posse chega ao banco.",
-        "16/11: item acrescentado no fechamento do RUN-172 — a acao foi movida como estava (correto) e o achado M-3 estava sem dono."
+        "16/11: item acrescentado no fechamento do RUN-172 — a acao foi movida como estava (correto) e o achado M-3 estava sem dono.",
+        "22/11: fechado pela conferência na main e7a3ca880. Último item (M-3): as Server Actions antigas da família saíram com o SEC-011 (#267, 3e00a4c5); a rota /api/app/voce/familia devolve só frases fixas do módulo lib/convite/familia.ts e nunca a mensagem do Postgres, provado em tests/unit/app-api/voce/familia.test.ts (positivo: 403/409/429 com a frase fixa; negativo: \"falha ao criar não ecoa a mensagem do Postgres\" e falha de leitura/envio 503 sem detalhes). A dependência F10-R3-SESSION-DERIVED está done (posse derivada de auth.uid() no banco). vitest familia.test.ts + familia-limite.test.ts: 32/32 verdes em 22/11."
       ],
-      "updatedAt": "2026-11-16",
-      "sourceRevision": "ad5ac070",
+      "updatedAt": "2026-11-22",
+      "sourceRevision": "e7a3ca880",
       "id": "F10-FAMILIA",
       "title": "F10 família: ligar convite e vínculo familiar ao app",
       "priority": "P1",
@@ -7922,7 +7923,9 @@
         "Revisão de segurança R3 antes da integração",
         "Silencio real nas Server Actions da familia (M-3 do parecer R3 de 11/11, hoje em lib/convite/familia-acoes.ts): nao ecoar mensagem do Postgres ao navegador — assercao real positivo/negativo"
       ],
-      "links": ["docs/agents/tasks/RUN-016.task.yml"]
+      "links": ["docs/agents/tasks/RUN-016.task.yml"],
+      "completedChecklist": [true, true, true, true, true, true],
+      "completedAt": "2026-11-22"
     },
     {
       "phase": "Lançamento",
@@ -10431,21 +10434,24 @@
       "phase": "Lançamento",
       "tests": [],
       "blockers": [
-        "O CLI do Supabase 2.107.0 (binário Bun) falha com EPERM ao abrir ou criar qualquer arquivo ou pasta: C:/Users/juana/.supabase/telemetry.json.tmp.* e também uma pasta pessoal temporária (HOME/USERPROFILE trocados), inclusive fora do sandbox. Quebra test:db, db:lint, migration list/up e status no PC do dono."
+        "O CLI do Supabase 2.107.0 (binário Bun) falha com EPERM ao abrir ou criar qualquer arquivo ou pasta: C:/Users/juana/.supabase/telemetry.json.tmp.* e também uma pasta pessoal temporária (HOME/USERPROFILE trocados), inclusive fora do sandbox. Quebra test:db, db:lint, migration list/up e status no PC do dono.",
+        "22/11: decisão do coordenador (opção B): a prova de banco segue no CI com ci:full; nenhum binário baixado no PC e nenhuma mudança no Docker. Próximo passo concreto para desbloquear (opção A): com aval do dono para o download, apontar SUPABASE_CLI_BINARY_OVERRIDE para o supabase.exe Go oficial da última release 2.x anterior ao binário Bun, fora da pasta do repositório (sem o rótulo Low), repetir status e depois fazer o reset local exclusivo sem seed e o test:db."
       ],
-      "updatedAt": "2026-11-20",
-      "sourceRevision": "f1c405eca",
+      "updatedAt": "2026-11-22",
+      "sourceRevision": "e7a3ca880",
       "links": ["package.json (supabase 2.107.0)", "PR #314"],
       "proof": [
         "20/11: tentados (1) rodar no worktree e no checkout principal; (2) fora do sandbox; (3) HOME/USERPROFILE numa pasta temporária: EPERM em todos. A pasta .supabase aceita escrita pelo bash (touch), e o acesso controlado a pastas do Defender está desligado (EnableControlledFolderAccess=0). As ACLs de ~/.supabase têm uma entrada CodexSandboxUsers (RX) que não nega nada ao usuário juana.",
         "20/11: o banco local (supabase_db_bivaque-community, de pé há 4 dias) tem supabase_migrations.schema_migrations vazio e não tem as tabelas de 18/11 (push_subscriptions), então está fora de sincronia com a main. Até o card fechar, a prova de banco fica no CI (ci:full), como no #314.",
-        "20/11 noite: com DO_NOT_TRACK=1 SUPABASE_TELEMETRY_DISABLED=1 o EPERM some e `supabase migration new` funciona (criou 20261121002331_sessao_nativa_limiter.sql). `supabase status` agora falha em outro ponto: acesso negado ao pipe do Docker Desktop (//./pipe/dockerDesktopLinuxEngine) a partir desta sessão. Próximo passo: rodar status/test:db com a variável num terminal do dono para separar sandbox de permissão do Docker."
+        "20/11 noite: com DO_NOT_TRACK=1 SUPABASE_TELEMETRY_DISABLED=1 o EPERM some e `supabase migration new` funciona (criou 20261121002331_sessao_nativa_limiter.sql). `supabase status` agora falha em outro ponto: acesso negado ao pipe do Docker Desktop (//./pipe/dockerDesktopLinuxEngine) a partir desta sessão. Próximo passo: rodar status/test:db com a variável num terminal do dono para separar sandbox de permissão do Docker.",
+        "22/11: causa do EPERM achada. A pasta do repositório (C:\\Users\\juana\\bivaque-community) carrega o rótulo Mandatory Label\\Low Mandatory Level herdável (OI)(CI)(NW) e a ACL CodexSandboxUsers, restos do sandbox do Codex; o supabase.exe em node_modules/@supabase/cli-windows-x64 herda o rótulo e roda em integridade baixa, que não grava em ~/.supabase (EPERM). Uma cópia do binário fora do repositório (%LOCALAPPDATA%\\bivaque-supabase-cli\\supabase.exe, sem rótulo Low) já roda migration list --local sem EPERM, mesmo sem DO_NOT_TRACK. O banco local segue fora de sincronia: migration list mostra todas as migrations só na coluna Local (schema_migrations vazio).",
+        "22/11: segundo defeito, independente do rótulo. O CLI 2.107.0 (binário Bun) recebe Access is denied ao abrir //./pipe/dockerDesktopLinuxEngine e //./pipe/docker_engine, inclusive a cópia sem rótulo e rodando num PowerShell de integridade média do dono, enquanto o docker.exe 29.5.3 no mesmo terminal abre o pipe e lista os contêineres. Sem o pipe não rodam status, start, o reset do banco nem test:db. Próximo passo concreto: (1) apontar SUPABASE_CLI_BINARY_OVERRIDE para o supabase.exe Go oficial da última release 2.x anterior ao binário Bun (baixar da release do GitHub supabase/cli, com aval do dono para o download) e repetir status; (2) se funcionar, fixar o override no ambiente do PC; depois o reset local exclusivo sem seed e test:db. Não mexer no rótulo da pasta do repositório sem decisão: ele faz parte do isolamento do Codex."
       ],
       "id": "INFRA-CLI-SUPABASE-PC",
       "title": "CLI do Supabase falha com EPERM no PC do dono e o banco local está fora de sincronia",
       "priority": "P1",
       "category": "infra",
-      "status": "now",
+      "status": "blocked",
       "description": "Sem o CLI, nenhuma prova de banco local roda no PC (test:db, db:lint, migration up). Próximo passo concreto: rodar o binário @supabase/cli-windows-x64 direto com --version e um comando que grava, comparar com o CLI Go oficial (SUPABASE_CLI_BINARY_OVERRIDE apontando para o supabase.exe da release anterior da linha 2.x) e, se o Go funcionar, fixar o override no ambiente local ou voltar o pin; depois, com a pilha exclusiva, reset --local --no-seed e test:db para ressincronizar o banco.",
       "checklist": [
         "Diagnóstico do EPERM com o binário direto e com o CLI Go",

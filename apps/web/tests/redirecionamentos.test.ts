@@ -11,7 +11,7 @@ const { nextConfig } = await import("../next.config")
 
 const ENDERECOS_ANTIGOS = ["/app/desapegos", "/app/catalogo", "/app/imoveis"]
 
-type Regra = { readonly source: string; readonly destination: string }
+type Regra = { readonly source: string; readonly destination: string; readonly permanent?: boolean }
 
 async function regras(): Promise<readonly Regra[]> {
   const redirects = nextConfig.redirects
@@ -39,5 +39,39 @@ describe("redirecionamentos da web para o Mercado (NAV-002)", () => {
     }
     // A tela de alertas é endereço próprio e continua chegando direto.
     expect(destinos.includes("/app/imoveis/alertas")).toBe(true)
+  })
+})
+
+// TROCA-004: a vila sai (redesenho §3.4) — o membro não indica prestador (§6) e o
+// painel de quem administrava a vila não existe mais. Os dois endereços respondem
+// 307 para telas do app; a query segue pelo Next, porque nenhum destino declara
+// query própria e o Next a repassa (provado no resolver de
+// tests/unit/infra/lan-troca-redirect.test.ts).
+describe("redirecionamentos da vila (TROCA-004)", () => {
+  const TELAS_DA_VILA = [
+    ["/communities/:id/indicar-prestador", "/app/negocios"],
+    ["/communities/:id/admin", "/app/comunidade"],
+  ] as const
+
+  it.each(TELAS_DA_VILA)("%s responde 307 e leva a %s", async (source, destination) => {
+    const lista = await regras()
+    const regra = lista.filter((item) => item.source === source)
+    expect(regra, `regra única para ${source}`).toHaveLength(1)
+    expect(regra[0]?.destination).toBe(destination)
+    // 307, não 308: o endereço pode voltar se o uso real pedir.
+    expect(regra[0]?.permanent).toBe(false)
+  })
+
+  it("as subrotas do painel caem pela mesma regra, e nada volta para a origem", async () => {
+    const lista = await regras()
+    const painel = lista.filter((item) => item.source === "/communities/:id/admin/:demais*")
+    expect(painel).toHaveLength(1)
+    expect(painel[0]?.destination).toBe("/app/comunidade")
+
+    // Ciclo seria uma regra cujo destino é outra origem; nenhum destino da vila é.
+    const origens = new Set(lista.map((item) => item.source))
+    for (const [, destination] of TELAS_DA_VILA) {
+      expect(origens.has(destination), `${destination} é origem de regra`).toBe(false)
+    }
   })
 })
