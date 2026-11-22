@@ -14,6 +14,9 @@ test("rotas antigas redirecionam para o app e preservam a consulta", async ({ re
     ["/invite/token?origem=aviso", "/app/comunidade?origem=aviso"],
     ["/gerir-comunidades?origem=aviso", "/app/comunidade?origem=aviso"],
     ["/communities?origem=aviso", "/app/comunidade?origem=aviso"],
+    ["/communities/123/indicar-prestador?origem=aviso", "/app/negocios?origem=aviso"],
+    ["/communities/123/admin?origem=aviso", "/app/comunidade?origem=aviso"],
+    ["/communities/123/admin/pending?origem=aviso", "/app/comunidade?origem=aviso"],
   ] as const) {
     const resposta = await request.get(origem, { maxRedirects: 0 })
     expect(resposta.status()).toBe(307)
@@ -32,6 +35,9 @@ test("rotas antigas levam visitantes anônimos à entrada sem ciclo", async ({ p
     ["/communities/123/invite", "/app/comunidade"],
     ["/invite/token", "/app/comunidade"],
     ["/gerir-comunidades", "/app/comunidade"],
+    ["/communities/123/indicar-prestador", "/app/negocios"],
+    ["/communities/123/admin", "/app/comunidade"],
+    ["/communities/123/admin/pending", "/app/comunidade"],
   ] as const) {
     const resposta = await request.get(origem, { maxRedirects: 0 })
     expect(resposta.status()).toBe(307)
