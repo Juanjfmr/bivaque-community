@@ -131,8 +131,12 @@ export function TelaDeEntrada() {
       verificarCodigo: async (codigo) => {
         const resultado = await verificarCodigoEVinculo(emailEmTransito.current ?? "", codigo)
         if (resultado.estado === "membro") {
+          // Quem já tem vínculo não grava rascunho nem provisiona de novo; a
+          // abertura relê o progresso e segue a etapa canônica do servidor
+          // (o Início, ou a etapa pendente depois da prévia).
           provisionado.current = true
-          setProgresso((atual) => (atual === null ? atual : { ...atual, etapa: "inicio" }))
+          setAutenticado(true)
+          setReabrir((valor) => valor + 1)
         } else if (resultado.estado === "autenticado") {
           setAutenticado(true)
         } else if (resultado.estado === "verificacao-indisponivel") {

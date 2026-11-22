@@ -630,9 +630,10 @@ test.describe("F01 — entrada real no app", { tag: "@stateful" }, () => {
     test.setTimeout(90_000)
     const puts: string[] = []
     page.on("request", (request) => {
-      if (request.method() === "PUT" && request.url().includes("/api/app/entry/progress")) {
-        puts.push(request.url())
-      }
+      const url = request.url()
+      const gravaRascunho = request.method() === "PUT" && url.includes("/api/app/entry/progress")
+      const provisiona = request.method() === "POST" && url.includes("/provision")
+      if (gravaRascunho || provisiona) puts.push(`${request.method()} ${url}`)
     })
     await page.goto(ROTA_DA_ENTRADA)
     await page.getByRole("button", { name: "Continuar com e-mail" }).click()
