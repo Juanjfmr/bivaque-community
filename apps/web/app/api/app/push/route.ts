@@ -54,9 +54,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const { error } = await auth.sessao.cliente.rpc("register_push_subscription", {
       p_kind: inscricao.kind,
       p_destination: inscricao.destination,
-      p_key_p256dh: inscricao.keyP256dh,
-      p_key_auth: inscricao.keyAuth,
-      p_label: inscricao.label,
+      p_key_p256dh: inscricao.keyP256dh as string,
+      p_key_auth: inscricao.keyAuth as string,
     })
 
     if (error) {
@@ -78,7 +77,12 @@ export async function DELETE(request: NextRequest): Promise<NextResponse> {
   if (porta !== "ok") return responder(request, { erro: porta }, 403)
 
   const lido = await lerCorpoJson(request)
-  const destino = lido.ok ? validarDestino(lido.corpo) : null
+  const destino = lido.ok
+    ? validarDestino({
+        ...lido.corpo,
+        kind: lido.corpo["kind"] === undefined ? "web" : lido.corpo["kind"],
+      })
+    : null
   if (destino === null) return responder(request, { erro: "dados-invalidos" }, 400)
 
   const userId = auth.sessao.usuario.id
@@ -87,7 +91,8 @@ export async function DELETE(request: NextRequest): Promise<NextResponse> {
       .from("push_subscriptions")
       .delete()
       .eq("user_id", userId)
-      .eq("destination", destino)
+      .eq("destination", destino.destination)
+      .eq("kind", destino.kind)
       .select("id")
 
     if (error) throw error

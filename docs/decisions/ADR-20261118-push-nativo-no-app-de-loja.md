@@ -52,6 +52,12 @@ empacotamento (§7). Ficaram dois pontos sem decisão:
      envio, não ao enfileirar. Isso acontece na mesma instrução SQL que reserva a linha
      (`… for update skip locked` sobre a inscrição). A troca de titular e a revogação que chegam durante o
      envio esperam essa linha.
+   - Nota de execução (22/11, PUSH-001): o servidor chama a reserva por RPC, e o bloqueio da linha termina
+     quando a instrução da RPC confirma, antes da chamada ao provedor. Não se segura transação aberta
+     durante um HTTP externo. A garantia é esta: titular, preferência e bloqueio são conferidos na mesma
+     instrução que reserva e devolve as inscrições; uma troca ou revogação concorrente espera só essa
+     instrução. A janela entre a reserva e o envio fica limitada pelo timeout de 10 s e entra no resíduo
+     abaixo, com o mesmo conteúdo fixo.
    - Resíduo aceito: um envio já entregue ao provedor antes da troca não é recolhido. Esse envio carrega só
      o título e a frase fixa, sem dado de terceiro (decisão 3).
    - Desligar o canal `push` nas preferências apaga as inscrições nativas da pessoa.
