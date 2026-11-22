@@ -6,17 +6,12 @@ const BASE_URL = process.env["APP_URL"] ?? "http://127.0.0.1:3000"
 // SEC-010, ADR-20261110-superficie-publica-do-proxy.
 //
 // O redirect de configuração (`apps/web/next.config.ts`) roda antes do proxy e
-// antes do filesystem. Para /login, /signup, /recuperar-senha, /nova-senha e
-// toda a subárvore /onboarding*, a resposta HTTP é do redirect de configuração,
-// não do portão — a lista do funil é inalcançável por HTTP (drift registrado no
-// ADR). Por isso a decisão do proxy é observada numa rota que a configuração não
-// intercepta (/admissions, /prestadorx, /landing/*): o 307 com o `location` que o
-// proxy escolheu é a prova, antes do próximo salto.
+// antes do filesystem. Toda a subárvore /onboarding* é inalcançável por HTTP;
+// nesses casos a resposta é do redirect de configuração, não do portão. A
+// decisão do proxy é observada em rotas não interceptadas (/admissions, /prestadorx).
 //
-// TROCA-005: o veículo era `/denuncias`. A última tela de membro da web saiu na
-// fase 2 (307 para a Ajuda do app) e com ela o caso "membro admitido abre a
-// casca" e o confinamento do prestador em /prestador — a casca web não existe
-// mais. A rota que SEGUE atrás do portão é a operação: /admissions.
+// TROCA-005: a operação /admissions segue atrás do portão; prestadores são
+// confinados ao destino do app /app/meu-negocio.
 //
 // `fetch` nativo com `redirect: "manual"` em vez de `maxRedirects: 0` do
 // APIRequestContext do Playwright: é o mesmo efeito (devolve o 307 sem seguir) e
@@ -56,24 +51,24 @@ test.describe("anônimo", () => {
     const recusa = await pedir("/admissions")
     expect(recusa.status).toBe(307)
     const destino = localizacao(recusa)
-    expect(destino.pathname).toBe("/login")
+    expect(destino.pathname).toBe("/app/entrar")
     expect(destino.searchParams.get("redirect")).toBe("/admissions")
 
     const page = await context.newPage()
     await page.goto("/admissions")
 
-    // O proxy manda a /login?redirect=...; a configuração leva a /app/entrar.
+    // O proxy leva direto à entrada do app, preservando o destino pedido.
     await expect(page).toHaveURL(/\/app\/entrar(?:\?|$)/)
     await context.close()
   })
 
   test("subrotas e prefixos vizinhos não abrem o portão", async () => {
     const casos: Array<[string, string]> = [
-      ["/convite/ABCD1234", "/login"],
-      ["/auth/confirmar-email", "/login"],
-      ["/prestadorx", "/login"],
-      ["/loginx", "/login"],
-      ["/apiario", "/login"],
+      ["/convite/ABCD1234", "/app/entrar"],
+      ["/auth/confirmar-email", "/app/entrar"],
+      ["/prestadorx", "/app/entrar"],
+      ["/loginx", "/app/entrar"],
+      ["/apiario", "/app/entrar"],
     ]
     for (const [caminho, esperado] of casos) {
       const resposta = await pedir(caminho)
@@ -109,28 +104,27 @@ test.describe("anônimo", () => {
 })
 
 test.describe("pré-admissão", () => {
-  test("verificada sem cidade é desviada pelo proxy para /onboarding/locality", async ({
+  test("pré-admissões verificadas e pendentes terminam na entrada em um salto", async ({
     browser,
   }) => {
-    const { context, cookie } = await abrirSessao(browser, VERIFICADO_SEM_CIDADE)
-
-    const resposta = await pedir("/admissions", cookie)
-    expect(resposta.status).toBe(307)
-    expect(localizacao(resposta).pathname).toBe("/onboarding/locality")
-
-    await context.close()
+    // Ambos passam pelo mesmo ramo kind === null; a entrada do app resolve o estado.
+    for (const email of [VERIFICADO_SEM_CIDADE, PENDENTE]) {
+      const { context, cookie } = await abrirSessao(browser, email)
+      const resposta = await pedir("/admissions", cookie)
+      expect(resposta.status, email).toBe(307)
+      expect(localizacao(resposta).pathname, email).toBe("/app/entrar")
+      await context.close()
+    }
   })
 
-  test("pendente é desviada pelo proxy para /onboarding/status com o caminho pedido", async ({
-    browser,
-  }) => {
-    const { context, cookie } = await abrirSessao(browser, PENDENTE)
+  test("prestador é confinado à área do negócio no app", async ({ browser }) => {
+    const { context, cookie } = await abrirSessao(browser, "prestador-seed@bivaque.example.invalid")
 
-    const resposta = await pedir("/admissions", cookie)
-    expect(resposta.status).toBe(307)
-    const destino = localizacao(resposta)
-    expect(destino.pathname).toBe("/onboarding/status")
-    expect(destino.searchParams.get("next")).toBe("/admissions")
+    for (const caminho of ["/admissions", "/prestadorx"]) {
+      const resposta = await pedir(caminho, cookie)
+      expect(resposta.status, caminho).toBe(307)
+      expect(localizacao(resposta).pathname, caminho).toBe("/app/meu-negocio")
+    }
 
     await context.close()
   })

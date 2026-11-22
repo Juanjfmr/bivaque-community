@@ -2,25 +2,23 @@
  * A superfície pública do portão de entrada — uma lista e três modos de casa.
  *
  * Antes desta lista, `apps/web/proxy.ts` comparava prefixo solto
- * (`pathname.startsWith(caminho)`), e por isso `/apiario` entrava como `/api`,
- * `/convite/ABCD1234` entrava como `/convite` e `/loginx` entrava como `/login`.
+ * (`pathname.startsWith(caminho)`), e por isso `/apiario` entrava como `/api`.
  * A comparação por fronteira (`casaFronteira`) exige que o que vem depois do
  * prefixo seja `/` ou o fim do caminho.
  *
  * Modos:
- * - `exata`: o caminho e a variante com barra final (`/login` e `/login/`).
+ * - `exata`: o caminho e a variante com barra final.
  * - `pasta`: o caminho e a subárvore (`/api` e `/api/qualquer`, nunca `/apiario`).
  * - `ativos`: só a subárvore (`/landing/hero.webp`, nunca `/landing`); é o
  *   espaço de assets, não de páginas.
  *
  * `/landing` é o caso que motivou o modo `ativos`: não existe página em
  * `apps/web/app/landing/`, mas `apps/web/public/landing/` guarda os assets da
- * landing anônima (`apps/web/app/landing/landing.tsx` e o onboarding). O
+ * landing anônima (`apps/web/app/landing/landing.tsx`). O
  * caminho exato `/landing` é redirecionado para `/` em `apps/web/next.config.ts`;
  * os assets continuam públicos e em 200.
  *
  * Decisão: `docs/decisions/ADR-20261110-superficie-publica-do-proxy.md`.
- * A entrada pública em si segue `docs/decisions/ADR-20261022-entrada-do-prototipo.md`.
  */
 
 export type ModoDaEntrada = "exata" | "pasta" | "ativos"
@@ -34,26 +32,6 @@ export type EntradaDaSuperficie = Readonly<{
 }>
 
 export const PUBLIC_SURFACE: readonly EntradaDaSuperficie[] = [
-  {
-    caminho: "/login",
-    modo: "exata",
-    motivo: "entrada por código/senha: quem não tem sessão é quem precisa entrar",
-  },
-  {
-    caminho: "/signup",
-    modo: "exata",
-    motivo: "criação de conta, sem sessão por definição",
-  },
-  {
-    caminho: "/recuperar-senha",
-    modo: "exata",
-    motivo: "sem sessão, o portão mandaria ao login justamente quem perdeu a senha",
-  },
-  {
-    caminho: "/nova-senha",
-    modo: "exata",
-    motivo: "o link de recuperação cria sessão antes de a pessoa definir a senha nova",
-  },
   {
     caminho: "/auth/callback",
     modo: "exata",
@@ -93,11 +71,6 @@ export const PUBLIC_SURFACE: readonly EntradaDaSuperficie[] = [
     caminho: "/landing",
     modo: "ativos",
     motivo: "assets de public/landing; /landing exato redireciona para / no next.config.ts",
-  },
-  {
-    caminho: "/prestador-convite",
-    modo: "pasta",
-    motivo: "convite de prestador com token no caminho; quem chega não tem conta",
   },
   {
     caminho: "/conta-apagada",
@@ -167,43 +140,4 @@ export function isPublicPath(caminho: string): boolean {
         return false
     }
   })
-}
-
-/**
- * As telas do funil de entrada que um usuário autenticado ainda não admitido
- * pode ver. Fora daqui, o estado de verificação redireciona para a tela dele.
- *
- * `/onboarding` é exato: a subárvore pertence ao funil só pelas quatro telas
- * nomeadas. Com `casaFronteira` no caminho-base, `/onboarding/statusx` voltaria
- * a passar — exatamente o prefixo solto que esta lista existe para fechar.
- */
-const CAMINHOS_EXATOS_DA_ENTRADA: readonly string[] = ["/onboarding"]
-
-const CAMINHOS_DA_ENTRADA: readonly string[] = [
-  "/onboarding/status",
-  "/onboarding/documento",
-  "/onboarding/locality",
-  "/onboarding/perfil",
-]
-
-/** O caminho pertence ao funil de entrada (com fronteira, não prefixo solto). */
-export function entradaEmAndamento(caminho: string): boolean {
-  return (
-    CAMINHOS_EXATOS_DA_ENTRADA.some((permitido) => casaExata(caminho, permitido)) ||
-    CAMINHOS_DA_ENTRADA.some((permitido) => casaFronteira(caminho, permitido))
-  )
-}
-
-/**
- * O caminho pertence à área do prestador (com fronteira, não prefixo solto).
- *
- * `/prestadores` entra porque é rota real do membro — a ficha pública de um
- * prestador, em `apps/web/app/(shell)/prestadores/[id]` — e o prefixo solto
- * antigo (`startsWith("/prestador")`) já a deixava passar; tirá-la seria
- * regressão de alcance, não endurecimento. `/prestadorx` continua de fora.
- */
-const CAMINHOS_DO_PRESTADOR: readonly string[] = ["/prestador", "/prestadores"]
-
-export function areaDoPrestador(caminho: string): boolean {
-  return CAMINHOS_DO_PRESTADOR.some((permitido) => casaFronteira(caminho, permitido))
 }

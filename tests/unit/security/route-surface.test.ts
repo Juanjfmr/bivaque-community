@@ -1,19 +1,12 @@
 import { describe, expect, it } from "vitest"
 import {
-  areaDoPrestador,
   casaFronteira,
-  entradaEmAndamento,
   isPublicPath,
   type ModoDaEntrada,
   PUBLIC_SURFACE,
 } from "web/lib/security/route-surface"
 
 const PUBLICOS = [
-  "/login",
-  "/login/",
-  "/signup",
-  "/recuperar-senha",
-  "/nova-senha",
   "/auth/callback",
   "/auth/callback/",
   "/auth/callback-error",
@@ -36,11 +29,16 @@ const PUBLICOS = [
   "/_next/image",
   "/landing/hero-bivaque-arrival.webp",
   "/landing/v8/hero.webp",
-  "/prestador-convite/abc",
 ]
 
 const NAO_PUBLICOS = [
   "/",
+  "/login",
+  "/login/",
+  "/signup",
+  "/recuperar-senha",
+  "/nova-senha",
+  "/prestador-convite/abc",
   "/loginx",
   "/login/entrar",
   "/convite",
@@ -71,7 +69,7 @@ describe("isPublicPath", () => {
   })
 
   it("normaliza caminho sem barra inicial", () => {
-    expect(isPublicPath("login")).toBe(true)
+    expect(isPublicPath("login")).toBe(false)
     expect(isPublicPath("api/qualquer")).toBe(true)
     expect(isPublicPath("apiario")).toBe(false)
   })
@@ -109,52 +107,5 @@ describe("casaFronteira", () => {
 
   it.each(casos)("%s com fronteira %s => %s", (caminho, prefixo, esperado) => {
     expect(casaFronteira(caminho, prefixo)).toBe(esperado)
-  })
-})
-
-describe("entradaEmAndamento", () => {
-  const permitidos = [
-    "/onboarding",
-    "/onboarding/",
-    "/onboarding/status",
-    "/onboarding/status/xyz",
-    "/onboarding/documento",
-    "/onboarding/locality",
-    "/onboarding/perfil",
-  ]
-  const recusados = [
-    "/onboarding/statusx",
-    "/onboarding/statusx/1",
-    "/onboardingx",
-    "/prestador/ficha",
-    "/app/inicio",
-  ]
-
-  it.each(permitidos)("aceita %s", (caminho) => {
-    expect(entradaEmAndamento(caminho)).toBe(true)
-  })
-
-  it.each(recusados)("recusa %s", (caminho) => {
-    expect(entradaEmAndamento(caminho)).toBe(false)
-  })
-})
-
-describe("areaDoPrestador", () => {
-  const permitidos = [
-    "/prestador",
-    "/prestador/",
-    "/prestador/ficha",
-    "/prestador/ficha/xyz",
-    "/prestadores",
-    "/prestadores/abc",
-  ]
-  const recusados = ["/prestadorx", "/prestadorx/1", "/prestadoresx", "/app/inicio", "/"]
-
-  it.each(permitidos)("aceita %s", (caminho) => {
-    expect(areaDoPrestador(caminho)).toBe(true)
-  })
-
-  it.each(recusados)("recusa %s", (caminho) => {
-    expect(areaDoPrestador(caminho)).toBe(false)
   })
 })
