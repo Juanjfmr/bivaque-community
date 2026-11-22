@@ -30,7 +30,7 @@ const MENSAGENS = {
   "convite-nao-encontrado": "Não encontramos este convite. Confira o link recebido.",
   "convite-expirado": "Este convite expirou. Peça um novo à comunidade que indicou você.",
   "convite-usado": "Este convite já foi usado. Entre na conta de prestador para continuar.",
-  "conta-recusada": "Esta conta não pode aceitar o convite de prestador.",
+  "conta-recusada": "Esta conta é de membro e não pode aceitar convite de prestador.",
   "outro-email": "O convite não corresponde ao e-mail da sua conta.",
   indisponivel: "Não foi possível aceitar o convite agora. Tente novamente.",
 } as const

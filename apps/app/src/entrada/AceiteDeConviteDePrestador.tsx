@@ -14,8 +14,9 @@ import { FalhaDaLeitura } from "@/src/negocios/FalhaDaLeitura"
  * O convite de prestador como estado da ENTRADA (TROCA-005): o link chega em
  * `/app/entrar?prestador=<token>` e não existe tela nova. O token não é
  * adivinhado nem o convite enumerado: token inválido e desconhecido caem na
- * mesma frase. Aceitar usa a sessão; sem sessão, a pessoa entra pelo e-mail que
- * recebeu o convite e abre o link de novo.
+ * mesma frase. Aceitar usa a sessão; sem sessão, "Entrar com e-mail" leva à
+ * entrada com o aceite como retorno (`?redirect=`), e o código por e-mail
+ * devolve a pessoa a este estado — sem passar pelo funil de membro.
  */
 
 const TEXTO_DO_ESTADO: Readonly<Record<Exclude<ConviteDePrestador["estado"], "pendente">, string>> =
@@ -25,7 +26,13 @@ const TEXTO_DO_ESTADO: Readonly<Record<Exclude<ConviteDePrestador["estado"], "pe
     expirado: "Este convite expirou. Peça um novo à comunidade que indicou você.",
   }
 
-export function AceiteDeConviteDePrestador({ token }: { readonly token: string }) {
+export function AceiteDeConviteDePrestador({
+  token,
+  aoEntrar,
+}: {
+  readonly token: string
+  readonly aoEntrar: () => void
+}) {
   const navegacao = useNavegacao()
   const [convite, setConvite] = useState<ConviteDePrestador | null>(null)
   const [erro, setErro] = useState<unknown>(null)
@@ -60,6 +67,11 @@ export function AceiteDeConviteDePrestador({ token }: { readonly token: string }
         falha !== null && typeof falha === "object" && "motivoDoServidor" in falha
           ? (falha as { motivoDoServidor: unknown }).motivoDoServidor
           : null
+      const doServidor =
+        falha !== null && typeof falha === "object" && "mensagem" in falha
+          ? (falha as { mensagem: unknown }).mensagem
+          : null
+      const mensagemDoServidor = typeof doServidor === "string" ? doServidor : null
       setMensagem(
         motivo === "convite-usado"
           ? "Este convite já foi usado. Entre na conta de prestador para continuar."
@@ -67,7 +79,10 @@ export function AceiteDeConviteDePrestador({ token }: { readonly token: string }
             ? "Este convite expirou. Peça um novo à comunidade que indicou você."
             : motivo === "outro-email"
               ? "O convite não corresponde ao e-mail da sua conta."
-              : "Não foi possível aceitar o convite agora. Tente novamente.",
+              : motivo === "conta-recusada"
+                ? (mensagemDoServidor ??
+                  "Esta conta é de membro e não pode aceitar convite de prestador.")
+                : "Não foi possível aceitar o convite agora. Tente novamente.",
       )
     } finally {
       setAceitando(false)
@@ -123,7 +138,7 @@ export function AceiteDeConviteDePrestador({ token }: { readonly token: string }
               </p>
             )}
             {convite.emailDaSessao === null ? (
-              <Botao onClick={() => window.location.assign("/app/entrar")}>Entrar com e-mail</Botao>
+              <Botao onClick={aoEntrar}>Entrar com e-mail</Botao>
             ) : (
               <Botao disabled={aceitando} onClick={() => void aceitar()}>
                 {aceitando ? "Aceitando…" : "Aceitar convite"}

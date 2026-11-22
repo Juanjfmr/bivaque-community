@@ -162,6 +162,16 @@ describe("TROCA-005 — aceite do convite de prestador", () => {
     expect(texto).not.toContain("segredo")
   })
 
+  it("conta de membro recebe a frase própria, não um 409 mudo", async () => {
+    const mock = clienteDoAceite({ code: "42501", message: "segredo do banco" })
+    autenticar(mock)
+    const corpo = await (await POST(req("POST"), contexto(TOKEN))).json()
+    expect(corpo.erro).toBe("conta-recusada")
+    expect(corpo.mensagem).toBe(
+      "Esta conta é de membro e não pode aceitar convite de prestador.",
+    )
+  })
+
   it("token malformado não chega ao banco", async () => {
     const mock = clienteDoAceite()
     autenticar(mock)

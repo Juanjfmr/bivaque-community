@@ -62,6 +62,49 @@ for (const tema of TEMAS) {
       await expect(page.getByRole("button", { name: "Aceitar convite" })).toHaveCount(0)
     })
 
+    test("o convidado sem sessão entra pelo código e cai no aceite, sem funil de membro", async ({
+      page,
+    }) => {
+      // A sessão só existe depois do código: é o GET do convite que diz se já há
+      // alguém para aceitar, e ele é relido na volta.
+      let comSessao = false
+      await page.route(new RegExp(`/api/app/prestador-convite/${TOKEN}$`), (rota) =>
+        rota.fulfill({
+          json: {
+            convite: { comunidade: "Comunidade Manaus", estado: "pendente" },
+            emailDaSessao: comSessao ? "prestador@example.invalid" : null,
+          },
+        }),
+      )
+      await page.route(/\/api\/app\/entry\/otp$/, (rota) =>
+        rota.fulfill({ json: { reenviarEm: 60 } }),
+      )
+      await page.route(/\/api\/app\/entry\/otp\/verify$/, (rota) => {
+        comSessao = true
+        return rota.fulfill({ json: { autenticado: true } })
+      })
+      // O convite não grava rascunho de entrada de membro: a casca ainda LÊ o
+      // progresso (rede de segurança da sessão), mas nada é ESCRITO.
+      const rascunhos: string[] = []
+      page.on("request", (pedido) => {
+        if (pedido.method() === "GET") return
+        if (pedido.url().includes("/api/app/entry/progress")) rascunhos.push(pedido.url())
+      })
+
+      await ir(page, url(), tema)
+      await page.getByRole("button", { name: "Entrar com e-mail" }).click()
+      await expect(page).toHaveURL(/\/app\/entrar\?redirect=/)
+      await page.getByLabel("E-mail").fill("prestador@example.invalid")
+      await page.getByRole("button", { name: "Enviar código" }).click()
+      await expect(page.getByText("Digite o código")).toBeVisible()
+      await page.getByLabel("Código de 6 números").fill("123456")
+
+      await expect(page.getByRole("button", { name: "Aceitar convite" })).toBeVisible()
+      // O endereço do aceite perde o token (credencial) assim que é lido.
+      await expect(page).toHaveURL(/\/app\/entrar$/)
+      expect(rascunhos).toHaveLength(0)
+    })
+
     test("convite já usado diz que foi usado, sem oferecer aceite", async ({ page }) => {
       await page.route(new RegExp(`/api/app/prestador-convite/${TOKEN}$`), (rota) =>
         rota.fulfill({
@@ -95,6 +138,35 @@ for (const tema of TEMAS) {
       )
       await ir(page, url("b".repeat(64)), tema)
       await expect(page.getByText("Este endereço não existe")).toBeVisible()
+    })
+
+    test("conta de membro lê a recusa na própria tela, sem ser levada ao Início", async ({
+      page,
+    }) => {
+      await page.route(new RegExp(`/api/app/prestador-convite/${TOKEN}$`), async (rota) => {
+        if (rota.request().method() === "POST") {
+          return rota.fulfill({
+            status: 409,
+            json: {
+              erro: "conta-recusada",
+              mensagem: "Esta conta é de membro e não pode aceitar convite de prestador.",
+            },
+          })
+        }
+        return rota.fulfill({
+          json: {
+            convite: { comunidade: "Comunidade Manaus", estado: "pendente" },
+            emailDaSessao: "membro@example.invalid",
+          },
+        })
+      })
+      await ir(page, url(), tema)
+      await page.getByRole("button", { name: "Aceitar convite" }).click()
+      await expect(page.getByRole("alert")).toContainText(
+        "Esta conta é de membro e não pode aceitar convite de prestador.",
+      )
+      await expect(page).toHaveURL(/\/app\/entrar$/)
+      await expect(page.getByRole("heading", { name: "Ofereça seus serviços no Bivaque" })).toBeVisible()
     })
 
     test("a recusa do aceite aparece como frase, não como sucesso", async ({ page }) => {
