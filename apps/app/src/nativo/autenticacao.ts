@@ -16,6 +16,7 @@ export async function receberAutenticacao(link: string): Promise<void> {
   if (url.protocol !== "bivaque:" || url.host !== "auth-callback" || processando) return
   processando = true
   let trocou = false
+  let valido = false
   try {
     const fluxo = await lerPkce()
     await apagarPkce()
@@ -27,6 +28,7 @@ export async function receberAutenticacao(link: string): Promise<void> {
       code &&
       !url.searchParams.has("error")
     ) {
+      valido = true
       const resposta = await requisitar("/api/app/sessao/token", {
         method: "POST",
         headers: { "content-type": "application/json" },
@@ -41,8 +43,10 @@ export async function receberAutenticacao(link: string): Promise<void> {
     // A entrada permite tentar novamente quando a troca falha.
   } finally {
     await Browser.close().catch(() => undefined)
-    window.history.replaceState(null, "", "/app/entrar")
-    window.dispatchEvent(new PopStateEvent("popstate"))
+    if (valido) {
+      window.history.replaceState(null, "", "/app/entrar")
+      window.dispatchEvent(new PopStateEvent("popstate"))
+    }
     if (trocou) window.dispatchEvent(new Event("bivaque:autenticacao"))
     processando = false
   }

@@ -67,6 +67,9 @@ it.each([null, { verificador: "v", criadoEm: Date.now() - 600001 }])(
     await receberAutenticacao("bivaque://auth-callback?code=sintetico")
     expect(f.apagar).toHaveBeenCalled()
     expect(f.requisitar).not.toHaveBeenCalled()
+    expect(window.history.replaceState).not.toHaveBeenCalled()
+    expect(window.dispatchEvent).not.toHaveBeenCalled()
+    expect(f.close).toHaveBeenCalled()
   },
 )
 
@@ -79,4 +82,12 @@ it("apaga o fluxo antes da troca mesmo se ela falhar", async () => {
   expect(f.apagar.mock.invocationCallOrder[0]).toBeLessThan(
     f.requisitar.mock.invocationCallOrder[0] ?? 0,
   )
+})
+
+it("ignora erro do provedor sem sair da tela", async () => {
+  f.ler.mockResolvedValue({ verificador: "v", criadoEm: Date.now() })
+  await receberAutenticacao("bivaque://auth-callback?error=cancelado")
+  expect(window.history.replaceState).not.toHaveBeenCalled()
+  expect(window.dispatchEvent).not.toHaveBeenCalled()
+  expect(f.close).toHaveBeenCalled()
 })
