@@ -50,21 +50,53 @@ describe("sessão nativa", () => {
     expect(cofre.set).toHaveBeenCalledTimes(1)
   })
 
-  it("renova sem AbortSignal.timeout e aborta fetch sem resposta em 3 segundos", async () => {
-    vi.stubGlobal("AbortSignal", class extends AbortSignal {})
-    const buscar = vi.fn().mockImplementation(
-      (_url: string, init: RequestInit) =>
-        new Promise<Response>((_resolve, reject) => {
-          init.signal?.addEventListener("abort", () => reject(new DOMException("", "AbortError")))
-        }),
-    )
+  it("não usa o cofre nem chama a rede com marcador de saída e aceita login novo", async () => {
+    const valores = new Map([["bivaque.saiu", "1"]])
+    vi.stubGlobal("localStorage", {
+      getItem: (chave: string) => valores.get(chave) ?? null,
+      removeItem: (chave: string) => valores.delete(chave),
+    })
+    const buscar = vi.fn().mockResolvedValue(par())
     vi.stubGlobal("fetch", buscar)
-    const falha = renovarSessao().catch((erro: unknown) => erro)
-    await vi.waitFor(() => expect(buscar).toHaveBeenCalledTimes(1))
-    expect(await falha).toMatchObject({ message: "rede" })
-    vi.useRealTimers()
-    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(par()))
+    expect(await renovarSessao()).toBeNull()
+    expect(cofre.get).not.toHaveBeenCalled()
+    expect(buscar).not.toHaveBeenCalled()
+    await aceitarPar({
+      access_token: "novo-acesso",
+      refresh_token: "nova-renovacao",
+      expires_at: Math.floor(Date.now() / 1000) + 3600,
+    })
+    expect(valores.has("bivaque.saiu")).toBe(false)
+    vi.unstubAllGlobals()
+  })
+
+  it("usa AbortController quando AbortSignal.timeout não existe", async () => {
+    vi.stubGlobal("AbortSignal", class extends AbortSignal {})
+    const buscar = vi.fn().mockResolvedValue(par())
+    vi.stubGlobal("fetch", buscar)
     expect(await renovarSessao()).toBe("acesso-sintetico")
+    expect(buscar).toHaveBeenCalledTimes(1)
+    vi.unstubAllGlobals()
+  })
+
+  it("aborta uma renovação sem resposta aos 3000 ms e classifica como rede", async () => {
+    vi.useFakeTimers()
+    vi.stubGlobal("AbortSignal", class extends AbortSignal {})
+    let sinal: AbortSignal | undefined
+    const buscar = vi.fn().mockImplementation((_url: string, init: RequestInit) => {
+      sinal = init.signal ?? undefined
+      return new Promise<Response>((_resolve, reject) => {
+        sinal?.addEventListener("abort", () => reject(new DOMException("", "AbortError")))
+      })
+    })
+    vi.stubGlobal("fetch", buscar)
+    const resultado = renovarSessao().catch((erro: unknown) => erro)
+    await vi.advanceTimersByTimeAsync(3000)
+    await vi.runAllTimersAsync()
+    expect(sinal?.aborted).toBe(true)
+    expect(await resultado).toMatchObject({ message: "rede" })
+    vi.useRealTimers()
+    vi.unstubAllGlobals()
   })
 
   it("mantém o novo par em memória se a gravação falha", async () => {
@@ -338,6 +370,39 @@ it("envia a sessão em memória nas rotas públicas autenticadas", async () => {
   vi.stubGlobal("fetch", buscar)
   await ler("/api/app/entry/progress")
   expect(buscar.mock.calls[0]?.[1].headers.get("Authorization")).toBe("Bearer acesso")
+})
+
+it("renova antes de uma rota autenticada da entrada perto do vencimento", async () => {
+  limparMemoria()
+  await aceitarPar({ access_token: "antigo", refresh_token: "rotacao", expires_at: 1 })
+  const buscar = vi.fn().mockResolvedValueOnce(par()).mockResolvedValueOnce(new Response("{}"))
+  vi.stubGlobal("fetch", buscar)
+  await ler("/api/app/entry/document")
+  expect(buscar).toHaveBeenCalledTimes(2)
+  expect(buscar.mock.calls[0]?.[0]).toContain("/api/app/sessao/renovar")
+})
+
+it("não renova rota pública e repete uma vez o GET autenticado após 401", async () => {
+  limparMemoria()
+  await aceitarPar({
+    access_token: "antigo",
+    refresh_token: "rotacao",
+    expires_at: Math.floor(Date.now() / 1000) + 3600,
+  })
+  const buscarPublica = vi.fn().mockResolvedValue(new Response("{}"))
+  vi.stubGlobal("fetch", buscarPublica)
+  await enviar("POST", "/api/app/entry/otp")
+  expect(buscarPublica).toHaveBeenCalledTimes(1)
+
+  const buscar = vi
+    .fn()
+    .mockResolvedValueOnce(new Response("{}", { status: 401 }))
+    .mockResolvedValueOnce(par())
+    .mockResolvedValueOnce(new Response("{}"))
+  vi.stubGlobal("fetch", buscar)
+  await ler("/api/app/entry/document")
+  expect(buscar).toHaveBeenCalledTimes(3)
+  expect(buscar.mock.calls[1]?.[0]).toContain("/api/app/sessao/renovar")
 })
 
 it("401 da leitura seguido de falha transitoria nao encerra sessao", async () => {

@@ -136,14 +136,18 @@ async function comRede(
 export async function requisitar(caminho: string, init: RequestInit = {}): Promise<Response> {
   if (!Capacitor.isNativePlatform()) return fetch(caminho, init)
   const publica =
-    caminho.startsWith("/api/app/entry/") ||
-    caminho.startsWith("/api/localities") ||
-    caminho === "/api/app/sessao/token"
+    new Set([
+      "/api/app/entry/otp",
+      "/api/app/entry/otp/verify",
+      "/api/app/entry/invite/preview",
+      "/api/app/entry/oauth",
+      "/api/localities",
+      "/api/app/sessao/token",
+    ]).has(caminho) || /^\/api\/localities\/[^/]+$/.test(caminho)
   const origem = origemDaApi()
   let token: string | null
   try {
-    token =
-      publica && caminho !== "/api/app/entry/progress" ? acessoEmMemoria() : await acessoAtual()
+    token = publica ? acessoEmMemoria() : await acessoAtual()
   } catch (erro) {
     throw new FalhaDaApi(
       erro instanceof Error && erro.message === "rede" ? "rede" : "indisponivel",
