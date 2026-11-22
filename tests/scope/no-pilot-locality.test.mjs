@@ -129,8 +129,8 @@ test("the scanner reaches source files in both apps/web/app and apps/web/lib", (
 
 test("the resolver lives in the locality-context module", () => {
   // TROCA-005: a casca web saiu inteira (o layout e as telas de membro), e com
-  // ela a prova de que o layout alimentava o provider. O módulo do resolvedor
-  // segue vivo — `member-context` e a audiência do feed o consomem.
+  // ela a prova de que o layout alimentava o provider. O resolvedor de localidade
+  // segue vivo para os fluxos públicos que ainda o usam.
   const context = readFileSync(join(root, "apps", "web", "lib", "locality-context.tsx"), "utf8")
 
   // When the executable code is inspected (comments stripped)

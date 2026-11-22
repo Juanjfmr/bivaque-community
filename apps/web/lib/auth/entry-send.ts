@@ -12,8 +12,8 @@
  * pertence é o dado que não pode vazar: ela expõe vínculo com a instituição.
  *
  * PROCESSO-DE-CONSTRUCAO §8: "Mensagens não devem expor resultados privados de
- * consultas de elegibilidade." O mesmo princípio já vale no compositor
- * (`lib/composer/publish-error.ts`, anti-enumeração de RLS); aqui ele chegou
+ * consultas de elegibilidade." O mesmo princípio vale nas portas do app (a
+ * resposta é uma frase fixa por código, nunca o texto do banco); aqui ele chegou
  * depois porque a tela de entrada nasceu antes da regra.
  *
  * Por isso "conta não encontrada" e "envio concluído" colapsam no MESMO estado

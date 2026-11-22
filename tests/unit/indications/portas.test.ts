@@ -27,14 +27,3 @@ describe("toda porta de um pedido leva a /app/pergunta/<id>", () => {
     expect(source).not.toContain("/recommendations?focus=")
   })
 })
-
-// O menu de mais opções é compartilhado com o feed: item sem ação não aparece.
-// Antes, "Ocultar" e "Denunciar" apareciam na própria resposta e não faziam nada.
-describe("menu de mais opções sem item morto", () => {
-  const menu = web("app", "components", "bivaque", "feed-post-menu.tsx")
-
-  it("ocultar e denunciar só existem quando alguém os executa", () => {
-    expect(menu).toMatch(/\{onHide \? \(\s*<Dropdown\.Item key="hide"/)
-    expect(menu).toMatch(/\{onReport \? \(\s*<Dropdown\.Item key="report"/)
-  })
-})

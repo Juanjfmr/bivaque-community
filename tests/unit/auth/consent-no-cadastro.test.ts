@@ -13,9 +13,7 @@ import { describe, expect, it } from "vitest"
 //
 // PORT-003: a linha passou a ser um componente só (`entry-consent.tsx`), usado
 // pelo cadastro e pelo passo Aceite do Google, e o envio deixou de depender de
-// um botão desligado — a especificação valida no envio e explica o que falta. A
-// cobertura não cai: o que se passa a exigir é a ORDEM, e ela é provada na
-// função pura (`entry-form.test.ts`).
+// um botão desligado — a especificação valida no envio e explica o que falta.
 
 const root = join(import.meta.dirname, "..", "..", "..")
 const read = (...segments: string[]) => readFileSync(join(root, ...segments), "utf8")
