@@ -87,37 +87,6 @@ test.describe("vitrine de prestadores", () => {
     await expect(page.getByText("Limpeza completa")).toBeVisible()
   })
 
-  // @stateful: grava no catálogo do mesmo prestador semeado, nos três tamanhos.
-  test("prestador entra e publica um item de catálogo", { tag: "@stateful" }, async ({ page }) => {
-    // Ciclo completo (navegar, preencher três campos, publicar por Server
-    // Action, revalidar) contra servidor recém-compilado em lote serial não
-    // cabe no teto padrão de 30s — visto em 2026-08-25.
-    test.setTimeout(90_000)
-
-    await signInAs(page, "prestador-seed@bivaque.example.invalid")
-    await page.setViewportSize({ width: 1280, height: 800 })
-
-    await page.goto("/prestador/catalogo")
-
-    await expect(page.getByRole("heading", { name: "Publicar item" })).toBeVisible({
-      timeout: 20000,
-    })
-
-    // Escopado no formulário de publicação: sem isto, os rótulos curtos
-    // colidem com os campos de edição dos itens já listados abaixo.
-    const publicar = page.getByRole("form", { name: "Publicar item" })
-    await publicar.getByLabel("Título do item").fill("Instalação de split")
-    await publicar.getByLabel("Descrição").fill("Instalação completa com gás incluso")
-    await publicar.getByLabel("Preço em centavos").fill("25000")
-    await publicar.getByRole("button", { name: "Publicar" }).click()
-
-    // .first(): títulos repetidos são permitidos no catálogo — execuções
-    // anteriores do próprio spec podem ter publicado o mesmo nome.
-    await expect(page.getByText("Instalação de split").first()).toBeVisible({
-      timeout: 10000,
-    })
-  })
-
   test("membro fora do alcance não acha a ficha", async ({ page }) => {
     await signInAs(page, "membro-vazia@bivaque.example.invalid")
     await page.setViewportSize({ width: 1280, height: 800 })

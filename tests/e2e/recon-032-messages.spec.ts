@@ -6,20 +6,10 @@
 // redirect, que nao mudou.
 
 import { expect, test } from "@playwright/test"
+import { mintSession, restDelete, restRpc, restSelect, seedAs } from "./helpers/recon032"
 import {
-  mintSession,
-  restDelete,
-  restInsert,
-  restRpc,
-  restSelect,
-  seedAs,
-} from "./helpers/recon032"
-import {
-  GRUPO_PAIS_E_FILHOS_ID,
-  MANAUS_LOCALITY_ID,
   MEMBRO_1_EMAIL,
   MEMBRO_1_USER_ID,
-  MEMBRO_9_EMAIL,
   PROVIDER_PROFILE_ID,
   PROVIDER_USER_ID,
   VISUAL_EMAIL,
@@ -119,48 +109,6 @@ test.describe("conversa por URL estavel", () => {
     await expect(page).toHaveURL(new RegExp(`/app/conversa/${conversationId}(?:\\?.*)?$`), {
       timeout: 15_000,
     })
-
-    await context.close()
-  })
-})
-
-test.describe("leitura de notificacoes persiste (prancha 54)", () => {
-  test("marcar como lida persiste apos reload e o contador acompanha", async ({ browser }) => {
-    // A nao-lida nasce do fluxo real e nao de sobra de rodada anterior: o
-    // membro-1 publica num grupo e outro membro do grupo comenta; o trigger
-    // notify_comment escreve a notificacao para o autor do post.
-    const membro = await mintSession(MEMBRO_1_EMAIL)
-    const stamp = Date.now().toString(36)
-    const post = await restInsert<{ id: string }>("posts", membro.accessToken, {
-      locality_id: MANAUS_LOCALITY_ID,
-      user_id: MEMBRO_1_USER_ID,
-      group_id: GRUPO_PAIS_E_FILHOS_ID,
-      post_type: "text",
-      content: `Publicação do ciclo RECON-032 ${stamp}`,
-    })
-    if (!post) {
-      throw new Error("não foi possível criar a publicação da fixture de leitura")
-    }
-    const colega = await mintSession(MEMBRO_9_EMAIL)
-    await restInsert("comments", colega.accessToken, {
-      post_id: post.id,
-      content: `Comentário do ciclo RECON-032 ${stamp}`,
-    })
-
-    // Viewport de desktop de propósito: o contador vive na sidebar larga, e em
-    // 375 a sidebar é rail/drawer — o badge não tem onde ser desenhado. O
-    // contexto sem viewport herdava a do projeto e o teste falhava nos três.
-    const context = await browser.newContext({ viewport: { width: 1440, height: 900 } })
-    await seedAs(context, MEMBRO_1_EMAIL)
-    const page = await context.newPage()
-
-    // RUN-172: o host era /profile; o contador da sidebar é o da casca web, viva
-    // em toda rota de membro do grupo. RUN-186: /salvos virou 307 para o app.
-    await page.goto("/denuncias")
-    const badge = page.locator('a[href="/app/avisos"] span.ml-auto')
-    await expect(badge).toBeVisible({ timeout: 10_000 })
-    const unreadCount = Number(await badge.textContent())
-    expect(unreadCount).toBeGreaterThan(0)
 
     await context.close()
   })

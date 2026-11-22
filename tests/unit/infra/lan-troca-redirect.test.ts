@@ -186,6 +186,7 @@ describe("LAN-TROCA fase 1", () => {
     "(shell)",
     "(provider)",
     "(preauth)/prestador-convite",
+    "(preauth)/login",
     "(preauth)/signup",
     "(preauth)/recuperar-senha",
     "(preauth)/nova-senha",
