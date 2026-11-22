@@ -284,21 +284,21 @@ export function MeuNegocio() {
           <EsqueletoDeLista linhas={4} />
         ) : (
           <>
+            {mensagem === null ? null : (
+              <p role="alert" className="text-sm text-(--destructive)">
+                {mensagem}
+              </p>
+            )}
+            {aviso === null ? null : (
+              <p role="status" className="text-sm text-(--primary)">
+                {aviso}
+              </p>
+            )}
             <div hidden={aba !== "ficha"}>
               <Secao
                 titulo={ficha === null ? "Criar a página" : "Sua página"}
                 className="max-w-2xl"
               >
-                {mensagem === null ? null : (
-                  <p role="alert" className="text-sm text-(--destructive)">
-                    {mensagem}
-                  </p>
-                )}
-                {aviso === null ? null : (
-                  <p role="status" className="text-sm text-(--primary)">
-                    {aviso}
-                  </p>
-                )}
                 {/* `noValidate`: a validação é a de lib/providers/showcase (a mesma do
                 servidor) e precisa dar a FRASE para a pessoa. Deixar o
                 `minlength` do navegador barrar o submit esconderia a mensagem. */}
