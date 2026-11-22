@@ -35,16 +35,21 @@ const TROCADAS = [
   ["/mercado/novo?categoria=eletronicos", "/app/mercado?categoria=eletronicos"],
   [`/imoveis/${ID}`, `/app/anuncio/${ID}`],
   // RUN-164: criar e editar imóvel saem da web; a lista é o destino do criar.
-  ["/imoveis/novo", "/app/imoveis"],
-  ["/imoveis/novo?tipo=casa", "/app/imoveis?tipo=casa"],
+  // NAV-002: a lista é o Mercado, com a aba na busca — o link chega ao destino
+  // final num salto só, sem o app redirecionar de novo.
+  ["/imoveis/novo", "/app/mercado?aba=imoveis"],
+  ["/imoveis/novo?tipo=casa", "/app/mercado?aba=imoveis&tipo=casa"],
   [`/imoveis/${ID}/editar`, `/app/anuncio/${ID}`],
   // RUN-169: a gestão dos alertas de busca é do app.
   ["/imoveis/alertas", "/app/imoveis/alertas"],
   ["/imoveis/alertas?aba=imoveis", "/app/imoveis/alertas?aba=imoveis"],
   ["/mercado", "/app/mercado"],
   ["/mercado?preco_min=10000&pagina=2", "/app/mercado?preco_min=10000&pagina=2"],
-  ["/imoveis", "/app/imoveis"],
-  ["/imoveis?q=centro&quartos=2&valor_max=4000", "/app/imoveis?q=centro&quartos=2&valor_max=4000"],
+  ["/imoveis", "/app/mercado?aba=imoveis"],
+  [
+    "/imoveis?q=centro&quartos=2&valor_max=4000",
+    "/app/mercado?aba=imoveis&q=centro&quartos=2&valor_max=4000",
+  ],
   ["/meus-anuncios", "/app/meus-anuncios"],
   ["/guide", "/app/guia"],
   ["/guide/sugerir", "/app/guia"],

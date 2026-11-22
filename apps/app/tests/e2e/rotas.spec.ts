@@ -18,9 +18,6 @@ const ROTAS_COM_CASCA: ReadonlyArray<readonly [url: string, titulo: string | Reg
   ["/app/conversa/c-1", "Conversa"],
   ["/app/voce", "Você"],
   ["/app/busca", "Buscar"],
-  ["/app/catalogo", "Desapegos"],
-  ["/app/desapegos", "Desapegos"],
-  ["/app/imoveis", "Imóveis"],
   ["/app/negocios", "Mercado da cidade"],
   ["/app/anuncio/a-1", "Anúncio"],
   ["/app/negocio/n-1", "Negócio local"],
@@ -119,6 +116,27 @@ test.describe("rotas reais em /app", () => {
       "data-subaba",
       "desapegos",
     )
+  })
+
+  test("os endereços antigos do Mercado chegam ao endereço dele com a aba certa", async ({
+    page,
+  }) => {
+    // NAV-002: um endereço só; o antigo redireciona em replace, com a aba.
+    const antigos: ReadonlyArray<readonly [antigo: string, aba: string]> = [
+      ["/app/catalogo", "desapegos"],
+      ["/app/desapegos", "desapegos"],
+      ["/app/imoveis", "imoveis"],
+    ]
+    for (const [antigo, aba] of antigos) {
+      await abrir(page, antigo)
+      expect(await caminhoAtual(page), antigo).toBe("/app/mercado")
+      expect(new URL(page.url()).searchParams.get("aba"), antigo).toBe(aba)
+      await expect(
+        page.locator('[data-subabas="mercado"] [aria-current="page"]'),
+        antigo,
+      ).toHaveAttribute("data-subaba", aba)
+      await expect(tituloDaTela(page), antigo).toHaveText("Mercado")
+    }
   })
 
   test("URL fora do catálogo tem fallback visível e volta ao início", async ({ page }) => {

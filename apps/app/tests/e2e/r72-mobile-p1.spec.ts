@@ -218,7 +218,7 @@ test("P1: a folha de imóvel recusa o que o servidor recusaria, sem sair da tela
   // A primeira recusa é a do CEP: o imóvel não existe sem ele (RUN-175).
   await folha.locator('[data-acao="publicar-imovel"]').click()
   await expect(folha.getByRole("alert")).toContainText("Informe o CEP do imóvel.")
-  await expect(page).toHaveURL(/\/app\/imoveis$/)
+  await expect(page).toHaveURL(/\/app\/mercado\?aba=imoveis$/)
 
   // Com o CEP, a recusa seguinte é a mesma de antes: centavos voltam 400 do
   // servidor e a régua do app avisa antes de sair.
@@ -227,7 +227,8 @@ test("P1: a folha de imóvel recusa o que o servidor recusaria, sem sair da tela
   await folha.locator('[data-acao="publicar-imovel"]').click()
   await expect(folha.getByRole("alert")).toContainText("sem centavos")
   await expect(folha.locator("#imovel-preco")).toHaveValue("3200.5")
-  await expect(page).toHaveURL(/\/app\/imoveis$/)
+  await expect(page).toHaveURL(/\/app\/mercado\?aba=imoveis$/)
+  await expect(page.locator('[data-fluxo="rascunho-imovel"]')).toBeVisible()
 })
 
 test("P1: Criar > Anunciar imóvel chega ao formulário, sem destino morto", async ({ page }) => {
@@ -235,7 +236,7 @@ test("P1: Criar > Anunciar imóvel chega ao formulário, sem destino morto", asy
   await page.goto("/app/inicio")
   await page.locator('[data-acao="criar"]').click()
   await page.locator('[data-escolha="create-property"]').click()
-  await expect(page).toHaveURL(/\/app\/imoveis$/)
+  await expect(page).toHaveURL(/\/app\/mercado\?aba=imoveis$/)
   await expect(page.locator('[data-fluxo="rascunho-imovel"]')).toBeVisible()
   await page
     .locator('[data-fluxo="rascunho-imovel"]')

@@ -28,6 +28,7 @@ import {
   useRotaAtual,
   useSobreposicaoDaEntrada,
 } from "@/lib/navegacao/react"
+import { lerAbaDaUrl, type SubAbaDoMercado } from "@/lib/navegacao/rotas"
 import { useCasca } from "@/src/contexto/casca"
 import { EstadoDeSessaoVencida, EstadoNegado } from "@/src/eventos/EstadosDeAcesso"
 import { acessoNegado, foiAbortada, sessaoVencida } from "@/src/eventos/formulario"
@@ -41,6 +42,7 @@ import {
 } from "@/src/mercado/cartao"
 import { mensagemDaFalha } from "@/src/mercado/falha"
 import { type FiltrosDaUrl, lerFiltrosDaUrl, mudarFiltroNaUrl } from "@/src/mercado/filtros-url"
+import { Negocios } from "@/src/negocios/Negocios"
 import { Segmentos } from "@/src/pecas/segmentos"
 
 /**
@@ -292,7 +294,14 @@ export function ListaDeMercado({ inicial }: { inicial: AbaDoMercado }) {
       <Segmentos
         itens={SUBABAS}
         valor={inicial}
-        aoEscolher={(aba) => void navegacao.irPara(aba)}
+        // Trocar de aba reescreve o endereço do Mercado em replace: o Voltar do
+        // navegador sai do Mercado, não percorre as abas.
+        aoEscolher={(destino) =>
+          void navegacao.irPara("mercado", {
+            aba: destino as SubAbaDoMercado,
+            replace: true,
+          })
+        }
         rotulo="Seções do Mercado"
         grupo="mercado"
       />
@@ -494,17 +503,13 @@ export function ListaDeMercado({ inicial }: { inicial: AbaDoMercado }) {
 }
 
 export function Mercado() {
-  return <ListaDeMercado inicial="desapegos" />
-}
-
-export function Desapegos() {
-  return <ListaDeMercado inicial="desapegos" />
-}
-
-export function Catalogo() {
-  return <ListaDeMercado inicial="desapegos" />
-}
-
-export function Imoveis() {
-  return <ListaDeMercado inicial="imoveis" />
+  const busca = useLocation({ select: (l) => l.search as Record<string, unknown> })
+  const aba = lerAbaDaUrl(busca)
+  // Negócios é a tela do Mercado da cidade (NAV-002): a aba abre a mesma tela
+  // que mora em `/app/negocios`, que continua como está. Sem salto e sem mudar
+  // a rota antiga.
+  if (aba === "negocios") return <Negocios />
+  // `key={aba}`: cada aba é uma lista própria — carregando, erro, aviso e modo
+  // de visualização não atravessam a troca.
+  return <ListaDeMercado key={aba} inicial={aba} />
 }

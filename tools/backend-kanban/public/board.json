@@ -10500,7 +10500,8 @@
       "proof": [
         "21/11: implementado pelo DeepSeek v4.1 Flash (Codex Terra indisponível), 22 commits em apps/app (mais 1 chamada em src/roteador.tsx, aceita pelo coordenador). Conferido pelo coordenador em f03406ef7: typecheck limpo; app test 71 arquivos/756 testes; nav-001.spec 33/33 em mobile-375, tablet-768, desktop-1440, claro e escuro; capturas em .visual/nav-001/pos-*.",
         "21/11: revisão independente às cegas (subagente reviewer) deu FAIL com 4 altos e 5 médios; rodada única de correção fechou todos com teste (fundo da Folha/Aviso fora de .pc, ignorado em Salvos, Negócios, categoria da Busca, foco de volta, Grupos, altura no computador, tempos do ANIMATION.md, fechamento por arrasto). Baixos em NAV-001-RESSALVAS.",
-        "21/11: merge do PR #318 condicionado ao CI completo (ci:full) verde no head."
+        "21/11: merge do PR #318 condicionado ao CI completo (ci:full) verde no head.",
+        "21/11 22:31Z: o dono aprovou a prova de toque real da Folha no celular (\"Funcionou\")."
       ]
     },
     {
@@ -10585,6 +10586,69 @@
       ],
       "updatedAt": "2026-11-21",
       "sourceRevision": "c698ccad7"
+    },
+    {
+      "id": "NAV-002",
+      "title": "Mercado com um endereço só: aba e filtros na URL de /app/mercado",
+      "phase": "Lançamento",
+      "priority": "P1",
+      "category": "frontend",
+      "status": "done",
+      "description": "Plano Reduzir o excesso de telas (dono, 21/11, lote 2 de 3; contrato docs/agents/tasks/NAV-002.task.yml). /app/mercado é o endereço canônico, com aba (desapegos, imoveis, negocios) e filtros na busca da URL; /app/desapegos, /app/catalogo e /app/imoveis redirecionam em replace com aba e filtros preservados, sem ciclo; os endereços antigos do site (/imoveis, /imoveis/novo) chegam em um salto só; links internos, Paleta, Criar, Guia e alertas de imóvel apontam para o endereço canônico.",
+      "checklist": [
+        "Aba e filtros do Mercado vivem na URL de /app/mercado",
+        "Endereços antigos do app redirecionam em replace, sem ciclo e sem entrada extra no histórico",
+        "Endereços antigos do site chegam ao Mercado em um salto",
+        "Links internos apontam para o endereço canônico",
+        "Vitest e E2E 375/768/1440 claro/escuro"
+      ],
+      "dependencies": ["NAV-001"],
+      "tests": [
+        "apps/app/tests/mercado-enderecos.test.ts",
+        "apps/app/tests/navegacao/rotas.test.ts",
+        "apps/app/tests/navegacao/transicoes.test.ts",
+        "apps/app/tests/e2e/nav-002-mercado.spec.ts",
+        "apps/web/tests/redirecionamentos.test.ts",
+        "tests/unit/infra/lan-troca-redirect.test.ts"
+      ],
+      "blockers": [],
+      "updatedAt": "2026-11-22",
+      "completedAt": "2026-11-22",
+      "sourceRevision": "9afd8609f",
+      "links": [
+        "docs/agents/tasks/NAV-002.task.yml",
+        "https://github.com/Juanjfmr/bivaque-community/pull/321"
+      ],
+      "proof": [
+        "21/11: implementado pelo DeepSeek v4.1 Flash por contrato; revisão às cegas (subagente reviewer) com uma rodada de correção (origem da volta ao trocar de aba em sobreposição, alertas de imóvel, formatação). Desvios de cerca aceitos pelo coordenador: src/guia/secoes.ts, src/negocios/Negocios.tsx e o teste lan-troca-redirect, todos só trocando o endereço para o canônico.",
+        "22/11: conferido pelo coordenador em 9afd8609f (main 9fc92ef6b mesclada): typecheck 0; app vitest 765/765; lan-troca-redirect 116/116; E2E do app 318/318 em mobile-375, tablet-768, desktop-1440; capturas em .visual/nav-002/mercado-imoveis-*.",
+        "22/11: merge condicionado ao CI completo (ci:full) verde no head."
+      ]
+    },
+    {
+      "id": "INDICAR-NEGOCIO",
+      "title": "Indicar um negócio: membro indica, operador aprova",
+      "phase": "Lançamento",
+      "priority": "P2",
+      "category": "backend",
+      "status": "repo",
+      "description": "Decisão do dono em 21/11 (\"Manter e sugerir depois\"): só o operador convida prestador, e o membro pode indicar um negócio. Folha de indicação (nome, contato, motivo); fila do operador; convite com um toque a partir da indicação; \"indicado por membros\" no perfil do negócio. Precisa de ADR com regra própria (dado de terceiro, contato e anti-abuso) antes de código. Não altera TROCA-004 nem TROCA-005.",
+      "checklist": [
+        "ADR com a regra da indicação (quem indica, que dado guarda, por quanto tempo, anti-abuso)",
+        "Folha Indicar um negócio com nome, contato e motivo",
+        "Fila do operador com convite em um toque",
+        "Marca \"indicado por membros\" no perfil do negócio",
+        "Testes positivos e negativos de permissão e E2E 375/768/1440"
+      ],
+      "dependencies": ["LAN-F07"],
+      "tests": [],
+      "blockers": ["Aguarda ADR com a regra da indicação antes de qualquer código."],
+      "updatedAt": "2026-11-22",
+      "sourceRevision": "9afd8609f",
+      "links": [],
+      "proof": [
+        "21/11: decisão do dono na thread do projeto (\"Manter e sugerir depois\"), registrada pelo coordenador; só o operador convida prestador (ADR-20261024 §3.4/§6)."
+      ]
     }
   ],
   "launch": {
