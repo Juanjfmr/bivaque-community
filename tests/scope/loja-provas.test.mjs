@@ -72,8 +72,14 @@ test("Mailpit Android lê a porta do Inbucket e registra URL sem query", () => {
 test("OAuth usa a mesma origem do build e registra somente dados de diagnóstico", () => {
   const android = readFileSync("tests/nativo/android.mjs", "utf8")
   const job = workflow.split("  android:")[1].split("  ios:")[0]
-  assert.match(job, /env:\s+VITE_SUPABASE_URL: http:\/\/localhost:54321/)
-  assert.equal((job.match(/VITE_SUPABASE_URL:/g) ?? []).length, 1)
+  const urls = job.match(/VITE_SUPABASE_URL: \S+/g) ?? []
+  assert.deepEqual(urls, [
+    "VITE_SUPABASE_URL: http://localhost:54321",
+    "VITE_SUPABASE_URL: http://localhost:54321",
+  ])
+  const prova = job.split("- name: Provar no emulador")[1].split("- name:")[0]
+  assert.match(prova, /env:\s+VITE_SUPABASE_URL: http:\/\/localhost:54321/)
+  assert.doesNotMatch(job.split("    steps:")[0], /VITE_SUPABASE_URL/)
   assert.match(android, /new URL\(process\.env\.VITE_SUPABASE_URL\)\.origin/)
   assert.match(android, /url\.origin !== origemEsperada/)
   assert.match(

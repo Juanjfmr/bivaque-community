@@ -18,8 +18,6 @@ permissions:
 
 jobs:
   android:
-    env:
-      VITE_SUPABASE_URL: http://localhost:54321
     runs-on: ubuntu-24.04
     timeout-minutes: 60
     steps:
@@ -110,6 +108,7 @@ jobs:
       - name: Compilar APK de depuração
         env:
           VITE_API_BASE: http://localhost:3000
+          VITE_SUPABASE_URL: http://localhost:54321
         run: |
           pnpm --filter @bivaque/app build
           pnpm --filter @bivaque/app exec cap sync android
@@ -167,6 +166,8 @@ jobs:
           } > .visual/loja-004/nativo/servidor.log
       - name: Provar no emulador
         uses: reactivecircus/android-emulator-runner@v2.34.0
+        env:
+          VITE_SUPABASE_URL: http://localhost:54321
         with:
           api-level: 34
           target: google_apis
