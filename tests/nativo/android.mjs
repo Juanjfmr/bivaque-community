@@ -14,11 +14,13 @@ function captura(nome) {
   const png = execFileSync("adb", ["exec-out", "screencap", "-p"], { maxBuffer: 20_000_000 })
   writeFileSync(join(pasta, `${nome}.png`), png)
 }
-function diagnostico() {
-  try {
-    captura("falha")
-  } catch {
-    log("Captura de falha indisponível")
+function diagnostico(podeCapturar) {
+  if (podeCapturar) {
+    try {
+      captura("falha")
+    } catch {
+      log("Captura de falha indisponível")
+    }
   }
   try {
     // Apenas prioridade e tag: mensagens do Android podem conter URLs ou credenciais.
@@ -180,10 +182,10 @@ try {
   })
 } catch (erro) {
   try {
-    const campo = page?.getByLabel("C?digo de 6 n?meros")
+    const campo = page?.getByLabel("Código de 6 números")
     if (campo && (await campo.isVisible())) await campo.fill("")
   } catch {
-    // A captura de falha ? omitida se n?o for poss?vel limpar o campo sens?vel.
+    // A captura de falha é omitida se não for possível limpar o campo sensível.
     page = undefined
   }
   log(erro instanceof Error ? erro.message : "Falha inesperada")
