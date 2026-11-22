@@ -57,13 +57,15 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     return responder(request, { erro: "sem-cidade" }, 409, sessao.sessao.cabecalhos)
   }
 
-  // Só públicos: grupo privado não é sugestão para quem ainda não é membro, e
-  // o nome de um grupo privado não pode virar interesse da entrada.
+  // Só públicos e não apagados: grupo privado não é sugestão para quem ainda
+  // não é membro, e o nome de um grupo privado não pode virar interesse da
+  // entrada. Grupo apagado sai da lista como sai da participação.
   const grupos = await cliente
     .from("groups")
     .select("id, name, description")
     .eq("locality_id", cidade.id)
     .eq("visibility", "public")
+    .eq("is_deleted", false)
     .order("name", { ascending: true })
     .limit(LIMITE_DE_GRUPOS)
 
