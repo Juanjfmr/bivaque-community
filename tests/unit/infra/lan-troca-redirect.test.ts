@@ -17,6 +17,15 @@ const TROCADAS = [
   ["/gerir-comunidades", "/app/comunidade"],
   ["/communities", "/app/comunidade"],
   [`/communities/${ID}?fonte=teste`, "/app/comunidade?fonte=teste"],
+  // TROCA-004: a vila sai (redesenho §3.4 e §6) — o membro não indica prestador e o
+  // painel de quem administra a vila não existe mais. O id e a query seguem, e os dois
+  // destinos são telas do app (nenhum deles redireciona de novo).
+  [`/communities/${ID}/indicar-prestador`, "/app/negocios"],
+  [`/communities/${ID}/admin`, "/app/comunidade"],
+  [`/communities/${ID}/admin/pending`, "/app/comunidade"],
+  [`/communities/${ID}/admin/moderators`, "/app/comunidade"],
+  [`/communities/${ID}/admin/providers`, "/app/comunidade"],
+  [`/communities/${ID}/admin/media`, "/app/comunidade"],
   ["/community", "/app/comunidade"],
   [`/community?post=${ID}`, `/app/publicacao/${ID}?post=${ID}`],
   ["/community?post=invalido", "/app/comunidade?post=invalido"],
@@ -304,14 +313,6 @@ describe("LAN-TROCA fase 1", () => {
     }
     for (const rota of ["communities", "communities/[id]"]) {
       expect(existsSync(join(shell, rota, "page.tsx"))).toBe(false)
-    }
-    for (const caminho of [
-      `/communities/${ID}/indicar-prestador`,
-      ...["", "/pending", "/moderators", "/providers", "/media"].map(
-        (subrota) => `/communities/${ID}/admin${subrota}`,
-      ),
-    ]) {
-      expect((await resolver(caminho)).headers.get("location")).toBeNull()
     }
     expect(existsSync(join(shell, "communities", "[id]", "indicar-prestador", "page.tsx"))).toBe(
       true,

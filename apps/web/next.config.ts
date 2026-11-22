@@ -191,6 +191,14 @@ const nextConfig: NextConfig = {
       },
       ...(
         [
+          // TROCA-004: a vila sai (redesenho §3.4) — o membro não indica prestador
+          // (§6) e o painel de quem administrava a vila não existe mais. O `:id` do
+          // Next casa um segmento só, então os caminhos abaixo têm regra própria; ela
+          // vem antes de `/communities/:id` para o destino ser determinístico. A query
+          // segue pelo Next, como nas demais.
+          ["/communities/:id/indicar-prestador", "/app/negocios"],
+          ["/communities/:id/admin", "/app/comunidade"],
+          ["/communities/:id/admin/:demais*", "/app/comunidade"],
           ["/communities/:id/invite", "/app/comunidade"],
           ["/invite/:token", "/app/comunidade"],
           ["/gerir-comunidades", "/app/comunidade"],
