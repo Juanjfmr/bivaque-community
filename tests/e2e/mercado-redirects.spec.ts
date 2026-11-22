@@ -17,13 +17,13 @@ const BASE_URL = process.env["APP_URL"] ?? "http://127.0.0.1:3000"
 // gestão do anúncio edita.
 const TROCAS = [
   ["/mercado?preco_min=10000&pagina=2", "/app/mercado"],
-  ["/imoveis?q=centro&quartos=2&valor_max=4000", "/app/imoveis"],
+  ["/imoveis?q=centro&quartos=2&valor_max=4000", "/app/mercado?aba=imoveis"],
   ["/meus-anuncios", "/app/meus-anuncios"],
   [`/mercado/${ANUNCIO_ID}?origem=email`, `/app/anuncio/${ANUNCIO_ID}`],
   [`/imoveis/${ANUNCIO_ID}?origem=push`, `/app/anuncio/${ANUNCIO_ID}`],
   ["/mercado/novo?categoria=eletronicos", "/app/mercado"],
   [`/mercado/${ANUNCIO_ID}/editar?aba=fotos`, `/app/anuncio/${ANUNCIO_ID}`],
-  ["/imoveis/novo", "/app/imoveis"],
+  ["/imoveis/novo", "/app/mercado?aba=imoveis"],
   // RUN-169: a gestão dos alertas de busca é do app, e a query segue na troca.
   ["/imoveis/alertas?aba=imoveis", "/app/imoveis/alertas"],
   [`/imoveis/${ANUNCIO_ID}/editar`, `/app/anuncio/${ANUNCIO_ID}`],
@@ -34,19 +34,28 @@ test("telas antigas do mercado levam ao app, sem sessão, nas três larguras", a
     const resposta = await fetch(`${BASE_URL}${caminho}`, { redirect: "manual" })
     expect(resposta.status, `status de ${caminho}`).toBe(307)
     const localizacao = new URL(resposta.headers.get("location") ?? "", BASE_URL)
-    expect(localizacao.pathname, `destino de ${caminho}`).toBe(destino)
+    const esperado = new URL(destino, BASE_URL)
+    // NAV-002: o Mercado tem um endereço só; a aba de imóveis vai na query.
+    const queryEsperada = [
+      ...esperado.searchParams,
+      ...new URL(caminho, BASE_URL).searchParams,
+    ].sort()
+    expect(localizacao.pathname, `destino de ${caminho}`).toBe(esperado.pathname)
     // A query do caminho antigo chega inteira: nenhum filtro se perde na troca.
-    expect([...localizacao.searchParams].sort(), `query de ${caminho}`).toEqual(
-      [...new URL(caminho, BASE_URL).searchParams].sort(),
-    )
+    expect([...localizacao.searchParams].sort(), `query de ${caminho}`).toEqual(queryEsperada)
 
     for (const width of [375, 768, 1440]) {
       await page.setViewportSize({ width, height: 900 })
       await page.goto(caminho)
       await expect(page).toHaveURL(
-        (url) =>
-          url.pathname === "/app/entrar" &&
-          url.searchParams.get("redirect") === `${destino}${new URL(caminho, BASE_URL).search}`,
+        (url) => {
+          if (url.pathname !== "/app/entrar") return false
+          const retorno = new URL(url.searchParams.get("redirect") ?? "", BASE_URL)
+          return (
+            retorno.pathname === esperado.pathname &&
+            JSON.stringify([...retorno.searchParams].sort()) === JSON.stringify(queryEsperada)
+          )
+        },
         { timeout: 30_000 },
       )
     }
@@ -57,7 +66,7 @@ test("as regras de criar e editar não capturam a lista nem o anúncio", async (
   for (const [caminho, destino] of [
     ["/mercado", "/app/mercado"],
     [`/mercado/${ANUNCIO_ID}`, `/app/anuncio/${ANUNCIO_ID}`],
-    ["/imoveis", "/app/imoveis"],
+    ["/imoveis", "/app/mercado"],
     [`/imoveis/${ANUNCIO_ID}`, `/app/anuncio/${ANUNCIO_ID}`],
   ] as const) {
     const resposta = await fetch(`${BASE_URL}${caminho}`, { redirect: "manual" })

@@ -30,13 +30,14 @@ const URL_DA_ROTA = `${ORIGEM}/app/api/app/entry/invite/preview`
 const CODIGO = "BVQ7K2MA"
 const DICA = "f***a@example.invalid"
 
-function requisicao(corpo: Record<string, unknown> = { codigo: CODIGO }) {
+function requisicao(corpo: Record<string, unknown> = { codigo: CODIGO }, nativo = false) {
   return new NextRequest(URL_DA_ROTA, {
     method: "POST",
     headers: {
       origin: ORIGEM,
       "content-type": "application/json",
       "x-bivaque-app": "bivaque-spa",
+      ...(nativo ? { "x-bivaque-cliente": "loja", origin: "https://localhost" } : {}),
     },
     body: JSON.stringify(corpo),
   })
@@ -63,6 +64,27 @@ beforeEach(() => {
 })
 
 describe("prévia do convite — o endereço nunca vem do outbox", () => {
+  it("exige cabeçalho do app no nativo e aceita o cabeçalho correto", async () => {
+    const semCabecalho = requisicao()
+    const headers = new Headers(semCabecalho.headers)
+    headers.delete("x-bivaque-app")
+    const recusada = await POST(
+      new NextRequest(URL_DA_ROTA, {
+        method: "POST",
+        headers: {
+          ...Object.fromEntries(headers),
+          "x-bivaque-cliente": "loja",
+          origin: "https://localhost",
+        },
+        body: JSON.stringify({ codigo: CODIGO }),
+      }),
+    )
+    expect(recusada.status).toBe(403)
+    expect(await recusada.json()).toEqual({ erro: "cabecalho-ausente" })
+    const aceita = await POST(requisicao({ codigo: CODIGO }, true))
+    expect(aceita.status).toBe(200)
+  })
+
   it("sem sessão devolve só o nome e a dica; email é null", async () => {
     const resposta = await POST(requisicao({ codigo: CODIGO, email: "declarado@example.invalid" }))
 

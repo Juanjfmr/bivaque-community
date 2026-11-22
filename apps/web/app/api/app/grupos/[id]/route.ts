@@ -1,5 +1,10 @@
 import type { NextRequest, NextResponse } from "next/server"
-import { exigirSessao, opcoesDoApp, responder } from "../../../../../lib/app-api/rota-do-app"
+import {
+  conferirEscrita,
+  exigirSessao,
+  opcoesDoApp,
+  responder,
+} from "../../../../../lib/app-api/rota-do-app"
 import { contarMembrosAprovados } from "../../../../../lib/search/contagem-de-membros"
 import { ehUuid } from "../../eventos/_comum"
 import {
@@ -13,6 +18,7 @@ import {
   participacao,
   registrarFalha,
 } from "../_comum"
+import { resultado } from "./_admin"
 
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
@@ -36,7 +42,16 @@ export async function GET(request: NextRequest, { params }: Context): Promise<Ne
     const cidade = await cidadeDoGrupo(client, grupo.locality_id)
     const membro = await participacao(client, id, userId)
     const membros = (await contarMembrosAprovados(client, [id])).get(id) ?? 0
-    const resumo = apresentarGrupo(grupo, membro, userId, membros)
+    let aviso: string | null = null
+    if (membro?.status === "approved") {
+      try {
+        const resultadoAviso = await client.rpc("my_group_notify_level", { p_group_id: id })
+        if (!resultadoAviso.error) aviso = resultadoAviso.data
+      } catch {
+        // O detalhe do grupo continua útil se a preferência de aviso falhar.
+      }
+    }
+    const resumo = { ...apresentarGrupo(grupo, membro, userId, membros), aviso }
     if (resumo.fechado && !resumo.membro) {
       return responder(request, { grupo: resumo, cidade, publicacoes: [], proximo: null }, 200)
     }
@@ -88,4 +103,19 @@ export async function GET(request: NextRequest, { params }: Context): Promise<Ne
 
 export function OPTIONS(request: NextRequest): NextResponse {
   return opcoesDoApp(request)
+}
+
+export async function DELETE(request: NextRequest, { params }: Context): Promise<NextResponse> {
+  const auth = await exigirSessao(request)
+  if (!auth.ok) return auth.resposta
+  const porta = conferirEscrita(request, auth.sessao.via)
+  if (porta !== "ok") return responder(request, { erro: porta }, 403)
+  const { id } = await params
+  if (!ehUuid(id)) return responder(request, { erro: "dados-invalidos" }, 400)
+  try {
+    const { error } = await auth.sessao.cliente.rpc("delete_group", { p_group_id: id })
+    return resultado(request, error)
+  } catch (error) {
+    return resultado(request, (error ?? {}) as { code?: string; message?: string })
+  }
 }

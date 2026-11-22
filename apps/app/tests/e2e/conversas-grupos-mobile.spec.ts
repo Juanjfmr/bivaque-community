@@ -134,21 +134,17 @@ test("menu da conversa abre a confirmação de bloquear e o compositor fecha", a
   await expect(page.locator('[data-compositor-conversa="sim"]')).toHaveCount(0)
 })
 
-test("Grupo com administrador mostra pedidos, mas não oferece aprovação fictícia", async ({
-  page,
-}) => {
+test("Grupo com administrador oferece gestao real dos pedidos", async ({ page }) => {
   await simularGrupos(page)
   await page.goto("/app/grupo/g-futebol")
+  await expect(page.locator('[data-compositor-grupo="sim"]')).toBeVisible()
+  await expect(page.getByRole("link", { name: "Aprovar pedidos e convidar" })).toHaveCount(0)
+  await page.getByRole("button", { name: "Administrar grupo" }).click()
   const pedidos = page.locator('[data-pedidos-entrada="sim"]')
-  await expect(pedidos).toBeVisible()
-  await pedidos.locator("summary").click()
   await expect(pedidos).toContainText("Bruno C.")
   await expect(pedidos).toContainText("Thiago S.")
-  const gestao = page.getByRole("link", { name: "Aprovar pedidos e convidar" })
-  await expect(gestao).toBeVisible()
-  await expect(gestao).toHaveAttribute("href", "/groups/g-futebol")
+  await expect(pedidos.getByRole("button", { name: "Aprovar" })).toHaveCount(2)
   await expect(pedidos).not.toContainText("ilustrativa")
-  await expect(page.locator('[data-compositor-grupo="sim"]')).toBeVisible()
 })
 
 test("membro sem administração não vê a porta de gestão do grupo", async ({ page }) => {
@@ -193,8 +189,8 @@ test("pedidos do grupo: duplo clique nao duplica pagina, erro preserva lista e r
   })
 
   await page.goto("/app/grupo/g-futebol")
+  await page.getByRole("button", { name: "Administrar grupo" }).click()
   const pedidos = page.locator('[data-pedidos-entrada="sim"]')
-  await pedidos.locator("summary").click()
   await expect(pedidos).toContainText("Bruno C.")
   await pedidos.getByRole("button", { name: "Ver mais pedidos" }).evaluate((botao) => {
     const alvo = botao as HTMLButtonElement
@@ -232,8 +228,8 @@ test("pedidos do grupo: falha inicial oferece tentar de novo sem exibir vazio fa
   })
 
   await page.goto("/app/grupo/g-futebol")
+  await page.getByRole("button", { name: "Administrar grupo" }).click()
   const pedidos = page.locator('[data-pedidos-entrada="sim"]')
-  await pedidos.locator("summary").click()
   await expect(pedidos.getByRole("alert")).toContainText("Não foi possível carregar os pedidos.")
   await expect(pedidos).not.toContainText("Nenhum pedido pendente.")
   await pedidos.getByRole("button", { name: "Tentar de novo" }).click()

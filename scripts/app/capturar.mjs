@@ -8,7 +8,7 @@ import { join, resolve } from "node:path"
 import { pathToFileURL } from "node:url"
 import { chromium } from "@playwright/test"
 import { CENARIOS } from "../../apps/app/lib/demo/cenarios.ts"
-import { ROTAS } from "../../apps/app/lib/navegacao/rotas.ts"
+import { ENDERECOS_ANTIGOS_DO_MERCADO, ROTAS } from "../../apps/app/lib/navegacao/rotas.ts"
 import { createDeterministicContext, stabilize } from "../bivaque-html/capture-support.mjs"
 import { assertRound13Baseline, round13Baseline } from "../bivaque-html/round13-baseline.mjs"
 import { htmlDoPar, matrizDeCaptura, validarDestino } from "./contrato-captura.mjs"
@@ -246,7 +246,10 @@ try {
                 : rota.nome + (ids[rota.nome] ? `/${ids[rota.nome]}` : "")
           const tituloCatalogo = rota.titulo.replace("{cidade}", "Manaus")
           const tituloApp = titulosNormais[rota.nome] ?? tituloCatalogo
-          const telaEsperada = ["mercado", "catalogo"].includes(rota.nome) ? "desapegos" : rota.nome
+          // Endereço antigo do Mercado (NAV-002) redireciona para /app/mercado na aba dele.
+          const abaAntiga = ENDERECOS_ANTIGOS_DO_MERCADO[rota.nome]
+          const caminhoFinal = abaAntiga === undefined ? caminho : "/app/mercado"
+          const telaEsperada = abaAntiga ?? (rota.nome === "mercado" ? "desapegos" : rota.nome)
           const tituloRef =
             rota.nome === "mercado"
               ? "Desapegos"
@@ -294,7 +297,7 @@ try {
               pronto: await app.locator("[data-tela]").isVisible(),
               tela: await app.locator("[data-tela]").getAttribute("data-tela"),
             },
-            { caminho: decodeURIComponent(caminho), titulo: tituloApp, tela: telaEsperada },
+            { caminho: decodeURIComponent(caminhoFinal), titulo: tituloApp, tela: telaEsperada },
           )
           if (sobreposicao) {
             await referencia.locator(sobreposicao.proto).first().click()

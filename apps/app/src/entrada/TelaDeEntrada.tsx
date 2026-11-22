@@ -108,6 +108,12 @@ export function TelaDeEntrada() {
       : null,
   )
   const [autenticado, setAutenticado] = useState(false)
+  const [reabrir, setReabrir] = useState(0)
+  useEffect(() => {
+    const atualizar = () => setReabrir((valor) => valor + 1)
+    window.addEventListener("bivaque:autenticacao", atualizar)
+    return () => window.removeEventListener("bivaque:autenticacao", atualizar)
+  }, [])
   const [falha, setFalha] = useState<string | null>(null)
   const [tentar, setTentar] = useState<(() => void) | null>(null)
   const [provisionandoAgora, setProvisionandoAgora] = useState(false)
@@ -193,6 +199,7 @@ export function TelaDeEntrada() {
   )
 
   // ── abertura: sessão, rascunho e verificação ──────────────────────────────
+  // biome-ignore lint/correctness/useExhaustiveDependencies: o retorno OAuth solicita nova leitura
   useEffect(() => {
     // O convite de prestador não tem rascunho nem verificação de membro: a
     // entrada só pede o e-mail e o código, e o aceite é a tela da vez.
@@ -244,7 +251,7 @@ export function TelaDeEntrada() {
     return () => {
       ativo = false
     }
-  }, [conviteDaUrl])
+  }, [conviteDaUrl, reabrir])
 
   // ── salva o rascunho a cada mudança de etapa (com atraso curto) ───────────
   useEffect(() => {

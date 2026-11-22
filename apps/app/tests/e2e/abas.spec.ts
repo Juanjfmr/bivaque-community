@@ -21,11 +21,11 @@ const SELETOR_ABRIR_PERGUNTA = '[data-acao="abrir-pergunta"][data-valor="pergunt
 const ABAS_FIXAS: ReadonlyArray<readonly [url: string, aba: string]> = [
   ["/app/inicio", "inicio"],
   ["/app/mercado", "mercado"],
+  ["/app/mercado?aba=desapegos", "mercado"],
+  ["/app/mercado?aba=imoveis", "mercado"],
+  ["/app/mercado?aba=negocios", "mercado"],
   ["/app/comunidade", "comunidade"],
   ["/app/voce", "voce"],
-  ["/app/catalogo", "mercado"],
-  ["/app/desapegos", "mercado"],
-  ["/app/imoveis", "mercado"],
   ["/app/negocios", "mercado"],
   ["/app/anuncio/a-1", "mercado"],
   ["/app/negocio/n-1", "mercado"],
@@ -139,16 +139,18 @@ test.describe("aba ativa", () => {
   })
 
   test("Mercado troca de sub-aba sem perder a aba", async ({ page }) => {
-    await abrir(page, "/app/desapegos")
+    await abrir(page, "/app/mercado?aba=desapegos")
     await expect(subAbaAtiva(page)).toHaveAttribute("data-subaba", "desapegos")
 
     await page.locator('[data-subaba="imoveis"]').click()
-    await esperarCaminho(page, "/app/imoveis")
+    await esperarCaminho(page, "/app/mercado")
+    expect(new URL(page.url()).searchParams.get("aba")).toBe("imoveis")
     await expect(subAbaAtiva(page)).toHaveAttribute("data-subaba", "imoveis")
     await expect(abaAtiva(page)).toHaveAttribute("data-aba", "mercado")
 
     await page.locator('[data-subaba="negocios"]').click()
-    await esperarCaminho(page, "/app/negocios")
+    await esperarCaminho(page, "/app/mercado")
+    expect(new URL(page.url()).searchParams.get("aba")).toBe("negocios")
     await expect(subAbaAtiva(page)).toHaveAttribute("data-subaba", "negocios")
     await expect(abaAtiva(page)).toHaveAttribute("data-aba", "mercado")
   })

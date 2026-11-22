@@ -129,7 +129,9 @@ export function MenuCriar({ aoFechar }: { readonly aoFechar: () => void }) {
           return
         }
         if (escolha.id !== "create-property") return
-        void navegacao.irPara("imoveis").then(() => navegacao.abrir("rascunho-imovel"))
+        void navegacao
+          .irPara("mercado", { aba: "imoveis" })
+          .then(() => navegacao.abrir("rascunho-imovel"))
       }}
       style={{ "--i": indice } as React.CSSProperties}
       className="bv-criar-escolha"

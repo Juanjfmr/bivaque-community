@@ -44,7 +44,7 @@ test("imóvel sem CEP não publica: o erro fica no campo do CEP", async ({ page 
   // Continua na folha, com o que foi digitado preservado.
   await expect(folha).toBeVisible()
   await expect(folha.locator("#imovel-titulo")).toHaveValue("Apartamento 2 quartos no Centro")
-  await expect(page).toHaveURL(/\/app\/imoveis$/)
+  await expect(page).toHaveURL(/\/app\/mercado\?aba=imoveis$/)
 })
 
 test("CEP exato publica o endereço escolhido no detalhe", async ({ page }) => {

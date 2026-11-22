@@ -101,6 +101,6 @@ test("As sete escolhas do Criar têm destinos ou formulário, sem ação silenci
   await page.goto("/app/inicio")
   await page.locator('[data-acao="criar"]').click()
   await page.locator('[data-escolha="create-property"]').click()
-  await expect(page).toHaveURL(/\/app\/imoveis$/)
+  await expect(page).toHaveURL(/\/app\/mercado\?aba=imoveis$/)
   await expect(page.locator('[data-fluxo="rascunho-imovel"]')).toBeVisible()
 })

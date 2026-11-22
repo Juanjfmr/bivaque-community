@@ -76,6 +76,31 @@ npx supabase db reset --local
 npx supabase test db
 ```
 
+## Dados de demonstração (só local)
+
+`supabase/dev/demo-manaus.sql` põe conteúdo fictício de Manaus no banco local
+para o app poder ser visto funcionando de verdade: 25 membros com famílias,
+30 anúncios no Mercado, 15 perguntas de Indicação com respostas, 8 negócios com
+catálogo, 6 grupos com publicações, 10 conversas, 4 encontros na Agenda e alguns
+avisos. Nada de CPF, documento, OM, posto ou graduação; sem vila/comunidade e
+sem foto (mídia exigiria upload no Storage).
+
+Roda à mão, **depois** de `supabase db reset --local` (o banco local com seed):
+
+```sh
+npx pnpm@11.18.0 exec supabase start
+npx pnpm@11.18.0 exec supabase db reset --local
+node scripts/dev/popular-local.mjs
+```
+
+O script recusa qualquer alvo que não seja o contêiner local
+`supabase_db_bivaque-community` e não aceita URL remota, chave nem `--linked`.
+O SQL é uma transação idempotente: rodar duas vezes não duplica nada.
+
+Persona principal: `demo-ana@bivaque.example.invalid` — senha sintética
+`bivaque-demo-local`, igual para todas as contas de demonstração. **Nunca** roda
+em CI nem em banco hospedado.
+
 ## Generated types
 
 Generate client types from the local database with the root command:

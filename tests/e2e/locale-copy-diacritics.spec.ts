@@ -113,18 +113,15 @@ test.describe("DS-035 — Portuguese diacritics in segment fallbacks", () => {
   test("/groups/<unknown> renders 'Página não encontrada' with full diacritics", async ({
     page,
   }) => {
-    await signInAndVisit(page, `/groups/${NOT_FOUND_GROUP_ID}`)
+    await signInAndVisit(page, `/app/grupo/${NOT_FOUND_GROUP_ID}`)
 
-    const body = page.locator("main")
-    await expect(body).toBeVisible({ timeout: 15000 })
-    await expect(body).toContainText("Página não encontrada")
-    await expect(body).toContainText("O endereço que você acessou não existe")
-
-    const text = (await body.textContent()) ?? ""
-    expect(text).not.toMatch(/Pagina nao/)
-    expect(text).not.toMatch(/endereco/)
-    expect(text).not.toMatch(/voce acessou/)
-    expect(text).not.toMatch(/nao existe/)
+    await expect(page).toHaveURL(new RegExp(`/app/grupo/${NOT_FOUND_GROUP_ID}$`))
+    const tela = page.locator('[data-tela="indisponivel"]')
+    await expect(tela).toBeVisible({ timeout: 15000 })
+    await expect(tela).toContainText("P\u00e1gina indispon\u00edvel")
+    await expect(tela).toContainText("Este endere\u00e7o n\u00e3o existe")
+    const text = (await tela.textContent()) ?? ""
+    expect(text).not.toMatch(/Pagina indisponivel|endereco|nao existe/)
   })
 
   test("/events/<unknown> also renders the diacritized fallback title", async ({ page }) => {

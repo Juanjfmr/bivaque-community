@@ -119,7 +119,7 @@ export function Negocios() {
         valor="negocios"
         rotulo="Seções do Mercado"
         grupo="mercado"
-        aoEscolher={(secao) => void navegacao.irPara(secao)}
+        aoEscolher={(secao) => void navegacao.irPara(secao, { replace: true })}
         acao={
           <Botao tom="tonal" icone="add" data-acao="anunciar-negocio" onClick={anunciar}>
             Divulgar meu negócio

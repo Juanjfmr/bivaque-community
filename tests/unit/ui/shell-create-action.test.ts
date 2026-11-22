@@ -42,7 +42,6 @@ describe("onde o botão de criação aparece", () => {
     "/guide/sugerir",
     "/guide/abc/correcao",
     "/communities/abc/invite",
-    "/communities/abc/indicar-prestador",
     "/cidade/00000000-0000-4000-8000-000000000001",
   ])("some em %s", (path) => {
     expect(showsCreateAction(path)).toBe(false)

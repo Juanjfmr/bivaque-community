@@ -142,7 +142,10 @@ export function MeusAnuncios() {
                   {rascunho.bairro} · {moeda(rascunho.preco)}
                 </small>
               </span>
-              <Botao tom="texto" onClick={() => void navegacao.irPara("imoveis")}>
+              <Botao
+                tom="texto"
+                onClick={() => void navegacao.irPara("mercado", { aba: "imoveis" })}
+              >
                 Ver
               </Botao>
             </div>

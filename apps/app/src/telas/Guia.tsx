@@ -80,7 +80,11 @@ function PassoDoGuia({ passo }: { passo: Passo }) {
       <Botao
         tom="texto"
         icone={passo.icone}
-        onClick={() => void navegacao.irPara(passo.rota)}
+        onClick={() =>
+          void navegacao.irPara(passo.rota, {
+            ...(passo.aba === undefined ? {} : { aba: passo.aba }),
+          })
+        }
         className="justify-self-start"
       >
         {passo.rotulo}

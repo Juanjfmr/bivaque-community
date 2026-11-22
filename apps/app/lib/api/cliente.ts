@@ -18,6 +18,7 @@
  */
 
 import { Capacitor } from "@capacitor/core"
+import { acessoAtual, acessoEmMemoria, origemDaApi, renovarSessao } from "../nativo/sessao"
 
 const enderecoInicial =
   typeof window === "undefined"
@@ -88,13 +89,17 @@ function falhaDe(status: number, corpo: Record<string, unknown>): FalhaDaApi {
   return new FalhaDaApi(codigo, status, textoOuNulo(corpo, "erro"), textoOuNulo(corpo, "mensagem"))
 }
 
-async function interpretar(resposta: Response): Promise<Record<string, unknown>> {
+async function interpretar(
+  resposta: Response,
+  redirecionar = true,
+): Promise<Record<string, unknown>> {
   const lido = (await resposta.json().catch(() => ({}))) as unknown
   const dados =
     lido !== null && typeof lido === "object" && !Array.isArray(lido)
       ? (lido as Record<string, unknown>)
       : {}
   if (
+    redirecionar &&
     resposta.status === 401 &&
     typeof window !== "undefined" &&
     !encaminhouParaEntrada &&
@@ -112,38 +117,64 @@ async function interpretar(resposta: Response): Promise<Record<string, unknown>>
   return dados
 }
 
-async function comRede(fazer: () => Promise<Response>): Promise<Record<string, unknown>> {
+async function comRede(
+  fazer: () => Promise<Response>,
+  redirecionar = true,
+): Promise<Record<string, unknown>> {
   let resposta: Response
   try {
     resposta = await fazer()
   } catch (erro: unknown) {
     // Abortar é decisão de quem chamou, não falha de rede: o erro sobe inteiro.
+    if (erro instanceof FalhaDaApi) throw erro
     if (erro instanceof DOMException && erro.name === "AbortError") throw erro
     throw new FalhaDaApi("rede", 0)
   }
-  return interpretar(resposta)
+  return interpretar(resposta, redirecionar)
 }
 
-function endereco(caminho: string): string {
-  if (!Capacitor.isNativePlatform()) return caminho
-  const base = import.meta.env["VITE_API_BASE"]
-  let url: URL
+export async function requisitar(caminho: string, init: RequestInit = {}): Promise<Response> {
+  if (!Capacitor.isNativePlatform()) return fetch(caminho, init)
+  const publica =
+    new Set([
+      "/api/app/entry/otp",
+      "/api/app/entry/otp/verify",
+      "/api/app/entry/invite/preview",
+      "/api/app/entry/oauth",
+      "/api/localities",
+      "/api/app/sessao/token",
+    ]).has(caminho) || /^\/api\/localities\/[^/]+$/.test(caminho)
+  const origem = origemDaApi()
+  let token: string | null
   try {
-    url = new URL(base)
-    if (
-      !["http:", "https:"].includes(url.protocol) ||
-      url.username ||
-      url.password ||
-      url.pathname !== "/" ||
-      url.search ||
-      url.hash
-    ) {
-      throw new Error()
-    }
-  } catch {
-    throw new Error("Configure VITE_API_BASE com a origem absoluta da API no app nativo")
+    token = publica ? acessoEmMemoria() : await acessoAtual()
+  } catch (erro) {
+    throw new FalhaDaApi(
+      erro instanceof Error && erro.message === "rede" ? "rede" : "indisponivel",
+      0,
+    )
   }
-  return `${url.origin}${caminho}`
+  const fazer = (credencial: string | null) => {
+    const headers = new Headers(init.headers)
+    headers.set("x-bivaque-app", "bivaque-spa")
+    headers.set("x-bivaque-cliente", "loja")
+    if (credencial) headers.set("Authorization", `Bearer ${credencial}`)
+    return fetch(`${origem}${caminho}`, { ...init, headers, credentials: "omit" })
+  }
+  const resposta = await fazer(token)
+  if (resposta.status === 401 && (init.method ?? "GET") === "GET" && !publica) {
+    let novo: string | null
+    try {
+      novo = await renovarSessao()
+    } catch (erro) {
+      throw new FalhaDaApi(
+        erro instanceof Error && erro.message === "rede" ? "rede" : "indisponivel",
+        0,
+      )
+    }
+    if (novo) return fazer(novo)
+  }
+  return resposta
 }
 
 async function chamar(
@@ -152,18 +183,19 @@ async function chamar(
   corpo: unknown,
   signal: AbortSignal | undefined,
 ): Promise<Record<string, unknown>> {
-  const url = endereco(caminho)
-  return comRede(() =>
-    fetch(url, {
-      method: metodo,
-      credentials: "include",
-      headers:
-        corpo === undefined
-          ? CABECALHOS_DO_APP
-          : { ...CABECALHOS_DO_APP, "content-type": "application/json" },
-      ...(corpo === undefined ? {} : { body: JSON.stringify(corpo) }),
-      ...(signal === undefined ? {} : { signal }),
-    }),
+  return comRede(
+    () =>
+      requisitar(caminho, {
+        method: metodo,
+        credentials: "include",
+        headers:
+          corpo === undefined
+            ? CABECALHOS_DO_APP
+            : { ...CABECALHOS_DO_APP, "content-type": "application/json" },
+        ...(corpo === undefined ? {} : { body: JSON.stringify(corpo) }),
+        ...(signal === undefined ? {} : { signal }),
+      }),
+    !Capacitor.isNativePlatform() || metodo === "GET",
   )
 }
 
@@ -195,14 +227,15 @@ export function enviarFormulario(
   formulario: FormData,
   opcoes: { signal?: AbortSignal } = {},
 ) {
-  const url = endereco(caminho)
-  return comRede(() =>
-    fetch(url, {
-      method: "POST",
-      credentials: "include",
-      headers: CABECALHOS_DO_APP,
-      body: formulario,
-      ...(opcoes.signal === undefined ? {} : { signal: opcoes.signal }),
-    }),
+  return comRede(
+    () =>
+      requisitar(caminho, {
+        method: "POST",
+        credentials: "include",
+        headers: CABECALHOS_DO_APP,
+        body: formulario,
+        ...(opcoes.signal === undefined ? {} : { signal: opcoes.signal }),
+      }),
+    !Capacitor.isNativePlatform(),
   )
 }

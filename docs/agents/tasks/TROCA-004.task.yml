@@ -1,62 +1,55 @@
 task_id: TROCA-004
 objective: >
-  Refazer no app o indicar prestador (/communities/[id]/indicar-prestador) e o painel de quem
-  administra a comunidade ((owner)/communities/[id]/admin: início, pendentes, moderadores, prestadores
-  e mídia), e então apagar as versões do site com código e testes. A porta provisória do #309 passa a
-  abrir as telas novas.
+  Tirar do site, sem substituto no app, o indicar prestador pelo membro
+  ((shell)/communities/[id]/indicar-prestador) e o painel de quem administra a vila
+  ((owner)/communities/[id]/admin: início, pendentes, moderadores, prestadores e mídia). Pelo redesenho
+  da Comunidade, a vila sai (§3.4) e só o operador convida e atesta prestador (§6); a indicação de
+  negócio por membro é do F09. As rotas antigas passam a 307 e as páginas saem com código e testes.
 authority:
   - docs/LANCAMENTO.md (fase 6, critério: nenhuma rota de membro no apps/web servindo tela)
-  - docs/decisions/ADR-20261024-front-react-spa.md (§5 contrato de API, §8 ordem da troca)
+  - docs/decisions/ADR-20261024-redesenho-da-comunidade.md (§3.4 a vila sai; §6 só o operador convida prestador)
+  - docs/decisions/ADR-20261024-front-react-spa.md (§8 rotas antigas redirecionam)
   - "card LAN-TROCA-ADMIN; decisão do dono de 20/11 (nenhuma tela antiga sobrevive)"
-adr: docs/decisions/ADR-20261024-front-react-spa.md
+adr: docs/decisions/ADR-20261024-redesenho-da-comunidade.md
 baseline:
   status: FAIL-EVIDENCED
   evidence: >
-    Depois do TROCA-002 (#309) seguem servindo tela no site (shell)/communities/[id]/indicar-prestador
-    e as cinco páginas de (owner)/communities/[id]/admin; no app só existe a porta provisória.
+    Em origin/main seguem servindo tela no site (shell)/communities/[id]/indicar-prestador e as cinco
+    páginas de (owner)/communities/[id]/admin, todas sobre a vila (communities, community_memberships,
+    provider_invitations.community_id).
 allowed_paths:
-  - apps/app/src/**
-  - apps/app/lib/**
-  - apps/app/tests/**
   - apps/web/app/(shell)/communities/**
   - apps/web/app/(owner)/**
-  - apps/web/app/api/app/**
+  - apps/web/app/components/**
   - apps/web/lib/**
   - apps/web/components/**
   - apps/web/proxy.ts
   - apps/web/next.config.ts
-  - supabase/migrations/**
-  - supabase/tests/**
   - tests/**
+  - apps/web/tests/**
   - docs/agents/tasks/TROCA-004.task.yml
 forbidden:
-  - editar migration já aplicada (só arquivo novo); reiniciar ou reconstruir o banco local
-  - remover a tela web antes de a tela do app passar na revisão às cegas e no E2E
-  - redirecionamento em ciclo ou que perca ID ou query
+  - criar no app tela, rota de API, RPC ou migration de comunidade (a vila sai, redesenho §3.4)
+  - convite ou atestação de prestador por membro (redesenho §6)
+  - apagar tabela ou função da vila no banco (é o RED-003/R4); migration de qualquer tipo
+  - redirecionamento em ciclo ou que perca a query
   - afrouxar ou apagar asserção de teste de uma rota que continua existindo
-  - rota de API nova sem o contrato do ADR SPA §5 (resolvedor único, CSRF por Origin e cabeçalho, CORS explícito) e sem teste positivo e negativo
-  - service_role sem autorização explícita no código
-  - expor Força/OM de outro membro (BLOCK-AFFILIATION)
+  - tocar apps/web/app/(admin)/** (a área do operador fica), apps/app, apps/mobile, apps/prototipo
   - git stash, delegar, dado pessoal real ou CPF real
-  - apps/web/app/(admin)/**, a landing, apps/mobile, apps/prototipo
 acceptance:
-  - "indicar prestador e cada seção do painel funcionam no app com entrada, ação, persistência, retorno, acompanhamento e falha principal, em 375/768/1440"
-  - "só dono e moderadores veem e usam o painel; membro comum e anônimo recebem recusa na API e na tela (testes negativos)"
-  - "aprovar ou recusar pendente, nomear moderador, gerir prestadores e mídia gravam com as mesmas regras de hoje (validação compartilhada num só módulo enquanto o caminho velho existir)"
-  - "as rotas antigas devolvem 307 ao /app com ID preservado; páginas, componentes e testes antigos saem"
-  - "a porta provisória passa a abrir as telas novas; link-crawl no rigor normal"
+  - "/communities/:id/indicar-prestador devolve 307 para /app/negocios; /communities/:id/admin e as subrotas (pending, moderators, providers, media) devolvem 307 para /app/comunidade; anônimo segue o portão sem ciclo"
+  - "as páginas, layouts, actions, componentes e testes do (owner) e do indicar-prestador saem; o layout (owner) sai se não sobrar página"
+  - "nenhum link vivo no apps/web nem no apps/app aponta para as rotas removidas (create-visibility e afins ajustados); link-crawl no rigor normal"
+  - "a área do operador em (admin) segue igual, com seus testes verdes"
 proof:
   - npx pnpm@11.18.0 gate --fast
   - npx pnpm@11.18.0 test
   - npx pnpm@11.18.0 test:scope
-  - npx pnpm@11.18.0 --filter @bivaque/app test
-  - npx pnpm@11.18.0 --filter @bivaque/app test:e2e
   - npx pnpm@11.18.0 test:e2e
-  - "npx pnpm@11.18.0 test:db, se houver migration nova, em pilha isolada"
 risk: authz
-risk_level: R3
+risk_level: R2
 reviewer_must_differ_from_executor: true
-retry_budget: 3
+retry_budget: 2
 on_budget_exhausted: HUMAN_DECISION
 closure:
   requires_runtime_evidence: true

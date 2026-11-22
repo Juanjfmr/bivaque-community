@@ -1,28 +1,34 @@
 task_id: TROCA-003
 objective: >
-  Refazer no app o convite de membros da comunidade (/communities/[id]/invite), o aceite do convite
-  (/invite/[token]) e o grupo (/groups/[id] passa a 307 para /app/grupo/:id), e então apagar as versões
-  do site com código e testes. A porta provisória que o #309 pôs na tela Comunidade do app passa a
-  abrir a tela nova. Ao fim, nenhuma dessas três rotas serve tela no apps/web.
+  Tirar do site o convite de comunidade, o aceite do convite, a lista /gerir-comunidades e o grupo
+  /groups/[id], seguindo o redesenho da Comunidade: a vila sai sem substituto (307 para /app/comunidade)
+  e o grupo é refeito no app. Na tela /app/grupo/:id entram o convite de grupo (compartilhar o link do
+  grupo, sem token) e a administração que /groups/[id] oferece hoje (aprovar e recusar pedidos, membros
+  e moderadores, regras, fixar, encerrar e passar a administração). Ao fim, nenhuma dessas rotas serve
+  tela no apps/web e o app não ganha nenhuma referência nova a communities.
 authority:
-  - docs/LANCAMENTO.md (fase 6, critério: nenhuma rota de membro no apps/web servindo tela)
+  - docs/LANCAMENTO.md (fase 6, critério: nenhuma rota de membro no apps/web servindo tela; F04)
+  - docs/decisions/ADR-20261024-redesenho-da-comunidade.md (§1 e §2 grupo da cidade; §3.4 a vila sai)
+  - docs/decisions/ADR-20261023-comunidade-do-prototipo.md (convite é link para a tela do grupo; decisões de grupo)
   - docs/decisions/ADR-20261024-front-react-spa.md (§5 contrato de API, §8 ordem da troca)
-  - "card LAN-TROCA-CONVITE; decisão do dono de 20/11 (opção 1 do #309, nenhuma tela antiga sobrevive)"
-adr: docs/decisions/ADR-20261024-front-react-spa.md
+  - "card LAN-TROCA-CONVITE; decisão do dono de 20/11 (nenhuma tela antiga sobrevive)"
+adr: docs/decisions/ADR-20261024-redesenho-da-comunidade.md
 baseline:
   status: FAIL-EVIDENCED
   evidence: >
-    Depois do TROCA-002 (#309) seguem servindo tela no site: (shell)/communities/[id]/invite,
-    (shell)/invite/[token] e (shell)/groups/[id] (734 linhas, sem regra 307 em next.config.ts,
-    embora o app já tenha /app/grupo/:id usado pelos avisos).
+    Em origin/main seguem servindo tela no site (shell)/communities/[id]/invite, (shell)/invite/[token],
+    (shell)/gerir-comunidades e (shell)/groups/[id] (sem regra 307 em next.config.ts, embora o app já
+    tenha /app/grupo/:id). A porta provisória em apps/app/src/grupos/Participacao.tsx abre /groups/:id e a
+    tela Comunidade do app liga /gerir-comunidades.
 allowed_paths:
   - apps/app/src/**
   - apps/app/lib/**
   - apps/app/tests/**
-  - apps/web/app/(shell)/communities/**
+  - apps/web/app/(shell)/communities/[id]/invite/**
   - apps/web/app/(shell)/invite/**
+  - apps/web/app/(shell)/gerir-comunidades/**
   - apps/web/app/(shell)/groups/**
-  - apps/web/app/api/app/**
+  - apps/web/app/api/app/grupos/**
   - apps/web/lib/**
   - apps/web/components/**
   - apps/web/proxy.ts
@@ -32,20 +38,23 @@ allowed_paths:
   - tests/**
   - docs/agents/tasks/TROCA-003.task.yml
 forbidden:
+  - criar no app tela, rota de API, RPC ou migration de comunidade (communities, community_memberships, community_invitations); a vila sai (redesenho §3.4)
+  - apagar tabela ou função da vila no banco (é o RED-003/R4)
   - editar migration já aplicada (só arquivo novo); reiniciar ou reconstruir o banco local
-  - remover a tela web antes de a tela do app passar na revisão às cegas e no E2E
-  - redirecionamento em ciclo ou que perca ID, token ou query
+  - remover /groups/[id] antes de a administração no app passar na revisão às cegas e no E2E
+  - redirecionamento em ciclo ou que perca ID ou query
   - afrouxar ou apagar asserção de teste de uma rota que continua existindo
   - rota de API nova sem o contrato do ADR SPA §5 (resolvedor único, CSRF por Origin e cabeçalho, CORS explícito) e sem teste positivo e negativo
   - service_role sem autorização explícita no código
   - git stash, delegar, dado pessoal real ou CPF real
-  - apps/web/app/(admin)/**, a landing, apps/mobile, apps/prototipo
+  - apps/web/app/(admin)/**, apps/web/app/(owner)/** (é o TROCA-004), a landing, apps/mobile, apps/prototipo
 acceptance:
-  - "convidar membros e aceitar convite funcionam no app: entrada, ação, persistência, retorno, acompanhamento e falha principal (convite vencido, já usado, sem permissão), em 375/768/1440"
-  - "só quem tem permissão vê e usa o convite; negativa provada na API e na tela"
-  - "/communities/:id/invite, /invite/:token e /groups/:id devolvem 307 ao equivalente no /app, com ID e token preservados; anônimo segue o portão sem ciclo"
-  - "as páginas antigas saem com componentes, testes e imports; os e-mails e pushes de convite apontam ao app"
-  - "a porta provisória na tela Comunidade do app passa a abrir a tela nova; link-crawl no rigor normal"
+  - "/communities/:id/invite, /invite/:token e /gerir-comunidades devolvem 307 para /app/comunidade; anônimo segue o portão sem ciclo; as páginas, componentes e testes delas saem"
+  - "/groups/:id devolve 307 para /app/grupo/:id com ID e query preservados; a página, componentes e testes saem depois da tela do app aprovada"
+  - "em /app/grupo/:id, o botão Convidar compartilha o link do grupo (navigator.share, com cópia para a área de transferência como alternativa e aviso de copiado); no grupo Fechado quem abre o link ainda pede para entrar"
+  - "a administração do grupo no app cobre exatamente as ações de /groups/[id] hoje: aprovar e recusar pedido (approve_group_member, motivo visível só a quem aprova), remover membro, passar a administração (transfer_group_ownership), regras (set_group_rules), fixar e desafixar (pin_group_post, unpin_group_post), aviso por grupo (set_group_notify_level, privado da pessoa) e excluir o grupo (delete_group); as RPCs e as regras do banco não mudam; entrada, ação, persistência, retorno, acompanhamento e falha principal em 375/768/1440 nos dois temas"
+  - "só dono e moderador veem e usam a administração; membro comum, pessoa de outra cidade e anônimo recebem recusa na API e na tela (testes negativos)"
+  - "a porta provisória de Participacao.tsx abre a administração nova; a tela Comunidade do app deixa de ligar /gerir-comunidades; link-crawl no rigor normal"
 proof:
   - npx pnpm@11.18.0 gate --fast
   - npx pnpm@11.18.0 test
@@ -53,7 +62,7 @@ proof:
   - npx pnpm@11.18.0 --filter @bivaque/app test
   - npx pnpm@11.18.0 --filter @bivaque/app test:e2e
   - npx pnpm@11.18.0 test:e2e
-  - "npx pnpm@11.18.0 test:db, se houver migration nova, em pilha isolada"
+  - "npx pnpm@11.18.0 test:db, se houver migration nova (no CI, ci:full, enquanto INFRA-CLI-SUPABASE-PC estiver aberto)"
 risk: authz
 risk_level: R3
 reviewer_must_differ_from_executor: true

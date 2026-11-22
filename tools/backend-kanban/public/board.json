@@ -6369,14 +6369,16 @@
       "phase": "Lançamento",
       "tests": [],
       "blockers": [],
-      "updatedAt": "2026-11-02",
-      "sourceRevision": "fc67e19e",
+      "updatedAt": "2026-11-22",
+      "sourceRevision": "9762b4a01",
       "links": ["docs/LANCAMENTO.md"],
       "proof": [
         "02/11: aberto na definição do lançamento (docs/LANCAMENTO.md), por mandato do dono.",
         "20/11 LOJA-001 (#312): Capacitor com android/ e ios/ versionados, base absoluta no nativo, câmera, link profundo, workflow app-loja.yml e inventário da sessão; revisão às cegas PASS no delta e2f069d3. Capturas do emulador em .visual/loja-001/ (camera, criar, link-entrada).",
         "21/11 LOJA-002 (#317): a prova contra o GoTrue local mediu que o reuso de R0 fora da janela recusa só R0 (401, 'Possible abuse attempt' no log); R2 segue válido direto no GoTrue. Emenda de 21/11 no ADR-20261120 por delegação: a revogação da família deixa de ser promessa, resíduo declarado na RATIFICACAO e card SEC-FAMILIA-RENOVACAO pós-lançamento.",
-        "21/11 LOJA-002 (#317, 40850d7b4): CI completo verde (run 44910688304, stateful 375/768/1440); security-auditor LIBERA COM RESSALVAS e revisão independente PASS-COM-RESSALVA. Herdado pelo LOJA-003: cofre, PKCE no app, CSP nativa e retorno com auditoria própria; cabeçalho do app em todo pedido nativo; repetir renovar só dentro da janela de 10 s; Apple no entry/oauth."
+        "21/11 LOJA-002 (#317, 40850d7b4): CI completo verde (run 44910688304, stateful 375/768/1440); security-auditor LIBERA COM RESSALVAS e revisão independente PASS-COM-RESSALVA. Herdado pelo LOJA-003: cofre, PKCE no app, CSP nativa e retorno com auditoria própria; cabeçalho do app em todo pedido nativo; repetir renovar só dentro da janela de 10 s; Apple no entry/oauth.",
+        "21/11 LOJA-003 (59ea6af85): testes do app 785/785, rota de progresso 28/28, build nativo com origens ficticias e CSP verificada; gate --fast executado. Pendentes: gate completo e CI, revisao independente de seguranca, prova Android com pilha local e iOS no CI/aparelho. Nao encerra LAN-LOJA.",
+        "22/11 LOJA-003 (#320, 9762b4a01): o app guarda a sessão no cofre do aparelho (@aparajita/capacitor-secure-storage 8.0.1, Keychain afterFirstUnlockThisDeviceOnly sem iCloud, Keystore, allowBackup=false). Também entraram: renovação única com espera em 429/503, PKCE no app, retorno bivaque://auth-callback no Android e iOS, CSP nativa sem script inline, CORS nativo em /api/localities, prévia do convite pelo Bearer com o cabeçalho do app, saída que limpa tudo (com o marcador 'saiu' se o cofre falhar). Gate completo verde em 8dd37550f e CI completo verde. Duas rodadas de auditoria de segurança independente: a 1ª reprovou (HIGH-1/2, MEDIUM-1/2); a 2ª deu LIBERA no eixo de segurança com F1–F5 corrigidos em 80077f9c6..9762b4a01 (AbortController no lugar de AbortSignal.timeout por causa do iOS 15, marcador de saída, renovação nas rotas autenticadas da entrada, cabeçalho do app na prévia, emenda dos allowed_paths). Testes: app 800, app-api 1644, escopo 318."
       ],
       "id": "LAN-LOJA",
       "title": "Fase 7: app de loja em Capacitor pronto para envio",
@@ -6392,7 +6394,9 @@
       ],
       "dependencies": ["LAN-TROCA", "BLOCK-MOBILE-RUNTIME"],
       "notes": [
-        "20/11 decisão do coordenador: a tela de entrada no nativo (apps/app/src/entrada/servidor.ts com fetch relativo) sai do LOJA-001 e entra no LOJA-002, junto da sessão nativa do ADR-20261120. Ficam também para o LOJA-002: android:allowBackup, window.alert no SeletorDeFoto, remover o ouvinte appUrlOpen, testes de template com.getcapacitor.myapp, varredura dos gerados do cap sync, ios/Pods no .gitignore, setup-java v4."
+        "20/11 decisão do coordenador: a tela de entrada no nativo (apps/app/src/entrada/servidor.ts com fetch relativo) sai do LOJA-001 e entra no LOJA-002, junto da sessão nativa do ADR-20261120. Ficam também para o LOJA-002: android:allowBackup, window.alert no SeletorDeFoto, remover o ouvinte appUrlOpen, testes de template com.getcapacitor.myapp, varredura dos gerados do cap sync, ios/Pods no .gitignore, setup-java v4.",
+        "22/11 riscos aceitos do LOJA-003, registrados no ADR-20261120 (reauditoria de 22/11): uma escrita que recebe 401 com o token longe de vencer não limpa o cofre (erro com Tentar de novo; o token vence em até 1 h); erro de configuração da origem da API aparece como falta de rede; a limpeza de rascunhos no IndexedDB é melhor esforço nos WebView sem indexedDB.databases().",
+        "22/11 falta para fechar o LAN-LOJA. (1) Provas: login Google/Apple, sessão ao reabrir, câmera e links no emulador Android (o PC não tem Docker para a pilha local) e no simulador iOS (macOS/CI); a sessão no iOS 15 só aparelho ou simulador mostram; builds de release sem assinatura no CI. (2) Atos do dono: credenciais Google e Apple, cadastro de bivaque://auth-callback nas URLs de retorno do projeto hospedado, assinatura, fichas e envio às lojas."
       ]
     },
     {
@@ -10323,19 +10327,19 @@
     },
     {
       "id": "LAN-TROCA-CONVITE",
-      "title": "Troca: convite de membros, aceite do convite e grupo saem do site para o app",
+      "title": "Troca: grupo e sua administração saem do site para o app; convite e lista da vila saem sem substituto",
       "priority": "P1",
       "category": "frontend",
       "status": "next",
       "phase": "Lançamento",
-      "description": "Depois do #309 seguem servindo tela no site /communities/[id]/invite, /invite/[token] e /groups/[id] (este sem regra 307, embora o app já tenha /app/grupo/:id).",
+      "description": "Revisto em 20/11 contra o ADR-20261024 do redesenho (§3.4: a vila sai) e o ADR-20261023 (convite de grupo é link para a tela do grupo). Refeito no app: a administração de /groups/:id (aprovar/recusar pedido, remover membro, passar a administração, regras, fixar, aviso por grupo, excluir) e o Convidar que compartilha o link do grupo. Sai sem substituto, com 307 para /app/comunidade: /communities/:id/invite, /invite/:token e /gerir-comunidades. /groups/:id passa a 307 para /app/grupo/:id.",
       "checklist": [
-        "Começa depois do merge do TROCA-002 (#309)",
-        "Tela no app com entrada, ação, persistência, retorno, acompanhamento e falha principal em 375/768/1440",
+        "307: /communities/:id/invite, /invite/:token e /gerir-comunidades para /app/comunidade (redesenho §3.4), com páginas e testes removidos",
+        "Administração do grupo no app com as ações de hoje, em 375/768/1440 nos dois temas",
+        "Convidar no app compartilha o link do grupo (ADR-20261023)",
         "API pelo ADR SPA §5 com testes positivos e negativos de permissão",
-        "Revisão às cegas PASS e security-auditor (R3) antes de apagar a versão do site",
-        "Rotas antigas em 307 para o /app (ID, token e query preservados), páginas, componentes e testes antigos removidos",
-        "Porta provisória do #309 aponta para a tela nova; link-crawl no rigor normal"
+        "Revisão às cegas PASS e security-auditor (R3) antes de apagar /groups/[id]",
+        "/groups/:id em 307 para /app/grupo/:id; porta de Participacao.tsx e link de /gerir-comunidades apontam para o app; link-crawl no rigor normal"
       ],
       "dependencies": [],
       "links": [
@@ -10347,26 +10351,31 @@
       "tests": [],
       "blockers": [],
       "proof": [
-        "20/11: aberto por decisão do dono (opção 1 do #309: porta provisória no app e nenhuma tela antiga sobrevive). Contrato TROCA-003 pronto para o Codex; começa depois do merge do TROCA-002 (#309)."
+        "20/11: aberto por decisão do dono (opção 1 do #309: porta provisória no app e nenhuma tela antiga sobrevive). Contrato TROCA-003 pronto para o Codex; começa depois do merge do TROCA-002 (#309).",
+        "20/11: escopo revisto. A1 (6489eb3e, RPCs de convite de comunidade) e A2 (2abddb89, rotas) revertidas em 682e2a78 e 1fbd5a65 por contrariarem o redesenho §3.4; migration nunca chegou à main. Contrato TROCA-003 reescrito.",
+        "21/11: correção c698ccad7 no #314: regras e fixar só para o dono, remover membro pela API não apaga o dono (neq role owner, teste unitário), aviso abre com o nível salvo, falha ao ler membros com Tentar de novo. Local: typecheck, vitest grupos-admin e grupos (8), Playwright grupos-administracao (102) verdes. Pendências no card GRUPOS-ADMIN-RESSALVAS."
       ],
       "updatedAt": "2026-11-20",
-      "sourceRevision": "1bd9c7f8"
+      "sourceRevision": "1bd9c7f8",
+      "notes": [
+        "20/11 pendências do #309 (f1c405e) para este card: MEDIUM — em apps/app/lib/api/cliente.ts a bandeira encaminhouParaEntrada nunca se religa quando a página volta do bfcache; religar no evento pageshow com persisted e cobrir em teste. LOW — comentar em supabase/seed.sql por que o insert de filiação owner/approved ficou só no grupo 2 (link-crawl e synthetic-people).",
+        "20/11 também do #309: aprovação de pedidos e convite de grupo no app (hoje a porta provisória leva ao /groups/:id), porta para moderador além do dono, e os LOWs dos revisores (teste sequencial em vez de Promise.all, laço /app/entrar no retornoValido, 401 em escritas por 42501, Sair com sessão vencida)."
+      ]
     },
     {
       "id": "LAN-TROCA-ADMIN",
-      "title": "Troca: indicar prestador e painel do administrador da comunidade saem do site para o app",
+      "title": "Troca: indicar prestador e painel da vila saem do site sem substituto (307)",
       "priority": "P1",
       "category": "frontend",
       "status": "next",
       "phase": "Lançamento",
-      "description": "Depois do #309 seguem servindo tela no site /communities/[id]/indicar-prestador e as cinco páginas de (owner)/communities/[id]/admin (início, pendentes, moderadores, prestadores, mídia).",
+      "description": "Revisto em 20/11 contra o ADR-20261024 do redesenho: a vila sai (§3.4) e só o operador convida e atesta prestador (§6). /communities/:id/indicar-prestador passa a 307 para /app/negocios; /communities/:id/admin e subrotas passam a 307 para /app/comunidade; páginas (owner) e testes saem. A área do operador em (admin) fica.",
       "checklist": [
-        "Começa depois do merge do TROCA-002 (#309)",
-        "Tela no app com entrada, ação, persistência, retorno, acompanhamento e falha principal em 375/768/1440",
-        "API pelo ADR SPA §5 com testes positivos e negativos de permissão",
-        "Revisão às cegas PASS e security-auditor (R3) antes de apagar a versão do site",
-        "Rotas antigas em 307 para o /app (ID, token e query preservados), páginas, componentes e testes antigos removidos",
-        "Porta provisória do #309 aponta para a tela nova; link-crawl no rigor normal"
+        "307 de /communities/:id/indicar-prestador para /app/negocios (redesenho §6)",
+        "307 de /communities/:id/admin e subrotas para /app/comunidade (redesenho §3.4)",
+        "Páginas, layouts, actions, componentes e testes do (owner) e do indicar-prestador removidos",
+        "Nenhum link vivo para as rotas removidas; link-crawl no rigor normal",
+        "Área do operador (admin) com testes verdes"
       ],
       "dependencies": [],
       "links": [
@@ -10377,7 +10386,8 @@
       "tests": [],
       "blockers": [],
       "proof": [
-        "20/11: aberto por decisão do dono (opção 1 do #309: porta provisória no app e nenhuma tela antiga sobrevive). Contrato TROCA-004 pronto para o Codex; começa depois do merge do TROCA-002 (#309)."
+        "20/11: aberto por decisão do dono (opção 1 do #309: porta provisória no app e nenhuma tela antiga sobrevive). Contrato TROCA-004 pronto para o Codex; começa depois do merge do TROCA-002 (#309).",
+        "20/11: contrato TROCA-004 reescrito para só redirecionamento e remoção (R2), pelo redesenho §3.4 e §6."
       ],
       "updatedAt": "2026-11-20",
       "sourceRevision": "1bd9c7f8"
@@ -10494,7 +10504,8 @@
       "proof": [
         "21/11: implementado pelo DeepSeek v4.1 Flash (Codex Terra indisponível), 22 commits em apps/app (mais 1 chamada em src/roteador.tsx, aceita pelo coordenador). Conferido pelo coordenador em f03406ef7: typecheck limpo; app test 71 arquivos/756 testes; nav-001.spec 33/33 em mobile-375, tablet-768, desktop-1440, claro e escuro; capturas em .visual/nav-001/pos-*.",
         "21/11: revisão independente às cegas (subagente reviewer) deu FAIL com 4 altos e 5 médios; rodada única de correção fechou todos com teste (fundo da Folha/Aviso fora de .pc, ignorado em Salvos, Negócios, categoria da Busca, foco de volta, Grupos, altura no computador, tempos do ANIMATION.md, fechamento por arrasto). Baixos em NAV-001-RESSALVAS.",
-        "21/11: merge do PR #318 condicionado ao CI completo (ci:full) verde no head."
+        "21/11: merge do PR #318 condicionado ao CI completo (ci:full) verde no head.",
+        "21/11 22:31Z: o dono aprovou a prova de toque real da Folha no celular (\"Funcionou\")."
       ]
     },
     {
@@ -10521,6 +10532,127 @@
       "sourceRevision": "27ba94327",
       "links": ["https://github.com/Juanjfmr/bivaque-community/pull/318"],
       "proof": ["21/11: registrado pelo coordenador a partir da revisão às cegas do NAV-001."]
+    },
+    {
+      "id": "CASCA-TOPO-E-NAV-DETALHE",
+      "title": "Casca: barra do topo alinhada à coluna a 1440 e navegação nas telas de detalhe a 375/768",
+      "phase": "lancamento",
+      "priority": "P2",
+      "category": "frontend",
+      "status": "next",
+      "description": "Revisão visual cega do TROCA-003 (3ª rodada, 21/11) mediu na casca compartilhada: a 1440 os controles do topo vão até x=1398 enquanto o conteúdo termina em x=1271 (IDENTIDADE-DAS-PECAS manda alinhar à coluna); a 375 e 768 as telas de detalhe (Grupo, Administrar grupo) não mostram barra inferior nem Criar, só o voltar. Decidir se detalhe mantém a navegação (régua Nextdoor) e alinhar o topo; vale para todas as telas, por isso fica fora do TROCA-003.",
+      "checklist": [
+        "[ ] Decidir navegação em telas de detalhe a partir de referências do Mobbin citadas",
+        "[ ] Topo alinhado à coluna a 1440 em todas as telas",
+        "[ ] Capturas 375/768/1440 nos dois temas e revisão cega"
+      ],
+      "dependencies": [],
+      "tests": [],
+      "blockers": [],
+      "updatedAt": "2026-11-21",
+      "sourceRevision": "02c7bca90",
+      "links": ["docs/agents/regua-nextdoor/IDENTIDADE-DAS-PECAS.md"],
+      "proof": [
+        "21/11: .visual/troca-003/revisao-visual-3.md (H2 e H4), capturas administrar|grupo-375|768|1440."
+      ]
+    },
+    {
+      "id": "GRUPOS-ADMIN-RESSALVAS",
+      "title": "Administração de grupos no app: prova contra banco real e ressalvas da revisão do TROCA-003",
+      "phase": "Lançamento",
+      "priority": "P2",
+      "category": "frontend",
+      "status": "next",
+      "description": "Restos da revisão de código, da auditoria de segurança e da 4ª revisão visual do PR #314 que ficaram fora do lote. O E2E da administração no app usa API simulada; o ciclo real (aprovar pedido, salvar regras relidas) contra a pilha com seed saiu com group-admin-cycle.spec.ts e precisa voltar como E2E do app.",
+      "checklist": [
+        "[ ] E2E do app contra a pilha com seed: aprovar pedido grava approved; salvar regras é relido após recarregar",
+        "[ ] Recusa de remover/recusar por não moderador responde 403 (hoje 404), igual a aprovar",
+        "[ ] membros/route.ts usa administra() em vez de repetir o papel",
+        "[ ] Moderador remove co-moderador quando o banco permite; etiqueta Administrador só para o dono",
+        "[ ] Guarda equivalente na policy group_memberships_delete_moderator contra apagar o dono (migration nova, R3)",
+        "[ ] Server action órfã (shell)/communities/community-invite-actions.ts removida",
+        "[ ] scripts/visual/capture.mjs e scripts/port/compare-groups.mjs apontam para /app/grupo/:id",
+        "[ ] Link de convite sem window.location.origin quando o app rodar no Capacitor",
+        "[ ] Visual: filtros cortados a 375/768, largura de coluna igual entre telas, níveis de título, estado vazio fora de card",
+        "[ ] grupo-coluna.css não redefine tipografia de peça nem --muted-foreground"
+      ],
+      "dependencies": [],
+      "links": [
+        "PR #314",
+        ".visual/troca-003/revisao-codigo.md",
+        ".visual/troca-003/auditoria-seguranca.md",
+        ".visual/troca-003/revisao-visual-4.md"
+      ],
+      "tests": [],
+      "blockers": [],
+      "proof": [
+        "21/11: aberto a partir das revisões do #314 (código: PASS-COM-RESSALVA; segurança: LIBERA COM RESSALVAS; visual 4: PASS COM RESSALVAS). Os dois achados altos e dois médios foram corrigidos no próprio #314 (c698ccad7)."
+      ],
+      "updatedAt": "2026-11-21",
+      "sourceRevision": "c698ccad7"
+    },
+    {
+      "id": "NAV-002",
+      "title": "Mercado com um endereço só: aba e filtros na URL de /app/mercado",
+      "phase": "Lançamento",
+      "priority": "P1",
+      "category": "frontend",
+      "status": "done",
+      "description": "Plano Reduzir o excesso de telas (dono, 21/11, lote 2 de 3; contrato docs/agents/tasks/NAV-002.task.yml). /app/mercado é o endereço canônico, com aba (desapegos, imoveis, negocios) e filtros na busca da URL; /app/desapegos, /app/catalogo e /app/imoveis redirecionam em replace com aba e filtros preservados, sem ciclo; os endereços antigos do site (/imoveis, /imoveis/novo) chegam em um salto só; links internos, Paleta, Criar, Guia e alertas de imóvel apontam para o endereço canônico.",
+      "checklist": [
+        "Aba e filtros do Mercado vivem na URL de /app/mercado",
+        "Endereços antigos do app redirecionam em replace, sem ciclo e sem entrada extra no histórico",
+        "Endereços antigos do site chegam ao Mercado em um salto",
+        "Links internos apontam para o endereço canônico",
+        "Vitest e E2E 375/768/1440 claro/escuro"
+      ],
+      "dependencies": ["NAV-001"],
+      "tests": [
+        "apps/app/tests/mercado-enderecos.test.ts",
+        "apps/app/tests/navegacao/rotas.test.ts",
+        "apps/app/tests/navegacao/transicoes.test.ts",
+        "apps/app/tests/e2e/nav-002-mercado.spec.ts",
+        "apps/web/tests/redirecionamentos.test.ts",
+        "tests/unit/infra/lan-troca-redirect.test.ts"
+      ],
+      "blockers": [],
+      "updatedAt": "2026-11-22",
+      "completedAt": "2026-11-22",
+      "sourceRevision": "9afd8609f",
+      "links": [
+        "docs/agents/tasks/NAV-002.task.yml",
+        "https://github.com/Juanjfmr/bivaque-community/pull/321"
+      ],
+      "proof": [
+        "21/11: implementado pelo DeepSeek v4.1 Flash por contrato; revisão às cegas (subagente reviewer) com uma rodada de correção (origem da volta ao trocar de aba em sobreposição, alertas de imóvel, formatação). Desvios de cerca aceitos pelo coordenador: src/guia/secoes.ts, src/negocios/Negocios.tsx e o teste lan-troca-redirect, todos só trocando o endereço para o canônico.",
+        "22/11: conferido pelo coordenador em 9afd8609f (main 9fc92ef6b mesclada): typecheck 0; app vitest 765/765; lan-troca-redirect 116/116; E2E do app 318/318 em mobile-375, tablet-768, desktop-1440; capturas em .visual/nav-002/mercado-imoveis-*.",
+        "22/11: merge condicionado ao CI completo (ci:full) verde no head."
+      ]
+    },
+    {
+      "id": "INDICAR-NEGOCIO",
+      "title": "Indicar um negócio: membro indica, operador aprova",
+      "phase": "Lançamento",
+      "priority": "P2",
+      "category": "backend",
+      "status": "repo",
+      "description": "Decisão do dono em 21/11 (\"Manter e sugerir depois\"): só o operador convida prestador, e o membro pode indicar um negócio. Folha de indicação (nome, contato, motivo); fila do operador; convite com um toque a partir da indicação; \"indicado por membros\" no perfil do negócio. Precisa de ADR com regra própria (dado de terceiro, contato e anti-abuso) antes de código. Não altera TROCA-004 nem TROCA-005.",
+      "checklist": [
+        "ADR com a regra da indicação (quem indica, que dado guarda, por quanto tempo, anti-abuso)",
+        "Folha Indicar um negócio com nome, contato e motivo",
+        "Fila do operador com convite em um toque",
+        "Marca \"indicado por membros\" no perfil do negócio",
+        "Testes positivos e negativos de permissão e E2E 375/768/1440"
+      ],
+      "dependencies": ["LAN-F07"],
+      "tests": [],
+      "blockers": ["Aguarda ADR com a regra da indicação antes de qualquer código."],
+      "updatedAt": "2026-11-22",
+      "sourceRevision": "9afd8609f",
+      "links": [],
+      "proof": [
+        "21/11: decisão do dono na thread do projeto (\"Manter e sugerir depois\"), registrada pelo coordenador; só o operador convida prestador (ADR-20261024 §3.4/§6)."
+      ]
     }
   ],
   "launch": {

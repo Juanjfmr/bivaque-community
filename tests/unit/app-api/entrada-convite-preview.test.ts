@@ -154,3 +154,48 @@ describe("POST /api/app/entry/invite/preview", () => {
     expect(await outro.json()).toEqual({ erro: "email-nao-confere" })
   })
 })
+
+it.each(["capacitor://localhost", "https://localhost"])(
+  "aceita convite nativo de %s",
+  async (origin) => {
+    const request = new NextRequest(URL_DA_ROTA, {
+      method: "POST",
+      headers: {
+        origin,
+        "x-bivaque-app": CABECALHO,
+        "x-bivaque-cliente": "loja",
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({ codigo: CODIGO }),
+    })
+    expect((await POST(request)).status).toBe(200)
+  },
+)
+
+it("recusa origem estranha em modo nativo", async () => {
+  const request = new NextRequest(URL_DA_ROTA, {
+    method: "POST",
+    headers: {
+      origin: "https://evil.example.invalid",
+      "x-bivaque-cliente": "loja",
+      "x-bivaque-app": CABECALHO,
+    },
+    body: "{}",
+  })
+  expect((await POST(request)).status).toBe(403)
+})
+
+it("aceita pre-visualizacao nativa com Bearer", async () => {
+  const request = new NextRequest(URL_DA_ROTA, {
+    method: "POST",
+    headers: {
+      origin: "https://localhost",
+      authorization: "Bearer sintetico",
+      "x-bivaque-app": CABECALHO,
+      "x-bivaque-cliente": "loja",
+      "content-type": "application/json",
+    },
+    body: JSON.stringify({ codigo: CODIGO }),
+  })
+  expect((await POST(request)).status).toBe(200)
+})

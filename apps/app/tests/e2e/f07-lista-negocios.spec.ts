@@ -49,7 +49,7 @@ for (const tema of ["light"] as const) {
 
       // O segmento leva ao endereço da seção, não a um filtro escondido.
       await page.locator(segmento("imoveis")).click()
-      await expect(page).toHaveURL(/\/app\/imoveis$/)
+      await expect(page).toHaveURL(/\/app\/mercado\?aba=imoveis$/)
     })
 
     test("vazio e 'Divulgar meu negócio' levam ao mesmo caminho de cadastro", async ({
