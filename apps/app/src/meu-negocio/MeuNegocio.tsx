@@ -19,6 +19,7 @@ import {
   removerServico,
   type ServicoDaFicha,
   salvarMinhaFicha,
+  salvarMinhaFichaDePrestador,
 } from "@/lib/dados/negocios"
 import { SeletorDeFoto } from "@/lib/nativo/SeletorDeFoto"
 import {
@@ -105,6 +106,7 @@ export function MeuNegocio() {
     useSobreposicaoDaEntrada("confirmacao")
   const [carregado, setCarregado] = useState(false)
   const [ficha, setFicha] = useState<MinhaFicha | null>(null)
+  const [tipoDaConta, setTipoDaConta] = useState<"membro" | "prestador">("membro")
   const [categorias, setCategorias] = useState<readonly Readonly<{ id: string; nome: string }>[]>(
     [],
   )
@@ -133,6 +135,7 @@ export function MeuNegocio() {
         if (controle.signal.aborted) return
         setFicha(lida.ficha)
         setCategorias(lida.categorias)
+        setTipoDaConta(lida.tipoDaConta)
         setCarregado(true)
         if (lida.ficha === null) return
         setNome(lida.ficha.nome)
@@ -168,7 +171,12 @@ export function MeuNegocio() {
     }
     const dados = { nome, categoria, descricao }
     void executar(
-      () => (ficha === null ? criarMinhaFicha(dados) : salvarMinhaFicha(dados)),
+      () =>
+        tipoDaConta === "prestador"
+          ? salvarMinhaFichaDePrestador(dados)
+          : ficha === null
+            ? criarMinhaFicha(dados)
+            : salvarMinhaFicha(dados),
       (gravada) => {
         setFicha(gravada)
         setAviso(ficha === null ? "Sua página foi criada." : "Sua página foi salva.")
@@ -275,7 +283,9 @@ export function MeuNegocio() {
         rotulo="Seções de Meu negócio"
         grupo="meu-negocio"
       />
-      {aba === "pedidos" ? <PedidosRecebidos irParaFicha={() => irParaAba("ficha")} /> : null}
+      {aba === "pedidos" ? (
+        <PedidosRecebidos tipoDaConta={tipoDaConta} irParaFicha={() => irParaAba("ficha")} />
+      ) : null}
       {aba === "conta" ? <ContaDoNegocio irParaFicha={() => irParaAba("ficha")} /> : null}
       {aba === "ficha" || aba === "catalogo" ? (
         erro !== null ? (

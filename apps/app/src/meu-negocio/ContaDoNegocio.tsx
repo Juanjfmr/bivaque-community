@@ -85,7 +85,7 @@ export function ContaDoNegocio({ irParaFicha }: { readonly irParaFicha: () => vo
             {conta.email ?? "E-mail não disponível"}
           </p>
           <p className="text-[13px] text-(--on-surface-variant)">
-            O e-mail de acesso é o da sua conta de membro. Ele não aparece na ficha pública.
+            O e-mail de acesso é o da sua conta. Ele não aparece na ficha pública.
           </p>
         </div>
 

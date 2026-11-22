@@ -14,6 +14,7 @@ import {
   publicarServico,
   removerServico,
   salvarMinhaFicha,
+  salvarMinhaFichaDePrestador,
 } from "@/lib/dados/negocios"
 
 const negocio = {
@@ -200,15 +201,35 @@ describe("porta do negócio próprio (F07 RUN-177)", () => {
     const fetch = responder({
       negocio: ficha,
       categorias: [{ id: "assistencia_tecnica", nome: "Assistência técnica" }],
+      tipoDaConta: "membro",
     })
     const lida = await lerMinhaFicha()
     expect(fetch.mock.calls[0]?.[0]).toBe("/api/app/negocio")
     expect(lida.ficha?.servicos[0]?.titulo).toBe("Limpeza")
     expect(lida.ficha?.fotos[0]?.url).toContain("assinada")
     expect(lida.categorias[0]?.nome).toBe("Assistência técnica")
+    expect(lida.tipoDaConta).toBe("membro")
 
-    responder({ negocio: null, categorias: [] })
-    await expect(lerMinhaFicha()).resolves.toEqual({ ficha: null, categorias: [] })
+    responder({ negocio: null, categorias: [], tipoDaConta: "membro" })
+    await expect(lerMinhaFicha()).resolves.toEqual({
+      ficha: null,
+      categorias: [],
+      tipoDaConta: "membro",
+    })
+  })
+
+  it("conta de prestador lê o tipo e grava a ficha pela rota do prestador", async () => {
+    const fetch = responder({ negocio: ficha, categorias: [], tipoDaConta: "prestador" })
+    const lida = await lerMinhaFicha()
+    expect(lida.tipoDaConta).toBe("prestador")
+
+    await salvarMinhaFichaDePrestador({
+      nome: "Climatiza",
+      categoria: "assistencia_tecnica",
+      descricao: "",
+    })
+    expect(fetch.mock.calls[1]?.[0]).toBe("/api/app/prestador/ficha")
+    expect(fetch.mock.calls[1]?.[1]).toMatchObject({ method: "PATCH" })
   })
 
   it("cria e edita a ficha por POST e PATCH, sem id no corpo", async () => {

@@ -44,9 +44,24 @@ describe("TROCA-005 — Meu negócio em abas", () => {
     expect(pedidos).toContain("salvarAtendimento")
   })
 
+  it("a Ficha escolhe o caminho pelo tipo da conta", () => {
+    expect(meuNegocio).toContain("tipoDaConta")
+    expect(meuNegocio).toContain("salvarMinhaFichaDePrestador")
+    expect(meuNegocio).toContain('tipoDaConta === "prestador"')
+  })
+
+  it("a Área de atendimento só existe para a conta de prestador, com a frase do servidor", () => {
+    expect(pedidos).toContain('tipoDaConta === "prestador"')
+    expect(pedidos).toContain("ehPrestador ? (")
+    expect(pedidos).toContain("mensagemDaAcao(falha)")
+    expect(pedidos).not.toContain("Não foi possível salvar a área de atendimento agora")
+  })
+
   it("a conta mostra o e-mail da sessão e o telefone opcional", () => {
     expect(conta).toContain("telefone")
     expect(conta).toContain("Mostrar meu telefone na ficha pública")
     expect(conta).toContain("Salvar conta")
+    // O prestador também abre esta aba: a frase não pode chamá-lo de membro.
+    expect(conta).not.toContain("conta de membro")
   })
 })

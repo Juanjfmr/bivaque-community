@@ -30,8 +30,17 @@ import { mensagemDaAcao, SITUACOES_DO_PEDIDO } from "@/src/negocios/formulario"
 
 const ABERTAS = new Set(["open", "in_conversation"])
 
-export function PedidosRecebidos({ irParaFicha }: { readonly irParaFicha: () => void }) {
+export function PedidosRecebidos({
+  tipoDaConta,
+  irParaFicha,
+}: {
+  readonly tipoDaConta: "membro" | "prestador"
+  readonly irParaFicha: () => void
+}) {
   const navegacao = useNavegacao()
+  // A área de atendimento só existe para a conta de PRESTADOR: o alcance do
+  // negócio do membro é a cidade e não se liga nem se desliga nesta aba.
+  const ehPrestador = tipoDaConta === "prestador"
   const folha = useSobreposicaoDaEntrada("pedido-do-negocio")
   const [pedidos, setPedidos] = useState<readonly PedidoDeServico[] | null>(null)
   const [erroDosPedidos, setErroDosPedidos] = useState<unknown>(null)
@@ -71,6 +80,7 @@ export function PedidosRecebidos({ irParaFicha }: { readonly irParaFicha: () => 
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: rodada é o pedido de tentar de novo
   useEffect(() => {
+    if (!ehPrestador) return
     const controle = new AbortController()
     setErroDoAtendimento(null)
     void lerAtendimento({ signal: controle.signal })
@@ -172,9 +182,11 @@ export function PedidosRecebidos({ irParaFicha }: { readonly irParaFicha: () => 
           ? "Sua ficha aparece para os membros da comunidade."
           : "Sua ficha saiu da busca. Os pedidos continuam no histórico.",
       )
-    } catch {
+    } catch (falha: unknown) {
       setAlcance(anterior)
-      setMensagemDoAlcance("Não foi possível salvar a área de atendimento agora. Tente de novo.")
+      // A frase é a do servidor quando ela existe: "Tente de novo" genérico
+      // esconderia a recusa real (conta, comunidade, validação).
+      setMensagemDoAlcance(mensagemDaAcao(falha))
     } finally {
       setSalvandoAlcance(false)
     }
@@ -214,44 +226,46 @@ export function PedidosRecebidos({ irParaFicha }: { readonly irParaFicha: () => 
         )}
       </Secao>
 
-      <Secao titulo="Área de atendimento">
-        {erroDoAtendimento !== null ? (
-          <FalhaDaLeitura
-            falha={erroDoAtendimento}
-            aoTentar={() => setRodada((atual) => atual + 1)}
-          />
-        ) : !temFicha ? (
-          <Nota>Crie a página do negócio antes de definir a área de atendimento.</Nota>
-        ) : alcance === null ? (
-          <EsqueletoDeLista linhas={1} />
-        ) : (
-          <div className="grid gap-2">
-            <p className="text-sm text-(--on-surface-variant)">
-              {cidade === null ? "Região atendida não definida." : `Região atendida: ${cidade}.`}
-            </p>
-            <label className="flex min-h-11 items-center gap-3 text-sm">
-              <input
-                type="checkbox"
-                checked={alcance}
-                disabled={salvandoAlcance}
-                onChange={(evento) => void gravarAlcance(evento.target.checked)}
-              />
-              {comunidade === null
-                ? "Atender membros da comunidade que indicou você"
-                : `Atender membros de ${comunidade}`}
-            </label>
-            <p className="text-[13px] text-(--on-surface-variant)">
-              Com o alcance ligado, a ficha aparece para os membros aprovados desta comunidade. Com
-              ele desligado, a ficha sai da busca — os pedidos existentes continuam no histórico.
-            </p>
-            {mensagemDoAlcance === null ? null : (
-              <p role="status" className="text-sm text-(--on-surface-variant)">
-                {mensagemDoAlcance}
+      {ehPrestador ? (
+        <Secao titulo="Área de atendimento">
+          {erroDoAtendimento !== null ? (
+            <FalhaDaLeitura
+              falha={erroDoAtendimento}
+              aoTentar={() => setRodada((atual) => atual + 1)}
+            />
+          ) : !temFicha ? (
+            <Nota>Crie a página do negócio antes de definir a área de atendimento.</Nota>
+          ) : alcance === null ? (
+            <EsqueletoDeLista linhas={1} />
+          ) : (
+            <div className="grid gap-2">
+              <p className="text-sm text-(--on-surface-variant)">
+                {cidade === null ? "Região atendida não definida." : `Região atendida: ${cidade}.`}
               </p>
-            )}
-          </div>
-        )}
-      </Secao>
+              <label className="flex min-h-11 items-center gap-3 text-sm">
+                <input
+                  type="checkbox"
+                  checked={alcance}
+                  disabled={salvandoAlcance}
+                  onChange={(evento) => void gravarAlcance(evento.target.checked)}
+                />
+                {comunidade === null
+                  ? "Atender membros da comunidade que indicou você"
+                  : `Atender membros de ${comunidade}`}
+              </label>
+              <p className="text-[13px] text-(--on-surface-variant)">
+                Com o alcance ligado, a ficha aparece para os membros aprovados desta comunidade. Com
+                ele desligado, a ficha sai da busca — os pedidos existentes continuam no histórico.
+              </p>
+              {mensagemDoAlcance === null ? null : (
+                <p role="status" className="text-sm text-(--on-surface-variant)">
+                  {mensagemDoAlcance}
+                </p>
+              )}
+            </div>
+          )}
+        </Secao>
+      ) : null}
 
       {!temFicha ? (
         <div className="flex justify-start">

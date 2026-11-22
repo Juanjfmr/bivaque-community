@@ -261,18 +261,23 @@ export async function mudarPedido(
 export type MinhaFichaLida = Readonly<{
   ficha: MinhaFicha | null
   categorias: readonly Readonly<{ id: string; nome: string }>[]
+  /** Quem grava: membro pelos RPCs da rota de negócio; prestador pela ficha dele. */
+  tipoDaConta: "membro" | "prestador"
 }>
 
 export async function lerMinhaFicha(
   opcoes: { signal?: AbortSignal } = {},
 ): Promise<MinhaFichaLida> {
   const corpo = await ler("/api/app/negocio", opcoes)
+  const tipo = corpo["tipoDaConta"]
+  if (tipo !== "membro" && tipo !== "prestador") foraDoContrato()
   return {
     ficha: corpo["negocio"] === null ? null : minhaFichaDe(corpo["negocio"]),
     categorias: lista(corpo, "categorias").map((valor) => {
       const categoria = registro(valor)
       return { id: texto(categoria, "id"), nome: texto(categoria, "nome") }
     }),
+    tipoDaConta: tipo,
   }
 }
 
@@ -288,6 +293,20 @@ export async function salvarMinhaFicha(
   opcoes: { signal?: AbortSignal } = {},
 ): Promise<MinhaFicha> {
   return minhaFichaDe((await enviar("PATCH", "/api/app/negocio", dados, opcoes))["negocio"])
+}
+
+/**
+ * A ficha de quem tem conta de PRESTADOR (TROCA-005): os RPCs da página de
+ * negócio do membro recusam essa conta, então a gravação vai pela ficha do
+ * prestador. A regra é a mesma no servidor; aqui muda só a porta.
+ */
+export async function salvarMinhaFichaDePrestador(
+  dados: DadosDaFicha,
+  opcoes: { signal?: AbortSignal } = {},
+): Promise<MinhaFicha> {
+  return minhaFichaDe(
+    (await enviar("PATCH", "/api/app/prestador/ficha", dados, opcoes))["negocio"],
+  )
 }
 
 export async function publicarServico(
