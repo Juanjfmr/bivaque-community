@@ -161,8 +161,8 @@ export function PedidosRecebidos({
   // `/app/meu-negocio?aba=pedidos&pedido=<id>` abre a Folha do pedido — e a
   // recarga reabre. A guarda evita reabrir quando a pessoa fecha.
   const abertoPelaUrl = useRef<string | null>(null)
-  /** Marca o fechamento de gente: é o que autoriza limpar a URL. */
-  const fechou = useRef(false)
+  /** A Folha já esteve aberta nesta entrada: é o que autoriza limpar a URL. */
+  const jaAbriu = useRef(false)
   // biome-ignore lint/correctness/useExhaustiveDependencies: a guarda é o que evita reabrir
   useEffect(() => {
     const id = busca["pedido"]
@@ -173,18 +173,20 @@ export function PedidosRecebidos({
   }, [busca])
 
   // B2 da revisão da correção 1: fechar a Folha tira o `?pedido=` da URL, senão
-  // recarregar reabriria o que a pessoa fechou. Só depois de um fechamento DE
-  // GENTE (`fechou`, marco do clique): no primeiro quadro a URL e o estado da
-  // entrada discordam, e limpar ali mataria a Folha que a URL abriu.
+  // recarregar reabriria o que a pessoa fechou. Só depois de a Folha ter estado
+  // aberta (`jaAbriu`): no primeiro quadro a URL e o estado da entrada
+  // discordam, e limpar ali mataria a Folha que a URL abriu. Fechar pelo botão,
+  // pelo Escape ou pelo Voltar do navegador passa por aqui — o estado da entrada
+  // é quem manda, não o clique.
   useEffect(() => {
-    if (!fechou.current) return
-    if (folha.aberto || detalheId !== null) return
-    if (busca["pedido"] === undefined) {
-      fechou.current = false
+    if (folha.aberto) {
+      jaAbriu.current = true
       return
     }
+    if (!jaAbriu.current) return
+    if (busca["pedido"] === undefined) return
     void trocarBusca({ aba: "pedidos" })
-  }, [folha.aberto, detalheId, busca, trocarBusca])
+  }, [folha.aberto, busca, trocarBusca])
 
   function abrir(pedido: PedidoDeServico) {
     setSelecionado(pedido)
@@ -202,7 +204,6 @@ export function PedidosRecebidos({
     setMensagens(null)
     setErroDaConversa(null)
     folha.aoMudarAberto(false)
-    fechou.current = true
   }
 
   function atualizarNaLista(pedido: PedidoDeServico) {

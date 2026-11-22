@@ -199,6 +199,23 @@ for (const tema of TEMAS) {
       await expect(page.locator('[data-sobreposicao="pedido-do-negocio"]')).toHaveCount(0)
     })
 
+    test("o Voltar do navegador também tira o pedido da URL", async ({ page }) => {
+      await montarNegocio(page)
+      await page.route(/\/api\/app\/pedidos(?:\?|$)/, (rota) =>
+        rota.fulfill({ json: { pedidos: [recebido], proximo: null } }),
+      )
+      await page.route(new RegExp(`/api/app/pedidos/${PEDIDO}/mensagens$`), (rota) =>
+        rota.fulfill({ json: { pedido: recebido, mensagens: [] } }),
+      )
+      await ir(page, `/app/meu-negocio?aba=pedidos&pedido=${PEDIDO}`, tema)
+      await expect(page.locator('[data-sobreposicao="pedido-do-negocio"]')).toBeVisible()
+      await page.goBack()
+      await expect(page.locator('[data-sobreposicao="pedido-do-negocio"]')).toHaveCount(0)
+      await expect(page).toHaveURL(/\/app\/meu-negocio\?aba=pedidos$/)
+      await page.reload()
+      await expect(page.locator('[data-sobreposicao="pedido-do-negocio"]')).toHaveCount(0)
+    })
+
     test("o membro sem página vê o caminho para a ficha, não um vazio", async ({ page }) => {
       // B3 da revisão da correção 1: `temFicha` é o da ficha lida em Meu negócio.
       await page.route(/\/api\/app\/negocio(?:\?|$)/, (rota) =>

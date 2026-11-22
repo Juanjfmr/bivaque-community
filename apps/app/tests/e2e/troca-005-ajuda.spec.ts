@@ -154,6 +154,19 @@ for (const tema of TEMAS) {
       await expect(page.locator('[data-sobreposicao="denuncia-detalhe"]')).toHaveCount(0)
     })
 
+    test("o Voltar do navegador também tira o id da URL", async ({ page }) => {
+      // B2 da correção 1: fechar não é só o botão — o Voltar do sistema desce a
+      // Folha pelo estado da entrada, e a URL tem de ficar limpa do mesmo jeito.
+      await montarDenuncias(page)
+      await ir(page, `/app/ajuda?aba=denuncias&denuncia=${DENUNCIA}`, tema)
+      await expect(page.locator('[data-sobreposicao="denuncia-detalhe"]')).toBeVisible()
+      await page.goBack()
+      await expect(page.locator('[data-sobreposicao="denuncia-detalhe"]')).toHaveCount(0)
+      await expect(page).toHaveURL(/\/app\/ajuda\?aba=denuncias$/)
+      await page.reload()
+      await expect(page.locator('[data-sobreposicao="denuncia-detalhe"]')).toHaveCount(0)
+    })
+
     test("a nova denúncia abre pelo alvo da URL, ainda que ele não esteja na lista", async ({
       page,
     }) => {

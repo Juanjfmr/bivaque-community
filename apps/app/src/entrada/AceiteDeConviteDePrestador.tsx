@@ -14,9 +14,10 @@ import { Nota } from "@/src/pecas/pecas"
  * O convite de prestador como estado da ENTRADA (TROCA-005): o link chega em
  * `/app/entrar?prestador=<token>` e não existe tela nova. O token não é
  * adivinhado nem o convite enumerado: token inválido e desconhecido caem na
- * mesma frase. Aceitar usa a sessão; sem sessão, "Entrar com e-mail" leva à
- * entrada com o aceite como retorno (`?redirect=`), e o código por e-mail
- * devolve a pessoa a este estado — sem passar pelo funil de membro.
+ * mesma frase. Aceitar usa a sessão; sem sessão, "Entrar com e-mail" põe a
+ * entrada no caminho do convite EM MEMÓRIA (o token não volta ao endereço) e o
+ * código por e-mail devolve a pessoa a este estado — sem passar pelo funil de
+ * membro.
  */
 
 const TEXTO_DO_ESTADO: Readonly<Record<Exclude<ConviteDePrestador["estado"], "pendente">, string>> =
