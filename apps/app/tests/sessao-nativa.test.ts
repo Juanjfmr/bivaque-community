@@ -50,6 +50,23 @@ describe("sessão nativa", () => {
     expect(cofre.set).toHaveBeenCalledTimes(1)
   })
 
+  it("renova sem AbortSignal.timeout e aborta fetch sem resposta em 3 segundos", async () => {
+    vi.stubGlobal("AbortSignal", class extends AbortSignal {})
+    const buscar = vi.fn().mockImplementation(
+      (_url: string, init: RequestInit) =>
+        new Promise<Response>((_resolve, reject) => {
+          init.signal?.addEventListener("abort", () => reject(new DOMException("", "AbortError")))
+        }),
+    )
+    vi.stubGlobal("fetch", buscar)
+    const falha = renovarSessao().catch((erro: unknown) => erro)
+    await vi.waitFor(() => expect(buscar).toHaveBeenCalledTimes(1))
+    expect(await falha).toMatchObject({ message: "rede" })
+    vi.useRealTimers()
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(par()))
+    expect(await renovarSessao()).toBe("acesso-sintetico")
+  })
+
   it("mantém o novo par em memória se a gravação falha", async () => {
     cofre.set.mockRejectedValue(new Error("cofre"))
     const buscar = vi.fn().mockImplementation(async () => par())

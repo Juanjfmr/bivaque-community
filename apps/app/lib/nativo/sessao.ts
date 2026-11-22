@@ -1,4 +1,5 @@
 import { apagarRenovacao, gravarRenovacao, lerRenovacao } from "./cofre"
+import { comTempoLimite } from "./tempo"
 
 let acesso: string | null = null
 let expiracao = 0
@@ -76,6 +77,7 @@ export function renovarSessao(): Promise<string | null> {
       let resposta: Response
       let falha = "indisponivel"
       let retryAfter = 0
+      const tempo = comTempoLimite(3000)
       try {
         resposta = await fetch(`${origemDaApi()}/api/app/sessao/renovar`, {
           method: "POST",
@@ -86,11 +88,13 @@ export function renovarSessao(): Promise<string | null> {
             "x-bivaque-cliente": "loja",
           },
           body: JSON.stringify({ refresh_token: token }),
-          signal: AbortSignal.timeout(3000),
+          signal: tempo.signal,
         })
       } catch {
         falha = "rede"
         resposta = new Response(null, { status: 503 })
+      } finally {
+        tempo.cancelar()
       }
       if (resposta.status === 429 || resposta.status === 503) {
         if (resposta.status === 429 || resposta.headers.has("retry-after")) falha = "indisponivel"
