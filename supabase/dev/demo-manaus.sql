@@ -208,19 +208,28 @@ delete from public.entry_progress ep
 using demo_membros m
 where ep.user_id = m.id;
 
--- Uma cidade `current` por conta é do índice do banco; o que a entrada pode
--- deixar é uma conta sem cidade atual (só a `leaving`). Nesse caso a linha
--- volta a ser a atual, para a pessoa não cair num app sem cidade.
+-- A persona de demonstração é de MANAUS. Um cadastro feito em outra cidade — o
+-- dono trocou para o Rio na entrada — não fica na demonstração: o vínculo da
+-- outra cidade sai, Manaus volta a ser a `current` e um momento de mudança
+-- para outra cidade volta a "morando". Só contas dd…; nenhuma outra é tocada.
+delete from public.locality_memberships lm
+ using demo_membros m
+ where lm.user_id = m.id
+   and lm.locality_id <> '00000000-0000-4000-8000-000000000001';
+
 update public.locality_memberships lm
    set kind = 'current', leaving_at = null
  from demo_membros m
  where lm.user_id = m.id
-   and lm.kind = 'leaving'
-   and not exists (
-     select 1
-       from public.locality_memberships x
-      where x.user_id = lm.user_id and x.kind = 'current'
-   );
+   and lm.locality_id = '00000000-0000-4000-8000-000000000001'
+   and (lm.kind <> 'current' or lm.leaving_at is not null);
+
+update public.member_entry_moments mem
+   set moment = 'resident', arrival_date = null, departure_date = null,
+       destination_locality_id = null, updated_at = now()
+ from demo_membros m
+ where mem.user_id = m.id
+   and (mem.moment <> 'resident' or mem.destination_locality_id is not null);
 
 -- ══════════════════════════════════════════════════════════════════════════
 -- 2. Família
@@ -801,6 +810,30 @@ on conflict (id) do nothing;
 -- daqui, só no banco local e de forma idempotente.
 -- ══════════════════════════════════════════════════════════════════════════
 
+-- Publicações de versões anteriores apontavam para as quase-duplicatas (ids
+-- dd2…) e para os grupos de prova ("Grupo COM-00…"), que saem logo abaixo. O
+-- mapa é o mesmo que vale para conversas e avisos: antes de apagar o grupo, a
+-- publicação vai para o grupo do seed do mesmo tema. Publicação em grupo de
+-- prova não tem equivalente — sai junto com o grupo, porque publicação sem
+-- grupo não existe no produto.
+update public.posts p
+   set group_id = g.novo
+  from (values
+    ('dd200000-0000-4000-8000-000000000001'::uuid, '60000000-0000-4000-8000-000000000001'::uuid),
+    ('dd200000-0000-4000-8000-000000000002'::uuid, '60000000-0000-4000-8000-000000000002'::uuid),
+    ('dd200000-0000-4000-8000-000000000003'::uuid, '60000000-0000-4000-8000-000000000003'::uuid),
+    ('dd200000-0000-4000-8000-000000000004'::uuid, '60000000-0000-4000-8000-000000000004'::uuid),
+    ('dd200000-0000-4000-8000-000000000005'::uuid, '60000000-0000-4000-8000-000000000007'::uuid),
+    ('dd200000-0000-4000-8000-000000000006'::uuid, '60000000-0000-4000-8000-000000000006'::uuid)
+  ) as g(antigo, novo)
+ where p.group_id = g.antigo;
+
+delete from public.posts p
+ using public.groups g
+ where p.group_id = g.id
+   and g.locality_id = '00000000-0000-4000-8000-000000000001'
+   and g.name like 'Grupo COM-00%';
+
 delete from public.groups
  where locality_id = '00000000-0000-4000-8000-000000000001'
    and (name like 'Grupo COM-00%' or id::text like 'dd200000-%');
@@ -876,11 +909,25 @@ values
    'text', 'Alguém conhece quem faça instalação de prateleira em parede de alvenaria? Tenho três para pendurar.', now() - interval '8 days'),
   ('dd300000-0000-4000-8000-000000000011', '00000000-0000-4000-8000-000000000001',
    'dd000000-0000-4000-8000-000000000025', '60000000-0000-4000-8000-000000000006',
-   'text', 'Testei o bolo de macaxeira com coco e ficou melhor que o da feira. Passo a receita para quem pedir aqui.', now() - interval '3 days'),
+   'text', 'Levei o bolo de macaxeira com coco para o lanche da escola e as crianças limparam a forma. Passo a receita para quem pedir aqui.', now() - interval '3 days'),
   ('dd300000-0000-4000-8000-000000000012', '00000000-0000-4000-8000-000000000001',
    'dd000000-0000-4000-8000-000000000007', '60000000-0000-4000-8000-000000000006',
-   'text', 'Almoço de domingo confirmado aqui em casa. Cada um traz um prato e eu faço o arroz.', now() - interval '5 days')
+   'text', 'Encontro das mães confirmado aqui em casa no domingo. Cada uma traz um prato e eu faço o arroz.', now() - interval '5 days')
 on conflict (id) do nothing;
+
+-- O texto acompanha o tema do grupo de destino ("Mães da Cidade"): a versão
+-- anterior deixou receita de bolo e almoço de domingo num grupo de outro tema.
+-- Idempotente, e alcança o banco que já tem as linhas.
+update public.posts p
+   set content = n.texto
+  from (values
+    ('dd300000-0000-4000-8000-000000000011'::uuid,
+     'Levei o bolo de macaxeira com coco para o lanche da escola e as crianças limparam a forma. Passo a receita para quem pedir aqui.'),
+    ('dd300000-0000-4000-8000-000000000012'::uuid,
+     'Encontro das mães confirmado aqui em casa no domingo. Cada uma traz um prato e eu faço o arroz.')
+  ) as n(id, texto)
+ where p.id = n.id
+   and p.content <> n.texto;
 
 insert into public.comments (id, post_id, user_id, content, created_at)
 values
