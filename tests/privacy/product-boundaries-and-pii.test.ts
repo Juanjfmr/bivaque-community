@@ -38,6 +38,10 @@ function infringeLimites(caminho: string, conteudo: string): boolean {
 
 const EXCLUDED_DIRS = new Set([
   "node_modules",
+  "build",
+  ".gradle",
+  "Pods",
+  "DerivedData",
   ".next",
   "dist",
   "coverage",

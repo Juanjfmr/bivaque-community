@@ -1,5 +1,6 @@
-﻿import { generateKeyPairSync } from "node:crypto"
+import { generateKeyPairSync } from "node:crypto"
 import { describe, expect, it } from "vitest"
+import { adaptadorComDependencias } from "web/lib/push/adaptador"
 import { criarAndroid } from "web/lib/push/android"
 import { servidorAndroid } from "./servidor-falso"
 
@@ -32,6 +33,8 @@ describe("Android contra servidor local", () => {
         [404, "", "destino"],
         [410, "", "destino"],
         [400, "UNREGISTERED", "destino"],
+        [403, "SENDER_ID_MISMATCH", "destino"],
+        [400, "INVALID_ARGUMENT token", "destino"],
         [429, "", "temporaria"],
         [503, "", "temporaria"],
       ] as const) {
@@ -41,14 +44,47 @@ describe("Android contra servidor local", () => {
           categoria,
         })
       }
+      servidor.roteiro(403, "SENDER_ID_MISMATCH")
+      const apagados: string[] = []
+      const adaptador = adaptadorComDependencias({
+        inscricoes: async () => [
+          { id: "1", kind: "android", destination: "destino", keyP256dh: "", keyAuth: "" },
+        ],
+        marcarSucesso: async () => undefined,
+        apagar: async (id) => {
+          apagados.push(id)
+        },
+        enviar: async (inscricao, conteudo) => cliente.enviar(inscricao.destination, conteudo),
+      })
+      expect(
+        await adaptador.send({
+          id: "1",
+          recipient: "1",
+          channel: "push",
+          type: "comment",
+          payload: {},
+          attempts: 0,
+          updatedAt: 0,
+        }),
+      ).toEqual({ ok: true })
+      expect(apagados).toEqual(["1"])
+      expect(cliente.ligado).toBe(true)
       servidor.roteiro(200, "", 250)
       await expect(cliente.enviar("destino", conteudo)).rejects.toMatchObject({
         categoria: "temporaria",
       })
+      servidor.oauthResposta(400)
+      const oauthRecusado = criar()
+      await expect(oauthRecusado.enviar("destino", conteudo)).rejects.toMatchObject({
+        status: 400,
+        categoria: "credencial",
+      })
+      expect(oauthRecusado.ligado).toBe(false)
+      /* Adaptador desligado globalmente apos credencial recusada. */
       servidor.roteiro(401)
       const recusado = criar()
       await expect(recusado.enviar("destino", conteudo)).rejects.toMatchObject({
-        categoria: "credencial",
+        categoria: "temporaria",
       })
       expect(recusado.ligado).toBe(false)
     } finally {

@@ -1,4 +1,4 @@
-﻿import { type KeyObject, verify } from "node:crypto"
+import { type KeyObject, verify } from "node:crypto"
 import { createServer as httpServer } from "node:http"
 import { createServer as http2Server } from "node:http2"
 
@@ -17,6 +17,7 @@ export async function servidorAndroid(chave: KeyObject) {
   let motivo = ""
   let atraso = 0
   let oauth = 0
+  let oauthStatus = 200
   const corpos: unknown[] = []
   const server = httpServer((req, res) => {
     let body = ""
@@ -27,8 +28,14 @@ export async function servidorAndroid(chave: KeyObject) {
       if (req.url === "/token") {
         oauth++
         const assertion = new URLSearchParams(body).get("assertion") ?? ""
-        res.writeHead(verificar(assertion, chave, "RSA-SHA256") ? 200 : 401)
-        res.end(JSON.stringify({ access_token: "acesso-sintetico", expires_in: 3600 }))
+        res.writeHead(verificar(assertion, chave, "RSA-SHA256") ? oauthStatus : 401)
+        res.end(
+          JSON.stringify(
+            oauthStatus === 200
+              ? { access_token: "acesso-sintetico", expires_in: 3600 }
+              : { error: "invalid_grant" },
+          ),
+        )
       } else {
         corpos.push(JSON.parse(body))
         setTimeout(() => {
@@ -44,6 +51,9 @@ export async function servidorAndroid(chave: KeyObject) {
   return {
     base: `http://127.0.0.1:${address.port}`,
     corpos,
+    oauthResposta(s: number) {
+      oauthStatus = s
+    },
     get oauth() {
       return oauth
     },
@@ -62,6 +72,13 @@ export async function servidorIos(chave: KeyObject) {
   const corpos: unknown[] = []
   // HTTP/2 sem TLS só no servidor local injetado; produção usa HTTPS fixo.
   const server = http2Server()
+  let conexoes = 0
+  const sessoes = new Set<import("node:http2").ServerHttp2Session>()
+  server.on("session", (sessao) => {
+    conexoes++
+    sessoes.add(sessao)
+    sessao.on("close", () => sessoes.delete(sessao))
+  })
   server.on("stream", (stream, headers) => {
     let body = ""
     stream.on("data", (chunk: Buffer) => {
@@ -88,11 +105,18 @@ export async function servidorIos(chave: KeyObject) {
   return {
     base: `http://127.0.0.1:${address.port}`,
     corpos,
+    get conexoes() {
+      return conexoes
+    },
     roteiro(s: number, m = "", a = 0) {
       status = s
       motivo = m
       atraso = a
     },
-    fechar: () => new Promise<void>((resolve) => server.close(() => resolve())),
+    fechar: () =>
+      new Promise<void>((resolve) => {
+        for (const sessao of sessoes) sessao.destroy()
+        server.close(() => resolve())
+      }),
   }
 }

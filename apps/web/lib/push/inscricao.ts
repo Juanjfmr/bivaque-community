@@ -61,8 +61,13 @@ export function validarDestino(
     const destination = destinoValido(valor)
     return destination === null ? null : { kind, destination }
   }
+  if (kind === "ios") {
+    return typeof valor === "string" && /^[0-9a-fA-F]{64,200}$/.test(valor)
+      ? { kind, destination: valor }
+      : null
+  }
   if (
-    (kind === "android" || kind === "ios") &&
+    kind === "android" &&
     typeof valor === "string" &&
     valor.length <= 4096 &&
     /^[\x21-\x7e]+$/.test(valor)

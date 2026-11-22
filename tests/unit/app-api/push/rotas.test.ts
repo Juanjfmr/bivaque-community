@@ -196,12 +196,11 @@ describe("rota de push do app", () => {
     it.each(["android", "ios"])("registra %s sem chaves nem rótulo", async (kind) => {
       const mock = mockClient()
       autenticar(mock)
-      expect((await inscrever(req("POST", BASE, { kind, destination: "token-123" }))).status).toBe(
-        201,
-      )
+      const destination = kind === "ios" ? "a".repeat(64) : "token-123"
+      expect((await inscrever(req("POST", BASE, { kind, destination }))).status).toBe(201)
       expect(mock.chamadas.find((chamada) => chamada.op === "rpc")?.corpo).toEqual({
         p_kind: kind,
-        p_destination: "token-123",
+        p_destination: destination,
         p_key_p256dh: null,
         p_key_auth: null,
       })
@@ -219,6 +218,8 @@ describe("rota de push do app", () => {
     })
 
     it.each([
+      ["ios nao hexadecimal", { kind: "ios", destination: "g".repeat(64) }],
+      ["tipo ausente", { destination: DESTINO, keys: { p256dh: CHAVE, auth: CHAVE } }],
       ["tipo desconhecido", { kind: "outro", destination: "token" }],
       ["token longo", { kind: "android", destination: "a".repeat(4097) }],
       ["token com espaço", { kind: "ios", destination: "a b" }],
@@ -282,6 +283,21 @@ describe("rota de push do app", () => {
   })
 
   describe("remoção", () => {
+    it.each([
+      [{ destination: DESTINO }, 200, "web"],
+      [{ kind: "android", destination: "token" }, 200, "android"],
+      [{ kind: "ios", destination: "a".repeat(64) }, 200, "ios"],
+      [{ kind: "outro", destination: DESTINO }, 400, null],
+    ])("DELETE %j", async (corpo, status, kind) => {
+      const mock = mockClient()
+      autenticar(mock)
+      expect((await apagar(req("DELETE", BASE, corpo))).status).toBe(status)
+      if (kind)
+        expect(mock.chamadas).toContainEqual(
+          expect.objectContaining({ coluna: "kind", valor: kind }),
+        )
+    })
+
     it("apaga só o destino deste aparelho e do dono da sessão", async () => {
       const mock = mockClient({ removidos: [{ id: "a1" }] })
       autenticar(mock)

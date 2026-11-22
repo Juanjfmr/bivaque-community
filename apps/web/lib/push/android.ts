@@ -1,4 +1,5 @@
 import { createSign } from "node:crypto"
+import { log } from "../logger"
 import { classificar, FalhaNativa } from "./classificacao"
 import type { ConteudoDoPush } from "./frases"
 
@@ -33,7 +34,11 @@ export function criarAndroid(config: ConfigAndroid) {
           }),
           signal: AbortSignal.timeout(config.timeout ?? 10_000),
         })
-        if (!response.ok) throw classificar("android", response.status)
+        if (!response.ok) {
+          const falha = new FalhaNativa("android", response.status, "credencial")
+          log.error("push credential refused", { type: "android", status: response.status })
+          throw falha
+        }
         const json: unknown = await response.json()
         if (
           !json ||

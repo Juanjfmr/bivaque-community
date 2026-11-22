@@ -3686,16 +3686,6 @@ export type Database = {
         }
         Returns: undefined
       }
-      reserve_push_deliveries: {
-        Args: { p_actor_user_id: string; p_type: string; p_user_id: string }
-        Returns: {
-          id: string
-          kind: string
-          destination: string
-          key_p256dh: string | null
-          key_auth: string | null
-        }[]
-      }
       register_service_request_photo: {
         Args: { p_path: string; p_position: number; p_request_id: string }
         Returns: string
@@ -3768,6 +3758,16 @@ export type Database = {
           p_token_digest: string
         }
         Returns: string
+      }
+      reserve_push_deliveries: {
+        Args: { p_actor_user_id: string; p_type: string; p_user_id: string }
+        Returns: {
+          destination: string
+          id: string
+          key_auth: string
+          key_p256dh: string
+          kind: string
+        }[]
       }
       resolve_report: {
         Args: {

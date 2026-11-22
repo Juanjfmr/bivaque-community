@@ -77,7 +77,12 @@ export async function DELETE(request: NextRequest): Promise<NextResponse> {
   if (porta !== "ok") return responder(request, { erro: porta }, 403)
 
   const lido = await lerCorpoJson(request)
-  const destino = lido.ok ? validarDestino(lido.corpo) : null
+  const destino = lido.ok
+    ? validarDestino({
+        ...lido.corpo,
+        kind: lido.corpo["kind"] === undefined ? "web" : lido.corpo["kind"],
+      })
+    : null
   if (destino === null) return responder(request, { erro: "dados-invalidos" }, 400)
 
   const userId = auth.sessao.usuario.id

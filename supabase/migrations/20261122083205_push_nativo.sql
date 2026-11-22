@@ -48,7 +48,7 @@ begin
   );
 end;
 $$;
-revoke all on function public.register_push_subscription(text, text, text, text) from public, anon;
+revoke all on function public.register_push_subscription(text, text, text, text) from public, anon, service_role;
 grant execute on function public.register_push_subscription(text, text, text, text) to authenticated;
 
 create function private.remove_native_push_on_preference() returns trigger

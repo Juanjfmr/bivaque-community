@@ -1,4 +1,4 @@
-﻿import type { ChannelAdapter, OutboxMessage } from "@bivaque/domain"
+import type { ChannelAdapter, OutboxMessage } from "@bivaque/domain"
 import type { SupabaseClient } from "@supabase/supabase-js"
 import type { Database } from "supabase/database.generated"
 import * as webpush from "web-push"
@@ -13,14 +13,14 @@ import { criarIos } from "./ios"
 /**
  * O adaptador de push do outbox (ADR-20261107, item 3).
  *
- * Um aviso por tipo, nÃ£o por aparelho: a linha do outbox alcanÃ§a todas as
- * inscriÃ§Ãµes web do destinatÃ¡rio. Destino recusado como inexistente (404/410)
- * apaga a inscriÃ§Ã£o â€” o aparelho nÃ£o existe mais. Falha temporÃ¡ria volta pelo
+ * Um aviso por tipo, não por aparelho: a linha do outbox alcança todas as
+ * inscrições web do destinatário. Destino recusado como inexistente (404/410)
+ * apaga a inscrição — o aparelho não existe mais. Falha temporária volta pelo
  * outbox, com o mesmo limite de lote e a mesma reserva.
  *
  * Sem as chaves VAPID no ambiente o canal fica desligado e responde `ok` sem
- * erro: nÃ£o Ã© falha do aviso, Ã© o produto sem push configurado. Nenhuma chave
- * privada passa por aqui para o cliente; sÃ³ o servidor a usa.
+ * erro: não é falha do aviso, é o produto sem push configurado. Nenhuma chave
+ * privada passa por aqui para o cliente; só o servidor a usa.
  */
 
 export type InscricaoWeb = Readonly<{
@@ -56,12 +56,12 @@ export type DependenciasDoPush = Readonly<{
 function usuarioDaMensagem(message: OutboxMessage): string | null {
   const doCorpo = message.payload["user_id"]
   if (typeof doCorpo === "string" && doCorpo !== "") return doCorpo
-  // No canal push o `recipient` Ã© o id do membro, nunca um endereÃ§o.
+  // No canal push o `recipient` é o id do membro, nunca um endereço.
   return message.recipient === "" ? null : message.recipient
 }
 
 /**
- * O adaptador com as dependÃªncias injetadas: Ã© esta funÃ§Ã£o que os testes
+ * O adaptador com as dependências injetadas: é esta função que os testes
  * exercitam sem banco nem provedor.
  */
 export function adaptadorComDependencias(deps: DependenciasDoPush): ChannelAdapter {
@@ -89,8 +89,8 @@ export function adaptadorComDependencias(deps: DependenciasDoPush): ChannelAdapt
       let falhas = 0
 
       for (const inscricao of inscricoes) {
-        // A lista de destinos vale aqui tambÃ©m: a linha pode ter entrado pelo
-        // Data API, e o servidor nÃ£o faz pedido para alvo escolhido pelo cliente.
+        // A lista de destinos vale aqui também: a linha pode ter entrado pelo
+        // Data API, e o servidor não faz pedido para alvo escolhido pelo cliente.
         if (
           (!inscricao.kind || inscricao.kind === "web") &&
           !destinoDePushPermitido(inscricao.destination)
@@ -121,8 +121,8 @@ export function adaptadorComDependencias(deps: DependenciasDoPush): ChannelAdapt
         }
       }
 
-      // Uma entrega jÃ¡ aceita basta para a linha nÃ£o ser repetida: repetir
-      // mandaria a mesma notificaÃ§Ã£o de novo aos aparelhos que receberam.
+      // Uma entrega já aceita basta para a linha não ser repetida: repetir
+      // mandaria a mesma notificação de novo aos aparelhos que receberam.
       if (falhas === 0 || entregues > 0) return { ok: true }
       return { ok: false, error: "push delivery failed" }
     },
@@ -229,7 +229,7 @@ export function criarAdaptadorPush(opcoes: OpcoesDoAdaptadorPush): ChannelAdapte
   })
 }
 
-/** Canal desligado: sem chaves, nada sai e nada Ã© retentado. */
+/** Canal desligado: sem chaves, nada sai e nada é retentado. */
 function adaptadorDesligado(): ChannelAdapter {
   return {
     async send() {
@@ -239,8 +239,8 @@ function adaptadorDesligado(): ChannelAdapter {
 }
 
 /**
- * O adaptador real. Devolve `null` quando as chaves nÃ£o estÃ£o configuradas ou
- * o cliente de serviÃ§o nÃ£o existe; `createChannelAdapters` entÃ£o usa o canal
+ * O adaptador real. Devolve `null` quando as chaves não estão configuradas ou
+ * o cliente de serviço não existe; `createChannelAdapters` então usa o canal
  * desligado.
  */
 export function adaptadorPush(): ChannelAdapter | null {
@@ -281,7 +281,7 @@ export function adaptadorPush(): ChannelAdapter | null {
       chavePrivada: chavePrivada ?? "",
       android,
       ios,
-      // Contato exigido pelo padrÃ£o VAPID; nÃ£o Ã© segredo.
+      // Contato exigido pelo padrão VAPID; não é segredo.
       assunto: process.env["WEB_PUSH_CONTACT"] ?? "mailto:contato@bivaque.app",
     })
   } catch {

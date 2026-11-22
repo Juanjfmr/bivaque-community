@@ -1,6 +1,6 @@
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(24);
+select plan(28);
 \ir fixtures/foundation.inc
 
 set local role authenticated;
@@ -9,6 +9,8 @@ select set_config('request.jwt.claim.role', 'authenticated', true);
 select lives_ok($$select public.register_push_subscription('android', 'token-android', null, null)$$, 'registra android');
 select lives_ok($$select public.register_push_subscription('ios', 'token-ios', null, null)$$, 'registra ios');
 select throws_ok($$select public.register_push_subscription('android', 'com espaco', null, null)$$, '22023', 'invalid push subscription', 'recusa espaço');
+select throws_ok($$select public.register_push_subscription('android', E'abc\n', null, null)$$, '22023', 'invalid push subscription', 'recusa controle');
+select throws_ok($$select public.register_push_subscription('android', 'não-ascii', null, null)$$, '22023', 'invalid push subscription', 'recusa fora de ASCII');
 select throws_ok($$select public.register_push_subscription('ios', '', null, null)$$, '22023', 'invalid push subscription', 'recusa vazio');
 select throws_ok($$select public.register_push_subscription('android', repeat('a', 4097), null, null)$$, '22023', 'invalid push subscription', 'recusa token longo');
 select throws_ok($$select public.register_push_subscription('outro', 'token', null, null)$$, '22023', 'invalid push subscription', 'recusa tipo desconhecido');
@@ -63,7 +65,12 @@ reset role;
 set local role authenticated;
 select throws_ok($$select * from public.reserve_push_deliveries('10000000-0000-4000-8000-000000000001', 'comment', null)$$, '42501', null, 'authenticated não reserva');
 reset role;
+insert into public.notification_channel_preferences (user_id, notification_type, channel, enabled) values ('10000000-0000-4000-8000-000000000001', 'messages', 'push', true) on conflict (user_id, notification_type, channel) do update set enabled = true;
+insert into public.push_subscriptions (user_id, kind, destination) values ('10000000-0000-4000-8000-000000000001', 'ios', 'delete-trigger');
+delete from public.notification_channel_preferences where user_id = '10000000-0000-4000-8000-000000000001' and channel = 'push' and notification_type = 'messages';
+select is((select count(*)::int from public.push_subscriptions where destination = 'delete-trigger'), 0, 'delete da ultima preferencia apaga nativas');
 set local role anon;
+select throws_ok($$select * from public.push_subscriptions$$, '42501', null, 'anon nao le inscricoes');
 select throws_ok($$select public.register_push_subscription('ios', 'anon', null, null)$$, '42501', null, 'anon não registra');
 reset role;
 insert into public.push_subscriptions (user_id, kind, destination, created_at) values

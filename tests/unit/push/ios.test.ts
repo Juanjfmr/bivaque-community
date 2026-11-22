@@ -1,4 +1,4 @@
-﻿import { generateKeyPairSync } from "node:crypto"
+import { generateKeyPairSync } from "node:crypto"
 import { describe, expect, it } from "vitest"
 import { criarIos } from "web/lib/push/ios"
 import { servidorIos } from "./servidor-falso"
@@ -19,7 +19,12 @@ describe("iOS contra servidor local", () => {
           timeout: 100,
         })
       const cliente = criar()
-      await cliente.enviar("destino", conteudo)
+      await cliente.enviar("a".repeat(64), conteudo)
+      await cliente.enviar("a".repeat(64), conteudo)
+      expect(servidor.conexoes).toBe(1)
+      await expect(cliente.enviar("inv?lido", conteudo)).rejects.toMatchObject({
+        categoria: "destino",
+      })
       expect(servidor.corpos[0]).toEqual({
         aps: { alert: { title: conteudo.title, body: conteudo.body } },
         path: conteudo.destino,
@@ -33,18 +38,18 @@ describe("iOS contra servidor local", () => {
         [503, "", "temporaria"],
       ] as const) {
         servidor.roteiro(status, motivo)
-        await expect(cliente.enviar("destino", conteudo)).rejects.toMatchObject({
+        await expect(cliente.enviar("a".repeat(64), conteudo)).rejects.toMatchObject({
           status,
           categoria,
         })
       }
       servidor.roteiro(200, "", 250)
-      await expect(cliente.enviar("destino", conteudo)).rejects.toMatchObject({
+      await expect(cliente.enviar("a".repeat(64), conteudo)).rejects.toMatchObject({
         categoria: "temporaria",
       })
       servidor.roteiro(403)
       const recusado = criar()
-      await expect(recusado.enviar("destino", conteudo)).rejects.toMatchObject({
+      await expect(recusado.enviar("a".repeat(64), conteudo)).rejects.toMatchObject({
         categoria: "credencial",
       })
       expect(recusado.ligado).toBe(false)
