@@ -1,4 +1,5 @@
 import type { NextRequest, NextResponse } from "next/server"
+import { type CidadeDaSessao, cidadeDaSessao } from "../../../../../lib/app-api/cidade-da-sessao"
 import { exigirSessao, opcoesDoApp, responder } from "../../../../../lib/app-api/rota-do-app"
 import { log } from "../../../../../lib/logger"
 
@@ -34,20 +35,21 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   const cliente = sessao.sessao.cliente
   const userId = sessao.sessao.usuario.id
 
-  // Quem ainda não tem vínculo com a cidade não tem etapa de interesses.
-  const cidade = await cliente
-    .from("locality_memberships")
-    .select("locality_id")
-    .eq("user_id", userId)
-    .limit(1)
-    .maybeSingle()
-
-  if (cidade.error) {
-    log.error("entry groups: locality read failed", { error: cidade.error.message, userId })
+  // Quem ainda não tem vínculo com a cidade não tem etapa de interesses. A
+  // cidade é a `current` da sessão — quem está de mudança tem duas linhas e a
+  // leitura sem o filtro pegava a que está deixando (BUG-CIDADE-GRUPOS).
+  let cidade: CidadeDaSessao | null
+  try {
+    cidade = await cidadeDaSessao(cliente, userId)
+  } catch (erro) {
+    log.error("entry groups: locality read failed", {
+      error: erro instanceof Error ? erro.message : "unknown",
+      userId,
+    })
     return responder(request, { erro: "leitura-indisponivel" }, 503, sessao.sessao.cabecalhos)
   }
 
-  if (cidade.data === null) {
+  if (cidade === null) {
     // Sem vínculo não há cidade para escopar grupos: a etapa de interesses só
     // existe depois do provisionamento confirmado. 409 é a resposta honesta —
     // lista vazia faria a tela dizer "nenhum grupo" para um cadastro que ainda
@@ -60,7 +62,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   const grupos = await cliente
     .from("groups")
     .select("id, name, description")
-    .eq("locality_id", cidade.data.locality_id)
+    .eq("locality_id", cidade.id)
     .eq("visibility", "public")
     .order("name", { ascending: true })
     .limit(LIMITE_DE_GRUPOS)

@@ -1,4 +1,5 @@
 import type { NextRequest, NextResponse } from "next/server"
+import { type CidadeDaSessao, cidadeDaSessao } from "../../../../../lib/app-api/cidade-da-sessao"
 import { avancarMarcador } from "../../../../../lib/app-api/marcador-da-entrada"
 import {
   clienteDeServicoOuNulo,
@@ -84,26 +85,27 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   if (servico === null) return respostaIndisponivel(request)
 
   const userId = sessao.sessao.usuario.id
-  // A cidade é a do vínculo já provisionado, lida pelo id da sessão: um
-  // `locality_id` no corpo não escolhe a cidade de ninguém. Sem vínculo não há
-  // cidade para escopar os interesses — a etapa anterior não terminou.
-  const { data: vinculo, error: vinculoError } = await servico
-    .from("locality_memberships")
-    .select("locality_id")
-    .eq("user_id", userId)
-    .limit(1)
-    .maybeSingle()
-  if (vinculoError) {
-    log.error("entry interests: locality read failed", { error: vinculoError.message })
+  // A cidade é a do vínculo `current` da SESSÃO, lida pelo mesmo helper das
+  // outras rotas do app: um `locality_id` no corpo não escolhe a cidade de
+  // ninguém, e quem está de mudança não tem a cidade da saída escolhida no
+  // lugar da atual. Sem vínculo não há cidade para escopar os interesses — a
+  // etapa anterior não terminou.
+  let cidade: CidadeDaSessao | null
+  try {
+    cidade = await cidadeDaSessao(sessao.sessao.cliente, userId)
+  } catch (erro) {
+    log.error("entry interests: locality read failed", {
+      error: erro instanceof Error ? erro.message : "unknown",
+    })
     return responder(request, { erro: "indisponivel" }, 503, sessao.sessao.cabecalhos)
   }
-  if (vinculo === null) {
+  if (cidade === null) {
     return responder(request, { erro: "sem-cidade" }, 409, sessao.sessao.cabecalhos)
   }
 
   const { error: gravacaoError } = await servico.rpc("record_user_group_interests", {
     p_user_id: userId,
-    p_locality_id: vinculo.locality_id,
+    p_locality_id: cidade.id,
     p_group_ids: grupos.grupos,
   })
   if (gravacaoError) {

@@ -32,24 +32,40 @@ const mockVinculo = vi.fn()
 const mockRpc = vi.fn()
 const mockMarcador = vi.fn()
 const mockEq = vi.fn()
-// O cliente do USUÁRIO não aparece neste caminho: a tabela é operacional e só
-// o cliente de serviço, autorizado no código, lê e grava. Se a rota tocar nele,
-// os testes falham.
-const mockClienteDoUsuario = vi.fn()
+const mockKind = vi.fn()
+const mockOrdem = vi.fn()
 
-function clienteDeServico() {
+function clienteDoUsuario() {
   return {
     from: (tabela: string) => {
-      if (tabela === "entry_progress") return { upsert: mockMarcador }
       if (tabela !== "locality_memberships") throw new Error(`tabela inesperada: ${tabela}`)
       return {
         select: () => ({
           eq: (coluna: string, valor: string) => {
             mockEq(coluna, valor)
-            return { limit: () => ({ maybeSingle: mockVinculo }) }
+            return {
+              eq: (colunaDoKind: string, kind: string) => {
+                mockKind(colunaDoKind, kind)
+                return {
+                  order: (colunaDaOrdem: string, opcoes: unknown) => {
+                    mockOrdem(colunaDaOrdem, opcoes)
+                    return { limit: () => ({ maybeSingle: mockVinculo }) }
+                  },
+                }
+              },
+            }
           },
         }),
       }
+    },
+  }
+}
+
+function clienteDeServico() {
+  return {
+    from: (tabela: string) => {
+      if (tabela === "entry_progress") return { upsert: mockMarcador }
+      throw new Error(`tabela inesperada: ${tabela}`)
     },
     rpc: mockRpc,
   }
@@ -60,7 +76,7 @@ function sessaoAutenticada() {
     estado: "autenticada",
     via: "cookie",
     usuario: PESSOA,
-    cliente: { from: mockClienteDoUsuario, rpc: mockClienteDoUsuario },
+    cliente: clienteDoUsuario(),
     cabecalhos: {},
   }
 }
@@ -212,6 +228,7 @@ describe("POST /api/app/entry/interests", () => {
     expect(resposta.status).toBe(200)
     expect(await resposta.json()).toEqual({ ok: true, grupos: [GRUPO_A, GRUPO_B] })
     expect(mockEq).toHaveBeenCalledWith("user_id", PESSOA.id)
+    expect(mockKind).toHaveBeenCalledWith("kind", "current")
     expect(mockRpc).toHaveBeenCalledTimes(1)
     expect(mockRpc).toHaveBeenCalledWith("record_user_group_interests", {
       p_user_id: PESSOA.id,
@@ -222,7 +239,6 @@ describe("POST /api/app/entry/interests", () => {
       { user_id: PESSOA.id, versao: 2, etapa: "combinado", estado: {} },
       { onConflict: "user_id" },
     )
-    expect(mockClienteDoUsuario).not.toHaveBeenCalled()
   })
 
   it("falha ao avançar o marcador vira 503, não sucesso sem retomada", async () => {
