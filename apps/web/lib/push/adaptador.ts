@@ -39,7 +39,11 @@ export class FalhaDoProvedor extends Error {
 }
 
 export type DependenciasDoPush = Readonly<{
-  inscricoes: (userId: string) => Promise<readonly InscricaoWeb[]>
+  inscricoes: (
+    userId: string,
+    tipoDoAviso: string,
+    autorId: string | null,
+  ) => Promise<readonly InscricaoWeb[]>
   marcarSucesso: (id: string) => Promise<void>
   apagar: (id: string) => Promise<void>
   enviar: (inscricao: InscricaoWeb, conteudo: ConteudoDoPush) => Promise<void>
@@ -64,7 +68,13 @@ export function adaptadorComDependencias(deps: DependenciasDoPush): ChannelAdapt
 
       let inscricoes: readonly InscricaoWeb[]
       try {
-        inscricoes = await deps.inscricoes(userId)
+        inscricoes = await deps.inscricoes(
+          userId,
+          message.type,
+          typeof message.payload["actor_user_id"] === "string"
+            ? message.payload["actor_user_id"]
+            : null,
+        )
       } catch {
         return { ok: false, error: "push subscription lookup failed" }
       }
@@ -128,15 +138,15 @@ export function criarAdaptadorPush(opcoes: OpcoesDoAdaptadorPush): ChannelAdapte
   webpush.setVapidDetails(opcoes.assunto, opcoes.chavePublica, opcoes.chavePrivada)
 
   return adaptadorComDependencias({
-    async inscricoes(userId) {
-      const { data, error } = await opcoes.cliente
-        .from("push_subscriptions")
-        .select("id,destination,key_p256dh,key_auth")
-        .eq("user_id", userId)
-        .eq("kind", "web")
+    async inscricoes(userId, tipoDoAviso, autorId) {
+      const { data, error } = await opcoes.cliente.rpc("reserve_push_deliveries", {
+        p_user_id: userId,
+        p_type: tipoDoAviso,
+        p_actor_user_id: autorId as string,
+      })
       if (error) throw error
       return (data ?? []).flatMap((linha) => {
-        if (linha.key_p256dh === null || linha.key_auth === null) return []
+        if (linha.kind !== "web" || linha.key_p256dh === null || linha.key_auth === null) return []
         return [
           {
             id: linha.id,

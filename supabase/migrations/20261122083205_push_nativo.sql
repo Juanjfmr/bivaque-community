@@ -55,7 +55,11 @@ create function private.remove_native_push_on_preference() returns trigger
 language plpgsql security definer set search_path = ''
 as $$
 begin
-  if old.channel = 'push' and (tg_op = 'DELETE' or not new.enabled) then
+  if old.channel = 'push' and (tg_op = 'DELETE' or not new.enabled)
+     and not exists (
+       select 1 from public.notification_channel_preferences
+       where user_id = old.user_id and channel = 'push' and enabled = true
+     ) then
     delete from public.push_subscriptions
     where user_id = old.user_id and kind in ('android', 'ios');
   end if;
