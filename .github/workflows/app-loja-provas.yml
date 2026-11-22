@@ -1,0 +1,187 @@
+name: Provas do app de loja
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - apps/app/android/**
+      - apps/app/ios/**
+      - apps/app/lib/nativo/**
+      - apps/app/src/nativo/**
+      - apps/app/lib/api/cliente.ts
+      - apps/app/capacitor.config.ts
+      - tests/nativo/**
+      - .github/workflows/app-loja-provas.yml
+
+permissions:
+  contents: read
+
+jobs:
+  android:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+        with:
+          run_install: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: pnpm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - run: pnpm install --frozen-lockfile
+      - name: Cache Supabase stack images
+        id: supabase-images
+        uses: actions/cache@v6
+        with:
+          path: /tmp/supabase-images.tar
+          key: supabase-images-2.107.0-postgres-17.6.1.136-gotrue-v2.190.0-postgrest-v14.13-storage-api-v1.60.20-postgres-meta-v0.96.6-studio-2026.06.15-sha-a412298-kong-2.8.1-imgproxy-v3.8.0-mailpit-v1.22.3
+
+      - name: Load Supabase stack images from cache
+        if: steps.supabase-images.outputs.cache-hit == 'true'
+        run: docker load -i /tmp/supabase-images.tar
+
+      - name: Pre-pull Supabase stack images
+        if: steps.supabase-images.outputs.cache-hit != 'true'
+        run: |
+          pull() {
+            local ecr="public.ecr.aws/supabase/$1" hub="$2"
+            for delay in 0 10 30 60; do
+              sleep "$delay"
+              docker pull -q "$ecr" && return 0
+            done
+            docker pull -q "$hub" && docker tag "$hub" "$ecr"               || echo "::warning::$1 nao baixou do ECR nem do Docker Hub; o supabase start tenta de novo"
+          }
+          pull postgres:17.6.1.136 supabase/postgres:17.6.1.136
+          pull gotrue:v2.190.0 supabase/gotrue:v2.190.0
+          pull postgrest:v14.13 postgrest/postgrest:v14.13
+          pull storage-api:v1.60.20 supabase/storage-api:v1.60.20
+          pull postgres-meta:v0.96.6 supabase/postgres-meta:v0.96.6
+          pull studio:2026.06.15-sha-a412298 supabase/studio:2026.06.15-sha-a412298
+          pull kong:2.8.1 kong:2.8.1
+          pull imgproxy:v3.8.0 darthsim/imgproxy:v3.8.0
+          pull mailpit:v1.22.3 axllent/mailpit:v1.22.3
+          # Grava o conjunto para o cache do próximo run. Imagem que faltou não
+          # derruba o passo (o pull acima já avisou); o cache simplesmente não é
+          # gravado e o run seguinte baixa de novo.
+          docker save -o /tmp/supabase-images.tar \
+            public.ecr.aws/supabase/postgres:17.6.1.136 \
+            public.ecr.aws/supabase/gotrue:v2.190.0 \
+            public.ecr.aws/supabase/postgrest:v14.13 \
+            public.ecr.aws/supabase/storage-api:v1.60.20 \
+            public.ecr.aws/supabase/postgres-meta:v0.96.6 \
+            public.ecr.aws/supabase/studio:2026.06.15-sha-a412298 \
+            public.ecr.aws/supabase/kong:2.8.1 \
+            public.ecr.aws/supabase/imgproxy:v3.8.0 \
+            public.ecr.aws/supabase/mailpit:v1.22.3 \
+            || echo "::warning::nem todas as imagens foram salvas; o proximo run baixa de novo"
+
+      - name: Start local Supabase
+        run: pnpm exec supabase start
+
+      - name: Configurar pilha e servidor
+        run: |
+          set -euo pipefail
+          pnpm exec supabase status -o env > "$RUNNER_TEMP/supabase.env"
+          . "$RUNNER_TEMP/supabase.env"
+          {
+            echo "SUPABASE_URL=$API_URL"
+            echo "SUPABASE_SERVICE_ROLE_KEY=$SERVICE_ROLE_KEY"
+            echo "NEXT_PUBLIC_SUPABASE_URL=$API_URL"
+            echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=$ANON_KEY"
+            echo "BIVAQUE_LIMITER_PEPPER=$(openssl rand -hex 32)"
+          } > apps/web/.env.local
+          pnpm exec supabase db reset --local
+          pnpm build
+          pnpm --filter web start > "$RUNNER_TEMP/web.log" 2>&1 &
+          for i in $(seq 1 120); do
+            if curl -fsS -o /dev/null http://127.0.0.1:3000; then exit 0; fi
+            sleep 2
+          done
+          echo "::error::Servidor web n?o iniciou"
+          exit 1
+      - name: Compilar APK de depura??o
+        env:
+          VITE_API_BASE: http://localhost:3000
+          VITE_SUPABASE_URL: http://localhost:54321
+        run: |
+          pnpm --filter @bivaque/app build
+          pnpm --filter @bivaque/app exec cap sync android
+          cd apps/app/android
+          ./gradlew assembleDebug
+      - name: Habilitar KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Provar no emulador
+        uses: reactivecircus/android-emulator-runner@v2.34.0
+        with:
+          api-level: 34
+          target: google_apis
+          arch: x86_64
+          disable-animations: true
+          emulator-boot-timeout: 600
+          script: |
+            adb reverse tcp:3000 tcp:3000
+            adb reverse tcp:54321 tcp:54321
+            adb install -r apps/app/android/app/build/outputs/apk/debug/app-debug.apk
+            node tests/nativo/android.mjs
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: provas-android
+          path: .visual/loja-004/nativo/
+          include-hidden-files: true
+          if-no-files-found: warn
+          retention-days: 7
+
+  ios:
+    runs-on: macos-15
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+        with:
+          run_install: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Preparar app
+        env:
+          VITE_API_BASE: https://api.example.invalid
+          VITE_SUPABASE_URL: https://storage.example.invalid
+        run: |
+          pnpm --filter @bivaque/app build
+          pnpm --filter @bivaque/app exec cap sync ios
+      - name: Compilar simulador sem assinatura
+        working-directory: apps/app/ios/App
+        run: xcodebuild -project App.xcodeproj -scheme App -sdk iphonesimulator -configuration Debug -derivedDataPath "$RUNNER_TEMP/ios-build" CODE_SIGNING_ALLOWED=NO build
+      - name: Abrir app e link no simulador
+        run: |
+          set -euo pipefail
+          mkdir -p .visual/loja-004/ios
+          device=$(xcrun simctl list devices available -j | node -e 'let s="";process.stdin.on("data",c=>s+=c);process.stdin.on("end",()=>{const d=Object.values(JSON.parse(s).devices).flat().find(x=>x.name.startsWith("iPhone"));if(!d)process.exit(1);process.stdout.write(d.udid)})')
+          xcrun simctl boot "$device" || true
+          xcrun simctl bootstatus "$device" -b
+          xcrun simctl install "$device" "$RUNNER_TEMP/ios-build/Build/Products/Debug-iphonesimulator/App.app"
+          xcrun simctl launch "$device" br.com.bivaque.app
+          sleep 20
+          xcrun simctl io "$device" screenshot .visual/loja-004/ios/01-entrada.png
+          xcrun simctl openurl "$device" bivaque://app/entrar
+          sleep 5
+          xcrun simctl io "$device" screenshot .visual/loja-004/ios/02-link.png
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: provas-ios
+          path: .visual/loja-004/ios/
+          include-hidden-files: true
+          if-no-files-found: warn
+          retention-days: 7
