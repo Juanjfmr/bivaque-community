@@ -36,7 +36,10 @@ test("iOS só prova tela renderizada e não registra diálogo como link", () => 
   assert.match(ios, /link profundo no iOS não provado no CI: o simctl pede confirmação/)
   assert.match(ios, /01-entrada-falha\.png/)
   assert.match(ios, /02-link-falha\.png/)
-  assert.match(workflow, /simctl launch --terminate-running-process --stdout=\"\$RUNNER_TEMP\/ios-console\.log\" --stderr=\"\$RUNNER_TEMP\/ios-console-error\.log\" \"\$device\" \"\$bundle_id\"/)
+  assert.match(
+    workflow,
+    /simctl launch --terminate-running-process --stdout="\$RUNNER_TEMP\/ios-console\.log" --stderr="\$RUNNER_TEMP\/ios-console-error\.log" "\$device" "\$bundle_id"/,
+  )
   assert.match(workflow, /ios-console\.log/)
   assert.match(workflow, /ios-console-error\.log/)
   assert.match(workflow, /cache: gradle/)
@@ -75,7 +78,7 @@ test("API iOS de prova aplica CORS e respostas esperadas", () => {
   assert.match(api, /request\.method === "OPTIONS"/)
   assert.match(api, /\/api\\\/localities/)
   assert.match(api, /writeHead\(401/)
-  assert.match(api, /\{"erro":"sem-sessao"\}/)
+  assert.match(api, /\{"autenticado":false,"motivo":"sem-sessao"\}/)
   assert.match(api, /request\.method\} \$\{pathname\}/)
   assert.doesNotMatch(api, /Access-Control-Allow-Credentials/)
 })
@@ -92,4 +95,20 @@ test("rede cleartext de prova só existe no overlay debug gerado pelo workflow",
   assert.match(workflow, /unzip -p .*resources\.arsc/)
   assert.match(workflow, /grep -F 'rede_de_prova'/)
   assert.doesNotMatch(workflow, /src\/main\/AndroidManifest\.xml/)
+})
+
+test("diagnóstico iOS é injetado somente na build do job", () => {
+  const iosJob = workflow.split("  ios:")[1]
+  assert.ok(iosJob)
+  assert.doesNotMatch(workflow.split("  ios:")[0], /diagnostico-ios/)
+  assert.match(iosJob, /find apps -name diagnostico-ios\.js/)
+  assert.match(
+    iosJob,
+    /cp tests\/nativo\/diagnostico-ios\.js apps\/app\/dist-nativo\/diagnostico-ios\.js/,
+  )
+  assert.match(iosJob, /<script src=/)
+  assert.match(iosJob, /GITHUB_ENV/)
+  const diagnostico = readFileSync("tests/nativo/diagnostico-ios.js", "utf8")
+  assert.match(diagnostico, /unhandledrejection/)
+  assert.match(diagnostico, /__diagnostico/)
 })

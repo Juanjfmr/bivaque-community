@@ -210,6 +210,8 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - name: Conferir isolamento do diagnóstico
+        run: test -z "$(find apps -name diagnostico-ios.js -print -quit)"
       - name: Iniciar API de prova do iOS
         run: |
           mkdir -p .visual/loja-004/ios
@@ -228,6 +230,8 @@ jobs:
           VITE_SUPABASE_URL: http://localhost:3999
         run: |
           pnpm --filter @bivaque/app build
+          cp tests/nativo/diagnostico-ios.js apps/app/dist-nativo/diagnostico-ios.js
+          node -e 'const fs=require("fs"); const p="apps/app/dist-nativo/index.html"; let s=fs.readFileSync(p,"utf8"); s=s.replace("</head>", "<script src=\"./diagnostico-ios.js\"></script></head>"); fs.writeFileSync(p,s)'
           pnpm --filter @bivaque/app exec cap sync ios
       - name: Compilar simulador sem assinatura
         working-directory: apps/app/ios/App
@@ -237,6 +241,7 @@ jobs:
           set -euo pipefail
           mkdir -p .visual/loja-004/ios
           device=$(xcrun simctl list devices available -j | node -e 'let s="";process.stdin.on("data",c=>s+=c);process.stdin.on("end",()=>{const d=Object.values(JSON.parse(s).devices).flat().find(x=>x.name.startsWith("iPhone"));if(!d)process.exit(1);process.stdout.write(d.udid)})')
+          echo "device=$device" >> "$GITHUB_ENV"
           xcrun simctl boot "$device" || true
           xcrun simctl bootstatus "$device" -b
           xcrun simctl install "$device" "$RUNNER_TEMP/ios-build/Build/Products/Debug-iphonesimulator/App.app"

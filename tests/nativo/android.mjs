@@ -72,26 +72,84 @@ function diagnostico(podeCapturar) {
     writeFileSync(join(pasta, "logcat-filtrado.log"), "Processo indisponível\n")
   }
 }
-async function passo(nome, acao) {
-  log(`Início: ${nome}`)
+const paginasInstrumentadas = new WeakSet()
+let device
+let page
+let falhou = false
+async function paginaAtual() {
+  const limite = Date.now() + 30000
+  while (Date.now() < limite) {
+    for (const view of device.webViews().filter((v) => v.pkg() === pacote)) {
+      try {
+        const atual = await view.page()
+        if (atual.isClosed()) continue
+        if (!paginasInstrumentadas.has(atual)) {
+          instrumentarRede(atual)
+          paginasInstrumentadas.add(atual)
+          atual.setDefaultTimeout(60000)
+        }
+        page = atual
+        return atual
+      } catch {
+        // A WebView pode desaparecer enquanto é consultada.
+      }
+    }
+    await esperar(500)
+  }
+  throw new Error("WebView de depuração não apareceu em 30 segundos")
+}
+async function limparCodigo() {
   try {
-    await acao()
-    captura(nome)
-    log(`OK: ${nome}`)
-  } catch (erro) {
-    log(
-      `FALHOU: ${nome}; URL ${urlSemQuery(page?.url() ?? "")}; erro ${sanitizar(erro instanceof Error ? erro.message : String(erro))}`,
-    )
-    throw new Error(`Falha no passo ${nome}; consulte a captura e o log filtrado`)
+    if (!page || page.isClosed()) await paginaAtual()
+    const campo = page.getByLabel("Código de 6 números")
+    if (await campo.isVisible()) await campo.fill("")
+    return true
+  } catch {
+    return false
   }
 }
-async function webview(device) {
-  for (let i = 0; i < 90; i++) {
-    const view = device.webViews().find((v) => v.pkg() === pacote)
-    if (view) return view.page()
-    await esperar(1000)
+async function passo(nome, acao, dependencia = true) {
+  log(`Início: ${nome}`)
+  try {
+    if (!dependencia) throw new Error("Dependência do passo falhou")
+    if (/^0[5-8]-/.test(nome)) abrir()
+    await paginaAtual()
+    await acao()
+    if (!(await limparCodigo())) throw new Error("Não foi possível limpar o campo de código")
+    captura(nome)
+    log(`OK: ${nome}`)
+    return true
+  } catch (erro) {
+    falhou = true
+    log(
+      `FALHOU: ${nome}; URL ${urlSemQuery(page?.isClosed() ? "" : (page?.url() ?? ""))}; erro ${sanitizar(erro instanceof Error ? erro.message : String(erro))}`,
+    )
+    const limpa = await limparCodigo()
+    if (limpa) {
+      try {
+        captura(nome)
+      } catch {
+        log(`Captura indisponível: ${nome}`)
+      }
+    } else log(`Captura omitida para proteger o código: ${nome}`)
+    diagnostico(false)
+    return false
   }
-  throw new Error("WebView de depuração não apareceu")
+}
+async function esperarAutenticada() {
+  const limite = Date.now() + 90000
+  while (Date.now() < limite) {
+    const atual = await paginaAtual()
+    try {
+      await atual
+        .getByRole("button", { name: "Você", exact: true })
+        .waitFor({ timeout: Math.min(5000, limite - Date.now()) })
+      return
+    } catch (erro) {
+      if (!atual.isClosed() && Date.now() >= limite) throw erro
+    }
+  }
+  throw new Error("Tela autenticada não apareceu")
 }
 function abrir() {
   adb("shell", "monkey", "-p", pacote, "1")
@@ -122,8 +180,6 @@ async function codigoDoMailpit(email, desde) {
   }
   throw new Error("Mensagem de código não chegou ao Mailpit")
 }
-let device
-let page
 try {
   const seed = readFileSync("supabase/seed.sql", "utf8")
   const email = seed.match(/'([^']*membro-rio@bivaque\.example\.invalid)'/)?.[1]
@@ -131,9 +187,6 @@ try {
   ;[device] = await _android.devices()
   if (!device) throw new Error("Emulador Android indisponível")
   abrir()
-  page = await webview(device)
-  instrumentarRede(page)
-  page.setDefaultTimeout(60000)
   await passo("01-entrada", async () => {
     const entrada = page.getByRole("button", { name: "Continuar com e-mail" })
     try {
@@ -144,35 +197,41 @@ try {
       throw new Error(`app não foi para a entrada sem sessão; URL ${urlSemQuery(page.url())}`)
     }
   })
-  await passo("02-codigo", async () => {
+  const codigoOk = await passo("02-codigo", async () => {
     await page.getByRole("button", { name: "Continuar com e-mail" }).click()
     await page.getByLabel("E-mail", { exact: true }).fill(email)
     const desde = Date.now()
     await page.getByRole("button", { name: "Enviar código" }).click()
     await page.getByLabel("Código de 6 números").fill(await codigoDoMailpit(email, desde))
-    await page.getByRole("button", { name: "Você", exact: true }).waitFor({ timeout: 90000 })
+    await esperarAutenticada()
   })
-  await passo("03-reabrir", async () => {
-    adb("shell", "am", "force-stop", pacote)
-    abrir()
-    page = await webview(device)
-    instrumentarRede(page)
-    await page.getByRole("button", { name: "Você", exact: true }).waitFor({ timeout: 90000 })
-    await page.getByRole("button", { name: "Você", exact: true }).click()
-    await page.getByText("Sua conta, seus anúncios e seus ajustes.").waitFor()
-    await page.getByText("Rio de Janeiro", { exact: true }).first().waitFor()
-    await page.getByText("Sair da conta", { exact: true }).waitFor()
-  })
-  await passo("04-sair", async () => {
-    await page.getByText("Sair da conta", { exact: true }).click()
-    await page.getByRole("button", { name: "Sair", exact: true }).click()
-    await page.getByRole("button", { name: "Continuar com e-mail" }).waitFor()
-    adb("shell", "am", "force-stop", pacote)
-    abrir()
-    page = await webview(device)
-    instrumentarRede(page)
-    await page.getByRole("button", { name: "Continuar com e-mail" }).waitFor()
-  })
+  const reabriu = await passo(
+    "03-reabrir",
+    async () => {
+      adb("shell", "am", "force-stop", pacote)
+      abrir()
+      page = await paginaAtual()
+      await page.getByRole("button", { name: "Você", exact: true }).waitFor({ timeout: 90000 })
+      await page.getByRole("button", { name: "Você", exact: true }).click()
+      await page.getByText("Sua conta, seus anúncios e seus ajustes.").waitFor()
+      await page.getByText("Rio de Janeiro", { exact: true }).first().waitFor()
+      await page.getByText("Sair da conta", { exact: true }).waitFor()
+    },
+    codigoOk,
+  )
+  await passo(
+    "04-sair",
+    async () => {
+      await page.getByText("Sair da conta", { exact: true }).click()
+      await page.getByRole("button", { name: "Sair", exact: true }).click()
+      await page.getByRole("button", { name: "Continuar com e-mail" }).waitFor()
+      adb("shell", "am", "force-stop", pacote)
+      abrir()
+      page = await paginaAtual()
+      await page.getByRole("button", { name: "Continuar com e-mail" }).waitFor()
+    },
+    reabriu,
+  )
   await passo("05-link", async () => {
     adb(
       "shell",
@@ -231,17 +290,11 @@ try {
     )
       throw new Error("Navegador do sistema não abriu")
   })
+  if (falhou) process.exitCode = 1
 } catch (erro) {
-  try {
-    const campo = page?.getByLabel("Código de 6 números")
-    if (campo && (await campo.isVisible())) await campo.fill("")
-  } catch {
-    // A captura de falha é omitida se não for possível limpar o campo sensível.
-    page = undefined
-  }
-  log(erro instanceof Error ? erro.message : "Falha inesperada")
+  log(`FALHOU: preparação; erro ${sanitizar(erro instanceof Error ? erro.message : String(erro))}`)
   process.exitCode = 1
 } finally {
-  diagnostico(Boolean(page))
+  diagnostico(await limparCodigo())
   await device?.close()
 }
