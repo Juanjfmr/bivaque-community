@@ -37,6 +37,7 @@ allowed_paths:
   - tests/privacy/push-log-redaction.test.ts
   - .gitignore
   - docs/agents/tasks/PUSH-001.task.yml
+  - docs/decisions/ADR-20261118-push-nativo-no-app-de-loja.md
   - tools/backend-kanban/public/board.json
   - tools/backend-kanban/BOARD.md
 forbidden:
