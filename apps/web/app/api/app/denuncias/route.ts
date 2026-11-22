@@ -8,8 +8,8 @@ import {
 } from "../../../../lib/app-api/rota-do-app"
 import {
   createReport,
-  type ReportMutationError,
   listOwnReports,
+  type ReportMutationError,
 } from "../../../../lib/reports/reports"
 
 export const runtime = "nodejs"
@@ -31,6 +31,7 @@ const STATUS_DO_ERRO: Readonly<Record<ReportMutationError, number>> = {
   "explicacao-longa": 400,
   "ja-denunciado": 409,
   "proprio-conteudo": 403,
+  recusado: 403,
   falha: 503,
 }
 
@@ -41,6 +42,7 @@ const MENSAGENS: Readonly<Record<ReportMutationError, string>> = {
   "explicacao-longa": "A explicação está longa demais. Encurte e tente de novo.",
   "ja-denunciado": "Você já denunciou este conteúdo. A denúncia anterior segue em análise.",
   "proprio-conteudo": "Você não pode denunciar o seu próprio conteúdo.",
+  recusado: "Sua conta não pode denunciar este conteúdo.",
   falha: "Não foi possível enviar a denúncia agora. Tente novamente.",
 }
 

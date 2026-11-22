@@ -14,8 +14,8 @@ import {
 import { MolduraContexto } from "@/src/previa-f01/moldura"
 import { TELAS_DA_ENTRADA } from "@/src/previa-f01/telas"
 import "@/src/previa-f01/previa-f01.css"
-import { ProvedorDoServidorDaEntrada, type ServidorDaEntrada } from "./contexto"
 import { AceiteDeConviteDePrestador } from "./AceiteDeConviteDePrestador"
+import { ProvedorDoServidorDaEntrada, type ServidorDaEntrada } from "./contexto"
 import { paraServidor, progressoDoServidor, verificacaoDoStatus } from "./estado"
 import { mensagemDoConvite } from "./mensagens"
 import { retornoValido } from "./retorno"
@@ -159,7 +159,7 @@ export function TelaDeEntrada() {
     if (!url.searchParams.has("prestador")) return
     url.searchParams.delete("prestador")
     window.history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`)
-  }, [tokenDoPrestador])
+  }, [])
 
   const servidor = useMemo<ServidorDaEntrada>(
     () => ({
@@ -488,9 +488,7 @@ export function TelaDeEntrada() {
             setEntrandoNoConvite(true)
             return
           }
-          window.location.assign(
-            `/app/entrar?redirect=${encodeURIComponent(retornoDoConvite)}`,
-          )
+          window.location.assign(`/app/entrar?redirect=${encodeURIComponent(retornoDoConvite)}`)
         }}
       />
     )

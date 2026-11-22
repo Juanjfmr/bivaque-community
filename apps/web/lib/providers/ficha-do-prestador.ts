@@ -2,8 +2,8 @@ import type { ProviderCategory } from "@bivaque/domain"
 import type { SupabaseClient } from "@supabase/supabase-js"
 import type { Database } from "supabase/database.generated"
 import {
-  firstFailure,
   type FieldValidation,
+  firstFailure,
   validateBio,
   validateCategory,
   validateContactPhone,
@@ -108,9 +108,10 @@ export async function salvarFichaDoPrestador(
   }
 
   const ficha = existente as LinhaDaFicha | null
-  const { error } = ficha === null
-    ? await client.from("provider_profiles").insert({ ...valores, owner_user_id: userId })
-    : await client.from("provider_profiles").update(valores).eq("id", ficha.id)
+  const { error } =
+    ficha === null
+      ? await client.from("provider_profiles").insert({ ...valores, owner_user_id: userId })
+      : await client.from("provider_profiles").update(valores).eq("id", ficha.id)
   if (error) return { ok: false, ...falhaDaFicha(error.code) }
   return { ok: true }
 }

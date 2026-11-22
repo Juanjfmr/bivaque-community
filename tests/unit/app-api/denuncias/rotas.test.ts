@@ -44,6 +44,7 @@ const linhaDaDenuncia = {
 function cliente(opcoes: Opcoes = {}) {
   const gravacoes: { tabela: string; metodo: string; valores?: unknown }[] = []
   const filtros: { tabela: string; coluna: string; valor: unknown }[] = []
+  const ors: { tabela: string; filtro: string }[] = []
 
   const resposta = (tabela: string, unico: boolean) => {
     if (opcoes.erroDeTabela === tabela) {
@@ -82,9 +83,17 @@ function cliente(opcoes: Opcoes = {}) {
 
   const from = vi.fn((tabela: string) => {
     const consulta: Record<string, unknown> = {}
-    for (const metodo of ["select", "order", "limit", "or", "in"]) consulta[metodo] = () => consulta
+    for (const metodo of ["select", "order", "limit", "in"]) consulta[metodo] = () => consulta
+    consulta["or"] = (filtro: string) => {
+      ors.push({ tabela, filtro })
+      return consulta
+    }
     consulta["eq"] = (coluna: string, valor: unknown) => {
       filtros.push({ tabela, coluna, valor })
+      return consulta
+    }
+    consulta["neq"] = (coluna: string, valor: unknown) => {
+      filtros.push({ tabela, coluna: `<>${coluna}`, valor })
       return consulta
     }
     consulta["insert"] = (valores: unknown) => {
@@ -121,6 +130,7 @@ function cliente(opcoes: Opcoes = {}) {
     rpc,
     gravacoes,
     filtros,
+    ors,
   }
 }
 
@@ -240,6 +250,7 @@ describe("TROCA-005 — escrita de denúncia pela porta", () => {
   it.each([
     [{ code: "23505", message: "duplicate" }, 409, "ja-denunciado"],
     [{ code: "P0001", message: "cannot report your own content" }, 403, "proprio-conteudo"],
+    [{ code: "42501", message: "segredo do Postgres" }, 403, "recusado"],
     [{ code: "XX000", message: "segredo do Postgres" }, 503, "falha"],
   ])("traduz a recusa do banco (%o) em %i", async (erro, status, codigo) => {
     const mock = cliente({ erroDoInsert: erro })
@@ -249,6 +260,14 @@ describe("TROCA-005 — escrita de denúncia pela porta", () => {
     const dados = await resposta.json()
     expect(dados.erro).toBe(codigo)
     expect(JSON.stringify(dados)).not.toContain("segredo")
+  })
+
+  it("o veto da conta (42501) é 403 com frase, não 503 mudo", async () => {
+    const mock = cliente({ erroDoInsert: { code: "42501", message: "segredo do Postgres" } })
+    autenticar(mock)
+    const resposta = await denunciar(req("denuncias", "POST", corpo))
+    expect(resposta.status).toBe(403)
+    expect((await resposta.json()).mensagem).toBe("Sua conta não pode denunciar este conteúdo.")
   })
 })
 
@@ -315,5 +334,29 @@ describe("TROCA-005 — alvos da nova denúncia", () => {
     ])
     expect(JSON.stringify(dados)).not.toContain(USER)
     expect(JSON.stringify(dados)).not.toContain(OUTRO)
+  })
+
+  it("as consultas dos alvos usam o id da SESSÃO, e o grupo dela fica de fora", async () => {
+    const mock = cliente()
+    autenticar(mock)
+    await alvos(req("denuncias/alvos"))
+    expect(mock.filtros).toContainEqual({
+      tabela: "locality_memberships",
+      coluna: "user_id",
+      valor: USER,
+    })
+    expect(mock.filtros).toContainEqual({
+      tabela: "group_memberships",
+      coluna: "user_id",
+      valor: USER,
+    })
+    // Grupo da própria pessoa não é alvo da denúncia dela.
+    expect(mock.filtros).toContainEqual({
+      tabela: "groups",
+      coluna: "<>owner_user_id",
+      valor: USER,
+    })
+    // A lista de denúncias não filtra por `.or` de id alheio.
+    expect(mock.ors.filter((item) => item.tabela === "reports")).toHaveLength(0)
   })
 })

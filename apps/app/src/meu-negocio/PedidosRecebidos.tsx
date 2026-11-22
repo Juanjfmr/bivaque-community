@@ -3,8 +3,13 @@ import { Botao } from "@/components/bivaque/botao"
 import { EsqueletoDeLista } from "@/components/bivaque/esqueleto"
 import { Etiqueta } from "@/components/bivaque/etiqueta"
 import { LinhaDeLista, Lista } from "@/components/bivaque/lista"
-import { Nota } from "@/src/pecas/pecas"
 import { Secao } from "@/components/bivaque/secao"
+import {
+  type ListaDePedidos,
+  lerPedidos,
+  mudarPedido,
+  type PedidoDeServico,
+} from "@/lib/dados/negocios"
 import {
   lerAtendimento,
   lerConversaDoPedido,
@@ -12,11 +17,15 @@ import {
   responderAoPedido,
   salvarAtendimento,
 } from "@/lib/dados/prestador"
-import { lerPedidos, type ListaDePedidos, mudarPedido, type PedidoDeServico } from "@/lib/dados/negocios"
-import { useNavegacao, useBuscaDaRota, useSobreposicaoDaEntrada, useTrocarBusca } from "@/lib/navegacao/react"
-import { AreaDeTexto, Folha } from "@/src/pecas/pecas"
+import {
+  useBuscaDaRota,
+  useNavegacao,
+  useSobreposicaoDaEntrada,
+  useTrocarBusca,
+} from "@/lib/navegacao/react"
 import { FalhaDaLeitura } from "@/src/negocios/FalhaDaLeitura"
 import { mensagemDaAcao, SITUACOES_DO_PEDIDO } from "@/src/negocios/formulario"
+import { AreaDeTexto, Folha, Nota } from "@/src/pecas/pecas"
 
 /**
  * Pedidos/Atendimento de Meu negócio (TROCA-005).
@@ -322,8 +331,9 @@ export function PedidosRecebidos({
                   : `Atender membros de ${comunidade}`}
               </label>
               <p className="text-[13px] text-(--on-surface-variant)">
-                Com o alcance ligado, a ficha aparece para os membros aprovados desta comunidade. Com
-                ele desligado, a ficha sai da busca — os pedidos existentes continuam no histórico.
+                Com o alcance ligado, a ficha aparece para os membros aprovados desta comunidade.
+                Com ele desligado, a ficha sai da busca — os pedidos existentes continuam no
+                histórico.
               </p>
               {mensagemDoAlcance === null ? null : (
                 <p role="status" className="text-sm text-(--on-surface-variant)">

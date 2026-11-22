@@ -7,8 +7,8 @@ import {
   lerConviteDePrestador,
 } from "@/lib/dados/prestador-convite"
 import { useNavegacao } from "@/lib/navegacao/react"
-import { Nota } from "@/src/pecas/pecas"
 import { FalhaDaLeitura } from "@/src/negocios/FalhaDaLeitura"
+import { Nota } from "@/src/pecas/pecas"
 
 /**
  * O convite de prestador como estado da ENTRADA (TROCA-005): o link chega em

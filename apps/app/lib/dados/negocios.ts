@@ -306,9 +306,7 @@ export async function salvarMinhaFichaDePrestador(
   dados: DadosDaFicha,
   opcoes: { signal?: AbortSignal } = {},
 ): Promise<MinhaFicha> {
-  return minhaFichaDe(
-    (await enviar("PATCH", "/api/app/prestador/ficha", dados, opcoes))["negocio"],
-  )
+  return minhaFichaDe((await enviar("PATCH", "/api/app/prestador/ficha", dados, opcoes))["negocio"])
 }
 
 export async function publicarServico(

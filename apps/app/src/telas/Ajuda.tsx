@@ -12,14 +12,14 @@ import {
   type AlvoDeDenuncia,
   type AlvoEscolhido,
   type Denuncia,
-  enviarDenuncia,
   EXPLICACAO_MAX,
+  enviarDenuncia,
   lerAlvosDeDenuncia,
   lerDenuncia,
   lerDenuncias,
   MOTIVOS_DA_DENUNCIA,
-  type TipoDoAlvoDenuncia,
   TIPOS_DE_ALVO,
+  type TipoDoAlvoDenuncia,
 } from "@/lib/dados/denuncias"
 import {
   useBuscaDaRota,
@@ -29,9 +29,9 @@ import {
   useSobreposicaoDaEntrada,
   useTrocarBusca,
 } from "@/lib/navegacao/react"
+import { FalhaDaLeitura } from "@/src/negocios/FalhaDaLeitura"
 import { AreaDeTexto, Folha } from "@/src/pecas/pecas"
 import { Segmentos } from "@/src/pecas/segmentos"
-import { FalhaDaLeitura } from "@/src/negocios/FalhaDaLeitura"
 
 /**
  * Ajuda (onda 8 + TROCA-005). As perguntas da conta continuam aqui; o que o

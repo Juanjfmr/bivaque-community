@@ -160,7 +160,9 @@ for (const tema of TEMAS) {
         .toBe("/app/ajuda")
     })
 
-    test("o detalhe do pedido abre direto pela URL e a recarga reabre a Folha", async ({ page }) => {
+    test("o detalhe do pedido abre direto pela URL e a recarga reabre a Folha", async ({
+      page,
+    }) => {
       await montarNegocio(page)
       await page.route(/\/api\/app\/pedidos(?:\?|$)/, (rota) =>
         rota.fulfill({ json: { pedidos: [recebido], proximo: null } }),

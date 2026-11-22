@@ -23,16 +23,16 @@ import {
 } from "@/lib/dados/negocios"
 import { SeletorDeFoto } from "@/lib/nativo/SeletorDeFoto"
 import {
-  useNavegacao,
   useBuscaDaRota,
   useCargaDaLista,
+  useNavegacao,
   useRolagemEFoco,
   useSobreposicaoDaEntrada,
   useTrocarBusca,
 } from "@/lib/navegacao/react"
-import { Segmentos } from "@/src/pecas/segmentos"
 import { FalhaDaLeitura } from "@/src/negocios/FalhaDaLeitura"
 import { mensagemDaFicha, validarFicha, validarServico } from "@/src/negocios/formulario"
+import { Segmentos } from "@/src/pecas/segmentos"
 import { ContaDoNegocio } from "./ContaDoNegocio"
 import { PedidosRecebidos } from "./PedidosRecebidos"
 

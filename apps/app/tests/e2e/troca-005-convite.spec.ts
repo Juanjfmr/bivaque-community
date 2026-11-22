@@ -166,7 +166,9 @@ for (const tema of TEMAS) {
         "Esta conta é de membro e não pode aceitar convite de prestador.",
       )
       await expect(page).toHaveURL(/\/app\/entrar$/)
-      await expect(page.getByRole("heading", { name: "Ofereça seus serviços no Bivaque" })).toBeVisible()
+      await expect(
+        page.getByRole("heading", { name: "Ofereça seus serviços no Bivaque" }),
+      ).toBeVisible()
     })
 
     test("a recusa do aceite aparece como frase, não como sucesso", async ({ page }) => {

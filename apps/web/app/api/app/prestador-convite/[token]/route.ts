@@ -50,7 +50,8 @@ export async function GET(request: NextRequest, { params }: Contexto): Promise<N
     return responder(
       request,
       {
-        convite,
+        // O app não tem tela de comunidade: o id não viaja e não vira oráculo.
+        convite: { comunidade: convite.comunidade, estado: convite.estado },
         emailDaSessao: sessao.estado === "autenticada" ? sessao.sessao.usuario.email : null,
       },
       200,

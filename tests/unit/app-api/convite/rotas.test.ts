@@ -77,11 +77,17 @@ describe("TROCA-005 — leitura do convite de prestador", () => {
     const resposta = await GET(req(), contexto(TOKEN))
     expect(resposta.status).toBe(200)
     expect((await resposta.json()).convite).toEqual({
-      comunidadeId: "10000000-0000-4000-8000-0000000000c1",
       comunidade: "Comunidade Manaus",
       estado: "pendente",
     })
     expect(estado.publico.rpc).toHaveBeenCalledWith("read_provider_invitation", { p_token: TOKEN })
+  })
+
+  it("o id da comunidade não viaja para o app", async () => {
+    resolver.mockResolvedValue({ estado: "recusada", sessao: {} } as never)
+    const texto = await (await GET(req(), contexto(TOKEN))).text()
+    expect(texto).not.toContain("10000000-0000-4000-8000-0000000000c1")
+    expect(texto).not.toContain("comunidadeId")
   })
 
   it("sem sessão a leitura continua pública e emailDaSessao é nulo", async () => {

@@ -56,6 +56,10 @@ function pedidoDoBanco(situacao: string) {
 function cliente(opcoes: Opcoes = {}) {
   const gravacoes: { tabela: string; metodo: string; valores?: unknown }[] = []
   const filtros: { tabela: string; coluna: string; valor: unknown }[] = []
+  // O `.or` e o `limit` são o filtro e o teto da consulta: guardá-los é o que
+  // prova que a fila usa o id da SESSÃO e que a conversa tem limite.
+  const ors: { tabela: string; filtro: string }[] = []
+  const limites: { tabela: string; valor: unknown }[] = []
   let situacao = "open"
   const mensagensDoBanco = [
     {
@@ -131,8 +135,16 @@ function cliente(opcoes: Opcoes = {}) {
 
   const from = vi.fn((tabela: string) => {
     const consulta: Record<string, unknown> = {}
-    for (const metodo of ["select", "order", "limit", "is", "or", "in", "range", "gte"]) {
+    for (const metodo of ["select", "order", "is", "in", "range", "gte"]) {
       consulta[metodo] = () => consulta
+    }
+    consulta["limit"] = (valor: unknown) => {
+      limites.push({ tabela, valor })
+      return consulta
+    }
+    consulta["or"] = (filtro: string) => {
+      ors.push({ tabela, filtro })
+      return consulta
     }
     consulta["eq"] = (coluna: string, valor: unknown) => {
       filtros.push({ tabela, coluna, valor })
@@ -160,7 +172,7 @@ function cliente(opcoes: Opcoes = {}) {
     return consulta
   })
 
-  return { client: { from, rpc } as never, from, rpc, gravacoes, filtros }
+  return { client: { from, rpc } as never, from, rpc, gravacoes, filtros, ors, limites }
 }
 
 function autenticar(mock: ReturnType<typeof cliente>) {
@@ -378,24 +390,43 @@ describe("TROCA-005 — conversa do pedido", () => {
     expect(resposta.status).toBe(200)
     const dados = await resposta.json()
     expect(dados.pedido.id).toBe(PEDIDO)
+    // O banco devolve as N mais recentes em ordem descendente; a rota entrega em
+    // ordem de leitura (mais antiga primeiro).
     expect(dados.mensagens).toEqual([
-      {
-        id: "10000000-0000-4000-8000-0000000000e1",
-        minha: true,
-        conteudo: "Resposta do prestador",
-        criadoEm: "2026-11-05T12:10:00Z",
-      },
       {
         id: "10000000-0000-4000-8000-0000000000e2",
         minha: false,
         conteudo: "Pedido do membro",
         criadoEm: "2026-11-05T12:00:00Z",
       },
+      {
+        id: "10000000-0000-4000-8000-0000000000e1",
+        minha: true,
+        conteudo: "Resposta do prestador",
+        criadoEm: "2026-11-05T12:10:00Z",
+      },
     ])
     expect(mock.filtros).toContainEqual({
       tabela: "dm_messages",
       coluna: "conversation_id",
       valor: CONVERSA,
+    })
+    // A conversa tem teto: um histórico enorme não vira resposta gigante.
+    expect(mock.limites).toContainEqual({ tabela: "dm_messages", valor: 50 })
+  })
+
+  it("a posse do pedido é filtrada pelo id da SESSÃO, nos dois lados", async () => {
+    const mock = cliente()
+    autenticar(mock)
+    await mensagens(req("pedidos/x/mensagens"), contexto(PEDIDO))
+    expect(mock.ors).toContainEqual({
+      tabela: "service_requests",
+      filtro: `requester_user_id.eq.${USER},provider_user_id.eq.${USER}`,
+    })
+    expect(mock.filtros).toContainEqual({
+      tabela: "service_requests",
+      coluna: "id",
+      valor: PEDIDO,
     })
   })
 

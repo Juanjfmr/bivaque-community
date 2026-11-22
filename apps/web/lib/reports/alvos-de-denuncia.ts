@@ -79,6 +79,8 @@ export async function alvosDeDenuncia(
     .select("id,name")
     .in("id", ids)
     .eq("is_deleted", false)
+    // Grupo da própria pessoa não é alvo de denúncia dela (a RLS deixaria ler).
+    .neq("owner_user_id", userId)
     .order("name")
     .limit(LIMITE_DE_GRUPOS)
   if (grupos.error) throw grupos.error

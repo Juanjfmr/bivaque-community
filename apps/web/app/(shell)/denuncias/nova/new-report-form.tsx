@@ -19,6 +19,7 @@ const ERROR_MESSAGES: Record<ReportMutationError, string> = {
   "alvo-invalido": "Este conteúdo não está mais disponível.",
   "ja-denunciado": "Você já denunciou este conteúdo. Sua denúncia anterior segue na fila.",
   "proprio-conteudo": "Você não pode denunciar o seu próprio conteúdo.",
+  recusado: "Sua conta não pode denunciar este conteúdo agora.",
   falha: "Não foi possível enviar a denúncia agora. Tente novamente.",
 }
 

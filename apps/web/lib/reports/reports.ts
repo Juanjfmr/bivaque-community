@@ -153,6 +153,7 @@ export type ReportMutationError =
   | "explicacao-longa"
   | "ja-denunciado"
   | "proprio-conteudo"
+  | "recusado"
   | "falha"
 
 // Aceita apenas o vocabulario fechado; qualquer outro valor — inclusive por
@@ -214,6 +215,10 @@ export async function createReport(
 
   if (error) {
     if (error.code === "23505") return { ok: false, error: "ja-denunciado" }
+    // AUTHZ-007/AUTHZ-006: conta suspensa, exclusão pedida ou veto de escrita
+    // chegam como 42501. É recusa da conta (403 com frase), não serviço fora —
+    // o mesmo tratamento da denúncia de mensagem.
+    if (error.code === "42501") return { ok: false, error: "recusado" }
     if (error.message.toLowerCase().includes("own content")) {
       return { ok: false, error: "proprio-conteudo" }
     }

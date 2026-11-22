@@ -100,6 +100,8 @@ export async function pedidoDoMembro(client: Cliente, userId: string, id: string
 // `open → in_conversation` na mesma transação.
 
 export const CONTEUDO_MAX = 2000
+/** A Folha mostra a conversa recente; um histórico enorme não vira resposta gigante. */
+export const MENSAGENS_DO_PEDIDO_MAX = 50
 
 export type MensagemDoPedido = Readonly<{
   id: string
@@ -117,9 +119,11 @@ export async function mensagensDoPedido(
     .from("dm_messages")
     .select("id,sender_id,content,created_at")
     .eq("conversation_id", conversaId)
-    .order("created_at", { ascending: true })
+    // As N mais recentes vêm do banco (descendente) e voltam em ordem de leitura.
+    .order("created_at", { ascending: false })
+    .limit(MENSAGENS_DO_PEDIDO_MAX)
   if (error) throw error
-  return (data ?? []).map((linha) => ({
+  return (data ?? []).reverse().map((linha) => ({
     id: linha.id,
     minha: linha.sender_id === userId,
     conteudo: linha.content,
