@@ -28,11 +28,11 @@ test.describe("portas de entrada", () => {
   test("a lista, o criar e os alertas migram para o app", async ({ page }) => {
     await signInAs(page.context(), OTHER)
     await page.goto("/imoveis")
-    await expect(page).toHaveURL(/\/app\/imoveis$/)
+    await expect(page).toHaveURL(/\/app\/mercado\?(?:.*&)?aba=imoveis(?:&|$)/)
     // Mesmo molde do desapego (RUN-156): o criar mora na folha do app, e a URL
     // antiga só leva à lista.
     await page.goto("/imoveis/novo")
-    await expect(page).toHaveURL(/\/app\/imoveis$/)
+    await expect(page).toHaveURL(/\/app\/mercado\?(?:.*&)?aba=imoveis(?:&|$)/)
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible({ timeout: 20_000 })
     // RUN-169: a gestão dos alertas também é do app. A URL antiga aterrissa na
     // tela nova, com o título real dela.
