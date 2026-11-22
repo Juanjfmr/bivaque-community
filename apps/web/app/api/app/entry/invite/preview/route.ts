@@ -1,7 +1,7 @@
 import type { NextRequest, NextResponse } from "next/server"
+import { VALOR_DO_CABECALHO_DO_APP } from "../../../../../../lib/app-api/contrato"
 import { ipConfiavel, limitadorConfigurado } from "../../../../../../lib/app-api/entrada-limite"
 import { avaliarModoNativo } from "../../../../../../lib/app-api/modo-nativo"
-import { VALOR_DO_CABECALHO_DO_APP } from "../../../../../../lib/app-api/contrato"
 import {
   clienteDeServicoOuNulo,
   conferirPorta,
