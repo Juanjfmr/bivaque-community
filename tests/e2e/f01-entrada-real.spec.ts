@@ -626,6 +626,29 @@ test.describe("F01 — entrada real no app", { tag: "@stateful" }, () => {
     await esperarEtapaDaEntrada(page, "Documento em análise")
   })
 
+  test("membro existente entra por código e chega ao Início", async ({ page }) => {
+    test.setTimeout(90_000)
+    const puts: string[] = []
+    page.on("request", (request) => {
+      if (request.method() === "PUT" && request.url().includes("/api/app/entry/progress")) {
+        puts.push(request.url())
+      }
+    })
+    await page.goto(ROTA_DA_ENTRADA)
+    await page.getByRole("button", { name: "Continuar com e-mail" }).click()
+    await esperarEtapaDaEntrada(page, "Qual é o seu e-mail?")
+    await page.getByLabel("E-mail").fill(MEMBRO_SEMEADO)
+    const desde = new Date()
+    await page.getByRole("button", { name: "Enviar código" }).click()
+    await esperarEtapaDaEntrada(page, "Digite o código")
+    const lido = await lerCodigoDoEmail(MEMBRO_SEMEADO, { desde })
+    await preencherCodigoDeEntrada(page, lido.codigo)
+    await expect(page).toHaveURL(/\/app\/inicio$/, { timeout: 30_000 })
+    await expect(page.getByRole("heading", { level: 1, name: /Sua rede em/ })).toBeVisible()
+    await page.waitForTimeout(700)
+    expect(puts).toEqual([])
+  })
+
   test("membro com sessão em /app/entrar cai no Início", async ({ page, context }, testInfo) => {
     test.setTimeout(90_000)
     const projeto = testInfo.project.name
