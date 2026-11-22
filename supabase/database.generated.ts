@@ -2350,7 +2350,6 @@ export type Database = {
           key_auth: string | null
           key_p256dh: string | null
           kind: string
-          label: string | null
           last_success_at: string | null
           user_id: string
         }
@@ -2361,7 +2360,6 @@ export type Database = {
           key_auth?: string | null
           key_p256dh?: string | null
           kind: string
-          label?: string | null
           last_success_at?: string | null
           user_id: string
         }
@@ -2372,7 +2370,6 @@ export type Database = {
           key_auth?: string | null
           key_p256dh?: string | null
           kind?: string
-          label?: string | null
           last_success_at?: string | null
           user_id?: string
         }
@@ -3686,9 +3683,18 @@ export type Database = {
           p_key_auth: string
           p_key_p256dh: string
           p_kind: string
-          p_label: string
         }
         Returns: undefined
+      }
+      reserve_push_deliveries: {
+        Args: { p_actor_user_id: string; p_type: string; p_user_id: string }
+        Returns: {
+          id: string
+          kind: string
+          destination: string
+          key_p256dh: string | null
+          key_auth: string | null
+        }[]
       }
       register_service_request_photo: {
         Args: { p_path: string; p_position: number; p_request_id: string }
