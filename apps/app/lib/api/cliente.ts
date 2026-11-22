@@ -142,9 +142,13 @@ export async function requisitar(caminho: string, init: RequestInit = {}): Promi
   const origem = origemDaApi()
   let token: string | null
   try {
-    token = publica && caminho !== "/api/app/entry/progress" ? acessoEmMemoria() : await acessoAtual()
+    token =
+      publica && caminho !== "/api/app/entry/progress" ? acessoEmMemoria() : await acessoAtual()
   } catch (erro) {
-    throw new FalhaDaApi(erro instanceof Error && erro.message === "rede" ? "rede" : "indisponivel", 0)
+    throw new FalhaDaApi(
+      erro instanceof Error && erro.message === "rede" ? "rede" : "indisponivel",
+      0,
+    )
   }
   const fazer = (credencial: string | null) => {
     const headers = new Headers(init.headers)
@@ -159,7 +163,10 @@ export async function requisitar(caminho: string, init: RequestInit = {}): Promi
     try {
       novo = await renovarSessao()
     } catch (erro) {
-      throw new FalhaDaApi(erro instanceof Error && erro.message === "rede" ? "rede" : "indisponivel", 0)
+      throw new FalhaDaApi(
+        erro instanceof Error && erro.message === "rede" ? "rede" : "indisponivel",
+        0,
+      )
     }
     if (novo) return fazer(novo)
   }

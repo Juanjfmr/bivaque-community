@@ -72,6 +72,7 @@ export function renovarSessao(): Promise<string | null> {
     const inicio = Date.now()
     let espera = 250
     while (true) {
+      if (geracao !== geracaoInicial) return null
       let resposta: Response
       let falha = "indisponivel"
       let retryAfter = 0
@@ -96,7 +97,9 @@ export function renovarSessao(): Promise<string | null> {
         const valor = resposta.headers.get("retry-after")
         if (valor) {
           const segundos = Number(valor)
-          const atraso = Number.isFinite(segundos) ? segundos * 1000 : Date.parse(valor) - Date.now()
+          const atraso = Number.isFinite(segundos)
+            ? segundos * 1000
+            : Date.parse(valor) - Date.now()
           retryAfter = Math.max(0, Math.min(3000, Number.isFinite(atraso) ? atraso : 0))
         }
         const atraso = Math.max(espera, retryAfter)

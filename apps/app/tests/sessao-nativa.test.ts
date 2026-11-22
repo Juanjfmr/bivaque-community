@@ -167,7 +167,11 @@ it("falha transitoria preserva sessao e nao redireciona", async () => {
   vi.useFakeTimers()
   limparMemoria()
   cofre.set.mockResolvedValue(undefined)
-  await aceitarPar({ access_token: "anterior", refresh_token: "renovacao", expires_at: Math.floor(Date.now() / 1000) + 20 })
+  await aceitarPar({
+    access_token: "anterior",
+    refresh_token: "renovacao",
+    expires_at: Math.floor(Date.now() / 1000) + 20,
+  })
   vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(null, { status: 503 })))
   const resultado = ler("/api/app/exemplo").catch((erro: unknown) => erro)
   await vi.runAllTimersAsync()
@@ -181,11 +185,14 @@ it("respeita Retry-After e inclui o timeout na janela", async () => {
   limparMemoria()
   cofre.get.mockResolvedValue("renovacao")
   const instantes: number[] = []
-  vi.stubGlobal("fetch", vi.fn().mockImplementation(async () => {
-    instantes.push(Date.now())
-    await new Promise((resolve) => setTimeout(resolve, 3000))
-    return new Response(null, { status: 429, headers: { "retry-after": "1" } })
-  }))
+  vi.stubGlobal(
+    "fetch",
+    vi.fn().mockImplementation(async () => {
+      instantes.push(Date.now())
+      await new Promise((resolve) => setTimeout(resolve, 3000))
+      return new Response(null, { status: 429, headers: { "retry-after": "1" } })
+    }),
+  )
   const resultado = renovarSessao().catch(() => null)
   await vi.runAllTimersAsync()
   await resultado
@@ -247,4 +254,32 @@ it("envia a sessão em memória nas rotas públicas autenticadas", async () => {
   vi.stubGlobal("fetch", buscar)
   await ler("/api/app/entry/progress")
   expect(buscar.mock.calls[0]?.[1].headers.get("Authorization")).toBe("Bearer acesso")
+})
+
+it("401 da leitura seguido de falha transitoria nao encerra sessao", async () => {
+  vi.useFakeTimers()
+  limparMemoria()
+  cofre.remove.mockClear()
+  cofre.set.mockResolvedValue(undefined)
+  await aceitarPar({
+    access_token: "valido",
+    refresh_token: "renovacao",
+    expires_at: Math.floor(Date.now() / 1000) + 3600,
+  })
+  const assign = vi.fn()
+  vi.stubGlobal("window", {
+    location: { pathname: "/app/mercado", search: "", origin: "https://local.invalid", assign },
+  })
+  const buscar = vi
+    .fn()
+    .mockResolvedValueOnce(new Response("{}", { status: 401 }))
+    .mockResolvedValue(new Response(null, { status: 503 }))
+  vi.stubGlobal("fetch", buscar)
+  const resultado = ler("/api/app/exemplo").catch((erro: unknown) => erro)
+  await vi.runAllTimersAsync()
+  expect(await resultado).toMatchObject({ codigo: "indisponivel" })
+  expect(assign).not.toHaveBeenCalled()
+  expect(cofre.remove).not.toHaveBeenCalled()
+  vi.unstubAllGlobals()
+  vi.useRealTimers()
 })

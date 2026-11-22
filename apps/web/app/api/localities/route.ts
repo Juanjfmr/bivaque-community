@@ -15,7 +15,10 @@ export async function GET(request: Request) {
   const { data, error } = await supabase.rpc("list_locality_state_codes")
 
   if (error) {
-    return NextResponse.json({ error: "internal" }, { status: 500, headers: corsLocalidades(request) })
+    return NextResponse.json(
+      { error: "internal" },
+      { status: 500, headers: corsLocalidades(request) },
+    )
   }
 
   const ufs = (data ?? []).map((row) => row.state_code)

@@ -9,6 +9,8 @@ export function opcoesLocalidades(request: Request): Response {
   const headers = cabecalhosDePreflight(request.headers.get("origin"), [], origensNativas())
   return new Response(null, {
     status: 204,
-    headers: Object.keys(headers).length ? { ...headers, "access-control-allow-methods": "GET, OPTIONS" } : headers,
+    headers: Object.keys(headers).length
+      ? { ...headers, "access-control-allow-methods": "GET, OPTIONS" }
+      : headers,
   })
 }
