@@ -6,6 +6,11 @@ let expiracao = 0
 let renovacao: string | null = null
 let pendente: Promise<string | null> | null = null
 let geracao = 0
+const MARCADOR_SAIU = "bivaque.saiu"
+
+function saiu(): boolean {
+  return typeof localStorage !== "undefined" && localStorage.getItem(MARCADOR_SAIU) === "1"
+}
 
 export function origemDaApi(): string {
   try {
@@ -61,6 +66,7 @@ export async function aceitarPar(par: unknown): Promise<void> {
   acesso = dados["access_token"]
   renovacao = dados["refresh_token"]
   expiracao = dados["expires_at"]
+  if (typeof localStorage !== "undefined") localStorage.removeItem(MARCADOR_SAIU)
   await gravarRenovacao(renovacao).catch(() => undefined)
 }
 
@@ -68,6 +74,10 @@ export function renovarSessao(): Promise<string | null> {
   if (pendente) return pendente
   const geracaoInicial = geracao
   pendente = (async () => {
+    if (saiu()) {
+      await apagarRenovacao().catch(() => undefined)
+      return null
+    }
     const token = renovacao ?? (await lerRenovacao())
     if (!token || geracao !== geracaoInicial) return null
     const inicio = Date.now()

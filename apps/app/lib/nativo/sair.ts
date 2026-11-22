@@ -14,9 +14,19 @@ export async function sairNativo(cliente: QueryClient): Promise<void> {
     // A limpeza local também acontece sem rede.
   } finally {
     limparMemoria()
-    await Promise.allSettled([apagarRenovacao(), apagarPkce()])
+    let cofreApagado = false
+    for (let tentativa = 0; tentativa < 2 && !cofreApagado; tentativa += 1) {
+      try {
+        await apagarRenovacao()
+        cofreApagado = true
+      } catch {
+        // A segunda tentativa cobre falhas transitórias do armazenamento seguro.
+      }
+    }
+    await Promise.allSettled([apagarPkce()])
     cliente.clear()
     localStorage.clear()
+    if (!cofreApagado) localStorage.setItem("bivaque.saiu", "1")
     if (typeof indexedDB !== "undefined" && indexedDB.databases) {
       const bancos = await indexedDB.databases().catch(() => [])
       await Promise.all(

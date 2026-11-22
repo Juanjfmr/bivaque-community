@@ -48,7 +48,15 @@ it.each([false, true])("limpa os dados ao sair, mesmo sem rede: %s", async (semR
     return pedido
   })
   const apagarCache = vi.fn().mockResolvedValue(true)
-  vi.stubGlobal("localStorage", { clear: limparLocal })
+  const local = new Map<string, string>()
+  vi.stubGlobal("localStorage", {
+    clear: () => {
+      limparLocal()
+      local.clear()
+    },
+    setItem: (chave: string, valor: string) => local.set(chave, valor),
+    getItem: (chave: string) => local.get(chave) ?? null,
+  })
   vi.stubGlobal("indexedDB", {
     databases: async () => [{ name: "banco" }],
     deleteDatabase: deletarBanco,
@@ -62,5 +70,20 @@ it.each([false, true])("limpa os dados ao sair, mesmo sem rede: %s", async (semR
   )
   expect(deletarBanco).toHaveBeenCalledWith("banco")
   expect(apagarCache).toHaveBeenCalledWith("cache")
+  vi.unstubAllGlobals()
+})
+
+it("marca a saída se as duas tentativas de apagar o cofre falharem", async () => {
+  const local = new Map<string, string>()
+  deps.apagarRenovacao.mockRejectedValue(new Error("cofre indisponível"))
+  vi.stubGlobal("localStorage", {
+    clear: () => local.clear(),
+    setItem: (chave: string, valor: string) => local.set(chave, valor),
+  })
+  vi.stubGlobal("indexedDB", {})
+  vi.stubGlobal("caches", { keys: async () => [], delete: vi.fn() })
+  await sairNativo({ clear: vi.fn() } as unknown as QueryClient)
+  expect(deps.apagarRenovacao).toHaveBeenCalledTimes(2)
+  expect(local.get("bivaque.saiu")).toBe("1")
   vi.unstubAllGlobals()
 })
