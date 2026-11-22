@@ -10,7 +10,7 @@ import {
   useState,
 } from "react"
 
-import { cidadesDaCasca, comCidadeTrocada } from "@/lib/casca"
+import { cidadesDaCasca, comCidadeDaSessao, comCidadeTrocada } from "@/lib/casca"
 import { dadosDoApp } from "@/lib/dados"
 import { lerAvisos } from "@/lib/dados/avisos"
 import { lerConversas } from "@/lib/dados/conversas"
@@ -33,6 +33,10 @@ import { modoDeProvaAtivo } from "@/src/modo-de-prova"
  * é entrada da prova, não medida que o app faz de si mesmo.
  */
 export type EstadoDaCasca = {
+  /**
+   * A cidade consultada. Vazia até a sessão dizer qual é: o chip mostra o rótulo
+   * neutro e nenhuma tela afirma uma cidade que não veio da sessão.
+   */
   readonly cidade: string
   readonly cidadeDeCasa: string
   readonly avisos: number
@@ -44,8 +48,6 @@ export type EstadoDaCasca = {
   readonly nomeDaPessoa: string
 }
 
-export const CIDADE_PADRAO = "Manaus"
-
 type PortaDaCasca = EstadoDaCasca & {
   readonly consulta: string
   definirConsulta(consulta: string): void
@@ -54,6 +56,8 @@ type PortaDaCasca = EstadoDaCasca & {
   readonly vendoOutraCidade: boolean
   trocarCidade(cidade: string): void
   voltarParaCasa(): void
+  /** A cidade da sessão chegou (perfil ou Início): nunca sobrescreve uma troca. */
+  confirmarCidadeDaSessao(cidade: string): void
   definir(pedaco: Partial<EstadoDaCasca>): void
 }
 
@@ -74,10 +78,10 @@ export function ProvedorDaCasca({ children }: { children: ReactNode }) {
   const [estado, setEstado] = useState<EstadoDaCasca>(() => {
     const semente = sementeDaProva()
     const resumo = modoDeProvaAtivo() ? null : dadosDoApp.resumoDaCasca()
-    // A cidade não vem do dado de demonstração: o chip dizia "Manaus" para quem
-    // tinha vínculo no Rio. Sem sessão ainda, o padrão vale até a leitura da
-    // sessão chegar (o efeito abaixo troca).
-    const cidades = cidadesDaCasca(null, semente, CIDADE_PADRAO)
+    // A cidade não vem do dado de demonstração nem de um padrão: o chip nascia
+    // "Manaus" para quem tinha vínculo no Rio. Vazio é "ainda não sei", e as
+    // leituras abaixo (perfil e Início) preenchem sem sobrescrever uma troca.
+    const cidades = cidadesDaCasca(semente)
     return {
       cidade: cidades.cidade,
       cidadeDeCasa: cidades.cidadeDeCasa,
@@ -86,6 +90,10 @@ export function ProvedorDaCasca({ children }: { children: ReactNode }) {
       nomeDaPessoa: semente.nomeDaPessoa ?? resumo?.nomeDaPessoa ?? "",
     }
   })
+
+  const confirmarCidadeDaSessao = useCallback((cidade: string) => {
+    setEstado((anterior) => ({ ...anterior, ...comCidadeDaSessao(anterior, cidade) }))
+  }, [])
 
   const definir = useCallback((pedaco: Partial<EstadoDaCasca>) => {
     setEstado((anterior) => ({ ...anterior, ...pedaco }))
@@ -104,13 +112,13 @@ export function ProvedorDaCasca({ children }: { children: ReactNode }) {
       .then((sessao) => {
         if (!sessao.autenticado || controle.signal.aborted) return
         // A cidade da sessão é a do chip: `lerPerfil` já devolve o vínculo
-        // `current` da rota de perfil (nenhuma rota nova). Falha de leitura
-        // deixa o padrão, com a tela dizendo o que aconteceu.
+        // `current` da rota de perfil (nenhuma rota nova). Se esta leitura
+        // falhar, a cidade fica vazia — e a consulta do Início devolve a mesma
+        // cidade da sessão, que preenche a casca no lugar dela.
         void lerPerfil({ signal: controle.signal })
           .then((conta) => {
-            const nome = conta.perfil.cidade.nome
-            if (controle.signal.aborted || nome.trim() === "") return
-            definir({ cidade: nome, cidadeDeCasa: nome })
+            if (controle.signal.aborted) return
+            confirmarCidadeDaSessao(conta.perfil.cidade.nome)
           })
           .catch(() => undefined)
         void lerConversas({ signal: controle.signal })
@@ -124,7 +132,7 @@ export function ProvedorDaCasca({ children }: { children: ReactNode }) {
       })
       .catch(() => undefined)
     return () => controle.abort()
-  }, [definir])
+  }, [definir, confirmarCidadeDaSessao])
 
   const trocarCidade = useCallback((cidade: string) => {
     setEstado((anterior) => ({ ...anterior, ...comCidadeTrocada(anterior, cidade) }))
@@ -144,9 +152,18 @@ export function ProvedorDaCasca({ children }: { children: ReactNode }) {
       vendoOutraCidade: estado.cidade !== estado.cidadeDeCasa,
       trocarCidade,
       voltarParaCasa,
+      confirmarCidadeDaSessao,
       definir,
     }),
-    [estado, consulta, conversaNoTopo, trocarCidade, voltarParaCasa, definir],
+    [
+      estado,
+      consulta,
+      conversaNoTopo,
+      trocarCidade,
+      voltarParaCasa,
+      confirmarCidadeDaSessao,
+      definir,
+    ],
   )
 
   return <Contexto.Provider value={porta}>{children}</Contexto.Provider>

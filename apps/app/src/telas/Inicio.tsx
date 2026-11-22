@@ -11,7 +11,7 @@ import { Grade } from "@/components/bivaque/grade"
 import { Icone } from "@/components/bivaque/icone"
 import { LinhaDeLista } from "@/components/bivaque/lista"
 import { Secao } from "@/components/bivaque/secao"
-import { cidadeDoInicio } from "@/lib/casca"
+import { cidadeDoConteudo } from "@/lib/casca"
 import {
   buscarEncontro,
   cancelarPresenca,
@@ -104,6 +104,12 @@ export function Inicio() {
   }, [rodada])
 
   const eventoId = dados?.eventos[0]?.id
+  // A consulta do Início é a cidade da sessão: ela preenche a casca quando a
+  // leitura do perfil não chegou (ou falhou), sem sobrescrever uma troca no chip.
+  const confirmarCidadeDaSessao = casca.confirmarCidadeDaSessao
+  useEffect(() => {
+    if (dados !== null) confirmarCidadeDaSessao(dados.cidade)
+  }, [dados, confirmarCidadeDaSessao])
   // biome-ignore lint/correctness/useExhaustiveDependencies: tentativa solicita nova leitura
   useEffect(() => {
     const controle = new AbortController()
@@ -210,7 +216,9 @@ export function Inicio() {
     })
   }
 
-  const cidade = cidadeDoInicio(casca, dados?.cidade ?? null)
+  // O conteúdo é o da cidade da sessão, que é o que a consulta confirmou; a
+  // cidade escolhida no chip fica só na faixa de visita.
+  const cidade = cidadeDoConteudo(dados?.cidade ?? null, casca.cidade)
   const negocios = dados?.negocios.slice(0, 4) ?? []
   const anuncios = dados?.anuncios.slice(0, 4) ?? []
   const grupos = dados?.grupos.slice(0, 2) ?? []

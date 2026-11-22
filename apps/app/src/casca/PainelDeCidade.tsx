@@ -28,6 +28,8 @@ export function PainelDeCidade({ aoFechar }: { readonly aoFechar: () => void }) 
   const [cidadeId, setCidadeId] = useState("")
   const [falha, setFalha] = useState<string | null>(null)
   const [carregando, setCarregando] = useState(false)
+  // A cidade da sessão pode ainda não ter chegado; a copy não escreve vazio.
+  const minhaCidade = casca.cidadeDeCasa === "" ? "sua cidade" : casca.cidadeDeCasa
 
   useEffect(() => {
     const leitura = new AbortController()
@@ -74,7 +76,7 @@ export function PainelDeCidade({ aoFechar }: { readonly aoFechar: () => void }) 
     <div className="grid gap-4">
       <p className="text-sm text-(--on-surface-variant)">
         Você lê o Guia, os encontros e os anúncios da cidade escolhida. Publicar e participar
-        continuam em {casca.cidadeDeCasa}.
+        continuam em {minhaCidade}.
       </p>
       {falha === null ? null : (
         <p role="alert" className="text-sm text-(--destructive)">
@@ -100,7 +102,7 @@ export function PainelDeCidade({ aoFechar }: { readonly aoFechar: () => void }) 
           Cancelar
         </Botao>
         <Botao data-acao="abrir-minha-cidade" tom="texto" onClick={() => abrir(CIDADE_ATUAL)}>
-          {`Minha cidade (${casca.cidadeDeCasa})`}
+          {`Minha cidade (${minhaCidade})`}
         </Botao>
         <Botao
           data-acao="abrir-cidade"
