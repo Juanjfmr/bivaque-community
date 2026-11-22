@@ -42,12 +42,18 @@ importers:
 
   apps/app:
     dependencies:
+      '@aparajita/capacitor-secure-storage':
+        specifier: 8.0.1
+        version: 8.0.1
       '@capacitor/android':
         specifier: 8.5.3
         version: 8.5.3(@capacitor/core@8.5.3)
       '@capacitor/app':
         specifier: 8.1.2
         version: 8.1.2(@capacitor/core@8.5.3)
+      '@capacitor/browser':
+        specifier: 8.0.5
+        version: 8.0.5(@capacitor/core@8.5.3)
       '@capacitor/camera':
         specifier: 8.2.5
         version: 8.2.5(@capacitor/core@8.5.3)
@@ -337,6 +343,10 @@ packages:
   '@alloc/quick-lru@5.2.0':
     resolution: {integrity: sha512-UrcABB+4bUrFABwbluTIBErXwvbsU/V7TZWfmbgJfbkwiBuziS9gxdODUyuiecfdGQ85jglMW6juS3+z5TsKLw==}
     engines: {node: '>=10'}
+
+  '@aparajita/capacitor-secure-storage@8.0.1':
+    resolution: {integrity: sha512-NSYIQtH6TyBgL3myumQGcCE3iecq2PtGNFlGxl1fJKEU37Dv5DudzDlwg42cgbVxCm1ay72g4X7rTSAvKULsVg==}
+    engines: {node: '>=20.0.0'}
 
   '@apm-js-collab/code-transformer-bundler-plugins@0.7.4':
     resolution: {integrity: sha512-nAfOeZPSUAQvJa1iFT/5oCrTm5YQhMMrfCNthNnaXHZiOQhu1KGuLoIx7HtbAi3wfwaBYLaICPIeenIaEwcXIg==}
@@ -919,6 +929,11 @@ packages:
     peerDependencies:
       '@capacitor/core': '>=8.0.0'
 
+  '@capacitor/browser@8.0.5':
+    resolution: {integrity: sha512-qqcEjUqs9kG1naF+tsD8rERuZ3wuIfXzvoIJEERHI4RNWwNSUqAHHduaKhkyb+t01VyVPa0ydx0mZ/eOskk2Ug==}
+    peerDependencies:
+      '@capacitor/core': '>=8.0.0'
+
   '@capacitor/camera@8.2.5':
     resolution: {integrity: sha512-FPuwY7byjTlBjeUKm17eTjLCPhuqBPJqTF4N3JCQuymLn2FUgfu0SMSN6OUQvCiiz/EVJVyZ9Mmg5GEmDfFoIA==}
     peerDependencies:
@@ -936,6 +951,11 @@ packages:
     resolution: {integrity: sha512-HnnV92Jl8+3x0JUloXUMjFcUsQI8wHFVsKwkLn72DfRZXYGZW11tQbmNOWOnRTljaU18FdI1b9ipT09SzzPDNw==}
     peerDependencies:
       '@capacitor/core': ^8.5.0
+
+  '@capacitor/keyboard@8.0.6':
+    resolution: {integrity: sha512-Bbe+9V0qaT6dzEFJEK7BUWR01l2+vZE8FM5ITF/WgKtx+G6eGZ6d5+YiSMRJBAK0VGjdO59v8yiQ10Doa5KyvQ==}
+    peerDependencies:
+      '@capacitor/core': '>=8.0.0'
 
   '@emnapi/runtime@1.11.3':
     resolution: {integrity: sha512-Xz4Tpyki7XyrpbUK1jR1AhdAdaXyhhY4lZ3neLodmhpuWfy2PAQN5B46sAiU4liOXGLkHypn/qU+jvfWSCYYLA==}
@@ -6720,6 +6740,14 @@ snapshots:
 
   '@alloc/quick-lru@5.2.0': {}
 
+  '@aparajita/capacitor-secure-storage@8.0.1':
+    dependencies:
+      '@capacitor/android': 8.5.3(@capacitor/core@8.5.3)
+      '@capacitor/app': 8.1.2(@capacitor/core@8.5.3)
+      '@capacitor/core': 8.5.3
+      '@capacitor/ios': 8.5.3(@capacitor/core@8.5.3)
+      '@capacitor/keyboard': 8.0.6(@capacitor/core@8.5.3)
+
   '@apm-js-collab/code-transformer-bundler-plugins@0.7.4':
     dependencies:
       '@apm-js-collab/code-transformer': 0.18.1
@@ -7397,6 +7425,10 @@ snapshots:
     dependencies:
       '@capacitor/core': 8.5.3
 
+  '@capacitor/browser@8.0.5(@capacitor/core@8.5.3)':
+    dependencies:
+      '@capacitor/core': 8.5.3
+
   '@capacitor/camera@8.2.5(@capacitor/core@8.5.3)':
     dependencies:
       '@capacitor/core': 8.5.3
@@ -7429,6 +7461,10 @@ snapshots:
       tslib: 2.8.1
 
   '@capacitor/ios@8.5.3(@capacitor/core@8.5.3)':
+    dependencies:
+      '@capacitor/core': 8.5.3
+
+  '@capacitor/keyboard@8.0.6(@capacitor/core@8.5.3)':
     dependencies:
       '@capacitor/core': 8.5.3
 

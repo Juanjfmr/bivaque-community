@@ -14,7 +14,13 @@ describe("origem da API", () => {
     const buscar = vi.fn().mockResolvedValue(new Response("{}"))
     vi.stubGlobal("fetch", buscar)
     await ler("/api/app/exemplo")
-    expect(buscar).toHaveBeenCalledWith("/api/app/exemplo", expect.anything())
+    expect(buscar).toHaveBeenCalledWith(
+      "/api/app/exemplo",
+      expect.objectContaining({
+        credentials: "include",
+        headers: expect.not.objectContaining({ Authorization: expect.anything() }),
+      }),
+    )
   })
 
   it("usa a origem configurada no nativo também para arquivos", async () => {
@@ -42,8 +48,10 @@ describe("origem da API", () => {
     vi.stubGlobal("fetch", buscar)
     for (const base of ["", "/api"]) {
       vi.stubEnv("VITE_API_BASE", base)
-      await expect(ler("/api/app/exemplo")).rejects.toThrow("VITE_API_BASE")
-      expect(() => enviarFormulario("/api/app/foto", new FormData())).toThrow("VITE_API_BASE")
+      await expect(ler("/api/app/exemplo")).rejects.toMatchObject({ codigo: "rede" })
+      await expect(enviarFormulario("/api/app/foto", new FormData())).rejects.toMatchObject({
+        codigo: "rede",
+      })
     }
     expect(buscar).not.toHaveBeenCalled()
   })

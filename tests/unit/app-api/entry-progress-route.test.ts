@@ -144,10 +144,10 @@ describe("GET /api/app/entry/progress", () => {
     expect(await resposta.json()).toEqual({ erro: "leitura-indisponivel" })
   })
 
-  it("informa o Google quando a sessão nasceu no OAuth", async () => {
+  it.each(["google", "apple"])("informa %s no OAuth", async (provedor) => {
     resolver.mockResolvedValue({
       ...sessaoAutenticada(),
-      usuario: { ...PESSOA, appMetadata: { provider: "google" } },
+      usuario: { ...PESSOA, appMetadata: { provider: provedor } },
     } as never)
 
     const resposta = await GET(requisicao("GET"))
@@ -155,7 +155,7 @@ describe("GET /api/app/entry/progress", () => {
     expect(await resposta.json()).toEqual({
       autenticado: true,
       via: "cookie",
-      provedor: "google",
+      provedor,
       progresso: { versao: 2, etapa: "porta", estado: {} },
     })
   })

@@ -32,7 +32,7 @@ export type ServidorDaEntrada = Readonly<{
   registrarCombinado: (versao: number) => Promise<void>
   salvarAvisos: (avisos: "ativados" | "agora-nao") => Promise<void>
   enviarDocumento: (arquivo: File) => Promise<void>
-  iniciarGoogle: () => Promise<string>
+  iniciarGoogle: (provedor?: "google" | "apple") => Promise<string>
   aceitarConvite: (entrada: { codigo: string; nome: string }) => Promise<void>
   /** Valida o convite antes do envio; devolve quem convidou e o e-mail declarado. */
   previewConvite: (codigo: string, email?: string) => Promise<PreviewDoConvite>

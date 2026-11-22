@@ -132,6 +132,7 @@ pública do proxy (ADR-20261110), e tem teste positivo e negativo.
 - No Android, `android:allowBackup="false"`, ou regras de extração que excluam o cofre. Falha de decifração
   conta como "sem sessão".
 - O token de acesso vive só na memória.
+- Emenda de 21/11: o token de renovação também fica em memória durante a sessão para a renovação única e é apagado ao sair e no 401 da renovação.
 - É proibido guardar qualquer um deles em `localStorage`, IndexedDB, `@capacitor/preferences`, URL, log,
   Sentry ou analytics.
 - O plugin de cofre é a única dependência fora de `@capacitor/*` que este ADR autoriza. Ele precisa de
@@ -299,3 +300,16 @@ pública do proxy (ADR-20261110), e tem teste positivo e negativo.
   sessão em dois lugares.
 - **ASWebAuthenticationSession no iOS.** Recusada agora: exigiria um segundo plugin de terceiros. Com PKCE
   S256, o SFSafariViewController basta.
+
+### Emenda de 21/11 — escolha do cofre
+
+O plugin escolhido é `@aparajita/capacitor-secure-storage` 8.0.1 (MIT), configurado com Keychain
+`afterFirstUnlockThisDeviceOnly` e sem sincronização com iCloud; usa Keystore no Android e
+`allowBackup=false`. O `capacitor-secure-storage-plugin` 0.14.2 foi recusado por ser publicado
+depois do corte de 11/10 da regra de versões, e o 0.13.0 por depender do SwiftKeychainWrapper sem
+acesso configurável. Ressalva: o pacote SPM `keychain-swift` entra com faixa "from 21.0.0" e fica
+fixado pelo `Package.resolved` do build.
+
+### Reauditoria de 22/11
+
+`AbortSignal.timeout` foi trocado por `AbortController` por causa do iOS 15; falha dupla ao apagar o cofre ao sair deixa o marcador `bivaque.saiu`, que impede retomar a sessão; rotas autenticadas da entrada renovam; e a prévia do convite exige `x-bivaque-app` no nativo. Riscos aceitos: escrita com 401 e token longe de vencer não limpa o cofre (a pessoa vê erro e Tentar de novo; o token vence em até 1 h); erro de configuração de `origemDaApi` aparece como falta de rede; `indexedDB.databases()` ausente em parte dos WebView torna a limpeza de rascunhos melhor esforço.

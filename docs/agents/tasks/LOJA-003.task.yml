@@ -1,0 +1,96 @@
+task_id: LOJA-003
+objective: >
+  Lado do app da sessão nativa do app de loja, como decide o ADR-20261120 (§5, §6, §7, §8, §9), sobre o
+  servidor que o LOJA-002 (#317) já entregou: cofre do aparelho para o token de renovação e o fluxo
+  pendente, token de acesso só em memória, cliente único com Bearer e base absoluta no nativo,
+  renovação única com ciclo de vida (abrir, voltar do segundo plano, 401), sair na ordem fixa com
+  limpeza local, Google e Apple pelo navegador do sistema com PKCE S256 e retorno por ouvinte
+  próprio, CSP do build nativo, e o ramo Apple no entry/oauth do servidor. A web (cookie) não muda.
+authority:
+  - docs/decisions/ADR-20261120-sessao-nativa-do-app-de-loja.md (a fonte deste lote; §5 a §9, Provas exigidas, item App, CSP e Emulador)
+  - docs/decisions/ADR-20261024-front-react-spa.md (§5 contrato de API)
+  - docs/decisions/ADR-20261105-porta-de-dados-do-app.md (§1 cliente único, sem repetir escrita)
+  - docs/decisions/ADR-20261118-push (ordem de sair, §2) e ADR-20261119 (CSP do /app, §2)
+  - docs/agents/LOJA-SESSAO-INVENTARIO.md
+  - "card LAN-LOJA em tools/backend-kanban/public/board.json (nota do LOJA-002: herdado pelo LOJA-003)"
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    Em origin/main 9fc92ef6b, apps/app/lib/api/cliente.ts usa só cookie (credentials include) e não
+    conhece Bearer nem renovação; não há plugin de cofre nem @capacitor/browser em apps/app/package.json;
+    apps/app/scripts/preparar-nativo.mjs injeta script inline sem CSP; apps/web/app/api/app/entry/oauth/route.ts
+    aceita só PROVEDOR = "google"; não existe ouvinte de bivaque://auth-callback.
+allowed_paths:
+  - apps/app/lib/**
+  - apps/app/src/**
+  - apps/app/scripts/**
+  - apps/app/tests/**
+  - apps/app/package.json
+  - apps/app/capacitor.config.ts
+  - apps/app/index.html
+  - apps/app/vite.config.ts
+  - apps/app/android/app/src/main/AndroidManifest.xml
+  - apps/app/android/app/src/main/res/xml/**
+  - apps/app/android/app/capacitor.build.gradle
+  - apps/app/android/capacitor.settings.gradle
+  - apps/app/android/app/src/main/assets/capacitor.plugins.json
+  - apps/app/ios/App/App/Info.plist
+  - apps/app/ios/App/Podfile
+  - apps/app/ios/App/CapApp-SPM/**
+  - apps/app/ios/App/App.xcodeproj/project.pbxproj
+  - pnpm-lock.yaml
+  - apps/web/app/api/app/entry/oauth/**
+  - .github/workflows/app-loja.yml # origens fictícias para o build nativo no CI
+  - apps/web/app/api/app/entry/invite/preview/route.ts # prévia do convite pelo Bearer nativo e cabeçalho do app
+  - apps/web/app/api/app/entry/progress/route.ts # provedor Apple
+  - apps/web/app/api/localities/** # CORS só para origens nativas, só GET e OPTIONS
+  - tests/scope/app-porta-de-dados.test.mjs # exceção da renovação ao cliente único — apps/app/lib/nativo/sessao.ts, ADR §7
+  - tests/scope/loja-callback.test.mjs # prova do filtro auth-callback
+  - apps/web/lib/app-api/**
+  - tests/unit/**
+  - tests/e2e/sessao-nativa.spec.ts
+  - docs/agents/prototipo-shadcn/versoes-1a.json
+  - docs/agents/tasks/LOJA-003.task.yml
+  - docs/decisions/ADR-20261120-sessao-nativa-do-app-de-loja.md
+  - docs/decisions/RATIFICACAO.md
+  - docs/agents/LOJA-SESSAO-INVENTARIO.md
+  - tools/backend-kanban/public/board.json
+  - tools/backend-kanban/BOARD.md
+forbidden:
+  - apps/mobile, apps/prototipo; mudar o comportamento da web (cookie) além do que o ADR manda
+  - qualquer token, code, code_verifier ou marcador do fluxo em localStorage, sessionStorage, IndexedDB, @capacitor/preferences, URL do roteador, histórico, log, console, Sentry ou analytics (ADR §6, §9)
+  - dependência fora de @capacitor/* além de um único plugin de cofre (versão exata, código aberto, manutenção ativa, Keystore e Keychain, registrado em versoes-1a.json); @capacitor/browser com versão exata alinhada ao core 8.5.3
+  - server.url ou allowNavigation no capacitor.config.ts; script inline sem hash no dist-nativo; unsafe-eval ou unsafe-inline em script-src
+  - repetir escrita depois de renovar (só leituras se repetem, uma vez); a exceção é sair, uma vez depois de 401 (ADR §7)
+  - limpar o cofre em 429, 503, tempo esgotado ou falta de rede (só 401 da renovação limpa)
+  - redirect_to vindo do pedido ou do Host no ramo nativo; aceitar provedor fora de google e apple; mudar o ramo web de entry/oauth além de aceitar apple
+  - Apple nativo pelo sistema no iOS (plugin de terceiros): fica para adendo se a revisão da loja exigir; aqui Apple é pelo navegador, como Google
+  - service_role; editar migration aplicada
+  - git stash, reiniciar ou reconstruir o banco local, delegar
+  - dado pessoal real ou CPF real; segredo ou chave real no repositório
+acceptance:
+  - "cofre: um módulo único (ex.: apps/app/lib/nativo/cofre.ts) sobre o plugin escolhido guarda token de renovação, code_verifier e marcador do fluxo (com criação); falha de decifração ou leitura conta como sem sessão; na web o módulo não existe em uso (cookie segue); android:allowBackup=false ou regras de extração que excluem o cofre (ADR §6)"
+  - "token de acesso e expires_at só em memória; cliente.ts no nativo usa base absoluta (VITE_API_BASE), credentials omit, Authorization Bearer, x-bivaque-app e x-bivaque-cliente: loja em todo pedido; a entrada (src/entrada/servidor.ts) passa a usar o cliente único (ADR §8 e emenda de 21/11)"
+  - "renovação única (single-flight) cobre abertura, volta do segundo plano e 401: pedidos concorrentes esperam a mesma renovação; o token novo é gravado no cofre antes de soltar os pedidos; falha na gravação mantém o par em memória (ADR §7)"
+  - "abrir a frio com token no cofre renova antes da primeira leitura; sem token vai para /app/entrar; voltar do segundo plano renova só com menos de 5 min para expires_at ou sem token de acesso (ADR §7)"
+  - "401 numa leitura: renova e repete uma vez; escrita não se repete e a tela oferece Tentar de novo; 401 da renovação limpa o cofre e vai para a entrada com redirect; 429, 503, tempo esgotado e rede não limpam o cofre e tentam de novo com espera crescente, repetindo a renovação só dentro da janela de 10 s de reuso quando a resposta não chegou (ADR §4, emenda de 21/11)"
+  - "sair no nativo na ordem: apagar inscrição de push pela rota, cancelar o plugin de push, POST /api/app/voce/sair (renova e repete uma vez diante de 401), limpar cofre, caches de consulta, localStorage, IndexedDB e Cache Storage; sem rede o passo de limpeza acontece mesmo assim (ADR §7)"
+  - "PKCE no app: code_verifier por gerador seguro (43 a 128 caracteres), só o code_challenge S256 vai ao servidor; entrar com Google e Apple abre @capacitor/browser na URL que entry/oauth devolve; o retorno bivaque://auth-callback é tratado por ouvinte próprio em appUrlOpen e App.getLaunchUrl(); só aceita com fluxo pendente de menos de 10 min; verificador e marcador apagados na primeira tentativa; troca em POST /api/app/sessao/token; depois segue /app/entrar; rotaDoLink continua recusando esse host e o code nunca entra no roteador nem no histórico (ADR §5, §9)"
+  - "servidor: entry/oauth aceita provider google e apple (lista fechada) nos ramos web e nativo, com teste positivo de apple e negativo de provedor desconhecido; o resto do contrato da rota não muda"
+  - "CSP do dist-nativo: meta com default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; connect-src 'self' + origem de VITE_API_BASE + origem do Supabase Storage; img-src 'self' data: blob: + essas origens; object-src 'none'; base-uri 'none'; frame-src 'none'. O script inline de preparar-nativo.mjs sai para arquivo próprio; capacitor.config.ts sem server.url nem allowNavigation; um teste lê o index.html gerado e confere (ADR §6)"
+  - "provas do ADR, seção Provas exigidas, item App e CSP: cada uma com teste (unitário com o plugin do cofre, o App e o Browser simulados), incluindo: renovação única com concorrentes; escrita não repetida; sair repetido uma vez depois de 401; 401 limpa o cofre e 429/503/rede não; retorno por appUrlOpen e por getLaunchUrl; abrir a frio renova sempre; segundo plano só com menos de 5 min; retorno sem fluxo pendente ou vencido ignorado; verificador não reutilizado; ordem ao sair; nada do cofre em localStorage e sair limpa localStorage, IndexedDB e Cache Storage; rotaDoLink recusa o host do retorno"
+proof:
+  - npx pnpm@11.18.0 gate --fast
+  - npx pnpm@11.18.0 test
+  - npx pnpm@11.18.0 --filter @bivaque/app test
+  - npx pnpm@11.18.0 --filter @bivaque/app build:nativo (ou o script que gera dist-nativo) e o teste da CSP sobre o index.html gerado
+  - "CI do PR com ci:full verde, incluindo o workflow Build do app de loja (Android e iOS compilam)"
+  - "emulador Android com pilha local (entrar por código, reabrir logado, sair e reabrir na entrada, Google por provedor falso): exige Docker, ausente no PC (card INFRA-CLI-SUPABASE-PC); fica registrado como prova pendente do card LAN-LOJA e do marco de aparelho do dono, sem virar PASS"
+risk: security
+risk_level: R3
+adr: docs/decisions/ADR-20261120-sessao-nativa-do-app-de-loja.md
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: HUMAN_DECISION
+closure:
+  requires_runtime_evidence: true

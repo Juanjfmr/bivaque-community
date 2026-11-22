@@ -178,3 +178,12 @@ describe("status da verificação", () => {
     expect(verificacaoDoStatus("qualquer")).toBe("nao-iniciada")
   })
 })
+
+it("retoma a entrada Apple no aceite", () => {
+  const progresso = progressoDoServidor({
+    autenticado: true,
+    provedor: "apple",
+    progresso: { versao: 2, etapa: "porta", estado: {} },
+  })
+  expect(progresso).toMatchObject({ via: "apple", etapa: "aceite" })
+})

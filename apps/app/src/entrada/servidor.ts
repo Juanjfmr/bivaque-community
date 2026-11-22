@@ -1,3 +1,7 @@
+import { Capacitor } from "@capacitor/core"
+import { requisitar } from "@/lib/api/cliente"
+import { aceitarPar } from "@/lib/nativo/sessao"
+
 /**
  * Cliente do app para as rotas `/api/app/entry/*` (LAN-F01).
  *
@@ -39,7 +43,7 @@ async function pedir(
 ): Promise<Resposta> {
   let resposta: Response
   try {
-    resposta = await fetch(`/api/app/entry/${caminho}`, {
+    resposta = await requisitar(`/api/app/entry/${caminho}`, {
       method: init.metodo ?? "GET",
       credentials: "include",
       headers: CABECALHOS_DO_APP,
@@ -60,7 +64,7 @@ function texto(corpo: Record<string, unknown>, chave: string): string | null {
 export type RespostaDeProgresso = Readonly<{
   autenticado: boolean
   via?: string
-  provedor?: "google" | "email"
+  provedor?: "google" | "apple" | "email"
   progresso?: unknown
 }>
 
@@ -76,7 +80,9 @@ export async function lerProgresso(): Promise<RespostaDeProgresso> {
   return {
     autenticado: resposta.corpo["autenticado"] === true,
     ...(typeof resposta.corpo["via"] === "string" ? { via: resposta.corpo["via"] } : {}),
-    ...(resposta.corpo["provedor"] === "google" || resposta.corpo["provedor"] === "email"
+    ...(resposta.corpo["provedor"] === "google" ||
+    resposta.corpo["provedor"] === "apple" ||
+    resposta.corpo["provedor"] === "email"
       ? { provedor: resposta.corpo["provedor"] }
       : {}),
     progresso: resposta.corpo["progresso"],
@@ -140,7 +146,16 @@ export async function verificarCodigo(email: string, codigo: string): Promise<Ve
   } catch {
     return { estado: "indisponivel" }
   }
-  if (resposta.status === 200) return { estado: "autenticado" }
+  if (resposta.status === 200) {
+    if (Capacitor.isNativePlatform()) {
+      try {
+        await aceitarPar(resposta.corpo)
+      } catch {
+        return { estado: "indisponivel" }
+      }
+    }
+    return { estado: "autenticado" }
+  }
   if (resposta.status === 400) return { estado: "codigo-invalido" }
   if (resposta.status === 429) {
     const reenviarEm = resposta.corpo["reenviarEm"]
@@ -265,7 +280,7 @@ export async function carregarEstados(): Promise<readonly string[]> {
   if (estadosEmCache !== null) return estadosEmCache
   let resposta: Response
   try {
-    resposta = await fetch("/api/localities", { credentials: "include" })
+    resposta = await requisitar("/api/localities", { credentials: "include" })
   } catch {
     throw new FalhaDaEntrada("rede", 0)
   }
@@ -283,7 +298,7 @@ export async function carregarCidades(uf: string): Promise<readonly CidadeDoCata
   if (guardadas !== undefined) return guardadas
   let resposta: Response
   try {
-    resposta = await fetch(`/api/localities/${encodeURIComponent(uf)}`, {
+    resposta = await requisitar(`/api/localities/${encodeURIComponent(uf)}`, {
       credentials: "include",
     })
   } catch {
@@ -310,8 +325,11 @@ export type GrupoDaEntrada = Readonly<{
 }>
 
 /** Inicia o OAuth do Google: devolve a URL de autorização (o PKCE vai em cookie). */
-export async function iniciarGoogle(): Promise<string> {
-  const resposta = await pedir("oauth", { metodo: "POST", corpo: { provedor: "google" } })
+export async function iniciarGoogle(provedor: "google" | "apple" = "google"): Promise<string> {
+  const code_challenge = Capacitor.isNativePlatform()
+    ? await (await import("@/lib/nativo/pkce")).criarPkce()
+    : undefined
+  const resposta = await pedir("oauth", { metodo: "POST", corpo: { provedor, code_challenge } })
   const url = texto(resposta.corpo, "url")
   if (resposta.status !== 200 || url === null) {
     throw new FalhaDaEntrada(texto(resposta.corpo, "erro") ?? "oauth-indisponivel", resposta.status)
@@ -382,7 +400,7 @@ export async function enviarDocumento(arquivo: File): Promise<void> {
   formulario.append("documento", arquivo)
   let resposta: Response
   try {
-    resposta = await fetch("/api/app/entry/document", {
+    resposta = await requisitar("/api/app/entry/document", {
       method: "POST",
       credentials: "include",
       headers: { "x-bivaque-app": "bivaque-spa" },
