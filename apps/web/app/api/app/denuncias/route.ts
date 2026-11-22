@@ -49,9 +49,15 @@ const MENSAGENS: Readonly<Record<ReportMutationError, string>> = {
 export async function GET(request: NextRequest): Promise<NextResponse> {
   const auth = await exigirSessao(request)
   if (!auth.ok) return auth.resposta
+  const depois = new URL(request.url).searchParams.get("depois")
+  // O cursor é o `created_at` da última linha da página anterior, como em
+  // `/api/app/pedidos`; valor que não é data é 400 antes do banco.
+  if (depois !== null && Number.isNaN(Date.parse(depois)))
+    return responder(request, { erro: "dados-invalidos" }, 400)
   try {
-    const denuncias = await listOwnReports(auth.sessao.cliente)
-    return responder(request, { denuncias }, 200)
+    const pagina = await listOwnReports(auth.sessao.cliente, depois)
+
+    return responder(request, { denuncias: pagina.denuncias, proximo: pagina.proximo }, 200)
   } catch {
     return responder(request, { erro: "leitura-indisponivel" }, 503)
   }

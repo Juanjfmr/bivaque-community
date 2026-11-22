@@ -29,6 +29,8 @@ type Opcoes = {
   alvoInvisivel?: boolean
   erroDoInsert?: { code: string; message: string }
   erroDeTabela?: string
+  /** Quantas linhas a página de denúncias devolve (padrão: 1). */
+  quantas?: number
 }
 
 const linhaDaDenuncia = {
@@ -41,10 +43,19 @@ const linhaDaDenuncia = {
   resolved_at: null,
 }
 
+function linhasDaDenuncia(quantas: number) {
+  return Array.from({ length: quantas }, (_, indice) => ({
+    ...linhaDaDenuncia,
+    created_at: new Date(Date.UTC(2026, 10, 5, 12, 0, indice)).toISOString(),
+  }))
+}
+
 function cliente(opcoes: Opcoes = {}) {
   const gravacoes: { tabela: string; metodo: string; valores?: unknown }[] = []
   const filtros: { tabela: string; coluna: string; valor: unknown }[] = []
   const ors: { tabela: string; filtro: string }[] = []
+  const limites: { tabela: string; valor: number }[] = []
+  const comparacoes: { tabela: string; operador: string; coluna: string; valor: unknown }[] = []
 
   const resposta = (tabela: string, unico: boolean) => {
     if (opcoes.erroDeTabela === tabela) {
@@ -52,13 +63,20 @@ function cliente(opcoes: Opcoes = {}) {
     }
     if (tabela === "reports")
       return {
-        data: unico ? (opcoes.semDenuncias === true ? null : linhaDaDenuncia) : [linhaDaDenuncia],
+        data: unico
+          ? opcoes.semDenuncias === true
+            ? null
+            : linhaDaDenuncia
+          : linhasDaDenuncia(opcoes.quantas ?? 1),
         error: null,
         count: null,
       }
     if (tabela === "posts")
       return {
-        data: opcoes.alvoInvisivel === true ? null : { content: "Oferta repetida de serviço" },
+        data:
+          opcoes.alvoInvisivel === true
+            ? []
+            : [{ id: POST, content: "Oferta repetida de serviço" }],
         error: null,
       }
     if (tabela === "locality_memberships") return { data: { locality_id: CIDADE }, error: null }
@@ -83,7 +101,15 @@ function cliente(opcoes: Opcoes = {}) {
 
   const from = vi.fn((tabela: string) => {
     const consulta: Record<string, unknown> = {}
-    for (const metodo of ["select", "order", "limit", "in"]) consulta[metodo] = () => consulta
+    for (const metodo of ["select", "order", "in"]) consulta[metodo] = () => consulta
+    consulta["limit"] = (valor: number) => {
+      limites.push({ tabela, valor })
+      return consulta
+    }
+    consulta["lt"] = (coluna: string, valor: unknown) => {
+      comparacoes.push({ tabela, operador: "lt", coluna, valor })
+      return consulta
+    }
     consulta["or"] = (filtro: string) => {
       ors.push({ tabela, filtro })
       return consulta
@@ -131,6 +157,8 @@ function cliente(opcoes: Opcoes = {}) {
     gravacoes,
     filtros,
     ors,
+    limites,
+    comparacoes,
   }
 }
 
@@ -318,6 +346,50 @@ describe("TROCA-005 — a denúncia não identifica o denunciante", () => {
     const resposta = await lista(req("denuncias"))
     expect(resposta.status).toBe(503)
     expect(await resposta.text()).not.toContain("segredo")
+  })
+
+  it("a página lê 50 e só oferece o próximo quando ela enche", async () => {
+    const cheia = cliente({ quantas: 50 })
+    autenticar(cheia)
+    const comProximo = await lista(req("denuncias"))
+    expect(comProximo.status).toBe(200)
+    expect(cheia.limites).toContainEqual({ tabela: "reports", valor: 50 })
+    const pagina = await comProximo.json()
+    expect(pagina.denuncias).toHaveLength(50)
+    expect(pagina.proximo).toBe(linhasDaDenuncia(50).at(-1)?.created_at)
+
+    const curta = cliente({ quantas: 3 })
+    autenticar(curta)
+    expect((await (await lista(req("denuncias"))).json()).proximo).toBeNull()
+  })
+
+  it("o cursor `depois` vira `created_at <` e valor fora de data é 400 antes do banco", async () => {
+    const mock = cliente()
+    autenticar(mock)
+    const resposta = await lista(
+      req(`denuncias?depois=${encodeURIComponent("2026-11-05T12:00:00Z")}`),
+    )
+    expect(resposta.status).toBe(200)
+    expect(mock.comparacoes).toContainEqual({
+      tabela: "reports",
+      operador: "lt",
+      coluna: "created_at",
+      valor: "2026-11-05T12:00:00Z",
+    })
+
+    const invalido = cliente()
+    autenticar(invalido)
+    expect((await lista(req("denuncias?depois=ontem"))).status).toBe(400)
+    expect(invalido.from).not.toHaveBeenCalled()
+  })
+
+  it("a leitura dos alvos é por lote: uma consulta por tipo, não por linha", async () => {
+    const mock = cliente({ quantas: 5 })
+    autenticar(mock)
+    await lista(req("denuncias"))
+    // As cinco denúncias apontam para o MESMO post: uma única ida à tabela.
+    const idasAosPosts = mock.from.mock.calls.filter(([tabela]) => tabela === "posts")
+    expect(idasAosPosts).toHaveLength(1)
   })
 })
 
