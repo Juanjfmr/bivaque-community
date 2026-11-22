@@ -6250,7 +6250,9 @@
       "sourceRevision": "29fcc8f",
       "links": ["docs/LANCAMENTO.md", "docs/decisions/ADR-20261024-front-react-spa.md"],
       "proof": [
-        "04/11: aberto por decisão do dono (push entra no lançamento), registrado em docs/LANCAMENTO.md, Mudanças de escopo."
+        "04/11: aberto por decisão do dono (push entra no lançamento), registrado em docs/LANCAMENTO.md, Mudanças de escopo.",
+        "PUSH-001 parcial: protecao de arquivos de credenciais e regra de limites de produto; reserva, migration, adaptadores, rota e testes de envio ainda pendentes. O lote do app segue dependente de LOJA-004: plugin, permissao em contexto, ordem de saida e E2E em emulador e simulador; chaves e testes reais dependem do dono.",
+        "PUSH-001: registro nativo, reserva com revalidação, adaptadores contra servidor falso, exceção do termo e redação. Faltam plugin do Capacitor, permissão em contexto, ordem de saída e E2E em emulador e simulador, dependentes de LOJA-004; recebimento real após as chaves do dono."
       ],
       "id": "LAN-PUSH",
       "title": "Push no celular: token do aparelho, envio pelo outbox e abertura no destino certo",
@@ -6266,7 +6268,8 @@
         "Prova no emulador Android e no simulador iOS com credenciais de teste; pgTAP positivo e negativo da tabela de tokens",
         "Requisito do lote nativo (ADR-20261118 §2): reserva com revalidação na mesma instrução no envio — apps/web/lib/push/adaptador.ts lê as inscrições e envia sem reservar a linha nem conferir de novo titular, preferência e bloqueio"
       ],
-      "dependencies": ["NOTIF-DEEPLINKS"]
+      "dependencies": ["NOTIF-DEEPLINKS"],
+      "completedChecklist": [false, false, false, false, false, true]
     },
     {
       "phase": "Lançamento",
@@ -6370,7 +6373,7 @@
       "tests": [],
       "blockers": [],
       "updatedAt": "2026-11-22",
-      "sourceRevision": "057f1c4bb",
+      "sourceRevision": "9762b4a01",
       "links": ["docs/LANCAMENTO.md"],
       "proof": [
         "02/11: aberto na definição do lançamento (docs/LANCAMENTO.md), por mandato do dono.",
@@ -6379,8 +6382,6 @@
         "21/11 LOJA-002 (#317, 40850d7b4): CI completo verde (run 44910688304, stateful 375/768/1440); security-auditor LIBERA COM RESSALVAS e revisão independente PASS-COM-RESSALVA. Herdado pelo LOJA-003: cofre, PKCE no app, CSP nativa e retorno com auditoria própria; cabeçalho do app em todo pedido nativo; repetir renovar só dentro da janela de 10 s; Apple no entry/oauth.",
         "21/11 LOJA-003 (59ea6af85): testes do app 785/785, rota de progresso 28/28, build nativo com origens ficticias e CSP verificada; gate --fast executado. Pendentes: gate completo e CI, revisao independente de seguranca, prova Android com pilha local e iOS no CI/aparelho. Nao encerra LAN-LOJA.",
         "22/11 LOJA-003 (#320, 9762b4a01): o app guarda a sessão no cofre do aparelho (@aparajita/capacitor-secure-storage 8.0.1, Keychain afterFirstUnlockThisDeviceOnly sem iCloud, Keystore, allowBackup=false). Também entraram: renovação única com espera em 429/503, PKCE no app, retorno bivaque://auth-callback no Android e iOS, CSP nativa sem script inline, CORS nativo em /api/localities, prévia do convite pelo Bearer com o cabeçalho do app, saída que limpa tudo (com o marcador 'saiu' se o cofre falhar). Gate completo verde em 8dd37550f e CI completo verde. Duas rodadas de auditoria de segurança independente: a 1ª reprovou (HIGH-1/2, MEDIUM-1/2); a 2ª deu LIBERA no eixo de segurança com F1–F5 corrigidos em 80077f9c6..9762b4a01 (AbortController no lugar de AbortSignal.timeout por causa do iOS 15, marcador de saída, renovação nas rotas autenticadas da entrada, cabeçalho do app na prévia, emenda dos allowed_paths). Testes: app 800, app-api 1644, escopo 318.",
-        "22/11 LOJA-004: workflow app-loja-provas e roteiro Android preparados; passos 1–7, Google alternativo e simulador iOS ainda não executados nem conferidos. Próximo passo: rodar no PR e conferir capturas e logs por passo; registrar falhas de produção sem corrigi-las neste lote. iOS com servidor permanece para o aparelho do dono.",
-        "22/11 LOJA-004 (#322, rascunho, 057f1c4bb): workflow app-loja-provas no GitHub Actions com pilha Supabase local, emulador Android (android-emulator-runner) e simulador iOS no macOS; capturas e logs como artefato, credenciais derivadas da pilha do CI. Cinco runs (44995198232..44999649034), orçamento de tentativas esgotado: HUMAN_DECISION, sem PASS. Provado: no Android o APK de debug abre na tela de entrada e falando com o servidor local (01-entrada.png); o código chega pelo Mailpit. Não provado: (a) Android passo 2 em diante — depois de enviar o código, a página da WebView que o roteiro segura é fechada ('Target page, context or browser has been closed'); provável troca/recarga da WebView após o login, o roteiro precisa readquiri-la; passos 3–8 não rodaram. (b) iOS — o app carrega (console do Capacitor, pedidos a /api/app/entry/progress e /api/localities chegam à API de prova) mas a tela fica em branco por 90 s (captura ~77 KB = tela vazia); causa não diagnosticada, pode ser defeito real do app no iOS. Google por provedor falso inviável (GoTrue fixado ignora a URL configurável; registrado no ADR-20261120).",
         "22/11 LOJA-005 (#322, 76ea99ec6..401c4dc84): quatro runs do app-loja-provas (45019546380, 45020824719, 45022364036, 45023729150), orçamento esgotado: HUMAN_DECISION, sem PASS. Roteiro Android readquire a WebView e roda os passos de forma independente. Provado no emulador: 01-entrada, 05-link (bivaque://app/entrar abre a entrada), 06-callback-sem-fluxo (callback sem PKCE não muda a rota), 07-backup (allowBackup=false). Não provado: 02/03/04 — defeito do app (card LOJA-DEF-ENTRADA-MEMBRO): o membro verificado do seed entra pelo código do Mailpit, o PUT /api/app/entry/progress volta 409 e o app fica em /app/entrar sem chegar ao Início (runs 2 e 3; no run 4 a WebView não reapareceu em 30 s depois do código). 08-google falhou nos runs 3 e 4 na conferência da URL OAuth/PKCE, sem detalhe no log; precisa de log da origem e dos parâmetros (sem valores) antes de culpar o app. iOS: saída (b), defeito do app (card LOJA-DEF-IOS-TELA-BRANCA): com a API de prova na forma real do servidor, em capacitor://localhost/app/ não há erro de JS, unhandledrejection, console.error nem falha de recurso; DOMContentLoaded em ~1,1 s; o pedido de progresso sai do bundle principal (provedor da casca), mas a raiz #root nunca recebe nenhuma mutação em 20 s: o React monta os provedores e o roteador nunca desenha a primeira tela. O mesmo build desenha no Android (https://localhost). Diagnóstico injetado só no dist-nativo do job (conferido pelo teste de escopo); artefatos em .visual/loja-004/ dos runs."
       ],
       "id": "LAN-LOJA",
@@ -6399,8 +6400,7 @@
       "notes": [
         "20/11 decisão do coordenador: a tela de entrada no nativo (apps/app/src/entrada/servidor.ts com fetch relativo) sai do LOJA-001 e entra no LOJA-002, junto da sessão nativa do ADR-20261120. Ficam também para o LOJA-002: android:allowBackup, window.alert no SeletorDeFoto, remover o ouvinte appUrlOpen, testes de template com.getcapacitor.myapp, varredura dos gerados do cap sync, ios/Pods no .gitignore, setup-java v4.",
         "22/11 riscos aceitos do LOJA-003, registrados no ADR-20261120 (reauditoria de 22/11): uma escrita que recebe 401 com o token longe de vencer não limpa o cofre (erro com Tentar de novo; o token vence em até 1 h); erro de configuração da origem da API aparece como falta de rede; a limpeza de rascunhos no IndexedDB é melhor esforço nos WebView sem indexedDB.databases().",
-        "22/11 falta para fechar o LAN-LOJA. (1) Provas: login Google/Apple, sessão ao reabrir, câmera e links no emulador Android (o PC não tem Docker para a pilha local) e no simulador iOS (macOS/CI); a sessão no iOS 15 só aparelho ou simulador mostram; builds de release sem assinatura no CI. (2) Atos do dono: credenciais Google e Apple, cadastro de bivaque://auth-callback nas URLs de retorno do projeto hospedado, assinatura, fichas e envio às lojas.",
-        "22/11 LOJA-004: GoTrue v2.190.0 ignora GOTRUE_EXTERNAL_GOOGLE_URL e fixa o emissor Google; Keycloak aceita URL mas o botão solicita google. Sem alterar imagem/código/config, retorno Google com provedor falso não está disponível; roteiro propõe conferir navegador e PKCE S256. Evidência e fontes na emenda do ADR-20261120; execução ainda pendente."
+        "22/11 falta para fechar o LAN-LOJA. (1) Provas: login Google/Apple, sessão ao reabrir, câmera e links no emulador Android (o PC não tem Docker para a pilha local) e no simulador iOS (macOS/CI); a sessão no iOS 15 só aparelho ou simulador mostram; builds de release sem assinatura no CI. (2) Atos do dono: credenciais Google e Apple, cadastro de bivaque://auth-callback nas URLs de retorno do projeto hospedado, assinatura, fichas e envio às lojas."
       ]
     },
     {
@@ -10679,17 +10679,42 @@
         "Passos 02 a 04 do app-loja-provas verdes no emulador"
       ],
       "dependencies": [],
-      "tests": [],
+      "tests": ["apps/app/tests/codigo-e-vinculo.test.ts", "tests/e2e/f01-entrada-real.spec.ts"],
       "blockers": [],
       "updatedAt": "2026-11-22",
-      "sourceRevision": "401c4dc84",
+      "sourceRevision": "363c63e99",
       "links": [
         "apps/app/src/previa-f01/etapas-conta.tsx",
         "apps/app/src/entrada/TelaDeEntrada.tsx",
-        "docs/agents/tasks/LOJA-005.task.yml"
+        "docs/agents/tasks/LOJA-005.task.yml",
+        "apps/app/src/entrada/codigo-e-vinculo.ts",
+        "docs/agents/tasks/ENTRADA-001.task.yml"
       ],
       "proof": [
-        "22/11 LOJA-005, runs 45020824719 e 45022364036: roteiro.log com FALHOU 02-codigo em /app/entrar; rede.log com PUT /api/app/entry/progress 409."
+        "22/11 LOJA-005, runs 45020824719 e 45022364036: roteiro.log com FALHOU 02-codigo em /app/entrar; rede.log com PUT /api/app/entry/progress 409.",
+        "22/11 ENTRADA-001 (fix/entrada-membro, 363c63e99 + correção da revisão: o membro relê o progresso canônico em vez de ir direto ao Início): depois do código autenticado a entrada lê /api/app/entry/verification; membro segue a etapa canônica do servidor (o Início, ou a etapa pendente pós-prévia) sem PUT de rascunho, pessoa nova segue ao aceite, falha da conferência mostra a mensagem fixa e Tentar de novo. Vitest codigo-e-vinculo (3 casos) e E2E stateful \"membro existente entra por código e chega ao Início\" (sem PUT de progresso). Falta só o passo 02–04 do app-loja-provas no emulador."
+      ]
+    },
+    {
+      "id": "TEST-PUSH-ANDROID-INSTAVEL",
+      "title": "Teste do push Android falha sob carga no gate completo",
+      "phase": "Lançamento",
+      "priority": "P2",
+      "category": "backend",
+      "status": "repo",
+      "description": "tests/unit/push/android.test.ts (PUSH-001, #326) usa timeout de 100 ms contra o servidor falso local, com assinatura RSA no mesmo turno. No gate completo da fix/entrada-membro (22/11) falhou com FalhaNativa push android 0 (status 0 = tempo esgotado); sozinho passou em 296 ms. Instável por tempo, não por regra.",
+      "checklist": [
+        "Folga de timeout no teste (ou relógio controlado) sem mudar o timeout de produção",
+        "Gate completo verde três vezes seguidas no PC"
+      ],
+      "dependencies": [],
+      "tests": ["tests/unit/push/android.test.ts"],
+      "blockers": [],
+      "updatedAt": "2026-11-22",
+      "sourceRevision": "2855bf0c1",
+      "links": ["tests/unit/push/android.test.ts", "apps/web/lib/push/android.ts"],
+      "proof": [
+        "22/11 gate completo em .work/entrada-membro: 1 falha de 3668, só este teste; reexecução isolada verde."
       ]
     },
     {

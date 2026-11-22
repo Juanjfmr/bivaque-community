@@ -1,24 +1,12 @@
-/**
- * A inscrição que a rota `/api/app/push` aceita (ADR-20261107, item 1).
- *
- * Só o Web Push entra nesta rodada: `kind` fechado em `web`, destino de um
- * serviço de push conhecido por HTTPS e as duas chaves públicas da inscrição. O
- * dono vem da sessão; o corpo nunca carrega `user_id`. A lista de serviços vale
- * de novo no envio (`adaptador.ts`): a gravação é só pela rota, que chama a
- * função de registro do banco — o Data API não é caminho de escrita.
- */
-
-export type InscricaoWebValida = Readonly<{
-  kind: "web"
+export type InscricaoValida = Readonly<{
+  kind: "web" | "android" | "ios"
   destination: string
-  keyP256dh: string
-  keyAuth: string
-  label: string
+  keyP256dh: string | null
+  keyAuth: string | null
 }>
 
 const DESTINO_MAXIMO = 1024
 const CHAVE_MAXIMA = 255
-const ROTULO_MAXIMO = 40
 const CHAVE_BASE64URL = /^[A-Za-z0-9_-]+$/
 
 // Endereços que os serviços de push dos navegadores publicam. O destino é dado
@@ -64,29 +52,42 @@ function chaveValida(valor: unknown): string | null {
   return valor
 }
 
-export function validarInscricao(
+export function validarDestino(
   corpo: Readonly<Record<string, unknown>>,
-): InscricaoWebValida | null {
-  if (corpo["kind"] !== "web") return null
+): { kind: "web" | "android" | "ios"; destination: string } | null {
+  const kind = corpo["kind"]
+  const valor = corpo["destination"]
+  if (kind === "web") {
+    const destination = destinoValido(valor)
+    return destination === null ? null : { kind, destination }
+  }
+  if (kind === "ios") {
+    return typeof valor === "string" && /^[0-9a-fA-F]{64,200}$/.test(valor)
+      ? { kind, destination: valor }
+      : null
+  }
+  if (
+    kind === "android" &&
+    typeof valor === "string" &&
+    valor.length <= 4096 &&
+    /^[\x21-\x7e]+$/.test(valor)
+  ) {
+    return { kind, destination: valor }
+  }
+  return null
+}
 
-  const destination = destinoValido(corpo["destination"])
-  if (destination === null) return null
-
+export function validarInscricao(corpo: Readonly<Record<string, unknown>>): InscricaoValida | null {
+  const destino = validarDestino(corpo)
+  if (destino === null) return null
+  if (destino.kind !== "web") {
+    if (corpo["keys"] != null) return null
+    return { ...destino, keyP256dh: null, keyAuth: null }
+  }
   const chaves = corpo["keys"]
   if (chaves === null || typeof chaves !== "object" || Array.isArray(chaves)) return null
   const keyP256dh = chaveValida((chaves as Record<string, unknown>)["p256dh"])
   const keyAuth = chaveValida((chaves as Record<string, unknown>)["auth"])
   if (keyP256dh === null || keyAuth === null) return null
-
-  const rotuloBruto = corpo["label"]
-  const label =
-    typeof rotuloBruto === "string" && rotuloBruto.trim() !== ""
-      ? rotuloBruto.trim().slice(0, ROTULO_MAXIMO)
-      : "Navegador"
-
-  return { kind: "web", destination, keyP256dh, keyAuth, label }
-}
-
-export function validarDestino(corpo: Readonly<Record<string, unknown>>): string | null {
-  return destinoValido(corpo["destination"])
+  return { ...destino, keyP256dh, keyAuth }
 }
