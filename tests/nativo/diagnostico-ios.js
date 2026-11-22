@@ -77,9 +77,39 @@
       erro?.line ?? "",
     )
   })
+  registrar("origem", `${location.protocol} ${location.origin}`)
+  for (const metodo of ["pushState", "replaceState"]) {
+    const original = history[metodo].bind(history)
+    history[metodo] = (estado, titulo, url) => {
+      registrar(`history-${metodo}`, url === undefined ? "" : caminhoDe(url))
+      return original(estado, titulo, url)
+    }
+  }
+  let mutacoes = 0
+  const observar = () => {
+    const raiz = document.querySelector("#root")
+    if (!raiz) return
+    new MutationObserver((lista) => {
+      for (const mutacao of lista) {
+        if (mutacoes++ >= 8) return
+        const nomes = (nos) =>
+          [...nos].map((no) => no.nodeName + (no.className ? `.${no.className}` : "")).join(",")
+        registrar(
+          "mutacao-raiz",
+          `+${mutacao.addedNodes.length} ${nomes(mutacao.addedNodes)} -${mutacao.removedNodes.length} ${nomes(mutacao.removedNodes)}`,
+        )
+      }
+    }).observe(raiz, { childList: true })
+  }
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", observar)
+  else observar()
+  document.addEventListener("DOMContentLoaded", () =>
+    registrar("domcontentloaded", String(Math.round(performance.now()))),
+  )
   for (const segundos of [2, 5, 10, 20])
     setTimeout(() => {
-      registrar(`estado-${segundos}s`, document.readyState)
+      const corpo = [...document.body.children].map((no) => no.nodeName).join(",")
+      registrar(`estado-${segundos}s`, `${document.readyState} corpo=${corpo}`)
       if (segundos === 5) recursos()
     }, segundos * 1000)
 })()
