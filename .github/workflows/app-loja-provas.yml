@@ -118,6 +118,15 @@ jobs:
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
+      - name: Registrar respostas do servidor
+        run: |
+          mkdir -p .visual/loja-004/nativo
+          {
+            printf 'GET /api/localities: '
+            curl -s -o /dev/null -w "%{http_code}\n" http://localhost:3000/api/localities
+            printf 'OPTIONS /api/app/voce: '
+            curl -s -o /dev/null -w "%{http_code}\n" -X OPTIONS -H "Origin: https://localhost" -H "Access-Control-Request-Method: GET" -H "Access-Control-Request-Headers: authorization,x-bivaque-app,x-bivaque-cliente" http://localhost:3000/api/app/voce
+          } > .visual/loja-004/nativo/servidor.log
       - name: Provar no emulador
         uses: reactivecircus/android-emulator-runner@v2.34.0
         with:
@@ -131,6 +140,17 @@ jobs:
             adb reverse tcp:54321 tcp:54321
             adb install -r apps/app/android/app/build/outputs/apk/debug/app-debug.apk
             node tests/nativo/android.mjs
+      - name: Filtrar erros do servidor web
+        if: always()
+        run: |
+          mkdir -p .visual/loja-004/nativo
+          if [ -f "$RUNNER_TEMP/web.log" ]; then
+            (grep -E 'error|Error|warn| [45][0-9]{2}([[:space:]]|$)' "$RUNNER_TEMP/web.log" || true) \
+              | sed -E 's/eyJ[A-Za-z0-9._-]+/[omitido]/g; s/Bearer [^ ]+/[omitido]/g; s/\b[0-9]{6}\b/[omitido]/g; s/\?[^ ]*/[omitido]/g' \
+              | sed -n '1,300p' > .visual/loja-004/nativo/web-erros.log
+          else
+            : > .visual/loja-004/nativo/web-erros.log
+          fi
       - uses: actions/upload-artifact@v7
         if: always()
         with:

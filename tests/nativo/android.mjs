@@ -7,6 +7,39 @@ const pasta = join(process.cwd(), ".visual", "loja-004", "nativo")
 const pacote = "br.com.bivaque.app"
 mkdirSync(pasta, { recursive: true })
 const log = (texto) => appendFileSync(join(pasta, "roteiro.log"), `${texto}\n`)
+const logRede = (texto) => appendFileSync(join(pasta, "rede.log"), `${texto}\n`)
+const sanitizar = (texto) =>
+  texto
+    .replace(/eyJ[A-Za-z0-9._-]+/g, "[omitido]")
+    .replace(/Bearer\s+[^\s]+/gi, "[omitido]")
+    .replace(/\b\d{6}\b/g, "[omitido]")
+    .replace(/\?[^\s]*/g, "[omitido]")
+    .slice(0, 300)
+const urlSemQuery = (valor) => {
+  try {
+    const url = new URL(valor)
+    return `${url.origin}${url.pathname}`
+  } catch {
+    return "URL indisponível"
+  }
+}
+function instrumentarRede(pagina) {
+  pagina.on("requestfailed", (pedido) =>
+    logRede(
+      `requestfailed ${pedido.method()} ${urlSemQuery(pedido.url())} ${sanitizar(pedido.failure()?.errorText ?? "falha sem detalhe")}`,
+    ),
+  )
+  pagina.on("response", (resposta) => {
+    if (resposta.status() >= 400)
+      logRede(
+        `response ${resposta.request().method()} ${urlSemQuery(resposta.url())} ${resposta.status()}`,
+      )
+  })
+  pagina.on("console", (mensagem) => {
+    if (mensagem.type() === "error" || mensagem.type() === "warning")
+      logRede(`console ${mensagem.type()} ${sanitizar(mensagem.text())}`)
+  })
+}
 const adb = (...args) =>
   execFileSync("adb", args, { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] })
 const esperar = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
@@ -45,8 +78,10 @@ async function passo(nome, acao) {
     await acao()
     captura(nome)
     log(`OK: ${nome}`)
-  } catch {
-    log(`FALHOU: ${nome}`)
+  } catch (erro) {
+    log(
+      `FALHOU: ${nome}; URL ${urlSemQuery(page?.url() ?? "")}; erro ${sanitizar(erro instanceof Error ? erro.message : String(erro))}`,
+    )
     throw new Error(`Falha no passo ${nome}; consulte a captura e o log filtrado`)
   }
 }
@@ -91,9 +126,17 @@ try {
   if (!device) throw new Error("Emulador Android indisponível")
   abrir()
   page = await webview(device)
+  instrumentarRede(page)
   page.setDefaultTimeout(60000)
   await passo("01-entrada", async () => {
-    await page.getByRole("button", { name: "Continuar com e-mail" }).waitFor()
+    const entrada = page.getByRole("button", { name: "Continuar com e-mail" })
+    try {
+      await entrada.waitFor({ timeout: 60000 })
+      log("Resultado 01-entrada: tela de entrada")
+    } catch {
+      log(`Resultado 01-entrada: outra tela; URL ${urlSemQuery(page.url())}`)
+      throw new Error(`app não foi para a entrada sem sessão; URL ${urlSemQuery(page.url())}`)
+    }
   })
   await passo("02-codigo", async () => {
     await page.getByRole("button", { name: "Continuar com e-mail" }).click()
@@ -107,6 +150,7 @@ try {
     adb("shell", "am", "force-stop", pacote)
     abrir()
     page = await webview(device)
+    instrumentarRede(page)
     await page.getByRole("button", { name: "Você", exact: true }).waitFor({ timeout: 90000 })
     await page.getByRole("button", { name: "Você", exact: true }).click()
     await page.getByText("Sua conta, seus anúncios e seus ajustes.").waitFor()
@@ -120,6 +164,7 @@ try {
     adb("shell", "am", "force-stop", pacote)
     abrir()
     page = await webview(device)
+    instrumentarRede(page)
     await page.getByRole("button", { name: "Continuar com e-mail" }).waitFor()
   })
   await passo("05-link", async () => {
