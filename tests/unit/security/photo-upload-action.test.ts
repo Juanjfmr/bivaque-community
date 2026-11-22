@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
-import { setCommunityImageAction } from "web/app/(owner)/communities/actions"
 import { uploadVerificationDocumentAction } from "web/app/(preauth)/onboarding/document-actions"
 import { addPortfolioPhotoAction } from "web/app/(provider)/prestador/actions"
 import { uploadPostPhotoAction } from "web/app/components/bivaque/post-photo-action"
@@ -14,14 +13,7 @@ const mocks = vi.hoisted(() => {
   const rpc = vi.fn()
   const eq = vi.fn()
   function table(name: string, privileged = false) {
-    const result = {
-      data:
-        name === "communities"
-          ? { owner_user_id: "fixture-user", banner_path: null, thumbnail_path: null }
-          : { id: "fixture-resource" },
-      error: null,
-      count: 0,
-    }
+    const result = { data: { id: "fixture-resource" }, error: null, count: 0 }
     const chain = {
       select: vi.fn(() => chain),
       insert: vi.fn(() => chain),
@@ -89,13 +81,14 @@ const formats = ["jpeg", "png", "webp"] as const
 const paths = [
   // RUN-172: a porta de upload de avatar morreu com a edição do perfil na web
   // (ADR-20261116 — o app é iniciais por régua). O `sanitize-image` continua
-  // provado nas outras oito portas vivas deste mesmo arquivo.
+  // provado nas outras portas vivas deste mesmo arquivo.
   // RUN-177 (F07): a porta de foto do PEDIDO morreu com a tela web; o app ainda
   // não aceita anexo no pedido (ver RELATORIO, C1). O `sanitize-image` do
   // portfólio do negócio também é provado pela porta nova em
   // tests/unit/app-api/negocio/rotas.test.ts.
-  { name: "comunidade faixa", field: "image", bucket: "community-images", maxMB: 10 },
-  { name: "comunidade miniatura", field: "image", bucket: "community-images", maxMB: 10 },
+  // TROCA-004: as duas portas da vila (faixa e miniatura) morreram com o painel
+  // de quem administrava a vila; o bucket `community-images` fica no banco para
+  // a saída da vila (R3/R4).
   { name: "portfolio", field: "file", bucket: "provider-photos", maxMB: 5 },
   { name: "identidade", field: "document", bucket: "verification-documents", maxMB: 10 },
   { name: "evento", field: "photo", bucket: "event-photos", maxMB: 5 },
@@ -122,9 +115,6 @@ function formFor(path: UploadPath, file: File) {
 async function send(path: UploadPath, file: File) {
   const form = formFor(path, file)
   switch (path.name) {
-    case "comunidade faixa":
-    case "comunidade miniatura":
-      return setCommunityImageAction(form)
     case "portfolio":
       return addPortfolioPhotoAction(form)
     case "identidade":
@@ -207,9 +197,7 @@ describe("SEC-004 event authorization", () => {
 })
 
 describe("SEC-004 recoverable image errors", () => {
-  const affected = paths.filter((path) =>
-    ["comunidade faixa", "comunidade miniatura", "portfolio", "evento"].includes(path.name),
-  )
+  const affected = paths.filter((path) => ["portfolio", "evento"].includes(path.name))
   it.each(affected)("returns the sanitizer message for $name without storing it", async (path) => {
     const message = "A imagem processada passa do tamanho permitido."
     vi.mocked(sanitizeImage).mockRejectedValueOnce(new Error(message))
