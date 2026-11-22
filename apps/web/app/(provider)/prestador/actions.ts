@@ -4,16 +4,13 @@ import { createServerClient } from "@supabase/ssr"
 import { revalidatePath } from "next/cache"
 import { cookies } from "next/headers"
 import { encerrarPedido, responderPedido } from "../../../lib/service-requests/app-pedidos"
+import { salvarFichaDoPrestador } from "../../../lib/providers/ficha-do-prestador"
 import {
   salvarAtendimento,
   salvarContaDoPrestador,
 } from "../../../lib/providers/prestador-area"
 import {
-  validateBio,
-  validateCategory,
-  validateContactPhone,
   validateDescription,
-  validateDisplayName,
   validatePriceCents,
   validateTitle,
 } from "../../../lib/providers/showcase"
@@ -75,47 +72,17 @@ function text(formData: FormData, name: string): string | null {
 }
 
 export async function saveProfileAction(formData: FormData): Promise<void> {
-  const displayName = text(formData, "displayName") ?? ""
-  const category = text(formData, "category") ?? ""
-  const bio = text(formData, "bio")
-  const contactPhone = text(formData, "contactPhone")
-  const contactIsPublic = formData.get("contactIsPublic") === "on"
-
-  for (const result of [
-    validateDisplayName(displayName),
-    validateCategory(category),
-    validateBio(bio),
-    validateContactPhone(contactPhone),
-  ]) {
-    if (!result.ok) throw new Error(result.message)
-  }
-
   const { client, userId } = await requireAuthClient()
 
-  const { data: existing, error: existingError } = await client
-    .from("provider_profiles")
-    .select("id")
-    .eq("owner_user_id", userId)
-    .maybeSingle()
-  if (existingError) throw new Error(`Falha ao localizar a ficha: ${existingError.message}`)
-
-  const values = {
-    display_name: displayName,
-    category,
-    bio,
-    contact_phone: contactPhone,
-    contact_is_public: contactIsPublic && contactPhone !== null,
-  }
-
-  if (existing?.id) {
-    const { error } = await client.from("provider_profiles").update(values).eq("id", existing.id)
-    if (error) throw new Error(`Falha ao salvar a ficha: ${error.message}`)
-  } else {
-    const { error } = await client
-      .from("provider_profiles")
-      .insert({ ...values, owner_user_id: userId })
-    if (error) throw new Error(`Falha ao criar a ficha: ${error.message}`)
-  }
+  // A regra é uma só: a mesma de `/api/app/prestador/ficha` (TROCA-005).
+  const resultado = await salvarFichaDoPrestador(client, userId, {
+    nome: text(formData, "displayName") ?? "",
+    categoria: text(formData, "category") ?? "",
+    descricao: text(formData, "bio"),
+    telefone: text(formData, "contactPhone"),
+    telefonePublico: formData.get("contactIsPublic") === "on",
+  })
+  if (!resultado.ok) throw new Error(resultado.mensagem)
 
   revalidatePath("/prestador")
   revalidatePath("/prestador/ficha")
