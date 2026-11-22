@@ -1,3 +1,4 @@
+import { corsLocalidades, opcoesLocalidades } from "../../../lib/app-api/cors-localidades"
 import { NextResponse } from "next/server"
 import { createServerClient } from "../../../lib/supabase/server"
 
@@ -8,15 +9,19 @@ import { createServerClient } from "../../../lib/supabase/server"
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
 
-export async function GET() {
+export async function GET(request: Request) {
   const supabase = createServerClient()
 
   const { data, error } = await supabase.rpc("list_locality_state_codes")
 
   if (error) {
-    return NextResponse.json({ error: "internal" }, { status: 500 })
+    return NextResponse.json({ error: "internal" }, { status: 500, headers: corsLocalidades(request) })
   }
 
   const ufs = (data ?? []).map((row) => row.state_code)
-  return NextResponse.json({ ufs })
+  return NextResponse.json({ ufs }, { headers: corsLocalidades(request) })
+}
+
+export function OPTIONS(request: Request): Response {
+  return opcoesLocalidades(request)
 }
