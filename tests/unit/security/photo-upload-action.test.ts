@@ -1,6 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
-import { uploadVerificationDocumentAction } from "web/app/(preauth)/onboarding/document-actions"
-import { addPortfolioPhotoAction } from "web/app/(provider)/prestador/actions"
 import { uploadPostPhotoAction } from "web/app/components/bivaque/post-photo-action"
 import { sanitizeImage } from "web/lib/storage/sanitize-image"
 import { hasExifGps, imageMetadata, locationImage } from "../../fixtures/location-image"
@@ -88,9 +86,9 @@ const paths = [
   // tests/unit/app-api/negocio/rotas.test.ts.
   // TROCA-004: as duas portas da vila (faixa e miniatura) morreram com o painel
   // de quem administrava a vila; o bucket `community-images` fica no banco para
-  // a saída da vila (R3/R4).
-  { name: "portfolio", field: "file", bucket: "provider-photos", maxMB: 5 },
-  { name: "identidade", field: "document", bucket: "verification-documents", maxMB: 10 },
+  // a saída da vila (R3/R4). TROCA-005: o portfólio e o documento de identidade
+  // saíram com as telas web — o primeiro é provado pela porta
+  // `/api/app/negocio/fotos` e o segundo pelo núcleo do envio de documento.
   { name: "evento", field: "photo", bucket: "event-photos", maxMB: 5 },
 ] as const
 
@@ -115,17 +113,13 @@ function formFor(path: UploadPath, file: File) {
 async function send(path: UploadPath, file: File) {
   const form = formFor(path, file)
   switch (path.name) {
-    case "portfolio":
-      return addPortfolioPhotoAction(form)
-    case "identidade":
-      return uploadVerificationDocumentAction(form)
     case "evento":
       return uploadPostPhotoAction(form)
   }
 }
 
 describe.each(paths)("SEC-004 $name", (path) => {
-  const accepted = path.name === "identidade" ? (["jpeg", "png"] as const) : formats
+  const accepted = formats
   for (const orientation of [1, 6]) {
     it.each(accepted)(
       `strips EXIF/GPS/XMP and preserves format and orientation ${orientation}: %s`,
@@ -197,7 +191,7 @@ describe("SEC-004 event authorization", () => {
 })
 
 describe("SEC-004 recoverable image errors", () => {
-  const affected = paths.filter((path) => ["portfolio", "evento"].includes(path.name))
+  const affected = paths.filter((path) => path.name === "evento")
   it.each(affected)("returns the sanitizer message for $name without storing it", async (path) => {
     const message = "A imagem processada passa do tamanho permitido."
     vi.mocked(sanitizeImage).mockRejectedValueOnce(new Error(message))
@@ -205,24 +199,4 @@ describe("SEC-004 recoverable image errors", () => {
     await expect(send(path, await locationImage("jpeg"))).resolves.toEqual({ error: message })
     expect(mocks.upload).not.toHaveBeenCalled()
   })
-})
-
-it("keeps the identity PDF path byte-for-byte", async () => {
-  const pdf = `%PDF-1.7
-1 0 obj
-<< /Type /Catalog /Pages 2 0 R >>
-endobj
-2 0 obj
-<< /Type /Pages /Kids [] /Count 0 >>
-endobj
-trailer
-<< /Root 1 0 R >>
-%%EOF
-`
-  const file = new File([pdf], "identity.pdf", { type: "application/pdf" })
-  // Por nome, não por índice: a tabela ganha e perde portas (o avatar saiu no
-  // RUN-172) e um `paths[7]` silencioso mandaria o PDF para a porta errada.
-  const identidade = paths[paths.findIndex((path) => path.name === "identidade")]
-  expect(await send(identidade, file)).toEqual({ ok: true })
-  expect(Buffer.from(mocks.upload.mock.calls[0]?.[1])).toEqual(Buffer.from(pdf))
 })

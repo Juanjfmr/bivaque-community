@@ -85,11 +85,11 @@ const PERSONAS: Array<{ nome: string; email: string | null; entradas: string[]; 
   {
     nome: "prestador",
     email: "prestador-seed@bivaque.example.invalid",
-    // A fila mostra só a aba ativa (?tab=; padrão "novos"), e o pedido respondido sai da aba
-    // padrão — a porta do detalhe só existe nas outras abas. São entradas declaradas, não links:
-    // passam por frontier.enter, que ignora o teto por rota.
-    entradas: ["/prestador", "/prestador?tab=em_conversa", "/prestador?tab=encerrados"],
-    chega: /^\/prestador$/,
+    // TROCA-005: a área do prestador no site virou 307 para Meu negócio (abas
+    // Ficha, Catálogo, Pedidos, Conta). A persona entra direto na tela do app;
+    // as sub-abas por busca morreram com a tela antiga.
+    entradas: ["/app/meu-negocio"],
+    chega: /^\/app\/meu-negocio$/,
   },
 ]
 
@@ -144,26 +144,11 @@ const PORTAS_FORA_DO_LINK: readonly PortaDeclarada[] = [
       "DÍVIDA ROTA-CONSENT-LEGADA: portão removido pelo ADR-20260907-consentimento-no-cadastro",
     dono: "visitante",
   },
-  {
-    route: "/denuncias",
-    porta:
-      "CONDICIONAL: 'Minhas denúncias' na Ajuda e o retorno do fluxo de denúncia; a lista só é alcançada quando a persona já denunciou, o que o rastreador nem sempre exercita (portas intactas, LT-007 não as tocou)",
-    dependeDeDados: true,
-    dono: "membro",
-  },
-  {
-    route: "/denuncias/[id]",
-    porta: "CONDICIONAL: lista de /denuncias, quando a pessoa já denunciou",
-    dependeDeDados: true,
-    dono: "membro",
-  },
-  // Sem semente de propósito: sem `?tipo=` e `?id=` a tela desenha "Conteúdo não encontrado" —
-  // o servidor confere o alvo antes de qualquer campo, por design. Mesma regra de
-  // /pedidos/novo: nada de inventar id para a semente, a declaração segue sendo a porta.
-  {
-    route: "/denuncias/nova",
-    porta: "FLUXO: versão endereçável (spec C10) do diálogo que as origens abrem por cima da tela",
-  },
+  // TROCA-005 fase 2: /denuncias, /denuncias/[id], /denuncias/nova,
+  // /prestador-convite/[token], /nova-senha, /recuperar-senha e toda a árvore
+  // /onboarding deixaram de ser páginas da web — são 307 para o app. Sem
+  // page.tsx não há rota de página a declarar, e a declaração que sobra vira
+  // dívida paga (staleAllowances acusaria a linha esquecida).
   // RUN-172/176: o perfil web era a única tela da casca a que uma persona chegava, e com ele
   // morreram as portas de Salvos, Configurações, Conta, senha, Comunidades e o detalhe da
   // indicação. Entrar na casca por uma semente devolveu a medida, e estas voltaram a ter link
@@ -186,43 +171,6 @@ const PORTAS_FORA_DO_LINK: readonly PortaDeclarada[] = [
   // - as telas da vila (`/communities/[id]/admin`, as quatro subrotas e
   //   `/communities/[id]/indicar-prestador`): saíram com 307 no TROCA-004 (redesenho §3.4 e §6).
   //   Sem page.tsx não há rota de página a declarar, e nenhuma tela web linka a URL antiga.
-  {
-    route: "/nova-senha",
-    porta: "EXTERNO: link do e-mail de recuperação de senha",
-    dono: "visitante",
-  },
-  {
-    // RUN-184: o último link ('Alterar' e 'Ajuda com acesso') morreu com a tela de conta. O
-    // endereço fica como rede para link antigo e cai no 307 de ENTRADA_ANTIGA para /app/entrar
-    // (a saída de senha é o ADR-20261101 §2).
-    route: "/recuperar-senha",
-    porta: "FLUXO: endereço antigo; o next.config redireciona para a entrada do app",
-    dono: "visitante",
-  },
-  { route: "/onboarding", porta: "FLUXO: proxy, cadastro e consentimento", dono: "visitante" },
-  {
-    route: "/onboarding/documento",
-    porta: "FLUXO: verificação recusada e 'Enviar identidade' no status",
-    dono: "visitante",
-  },
-  {
-    route: "/onboarding/locality",
-    porta: "FLUXO: proxy redireciona quem é verificado e ainda não escolheu cidade",
-    dono: "visitante",
-  },
-  {
-    route: "/onboarding/perfil",
-    porta:
-      "FLUXO: redireciona para a tela de cidade — o passo de personalização saiu da entrada (PORT-005)",
-    dono: "visitante",
-  },
-  {
-    route: "/onboarding/status",
-    porta: "FLUXO: proxy e notificação de entrada recusada",
-    dono: "visitante",
-  },
-  { route: "/onboarding/welcome", porta: "FLUXO: fim do onboarding", dono: "visitante" },
-  { route: "/prestador-convite/[token]", porta: "EXTERNO: e-mail de convite do prestador" },
 ]
 
 // Sementes da persona: as portas que ela detém e cuja URL se digita. Rota com parâmetro fica

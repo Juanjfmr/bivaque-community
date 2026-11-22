@@ -54,21 +54,6 @@ describe("validação da mudança de cidade", () => {
 })
 
 describe("costura das telas", () => {
-  it("o chip da web manda a consulta para o app, em toda largura", () => {
-    const shell = web("app", "components", "bivaque", "app-shell.tsx")
-    const switcher = web("app", "components", "shell", "city-switcher.tsx")
-    expect(shell).toContain("<CitySwitcher />")
-    expect(switcher).toContain('data-testid="shell-locality-pill"')
-    // CIDADE-169: a consulta é tela do app (/app/cidade/[id]); a tela web não
-    // existe mais e o endereço antigo responde 307 (lan-troca).
-    expect(switcher).toContain("router.push(`/app/cidade/${city.id}` as Route)")
-    // RUN-172: a mudança de cidade é do Você no app, e o rodapé do chip chega
-    // na seção ancorada em `#cidade`.
-    expect(switcher).toContain('href={"/app/voce#cidade" as Route}')
-    // O botão tem nome acessível em toda largura (o texto visível só do md para cima).
-    expect(switcher).toContain("aria-label={`Sua cidade: ${cityLabel}. Ver outra cidade`}")
-  })
-
   it("o painel de cidade do app consulta de verdade: id do catálogo ou `atual`", () => {
     const painel = read("apps", "app", "src", "casca", "PainelDeCidade.tsx")
     expect(painel).not.toContain("trocarCidade(")

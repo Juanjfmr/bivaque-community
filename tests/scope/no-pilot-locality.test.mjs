@@ -127,24 +127,18 @@ test("the scanner reaches source files in both apps/web/app and apps/web/lib", (
   assert.ok(libFiles.length > 0, "apps/web/lib produced no files; walk is broken")
 })
 
-test("the resolver lives in the locality-context module and the shell wires it", () => {
-  // Given the new resolver location and the shell layout
+test("the resolver lives in the locality-context module", () => {
+  // TROCA-005: a casca web saiu inteira (o layout e as telas de membro), e com
+  // ela a prova de que o layout alimentava o provider. O módulo do resolvedor
+  // segue vivo — `member-context` e a audiência do feed o consomem.
   const context = readFileSync(join(root, "apps", "web", "lib", "locality-context.tsx"), "utf8")
-  const layout = readFileSync(join(root, "apps", "web", "app", "(shell)", "layout.tsx"), "utf8")
 
   // When the executable code is inspected (comments stripped)
   const contextCode = stripComments(context)
-  const layoutCode = stripComments(layout)
 
   // Then the provider and hook are exported from the context module
   assert.match(contextCode, /export function LocalityContextProvider/)
   assert.match(contextCode, /export function useLocalityContext/)
-
-  // And the layout resolves the member's locality and feeds the provider,
-  // not the consumer components directly.
-  assert.match(layoutCode, /from\s+["'].*locality-context["']/)
-  assert.match(layoutCode, /LocalityContextProvider/)
-  assert.match(layoutCode, /locality_memberships/)
 })
 
 test("the comment stripper ignores identifiers inside comments and strings", () => {

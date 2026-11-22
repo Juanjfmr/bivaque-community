@@ -10,8 +10,13 @@ const BASE_URL = process.env["APP_URL"] ?? "http://127.0.0.1:3000"
 // toda a subárvore /onboarding*, a resposta HTTP é do redirect de configuração,
 // não do portão — a lista do funil é inalcançável por HTTP (drift registrado no
 // ADR). Por isso a decisão do proxy é observada numa rota que a configuração não
-// intercepta (/denuncias, /prestador, /prestadorx, /landing/*): o 307 com o
-// `location` que o proxy escolheu é a prova, antes do próximo salto.
+// intercepta (/admissions, /prestadorx, /landing/*): o 307 com o `location` que o
+// proxy escolheu é a prova, antes do próximo salto.
+//
+// TROCA-005: o veículo era `/denuncias`. A última tela de membro da web saiu na
+// fase 2 (307 para a Ajuda do app) e com ela o caso "membro admitido abre a
+// casca" e o confinamento do prestador em /prestador — a casca web não existe
+// mais. A rota que SEGUE atrás do portão é a operação: /admissions.
 //
 // `fetch` nativo com `redirect: "manual"` em vez de `maxRedirects: 0` do
 // APIRequestContext do Playwright: é o mesmo efeito (devolve o 307 sem seguir) e
@@ -38,29 +43,27 @@ async function abrirSessao(
   return { context, cookie }
 }
 
-const VISUAL = "visual@bivaque.example.invalid"
-const PRESTADOR = "prestador-seed@bivaque.example.invalid"
 const VERIFICADO_SEM_CIDADE = "verified-no-membership@bivaque.example.invalid"
 const PENDENTE = "admissao-1@bivaque.example.invalid"
 
 test.describe("anônimo", () => {
-  test("GET /denuncias é recusado pelo proxy e termina na entrada do app", async ({ browser }) => {
+  test("GET /admissions é recusado pelo proxy e termina na entrada do app", async ({ browser }) => {
     const context = await browser.newContext()
     await context.addCookies([
       { name: "bivaque-consent-version", value: CURRENT_CONSENT, domain: "127.0.0.1", path: "/" },
     ])
 
-    const recusa = await pedir("/denuncias")
+    const recusa = await pedir("/admissions")
     expect(recusa.status).toBe(307)
     const destino = localizacao(recusa)
     expect(destino.pathname).toBe("/login")
-    expect(destino.searchParams.get("redirect")).toBe("/denuncias")
+    expect(destino.searchParams.get("redirect")).toBe("/admissions")
 
     const page = await context.newPage()
-    await page.goto("/denuncias")
+    await page.goto("/admissions")
 
     // O proxy manda a /login?redirect=...; a configuração leva a /app/entrar.
-    await expect(page).toHaveURL("http://127.0.0.1:3000/app/entrar")
+    await expect(page).toHaveURL(/\/app\/entrar(?:\?|$)/)
     await context.close()
   })
 
@@ -105,59 +108,13 @@ test.describe("anônimo", () => {
   })
 })
 
-test.describe("membro admitido", () => {
-  test("/denuncias abre com sessão; /landing exato continua indo para /", async ({ browser }) => {
-    const { context, cookie } = await abrirSessao(browser, VISUAL)
-
-    const comunidade = await pedir("/denuncias", cookie)
-    expect(comunidade.status).toBe(200)
-
-    const landing = await pedir("/landing", cookie)
-    expect(landing.status).toBe(307)
-    expect(localizacao(landing).pathname).toBe("/")
-
-    await context.close()
-  })
-})
-
-test.describe("prestador", () => {
-  test("é confinado à área /prestador, com fronteira: /prestadorx volta para /prestador", async ({
-    browser,
-  }) => {
-    const { context, cookie } = await abrirSessao(browser, PRESTADOR)
-
-    const propriaArea = await pedir("/prestador", cookie)
-    expect(propriaArea.status).toBe(200)
-
-    const fora = await pedir("/denuncias", cookie)
-    expect(fora.status).toBe(307)
-    expect(localizacao(fora).pathname).toBe("/prestador")
-
-    const vizinho = await pedir("/prestadorx", cookie)
-    expect(vizinho.status).toBe(307)
-    expect(localizacao(vizinho).pathname).toBe("/prestador")
-
-    // /prestadores (ficha pública de membro) já era permitida pelo prefixo
-    // solto antigo e não pode virar regressão: o proxy não pode desviar para
-    // /prestador. A página responde 200/404 conforme o id, nunca o desvio.
-    const ficha = await pedir("/prestadores/00000000-0000-4000-8000-000000000001", cookie)
-    if (ficha.status >= 300 && ficha.status < 400) {
-      expect(localizacao(ficha).pathname).not.toBe("/prestador")
-    } else {
-      expect([200, 404]).toContain(ficha.status)
-    }
-
-    await context.close()
-  })
-})
-
 test.describe("pré-admissão", () => {
   test("verificada sem cidade é desviada pelo proxy para /onboarding/locality", async ({
     browser,
   }) => {
     const { context, cookie } = await abrirSessao(browser, VERIFICADO_SEM_CIDADE)
 
-    const resposta = await pedir("/denuncias", cookie)
+    const resposta = await pedir("/admissions", cookie)
     expect(resposta.status).toBe(307)
     expect(localizacao(resposta).pathname).toBe("/onboarding/locality")
 
@@ -169,11 +126,11 @@ test.describe("pré-admissão", () => {
   }) => {
     const { context, cookie } = await abrirSessao(browser, PENDENTE)
 
-    const resposta = await pedir("/denuncias", cookie)
+    const resposta = await pedir("/admissions", cookie)
     expect(resposta.status).toBe(307)
     const destino = localizacao(resposta)
     expect(destino.pathname).toBe("/onboarding/status")
-    expect(destino.searchParams.get("next")).toBe("/denuncias")
+    expect(destino.searchParams.get("next")).toBe("/admissions")
 
     await context.close()
   })

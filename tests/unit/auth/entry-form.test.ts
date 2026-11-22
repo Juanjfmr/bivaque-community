@@ -153,19 +153,6 @@ const consent = readFileSync(
   ),
   "utf8",
 )
-const signUpScreen = readFileSync(
-  join(
-    process.cwd(),
-    "apps",
-    "web",
-    "app",
-    "(preauth)",
-    "login",
-    "components",
-    "bivaque-sign-in.tsx",
-  ),
-  "utf8",
-)
 const googleConsentStep = readFileSync(
   join(process.cwd(), "apps", "web", "app", "(preauth)", "consent", "consent-form.tsx"),
   "utf8",
@@ -189,12 +176,12 @@ describe("o aceite é o mesmo nos dois caminhos", () => {
     expect(consent).toContain("Pelo Google, o aceite vem no passo seguinte.")
   })
 
-  it("a tela de criar conta é quem pede a nota, e o passo Aceite não", () => {
+  it("o passo Aceite do Google não repete a nota do cadastro", () => {
     // Revisão de 22/10/2026 (P3): o cadastro pedia `note="google"`, o valor do
-    // passo Aceite, e a frase do protótipo não aparecia em lugar nenhum. O
-    // componente estava certo; a tela é que trocava os dois papéis.
-    expect(signUpScreen).toContain('note="signup"')
-    expect(signUpScreen).not.toContain('note="google"')
+    // passo Aceite, e a frase do protótipo não aparecia em lugar nenhum. Com a
+    // saída do cadastro da web (TROCA-005), o único caminho que monta a linha é
+    // o consentimento público — e ele não pede nota.
+    expect(googleConsentStep).toContain("<EntryConsent")
     expect(googleConsentStep).not.toContain("note=")
   })
 })
