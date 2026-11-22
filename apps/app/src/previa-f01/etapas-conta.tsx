@@ -385,6 +385,7 @@ export function Codigo({ progresso, concluir, voltar, erro }: PropsDaEtapa) {
       concluir()
       return
     }
+    if (resultado.estado === "membro" || resultado.estado === "verificacao-indisponivel") return
     if (resultado.estado === "limite") {
       setProblema(`Muitas tentativas. Aguarde ${resultado.reenviarEm} s e peça outro código.`)
       return

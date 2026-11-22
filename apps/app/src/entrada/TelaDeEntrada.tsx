@@ -14,6 +14,7 @@ import {
 import { MolduraContexto } from "@/src/previa-f01/moldura"
 import { TELAS_DA_ENTRADA } from "@/src/previa-f01/telas"
 import "@/src/previa-f01/previa-f01.css"
+import { verificarCodigoEVinculo } from "./codigo-e-vinculo"
 import { ProvedorDoServidorDaEntrada, type ServidorDaEntrada } from "./contexto"
 import { paraServidor, progressoDoServidor, verificacaoDoStatus } from "./estado"
 import { mensagemDoConvite } from "./mensagens"
@@ -38,7 +39,6 @@ import {
   salvarAvisos,
   salvarInteresses,
   salvarProgresso,
-  verificarCodigo,
 } from "./servidor"
 
 /**
@@ -129,10 +129,20 @@ export function TelaDeEntrada() {
       },
       enviarCodigo,
       verificarCodigo: async (codigo) => {
-        const resultado = await verificarCodigo(emailEmTransito.current ?? "", codigo)
-        // A sessão nasce nesta chamada: a tela passa a gravar o rascunho e a
-        // provisionar a partir daqui.
-        if (resultado.estado === "autenticado") setAutenticado(true)
+        const resultado = await verificarCodigoEVinculo(emailEmTransito.current ?? "", codigo)
+        if (resultado.estado === "membro") {
+          // Quem já tem vínculo não grava rascunho nem provisiona de novo; a
+          // abertura relê o progresso e segue a etapa canônica do servidor
+          // (o Início, ou a etapa pendente depois da prévia).
+          provisionado.current = true
+          setAutenticado(true)
+          setReabrir((valor) => valor + 1)
+        } else if (resultado.estado === "autenticado") {
+          setAutenticado(true)
+        } else if (resultado.estado === "verificacao-indisponivel") {
+          setFalha("Não foi possível conferir seu vínculo agora. Tente de novo.")
+          setTentar(() => () => window.location.reload())
+        }
         return resultado
       },
       consultarCpf,
