@@ -1,5 +1,4 @@
 import type { NextRequest, NextResponse } from "next/server"
-import { type CidadeDaSessao, cidadeDaSessao } from "../../../../../lib/app-api/cidade-da-sessao"
 import { avancarMarcador } from "../../../../../lib/app-api/marcador-da-entrada"
 import {
   clienteDeServicoOuNulo,
@@ -12,6 +11,7 @@ import {
 } from "../../../../../lib/app-api/rota-do-app"
 import { entrarNosGruposDaEntrada } from "../../../../../lib/communities/grupos"
 import { log } from "../../../../../lib/logger"
+import { type CidadeDaSessao, cidadeDaSessao } from "../../eventos/_comum"
 
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"

@@ -1,7 +1,7 @@
 import type { NextRequest, NextResponse } from "next/server"
-import { type CidadeDaSessao, cidadeDaSessao } from "../../../../../lib/app-api/cidade-da-sessao"
 import { exigirSessao, opcoesDoApp, responder } from "../../../../../lib/app-api/rota-do-app"
 import { log } from "../../../../../lib/logger"
+import { type CidadeDaSessao, cidadeDaSessao } from "../../eventos/_comum"
 
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"

@@ -6,13 +6,37 @@ import type { Database } from "supabase/database.generated"
  * aceitam e a resposta a uma pergunta que TODAS fazem — de que cidade é a pessoa
  * da sessão.
  *
- * A leitura da cidade mora em `lib/app-api/cidade-da-sessao` desde o
- * BUG-CIDADE-GRUPOS: entrada, Início, busca e eventos fazem a mesma pergunta e
- * agora chamam o mesmo helper. Reexportado aqui para as rotas de eventos não
- * mudarem de import.
+ * `cidadeDaSessao` mora aqui e é a leitura única da cidade da sessão em
+ * `api/app`: as rotas da entrada (grupos e interesses) a importam daqui desde o
+ * BUG-CIDADE-GRUPOS, em vez de repetir a consulta sem filtro de `kind`.
  */
 
-export { type CidadeDaSessao, cidadeDaSessao } from "../../../../lib/app-api/cidade-da-sessao"
+export type CidadeDaSessao = Readonly<{ id: string; nome: string }>
+
+/**
+ * A cidade atual de quem está na sessão, ou `null` para quem ainda não tem
+ * vínculo. A leitura é sempre pelo vínculo `kind = 'current'`: quem está em
+ * transferência tem duas linhas (a atual e a que está deixando) e a leitura sem
+ * o filtro cai na cidade errada — o mesmo recorte que
+ * `apps/web/app/(shell)/layout.tsx` usa. Erro de leitura sobe: quem chama
+ * decide entre 503 e seguir.
+ */
+export async function cidadeDaSessao(
+  client: SupabaseClient<Database>,
+  userId: string,
+): Promise<CidadeDaSessao | null> {
+  const { data, error } = await client
+    .from("locality_memberships")
+    .select("locality_id, localities(city_name)")
+    .eq("user_id", userId)
+    .eq("kind", "current")
+    .order("joined_at", { ascending: true })
+    .limit(1)
+    .maybeSingle()
+  if (error) throw error
+  if (data === null) return null
+  return { id: data.locality_id, nome: data.localities?.city_name ?? "" }
+}
 
 export const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 
