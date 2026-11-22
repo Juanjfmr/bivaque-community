@@ -116,8 +116,11 @@ async function passo(nome, acao, dependencia = true) {
       if (falhou) {
         adb("shell", "pm", "clear", pacote)
         log(`Dados do app limpos antes de ${nome}`)
+        page = undefined
       }
       abrir()
+      // O processo antigo some com o pm clear; espera a WebView nova assentar.
+      await esperar(5000)
     }
     await paginaAtual()
     await acao()
@@ -253,6 +256,7 @@ try {
     await page.getByRole("button", { name: "Continuar com e-mail" }).waitFor()
   })
   await passo("06-callback-sem-fluxo", async () => {
+    await page.getByRole("button", { name: "Continuar com e-mail" }).waitFor()
     const antes = page.url()
     adb(
       "shell",

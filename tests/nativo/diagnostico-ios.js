@@ -15,9 +15,59 @@
       }),
     }).catch(() => {})
   }
-  window.addEventListener("error", (evento) =>
-    registrar("error", evento.message, evento.filename, evento.lineno),
+  const caminhoDe = (url) => {
+    try {
+      return new URL(String(url), location.href).pathname
+    } catch {
+      return ""
+    }
+  }
+  window.addEventListener(
+    "error",
+    (evento) => {
+      const alvo = evento.target
+      if (alvo && alvo !== window && (alvo.src || alvo.href)) {
+        registrar("recurso-falhou", alvo.tagName, caminhoDe(alvo.src || alvo.href))
+        return
+      }
+      registrar("error", evento.message, evento.filename, evento.lineno)
+    },
+    true,
   )
+  for (const nivel of ["error", "warn"]) {
+    const original = console[nivel].bind(console)
+    console[nivel] = (...args) => {
+      registrar(
+        `console-${nivel}`,
+        args.map((a) => (a instanceof Error ? `${a.name}: ${a.message}` : String(a))).join(" "),
+      )
+      original(...args)
+    }
+  }
+  const fetchOriginal = window.fetch.bind(window)
+  window.fetch = (entrada, opcoes) => {
+    const caminho = caminhoDe(entrada instanceof Request ? entrada.url : entrada)
+    if (caminho.startsWith("/api/")) {
+      const pilha = (new Error().stack ?? "")
+        .split("\n")
+        .slice(1, 4)
+        .map((quadro) => {
+          const local = quadro.replace(/^[^@]*@/, "")
+          const posicao = local.match(/(:\d+:\d+)$/)?.[1] ?? ""
+          return `${caminhoDe(local.replace(/:\d+:\d+$/, ""))}${posicao}`
+        })
+        .join(" < ")
+      registrar("fetch", caminho, pilha)
+    }
+    return fetchOriginal(entrada, opcoes)
+  }
+  function recursos() {
+    const nomes = performance
+      .getEntriesByType("resource")
+      .map((r) => caminhoDe(r.name))
+      .filter((nome) => nome && !nome.startsWith("/__diagnostico"))
+    for (let i = 0; i < nomes.length; i += 6) registrar("recursos", nomes.slice(i, i + 6).join(" "))
+  }
   window.addEventListener("unhandledrejection", (evento) => {
     const erro = evento.reason
     registrar(
@@ -28,5 +78,8 @@
     )
   })
   for (const segundos of [2, 5, 10, 20])
-    setTimeout(() => registrar(`estado-${segundos}s`), segundos * 1000)
+    setTimeout(() => {
+      registrar(`estado-${segundos}s`, document.readyState)
+      if (segundos === 5) recursos()
+    }, segundos * 1000)
 })()
