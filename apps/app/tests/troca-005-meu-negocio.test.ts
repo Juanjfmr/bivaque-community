@@ -57,6 +57,17 @@ describe("TROCA-005 — Meu negócio em abas", () => {
     expect(pedidos).not.toContain("Não foi possível salvar a área de atendimento agora")
   })
 
+  it("a fila de pedidos recebidos vem do servidor, com página e cursor", () => {
+    expect(pedidos).toContain('lado: "recebidos"')
+    expect(pedidos).toContain("pedidos.proximo")
+    expect(pedidos).toContain("carregarMais")
+    expect(pedidos).toContain("Ver mais pedidos")
+    // O vazio só aparece quando o servidor confirma que não há mais nenhum.
+    expect(pedidos).toContain("pedidos.pedidos.length === 0 && pedidos.proximo === null")
+    // Nada de filtrar o lado no navegador.
+    expect(pedidos).not.toContain('filter((pedido) => pedido.lado === "dono")')
+  })
+
   it("a conta mostra o e-mail da sessão e o telefone opcional", () => {
     expect(conta).toContain("telefone")
     expect(conta).toContain("Mostrar meu telefone na ficha pública")

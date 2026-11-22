@@ -184,6 +184,12 @@ describe("porta de negócios e pedidos", () => {
     )
     await expect(lerPedidos()).rejects.toMatchObject({ name: "AbortError" })
   })
+
+  it("pede a fila pelo lado e a página pelo cursor, no servidor", async () => {
+    const fetch = responder({ pedidos: [], proximo: null })
+    await lerPedidos({ lado: "recebidos", depois: "p9" })
+    expect(fetch.mock.calls[0]?.[0]).toBe("/api/app/pedidos?lado=recebidos&depois=p9")
+  })
 })
 
 const ficha = {

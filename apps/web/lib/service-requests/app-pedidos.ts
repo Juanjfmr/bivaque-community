@@ -16,13 +16,19 @@ type Cliente = SupabaseClient<Database>
  * cruas — cep, latitude, longitude — não estão aqui de propósito: `authenticated`
  * não tem SELECT nelas, e o payload nunca as carrega.
  */
-export function consultaPedidos(client: Cliente, userId: string) {
-  return client
+export type LadoDaFila = "recebidos" | "enviados"
+
+export function consultaPedidos(client: Cliente, userId: string, lado?: LadoDaFila) {
+  const consulta = client
     .from("service_requests")
     .select(
       "id,provider_id,requester_user_id,provider_user_id,category,description,when_text,status,region,created_at,updated_at,conversation_id,provider_profiles(display_name)",
     )
-    .or(`requester_user_id.eq.${userId},provider_user_id.eq.${userId}`)
+  // TROCA-005 — a fila de UM lado é do servidor: a página da aba não pode vir
+  // cheia da outra fila para a tela descartar metade.
+  if (lado === "recebidos") return consulta.eq("provider_user_id", userId)
+  if (lado === "enviados") return consulta.eq("requester_user_id", userId)
+  return consulta.or(`requester_user_id.eq.${userId},provider_user_id.eq.${userId}`)
 }
 
 type LinhaPedido = Pick<

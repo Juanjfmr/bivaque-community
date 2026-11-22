@@ -227,10 +227,12 @@ export async function criarPedido(
 }
 
 export async function lerPedidos(
-  opcoes: { signal?: AbortSignal; depois?: string } = {},
+  opcoes: { signal?: AbortSignal; depois?: string; lado?: "recebidos" | "enviados" } = {},
 ): Promise<ListaDePedidos> {
-  const busca = opcoes.depois === undefined ? "" : `?depois=${encodeURIComponent(opcoes.depois)}`
-  const corpo = await ler(`/api/app/pedidos${busca}`, opcoes)
+  const busca = new URLSearchParams()
+  if (opcoes.lado !== undefined) busca.set("lado", opcoes.lado)
+  if (opcoes.depois !== undefined) busca.set("depois", opcoes.depois)
+  const corpo = await ler(`/api/app/pedidos${busca.size === 0 ? "" : `?${busca}`}`, opcoes)
   return { pedidos: lista(corpo, "pedidos").map(pedidoDe), proximo: opcional(corpo, "proximo") }
 }
 

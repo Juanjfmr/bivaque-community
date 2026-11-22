@@ -12,7 +12,7 @@ import {
   responderAoPedido,
   salvarAtendimento,
 } from "@/lib/dados/prestador"
-import { lerPedidos, mudarPedido, type PedidoDeServico } from "@/lib/dados/negocios"
+import { lerPedidos, type ListaDePedidos, mudarPedido, type PedidoDeServico } from "@/lib/dados/negocios"
 import { useNavegacao, useSobreposicaoDaEntrada } from "@/lib/navegacao/react"
 import { AreaDeTexto, Folha } from "@/src/pecas/pecas"
 import { FalhaDaLeitura } from "@/src/negocios/FalhaDaLeitura"
@@ -42,9 +42,11 @@ export function PedidosRecebidos({
   // negócio do membro é a cidade e não se liga nem se desliga nesta aba.
   const ehPrestador = tipoDaConta === "prestador"
   const folha = useSobreposicaoDaEntrada("pedido-do-negocio")
-  const [pedidos, setPedidos] = useState<readonly PedidoDeServico[] | null>(null)
+  const [pedidos, setPedidos] = useState<ListaDePedidos | null>(null)
   const [erroDosPedidos, setErroDosPedidos] = useState<unknown>(null)
   const [rodada, setRodada] = useState(0)
+  const [mais, setMais] = useState(false)
+  const [erroMais, setErroMais] = useState(false)
   const [alcance, setAlcance] = useState<boolean | null>(null)
   const [comunidade, setComunidade] = useState<string | null>(null)
   const [cidade, setCidade] = useState<string | null>(null)
@@ -66,17 +68,37 @@ export function PedidosRecebidos({
     const controle = new AbortController()
     setPedidos(null)
     setErroDosPedidos(null)
-    void lerPedidos({ signal: controle.signal })
+    setMais(false)
+    setErroMais(false)
+    // O lado vem do servidor: esta aba só existe para os pedidos RECEBIDOS, e
+    // filtrar no navegador perderia pedidos que ficaram na outra página.
+    void lerPedidos({ lado: "recebidos", signal: controle.signal })
       .then((lidos) => {
-        if (!controle.signal.aborted) {
-          setPedidos(lidos.pedidos.filter((pedido) => pedido.lado === "dono"))
-        }
+        if (!controle.signal.aborted) setPedidos(lidos)
       })
       .catch((falha: unknown) => {
         if (!controle.signal.aborted) setErroDosPedidos(falha)
       })
     return () => controle.abort()
   }, [rodada])
+
+  async function carregarMais() {
+    if (pedidos === null || pedidos.proximo === null || mais) return
+    setMais(true)
+    setErroMais(false)
+    try {
+      const lidos = await lerPedidos({ lado: "recebidos", depois: pedidos.proximo })
+      setPedidos((atual) =>
+        atual === null || atual.proximo !== pedidos.proximo
+          ? atual
+          : { ...lidos, pedidos: [...atual.pedidos, ...lidos.pedidos] },
+      )
+    } catch {
+      setErroMais(true)
+    } finally {
+      setMais(false)
+    }
+  }
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: rodada é o pedido de tentar de novo
   useEffect(() => {
@@ -131,7 +153,13 @@ export function PedidosRecebidos({
   }
 
   function atualizarNaLista(pedido: PedidoDeServico) {
-    setPedidos((atual) => atual?.map((item) => (item.id === pedido.id ? pedido : item)) ?? atual)
+    setPedidos(
+      (atual) =>
+        atual && {
+          ...atual,
+          pedidos: atual.pedidos.map((item) => (item.id === pedido.id ? pedido : item)),
+        },
+    )
   }
 
   async function enviarResposta() {
@@ -201,28 +229,42 @@ export function PedidosRecebidos({
           <FalhaDaLeitura falha={erroDosPedidos} aoTentar={() => setRodada((atual) => atual + 1)} />
         ) : pedidos === null ? (
           <EsqueletoDeLista linhas={3} />
-        ) : pedidos.length === 0 ? (
+        ) : pedidos.pedidos.length === 0 && pedidos.proximo === null ? (
           <p className="text-sm text-(--on-surface-variant)">
             Nenhum pedido recebido ainda. Quando alguém pedir um serviço pelo seu negócio, o pedido
             aparece aqui.
           </p>
         ) : (
-          <Lista>
-            {pedidos.map((pedido) => (
-              <LinhaDeLista
-                key={pedido.id}
-                icone="request_quote"
-                titulo={pedido.descricao.split(/\r?\n/)[0] ?? pedido.descricao}
-                subtitulo={
-                  pedido.bairro === null
-                    ? (pedido.quando ?? "")
-                    : `${pedido.quando ?? ""} · ${pedido.bairro}`
-                }
-                fim={<Etiqueta tom="neutro">{SITUACOES_DO_PEDIDO[pedido.situacao]}</Etiqueta>}
-                onClick={() => abrir(pedido)}
-              />
-            ))}
-          </Lista>
+          <>
+            <Lista>
+              {pedidos.pedidos.map((pedido) => (
+                <LinhaDeLista
+                  key={pedido.id}
+                  icone="request_quote"
+                  titulo={pedido.descricao.split(/\r?\n/)[0] ?? pedido.descricao}
+                  subtitulo={
+                    pedido.bairro === null
+                      ? (pedido.quando ?? "")
+                      : `${pedido.quando ?? ""} · ${pedido.bairro}`
+                  }
+                  fim={<Etiqueta tom="neutro">{SITUACOES_DO_PEDIDO[pedido.situacao]}</Etiqueta>}
+                  onClick={() => abrir(pedido)}
+                />
+              ))}
+            </Lista>
+            {erroMais ? (
+              <p role="alert" className="text-sm text-(--destructive)">
+                Não foi possível carregar mais pedidos. Os anteriores continuam aqui.
+              </p>
+            ) : null}
+            {pedidos.proximo === null ? null : (
+              <div className="flex justify-start">
+                <Botao tom="contornado" disabled={mais} onClick={() => void carregarMais()}>
+                  {mais ? "Carregando…" : erroMais ? "Tentar de novo" : "Ver mais pedidos"}
+                </Botao>
+              </div>
+            )}
+          </>
         )}
       </Secao>
 
