@@ -6369,15 +6369,16 @@
       "phase": "Lançamento",
       "tests": [],
       "blockers": [],
-      "updatedAt": "2026-11-02",
-      "sourceRevision": "fc67e19e",
+      "updatedAt": "2026-11-22",
+      "sourceRevision": "9762b4a01",
       "links": ["docs/LANCAMENTO.md"],
       "proof": [
         "02/11: aberto na definição do lançamento (docs/LANCAMENTO.md), por mandato do dono.",
         "20/11 LOJA-001 (#312): Capacitor com android/ e ios/ versionados, base absoluta no nativo, câmera, link profundo, workflow app-loja.yml e inventário da sessão; revisão às cegas PASS no delta e2f069d3. Capturas do emulador em .visual/loja-001/ (camera, criar, link-entrada).",
         "21/11 LOJA-002 (#317): a prova contra o GoTrue local mediu que o reuso de R0 fora da janela recusa só R0 (401, 'Possible abuse attempt' no log); R2 segue válido direto no GoTrue. Emenda de 21/11 no ADR-20261120 por delegação: a revogação da família deixa de ser promessa, resíduo declarado na RATIFICACAO e card SEC-FAMILIA-RENOVACAO pós-lançamento.",
         "21/11 LOJA-002 (#317, 40850d7b4): CI completo verde (run 44910688304, stateful 375/768/1440); security-auditor LIBERA COM RESSALVAS e revisão independente PASS-COM-RESSALVA. Herdado pelo LOJA-003: cofre, PKCE no app, CSP nativa e retorno com auditoria própria; cabeçalho do app em todo pedido nativo; repetir renovar só dentro da janela de 10 s; Apple no entry/oauth.",
-        "21/11 LOJA-003 (59ea6af85): testes do app 785/785, rota de progresso 28/28, build nativo com origens ficticias e CSP verificada; gate --fast executado. Pendentes: gate completo e CI, revisao independente de seguranca, prova Android com pilha local e iOS no CI/aparelho. Nao encerra LAN-LOJA."
+        "21/11 LOJA-003 (59ea6af85): testes do app 785/785, rota de progresso 28/28, build nativo com origens ficticias e CSP verificada; gate --fast executado. Pendentes: gate completo e CI, revisao independente de seguranca, prova Android com pilha local e iOS no CI/aparelho. Nao encerra LAN-LOJA.",
+        "22/11 LOJA-003 (#320, 9762b4a01): o app guarda a sessão no cofre do aparelho (@aparajita/capacitor-secure-storage 8.0.1, Keychain afterFirstUnlockThisDeviceOnly sem iCloud, Keystore, allowBackup=false). Também entraram: renovação única com espera em 429/503, PKCE no app, retorno bivaque://auth-callback no Android e iOS, CSP nativa sem script inline, CORS nativo em /api/localities, prévia do convite pelo Bearer com o cabeçalho do app, saída que limpa tudo (com o marcador 'saiu' se o cofre falhar). Gate completo verde em 8dd37550f e CI completo verde. Duas rodadas de auditoria de segurança independente: a 1ª reprovou (HIGH-1/2, MEDIUM-1/2); a 2ª deu LIBERA no eixo de segurança com F1–F5 corrigidos em 80077f9c6..9762b4a01 (AbortController no lugar de AbortSignal.timeout por causa do iOS 15, marcador de saída, renovação nas rotas autenticadas da entrada, cabeçalho do app na prévia, emenda dos allowed_paths). Testes: app 800, app-api 1644, escopo 318."
       ],
       "id": "LAN-LOJA",
       "title": "Fase 7: app de loja em Capacitor pronto para envio",
@@ -6393,7 +6394,9 @@
       ],
       "dependencies": ["LAN-TROCA", "BLOCK-MOBILE-RUNTIME"],
       "notes": [
-        "20/11 decisão do coordenador: a tela de entrada no nativo (apps/app/src/entrada/servidor.ts com fetch relativo) sai do LOJA-001 e entra no LOJA-002, junto da sessão nativa do ADR-20261120. Ficam também para o LOJA-002: android:allowBackup, window.alert no SeletorDeFoto, remover o ouvinte appUrlOpen, testes de template com.getcapacitor.myapp, varredura dos gerados do cap sync, ios/Pods no .gitignore, setup-java v4."
+        "20/11 decisão do coordenador: a tela de entrada no nativo (apps/app/src/entrada/servidor.ts com fetch relativo) sai do LOJA-001 e entra no LOJA-002, junto da sessão nativa do ADR-20261120. Ficam também para o LOJA-002: android:allowBackup, window.alert no SeletorDeFoto, remover o ouvinte appUrlOpen, testes de template com.getcapacitor.myapp, varredura dos gerados do cap sync, ios/Pods no .gitignore, setup-java v4.",
+        "22/11 riscos aceitos do LOJA-003, registrados no ADR-20261120 (reauditoria de 22/11): uma escrita que recebe 401 com o token longe de vencer não limpa o cofre (erro com Tentar de novo; o token vence em até 1 h); erro de configuração da origem da API aparece como falta de rede; a limpeza de rascunhos no IndexedDB é melhor esforço nos WebView sem indexedDB.databases().",
+        "22/11 falta para fechar o LAN-LOJA. (1) Provas: login Google/Apple, sessão ao reabrir, câmera e links no emulador Android (o PC não tem Docker para a pilha local) e no simulador iOS (macOS/CI); a sessão no iOS 15 só aparelho ou simulador mostram; builds de release sem assinatura no CI. (2) Atos do dono: credenciais Google e Apple, cadastro de bivaque://auth-callback nas URLs de retorno do projeto hospedado, assinatura, fichas e envio às lojas."
       ]
     },
     {
