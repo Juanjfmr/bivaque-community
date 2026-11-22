@@ -55,8 +55,8 @@ risk: harness
 risk_level: R3
 adr: docs/decisions/ADR-20261120-sessao-nativa-do-app-de-loja.md
 reviewer_must_differ_from_executor: true
-# 22/11: estendido de 4 para 6 pelo coordenador; as quatro falhas tiveram causas distintas e já resolvidas (cleartext no debug, captura iOS, porta do Mailpit, 429 do Maven e sintaxe do simctl), nenhuma repetida.
-retry_budget: 6
+# 22/11: estendido de 4 para 5 (teto do validador) pelo coordenador; as quatro falhas tiveram causas distintas e já resolvidas (cleartext no debug, captura iOS, porta do Mailpit, 429 do Maven e sintaxe do simctl), nenhuma repetida.
+retry_budget: 5
 on_budget_exhausted: HUMAN_DECISION
 closure:
   requires_runtime_evidence: true
