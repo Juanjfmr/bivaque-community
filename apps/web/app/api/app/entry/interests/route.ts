@@ -10,6 +10,7 @@ import {
   responder,
   respostaIndisponivel,
 } from "../../../../../lib/app-api/rota-do-app"
+import { entrarNosGruposDaEntrada } from "../../../../../lib/communities/grupos"
 import { log } from "../../../../../lib/logger"
 
 export const runtime = "nodejs"
@@ -21,8 +22,13 @@ export const dynamic = "force-dynamic"
 // gravado em `user_group_interests` pelo RPC canônico
 // `record_user_group_interests`, o mesmo que a web usa. O RPC substitui o
 // conjunto inteiro e recusa grupo de outra cidade (42501), então a rota não
-// reimplementa essa regra: passa a cidade do vínculo da SESSÃO e deixa o banco
-// decidir.
+// reimplementa essa regra: passa a cidade do vínculo `current` da SESSÃO e
+// deixa o banco decidir.
+//
+// "Entrar" é participação, não só interesse (BUG-CIDADE-GRUPOS): cada grupo
+// marcado que a consulta confirma público e da cidade entra pela RPC
+// `join_group`, no cliente da sessão, sob RLS. Grupo privado, de outra cidade
+// ou inexistente é ignorado sem erro para a pessoa.
 //
 // O dono da linha vem SEMPRE da sessão resolvida no servidor, nunca do corpo:
 // `user_id` ou `locality_id` mandados pelo cliente são ignorados. A gravação usa
@@ -112,6 +118,26 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     // Mensagem fixa mais o erro do banco: os ids dos grupos não entram no log,
     // e a mensagem do banco nunca volta para o cliente.
     log.error("entry interests write failed", { error: gravacaoError.message })
+    return responder(request, { erro: "gravacao-indisponivel" }, 503, sessao.sessao.cabecalhos)
+  }
+
+  // "Entrar" na entrada é participação: cada grupo marcado que a consulta
+  // confirma público e da cidade atual vira `group_membership` pela RPC
+  // canônica `join_group`, no cliente da SESSÃO — a função é SECURITY DEFINER e
+  // resolve o dono por `auth.uid()`; um cliente de privilégio não teria
+  // identidade. Interesse continua gravado como antes.
+  //
+  // A lista do corpo não é confiável: grupo privado, de outra cidade ou
+  // apagado é ignorado sem erro (a pessoa não é obrigada a adivinhar por que o
+  // grupo sumiu). A consulta já exige o recorte, então um id forjado não entra
+  // e não pede aprovação em grupo fechado.
+  const participacao = await entrarNosGruposDaEntrada(
+    sessao.sessao.cliente,
+    cidade.id,
+    grupos.grupos,
+  )
+  if (!participacao.ok) {
+    log.error("entry interests join failed", { error: participacao.motivo, userId })
     return responder(request, { erro: "gravacao-indisponivel" }, 503, sessao.sessao.cabecalhos)
   }
 

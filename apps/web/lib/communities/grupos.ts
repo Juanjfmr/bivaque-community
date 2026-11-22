@@ -16,6 +16,45 @@ export function entrarNoGrupo(client: SupabaseClient<Database>, grupoId: string,
   })
 }
 
+/**
+ * A participação da etapa de interesses da entrada (BUG-CIDADE-GRUPOS).
+ *
+ * A entrada só grava interesse (`user_group_interests`), e a Comunidade lista
+ * `group_memberships`: quem marcava "Entrar" nunca virava membro. Aqui cada id
+ * marcado que a consulta confirma **público, da cidade atual e não apagado**
+ * entra pela RPC canônica `join_group`, no cliente da SESSÃO — a função é
+ * SECURITY DEFINER e resolve o dono por `auth.uid()`, então um cliente de
+ * privilégio não serve.
+ *
+ * O corpo da entrada não é confiável: id de grupo privado, de outra cidade ou
+ * inexistente é ignorado sem erro para a pessoa (a consulta já exige o recorte,
+ * e grupo fechado não vira pedido por acidente). Falha do banco devolve
+ * `ok: false`: a rota responde 503 e a nova tentativa é idempotente, porque
+ * `join_group` não duplica participação.
+ */
+export async function entrarNosGruposDaEntrada(
+  client: SupabaseClient<Database>,
+  localityId: string,
+  groupIds: readonly string[],
+): Promise<Readonly<{ ok: true }> | Readonly<{ ok: false; motivo: string }>> {
+  if (groupIds.length === 0) return { ok: true }
+
+  const { data, error } = await client
+    .from("groups")
+    .select("id")
+    .in("id", [...groupIds])
+    .eq("locality_id", localityId)
+    .eq("visibility", "public")
+    .eq("is_deleted", false)
+  if (error) return { ok: false, motivo: error.message }
+
+  for (const grupo of data ?? []) {
+    const { error: erroDoJoin } = await client.rpc("join_group", { p_group_id: grupo.id })
+    if (erroDoJoin) return { ok: false, motivo: erroDoJoin.message }
+  }
+  return { ok: true }
+}
+
 export function lerComentarioDoGrupo(corpo: Record<string, unknown>) {
   const content = typeof corpo["texto"] === "string" ? corpo["texto"].trim() : ""
   const alvo = corpo["respondeA"]

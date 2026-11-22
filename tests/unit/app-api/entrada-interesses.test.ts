@@ -34,10 +34,43 @@ const mockMarcador = vi.fn()
 const mockEq = vi.fn()
 const mockKind = vi.fn()
 const mockOrdem = vi.fn()
+// A consulta que separa público/da cidade e o RPC de participação, no cliente
+// da SESSÃO.
+const mockGrupoIds = vi.fn()
+const mockGrupoCidade = vi.fn()
+const mockGrupoVisibilidade = vi.fn()
+const mockGrupoApagado = vi.fn()
+const mockPublicos = vi.fn()
+const mockJoin = vi.fn()
 
 function clienteDoUsuario() {
   return {
     from: (tabela: string) => {
+      if (tabela === "groups") {
+        return {
+          select: () => ({
+            in: (coluna: string, valores: unknown) => {
+              mockGrupoIds(coluna, valores)
+              return {
+                eq: (colunaDaCidade: string, cidade: string) => {
+                  mockGrupoCidade(colunaDaCidade, cidade)
+                  return {
+                    eq: (colunaDaVisibilidade: string, visibilidade: string) => {
+                      mockGrupoVisibilidade(colunaDaVisibilidade, visibilidade)
+                      return {
+                        eq: (colunaDoApagado: string, apagado: boolean) => {
+                          mockGrupoApagado(colunaDoApagado, apagado)
+                          return mockPublicos()
+                        },
+                      }
+                    },
+                  }
+                },
+              }
+            },
+          }),
+        }
+      }
       if (tabela !== "locality_memberships") throw new Error(`tabela inesperada: ${tabela}`)
       return {
         select: () => ({
@@ -58,6 +91,7 @@ function clienteDoUsuario() {
         }),
       }
     },
+    rpc: mockJoin,
   }
 }
 
@@ -109,6 +143,8 @@ beforeEach(() => {
   mockVinculo.mockResolvedValue({ data: { locality_id: CIDADE }, error: null })
   mockRpc.mockResolvedValue({ data: null, error: null })
   mockMarcador.mockResolvedValue({ error: null })
+  mockPublicos.mockResolvedValue({ data: [], error: null })
+  mockJoin.mockResolvedValue({ data: null, error: null })
   criarCliente.mockReturnValue(clienteDeServico() as never)
   resolver.mockResolvedValue(sessaoAutenticada() as never)
 })
@@ -314,6 +350,64 @@ describe("POST /api/app/entry/interests", () => {
     } finally {
       consoleError.mockRestore()
     }
+  })
+
+  it("grupo público da cidade marcado com Entrar vira participação", async () => {
+    mockPublicos.mockResolvedValue({ data: [{ id: GRUPO_A }, { id: GRUPO_B }], error: null })
+    const resposta = await POST(requisicao({ corpo: { grupos: [GRUPO_A, GRUPO_B] } }))
+    expect(resposta.status).toBe(200)
+
+    // A consulta exige o recorte: público, da cidade atual, não apagado.
+    expect(mockGrupoIds).toHaveBeenCalledWith("id", [GRUPO_A, GRUPO_B])
+    expect(mockGrupoCidade).toHaveBeenCalledWith("locality_id", CIDADE)
+    expect(mockGrupoVisibilidade).toHaveBeenCalledWith("visibility", "public")
+    expect(mockGrupoApagado).toHaveBeenCalledWith("is_deleted", false)
+    // A participação é do cliente da SESSÃO, pelo RPC canônico.
+    expect(mockJoin).toHaveBeenCalledTimes(2)
+    expect(mockJoin).toHaveBeenCalledWith("join_group", { p_group_id: GRUPO_A })
+    expect(mockJoin).toHaveBeenCalledWith("join_group", { p_group_id: GRUPO_B })
+    // O interesse continua gravado e o marcador avança.
+    expect(mockRpc).toHaveBeenCalledWith("record_user_group_interests", {
+      p_user_id: PESSOA.id,
+      p_locality_id: CIDADE,
+      p_group_ids: [GRUPO_A, GRUPO_B],
+    })
+    expect(mockMarcador).toHaveBeenCalledTimes(1)
+  })
+
+  it("grupo privado, de outra cidade ou apagado é ignorado sem erro", async () => {
+    // A consulta recorta cidade e visibilidade; o que não passa não é joined nem
+    // vira pedido em grupo fechado. O id forjado no corpo some do resultado.
+    mockPublicos.mockResolvedValue({ data: [], error: null })
+    const resposta = await POST(requisicao({ corpo: { grupos: [GRUPO_A], user_id: PESSOA.id } }))
+    expect(resposta.status).toBe(200)
+    expect(await resposta.json()).toEqual({ ok: true, grupos: [GRUPO_A] })
+    expect(mockJoin).not.toHaveBeenCalled()
+    expect(mockMarcador).toHaveBeenCalledTimes(1)
+  })
+
+  it("sem grupo marcado não consulta grupos nem participa", async () => {
+    const resposta = await POST(requisicao({ corpo: { grupos: [] } }))
+    expect(resposta.status).toBe(200)
+    expect(mockGrupoIds).not.toHaveBeenCalled()
+    expect(mockJoin).not.toHaveBeenCalled()
+    expect(mockMarcador).toHaveBeenCalledTimes(1)
+  })
+
+  it("falha ao entrar no grupo vira 503 e não avança o marcador", async () => {
+    mockPublicos.mockResolvedValue({ data: [{ id: GRUPO_A }], error: null })
+    mockJoin.mockResolvedValue({ data: null, error: { message: "must be a locality member" } })
+    const resposta = await POST(requisicao({ corpo: { grupos: [GRUPO_A] } }))
+    expect(resposta.status).toBe(503)
+    expect(await resposta.json()).toEqual({ erro: "gravacao-indisponivel" })
+    expect(mockMarcador).not.toHaveBeenCalled()
+  })
+
+  it("falha na consulta dos grupos públicos vira 503", async () => {
+    mockPublicos.mockResolvedValue({ data: null, error: { message: "db offline" } })
+    const resposta = await POST(requisicao({ corpo: { grupos: [GRUPO_A] } }))
+    expect(resposta.status).toBe(503)
+    expect(mockJoin).not.toHaveBeenCalled()
   })
 
   it("falta de variável do servidor responde 503, não 500", async () => {
