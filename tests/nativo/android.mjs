@@ -112,7 +112,13 @@ async function passo(nome, acao, dependencia = true) {
   log(`Início: ${nome}`)
   try {
     if (!dependencia) throw new Error("Dependência do passo falhou")
-    if (/^0[5-8]-/.test(nome)) abrir()
+    if (/^0[5-8]-/.test(nome)) {
+      if (falhou) {
+        adb("shell", "pm", "clear", pacote)
+        log(`Dados do app limpos antes de ${nome}`)
+      }
+      abrir()
+    }
     await paginaAtual()
     await acao()
     if (!(await limparCodigo())) throw new Error("Não foi possível limpar o campo de código")

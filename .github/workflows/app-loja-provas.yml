@@ -231,7 +231,7 @@ jobs:
         run: |
           pnpm --filter @bivaque/app build
           cp tests/nativo/diagnostico-ios.js apps/app/dist-nativo/diagnostico-ios.js
-          node -e 'const fs=require("fs"); const p="apps/app/dist-nativo/index.html"; let s=fs.readFileSync(p,"utf8"); s=s.replace("</head>", "<script src=\"./diagnostico-ios.js\"></script></head>"); fs.writeFileSync(p,s)'
+          node -e 'const fs=require("fs"); const p="apps/app/dist-nativo/index.html"; let s=fs.readFileSync(p,"utf8"); s=s.replace("</head>", "<script src=\"/diagnostico-ios.js\"></script></head>"); fs.writeFileSync(p,s)'
           pnpm --filter @bivaque/app exec cap sync ios
       - name: Compilar simulador sem assinatura
         working-directory: apps/app/ios/App
