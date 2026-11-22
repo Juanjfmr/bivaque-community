@@ -1,0 +1,61 @@
+task_id: LOJA-004
+objective: >
+  Provas de execução do app de loja no GitHub Actions, já que o PC do dono não tem Docker: um workflow
+  novo que sobe a pilha Supabase local e o servidor web, instala o APK de debug num emulador Android
+  e percorre o roteiro do ADR-20261120 (seção Provas exigidas, item Emulador Android), e um job no
+  runner macOS que abre o app no simulador iOS e prova abertura, tela de entrada e link profundo.
+  As capturas saem como artefato. Só credenciais de teste que o próprio CI deriva da pilha local.
+authority:
+  - docs/decisions/ADR-20261120-sessao-nativa-do-app-de-loja.md (Provas exigidas, item Emulador Android; iOS)
+  - docs/decisions/ADR-20261114-ci-ciclo-rapido-e-completo-no-fechamento.md
+  - "card LAN-LOJA em tools/backend-kanban/public/board.json (nota de 22/11: falta para fechar)"
+  - .github/workflows/pull-request-ci.yml (como o CI sobe a pilha local, grava apps/web/.env.local e semeia)
+  - .github/workflows/app-loja.yml (como o CI compila Android e iOS)
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    Em origin/main 9c7b59489 não há workflow que rode o app num emulador ou simulador; app-loja.yml só
+    compila. O card LAN-LOJA registra como pendentes as provas no emulador Android e no simulador iOS,
+    porque o PC não tem Docker para a pilha local.
+allowed_paths:
+  - .github/workflows/app-loja-provas.yml
+  - tests/nativo/**
+  - tests/scope/loja-provas.test.mjs
+  - apps/app/package.json
+  - pnpm-lock.yaml
+  - package.json
+  - docs/agents/tasks/LOJA-004.task.yml
+  - docs/decisions/ADR-20261120-sessao-nativa-do-app-de-loja.md
+  - tools/backend-kanban/public/board.json
+  - tools/backend-kanban/BOARD.md
+forbidden:
+  - apps/mobile, apps/prototipo; mudar código de produção do app ou do servidor para fazer a prova passar (achado de produção vira relato, não remendo)
+  - chave, token, senha ou e-mail real no repositório ou no log; credenciais fixas no workflow (o CI deriva da pilha local, como o pull-request-ci.yml)
+  - supabase --linked, banco de produção, Portal da Transparência, provedor OAuth real
+  - mudar supabase/config.toml, migrations ou seed.sql; editar migration aplicada
+  - server.url ou allowNavigation no capacitor.config.ts; build de release assinado
+  - tornar o workflow novo obrigatório no ruleset ou mudar os workflows existentes
+  - git stash, reiniciar ou reconstruir o banco local do PC, delegar
+  - dado pessoal real ou CPF real
+acceptance:
+  - "workflow .github/workflows/app-loja-provas.yml com workflow_dispatch e pull_request filtrado por caminhos (apps/app/android/**, apps/app/ios/**, apps/app/lib/nativo/**, apps/app/src/nativo/**, apps/app/lib/api/cliente.ts, apps/app/capacitor.config.ts, tests/nativo/** e o próprio workflow); permissões mínimas (contents: read); versões de actions fixadas como no repositório"
+  - "job android (ubuntu, KVM habilitado): sobe a pilha Supabase local como o pull-request-ci.yml, semeia, grava apps/web/.env.local com as chaves derivadas, builda e sobe o servidor web em 127.0.0.1:3000; builda o dist-nativo com VITE_API_BASE e VITE_SUPABASE_URL apontando para http://localhost:3000 e http://localhost:54321, faz cap sync android e assembleDebug; roda o emulador com reactivecircus/android-emulator-runner (versão fixada) e adb reverse das portas 3000 e 54321, para a WebView (https://localhost) alcançar o servidor sem conteúdo misto"
+  - "roteiro android em tests/nativo/ (Playwright _android sobre a WebView de debug, ou CDP pela porta de depuração da WebView): (1) app abre na entrada; (2) entrar por código com uma persona semeada, lendo o código no Mailpit local; (3) fechar o app (am force-stop) e reabrir continua logado, a primeira tela autenticada carrega dados do servidor; (4) sair e reabrir cai na entrada; (5) link profundo bivaque://app/... abre a rota certa; (6) adb shell am start com bivaque://auth-callback sem fluxo pendente é ignorado e não muda a tela; (7) o manifesto instalado tem allowBackup=false (dumpsys package ou aapt). Cada passo grava captura em PNG"
+  - "Google por provedor falso: investigar se o GoTrue local aceita um provedor OIDC de teste só no CI (variável de ambiente do container ou supabase start com override, sem mudar config.toml) com um servidor OIDC mínimo; se for viável, provar Google do navegador do sistema de volta ao app; se não for, provar que Entrar com Google abre o navegador do sistema na URL de autorização do GoTrue local com code_challenge S256 e registrar no ADR e no card, com a evidência, por que a volta com provedor falso não roda no CI"
+  - "job ios (macos): builda o dist-nativo com origens fictícias, cap sync ios, xcodebuild para o simulador (sem assinatura), instala com simctl, abre o app, captura a tela de entrada, abre bivaque://app/... por simctl openurl e captura; registra que sessão com servidor no iOS fica para o aparelho do dono (o runner macOS não tem Docker)"
+  - "capturas, logcat filtrado do app e o log do roteiro sobem como artefato (actions/upload-artifact, retenção curta); nenhum token, código OTP ou cookie aparece no log nem na captura de texto"
+  - "teste de escopo tests/scope/loja-provas.test.mjs confere: o workflow existe, tem permissões mínimas, não referencia secrets., não usa --linked, fixa versão das actions e roda os dois jobs"
+  - "o resultado de cada passo vai ao card LAN-LOJA (prova) e, se algum passo revelar defeito de produção, ele vira relato com o passo, a captura e o log, sem correção neste lote"
+proof:
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/LOJA-004.task.yml
+  - node --test tests/scope/loja-provas.test.mjs
+  - npx pnpm@11.18.0 gate --fast
+  - "run verde do workflow app-loja-provas no PR, com o artefato de capturas baixado e conferido pelo coordenador"
+risk: harness
+risk_level: R3
+adr: docs/decisions/ADR-20261120-sessao-nativa-do-app-de-loja.md
+reviewer_must_differ_from_executor: true
+retry_budget: 4
+on_budget_exhausted: HUMAN_DECISION
+closure:
+  requires_runtime_evidence: true
