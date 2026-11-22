@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { Botao } from "@/components/bivaque/botao"
 import { EsqueletoDeLista } from "@/components/bivaque/esqueleto"
 import { Etiqueta } from "@/components/bivaque/etiqueta"
@@ -13,7 +13,7 @@ import {
   salvarAtendimento,
 } from "@/lib/dados/prestador"
 import { lerPedidos, type ListaDePedidos, mudarPedido, type PedidoDeServico } from "@/lib/dados/negocios"
-import { useNavegacao, useSobreposicaoDaEntrada } from "@/lib/navegacao/react"
+import { useNavegacao, useBuscaDaRota, useSobreposicaoDaEntrada, useTrocarBusca } from "@/lib/navegacao/react"
 import { AreaDeTexto, Folha } from "@/src/pecas/pecas"
 import { FalhaDaLeitura } from "@/src/negocios/FalhaDaLeitura"
 import { mensagemDaAcao, SITUACOES_DO_PEDIDO } from "@/src/negocios/formulario"
@@ -26,9 +26,14 @@ import { mensagemDaAcao, SITUACOES_DO_PEDIDO } from "@/src/negocios/formulario"
  * conversa do pedido; responder devolve o estado GRAVADO pelo banco, e a fila
  * mostra a situação nova. Abaixo, a área de atendimento: o alcance que decide se
  * a ficha aparece na busca.
+ *
+ * O pedido aberto vive também na URL (`?aba=pedidos&pedido=<id>`), então
+ * recarregar a página reabre a Folha — é o que os 307 da fase 2 precisam.
  */
 
 const ABERTAS = new Set(["open", "in_conversation"])
+
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
 export function PedidosRecebidos({
   tipoDaConta,
@@ -38,6 +43,8 @@ export function PedidosRecebidos({
   readonly irParaFicha: () => void
 }) {
   const navegacao = useNavegacao()
+  const busca = useBuscaDaRota()
+  const trocarBusca = useTrocarBusca()
   // A área de atendimento só existe para a conta de PRESTADOR: o alcance do
   // negócio do membro é a cidade e não se liga nem se desliga nesta aba.
   const ehPrestador = tipoDaConta === "prestador"
@@ -56,6 +63,8 @@ export function PedidosRecebidos({
   const [mensagemDoAlcance, setMensagemDoAlcance] = useState<string | null>(null)
 
   const [selecionado, setSelecionado] = useState<PedidoDeServico | null>(null)
+  /** O pedido da Folha: vem da lista ou de `?pedido=<id>` na URL. */
+  const [detalheId, setDetalheId] = useState<string | null>(null)
   const [mensagens, setMensagens] = useState<readonly MensagemDoPedido[] | null>(null)
   const [erroDaConversa, setErroDaConversa] = useState<unknown>(null)
   const [rodadaDaConversa, setRodadaDaConversa] = useState(0)
@@ -119,7 +128,7 @@ export function PedidosRecebidos({
     return () => controle.abort()
   }, [rodada])
 
-  const conversa = selecionado?.id ?? null
+  const conversa = detalheId
   // biome-ignore lint/correctness/useExhaustiveDependencies: a conversa muda só com o pedido aberto
   useEffect(() => {
     if (conversa === null) return
@@ -139,14 +148,31 @@ export function PedidosRecebidos({
     return () => controle.abort()
   }, [conversa, rodadaDaConversa])
 
+  // `/app/meu-negocio?aba=pedidos&pedido=<id>` abre a Folha do pedido — e a
+  // recarga reabre. A guarda evita reabrir quando a pessoa fecha.
+  const abertoPelaUrl = useRef<string | null>(null)
+  // biome-ignore lint/correctness/useExhaustiveDependencies: a guarda é o que evita reabrir
+  useEffect(() => {
+    const id = busca["pedido"]
+    if (id === undefined || !UUID.test(id) || abertoPelaUrl.current === id) return
+    abertoPelaUrl.current = id
+    setDetalheId(id)
+    folha.aoMudarAberto(true)
+  }, [busca])
+
   function abrir(pedido: PedidoDeServico) {
     setSelecionado(pedido)
+    setDetalheId(pedido.id)
+    abertoPelaUrl.current = pedido.id
     setResposta("")
     folha.aoMudarAberto(true)
+    // O detalhe também vive na URL: a recarga reabre a Folha.
+    void trocarBusca({ aba: "pedidos", pedido: pedido.id })
   }
 
   function fechar() {
     setSelecionado(null)
+    setDetalheId(null)
     setMensagens(null)
     setErroDaConversa(null)
     folha.aoMudarAberto(false)
@@ -163,11 +189,11 @@ export function PedidosRecebidos({
   }
 
   async function enviarResposta() {
-    if (selecionado === null || enviando) return
+    if (detalheId === null || enviando) return
     setEnviando(true)
     setMensagemDaFolha(null)
     try {
-      const lida = await responderAoPedido(selecionado.id, resposta)
+      const lida = await responderAoPedido(detalheId, resposta)
       setSelecionado(lida.pedido)
       setMensagens(lida.mensagens)
       atualizarNaLista(lida.pedido)
@@ -181,11 +207,11 @@ export function PedidosRecebidos({
   }
 
   async function encerrar() {
-    if (selecionado === null || enviando) return
+    if (detalheId === null || enviando) return
     setEnviando(true)
     setMensagemDaFolha(null)
     try {
-      const atualizado = await mudarPedido(selecionado.id, "encerrar")
+      const atualizado = await mudarPedido(detalheId, "encerrar")
       setSelecionado(atualizado)
       atualizarNaLista(atualizado)
       setMensagemDaFolha("Pedido encerrado.")
@@ -318,7 +344,7 @@ export function PedidosRecebidos({
       ) : null}
 
       <Folha
-        aberta={folha.aberto && selecionado !== null}
+        aberta={folha.aberto && detalheId !== null}
         aoFechar={fechar}
         sobreposicao="pedido-do-negocio"
         titulo="Pedido recebido"
@@ -329,7 +355,7 @@ export function PedidosRecebidos({
             falha={erroDaConversa}
             aoTentar={() => setRodadaDaConversa((atual) => atual + 1)}
           />
-        ) : selecionado === null || mensagens === null ? (
+        ) : selecionado === null || mensagens === null || selecionado.id !== detalheId ? (
           <EsqueletoDeLista linhas={3} />
         ) : (
           <div className="grid gap-4" data-pedido-recebido={selecionado.id}>

@@ -136,6 +136,30 @@ for (const tema of TEMAS) {
       await expect(page.getByRole("button", { name: "Enviar denúncia" })).toHaveCount(0)
     })
 
+    test("o detalhe abre direto pela URL e a recarga reabre a Folha", async ({ page }) => {
+      await montarDenuncias(page)
+      await ir(page, `/app/ajuda?aba=denuncias&denuncia=${DENUNCIA}`, tema)
+      const detalhe = page.locator('[data-sobreposicao="denuncia-detalhe"]')
+      await expect(detalhe).toBeVisible()
+      await expect(detalhe.getByText("Spam", { exact: true })).toBeVisible()
+
+      await page.reload()
+      await expect(page.locator('[data-sobreposicao="denuncia-detalhe"]')).toBeVisible()
+    })
+
+    test("a nova denúncia abre pelo alvo da URL, ainda que ele não esteja na lista", async ({
+      page,
+    }) => {
+      await montarDenuncias(page)
+      const alvo = "50000000-0000-4000-8000-0000000000a9"
+      await ir(page, `/app/ajuda?denunciar=post:${alvo}`, tema)
+      const nova = page.locator('[data-sobreposicao="denuncia-nova"]')
+      await expect(nova).toBeVisible()
+      await expect(
+        nova.getByRole("radio", { name: /Conteúdo que você abriu para denunciar/ }),
+      ).toBeChecked()
+    })
+
     test("chamados e denúncias dividem a mesma lista, sem tela nova", async ({ page }) => {
       await montarDenuncias(page)
       await ir(page, "/app/ajuda", tema)

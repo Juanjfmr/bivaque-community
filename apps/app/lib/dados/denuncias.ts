@@ -42,8 +42,31 @@ export const MOTIVOS_DA_DENUNCIA = [
 
 export const EXPLICACAO_MAX = 300
 
+/**
+ * Os tipos de alvo que a denúncia conhece (o mesmo enum do banco). A Ajuda
+ * oferece publicações e grupos; o link `?denunciar=<tipo>:<id>` pode apontar
+ * outros, e o servidor confere a visibilidade do alvo no insert.
+ */
+export const TIPOS_DE_ALVO = [
+  "post",
+  "comment",
+  "group",
+  "message",
+  "recommendation_request",
+  "recommendation_reply",
+] as const
+
+export type TipoDoAlvoDenuncia = (typeof TIPOS_DE_ALVO)[number]
+
 export type AlvoDeDenuncia = Readonly<{
   tipo: "post" | "group"
+  id: string
+  titulo: string
+}>
+
+/** O alvo escolhido para denunciar, venha da lista ou da URL. */
+export type AlvoEscolhido = Readonly<{
+  tipo: TipoDoAlvoDenuncia
   id: string
   titulo: string
 }>
@@ -109,7 +132,7 @@ export async function lerDenuncia(
 
 export async function enviarDenuncia(
   dados: Readonly<{
-    tipo: AlvoDeDenuncia["tipo"]
+    tipo: TipoDoAlvoDenuncia
     alvo: string
     motivo: string
     explicacao: string

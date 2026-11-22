@@ -74,12 +74,14 @@ test.describe("F07 — Meu negócio", () => {
     await page.route(/\/api\/app\/negocio(?:\?|$)/, async (rota) => {
       const metodo = rota.request().method()
       if (metodo === "GET")
-        return rota.fulfill({ json: { negocio: ficha, categorias: CATEGORIAS } })
+        return rota.fulfill({
+          json: { negocio: ficha, categorias: CATEGORIAS, tipoDaConta: "membro" },
+        })
       const corpo = rota.request().postDataJSON() as Record<string, string>
       ficha = { nome: corpo["nome"], descricao: corpo["descricao"] ?? "" }
       return rota.fulfill({
         status: metodo === "POST" ? 201 : 200,
-        json: { negocio: negocioAtual(), categorias: CATEGORIAS },
+        json: { negocio: negocioAtual(), categorias: CATEGORIAS, tipoDaConta: "membro" },
       })
     })
     await page.route(/\/api\/app\/negocio\/catalogo$/, async (rota) => {
@@ -175,7 +177,7 @@ test.describe("F07 — Meu negócio", () => {
     page,
   }, testInfo) => {
     await page.route(/\/api\/app\/negocio(?:\?|$)/, (rota) =>
-      rota.fulfill({ json: { negocio: null, categorias: CATEGORIAS } }),
+      rota.fulfill({ json: { negocio: null, categorias: CATEGORIAS, tipoDaConta: "membro" } }),
     )
     await page.goto("/app/meu-negocio")
     await expect(page.getByRole("button", { name: "Criar minha página" })).toBeVisible()

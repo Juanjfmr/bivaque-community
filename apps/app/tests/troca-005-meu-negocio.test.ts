@@ -68,6 +68,12 @@ describe("TROCA-005 — Meu negócio em abas", () => {
     expect(pedidos).not.toContain('filter((pedido) => pedido.lado === "dono")')
   })
 
+  it("o detalhe do pedido abre pela URL e a recarga reabre a Folha", () => {
+    expect(pedidos).toContain('busca["pedido"]')
+    expect(pedidos).toContain("pedido: pedido.id")
+    expect(pedidos).toContain("abertoPelaUrl")
+  })
+
   it("a conta mostra o e-mail da sessão e o telefone opcional", () => {
     expect(conta).toContain("telefone")
     expect(conta).toContain("Mostrar meu telefone na ficha pública")

@@ -28,6 +28,16 @@ describe("TROCA-005 — Ajuda com chamados e denúncias", () => {
     expect(ajuda).toContain("lerDenuncias")
   })
 
+  it("detalhe e denúncia nova abrem pela URL e a recarga reabre", () => {
+    expect(ajuda).toContain('busca["denuncia"]')
+    expect(ajuda).toContain('busca["denunciar"]')
+    expect(ajuda).toContain("alvoDaBusca")
+    // A Folha fica na URL do detalhe; abrir escreve o id na busca.
+    expect(ajuda).toContain("denuncia: id")
+    // O alvo da URL chega ao formulário como opção escolhida.
+    expect(ajuda).toContain("alvoInicial={alvoDaUrl}")
+  })
+
   it("a Ajuda ainda responde pelas perguntas da conta", () => {
     expect(ajuda).toContain('"Preciso de senha para entrar?"')
     expect(ajuda).toContain("o Bivaque não usa senha")

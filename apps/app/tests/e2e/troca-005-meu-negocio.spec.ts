@@ -53,9 +53,9 @@ async function ir(page: Page, caminho: string, tema: (typeof TEMAS)[number]) {
   }
 }
 
-async function montarNegocio(page: Page) {
+async function montarNegocio(page: Page, tipoDaConta: "membro" | "prestador" = "membro") {
   await page.route(/\/api\/app\/negocio(?:\?|$)/, (rota) =>
-    rota.fulfill({ json: { negocio: ficha, categorias: CATEGORIAS } }),
+    rota.fulfill({ json: { negocio: ficha, categorias: CATEGORIAS, tipoDaConta } }),
   )
 }
 
@@ -67,7 +67,7 @@ for (const tema of TEMAS) {
       let situacao = "open"
       const mensagens: { id: string; minha: boolean; conteudo: string; criadoEm: string }[] = []
 
-      await montarNegocio(page)
+      await montarNegocio(page, "prestador")
       await page.route(/\/api\/app\/pedidos(?:\?|$)/, (rota) =>
         rota.fulfill({ json: { pedidos: [{ ...recebido, situacao }], proximo: null } }),
       )
@@ -158,6 +158,36 @@ for (const tema of TEMAS) {
       await expect
         .poll(async () => new URL(page.url()).pathname, { timeout: 10_000 })
         .toBe("/app/ajuda")
+    })
+
+    test("o detalhe do pedido abre direto pela URL e a recarga reabre a Folha", async ({ page }) => {
+      await montarNegocio(page)
+      await page.route(/\/api\/app\/pedidos(?:\?|$)/, (rota) =>
+        rota.fulfill({ json: { pedidos: [recebido], proximo: null } }),
+      )
+      await page.route(/\/api\/app\/prestador\/atendimento$/, (rota) =>
+        rota.fulfill({
+          json: {
+            atendimento: {
+              temFicha: true,
+              alcanceAtivo: true,
+              comunidade: "Comunidade Manaus",
+              cidade: "Manaus, AM",
+            },
+          },
+        }),
+      )
+      await page.route(new RegExp(`/api/app/pedidos/${PEDIDO}/mensagens$`), (rota) =>
+        rota.fulfill({ json: { pedido: recebido, mensagens: [] } }),
+      )
+
+      await ir(page, `/app/meu-negocio?aba=pedidos&pedido=${PEDIDO}`, tema)
+      const folha = page.locator('[data-sobreposicao="pedido-do-negocio"]')
+      await expect(folha).toBeVisible()
+      await expect(folha.getByText("Limpar o ar-condicionado da sala")).toBeVisible()
+
+      await page.reload()
+      await expect(page.locator('[data-sobreposicao="pedido-do-negocio"]')).toBeVisible()
     })
 
     test("a aba Conta mostra o e-mail da sessão e salva o telefone", async ({ page }) => {
