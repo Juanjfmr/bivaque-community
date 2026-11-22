@@ -6251,7 +6251,8 @@
       "links": ["docs/LANCAMENTO.md", "docs/decisions/ADR-20261024-front-react-spa.md"],
       "proof": [
         "04/11: aberto por decisão do dono (push entra no lançamento), registrado em docs/LANCAMENTO.md, Mudanças de escopo.",
-        "PUSH-001 parcial: protecao de arquivos de credenciais e regra de limites de produto; reserva, migration, adaptadores, rota e testes de envio ainda pendentes. O lote do app segue dependente de LOJA-004: plugin, permissao em contexto, ordem de saida e E2E em emulador e simulador; chaves e testes reais dependem do dono."
+        "PUSH-001 parcial: protecao de arquivos de credenciais e regra de limites de produto; reserva, migration, adaptadores, rota e testes de envio ainda pendentes. O lote do app segue dependente de LOJA-004: plugin, permissao em contexto, ordem de saida e E2E em emulador e simulador; chaves e testes reais dependem do dono.",
+        "PUSH-001: registro nativo, reserva com revalidação, adaptadores contra servidor falso, exceção do termo e redação. Faltam plugin do Capacitor, permissão em contexto, ordem de saída e E2E em emulador e simulador, dependentes de LOJA-004; recebimento real após as chaves do dono."
       ],
       "id": "LAN-PUSH",
       "title": "Push no celular: token do aparelho, envio pelo outbox e abertura no destino certo",
@@ -6267,7 +6268,8 @@
         "Prova no emulador Android e no simulador iOS com credenciais de teste; pgTAP positivo e negativo da tabela de tokens",
         "Requisito do lote nativo (ADR-20261118 §2): reserva com revalidação na mesma instrução no envio — apps/web/lib/push/adaptador.ts lê as inscrições e envia sem reservar a linha nem conferir de novo titular, preferência e bloqueio"
       ],
-      "dependencies": ["NOTIF-DEEPLINKS"]
+      "dependencies": ["NOTIF-DEEPLINKS"],
+      "completedChecklist": [false, false, false, false, false, true]
     },
     {
       "phase": "Lançamento",

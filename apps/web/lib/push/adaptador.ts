@@ -1,27 +1,31 @@
-import type { ChannelAdapter, OutboxMessage } from "@bivaque/domain"
+﻿import type { ChannelAdapter, OutboxMessage } from "@bivaque/domain"
 import type { SupabaseClient } from "@supabase/supabase-js"
 import type { Database } from "supabase/database.generated"
 import * as webpush from "web-push"
 import { log } from "../logger"
 import { createServerClient } from "../supabase/server"
+import { criarAndroid } from "./android"
+import { FalhaNativa } from "./classificacao"
 import { type ConteudoDoPush, conteudoDoPush } from "./frases"
 import { destinoDePushPermitido } from "./inscricao"
+import { criarIos } from "./ios"
 
 /**
  * O adaptador de push do outbox (ADR-20261107, item 3).
  *
- * Um aviso por tipo, não por aparelho: a linha do outbox alcança todas as
- * inscrições web do destinatário. Destino recusado como inexistente (404/410)
- * apaga a inscrição — o aparelho não existe mais. Falha temporária volta pelo
+ * Um aviso por tipo, nÃ£o por aparelho: a linha do outbox alcanÃ§a todas as
+ * inscriÃ§Ãµes web do destinatÃ¡rio. Destino recusado como inexistente (404/410)
+ * apaga a inscriÃ§Ã£o â€” o aparelho nÃ£o existe mais. Falha temporÃ¡ria volta pelo
  * outbox, com o mesmo limite de lote e a mesma reserva.
  *
  * Sem as chaves VAPID no ambiente o canal fica desligado e responde `ok` sem
- * erro: não é falha do aviso, é o produto sem push configurado. Nenhuma chave
- * privada passa por aqui para o cliente; só o servidor a usa.
+ * erro: nÃ£o Ã© falha do aviso, Ã© o produto sem push configurado. Nenhuma chave
+ * privada passa por aqui para o cliente; sÃ³ o servidor a usa.
  */
 
 export type InscricaoWeb = Readonly<{
   id: string
+  kind?: "web" | "android" | "ios"
   destination: string
   keyP256dh: string
   keyAuth: string
@@ -52,12 +56,12 @@ export type DependenciasDoPush = Readonly<{
 function usuarioDaMensagem(message: OutboxMessage): string | null {
   const doCorpo = message.payload["user_id"]
   if (typeof doCorpo === "string" && doCorpo !== "") return doCorpo
-  // No canal push o `recipient` é o id do membro, nunca um endereço.
+  // No canal push o `recipient` Ã© o id do membro, nunca um endereÃ§o.
   return message.recipient === "" ? null : message.recipient
 }
 
 /**
- * O adaptador com as dependências injetadas: é esta função que os testes
+ * O adaptador com as dependÃªncias injetadas: Ã© esta funÃ§Ã£o que os testes
  * exercitam sem banco nem provedor.
  */
 export function adaptadorComDependencias(deps: DependenciasDoPush): ChannelAdapter {
@@ -85,9 +89,12 @@ export function adaptadorComDependencias(deps: DependenciasDoPush): ChannelAdapt
       let falhas = 0
 
       for (const inscricao of inscricoes) {
-        // A lista de destinos vale aqui também: a linha pode ter entrado pelo
-        // Data API, e o servidor não faz pedido para alvo escolhido pelo cliente.
-        if (!destinoDePushPermitido(inscricao.destination)) {
+        // A lista de destinos vale aqui tambÃ©m: a linha pode ter entrado pelo
+        // Data API, e o servidor nÃ£o faz pedido para alvo escolhido pelo cliente.
+        if (
+          (!inscricao.kind || inscricao.kind === "web") &&
+          !destinoDePushPermitido(inscricao.destination)
+        ) {
           log.error("push destination refused", { type: message.type })
           falhas++
           continue
@@ -97,7 +104,10 @@ export function adaptadorComDependencias(deps: DependenciasDoPush): ChannelAdapt
           entregues++
           await deps.marcarSucesso(inscricao.id).catch(() => undefined)
         } catch (erro) {
-          if (erro instanceof FalhaDoProvedor && (erro.status === 404 || erro.status === 410)) {
+          if (
+            (erro instanceof FalhaDoProvedor && (erro.status === 404 || erro.status === 410)) ||
+            (erro instanceof FalhaNativa && erro.categoria === "destino")
+          ) {
             await deps.apagar(inscricao.id).catch(() => undefined)
             continue
           }
@@ -105,13 +115,14 @@ export function adaptadorComDependencias(deps: DependenciasDoPush): ChannelAdapt
           log.error("push delivery failed", {
             channel: message.channel,
             type: message.type,
-            status: erro instanceof FalhaDoProvedor ? erro.status : 0,
+            status:
+              erro instanceof FalhaDoProvedor || erro instanceof FalhaNativa ? erro.status : 0,
           })
         }
       }
 
-      // Uma entrega já aceita basta para a linha não ser repetida: repetir
-      // mandaria a mesma notificação de novo aos aparelhos que receberam.
+      // Uma entrega jÃ¡ aceita basta para a linha nÃ£o ser repetida: repetir
+      // mandaria a mesma notificaÃ§Ã£o de novo aos aparelhos que receberam.
       if (falhas === 0 || entregues > 0) return { ok: true }
       return { ok: false, error: "push delivery failed" }
     },
@@ -132,10 +143,13 @@ export type OpcoesDoAdaptadorPush = Readonly<{
   chavePublica: string
   chavePrivada: string
   assunto: string
+  android?: ReturnType<typeof criarAndroid> | undefined
+  ios?: ReturnType<typeof criarIos> | undefined
 }>
 
 export function criarAdaptadorPush(opcoes: OpcoesDoAdaptadorPush): ChannelAdapter {
-  webpush.setVapidDetails(opcoes.assunto, opcoes.chavePublica, opcoes.chavePrivada)
+  if (opcoes.chavePublica && opcoes.chavePrivada)
+    webpush.setVapidDetails(opcoes.assunto, opcoes.chavePublica, opcoes.chavePrivada)
 
   return adaptadorComDependencias({
     async inscricoes(userId, tipoDoAviso, autorId) {
@@ -146,7 +160,26 @@ export function criarAdaptadorPush(opcoes: OpcoesDoAdaptadorPush): ChannelAdapte
       })
       if (error) throw error
       return (data ?? []).flatMap((linha) => {
-        if (linha.kind !== "web" || linha.key_p256dh === null || linha.key_auth === null) return []
+        if (linha.kind === "android" || linha.kind === "ios") {
+          if (!opcoes[linha.kind]?.ligado) return []
+          return [
+            {
+              id: linha.id,
+              kind: linha.kind,
+              destination: linha.destination,
+              keyP256dh: "",
+              keyAuth: "",
+            },
+          ]
+        }
+        if (
+          linha.kind !== "web" ||
+          !opcoes.chavePublica ||
+          !opcoes.chavePrivada ||
+          linha.key_p256dh === null ||
+          linha.key_auth === null
+        )
+          return []
         return [
           {
             id: linha.id,
@@ -170,6 +203,10 @@ export function criarAdaptadorPush(opcoes: OpcoesDoAdaptadorPush): ChannelAdapte
     },
     async enviar(inscricao, conteudo) {
       try {
+        if (inscricao.kind === "android" || inscricao.kind === "ios") {
+          await opcoes[inscricao.kind]?.enviar(inscricao.destination, conteudo)
+          return
+        }
         await opcoes.enviar(
           {
             endpoint: inscricao.destination,
@@ -179,7 +216,7 @@ export function criarAdaptadorPush(opcoes: OpcoesDoAdaptadorPush): ChannelAdapte
           { TTL: 3_600 },
         )
       } catch (erro) {
-        if (erro instanceof FalhaDoProvedor) throw erro
+        if (erro instanceof FalhaDoProvedor || erro instanceof FalhaNativa) throw erro
         const status =
           erro instanceof webpush.WebPushError
             ? erro.statusCode
@@ -192,7 +229,7 @@ export function criarAdaptadorPush(opcoes: OpcoesDoAdaptadorPush): ChannelAdapte
   })
 }
 
-/** Canal desligado: sem chaves, nada sai e nada é retentado. */
+/** Canal desligado: sem chaves, nada sai e nada Ã© retentado. */
 function adaptadorDesligado(): ChannelAdapter {
   return {
     async send() {
@@ -202,23 +239,49 @@ function adaptadorDesligado(): ChannelAdapter {
 }
 
 /**
- * O adaptador real. Devolve `null` quando as chaves não estão configuradas ou
- * o cliente de serviço não existe; `createChannelAdapters` então usa o canal
+ * O adaptador real. Devolve `null` quando as chaves nÃ£o estÃ£o configuradas ou
+ * o cliente de serviÃ§o nÃ£o existe; `createChannelAdapters` entÃ£o usa o canal
  * desligado.
  */
 export function adaptadorPush(): ChannelAdapter | null {
   const chavePublica = process.env["WEB_PUSH_PUBLIC_KEY"]
   const chavePrivada = process.env["WEB_PUSH_PRIVATE_KEY"]
-  if (!chavePublica || !chavePrivada) return null
+  const env = process.env
+  const android =
+    env["PUSH_ANDROID_PROJECT_ID"] &&
+    env["PUSH_ANDROID_CLIENT_EMAIL"] &&
+    env["PUSH_ANDROID_PRIVATE_KEY"]
+      ? criarAndroid({
+          projectId: env["PUSH_ANDROID_PROJECT_ID"],
+          clientEmail: env["PUSH_ANDROID_CLIENT_EMAIL"],
+          privateKey: env["PUSH_ANDROID_PRIVATE_KEY"],
+        })
+      : undefined
+  const ios =
+    env["PUSH_IOS_KEY_ID"] &&
+    env["PUSH_IOS_TEAM_ID"] &&
+    env["PUSH_IOS_PRIVATE_KEY"] &&
+    env["PUSH_IOS_TOPIC"]
+      ? criarIos({
+          keyId: env["PUSH_IOS_KEY_ID"],
+          teamId: env["PUSH_IOS_TEAM_ID"],
+          privateKey: env["PUSH_IOS_PRIVATE_KEY"],
+          topic: env["PUSH_IOS_TOPIC"],
+          sandbox: env["PUSH_IOS_SANDBOX"] === "true",
+        })
+      : undefined
+  if ((!chavePublica || !chavePrivada) && !android && !ios) return null
 
   try {
     const cliente = createServerClient()
     return criarAdaptadorPush({
       cliente,
       enviar: webpush.sendNotification as unknown as EnviarNotification,
-      chavePublica,
-      chavePrivada,
-      // Contato exigido pelo padrão VAPID; não é segredo.
+      chavePublica: chavePublica ?? "",
+      chavePrivada: chavePrivada ?? "",
+      android,
+      ios,
+      // Contato exigido pelo padrÃ£o VAPID; nÃ£o Ã© segredo.
       assunto: process.env["WEB_PUSH_CONTACT"] ?? "mailto:contato@bivaque.app",
     })
   } catch {
