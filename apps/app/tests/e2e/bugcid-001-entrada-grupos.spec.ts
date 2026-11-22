@@ -212,9 +212,10 @@ for (const tema of ["claro", "escuro"] as const) {
       await capturar(page, `${info.project.name}-01-interesses-${tema}`)
 
       await page.getByRole("button", { name: `Entrar em ${ESCOLHIDO.nome}` }).click()
-      await expect(
-        page.getByRole("button", { name: `Sair de ${ESCOLHIDO.nome}` }),
-      ).toHaveAttribute("aria-pressed", "true")
+      await expect(page.getByRole("button", { name: `Sair de ${ESCOLHIDO.nome}` })).toHaveAttribute(
+        "aria-pressed",
+        "true",
+      )
 
       await page.getByRole("button", { name: "Continuar com 1 grupo", exact: true }).click()
       await expect(page.locator(ETAPA_COMBINADO)).toBeVisible()
@@ -273,4 +274,4 @@ for (const tema of ["claro", "escuro"] as const) {
       )
     })
   })
-})
+}

@@ -207,7 +207,10 @@ describe("GET /api/app/entry/groups", () => {
       const pediuNaoApagado = mockGruposFiltroApagado.mock.calls.some(
         ([coluna, valor]) => coluna === "is_deleted" && valor === false,
       )
-      return { data: pediuNaoApagado ? [publicado] : [publicado, { ...publicado, id: "apagado" }], error: null }
+      return {
+        data: pediuNaoApagado ? [publicado] : [publicado, { ...publicado, id: "apagado" }],
+        error: null,
+      }
     })
 
     const resposta = await GET(requisicao())
@@ -227,7 +230,10 @@ describe("GET /api/app/entry/groups", () => {
         ([coluna, valor]) => coluna === "kind" && valor === "current",
       )
       return filtrouAKind
-        ? { data: { locality_id: CIDADE, localities: { city_name: "Rio de Janeiro" } }, error: null }
+        ? {
+            data: { locality_id: CIDADE, localities: { city_name: "Rio de Janeiro" } },
+            error: null,
+          }
         : {
             data: { locality_id: CIDADE_QUE_DEIXA, localities: { city_name: "Manaus" } },
             error: null,
