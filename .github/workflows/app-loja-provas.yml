@@ -102,9 +102,9 @@ jobs:
             if curl -fsS -o /dev/null http://127.0.0.1:3000; then exit 0; fi
             sleep 2
           done
-          echo "::error::Servidor web n?o iniciou"
+          echo "::error::Servidor web não iniciou"
           exit 1
-      - name: Compilar APK de depura??o
+      - name: Compilar APK de depuração
         env:
           VITE_API_BASE: http://localhost:3000
           VITE_SUPABASE_URL: http://localhost:54321

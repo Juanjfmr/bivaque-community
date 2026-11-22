@@ -320,7 +320,7 @@ fixado pelo `Package.resolved` do build.
 O workflow `app-loja-provas` prepara a pilha local no runner Android e recolhe capturas do roteiro;
 o job macOS compila e abre o app e um link no simulador. Sessão iOS com servidor continua para o
 aparelho do dono: o job macOS não sobe Docker. A aprovação depende de um run e da conferência dos
-artefatos; a existência do workflow não é prova de execu??o.
+artefatos; a existência do workflow não é prova de execução.
 
 Para Google, a alternativa exercita a abertura do navegador e confere a URL local de autorização
 com PKCE S256; o retorno autenticado fica pendente. A CLI permite referências `env(...)` no
