@@ -191,12 +191,18 @@ jobs:
           xcrun simctl boot "$device" || true
           xcrun simctl bootstatus "$device" -b
           xcrun simctl install "$device" "$RUNNER_TEMP/ios-build/Build/Products/Debug-iphonesimulator/App.app"
-          xcrun simctl launch "$device" br.com.bivaque.app
-          sleep 20
-          xcrun simctl io "$device" screenshot .visual/loja-004/ios/01-entrada.png
-          xcrun simctl openurl "$device" bivaque://app/entrar
-          sleep 5
-          xcrun simctl io "$device" screenshot .visual/loja-004/ios/02-link.png
+          bundle_id=$(/usr/libexec/PlistBuddy -c 'Print CFBundleIdentifier' "$RUNNER_TEMP/ios-build/Build/Products/Debug-iphonesimulator/App.app/Info.plist")
+          node tests/nativo/ios.mjs "$device" "$bundle_id"
+      - name: Registrar logs do app e WebKit
+        if: always()
+        run: |
+          mkdir -p .visual/loja-004/ios
+          filter='s/eyJ[A-Za-z0-9._-]+/[omitido]/g; s/Bearer [^ ]+/[omitido]/g; s/\b[0-9]{6}\b/[omitido]/g; s/\?[^ ]*/[omitido]/g'
+          process_name=$(/usr/libexec/PlistBuddy -c 'Print CFBundleExecutable' "$RUNNER_TEMP/ios-build/Build/Products/Debug-iphonesimulator/App.app/Info.plist" 2>/dev/null || echo App)
+          xcrun simctl spawn booted log show --last 5m --style compact --predicate "process == \"$process_name\" OR subsystem CONTAINS \"capacitor\" OR eventMessage CONTAINS \"⚡️\"" 2>&1 \
+            | sed -E "$filter" | tail -n 400 > .visual/loja-004/ios/ios-app.log || true
+          xcrun simctl spawn booted log show --last 5m --style compact --predicate 'process == "com.apple.WebKit.WebContent" AND (eventMessage CONTAINS[c] "Content Security Policy" OR eventMessage CONTAINS[c] "Refused" OR eventMessage CONTAINS[c] "error")' 2>&1 \
+            | sed -E "$filter" | tail -n 400 > .visual/loja-004/ios/ios-webkit.log || true
       - uses: actions/upload-artifact@v7
         if: always()
         with:
