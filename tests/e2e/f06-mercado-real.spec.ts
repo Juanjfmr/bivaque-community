@@ -301,7 +301,8 @@ test.describe("F06 — mercadoria real no app", { tag: "@stateful" }, () => {
     await page.goto("/app/desapegos")
     await expect(page).toHaveURL(
       (url) =>
-        url.pathname === "/app/entrar" && url.searchParams.get("redirect") === "/app/desapegos",
+        url.pathname === "/app/entrar" &&
+        (url.searchParams.get("redirect") ?? "").startsWith("/app/mercado"),
       { timeout: 30_000 },
     )
     await expect(page.getByRole("button", { name: "Tentar de novo" })).toHaveCount(0)
@@ -722,7 +723,7 @@ test.describe("F06 — mercadoria real no app", { tag: "@stateful" }, () => {
 
       // "Ver resultados" abre o Mercado com os critérios do alerta no endereço.
       await page.locator(`[data-acao="ver-resultados"][data-valor="${alertaId}"]`).click()
-      await expect(page).toHaveURL(/\/app\/imoveis\?/, { timeout: 30_000 })
+      await expect(page).toHaveURL(/\/app\/mercado\?(?=.*aba=imoveis)/, { timeout: 30_000 })
       const endereco = new URL(page.url())
       expect(endereco.searchParams.get("bairro")).toBe("Centro")
       expect(endereco.searchParams.get("tipo_negocio")).toBe("rent")
