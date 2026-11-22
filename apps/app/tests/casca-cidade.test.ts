@@ -23,7 +23,7 @@ describe("cidade da casca", () => {
   it("a casca nasce sem cidade: neutra, nunca o padrão de demonstração", () => {
     expect(DESCONHECIDA).toEqual({ cidade: "", cidadeDeCasa: "" })
     expect(DESCONHECIDA.cidade).not.toBe("Manaus")
-    expect(cidadeDoConteudo(null, DESCONHECIDA.cidade)).toBe("sua cidade")
+    expect(cidadeDoConteudo(null, DESCONHECIDA)).toBe("sua cidade")
   })
 
   it("a semente da prova manda (é entrada da prova, não medida)", () => {
@@ -76,7 +76,7 @@ describe("cidade da casca", () => {
   it("sessão Rio com o chip em Recife: título e vazio dizem Rio, a faixa diz Recife", () => {
     const emCasa = comCidadeDaSessao(DESCONHECIDA, "Rio de Janeiro")
     const consultando = comCidadeTrocada(emCasa, "Recife")
-    const doConteudo = cidadeDoConteudo("Rio de Janeiro", consultando.cidade)
+    const doConteudo = cidadeDoConteudo("Rio de Janeiro", consultando)
     expect(doConteudo).toBe("Rio de Janeiro")
     expect(`Sua rede em ${doConteudo}`).toBe("Sua rede em Rio de Janeiro")
     expect(doConteudo).not.toBe("Recife")
@@ -86,11 +86,18 @@ describe("cidade da casca", () => {
     )
   })
 
-  it("sem o dado da consulta o conteúdo cai no chip e, sem chip, no rótulo neutro", () => {
-    expect(cidadeDoConteudo(null, "Rio de Janeiro")).toBe("Rio de Janeiro")
-    expect(cidadeDoConteudo("  ", "Rio de Janeiro")).toBe("Rio de Janeiro")
-    expect(cidadeDoConteudo(null, "")).toBe("sua cidade")
+  it("sem o dado da consulta, o conteúdo reserva a cidade de casa, não a do chip", () => {
+    expect(
+      cidadeDoConteudo(null, { cidade: "Rio de Janeiro", cidadeDeCasa: "Rio de Janeiro" }),
+    ).toBe("Rio de Janeiro")
+    const titulo = cidadeDoConteudo(null, { cidade: "Recife", cidadeDeCasa: "Rio de Janeiro" })
+    expect(titulo).toBe("Rio de Janeiro")
+    expect(`Sua rede em ${titulo}`).toBe("Sua rede em Rio de Janeiro")
+    expect(titulo).not.toBe("Recife")
+    expect(cidadeDoConteudo(null, { cidade: "Recife", cidadeDeCasa: "" })).toBe("sua cidade")
     // A consulta é a fonte: mesmo com o chip em outra cidade, quem manda é ela.
-    expect(cidadeDoConteudo("Rio de Janeiro", "Recife")).toBe("Rio de Janeiro")
+    expect(cidadeDoConteudo("Rio de Janeiro", { cidade: "Recife", cidadeDeCasa: "" })).toBe(
+      "Rio de Janeiro",
+    )
   })
 })

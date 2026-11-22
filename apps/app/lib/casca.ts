@@ -62,9 +62,9 @@ export function criaVisivel(nomeDaRota: string, largura: number): boolean {
   return rotaPorNome(nomeDaRota)?.raiz ?? false
 }
 
-/** §5.2: vendo outra cidade, a faixa de visita aparece no alto do conteúdo. */
-export function mostraFaixaDeVisita(vendoOutraCidade: boolean): boolean {
-  return vendoOutraCidade
+/** §5.2: a faixa de visita exige uma cidade de casa conhecida. */
+export function mostraFaixaDeVisita(vendoOutraCidade: boolean, cidadeDeCasa: string): boolean {
+  return vendoOutraCidade && cidadeDeCasa.trim() !== ""
 }
 
 export function textoDaFaixaDeVisita(cidadeVista: string, cidadeDaPessoa: string): string {
@@ -107,14 +107,13 @@ export function comCidadeTrocada(atual: CidadeDaCasca, cidade: string): CidadeDa
 }
 
 /**
- * A cidade que nomeia o CONTEÚDO do Início: a que a consulta confirmou — a da
- * sessão. A cidade escolhida no chip aparece só na faixa de visita; o título, o
- * vazio e o `local` das perguntas não falam de outra cidade. Sem a consulta
- * ainda, o chip serve de rótulo; sem nada, "sua cidade", que não afirma nada.
+ * A cidade que nomeia o CONTEÚDO do Início: a que a consulta confirmou. Antes
+ * da consulta, a reserva é a cidade de casa, nunca a cidade escolhida no chip.
+ * Sem a cidade de casa, "sua cidade" não afirma nada.
  */
-export function cidadeDoConteudo(cidadeDosDados: string | null, cidadeDaCasca: string): string {
+export function cidadeDoConteudo(cidadeDosDados: string | null, cidades: CidadeDaCasca): string {
   const confirmada = cidadeDosDados?.trim() ?? ""
   if (confirmada !== "") return confirmada
-  const daCasca = cidadeDaCasca.trim()
+  const daCasca = cidades.cidadeDeCasa.trim()
   return daCasca !== "" ? daCasca : "sua cidade"
 }

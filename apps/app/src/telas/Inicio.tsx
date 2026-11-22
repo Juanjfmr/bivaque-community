@@ -218,7 +218,7 @@ export function Inicio() {
 
   // O conteúdo é o da cidade da sessão, que é o que a consulta confirmou; a
   // cidade escolhida no chip fica só na faixa de visita.
-  const cidade = cidadeDoConteudo(dados?.cidade ?? null, casca.cidade)
+  const cidade = cidadeDoConteudo(dados?.cidade ?? null, casca)
   const negocios = dados?.negocios.slice(0, 4) ?? []
   const anuncios = dados?.anuncios.slice(0, 4) ?? []
   const grupos = dados?.grupos.slice(0, 2) ?? []
