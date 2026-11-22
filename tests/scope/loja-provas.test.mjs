@@ -1,4 +1,4 @@
-﻿import assert from "node:assert/strict"
+import assert from "node:assert/strict"
 import { readFileSync } from "node:fs"
 import test from "node:test"
 
@@ -36,7 +36,7 @@ test("iOS só prova tela renderizada e não registra diálogo como link", () => 
   assert.match(ios, /link profundo no iOS não provado no CI: o simctl pede confirmação/)
   assert.match(ios, /01-entrada-falha\.png/)
   assert.match(ios, /02-link-falha\.png/)
-  assert.match(workflow, /simctl launch --console-pty booted/)
+  assert.match(workflow, /simctl launch --stdout .* --stderr .* booted/)
   assert.match(workflow, /ios-console\.log/)
   assert.match(workflow, /tail -n 400/)
   assert.match(workflow, /CFBundleExecutable/)
@@ -45,6 +45,34 @@ test("iOS só prova tela renderizada e não registra diálogo como link", () => 
   assert.ok(workflow.includes('NOT subsystem CONTAINS[c] \\"com.apple.coremedia\\"'))
   assert.match(workflow, /\.visual\/loja-004\/ios\/\*\.png/)
   assert.match(workflow, /Content Security Policy/)
+  assert.match(workflow, /VITE_API_BASE: http:\/\/localhost:3999/)
+  assert.match(workflow, /VITE_SUPABASE_URL: http:\/\/localhost:3999/)
+  assert.match(workflow, /tests\/nativo\/api-de-prova\.mjs/)
+  assert.match(workflow, /ios-api\.log/)
+})
+
+test("Mailpit Android lê a porta do Inbucket e registra URL sem query", () => {
+  const android = readFileSync("tests/nativo/android.mjs", "utf8")
+  const config = readFileSync("supabase/config.toml", "utf8")
+  assert.match(config, /\[inbucket\][\s\S]*?port\s*=\s*55324/)
+  assert.match(android, /\\\[inbucket\\\]/)
+  assert.match(android, /MAILPIT_URL \?\? `http:\/\/127\.0\.0\.1:\$\{porta/)
+  assert.match(android, /log\(`Mailpit: \$\{urlSemQuery\(base\)\}`\)/)
+  assert.doesNotMatch(android, /127\.0\.0\.1:54324/)
+})
+
+test("API iOS de prova aplica CORS e respostas esperadas", () => {
+  const api = readFileSync("tests/nativo/api-de-prova.mjs", "utf8")
+  assert.match(api, /capacitor:\/\/localhost/)
+  assert.match(api, /Access-Control-Allow-Origin/)
+  assert.match(api, /GET, POST, OPTIONS/)
+  assert.match(api, /authorization, content-type, x-bivaque-app, x-bivaque-cliente/)
+  assert.match(api, /request\.method === "OPTIONS"/)
+  assert.match(api, /\/api\\\/localities/)
+  assert.match(api, /writeHead\(401/)
+  assert.match(api, /\{"erro":"sem-sessao"\}/)
+  assert.match(api, /request\.method\} \$\{pathname\}/)
+  assert.doesNotMatch(api, /Access-Control-Allow-Credentials/)
 })
 
 test("rede cleartext de prova só existe no overlay debug gerado pelo workflow", () => {

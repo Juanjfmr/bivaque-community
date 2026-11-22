@@ -97,14 +97,20 @@ function abrir() {
   adb("shell", "monkey", "-p", pacote, "1")
 }
 async function codigoDoMailpit(email, desde) {
+  const config = readFileSync("supabase/config.toml", "utf8")
+  const inbucket = config.match(/^\[inbucket\]\s*([\s\S]*?)(?=^\[|$)/m)?.[1]
+  const porta = inbucket?.match(/^\s*port\s*=\s*(\d+)/m)?.[1]
+  const base = process.env.MAILPIT_URL ?? `http://127.0.0.1:${porta ?? "55324"}`
+  log(`Mailpit: ${urlSemQuery(base)}`)
+  const url = (path) => `${base.replace(/\/$/, "")}${path}`
   for (let i = 0; i < 90; i++) {
-    const lista = await (await fetch("http://127.0.0.1:54324/api/v1/messages?limit=50")).json()
+    const lista = await (await fetch(url("/api/v1/messages?limit=50"))).json()
     const mensagem = lista.messages?.find(
       (m) => m.To?.some((p) => p.Address === email) && Date.parse(m.Created) >= desde - 2000,
     )
     if (mensagem) {
       const detalhe = await (
-        await fetch(`http://127.0.0.1:54324/api/v1/message/${encodeURIComponent(mensagem.ID)}`)
+        await fetch(url(`/api/v1/message/${encodeURIComponent(mensagem.ID)}`))
       ).json()
       const codigo =
         `${detalhe.Text ?? ""} ${detalhe.Subject ?? ""} ${(detalhe.HTML ?? "").replace(/<[^>]*>/g, " ")}`.match(

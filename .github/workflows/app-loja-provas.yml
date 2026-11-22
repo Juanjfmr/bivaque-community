@@ -198,10 +198,22 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - name: Iniciar API de prova do iOS
+        run: |
+          mkdir -p .visual/loja-004/ios
+          : > .visual/loja-004/ios/ios-api.log
+          node tests/nativo/api-de-prova.mjs .visual/loja-004/ios/ios-api.log > "$RUNNER_TEMP/ios-api-server.log" 2>&1 &
+          echo $! > "$RUNNER_TEMP/ios-api-server.pid"
+          for i in $(seq 1 30); do
+            if curl -fsS -o /dev/null http://localhost:3999/api/localities; then exit 0; fi
+            sleep 1
+          done
+          echo "::error::API de prova do iOS não iniciou"
+          exit 1
       - name: Preparar app
         env:
-          VITE_API_BASE: https://api.example.invalid
-          VITE_SUPABASE_URL: https://storage.example.invalid
+          VITE_API_BASE: http://localhost:3999
+          VITE_SUPABASE_URL: http://localhost:3999
         run: |
           pnpm --filter @bivaque/app build
           pnpm --filter @bivaque/app exec cap sync ios
@@ -218,7 +230,7 @@ jobs:
           xcrun simctl install "$device" "$RUNNER_TEMP/ios-build/Build/Products/Debug-iphonesimulator/App.app"
           bundle_id=$(/usr/libexec/PlistBuddy -c 'Print CFBundleIdentifier' "$RUNNER_TEMP/ios-build/Build/Products/Debug-iphonesimulator/App.app/Info.plist")
           mkdir -p .visual/loja-004/ios
-          xcrun simctl launch --console-pty booted "$bundle_id" > "$RUNNER_TEMP/ios-console.log" 2>&1 &
+          xcrun simctl launch --stdout "$RUNNER_TEMP/ios-console.log" --stderr "$RUNNER_TEMP/ios-console-error.log" booted "$bundle_id"
           node tests/nativo/ios.mjs "$device" "$bundle_id"
       - name: Registrar logs do app e WebKit
         if: always()
@@ -229,6 +241,12 @@ jobs:
             sed -E "$filter" "$RUNNER_TEMP/ios-console.log" | tail -n 400 > .visual/loja-004/ios/ios-console.log
           else
             : > .visual/loja-004/ios/ios-console.log
+          fi
+          if [ -f "$RUNNER_TEMP/ios-console-error.log" ]; then
+            sed -E "$filter" "$RUNNER_TEMP/ios-console-error.log" | tail -n 400 >> .visual/loja-004/ios/ios-console.log
+          fi
+          if [ -f "$RUNNER_TEMP/ios-api-server.log" ]; then
+            sed -E "$filter" "$RUNNER_TEMP/ios-api-server.log" | tail -n 400 > .visual/loja-004/ios/ios-api-server.log
           fi
           process_name=$(/usr/libexec/PlistBuddy -c 'Print CFBundleExecutable' "$RUNNER_TEMP/ios-build/Build/Products/Debug-iphonesimulator/App.app/Info.plist" 2>/dev/null || echo App)
           xcrun simctl spawn booted log show --last 5m --style compact --predicate "(subsystem CONTAINS[c] \"$process_name\" OR subsystem CONTAINS[c] \"webkit\" OR subsystem CONTAINS[c] \"capacitor\") AND NOT subsystem CONTAINS[c] \"com.apple.coremedia\"" 2>&1 \
