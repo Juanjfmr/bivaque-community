@@ -74,7 +74,7 @@ it("não registra destinos nem credenciais em sucesso ou falha", async () => {
       attempts: 0,
       updatedAt: 0,
     }
-    const corpoSecreto = "corpo-sintetico-unico"
+    const corpoSintetico = "corpo-sintetico-unico"
     const vapid = webpush.generateVAPIDKeys()
     const real = criarAdaptadorPush({
       cliente: {
@@ -95,7 +95,7 @@ it("não registra destinos nem credenciais em sucesso ou falha", async () => {
       chavePrivada: vapid.privateKey,
       assunto: "mailto:teste@example.invalid",
       enviar: async () => {
-        throw new webpush.WebPushError("erro", 403, {}, corpoSecreto, endpoint)
+        throw new webpush.WebPushError("erro", 403, {}, corpoSintetico, endpoint)
       },
     })
     mensagens.push(JSON.stringify(await real.send(mensagem)))
@@ -146,7 +146,7 @@ it("não registra destinos nem credenciais em sucesso ou falha", async () => {
     for (const segredo of [
       token,
       "a".repeat(64),
-      corpoSecreto,
+      corpoSintetico,
       endpoint,
       chaveAndroid,
       chaveIos,
