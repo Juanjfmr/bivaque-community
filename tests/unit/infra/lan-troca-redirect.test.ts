@@ -314,9 +314,9 @@ describe("LAN-TROCA fase 1", () => {
     for (const rota of ["communities", "communities/[id]"]) {
       expect(existsSync(join(shell, rota, "page.tsx"))).toBe(false)
     }
-    expect(existsSync(join(shell, "communities", "[id]", "indicar-prestador", "page.tsx"))).toBe(
-      true,
-    )
+    // TROCA-004: o indicar-prestador saiu inteiro — página, action e formulário —
+    // e o endereço responde 307 (TROCADAS acima). Prova de ausência, não de tela.
+    expect(existsSync(join(shell, "communities", "[id]", "indicar-prestador"))).toBe(false)
     expect(existsSync(join(shell, "groups"))).toBe(false)
     expect(
       existsSync(join(shell, "..", "(owner)", "communities", "[id]", "admin", "page.tsx")),
