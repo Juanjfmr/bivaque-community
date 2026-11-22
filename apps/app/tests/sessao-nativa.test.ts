@@ -71,7 +71,8 @@ describe("sessão nativa", () => {
   })
 
   it("usa AbortController quando AbortSignal.timeout não existe", async () => {
-    vi.stubGlobal("AbortSignal", class extends AbortSignal {})
+    vi.stubGlobal("AbortSignal", {})
+    expect("timeout" in AbortSignal).toBe(false)
     const buscar = vi.fn().mockResolvedValue(par())
     vi.stubGlobal("fetch", buscar)
     expect(await renovarSessao()).toBe("acesso-sintetico")
@@ -81,7 +82,7 @@ describe("sessão nativa", () => {
 
   it("aborta uma renovação sem resposta aos 3000 ms e classifica como rede", async () => {
     vi.useFakeTimers()
-    vi.stubGlobal("AbortSignal", class extends AbortSignal {})
+    vi.stubGlobal("AbortSignal", {})
     let sinal: AbortSignal | undefined
     const buscar = vi.fn().mockImplementation((_url: string, init: RequestInit) => {
       sinal = init.signal ?? undefined
