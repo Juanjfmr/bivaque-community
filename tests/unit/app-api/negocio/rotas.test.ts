@@ -149,7 +149,10 @@ function cliente(opcoes: Opcoes = {}) {
       // TROCA-005: o GET do negócio também diz o tipo da conta. Sem conta de
       // prestador, a sessão é de membro.
       if (tabela === "provider_accounts")
-        return { data: opcoes.contaDePrestador === true ? { auth_user_id: USER } : null, error: null }
+        return {
+          data: opcoes.contaDePrestador === true ? { auth_user_id: USER } : null,
+          error: null,
+        }
       throw new Error(`Tabela inesperada: ${tabela}`)
     }
 

@@ -92,9 +92,12 @@ const escritas = [
   [
     "convite POST",
     (headers: Record<string, string>) =>
-      aceitarConvite(new NextRequest(`${BASE}/prestador-convite/${TOKEN}`, { method: "POST", headers }), {
-        params: Promise.resolve({ token: TOKEN }),
-      }),
+      aceitarConvite(
+        new NextRequest(`${BASE}/prestador-convite/${TOKEN}`, { method: "POST", headers }),
+        {
+          params: Promise.resolve({ token: TOKEN }),
+        },
+      ),
   ],
 ] as const
 

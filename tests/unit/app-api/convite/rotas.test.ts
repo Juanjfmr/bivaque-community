@@ -173,9 +173,7 @@ describe("TROCA-005 — aceite do convite de prestador", () => {
     autenticar(mock)
     const corpo = await (await POST(req("POST"), contexto(TOKEN))).json()
     expect(corpo.erro).toBe("conta-recusada")
-    expect(corpo.mensagem).toBe(
-      "Esta conta é de membro e não pode aceitar convite de prestador.",
-    )
+    expect(corpo.mensagem).toBe("Esta conta é de membro e não pode aceitar convite de prestador.")
   })
 
   it("token malformado não chega ao banco", async () => {

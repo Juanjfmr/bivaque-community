@@ -3,12 +3,12 @@ import { beforeEach, describe, expect, it, vi } from "vitest"
 
 vi.mock("web/lib/app-api/sessao-do-next", () => ({ resolverSessaoDaRequisicao: vi.fn() }))
 
+import { GET as mensagens, POST as responder } from "web/app/api/app/pedidos/[id]/mensagens/route"
 import {
   GET as atendimento,
   PATCH as salvarAtendimento,
 } from "web/app/api/app/prestador/atendimento/route"
 import { GET as conta, PATCH as salvarConta } from "web/app/api/app/prestador/conta/route"
-import { GET as mensagens, POST as responder } from "web/app/api/app/pedidos/[id]/mensagens/route"
 import { resolverSessaoDaRequisicao } from "web/lib/app-api/sessao-do-next"
 
 const resolver = vi.mocked(resolverSessaoDaRequisicao)

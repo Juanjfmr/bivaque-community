@@ -3,17 +3,14 @@
 import { createServerClient } from "@supabase/ssr"
 import { revalidatePath } from "next/cache"
 import { cookies } from "next/headers"
-import { encerrarPedido, responderPedido } from "../../../lib/service-requests/app-pedidos"
 import { salvarFichaDoPrestador } from "../../../lib/providers/ficha-do-prestador"
-import {
-  salvarAtendimento,
-  salvarContaDoPrestador,
-} from "../../../lib/providers/prestador-area"
+import { salvarAtendimento, salvarContaDoPrestador } from "../../../lib/providers/prestador-area"
 import {
   validateDescription,
   validatePriceCents,
   validateTitle,
 } from "../../../lib/providers/showcase"
+import { encerrarPedido, responderPedido } from "../../../lib/service-requests/app-pedidos"
 import { isDefiniteSqlRejection } from "../../../lib/storage/rpc-outcome"
 import { sanitizeImage } from "../../../lib/storage/sanitize-image"
 import { conferirEscritaDaConta } from "../../../lib/storage/veto-de-conta"
