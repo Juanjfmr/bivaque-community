@@ -113,11 +113,17 @@ function denunciaDe(valor: unknown, detalhada: boolean): Denuncia {
 }
 
 export async function lerDenuncias(
-  opcoes: { signal?: AbortSignal } = {},
-): Promise<readonly Denuncia[]> {
-  return lista(await ler("/api/app/denuncias", opcoes), "denuncias").map((valor) =>
-    denunciaDe(valor, false),
-  )
+  opcoes: { depois?: string; signal?: AbortSignal } = {},
+): Promise<Readonly<{ denuncias: readonly Denuncia[]; proximo: string | null }>> {
+  const caminho =
+    opcoes.depois === undefined
+      ? "/api/app/denuncias"
+      : `/api/app/denuncias?depois=${encodeURIComponent(opcoes.depois)}`
+  const resposta = registro(await ler(caminho, opcoes))
+  return {
+    denuncias: lista(resposta, "denuncias").map((valor) => denunciaDe(valor, false)),
+    proximo: textoOuNulo(resposta, "proximo"),
+  }
 }
 
 export async function lerDenuncia(

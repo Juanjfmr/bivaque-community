@@ -101,9 +101,14 @@ export function Ajuda() {
   const trocarBusca = useTrocarBusca()
   const aba: AbaDaAjuda = busca["aba"] === "denuncias" ? "denuncias" : "chamados"
 
-  const [denuncias, setDenuncias] = useState<readonly Denuncia[] | null>(null)
+  const [denuncias, setDenuncias] = useState<{
+    denuncias: readonly Denuncia[]
+    proximo: string | null
+  } | null>(null)
   const [erroDasDenuncias, setErroDasDenuncias] = useState<unknown>(null)
   const [rodada, setRodada] = useState(0)
+  const [mais, setMais] = useState(false)
+  const [erroMais, setErroMais] = useState(false)
 
   const nova = useSobreposicaoDaEntrada("denuncia-nova")
   const detalhe = useSobreposicaoDaEntrada("denuncia-detalhe")
@@ -119,7 +124,10 @@ export function Ajuda() {
   useEffect(() => {
     if (aba !== "denuncias") return
     const controle = new AbortController()
+    setDenuncias(null)
     setErroDasDenuncias(null)
+    setMais(false)
+    setErroMais(false)
     void lerDenuncias({ signal: controle.signal })
       .then((lidas) => {
         if (!controle.signal.aborted) setDenuncias(lidas)
@@ -129,6 +137,24 @@ export function Ajuda() {
       })
     return () => controle.abort()
   }, [aba, rodada])
+
+  async function carregarMais() {
+    if (denuncias === null || denuncias.proximo === null || mais) return
+    setMais(true)
+    setErroMais(false)
+    try {
+      const lidos = await lerDenuncias({ depois: denuncias.proximo })
+      setDenuncias((atual) =>
+        atual === null || atual.proximo !== denuncias.proximo
+          ? atual
+          : { ...lidos, denuncias: [...atual.denuncias, ...lidos.denuncias] },
+      )
+    } catch {
+      setErroMais(true)
+    } finally {
+      setMais(false)
+    }
+  }
 
   useRolagemEFoco(
     useCargaDaLista(aba !== "denuncias" || denuncias !== null || erroDasDenuncias !== null),
@@ -197,7 +223,10 @@ export function Ajuda() {
         itens={ABAS.map((item) => ({
           id: item.id,
           rotulo: item.rotulo,
-          contagem: item.id === "denuncias" ? (denuncias?.length ?? null) : null,
+          contagem:
+            item.id === "denuncias" && denuncias?.proximo === null
+              ? denuncias.denuncias.length
+              : null,
         }))}
         valor={aba}
         aoEscolher={(id) => irParaAba(id as AbaDaAjuda)}
@@ -235,7 +264,7 @@ export function Ajuda() {
             />
           ) : denuncias === null ? (
             <EsqueletoDeLista linhas={2} />
-          ) : denuncias.length === 0 ? (
+          ) : denuncias.denuncias.length === 0 && denuncias.proximo === null ? (
             <EstadoVazio
               titulo="Nenhuma denúncia enviada"
               texto="Se algo aqui na comunidade não estiver certo, conte para a gente. A equipe analisa e você acompanha por aqui."
@@ -246,22 +275,36 @@ export function Ajuda() {
               }}
             />
           ) : (
-            <Lista>
-              {denuncias.map((denuncia) => (
-                <LinhaDeLista
-                  key={denuncia.id}
-                  icone="flag"
-                  titulo={denuncia.previaDeAlvo ?? denuncia.rotuloDoAlvo}
-                  subtitulo={`${denuncia.rotuloDoAlvo} · ${dataCurta(denuncia.criadaEm)}`}
-                  fim={
-                    <Etiqueta tom={denuncia.resolvida ? "neutro" : "info"}>
-                      {denuncia.resolvida ? "Resolvida" : "Em análise"}
-                    </Etiqueta>
-                  }
-                  onClick={() => abrirDetalhe(denuncia.id)}
-                />
-              ))}
-            </Lista>
+            <>
+              <Lista>
+                {denuncias.denuncias.map((denuncia) => (
+                  <LinhaDeLista
+                    key={denuncia.id}
+                    icone="flag"
+                    titulo={denuncia.previaDeAlvo ?? denuncia.rotuloDoAlvo}
+                    subtitulo={`${denuncia.rotuloDoAlvo} · ${dataCurta(denuncia.criadaEm)}`}
+                    fim={
+                      <Etiqueta tom={denuncia.resolvida ? "neutro" : "info"}>
+                        {denuncia.resolvida ? "Resolvida" : "Em análise"}
+                      </Etiqueta>
+                    }
+                    onClick={() => abrirDetalhe(denuncia.id)}
+                  />
+                ))}
+              </Lista>
+              {erroMais ? (
+                <p role="alert" className="text-sm text-(--destructive)">
+                  Não foi possível carregar mais denúncias. As anteriores continuam aqui.
+                </p>
+              ) : null}
+              {denuncias.proximo === null ? null : (
+                <div className="flex justify-start">
+                  <Botao tom="contornado" disabled={mais} onClick={() => void carregarMais()}>
+                    {mais ? "Carregando…" : erroMais ? "Tentar de novo" : "Ver mais denúncias"}
+                  </Botao>
+                </div>
+              )}
+            </>
           )}
         </Secao>
       )}

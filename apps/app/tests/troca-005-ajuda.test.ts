@@ -28,6 +28,15 @@ describe("TROCA-005 — Ajuda com chamados e denúncias", () => {
     expect(ajuda).toContain("lerDenuncias")
   })
 
+  it("carrega páginas seguintes sem perder a lista anterior", () => {
+    expect(ajuda).toContain("carregarMais")
+    expect(ajuda).toContain("depois:")
+    expect(ajuda).toContain("proximo")
+    expect(ajuda).toContain(
+      "Não foi possível carregar mais denúncias. As anteriores continuam aqui.",
+    )
+  })
+
   it("detalhe e denúncia nova abrem pela URL e a recarga reabre", () => {
     expect(ajuda).toContain('busca["denuncia"]')
     expect(ajuda).toContain('busca["denunciar"]')

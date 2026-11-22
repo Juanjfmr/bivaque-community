@@ -30,10 +30,33 @@ afterEach(() => vi.unstubAllGlobals())
 
 describe("TROCA-005 — porta das denúncias", () => {
   it("lê a lista do próprio denunciante", async () => {
-    const fetch = responder({ denuncias: [denuncia] })
+    const fetch = responder({ denuncias: [denuncia], proximo: null })
     const lidas = await lerDenuncias()
-    expect(lidas[0]).toMatchObject({ id: "d1", rotuloDoAlvo: "Publicação", resolvida: false })
+    expect(lidas.denuncias[0]).toMatchObject({
+      id: "d1",
+      rotuloDoAlvo: "Publicação",
+      resolvida: false,
+    })
+    expect(lidas.proximo).toBeNull()
     expect(fetch).toHaveBeenCalledWith("/api/app/denuncias", expect.anything())
+  })
+
+  it("envia o cursor de paginação na query", async () => {
+    const depois = "2026-11-05T12:00:00+00:00"
+    const fetch = responder({ denuncias: [], proximo: null })
+    const lidas = await lerDenuncias({ depois })
+    expect(lidas).toEqual({ denuncias: [], proximo: null })
+    expect(fetch).toHaveBeenCalledWith(
+      `/api/app/denuncias?depois=${encodeURIComponent(depois)}`,
+      expect.anything(),
+    )
+  })
+
+  it("proximo ausente é falha de contrato", async () => {
+    responder({ denuncias: [denuncia] })
+    await expect(lerDenuncias()).rejects.toMatchObject({
+      mensagem: "Resposta do servidor fora do contrato.",
+    })
   })
 
   it("lê o detalhe com motivo separado", async () => {

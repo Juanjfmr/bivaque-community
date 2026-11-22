@@ -45,12 +45,12 @@ async function montarDenuncias(page: Page) {
       },
     }),
   )
-  await page.route(/\/api\/app\/denuncias$/, async (rota) => {
+  await page.route(/\/api\/app\/denuncias(\?|$)/, async (rota) => {
     if (rota.request().method() === "POST") {
       enviadas.push(denuncia)
       return rota.fulfill({ status: 201, json: { denuncia: { id: DENUNCIA } } })
     }
-    return rota.fulfill({ json: { denuncias: enviadas } })
+    return rota.fulfill({ json: { denuncias: enviadas, proximo: null } })
   })
   await page.route(new RegExp(`/api/app/denuncias/${DENUNCIA}$`), (rota) =>
     rota.fulfill({
@@ -111,7 +111,7 @@ for (const tema of TEMAS) {
     })
 
     test("a falha principal da lista é erro honesto, não vazio", async ({ page }) => {
-      await page.route(/\/api\/app\/denuncias$/, (rota) =>
+      await page.route(/\/api\/app\/denuncias(\?|$)/, (rota) =>
         rota.fulfill({ status: 503, json: { erro: "leitura-indisponivel" } }),
       )
       await ir(page, "/app/ajuda?aba=denuncias", tema)
@@ -119,11 +119,35 @@ for (const tema of TEMAS) {
       await expect(page.getByText("Nenhuma denúncia enviada")).toHaveCount(0)
     })
 
+    test("carrega a página seguinte de denúncias", async ({ page }) => {
+      const primeira = { ...denuncia, id: "50000000-0000-4000-8000-0000000000f2" }
+      const segunda = {
+        ...denuncia,
+        id: "50000000-0000-4000-8000-0000000000f3",
+        targetPreview: "Segunda denúncia da página seguinte",
+        createdAt: "2026-11-04T12:00:00Z",
+      }
+      await page.route(/\/api\/app\/denuncias(\?|$)/, (rota) => {
+        const depois = new URL(rota.request().url()).searchParams.get("depois")
+        return rota.fulfill({
+          json:
+            depois === null
+              ? { denuncias: [primeira], proximo: primeira.createdAt }
+              : { denuncias: [segunda], proximo: null },
+        })
+      })
+      await ir(page, "/app/ajuda?aba=denuncias", tema)
+      await expect(page.getByText("Oferta repetida de serviço")).toBeVisible()
+      await page.getByRole("button", { name: "Ver mais denúncias" }).click()
+      await expect(page.getByText("Segunda denúncia da página seguinte")).toBeVisible()
+      await expect(page.getByRole("button", { name: "Ver mais denúncias" })).toHaveCount(0)
+    })
+
     test("sem alvos, a Folha explica onde denunciar em vez de fingir um formulário", async ({
       page,
     }) => {
-      await page.route(/\/api\/app\/denuncias$/, (rota) =>
-        rota.fulfill({ json: { denuncias: [] } }),
+      await page.route(/\/api\/app\/denuncias(\?|$)/, (rota) =>
+        rota.fulfill({ json: { denuncias: [], proximo: null } }),
       )
       await page.route(/\/api\/app\/denuncias\/alvos$/, (rota) =>
         rota.fulfill({ json: { alvos: [] } }),
