@@ -111,8 +111,33 @@ jobs:
         run: |
           pnpm --filter @bivaque/app build
           pnpm --filter @bivaque/app exec cap sync android
+          mkdir -p apps/app/android/app/src/debug/res/xml
+          cat > apps/app/android/app/src/debug/AndroidManifest.xml <<'EOF'
+          <manifest xmlns:android="http://schemas.android.com/apk/res/android" xmlns:tools="http://schemas.android.com/tools">
+            <application android:networkSecurityConfig="@xml/rede_de_prova" tools:ignore="GoogleAppIndexingWarning" />
+          </manifest>
+          EOF
+          cat > apps/app/android/app/src/debug/res/xml/rede_de_prova.xml <<'EOF'
+          <?xml version="1.0" encoding="utf-8"?>
+          <network-security-config>
+            <base-config cleartextTrafficPermitted="false" />
+            <domain-config cleartextTrafficPermitted="true">
+              <domain includeSubdomains="false">localhost</domain>
+              <domain includeSubdomains="false">127.0.0.1</domain>
+            </domain-config>
+          </network-security-config>
+          EOF
           cd apps/app/android
           ./gradlew assembleDebug
+      - name: Conferir configuração de rede no APK de depuração
+        run: |
+          set -euo pipefail
+          mkdir -p .visual/loja-004/nativo
+          apk=apps/app/android/app/build/outputs/apk/debug/app-debug.apk
+          aapt2=$(find "$ANDROID_HOME/build-tools" -name aapt2 -type f | sort -V | tail -n 1)
+          "$aapt2" dump xmltree "$apk" --file AndroidManifest.xml | grep -F 'networkSecurityConfig' | tee .visual/loja-004/nativo/rede-debug.log
+          unzip -p "$apk" resources.arsc | strings | grep -F 'rede_de_prova' | tee -a .visual/loja-004/nativo/rede-debug.log
+          test -s .visual/loja-004/nativo/rede-debug.log
       - name: Habilitar KVM
         run: |
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
@@ -192,14 +217,21 @@ jobs:
           xcrun simctl bootstatus "$device" -b
           xcrun simctl install "$device" "$RUNNER_TEMP/ios-build/Build/Products/Debug-iphonesimulator/App.app"
           bundle_id=$(/usr/libexec/PlistBuddy -c 'Print CFBundleIdentifier' "$RUNNER_TEMP/ios-build/Build/Products/Debug-iphonesimulator/App.app/Info.plist")
+          mkdir -p .visual/loja-004/ios
+          xcrun simctl launch --console-pty booted "$bundle_id" > "$RUNNER_TEMP/ios-console.log" 2>&1 &
           node tests/nativo/ios.mjs "$device" "$bundle_id"
       - name: Registrar logs do app e WebKit
         if: always()
         run: |
           mkdir -p .visual/loja-004/ios
           filter='s/eyJ[A-Za-z0-9._-]+/[omitido]/g; s/Bearer [^ ]+/[omitido]/g; s/\b[0-9]{6}\b/[omitido]/g; s/\?[^ ]*/[omitido]/g'
+          if [ -f "$RUNNER_TEMP/ios-console.log" ]; then
+            sed -E "$filter" "$RUNNER_TEMP/ios-console.log" | tail -n 400 > .visual/loja-004/ios/ios-console.log
+          else
+            : > .visual/loja-004/ios/ios-console.log
+          fi
           process_name=$(/usr/libexec/PlistBuddy -c 'Print CFBundleExecutable' "$RUNNER_TEMP/ios-build/Build/Products/Debug-iphonesimulator/App.app/Info.plist" 2>/dev/null || echo App)
-          xcrun simctl spawn booted log show --last 5m --style compact --predicate "process == \"$process_name\" OR subsystem CONTAINS \"capacitor\" OR eventMessage CONTAINS \"⚡️\"" 2>&1 \
+          xcrun simctl spawn booted log show --last 5m --style compact --predicate "(subsystem CONTAINS[c] \"$process_name\" OR subsystem CONTAINS[c] \"webkit\" OR subsystem CONTAINS[c] \"capacitor\") AND NOT subsystem CONTAINS[c] \"com.apple.coremedia\"" 2>&1 \
             | sed -E "$filter" | tail -n 400 > .visual/loja-004/ios/ios-app.log || true
           xcrun simctl spawn booted log show --last 5m --style compact --predicate 'process == "com.apple.WebKit.WebContent" AND (eventMessage CONTAINS[c] "Content Security Policy" OR eventMessage CONTAINS[c] "Refused" OR eventMessage CONTAINS[c] "error")' 2>&1 \
             | sed -E "$filter" | tail -n 400 > .visual/loja-004/ios/ios-webkit.log || true
@@ -207,7 +239,9 @@ jobs:
         if: always()
         with:
           name: provas-ios
-          path: .visual/loja-004/ios/
+          path: |
+            .visual/loja-004/ios/*.png
+            .visual/loja-004/ios/*.log
           include-hidden-files: true
           if-no-files-found: warn
           retention-days: 7
