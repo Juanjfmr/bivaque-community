@@ -3,9 +3,9 @@ import { beforeEach, describe, expect, it, vi } from "vitest"
 
 vi.mock("web/lib/app-api/sessao-do-next", () => ({ resolverSessaoDaRequisicao: vi.fn() }))
 
-import { GET as alvos } from "web/app/api/app/denuncias/alvos/route"
 import { GET as detalhe } from "web/app/api/app/denuncias/[id]/route"
-import { GET as lista, POST as denunciar } from "web/app/api/app/denuncias/route"
+import { GET as alvos } from "web/app/api/app/denuncias/alvos/route"
+import { POST as denunciar, GET as lista } from "web/app/api/app/denuncias/route"
 import { resolverSessaoDaRequisicao } from "web/lib/app-api/sessao-do-next"
 
 const resolver = vi.mocked(resolverSessaoDaRequisicao)
@@ -97,6 +97,7 @@ function cliente(opcoes: Opcoes = {}) {
             error: erro,
           }),
         }),
+        // biome-ignore lint/suspicious/noThenProperty: o builder do insert é awaitable
         then: (resolver: (valor: unknown) => unknown) =>
           Promise.resolve(resolver({ data: null, error: erro })),
       }
