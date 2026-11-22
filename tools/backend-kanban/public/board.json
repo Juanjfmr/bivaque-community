@@ -10428,7 +10428,8 @@
       "phase": "Lançamento",
       "tests": [],
       "blockers": [
-        "O CLI do Supabase 2.107.0 (binário Bun) falha com EPERM ao abrir ou criar qualquer arquivo ou pasta: C:/Users/juana/.supabase/telemetry.json.tmp.* e também uma pasta pessoal temporária (HOME/USERPROFILE trocados), inclusive fora do sandbox. Quebra test:db, db:lint, migration list/up e status no PC do dono."
+        "O CLI do Supabase 2.107.0 (binário Bun) falha com EPERM ao abrir ou criar qualquer arquivo ou pasta: C:/Users/juana/.supabase/telemetry.json.tmp.* e também uma pasta pessoal temporária (HOME/USERPROFILE trocados), inclusive fora do sandbox. Quebra test:db, db:lint, migration list/up e status no PC do dono.",
+        "22/11: decisão do coordenador (opção B): a prova de banco segue no CI com ci:full; nenhum binário baixado no PC e nenhuma mudança no Docker. Próximo passo concreto para desbloquear (opção A): com aval do dono para o download, apontar SUPABASE_CLI_BINARY_OVERRIDE para o supabase.exe Go oficial da última release 2.x anterior ao binário Bun, fora da pasta do repositório (sem o rótulo Low), repetir status e depois fazer o reset local exclusivo sem seed e o test:db."
       ],
       "updatedAt": "2026-11-22",
       "sourceRevision": "e7a3ca880",
@@ -10444,7 +10445,7 @@
       "title": "CLI do Supabase falha com EPERM no PC do dono e o banco local está fora de sincronia",
       "priority": "P1",
       "category": "infra",
-      "status": "now",
+      "status": "blocked",
       "description": "Sem o CLI, nenhuma prova de banco local roda no PC (test:db, db:lint, migration up). Próximo passo concreto: rodar o binário @supabase/cli-windows-x64 direto com --version e um comando que grava, comparar com o CLI Go oficial (SUPABASE_CLI_BINARY_OVERRIDE apontando para o supabase.exe da release anterior da linha 2.x) e, se o Go funcionar, fixar o override no ambiente local ou voltar o pin; depois, com a pilha exclusiva, reset --local --no-seed e test:db para ressincronizar o banco.",
       "checklist": [
         "Diagnóstico do EPERM com o binário direto e com o CLI Go",
