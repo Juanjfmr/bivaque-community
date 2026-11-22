@@ -73,3 +73,8 @@ apps/app/dist-nativo/
 
 *.keystore
 *.jks
+
+# Credenciais locais de push nativo
+google-services.json
+GoogleService-Info.plist
+*.p8

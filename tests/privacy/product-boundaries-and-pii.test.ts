@@ -1,11 +1,40 @@
 import { readdirSync, readFileSync, statSync } from "node:fs"
 import { readFile } from "node:fs/promises"
-import { join } from "node:path"
+import { join, relative } from "node:path"
 import { describe, expect, it } from "vitest"
 
 const root = join(import.meta.dirname, "..", "..")
 
-const SOURCE_EXTENSIONS = new Set([".ts", ".tsx", ".mjs", ".js", ".sql", ".toml", ".json"])
+const SOURCE_EXTENSIONS = new Set([
+  ".ts",
+  ".tsx",
+  ".mjs",
+  ".js",
+  ".sql",
+  ".toml",
+  ".json",
+  ".gradle",
+  ".kt",
+  ".xml",
+  ".plist",
+])
+
+const EXCECOES_PLATAFORMA = [
+  "apps/app/android/app/build.gradle",
+  "apps/app/android/build.gradle",
+  "apps/app/android/variables.gradle",
+  "apps/web/lib/push/android.ts",
+] as const
+const TERMO_PLATAFORMA = /\bfirebase\b/i
+const OUTROS_TERMOS =
+  /\b(microservice|anonymous posting|anon_posts?|public verification badge|alerts? broadcast)\b/i
+
+function infringeLimites(caminho: string, conteudo: string): boolean {
+  return (
+    OUTROS_TERMOS.test(conteudo) ||
+    (TERMO_PLATAFORMA.test(conteudo) && !EXCECOES_PLATAFORMA.some((excecao) => excecao === caminho))
+  )
+}
 
 const EXCLUDED_DIRS = new Set([
   "node_modules",
@@ -50,7 +79,11 @@ function collectFiles(dir: string): string[] {
   return files
 }
 
-async function scan(pattern: RegExp, exclude: RegExp[] = []): Promise<string[]> {
+async function scan(
+  pattern: RegExp,
+  exclude: RegExp[] = [],
+  plataforma = false,
+): Promise<string[]> {
   const hits: string[] = []
   const files = collectFiles(root).filter((file) => !exclude.some((e) => e.test(file)))
   for (let offset = 0; offset < files.length; offset += 32) {
@@ -59,7 +92,11 @@ async function scan(pattern: RegExp, exclude: RegExp[] = []): Promise<string[]> 
         const content = await readFile(file, "utf8")
         const matches: string[] = []
         for (const line of content.split("\n")) {
-          if (pattern.test(line)) matches.push(`${file}: ${line.trim().slice(0, 120)}`)
+          if (
+            pattern.test(line) &&
+            (!plataforma || infringeLimites(relative(root, file).replaceAll("\\", "/"), line))
+          )
+            matches.push(`${file}: ${line.trim().slice(0, 120)}`)
         }
         return matches
       }),
@@ -82,40 +119,51 @@ describe("product boundaries and PII audit", () => {
   it("keeps declared product-boundary terms out of product source", async () => {
     // Given the source tree (excluding files that legitimately mention
     // boundary terms inside prohibition regexes, denial tests, and docs)
-    const hits = await scan(
-      /\b(firebase|microservice|anonymous posting|anon_posts?|public verification badge|alerts? broadcast)\b/i,
-      [
-        /feed-post\.tsx$/,
-        /recommendations[\\/]page\.tsx$/,
-        /contracts[\\/]src[\\/]index\.ts$/,
-        /domain[\\/]src[\\/]index\.ts$/,
-        /community_feed\.sql$/,
-        /recommendations\.sql$/,
-        /fix_forbidden_content_regex\.sql$/,
-        /community-feed-denials\.sql$/,
-        /prohibited-content\.test\.ts$/,
-        /prohibited-commercial-fields\.test\.ts$/,
-        /product-boundaries-and-pii\.test\.ts$/,
-        /dm-pii-redaction\.test\.ts$/,
-        /notification-pii-redaction\.test\.ts$/,
-        /reports-pii-redaction\.test\.ts$/,
-        /portal-redaction-and-negative-fixtures\.test\.ts$/,
-        /log-redaction\.test\.ts$/,
-        /PILOT_RUNBOOK\.md$/,
-        /GO-NO-GO-REPORT\.md$/,
-        // O manifesto do guia visual registra os prompts do gerador, e vários
-        // deles proíbem o termo explicitamente ("no public verification badge").
-        // Citar a proibição não é implementá-la.
-        /visual-guide-2026-09-06[\\/](manifest|[a-z-]*generation[a-z0-9-]*)\.json$/,
-        /\.omo[\\/]/,
-        /notepad/,
-      ],
-    )
+    const hits = await scan(OUTROS_TERMOS, [
+      /feed-post\.tsx$/,
+      /recommendations[\\/]page\.tsx$/,
+      /contracts[\\/]src[\\/]index\.ts$/,
+      /domain[\\/]src[\\/]index\.ts$/,
+      /community_feed\.sql$/,
+      /recommendations\.sql$/,
+      /fix_forbidden_content_regex\.sql$/,
+      /community-feed-denials\.sql$/,
+      /prohibited-content\.test\.ts$/,
+      /prohibited-commercial-fields\.test\.ts$/,
+      /product-boundaries-and-pii\.test\.ts$/,
+      /dm-pii-redaction\.test\.ts$/,
+      /notification-pii-redaction\.test\.ts$/,
+      /reports-pii-redaction\.test\.ts$/,
+      /portal-redaction-and-negative-fixtures\.test\.ts$/,
+      /log-redaction\.test\.ts$/,
+      /PILOT_RUNBOOK\.md$/,
+      /GO-NO-GO-REPORT\.md$/,
+      // O manifesto do guia visual registra os prompts do gerador, e vários
+      // deles proíbem o termo explicitamente ("no public verification badge").
+      // Citar a proibição não é implementá-la.
+      /visual-guide-2026-09-06[\\/](manifest|[a-z-]*generation[a-z0-9-]*)\.json$/,
+      /\.omo[\\/]/,
+      /notepad/,
+    ])
 
     // Then no unsupported product-boundary term appears in product code.
     // "marketplace" is deliberately absent from this rule: the Bivaque
     // Vitrine is a valid product surface and a lexical ban was a false proxy
     // for an implementation constraint.
+    expect(hits).toEqual([])
+  })
+
+  it("restringe a excecao da plataforma aos arquivos nomeados", async () => {
+    expect(EXCECOES_PLATAFORMA).toEqual([
+      "apps/app/android/app/build.gradle",
+      "apps/app/android/build.gradle",
+      "apps/app/android/variables.gradle",
+      "apps/web/lib/push/android.ts",
+    ])
+    expect(infringeLimites("outro.ts", "firebase")).toBe(true)
+    expect(infringeLimites(EXCECOES_PLATAFORMA[0], "microservice")).toBe(true)
+    expect(infringeLimites(EXCECOES_PLATAFORMA[0], "firebase")).toBe(false)
+    const hits = await scan(TERMO_PLATAFORMA, [/product-boundaries-and-pii\.test\.ts$/], true)
     expect(hits).toEqual([])
   })
 

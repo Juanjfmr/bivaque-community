@@ -6250,7 +6250,8 @@
       "sourceRevision": "29fcc8f",
       "links": ["docs/LANCAMENTO.md", "docs/decisions/ADR-20261024-front-react-spa.md"],
       "proof": [
-        "04/11: aberto por decisão do dono (push entra no lançamento), registrado em docs/LANCAMENTO.md, Mudanças de escopo."
+        "04/11: aberto por decisão do dono (push entra no lançamento), registrado em docs/LANCAMENTO.md, Mudanças de escopo.",
+        "PUSH-001 parcial: protecao de arquivos de credenciais e regra de limites de produto; reserva, migration, adaptadores, rota e testes de envio ainda pendentes. O lote do app segue dependente de LOJA-004: plugin, permissao em contexto, ordem de saida e E2E em emulador e simulador; chaves e testes reais dependem do dono."
       ],
       "id": "LAN-PUSH",
       "title": "Push no celular: token do aparelho, envio pelo outbox e abertura no destino certo",
