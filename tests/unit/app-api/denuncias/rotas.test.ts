@@ -379,7 +379,9 @@ describe("TROCA-005 — a denúncia não identifica o denunciante", () => {
 
     const invalido = cliente()
     autenticar(invalido)
-    expect((await lista(req("denuncias?depois=ontem"))).status).toBe(400)
+    for (const valor of ["ontem", "1", "2026"]) {
+      expect((await lista(req(`denuncias?depois=${valor}`))).status, valor).toBe(400)
+    }
     expect(invalido.from).not.toHaveBeenCalled()
   })
 
