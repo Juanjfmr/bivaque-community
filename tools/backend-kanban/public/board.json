@@ -7895,17 +7895,18 @@
     },
     {
       "phase": "Lançamento",
-      "status": "repo",
+      "status": "done",
       "dependencies": ["F10-R3-SESSION-DERIVED"],
       "tests": [],
       "blockers": [],
       "proof": [
         "13/11: reconciliado pelo coordenador — o cartão estava desatualizado (06/11). A jornada JÁ está ligada e provada: rotas GET/POST/DELETE /api/app/voce/familia + tela Familia.tsx pela sessão (RUN-018, PR #147, merge 3093390f); service_role só no servidor após exigirSessao, id sempre da sessão, nunca do corpo. pgTAP positivo/negativo (plan 20) + revisão R3 sem CRÍTICO/ALTO (RUN-030/031, PR #194, ef72c839; docs/agents/reviews/2026-11-11-revisao-r3-f10-familia.md). E2E real f10-voce-real.spec.ts:180 (convite entra na lista, revogação some) em 375/768/1440. ADR-20261111-convite-familiar-pela-sessao listado em RATIFICACAO.md. Limite de envio (5704b78d) e corrida de convites (261a1ab5) corrigidos.",
         "Pendência que impede fechar como 'posse derivada da sessão' (ADR-20261111): o banco ainda aceita o id do titular por parâmetro; a posse é verificada na rota, não derivada de auth.uid() no banco. O hardening F10-R3-SESSION-DERIVED não é trivial: o caminho usa service_role, que não carrega o JWT do usuário, então auth.uid() seria nulo — exige redesenhar como a posse chega ao banco.",
-        "16/11: item acrescentado no fechamento do RUN-172 — a acao foi movida como estava (correto) e o achado M-3 estava sem dono."
+        "16/11: item acrescentado no fechamento do RUN-172 — a acao foi movida como estava (correto) e o achado M-3 estava sem dono.",
+        "22/11: fechado pela conferência na main e7a3ca880. Último item (M-3): as Server Actions antigas da família saíram com o SEC-011 (#267, 3e00a4c5); a rota /api/app/voce/familia devolve só frases fixas do módulo lib/convite/familia.ts e nunca a mensagem do Postgres, provado em tests/unit/app-api/voce/familia.test.ts (positivo: 403/409/429 com a frase fixa; negativo: \"falha ao criar não ecoa a mensagem do Postgres\" e falha de leitura/envio 503 sem detalhes). A dependência F10-R3-SESSION-DERIVED está done (posse derivada de auth.uid() no banco). vitest familia.test.ts + familia-limite.test.ts: 32/32 verdes em 22/11."
       ],
-      "updatedAt": "2026-11-16",
-      "sourceRevision": "ad5ac070",
+      "updatedAt": "2026-11-22",
+      "sourceRevision": "e7a3ca880",
       "id": "F10-FAMILIA",
       "title": "F10 família: ligar convite e vínculo familiar ao app",
       "priority": "P1",
@@ -7919,7 +7920,9 @@
         "Revisão de segurança R3 antes da integração",
         "Silencio real nas Server Actions da familia (M-3 do parecer R3 de 11/11, hoje em lib/convite/familia-acoes.ts): nao ecoar mensagem do Postgres ao navegador — assercao real positivo/negativo"
       ],
-      "links": ["docs/agents/tasks/RUN-016.task.yml"]
+      "links": ["docs/agents/tasks/RUN-016.task.yml"],
+      "completedChecklist": [true, true, true, true, true, true],
+      "completedAt": "2026-11-22"
     },
     {
       "phase": "Lançamento",
