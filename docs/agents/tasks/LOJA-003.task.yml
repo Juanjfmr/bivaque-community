@@ -40,6 +40,12 @@ allowed_paths:
   - apps/app/ios/App/App.xcodeproj/project.pbxproj
   - pnpm-lock.yaml
   - apps/web/app/api/app/entry/oauth/**
+  - .github/workflows/app-loja.yml # origens fictícias para o build nativo no CI
+  - apps/web/app/api/app/entry/invite/preview/route.ts # prévia do convite pelo Bearer nativo e cabeçalho do app
+  - apps/web/app/api/app/entry/progress/route.ts # provedor Apple
+  - apps/web/app/api/localities/** # CORS só para origens nativas, só GET e OPTIONS
+  - tests/scope/app-porta-de-dados.test.mjs # exceção da renovação ao cliente único — apps/app/lib/nativo/sessao.ts, ADR §7
+  - tests/scope/loja-callback.test.mjs # prova do filtro auth-callback
   - apps/web/lib/app-api/**
   - tests/unit/**
   - tests/e2e/sessao-nativa.spec.ts

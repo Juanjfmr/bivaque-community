@@ -309,3 +309,7 @@ O plugin escolhido é `@aparajita/capacitor-secure-storage` 8.0.1 (MIT), configu
 depois do corte de 11/10 da regra de versões, e o 0.13.0 por depender do SwiftKeychainWrapper sem
 acesso configurável. Ressalva: o pacote SPM `keychain-swift` entra com faixa "from 21.0.0" e fica
 fixado pelo `Package.resolved` do build.
+
+### Reauditoria de 22/11
+
+`AbortSignal.timeout` foi trocado por `AbortController` por causa do iOS 15; falha dupla ao apagar o cofre ao sair deixa o marcador `bivaque.saiu`, que impede retomar a sessão; rotas autenticadas da entrada renovam; e a prévia do convite exige `x-bivaque-app` no nativo. Riscos aceitos: escrita com 401 e token longe de vencer não limpa o cofre (a pessoa vê erro e Tentar de novo; o token vence em até 1 h); erro de configuração de `origemDaApi` aparece como falta de rede; `indexedDB.databases()` ausente em parte dos WebView torna a limpeza de rascunhos melhor esforço.
