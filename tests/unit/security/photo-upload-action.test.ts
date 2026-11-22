@@ -77,18 +77,16 @@ afterEach(() => vi.unstubAllEnvs())
 
 const formats = ["jpeg", "png", "webp"] as const
 const paths = [
-  // RUN-172: a porta de upload de avatar morreu com a edição do perfil na web
-  // (ADR-20261116 — o app é iniciais por régua). O `sanitize-image` continua
-  // provado nas outras portas vivas deste mesmo arquivo.
-  // RUN-177 (F07): a porta de foto do PEDIDO morreu com a tela web; o app ainda
-  // não aceita anexo no pedido (ver RELATORIO, C1). O `sanitize-image` do
-  // portfólio do negócio também é provado pela porta nova em
-  // tests/unit/app-api/negocio/rotas.test.ts.
-  // TROCA-004: as duas portas da vila (faixa e miniatura) morreram com o painel
-  // de quem administrava a vila; o bucket `community-images` fica no banco para
-  // a saída da vila (R3/R4). TROCA-005: o portfólio e o documento de identidade
-  // saíram com as telas web — o primeiro é provado pela porta
-  // `/api/app/negocio/fotos` e o segundo pelo núcleo do envio de documento.
+  // Sobrou UMA porta nesta tela: a foto de evento. RUN-172 levou o avatar,
+  // RUN-177 a foto do pedido, TROCA-004 as duas da vila e TROCA-005 o portfólio
+  // e o documento de identidade (o primeiro é provado pela porta
+  // `/api/app/negocio/fotos`, o segundo pelo núcleo do envio de documento).
+  //
+  // O `sanitize-image` chamado aqui é o REAL: o mock é um espião sobre a
+  // implementação (`vi.fn(actual.sanitizeImage)`), então "descarta EXIF/GPS" é
+  // comportamento de verdade. A exceção é o caso de erro recuperável abaixo, que
+  // troca o espião por um falso que só lança — ali se prova a TRADUÇÃO da falha
+  // pela ação, não a limpeza da imagem.
   { name: "evento", field: "photo", bucket: "event-photos", maxMB: 5 },
 ] as const
 

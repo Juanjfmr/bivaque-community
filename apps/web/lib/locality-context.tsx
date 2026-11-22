@@ -19,9 +19,11 @@ import { createContext, type ReactNode, useContext } from "react"
 //     second query per screen for the same field is the same coupling we
 //     are removing.
 //
-// The provider is mounted once at (shell)/layout.tsx. It does not read the
-// database — it only receives the resolved value. The server-side resolver
-// lives next to that layout; the client side never knows Supabase is involved.
+// The provider was mounted once by the member shell of the site, which left with
+// TROCA-005. It does not read the database — it only receives the resolved value;
+// the client side never knows Supabase is involved. The resolver that fed it is
+// gone, so the shape stays here as the contract for the app's own locality
+// reading (the invariant tests/scope/no-pilot-locality.test.mjs guards).
 
 export type LocalityCurrent = {
   id: string
