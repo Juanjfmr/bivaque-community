@@ -1,3 +1,4 @@
+import { Capacitor } from "@capacitor/core"
 import { KeychainAccess, SecureStorage } from "@aparajita/capacitor-secure-storage"
 
 const RENOVACAO = "sessao.renovacao"
@@ -17,6 +18,7 @@ function configurar(): Promise<void> {
 }
 
 async function ler(chave: string): Promise<string | null> {
+  if (!Capacitor.isNativePlatform()) return null
   try {
     await configurar()
     const valor = await SecureStorage.get(chave)
@@ -27,11 +29,13 @@ async function ler(chave: string): Promise<string | null> {
 }
 
 async function gravar(chave: string, valor: string): Promise<void> {
+  if (!Capacitor.isNativePlatform()) throw new Error("cofre disponivel apenas no aparelho")
   await configurar()
   await SecureStorage.set(chave, valor)
 }
 
 async function apagar(chave: string): Promise<void> {
+  if (!Capacitor.isNativePlatform()) throw new Error("cofre disponivel apenas no aparelho")
   await configurar()
   await SecureStorage.remove(chave)
 }

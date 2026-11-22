@@ -1,5 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
 
+const plataforma = vi.hoisted(() => ({ nativa: true }))
+vi.mock("@capacitor/core", () => ({ Capacitor: { isNativePlatform: () => plataforma.nativa } }))
+
 const cofre = vi.hoisted(() => ({
   get: vi.fn(),
   set: vi.fn(),
@@ -13,10 +16,10 @@ vi.mock("@aparajita/capacitor-secure-storage", () => ({
   KeychainAccess: { afterFirstUnlockThisDeviceOnly: 3 },
 }))
 
-import { gravarPkce, gravarRenovacao, lerPkce, lerRenovacao } from "@/lib/nativo/cofre"
+import { apagarRenovacao, gravarPkce, gravarRenovacao, lerPkce, lerRenovacao } from "@/lib/nativo/cofre"
 
 describe("cofre nativo", () => {
-  beforeEach(() => vi.resetAllMocks())
+  beforeEach(() => { vi.resetAllMocks(); plataforma.nativa = true })
 
   it("configura as proteções antes da primeira leitura", async () => {
     cofre.get.mockResolvedValue(null)
@@ -43,13 +46,18 @@ describe("cofre nativo", () => {
     expect(await lerPkce()).toEqual({ verificador: "sintetico", criadoEm: 42 })
   })
 
-  it("não grava credenciais no armazenamento local", async () => {
-    const setItem = vi.fn()
-    vi.stubGlobal("localStorage", { setItem })
-    cofre.set.mockResolvedValue(undefined)
-    await gravarRenovacao("sintetico")
-    await gravarPkce({ verificador: "sintetico", criadoEm: 42 })
-    expect(setItem).not.toHaveBeenCalled()
+  it("recusa o plugin web que gravaria em localStorage", async () => {
+    plataforma.nativa = false
+    const armazenamento = new Map<string, string>()
+    vi.stubGlobal("localStorage", { setItem: (chave: string, valor: string) => armazenamento.set(chave, valor) })
+    cofre.set.mockImplementation((chave: string, valor: string) => localStorage.setItem(chave, valor))
+    expect(await lerRenovacao()).toBeNull()
+    await expect(gravarRenovacao("sintetico")).rejects.toThrow()
+    await expect(apagarRenovacao()).rejects.toThrow()
+    expect(armazenamento.size).toBe(0)
+    expect(cofre.get).not.toHaveBeenCalled()
+    expect(cofre.set).not.toHaveBeenCalled()
+    expect(cofre.remove).not.toHaveBeenCalled()
     vi.unstubAllGlobals()
   })
 
