@@ -297,6 +297,15 @@
   padding: 12px 0;
 }
 
+/* Entrar/Entrou com a mesma largura em toda linha: a coluna do botão é fixa, e
+   o tamanho do nome do grupo (ou do selo na primeira linha) não a encolhe. O
+   botão fica sempre na última coluna, inclusive nas linhas sem selo. */
+.f01-grupo > .pc-botao {
+  grid-column: -2 / -1;
+  inline-size: 6.75rem;
+  justify-content: center;
+}
+
 /* ── verificação e documento ─────────────────────────────────────────────── */
 .f01-linha-do-tempo {
   display: flex;

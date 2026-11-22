@@ -30,6 +30,7 @@ import { foiAbortada } from "@/src/eventos/formulario"
 import { type TipoDeFalha, tipoDeFalha } from "@/src/eventos/tipo-de-falha"
 import { CartaoDaPublicacao } from "@/src/inicio/CartaoDaPublicacao"
 import { rotuloDaCategoria } from "@/src/inicio/categorias"
+import { inicioVazio, vazioDoInicio } from "@/src/inicio/vazio"
 import { mensagemDaFalha } from "@/src/mercado/falha"
 
 /**
@@ -217,13 +218,8 @@ export function Inicio() {
   const perguntas = [...(dados?.perguntas ?? [])]
     .sort((a, b) => a.respostas - b.respostas)
     .slice(0, 4)
-  const cidadeVazia =
-    dados !== null &&
-    perguntas.length === 0 &&
-    negocios.length === 0 &&
-    anuncios.length === 0 &&
-    grupos.length === 0 &&
-    dados.eventos.length === 0
+  const cidadeVazia = inicioVazio(dados)
+  const vazio = vazioDoInicio(cidade)
 
   return (
     <section data-tela="inicio" className="grid gap-2">
@@ -319,28 +315,10 @@ export function Inicio() {
           <div data-home="leitura" className="grid min-w-0 gap-0">
             {cidadeVazia ? (
               <Secao titulo={`${cidade} está começando`} className="mt-4">
-                <EstadoVazio
-                  nivel="h3"
-                  titulo="A primeira publicação abre a cidade"
-                  texto="Seja a primeira pessoa a publicar na sua cidade."
-                  icone="public"
-                >
-                  <div className="flex flex-wrap justify-center gap-2">
-                    <Botao
-                      tom="tonal"
-                      icone="add"
-                      onClick={() => void navegacao.abrir("menu-criar")}
-                    >
-                      Publicar na cidade
-                    </Botao>
-                    <Botao
-                      tom="contornado"
-                      icone="volunteer_activism"
-                      onClick={() => void navegacao.irPara("comunidade")}
-                    >
-                      Ver perguntas
-                    </Botao>
-                  </div>
+                <EstadoVazio nivel="h3" titulo={vazio.titulo} texto={vazio.texto} icone="public">
+                  <Botao tom="tonal" icone="add" onClick={() => void navegacao.abrir("menu-criar")}>
+                    Publicar na cidade
+                  </Botao>
                 </EstadoVazio>
               </Secao>
             ) : (
@@ -580,7 +558,7 @@ export function Inicio() {
               </Secao>
             )}
 
-            {grupos.length === 0 && encontro === null ? (
+            {grupos.length === 0 && encontro === null && !cidadeVazia ? (
               <Secao titulo={`Em ${cidade}`}>
                 <div className="grid gap-2">
                   <LinhaDeLista
