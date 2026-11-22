@@ -28,7 +28,8 @@ allowed_paths:
   - apps/app/src/**
   - apps/app/lib/**
   - apps/app/tests/**
-  - apps/web/app/(shell)/denuncias/**
+  - apps/web/app/(shell)/**
+  - apps/web/app/components/**
   - apps/web/app/(provider)/**
   - apps/web/app/(preauth)/**
   - apps/web/app/api/app/**
