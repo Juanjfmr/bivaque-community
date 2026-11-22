@@ -81,8 +81,22 @@ async function paginaAtual() {
   while (Date.now() < limite) {
     for (const view of device.webViews().filter((v) => v.pkg() === pacote)) {
       try {
-        const atual = await view.page()
-        if (atual.isClosed()) continue
+        let atual = await view.page()
+        if (atual.isClosed()) {
+          // O Playwright guarda a primeira página do socket; quando a WebView troca de alvo
+          // no mesmo processo, procura a página aberta no contexto ou reconecta ao socket.
+          const aberta = atual
+            .context()
+            .pages()
+            .find((candidata) => !candidata.isClosed())
+          if (aberta) atual = aberta
+          else {
+            view._pagePromise = undefined
+            atual = await view.page()
+          }
+          if (atual.isClosed()) continue
+          log("WebView readquirida depois de trocar de alvo")
+        }
         if (!paginasInstrumentadas.has(atual)) {
           instrumentarRede(atual)
           paginasInstrumentadas.add(atual)

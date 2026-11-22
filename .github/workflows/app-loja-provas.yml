@@ -96,6 +96,8 @@ jobs:
             echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=$ANON_KEY"
             echo "BIVAQUE_LIMITER_PEPPER=$(openssl rand -hex 32)"
           } > apps/web/.env.local
+          # Origem pública da pilha local: o build nativo e o roteiro usam a mesma.
+          echo "VITE_SUPABASE_URL=$API_URL" >> "$GITHUB_ENV"
           pnpm exec supabase db reset --local
           pnpm build
           pnpm --filter web start > "$RUNNER_TEMP/web.log" 2>&1 &
@@ -108,7 +110,6 @@ jobs:
       - name: Compilar APK de depuração
         env:
           VITE_API_BASE: http://localhost:3000
-          VITE_SUPABASE_URL: http://localhost:54321
         run: |
           pnpm --filter @bivaque/app build
           pnpm --filter @bivaque/app exec cap sync android
@@ -166,8 +167,6 @@ jobs:
           } > .visual/loja-004/nativo/servidor.log
       - name: Provar no emulador
         uses: reactivecircus/android-emulator-runner@v2.34.0
-        env:
-          VITE_SUPABASE_URL: http://localhost:54321
         with:
           api-level: 34
           target: google_apis
@@ -176,7 +175,7 @@ jobs:
           emulator-boot-timeout: 600
           script: |
             adb reverse tcp:3000 tcp:3000
-            adb reverse tcp:54321 tcp:54321
+            adb reverse tcp:${VITE_SUPABASE_URL##*:} tcp:${VITE_SUPABASE_URL##*:}
             adb install -r apps/app/android/app/build/outputs/apk/debug/app-debug.apk
             node tests/nativo/android.mjs
       - name: Filtrar erros do servidor web
