@@ -132,6 +132,7 @@ pública do proxy (ADR-20261110), e tem teste positivo e negativo.
 - No Android, `android:allowBackup="false"`, ou regras de extração que excluam o cofre. Falha de decifração
   conta como "sem sessão".
 - O token de acesso vive só na memória.
+- Emenda de 21/11: o token de renovação também fica em memória durante a sessão para a renovação única e é apagado ao sair e no 401 da renovação.
 - É proibido guardar qualquer um deles em `localStorage`, IndexedDB, `@capacitor/preferences`, URL, log,
   Sentry ou analytics.
 - O plugin de cofre é a única dependência fora de `@capacitor/*` que este ADR autoriza. Ele precisa de
