@@ -160,6 +160,8 @@ describe("TROCA-005 — CSRF das cinco escritas do lote", () => {
     const resposta = await atendimentoLido(
       new NextRequest(`${BASE}/prestador/atendimento`, { headers: { origin: cabecalhos.origin } }),
     )
-    expect([200, 503]).toContain(resposta.status)
+    // O dublê responde à leitura inteira: a porta não recusa a leitura, e o 200
+    // prova o caminho, não a ausência do 403.
+    expect(resposta.status).toBe(200)
   })
 })
