@@ -33,6 +33,7 @@ jobs:
         with:
           distribution: temurin
           java-version: 21
+          cache: gradle
       - run: pnpm install --frozen-lockfile
       - name: Cache Supabase stack images
         id: supabase-images
@@ -128,7 +129,18 @@ jobs:
           </network-security-config>
           EOF
           cd apps/app/android
-          ./gradlew assembleDebug
+          for attempt in 1 2 3; do
+            echo "Tentativa $attempt/3: ./gradlew assembleDebug"
+            if ./gradlew assembleDebug; then
+              exit 0
+            fi
+            if [ "$attempt" -lt 3 ]; then
+              echo "assembleDebug falhou na tentativa $attempt; aguardando 60s antes de repetir"
+              sleep 60
+            fi
+          done
+          echo "::error::assembleDebug falhou após 3 tentativas"
+          exit 1
       - name: Conferir configuração de rede no APK de depuração
         run: |
           set -euo pipefail
@@ -230,7 +242,7 @@ jobs:
           xcrun simctl install "$device" "$RUNNER_TEMP/ios-build/Build/Products/Debug-iphonesimulator/App.app"
           bundle_id=$(/usr/libexec/PlistBuddy -c 'Print CFBundleIdentifier' "$RUNNER_TEMP/ios-build/Build/Products/Debug-iphonesimulator/App.app/Info.plist")
           mkdir -p .visual/loja-004/ios
-          xcrun simctl launch --stdout "$RUNNER_TEMP/ios-console.log" --stderr "$RUNNER_TEMP/ios-console-error.log" booted "$bundle_id"
+          xcrun simctl launch --terminate-running-process --stdout="$RUNNER_TEMP/ios-console.log" --stderr="$RUNNER_TEMP/ios-console-error.log" "$device" "$bundle_id"
           node tests/nativo/ios.mjs "$device" "$bundle_id"
       - name: Registrar logs do app e WebKit
         if: always()
@@ -243,15 +255,17 @@ jobs:
             : > .visual/loja-004/ios/ios-console.log
           fi
           if [ -f "$RUNNER_TEMP/ios-console-error.log" ]; then
-            sed -E "$filter" "$RUNNER_TEMP/ios-console-error.log" | tail -n 400 >> .visual/loja-004/ios/ios-console.log
+            sed -E "$filter" "$RUNNER_TEMP/ios-console-error.log" | tail -n 400 > .visual/loja-004/ios/ios-console-error.log
+          else
+            : > .visual/loja-004/ios/ios-console-error.log
           fi
           if [ -f "$RUNNER_TEMP/ios-api-server.log" ]; then
             sed -E "$filter" "$RUNNER_TEMP/ios-api-server.log" | tail -n 400 > .visual/loja-004/ios/ios-api-server.log
           fi
           process_name=$(/usr/libexec/PlistBuddy -c 'Print CFBundleExecutable' "$RUNNER_TEMP/ios-build/Build/Products/Debug-iphonesimulator/App.app/Info.plist" 2>/dev/null || echo App)
-          xcrun simctl spawn booted log show --last 5m --style compact --predicate "(subsystem CONTAINS[c] \"$process_name\" OR subsystem CONTAINS[c] \"webkit\" OR subsystem CONTAINS[c] \"capacitor\") AND NOT subsystem CONTAINS[c] \"com.apple.coremedia\"" 2>&1 \
+          xcrun simctl spawn "$device" log show --last 5m --style compact --predicate "(subsystem CONTAINS[c] \"$process_name\" OR subsystem CONTAINS[c] \"webkit\" OR subsystem CONTAINS[c] \"capacitor\") AND NOT subsystem CONTAINS[c] \"com.apple.coremedia\"" 2>&1 \
             | sed -E "$filter" | tail -n 400 > .visual/loja-004/ios/ios-app.log || true
-          xcrun simctl spawn booted log show --last 5m --style compact --predicate 'process == "com.apple.WebKit.WebContent" AND (eventMessage CONTAINS[c] "Content Security Policy" OR eventMessage CONTAINS[c] "Refused" OR eventMessage CONTAINS[c] "error")' 2>&1 \
+          xcrun simctl spawn "$device" log show --last 5m --style compact --predicate 'process == "com.apple.WebKit.WebContent" AND (eventMessage CONTAINS[c] "Content Security Policy" OR eventMessage CONTAINS[c] "Refused" OR eventMessage CONTAINS[c] "error")' 2>&1 \
             | sed -E "$filter" | tail -n 400 > .visual/loja-004/ios/ios-webkit.log || true
       - uses: actions/upload-artifact@v7
         if: always()
