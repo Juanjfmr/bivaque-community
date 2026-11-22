@@ -73,7 +73,8 @@ risk: data
 risk_level: R3
 adr: docs/decisions/ADR-20261118-push-nativo-no-app-de-loja.md
 reviewer_must_differ_from_executor: true
-retry_budget: 3
+# 22/11: de 3 para 5 pelo coordenador; as rodadas 1 e 2 pararam por escopo grande demais numa execução (nada reprovado), e o lote passou a ir em fatias.
+retry_budget: 5
 on_budget_exhausted: HUMAN_DECISION
 closure:
   requires_runtime_evidence: true
