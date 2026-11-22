@@ -1,6 +1,7 @@
 import type { NextRequest, NextResponse } from "next/server"
 import { ipConfiavel, limitadorConfigurado } from "../../../../../../lib/app-api/entrada-limite"
 import { avaliarModoNativo } from "../../../../../../lib/app-api/modo-nativo"
+import { VALOR_DO_CABECALHO_DO_APP } from "../../../../../../lib/app-api/contrato"
 import {
   clienteDeServicoOuNulo,
   conferirPorta,
@@ -42,6 +43,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   const modo = avaliarModoNativo(request)
   if ("recusa" in modo) return responder(request, { erro: "origem-recusada" }, modo.recusa)
   const porta = conferirPorta(request, modo.nativo ? "bearer" : "cookie")
+  if (modo.nativo && request.headers.get("x-bivaque-app") !== VALOR_DO_CABECALHO_DO_APP) {
+    return responder(request, { erro: "cabecalho-ausente" }, 403)
+  }
   if (porta !== "ok") return responder(request, { erro: porta }, 403)
 
   // O digest da origem usa o segredo do limitador. Sem ele, a rota responde 503
