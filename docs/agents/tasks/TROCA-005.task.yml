@@ -39,6 +39,7 @@ allowed_paths:
   - supabase/migrations/**
   - supabase/tests/**
   - tests/**
+  - apps/web/tests/**
   - docs/agents/tasks/TROCA-005.task.yml
 forbidden:
   - editar migration já aplicada (só arquivo novo); reiniciar ou reconstruir o banco local
