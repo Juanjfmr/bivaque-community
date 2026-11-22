@@ -43,7 +43,6 @@ test("o anônimo segue o portão até o app, sem ciclo", async ({ page }) => {
     ["/denuncias", "/app/ajuda"],
     [`/denuncias/${ID}`, "/app/ajuda"],
     ["/prestador", "/app/meu-negocio"],
-    [`/prestador-convite/${TOKEN}`, "/app/entrar"],
   ] as const) {
     await page.goto(origem)
     // A casca do app manda quem não tem sessão para a entrada, carregando o
@@ -54,4 +53,26 @@ test("o anônimo segue o portão até o app, sem ciclo", async ({ page }) => {
     expect(atual.pathname, origem).not.toBe(origem)
     expect(atual.searchParams.get("redirect") ?? "", origem).toContain(destino)
   }
+})
+
+// O convite fica FORA do laço acima: ele é o único destino que não carrega
+// `redirect` e cujo parâmetro é credencial. A entrada lê `?prestador=`, põe o
+// aceite em memória e apaga o token do endereço (M1 da correção 1); um `expect`
+// de `redirect` aqui exigiria o token de volta na barra, que é justamente o que
+// o desenho proíbe.
+test("o convite de prestador termina no aceite da entrada, sem o token na URL", async ({
+  page,
+}) => {
+  await page.goto(`/prestador-convite/${TOKEN}`)
+  await page.waitForURL(/\/app\/entrar(?:\?|$)/)
+  await expect.poll(() => new URL(page.url()).searchParams.has("prestador")).toBe(false)
+
+  const atual = new URL(page.url())
+  expect(atual.pathname).toBe("/app/entrar")
+  expect(atual.searchParams.get("redirect")).toBeNull()
+  expect(page.url()).not.toContain(TOKEN)
+
+  // O aceite é um ESTADO da entrada, não uma tela nova: o painel do convite
+  // aparece na mesma `/app/entrar` (para token válido, inválido ou já usado).
+  await expect(page.locator('[data-tela="convite-de-prestador"]')).toBeVisible()
 })
