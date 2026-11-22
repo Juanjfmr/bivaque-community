@@ -10662,6 +10662,59 @@
       "proof": [
         "21/11: decisão do dono na thread do projeto (\"Manter e sugerir depois\"), registrada pelo coordenador; só o operador convida prestador (ADR-20261024 §3.4/§6)."
       ]
+    },
+    {
+      "id": "LOJA-DEF-ENTRADA-MEMBRO",
+      "title": "Membro que entra por código fica na entrada em vez de ir ao Início",
+      "phase": "Lançamento",
+      "priority": "P1",
+      "category": "frontend",
+      "status": "repo",
+      "description": "Achado pelo LOJA-005 no emulador Android: o membro verificado do seed (membro-rio) entra pelo código de 6 números, a sessão é criada, mas a entrada segue para a etapa seguinte do cadastro, o PUT /api/app/entry/progress volta 409 (já tem vínculo) e o app fica em /app/entrar sem chegar ao Início. Causa no código: em etapas-conta.tsx o retorno autenticado de verificarCodigo chama concluir() sem conferir o vínculo; a conferência de membroDaCidade (lerVerificacao) só roda na abertura da TelaDeEntrada. O E2E web cobre só membro que já abre com sessão (f01-entrada-real.spec.ts:629), não o login por código.",
+      "checklist": [
+        "Depois do código, a entrada confere o vínculo (lerVerificacao) e manda o membro ao Início, sem PUT de rascunho",
+        "Teste do app: membro existente que entra por código vai ao Início; pessoa nova segue para o aceite",
+        "E2E web do login por código de membro existente em 375/768/1440",
+        "Passos 02 a 04 do app-loja-provas verdes no emulador"
+      ],
+      "dependencies": [],
+      "tests": ["apps/app/tests/codigo-e-vinculo.test.ts", "tests/e2e/f01-entrada-real.spec.ts"],
+      "blockers": [],
+      "updatedAt": "2026-11-22",
+      "sourceRevision": "363c63e99",
+      "links": [
+        "apps/app/src/previa-f01/etapas-conta.tsx",
+        "apps/app/src/entrada/TelaDeEntrada.tsx",
+        "docs/agents/tasks/LOJA-005.task.yml",
+        "apps/app/src/entrada/codigo-e-vinculo.ts",
+        "docs/agents/tasks/ENTRADA-001.task.yml"
+      ],
+      "proof": [
+        "22/11 LOJA-005, runs 45020824719 e 45022364036: roteiro.log com FALHOU 02-codigo em /app/entrar; rede.log com PUT /api/app/entry/progress 409.",
+        "22/11 ENTRADA-001 (fix/entrada-membro, 363c63e99 + correção da revisão: o membro relê o progresso canônico em vez de ir direto ao Início): depois do código autenticado a entrada lê /api/app/entry/verification; membro segue a etapa canônica do servidor (o Início, ou a etapa pendente pós-prévia) sem PUT de rascunho, pessoa nova segue ao aceite, falha da conferência mostra a mensagem fixa e Tentar de novo. Vitest codigo-e-vinculo (3 casos) e E2E stateful \"membro existente entra por código e chega ao Início\" (sem PUT de progresso). Falta só o passo 02–04 do app-loja-provas no emulador."
+      ]
+    },
+    {
+      "id": "TEST-PUSH-ANDROID-INSTAVEL",
+      "title": "Teste do push Android falha sob carga no gate completo",
+      "phase": "Lançamento",
+      "priority": "P2",
+      "category": "backend",
+      "status": "repo",
+      "description": "tests/unit/push/android.test.ts (PUSH-001, #326) usa timeout de 100 ms contra o servidor falso local, com assinatura RSA no mesmo turno. No gate completo da fix/entrada-membro (22/11) falhou com FalhaNativa push android 0 (status 0 = tempo esgotado); sozinho passou em 296 ms. Instável por tempo, não por regra.",
+      "checklist": [
+        "Folga de timeout no teste (ou relógio controlado) sem mudar o timeout de produção",
+        "Gate completo verde três vezes seguidas no PC"
+      ],
+      "dependencies": [],
+      "tests": ["tests/unit/push/android.test.ts"],
+      "blockers": [],
+      "updatedAt": "2026-11-22",
+      "sourceRevision": "2855bf0c1",
+      "links": ["tests/unit/push/android.test.ts", "apps/web/lib/push/android.ts"],
+      "proof": [
+        "22/11 gate completo em .work/entrada-membro: 1 falha de 3668, só este teste; reexecução isolada verde."
+      ]
     }
   ],
   "launch": {
