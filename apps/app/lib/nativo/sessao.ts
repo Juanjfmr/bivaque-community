@@ -25,9 +25,9 @@ export function origemDaApi(): string {
 }
 
 export async function acessoAtual(): Promise<string | null> {
-  if (pendente) return pendente.catch(() => acesso)
+  if (pendente) return pendente
   if (!precisaRenovar()) return acesso
-  return renovarSessao().catch(() => acesso)
+  return renovarSessao()
 }
 
 export function acessoEmMemoria(): string | null {
@@ -73,6 +73,8 @@ export function renovarSessao(): Promise<string | null> {
     let espera = 250
     while (true) {
       let resposta: Response
+      let falha = "indisponivel"
+      let retryAfter = 0
       try {
         resposta = await fetch(`${origemDaApi()}/api/app/sessao/renovar`, {
           method: "POST",
@@ -86,8 +88,20 @@ export function renovarSessao(): Promise<string | null> {
           signal: AbortSignal.timeout(3000),
         })
       } catch {
-        if (espera > 500 || Date.now() - inicio + espera >= 9000) throw new Error("rede")
-        await new Promise((resolve) => setTimeout(resolve, espera))
+        falha = "rede"
+        resposta = new Response(null, { status: 503 })
+      }
+      if (resposta.status === 429 || resposta.status === 503) {
+        if (resposta.status === 429 || resposta.headers.has("retry-after")) falha = "indisponivel"
+        const valor = resposta.headers.get("retry-after")
+        if (valor) {
+          const segundos = Number(valor)
+          const atraso = Number.isFinite(segundos) ? segundos * 1000 : Date.parse(valor) - Date.now()
+          retryAfter = Math.max(0, Math.min(3000, Number.isFinite(atraso) ? atraso : 0))
+        }
+        const atraso = Math.max(espera, retryAfter)
+        if (espera > 500 || Date.now() - inicio + atraso + 3000 > 9000) throw new Error(falha)
+        await new Promise((resolve) => setTimeout(resolve, atraso))
         espera *= 2
         continue
       }
@@ -105,7 +119,6 @@ export function renovarSessao(): Promise<string | null> {
         }
         return null
       }
-      if (resposta.status === 429 || resposta.status === 503) throw new Error("indisponivel")
       if (!resposta.ok) throw new Error("renovação indisponível")
       const par: unknown = await resposta.json()
       if (geracao !== geracaoInicial) return null

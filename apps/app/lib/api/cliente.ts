@@ -126,6 +126,7 @@ async function comRede(
     resposta = await fazer()
   } catch (erro: unknown) {
     // Abortar é decisão de quem chamou, não falha de rede: o erro sobe inteiro.
+    if (erro instanceof FalhaDaApi) throw erro
     if (erro instanceof DOMException && erro.name === "AbortError") throw erro
     throw new FalhaDaApi("rede", 0)
   }
@@ -139,8 +140,12 @@ export async function requisitar(caminho: string, init: RequestInit = {}): Promi
     caminho.startsWith("/api/localities") ||
     caminho === "/api/app/sessao/token"
   const origem = origemDaApi()
-  const token =
-    publica && caminho !== "/api/app/entry/progress" ? acessoEmMemoria() : await acessoAtual()
+  let token: string | null
+  try {
+    token = publica && caminho !== "/api/app/entry/progress" ? acessoEmMemoria() : await acessoAtual()
+  } catch (erro) {
+    throw new FalhaDaApi(erro instanceof Error && erro.message === "rede" ? "rede" : "indisponivel", 0)
+  }
   const fazer = (credencial: string | null) => {
     const headers = new Headers(init.headers)
     headers.set("x-bivaque-app", "bivaque-spa")
@@ -150,7 +155,12 @@ export async function requisitar(caminho: string, init: RequestInit = {}): Promi
   }
   const resposta = await fazer(token)
   if (resposta.status === 401 && (init.method ?? "GET") === "GET" && !publica) {
-    const novo = await renovarSessao()
+    let novo: string | null
+    try {
+      novo = await renovarSessao()
+    } catch (erro) {
+      throw new FalhaDaApi(erro instanceof Error && erro.message === "rede" ? "rede" : "indisponivel", 0)
+    }
     if (novo) return fazer(novo)
   }
   return resposta
@@ -174,7 +184,7 @@ async function chamar(
         ...(corpo === undefined ? {} : { body: JSON.stringify(corpo) }),
         ...(signal === undefined ? {} : { signal }),
       }),
-    !Capacitor.isNativePlatform() || metodo === "GET",
+    !Capacitor.isNativePlatform(),
   )
 }
 

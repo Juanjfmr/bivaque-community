@@ -163,19 +163,34 @@ it("descarta renovação concluída após a limpeza", async () => {
   expect(await acessoAtual()).toBeNull()
 })
 
-it("usa o acesso próximo do vencimento se a renovação falhar", async () => {
+it("falha transitoria preserva sessao e nao redireciona", async () => {
   vi.useFakeTimers()
   limparMemoria()
   cofre.set.mockResolvedValue(undefined)
-  await aceitarPar({
-    access_token: "anterior",
-    refresh_token: "renovacao",
-    expires_at: Math.floor(Date.now() / 1000) + 20,
-  })
-  vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("rede")))
-  const resultado = acessoAtual()
+  await aceitarPar({ access_token: "anterior", refresh_token: "renovacao", expires_at: Math.floor(Date.now() / 1000) + 20 })
+  vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(null, { status: 503 })))
+  const resultado = ler("/api/app/exemplo").catch((erro: unknown) => erro)
   await vi.runAllTimersAsync()
-  expect(await resultado).toBe("anterior")
+  expect(await resultado).toMatchObject({ codigo: "indisponivel" })
+  expect(cofre.remove).not.toHaveBeenCalled()
+  vi.useRealTimers()
+})
+
+it("respeita Retry-After e inclui o timeout na janela", async () => {
+  vi.useFakeTimers()
+  limparMemoria()
+  cofre.get.mockResolvedValue("renovacao")
+  const instantes: number[] = []
+  vi.stubGlobal("fetch", vi.fn().mockImplementation(async () => {
+    instantes.push(Date.now())
+    await new Promise((resolve) => setTimeout(resolve, 3000))
+    return new Response(null, { status: 429, headers: { "retry-after": "1" } })
+  }))
+  const resultado = renovarSessao().catch(() => null)
+  await vi.runAllTimersAsync()
+  await resultado
+  expect(instantes).toHaveLength(2)
+  expect((instantes[1] ?? 0) - (instantes[0] ?? 0)).toBe(4000)
   vi.useRealTimers()
 })
 
