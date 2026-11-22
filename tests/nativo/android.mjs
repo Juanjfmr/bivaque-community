@@ -284,6 +284,7 @@ try {
     await page.getByRole("button", { name: "Continuar com Google" }).click()
     const corpo = await (await resposta).json()
     const url = new URL(corpo.url)
+    if (!process.env.VITE_SUPABASE_URL) throw new Error("VITE_SUPABASE_URL ausente no roteiro")
     const origemEsperada = new URL(process.env.VITE_SUPABASE_URL).origin
     const provider = url.searchParams.get("provider")
     const metodo = url.searchParams.get("code_challenge_method")
@@ -291,7 +292,7 @@ try {
     const formatoValido = /^[\w-]{43}$/.test(desafio)
     const campoSeguro = (valor) => (/^[a-z0-9_-]{1,20}$/i.test(valor ?? "") ? valor : "inválido")
     log(
-      `OAuth: origem=${url.origin} caminho=${url.pathname} provider=${campoSeguro(provider)} metodo=${campoSeguro(metodo)} desafio_comprimento=${desafio.length} desafio_formato_valido=${formatoValido}`,
+      `OAuth: origem=${url.origin} caminho=${url.pathname === "/auth/v1/authorize" ? url.pathname : "inesperado"} provider=${campoSeguro(provider)} metodo=${campoSeguro(metodo)} desafio_comprimento=${desafio.length} desafio_formato_valido=${formatoValido}`,
     )
     if (
       url.origin !== origemEsperada ||

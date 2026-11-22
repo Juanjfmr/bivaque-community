@@ -81,6 +81,13 @@ test("OAuth usa a mesma origem do build e registra somente dados de diagnóstico
     /desafio_comprimento=\$\{desafio\.length\} desafio_formato_valido=\$\{formatoValido\}/,
   )
   assert.doesNotMatch(android, /\$\{desafio\}/)
+  assert.doesNotMatch(android, /\$\{url\.(search|href)\}/)
+})
+
+test("roteador do app recebe a origem HTTP só no iOS", () => {
+  const roteador = readFileSync("apps/app/src/roteador.tsx", "utf8")
+  assert.match(roteador, /origemDoRoteador\(window\.location\)/)
+  assert.match(roteador, /\{ origin: origem \}/)
 })
 
 test("API iOS de prova aplica CORS e respostas esperadas", () => {

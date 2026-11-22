@@ -35,4 +35,9 @@ describe("origem do roteador nativo", () => {
     expect(destino.publicHref).toBe("/app/")
     expect(router.getMatchedRoutes(location.pathname)[0]).toContain(indice)
   })
+
+  it("deixa web e Android com a origem padrão do navegador", () => {
+    expect(origemDoRoteador({ protocol: "https:" })).toBeUndefined()
+    expect(origemDoRoteador({ protocol: "http:" })).toBeUndefined()
+  })
 })
