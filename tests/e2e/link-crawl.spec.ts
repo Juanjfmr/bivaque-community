@@ -120,22 +120,6 @@ interface PortaDeclarada extends AllowedUnreached {
 }
 
 const PORTAS_FORA_DO_LINK: readonly PortaDeclarada[] = [
-  ...(
-    [
-      "/communities/[id]/admin",
-      "/communities/[id]/admin/media",
-      "/communities/[id]/admin/moderators",
-      "/communities/[id]/admin/pending",
-      "/communities/[id]/admin/providers",
-      "/communities/[id]/indicar-prestador",
-    ] as const
-  ).map(
-    (route): PortaDeclarada => ({
-      route,
-      porta:
-        "DÍVIDA LAN-TROCA-ADMIN: a porta era a página antiga /groups/:id, removida no TROCA-003; a tela sai com 307 no TROCA-004",
-    }),
-  ),
   {
     route: "/auth/callback-error",
     porta: "FLUXO: redirect do /auth/callback quando o OAuth falha",
@@ -199,6 +183,9 @@ const PORTAS_FORA_DO_LINK: readonly PortaDeclarada[] = [
   // - /communities: card 'Entrar na comunidade' de /community (join-community.tsx:24). Como é
   //   por ela que a casca se abre, a entrada do dono da vila foi para `entradas`, não para cá:
   //   a casca não tem link saindo do app, e entrada declarada não é dívida.
+  // - as telas da vila (`/communities/[id]/admin`, as quatro subrotas e
+  //   `/communities/[id]/indicar-prestador`): saíram com 307 no TROCA-004 (redesenho §3.4 e §6).
+  //   Sem page.tsx não há rota de página a declarar, e nenhuma tela web linka a URL antiga.
   {
     route: "/nova-senha",
     porta: "EXTERNO: link do e-mail de recuperação de senha",

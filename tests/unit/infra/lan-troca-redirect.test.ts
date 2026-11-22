@@ -307,7 +307,7 @@ describe("LAN-TROCA fase 1", () => {
     expect(sobras).toEqual([])
   })
 
-  it("remove as telas da vila e preserva indicação e console do dono", async () => {
+  it("remove as telas da vila e não deixa o painel do dono para trás", async () => {
     for (const rota of ["communities/[id]/invite", "invite", "gerir-comunidades"]) {
       expect(existsSync(join(shell, rota))).toBe(false)
     }
@@ -318,9 +318,10 @@ describe("LAN-TROCA fase 1", () => {
     // e o endereço responde 307 (TROCADAS acima). Prova de ausência, não de tela.
     expect(existsSync(join(shell, "communities", "[id]", "indicar-prestador"))).toBe(false)
     expect(existsSync(join(shell, "groups"))).toBe(false)
-    expect(
-      existsSync(join(shell, "..", "(owner)", "communities", "[id]", "admin", "page.tsx")),
-    ).toBe(true)
+    // TROCA-004: o painel de quem administrava a vila saiu inteiro, e com ele o grupo
+    // de rota (owner) e as Server Actions que só ele chamava. Prova de ausência: a
+    // pasta não existe mais no checkout, e as cinco rotas respondem 307.
+    expect(existsSync(join(shell, "..", "(owner)"))).toBe(false)
   })
 
   it.each(["mercado", "imoveis", "guide"])(
