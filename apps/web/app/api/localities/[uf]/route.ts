@@ -1,5 +1,5 @@
-import { corsLocalidades, opcoesLocalidades } from "../../../../lib/app-api/cors-localidades"
 import { NextResponse } from "next/server"
+import { corsLocalidades, opcoesLocalidades } from "../../../../lib/app-api/cors-localidades"
 import { createServerClient } from "../../../../lib/supabase/server"
 
 // P0 Task 5: municípios de uma UF, do catálogo canônico (Task 1). Valida a UF

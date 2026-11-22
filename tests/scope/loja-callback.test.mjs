@@ -1,5 +1,5 @@
-import { readFileSync } from "node:fs"
 import { strict as assert } from "node:assert"
+import { readFileSync } from "node:fs"
 import { test } from "node:test"
 
 test("plataformas registram o retorno de autenticação", () => {

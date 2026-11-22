@@ -15,8 +15,9 @@ vi.mock("web/lib/supabase/server", () => ({
     }),
   }),
 }))
-import * as estados from "web/app/api/localities/route"
+
 import * as cidades from "web/app/api/localities/[uf]/route"
+import * as estados from "web/app/api/localities/route"
 
 describe.each(["capacitor://localhost", "https://localhost", "https://estranha.example.invalid"])(
   "CORS %s",

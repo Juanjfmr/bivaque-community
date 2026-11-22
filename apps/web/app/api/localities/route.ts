@@ -1,5 +1,5 @@
-import { corsLocalidades, opcoesLocalidades } from "../../../lib/app-api/cors-localidades"
 import { NextResponse } from "next/server"
+import { corsLocalidades, opcoesLocalidades } from "../../../lib/app-api/cors-localidades"
 import { createServerClient } from "../../../lib/supabase/server"
 
 // P0 Task 5: o catálogo canônico servido do banco (Task 1). Nunca a BrasilAPI

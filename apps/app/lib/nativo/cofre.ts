@@ -1,5 +1,5 @@
-import { Capacitor } from "@capacitor/core"
 import { KeychainAccess, SecureStorage } from "@aparajita/capacitor-secure-storage"
+import { Capacitor } from "@capacitor/core"
 
 const RENOVACAO = "sessao.renovacao"
 const PKCE = "sessao.pkce"

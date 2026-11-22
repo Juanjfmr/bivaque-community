@@ -1,6 +1,6 @@
-import { avaliarModoNativo } from "../../../../../../lib/app-api/modo-nativo"
 import type { NextRequest, NextResponse } from "next/server"
 import { ipConfiavel, limitadorConfigurado } from "../../../../../../lib/app-api/entrada-limite"
+import { avaliarModoNativo } from "../../../../../../lib/app-api/modo-nativo"
 import {
   clienteDeServicoOuNulo,
   conferirPorta,
