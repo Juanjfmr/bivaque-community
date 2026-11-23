@@ -205,6 +205,12 @@ test("perfil de membro com conversa: Mensagem abre a conversa e Denunciar está 
 
   const mensagem = page.getByRole("button", { name: "Mensagem" })
   await expect(mensagem).toBeVisible()
+  // Mensagem e Opções cabem na largura: a tela não rola para o lado (375).
+  const vazaParaOLado = await page.evaluate(
+    () => document.documentElement.scrollWidth > document.documentElement.clientWidth,
+  )
+  expect(vazaParaOLado).toBe(false)
+  await expect(page.getByRole("button", { name: "Opções" })).toBeInViewport({ ratio: 1 })
   await page.getByRole("button", { name: "Opções" }).click()
   await expect(page.getByRole("menuitem", { name: "Bloquear Paulo Roberto" })).toBeVisible()
   await expect(page.getByRole("menuitem", { name: "Denunciar" })).toBeVisible()

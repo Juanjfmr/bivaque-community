@@ -199,74 +199,78 @@ export function PerfilDeMembro() {
               negativa: nome e menu nunca encostam na arte, nos dois temas e
               nas três larguras (revisão cega R1, G3). O nome é h1 na escala
               de título da tela, acima das seções (R1, M12). */}
-          <header className="flex items-center gap-3 px-1">
+          {/* Com Mensagem, as ações descem para a linha de baixo no celular em vez
+              de empurrar a tela para fora da largura (375). */}
+          <header className="flex flex-wrap items-center gap-x-3 gap-y-2 px-1">
             <Avatar nome={nome} tamanho={56} />
-            <span className="grid min-w-0 gap-0.5">
+            <span className="grid min-w-0 flex-1 gap-0.5">
               <h1 id="titulo-da-tela" data-titulo-da-tela tabIndex={-1} className="break-words">
                 {nome}
               </h1>
               <small className="text-(--on-surface-variant)">Membro da comunidade</small>
             </span>
-            {bloqueado || conversaId === null ? null : (
-              <Botao
-                tom="contornado"
-                icone="chat_bubble"
-                data-acao="mensagem"
-                className="shrink-0 rounded-full"
-                onClick={abrirConversa}
-              >
-                Mensagem
-              </Botao>
-            )}
-            {bloqueado ? null : (
-              <DropdownMenu open={menuAberto} onOpenChange={mudarMenu} modal>
-                {/*
+            <div data-acoes-do-perfil="" className="ms-auto flex shrink-0 items-center gap-1">
+              {bloqueado || conversaId === null ? null : (
+                <Botao
+                  tom="contornado"
+                  icone="chat_bubble"
+                  data-acao="mensagem"
+                  className="shrink-0 rounded-full"
+                  onClick={abrirConversa}
+                >
+                  Mensagem
+                </Botao>
+              )}
+              {bloqueado ? null : (
+                <DropdownMenu open={menuAberto} onOpenChange={mudarMenu} modal>
+                  {/*
                   A confirmação SUBSTITUI o menu na mesma entrada. Deixar o Radix
                   fechar o menu (Voltar da entrada) fecharia a confirmação junto,
                   porque cada entrada tem uma sobreposição só — o molde da
                   Conversa (RUN-165).
                 */}
-                <DropdownMenuTrigger asChild>
-                  <button
-                    type="button"
-                    data-acao="opcoes"
-                    aria-haspopup="menu"
-                    className="inline-flex h-11 shrink-0 items-center gap-1 rounded-full px-3 text-sm font-medium text-(--on-surface-variant) hover:bg-(--muted)"
-                    onClick={() => mudarMenu(true)}
+                  <DropdownMenuTrigger asChild>
+                    <button
+                      type="button"
+                      data-acao="opcoes"
+                      aria-haspopup="menu"
+                      className="inline-flex h-11 shrink-0 items-center gap-1 rounded-full px-3 text-sm font-medium text-(--on-surface-variant) hover:bg-(--muted)"
+                      onClick={() => mudarMenu(true)}
+                    >
+                      <Icone nome="more_vert" />
+                      Opções
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent
+                    data-sobreposicao="menu-de-linha"
+                    aria-label={`Opções do perfil de ${nome}`}
+                    sideOffset={6}
+                    align="end"
+                    className="min-w-52"
                   >
-                    <Icone nome="more_vert" />
-                    Opções
-                  </button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent
-                  data-sobreposicao="menu-de-linha"
-                  aria-label={`Opções do perfil de ${nome}`}
-                  sideOffset={6}
-                  align="end"
-                  className="min-w-52"
-                >
-                  <ItemDoMenu
-                    perigo
-                    disabled={bloqueando}
-                    aria-busy={bloqueando ? "true" : undefined}
-                    onSelect={(evento) => evento.preventDefault()}
-                    onClick={() =>
-                      void navegacao.atualizarCom((atual) => ({
-                        ...atual,
-                        sobreposicao: "confirmacao",
-                      }))
-                    }
-                  >
-                    {bloqueando ? `Bloqueando ${nome}…` : `Bloquear ${nome}`}
-                  </ItemDoMenu>
-                  {/* Sem o nome no rótulo: o item de bloqueio é o único que
+                    <ItemDoMenu
+                      perigo
+                      disabled={bloqueando}
+                      aria-busy={bloqueando ? "true" : undefined}
+                      onSelect={(evento) => evento.preventDefault()}
+                      onClick={() =>
+                        void navegacao.atualizarCom((atual) => ({
+                          ...atual,
+                          sobreposicao: "confirmacao",
+                        }))
+                      }
+                    >
+                      {bloqueando ? `Bloqueando ${nome}…` : `Bloquear ${nome}`}
+                    </ItemDoMenu>
+                    {/* Sem o nome no rótulo: o item de bloqueio é o único que
                       leva o nome da pessoa no menu. */}
-                  <ItemDoMenu data-acao="denunciar" onSelect={denunciar}>
-                    Denunciar
-                  </ItemDoMenu>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            )}
+                    <ItemDoMenu data-acao="denunciar" onSelect={denunciar}>
+                      Denunciar
+                    </ItemDoMenu>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
+            </div>
           </header>
 
           {perfil.bio.trim() === "" ? null : (
