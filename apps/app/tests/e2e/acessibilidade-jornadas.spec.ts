@@ -54,6 +54,26 @@ test.describe("teclado por jornada", () => {
   })
 })
 
+test("alvos das folhas de pergunta e desapego medem ao menos 24 px em 375", async ({ page }) => {
+  await page.setViewportSize({ width: 375, height: 812 })
+  await simularProgresso(page)
+  await simularCriar(page)
+  for (const escolha of ["ask", "create-item"] as const) {
+    await page.goto("/app/inicio")
+    await page.locator('[data-acao="criar"]').click()
+    await page.locator(`[data-escolha="${escolha}"]`).click()
+    const alvo =
+      escolha === "ask"
+        ? page.getByRole("button", { name: "Revisar pergunta" })
+        : page.locator('[data-formulario-criacao="create-item"] button[type="submit"]')
+    await expect(alvo).toBeVisible()
+    const caixa = await alvo.boundingBox()
+    expect(caixa).not.toBeNull()
+    expect(caixa?.width).toBeGreaterThanOrEqual(24)
+    expect(caixa?.height).toBeGreaterThanOrEqual(24)
+  }
+})
+
 const telas = [
   {
     nome: "Comunidade",
