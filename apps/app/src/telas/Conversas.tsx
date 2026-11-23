@@ -12,6 +12,7 @@ import { useNavegacao, useRolagemEFoco } from "@/lib/navegacao/react"
 import { CARGA_CONCLUIDA } from "@/lib/navegacao/restauracao"
 import { iniciais } from "@/lib/texto"
 import { contexto } from "@/src/conversas/contexto"
+import { useItemDaConversa } from "@/src/conversas/item"
 import { EstadoDeSessaoVencida, EstadoNegado } from "@/src/eventos/EstadosDeAcesso"
 import { acessoNegado, sessaoVencida } from "@/src/eventos/formulario"
 
@@ -235,57 +236,86 @@ export function ListaDeConversas({
 }) {
   return (
     <div data-lista="conversas" className="grid min-w-0">
-      {conversas.map((conversa) => {
-        const origem = contexto(conversa.tipo)
-        return (
-          <article
-            key={conversa.id}
-            data-thread={conversa.id}
-            data-ativa={selecionada === conversa.id ? "sim" : undefined}
-            className="border-b border-(--outline-variant) last:border-b-0 data-[ativa=sim]:bg-(--surface-low)"
-          >
-            <button
-              type="button"
-              className="bv-press flex min-h-16 w-full min-w-0 items-center gap-3 px-1 py-2.5 text-left hover:bg-(--surface-low) focus-visible:outline-3 focus-visible:outline-offset-[-3px] focus-visible:outline-(--ring)"
-              onClick={() => aoAbrir(conversa.id)}
-            >
-              <Avatar size="lg" aria-hidden="true">
-                <AvatarFallback className="bg-(--secondary-container) font-semibold">
-                  {iniciais(conversa.nome)}
-                </AvatarFallback>
-              </Avatar>
-              <span className="grid min-w-0 flex-1 gap-1">
-                <b className="truncate text-sm">{conversa.nome}</b>
-                {origem && comContexto && (
-                  <span className="truncate text-xs text-(--on-surface-variant)">
-                    {origem.titulo}
-                  </span>
-                )}
-                <span
-                  className={
-                    conversa.porLer
-                      ? "truncate text-[13px] font-semibold"
-                      : "truncate text-[13px] text-(--on-surface-variant)"
-                  }
-                >
-                  {conversa.ultima || "Comece a conversa"}
-                </span>
-              </span>
-              {conversa.porLer && selecionada !== conversa.id && (
-                <span
-                  role="img"
-                  aria-label="Por ler"
-                  className="size-2 shrink-0 rounded-full bg-(--primary)"
-                />
-              )}
-              <Icone
-                nome="chevron_right"
-                className="size-5 shrink-0 text-(--on-surface-variant) md:hidden"
-              />
-            </button>
-          </article>
-        )
-      })}
+      {conversas.map((conversa) => (
+        <LinhaDaConversa
+          key={conversa.id}
+          conversa={conversa}
+          ativa={selecionada === conversa.id}
+          comContexto={comContexto}
+          aoAbrir={aoAbrir}
+        />
+      ))}
     </div>
+  )
+}
+
+/**
+ * Uma linha da caixa. O contexto é o nome do item (o anúncio, o negócio, o
+ * grupo em comum), lido pela leitura que já existe; sem ela, o tipo. A API da
+ * caixa não traz horário da última mensagem, então a linha não inventa um.
+ */
+function LinhaDaConversa({
+  conversa,
+  ativa,
+  comContexto,
+  aoAbrir,
+}: {
+  conversa: ConversaDaCaixa
+  ativa: boolean
+  comContexto: boolean
+  aoAbrir: (id: string) => void
+}) {
+  const item = useItemDaConversa(conversa.tipo, conversa.contextoId)
+  const origem = contexto(conversa.tipo)
+  const rotulo = item?.titulo ?? origem?.titulo ?? null
+  return (
+    <article
+      data-thread={conversa.id}
+      data-ativa={ativa ? "sim" : undefined}
+      className="border-b border-(--outline-variant) last:border-b-0 data-[ativa=sim]:bg-(--surface-low)"
+    >
+      <button
+        type="button"
+        className="bv-press flex min-h-16 w-full min-w-0 items-center gap-3 px-1 py-2.5 text-left hover:bg-(--surface-low) focus-visible:outline-3 focus-visible:outline-offset-[-3px] focus-visible:outline-(--ring)"
+        onClick={() => aoAbrir(conversa.id)}
+      >
+        <Avatar size="lg" aria-hidden="true">
+          <AvatarFallback className="bg-(--secondary-container) font-semibold">
+            {iniciais(conversa.nome)}
+          </AvatarFallback>
+        </Avatar>
+        <span className="grid min-w-0 flex-1 gap-1">
+          <b className="truncate text-sm">{conversa.nome}</b>
+          {rotulo && comContexto && (
+            <span
+              data-contexto-da-linha=""
+              className="truncate text-xs text-(--on-surface-variant)"
+            >
+              {rotulo}
+            </span>
+          )}
+          <span
+            className={
+              conversa.porLer
+                ? "truncate text-[13px] font-semibold"
+                : "truncate text-[13px] text-(--on-surface-variant)"
+            }
+          >
+            {conversa.ultima || "Comece a conversa"}
+          </span>
+        </span>
+        {conversa.porLer && !ativa && (
+          <span
+            role="img"
+            aria-label="Por ler"
+            className="size-2 shrink-0 rounded-full bg-(--primary)"
+          />
+        )}
+        <Icone
+          nome="chevron_right"
+          className="size-5 shrink-0 text-(--on-surface-variant) md:hidden"
+        />
+      </button>
+    </article>
   )
 }

@@ -119,7 +119,8 @@ test("o envio que falha vira o balão Não enviada; Tentar de novo entrega e o t
   const anuncioOculto = page.locator('[data-compositor-conversa] [role="alert"]')
   await expect(anuncioOculto).toHaveText("Não foi possível enviar. Seu texto foi mantido.")
   await expect(anuncioOculto).toHaveCSS("width", "1px")
-  // O texto continua no campo: a chave de idempotência reaproveita no reenvio.
+  // O campo esvazia na falha (o texto fica no balão "Não enviada"); a chave de idempotência
+  // reaproveita no reenvio.
   await expect(campo).toHaveValue("")
 
   // D2: o status mora dentro da área rolável de mensagens e o compositor,
