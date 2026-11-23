@@ -86,7 +86,7 @@ export function CartaoDeFoto({
             <small className="text-[12px] text-(--on-surface-variant)">/ mês</small>
           ) : null}
         </span>
-        <h2 className="text-[17px] leading-6">{anuncio.titulo}</h2>
+        <h2 className="text-[17px] leading-6 font-semibold">{anuncio.titulo}</h2>
         <span className="text-[13px] text-(--on-surface-variant)">{anuncio.meta}</span>
         {anuncio.detalhes === undefined || anuncio.detalhes.length === 0 ? null : (
           <span
