@@ -11,7 +11,6 @@ import { Icone } from "@/components/bivaque/icone"
 import { ItemDoMenu, MenuDaLinha } from "@/components/bivaque/menu-de-linha"
 import { NomeDeMembro } from "@/components/bivaque/nome-de-membro"
 import { Sobreposicao } from "@/components/bivaque/sobreposicao"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Textarea } from "@/components/ui/textarea"
 import { enviar, FalhaDaApi } from "@/lib/api/cliente"
 import {
@@ -28,7 +27,6 @@ import { bloquear, lerBloqueados } from "@/lib/dados/voce"
 import { useNavegacao, useRolagemEFoco, useSobreposicaoDaEntrada } from "@/lib/navegacao/react"
 import { CARGA_CONCLUIDA } from "@/lib/navegacao/restauracao"
 import { validarParametros } from "@/lib/navegacao/rotas"
-import { iniciais } from "@/lib/texto"
 import { useLarguraDaTela } from "@/src/casca/ganchos"
 import { useCasca } from "@/src/contexto/casca"
 import { CabecaDoItem } from "@/src/conversas/CabecaDoItem"
@@ -36,6 +34,7 @@ import { contexto } from "@/src/conversas/contexto"
 import { useItemDaConversa } from "@/src/conversas/item"
 import { EstadoDeSessaoVencida, EstadoNegado } from "@/src/eventos/EstadosDeAcesso"
 import { acessoNegado, sessaoVencida } from "@/src/eventos/formulario"
+import { Avatar } from "@/src/pecas/pecas"
 import { ListaDeConversas } from "@/src/telas/Conversas"
 import { TelaIndisponivel } from "@/src/telas/TelaIndisponivel"
 
@@ -221,7 +220,8 @@ export function Conversa() {
       }
     } catch {
       // A mensagem que não saiu fica visível como balão seu, marcada
-      // "Não enviada", com a ação de tentar de novo; o texto continua no campo.
+      // "Não enviada", com a ação de tentar de novo; o campo volta limpo e o
+      // texto fica só no balão.
       // O leitor de tela ouve o fato pelo anúncio oculto; o que se VÊ é só o
       // balão (D22: um texto por erro).
       if (!pedido.signal.aborted) {
@@ -362,7 +362,6 @@ export function Conversa() {
             <ListaDeConversas
               conversas={caixa.conversas}
               selecionada={id}
-              comContexto={false}
               aoAbrir={(nova) => {
                 if (nova === id) return
                 void navegacao.irPara("conversa", { parametros: { id: nova } })
@@ -372,11 +371,7 @@ export function Conversa() {
         </aside>
         <div data-conversa="painel" className="flex min-w-0 flex-col gap-2 sm:gap-3">
           <div data-cabeca="conversa" className="flex min-w-0 items-center gap-3 px-1 py-2">
-            <Avatar size="lg" className="size-11 shrink-0" aria-hidden="true">
-              <AvatarFallback className="bg-(--secondary-container) font-semibold">
-                {iniciais(nome)}
-              </AvatarFallback>
-            </Avatar>
+            <Avatar nome={nome} />
             <span className="grid min-w-0 gap-0.5">
               {/* O nome de quem conversa aparece uma vez só: aqui. A barra do
                   topo diz a seção ("Conversas"). */}
@@ -494,7 +489,7 @@ export function Conversa() {
             <EstadoVazio
               titulo="Combine os detalhes por aqui"
               texto="Descreva o que você procura e confirme preço, disponibilidade e horário."
-              icone="chat_bubble"
+              figura="encontro"
             />
           ) : (
             <div data-mensagens="historico" className="grid min-w-0 content-start gap-2 pb-2">

@@ -26,7 +26,9 @@ test("caixa abre conversa contextual", async ({ page }, testInfo) => {
   await expect(page.locator('[data-contexto-conversa="informativo"]')).toContainText("Anúncio")
 })
 
-test("compositor mostra a resposta gravada e preserva o texto na falha", async ({ page }) => {
+test("compositor mostra a resposta gravada e, na falha, guarda o texto no balão e limpa o campo", async ({
+  page,
+}) => {
   await simularConversas(page)
   await page.goto("/app/conversa/t2")
   const caixa = page.locator('[data-compositor-conversa="sim"]')

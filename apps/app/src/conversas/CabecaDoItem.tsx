@@ -57,7 +57,7 @@ export function CabecaDoItem({
       data-cabeca-do-item="sim"
       className={`bv-press ${classe} hover:bg-(--surface-low)`}
       onClick={aoAbrir}
-      aria-label={`Ver ${item.titulo}`}
+      aria-label={item.preco === null ? `Ver ${item.titulo}` : `Ver ${item.titulo}, ${item.preco}`}
     >
       {conteudo}
     </button>

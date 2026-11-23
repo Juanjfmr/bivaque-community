@@ -39,6 +39,7 @@ type Conversa = Readonly<{
   tipo: string
   contextoId: string
   ultima: string
+  ultimaEm: string
   porLer: boolean
 }>
 
@@ -105,6 +106,7 @@ const CAIXA: readonly Conversa[] = [
     tipo: "listing",
     contextoId: "anuncio-sofa-3-lugares",
     ultima: "Fechado, levo o sofá na sexta de manhã.",
+    ultimaEm: new Date(Date.now() - 5 * 60000).toISOString(),
     porLer: true,
   },
   {
@@ -114,6 +116,7 @@ const CAIXA: readonly Conversa[] = [
     tipo: "provider",
     contextoId: "negocio-climatizacao-rio-negro",
     ultima: "Posso passar amanhã às 9h.",
+    ultimaEm: new Date(Date.now() - 26 * 3600000).toISOString(),
     porLer: false,
   },
   {
@@ -125,6 +128,7 @@ const CAIXA: readonly Conversa[] = [
     tipo: "shared_group",
     contextoId: "grupo-familias-do-centro",
     ultima: "Combinado, obrigada!",
+    ultimaEm: "2026-11-12T15:00:00Z",
     porLer: false,
   },
 ]

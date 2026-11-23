@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest"
 import { assetUrl } from "../lib/assets"
 import { dataISO, diasAte, moeda, rotuloDeData } from "../lib/formato"
 import { idLocal } from "../lib/id"
-import { iniciais, normalizar, tomDoNome } from "../lib/texto"
+import { horaDaCaixa, iniciais, normalizar, tomDoNome } from "../lib/texto"
 
 describe("texto (§7 helpers)", () => {
   it("normaliza sem acento e em minúsculo", () => {
@@ -28,6 +28,17 @@ describe("texto (§7 helpers)", () => {
     expect(
       new Set(["Ana", "Bruno", "Carla", "Davi", "Elisa", "Fábio"].map(tomDoNome)).size,
     ).toBeGreaterThan(1)
+  })
+
+  it("escreve o horário curto da linha da caixa sem inventar um (REGUA-003)", () => {
+    const agora = new Date(2026, 10, 23, 15, 0)
+    const antes = (minutos: number) => new Date(agora.getTime() - minutos * 60000).toISOString()
+    expect(horaDaCaixa(antes(0), agora)).toBe("agora")
+    expect(horaDaCaixa(antes(5), agora)).toBe("5 min")
+    expect(horaDaCaixa(antes(180), agora)).toBe("3 h")
+    expect(horaDaCaixa(new Date(2026, 10, 22, 23, 0).toISOString(), agora)).toBe("ontem")
+    expect(horaDaCaixa(new Date(2026, 10, 12, 9, 0).toISOString(), agora)).toBe("12/11")
+    expect(horaDaCaixa("não é data", agora)).toBe("")
   })
 })
 

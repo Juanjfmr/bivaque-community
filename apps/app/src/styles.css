@@ -892,6 +892,17 @@
     padding: 10px 12px;
   }
 
+  /* O item, a segurança e os avisos do painel têm o recuo dos balões: nada
+     encosta na divisória das colunas (sem borda dupla) — REGUA-003. */
+  [data-tela="conversa"] [data-conversa="painel"] > [data-cabeca-do-item],
+  [data-tela="conversa"] [data-conversa="painel"] > [data-contexto-conversa],
+  [data-tela="conversa"] [data-conversa="painel"] > [data-seguranca-conversa],
+  [data-tela="conversa"] [data-conversa="painel"] > [data-estado],
+  [data-tela="conversa"] [data-conversa="painel"] > [role="status"] {
+    margin-inline: 12px;
+    width: auto;
+  }
+
   [data-tela="conversa"] [data-mensagens="historico"] {
     flex: 1 1 auto;
     min-height: 0;

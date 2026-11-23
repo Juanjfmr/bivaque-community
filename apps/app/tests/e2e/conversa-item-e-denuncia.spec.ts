@@ -14,6 +14,7 @@ const CONVERSAS = [
     tipo: "listing",
     contextoId: "i3",
     ultima: "Ainda está disponível?",
+    ultimaEm: new Date(Date.now() - 5 * 60000).toISOString(),
     porLer: false,
   },
   {
@@ -23,6 +24,7 @@ const CONVERSAS = [
     tipo: "provider",
     contextoId: "n1",
     ultima: "Posso passar amanhã.",
+    ultimaEm: "2026-11-12T13:00:00Z",
     porLer: false,
   },
   {
@@ -129,17 +131,28 @@ test("cada linha da caixa diz o nome do item, ou o tipo quando não há leitura"
   await expect(linha("t3")).toHaveText("Família")
 })
 
-test("na coluna ao lado da conversa, as outras linhas também dizem o item", async ({
+test("cada linha da caixa diz quando foi a última mensagem; sem horário, não inventa", async ({
   page,
-}, info) => {
-  test.skip(info.project.name !== "desktop-1440", "a coluna da caixa só aparece no computador")
+}) => {
+  await simular(page)
+  await page.goto("/app/conversas")
+  const hora = (id: string) => page.locator(`[data-thread="${id}"] [data-hora-da-linha]`)
+  await expect(hora("t1")).toHaveText("5 min")
+  await expect(hora("t2")).toHaveText("12/11")
+  await expect(hora("t3")).toHaveCount(0)
+})
+
+test("na coluna ao lado da conversa, todas as linhas dizem o item, a aberta também", async ({
+  page,
+}) => {
+  test.skip((page.viewportSize()?.width ?? 0) < 768, "a coluna da caixa só aparece a partir de 768")
   await simular(page)
   await page.goto("/app/conversa/t1")
   const linha = (id: string) => page.locator(`[data-thread="${id}"] [data-contexto-da-linha]`)
   await expect(linha("t2")).toHaveText("Climatização Amazonas")
   await expect(linha("t3")).toHaveText("Família")
-  // A aberta não repete o item: ele está no cabeçalho do painel.
-  await expect(linha("t1")).toHaveCount(0)
+  // A aberta continua dizendo o item: a caixa não muda de forma ao abrir.
+  await expect(linha("t1")).toHaveText("Sofá de 3 lugares")
 })
 
 test("o cabeçalho da conversa mostra título e preço do anúncio", async ({ page }) => {
@@ -148,6 +161,8 @@ test("o cabeçalho da conversa mostra título e preço do anúncio", async ({ pa
   const cabeca = page.locator('[data-tela="conversa"] [data-cabeca-do-item="sim"]')
   await expect(cabeca.locator('[data-item-da-conversa="titulo"]')).toHaveText("Sofá de 3 lugares")
   await expect(cabeca.locator('[data-item-da-conversa="preco"]')).toHaveText(/R\$\s*800/)
+  // O nome acessível do cartão inclui o preço (não o apaga).
+  await expect(cabeca).toHaveAccessibleName(/Sofá de 3 lugares, R\$\s*800/)
 })
 
 test("o ⋯ tem Denunciar e Bloquear, e Denunciar abre a denúncia da mensagem recebida", async ({
@@ -194,4 +209,28 @@ test("sem mensagem recebida o ⋯ não oferece denúncia", async ({ page }) => {
   await page.locator('[data-cabeca="conversa"] [data-acao="opcoes"]').click()
   await expect(page.getByRole("menuitem", { name: /^Bloquear / })).toBeVisible()
   await expect(page.getByRole("menuitem", { name: "Denunciar", exact: true })).toHaveCount(0)
+})
+
+test("no computador, o item e a segurança têm o recuo dos balões, sem encostar na divisória", async ({
+  page,
+}) => {
+  test.skip(
+    (page.viewportSize()?.width ?? 0) < 768,
+    "o painel ao lado da caixa só existe a partir de 768",
+  )
+  await simular(page)
+  await page.goto("/app/conversa/t1")
+  const painel = page.locator('[data-conversa="painel"]')
+  await expect(page.locator('[data-mensagens="historico"]')).toBeVisible()
+  const caixaDoPainel = await painel.boundingBox()
+  const item = await painel.locator("[data-cabeca-do-item]").boundingBox()
+  const seguranca = await painel.locator("[data-seguranca-conversa]").boundingBox()
+  expect(caixaDoPainel && item && seguranca).toBeTruthy()
+  if (!caixaDoPainel || !item || !seguranca) return
+  for (const caixa of [item, seguranca]) {
+    expect(caixa.x - caixaDoPainel.x).toBeGreaterThanOrEqual(10)
+    expect(caixaDoPainel.x + caixaDoPainel.width - (caixa.x + caixa.width)).toBeGreaterThanOrEqual(
+      10,
+    )
+  }
 })
