@@ -29,6 +29,15 @@ allowed_paths:
   - apps/app/src/casca/*.tsx
   - apps/app/src/grupos/*.tsx
   - apps/app/src/eventos/*.tsx
+  - apps/app/src/guia/*.tsx
+  - apps/app/src/mercado/*.tsx
+  - apps/app/src/meu-negocio/*.tsx
+  - apps/app/src/negocios/*.tsx
+  - apps/app/src/perguntas/*.tsx
+  - apps/app/src/conversas/*.tsx
+  - apps/app/src/avisos/*.tsx
+  - apps/app/src/voce/*.tsx
+  - apps/app/src/criar/*.tsx
   - apps/app/src/pecas/*.tsx
   - apps/app/src/pecas/pecas.css
   - apps/app/src/styles.css
