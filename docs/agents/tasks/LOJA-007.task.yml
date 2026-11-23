@@ -1,0 +1,72 @@
+task_id: LOJA-007
+objective: >
+  O app Android de loja conclui o login por código: depois do código de 6 números a pessoa vê a tela
+  autenticada, a sessão chega aos pedidos da API sem 401, sobrevive ao reabrir e sai pela conta. O passo
+  do Google abre o navegador do sistema no emulador ou vira relato com a condição exata. A interface
+  respeita as barras do sistema no Android 15+ (edge-to-edge obrigatório com targetSdk 36).
+authority:
+  - "decisão do dono, 23/11 (opção A do LOJA-006, repassada pelo coordenador): merge do provado no #322 e lote LOJA-007 com orçamento próprio"
+  - "pedido do coordenador, 23/11: item de edge-to-edge no LOJA-007 (targetSdk 36, cabeçalho, barra de baixo e teclado contra as barras do sistema)"
+  - docs/decisions/ADR-20261120-sessao-nativa-do-app-de-loja.md (Provas exigidas)
+  - "cards LOJA-DEF-ANDROID-POS-CODIGO, LOJA-DEF-ENTRADA-MEMBRO e LAN-LOJA em tools/backend-kanban/public/board.json"
+  - docs/agents/tasks/LOJA-006.task.yml (roteiro, fronteiras e sanitização herdados)
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    Run 45088773294 do app-loja-provas (#322, 63b2ce5ec; artefatos copiados em .visual/loja-007/run8-loja006).
+    Android: depois do código do Mailpit o app fica em tela branca em https://localhost/app/entrar, a tela
+    autenticada não aparece em 120 s, a WebView segue ligada ao depurador, e o rede.log tem 401 em
+    /api/app/entry/progress, /api/app/inicio e /api/app/mercado/salvos. 08-google: URL OAuth válida (origem
+    da pilha, /auth/v1/authorize, google, s256, desafio de 43 caracteres), mas "Navegador do sistema não
+    abriu". 01, 05, 06, 07 verdes no Android; iOS 01 verde. Edge-to-edge não conferido.
+allowed_paths:
+  - apps/app/src/entrada/**
+  - apps/app/src/nativo/**
+  - apps/app/src/contexto/**
+  - apps/app/src/casca/**
+  - apps/app/src/styles.css
+  - apps/app/lib/**
+  - apps/app/tests/**
+  - apps/app/scripts/preparar-nativo.mjs
+  - apps/app/capacitor.config.ts
+  - .github/workflows/app-loja-provas.yml
+  - tests/nativo/**
+  - tests/scope/loja-provas.test.mjs
+  - docs/agents/tasks/LOJA-007.task.yml
+  - docs/decisions/ADR-20261120-sessao-nativa-do-app-de-loja.md
+  - tools/backend-kanban/public/board.json
+  - tools/backend-kanban/BOARD.md
+forbidden:
+  - apps/web (servidor, rotas de API, resolvedor de sessão); se a causa estiver no servidor, vira relato com arquivo e condição, nunca remendo neste lote
+  - supabase/ (config, migrations, seed)
+  - android/ e ios/ versionados, server.url ou allowNavigation no capacitor.config.ts, build de release assinado
+  - telas fora da entrada (previa-*, mercado, comunidade e demais) salvo ajuste de safe-area em styles.css ou na casca
+  - instrumentação de diagnóstico no código de produção; diagnóstico só no roteiro ou injetado no dist-nativo do job
+  - chave, token, senha, código OTP, cookie, code_challenge, query string ou e-mail real no repositório, no log ou no artefato
+  - projeto Supabase hospedado, banco de produção, Portal da Transparência, provedor OAuth real
+  - tornar o workflow obrigatório no ruleset ou mudar outros workflows
+  - dependência nova ou troca de versão no package.json ou no lockfile
+  - git stash, reiniciar ou reconstruir o banco local do PC, delegar
+  - dado pessoal real ou CPF real
+acceptance:
+  - "Android: a causa da tela branca e dos 401 depois do código é achada no código (arquivo, condição, por que só no nativo) e registrada no card LOJA-DEF-ANDROID-POS-CODIGO, sem palpite"
+  - "Android: correção mínima com teste automatizado em apps/app/tests que falha sem a correção e passa com ela; web e iOS seguem iguais (testes do app verdes)"
+  - "Android: passos 02-codigo, 03-reabrir e 04-sair verdes no emulador, com captura e linha OK no roteiro.log; 01, 05, 06 e 07 continuam verdes; iOS 01 continua verde"
+  - "Android: 08-google abre o navegador do sistema no emulador, ou o roteiro registra a condição exata (pacote padrão de navegador, intent, imagem do emulador) e o passo vira relato aceito no card"
+  - "Edge-to-edge: no emulador (API 34+ com targetSdk 36), capturas mostram o cabeçalho, a barra de navegação de baixo e o campo com teclado aberto sem sobreposição às barras do sistema; correção, se precisar, por safe-area no CSS ou pela configuração do Capacitor, com a fonte oficial citada no card"
+  - "logs e artefatos seguem a sanitização do LOJA-004; tests/scope/loja-provas.test.mjs continua passando e cobre o que mudou"
+  - "gate completo verde e CI completo (ci:full) verde na revisão entregue; notas de prova em LAN-LOJA, LOJA-DEF-ANDROID-POS-CODIGO e LOJA-DEF-ENTRADA-MEMBRO"
+proof:
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/LOJA-007.task.yml
+  - npx pnpm@11.18.0 --filter @bivaque/app test
+  - node --test tests/scope/loja-provas.test.mjs
+  - npx pnpm@11.18.0 gate --fast
+  - "run do workflow app-loja-provas no PR com o artefato baixado e conferido pelo coordenador, passo a passo"
+risk: harness
+risk_level: R3
+adr: docs/decisions/ADR-20261120-sessao-nativa-do-app-de-loja.md
+reviewer_must_differ_from_executor: true
+retry_budget: 4
+on_budget_exhausted: HUMAN_DECISION
+closure:
+  requires_runtime_evidence: true
