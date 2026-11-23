@@ -89,13 +89,14 @@ export function Bloqueados() {
       ) : carregando ? (
         <EsqueletoDeLista linhas={3} />
       ) : linhas.length === 0 ? (
-        // O vazio é compacto, centrado na coluna (revisão cega R1, M9), e sem
-        // CTA de voltar: a seta de voltar já está na barra (R1, L6).
-        <div className="mx-auto w-full max-w-[27rem]">
+        // O vazio ocupa a coluna do título (REGUA-003), sem figura — nenhuma
+        // cena da família fala de bloqueio — e sem CTA de voltar: a seta de
+        // voltar já está na barra (R1, L6).
+        <div>
           <EstadoVazio
             titulo="Ninguém bloqueado ainda"
             texto="Quando você bloquear, a pessoa aparece aqui."
-            icone="person"
+            figura="nenhuma"
           />
         </div>
       ) : (

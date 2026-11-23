@@ -315,7 +315,7 @@ export function PerfilDeMembro() {
                 nivel="h3"
                 titulo="Nenhuma publicação visível"
                 texto="O que vocês dois podem ver aparece aqui."
-                icone="forum"
+                figura="nenhuma"
               />
             ) : (
               <ul className="grid gap-3">
@@ -340,7 +340,7 @@ export function PerfilDeMembro() {
                 nivel="h3"
                 titulo="Nenhum evento visível"
                 texto="Os encontros que essa pessoa organiza aparecem aqui."
-                icone="event"
+                figura="nenhuma"
               />
             ) : (
               <ul className="grid gap-2">
