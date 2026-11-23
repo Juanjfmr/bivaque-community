@@ -66,8 +66,11 @@ test("falha de leitura mostra um único aviso e a tela segue de pé", async ({ p
 
   const aviso = page.locator('[data-aviso="perfil"]')
   await expect(aviso).toBeVisible()
-  await expect(aviso).toContainText("Leitura do perfil indisponível agora.")
-  await expect(page.getByRole("button", { name: "Tentar de novo" })).toBeVisible()
+  await expect(aviso).toContainText("Não foi possível carregar seu perfil.")
+  const tentar = page.getByRole("button", { name: "Tentar de novo" })
+  await expect(tentar).toBeVisible()
+  // A saída é pílula, como no resto do app (REGUA-003).
+  await expect(tentar).toHaveClass(/rounded-full/)
   await expect(page.locator('[data-estado="erro"]')).toHaveCount(0)
   // Sem leitura não há identidade: a barra cai no ícone, sem nome herdado.
   await expect(
@@ -78,8 +81,9 @@ test("falha de leitura mostra um único aviso e a tela segue de pé", async ({ p
   await expect(page.getByRole("heading", { name: "Família" })).toBeVisible()
   await expect(page.getByRole("heading", { name: "Avisos" })).toBeVisible()
   await expect(page.getByRole("heading", { name: "Privacidade e ajuda" })).toBeVisible()
-  // O formulário de cidade depende da leitura: a linha não aparece sem perfil.
-  await expect(page.getByRole("button", { name: "Mudar de cidade" })).toHaveCount(0)
+  // A linha "Mudar de cidade" continua na falha (REGUA-003); sem perfil o
+  // toque tenta a leitura de novo, porque o formulário depende dela.
+  await expect(page.getByRole("button", { name: /Mudar de cidade/ })).toBeVisible()
 
   await page.unroute("**/api/app/voce")
   await page.getByRole("button", { name: "Tentar de novo" }).click()
@@ -161,6 +165,68 @@ test("bloquear pelo perfil com o servidor fora: o alerta diz para tentar e o men
   // A falha não finge sucesso: sem estado de bloqueado, com a saída à mão.
   await expect(page.getByRole("status")).toHaveCount(0)
   await expect(page.getByRole("button", { name: "Opções" })).toBeVisible()
+})
+
+// REGUA-003: o menu do perfil tem Bloquear e Denunciar. "Mensagem" só aparece
+// quando já existe conversa com a pessoa — não há rota para começar uma — e a
+// denúncia leva a essa conversa ou explica onde denunciar.
+function simularCaixa(page: import("@playwright/test").Page, outroId: string | null) {
+  return page.route(/\/api\/app\/conversas(?:\?|$)/, (rota) =>
+    rota.fulfill({
+      json: {
+        conversas:
+          outroId === null
+            ? []
+            : [
+                {
+                  id: "c-paulo",
+                  nome: "Paulo Roberto",
+                  outroId,
+                  tipo: "direct",
+                  contextoId: "c-paulo",
+                  ultima: "Até amanhã.",
+                  porLer: false,
+                },
+              ],
+        proximo: null,
+        porLer: 0,
+      },
+    }),
+  )
+}
+
+test("perfil de membro com conversa: Mensagem abre a conversa e Denunciar está no menu", async ({
+  page,
+}) => {
+  await simularVoce(page)
+  await simularCaixa(page, "u-paulo")
+  await page.goto("/app/perfil/u-paulo")
+  await expect(page.getByRole("heading", { name: "Paulo Roberto" })).toBeVisible()
+
+  const mensagem = page.getByRole("button", { name: "Mensagem" })
+  await expect(mensagem).toBeVisible()
+  await page.getByRole("button", { name: "Opções" }).click()
+  await expect(page.getByRole("menuitem", { name: "Bloquear Paulo Roberto" })).toBeVisible()
+  await expect(page.getByRole("menuitem", { name: "Denunciar" })).toBeVisible()
+  await page.keyboard.press("Escape")
+
+  await mensagem.click()
+  await expect(page).toHaveURL(/\/app\/conversa\/c-paulo$/)
+})
+
+test("perfil de membro sem conversa: sem Mensagem e a denúncia explica o caminho", async ({
+  page,
+}) => {
+  await simularVoce(page)
+  await simularCaixa(page, null)
+  await page.goto("/app/perfil/u-paulo")
+  await expect(page.getByRole("heading", { name: "Paulo Roberto" })).toBeVisible()
+  await expect(page.getByRole("button", { name: "Mensagem" })).toHaveCount(0)
+
+  await page.getByRole("button", { name: "Opções" }).click()
+  await page.getByRole("menuitem", { name: "Denunciar" }).click()
+  await expect(page.locator('[data-aviso="denunciar"]')).toContainText("Denunciar no menu dela")
+  await expect(page.getByRole("menu")).toHaveCount(0)
 })
 
 // RUN-184: o aviso da exclusão é o mesmo da tela antiga da web (o que sai agora, o

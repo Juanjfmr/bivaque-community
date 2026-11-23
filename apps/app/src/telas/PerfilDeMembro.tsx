@@ -16,6 +16,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { FalhaDaApi } from "@/lib/api/cliente"
+import { lerConversas } from "@/lib/dados/conversas"
 import { lerPerfilDeMembro, type PerfilDeMembro as Perfil } from "@/lib/dados/perfil"
 import { bloquear } from "@/lib/dados/voce"
 import { rotuloDeData } from "@/lib/formato"
@@ -37,8 +38,14 @@ import { TelaIndisponivel } from "@/src/telas/TelaIndisponivel"
  * "sem acesso": a existência da pessoa também é privada.
  *
  * A saída é o menu de opções (Mobbin f23df80d): Bloquear, pela porta existente
- * `/api/app/voce/bloqueados`, com confirmação. "Mandar mensagem" e "Denunciar
- * a pessoa" não têm rota no produto e ficam de fora (REGUA-002).
+ * `/api/app/voce/bloqueados`, com confirmação, e Denunciar (REGUA-003).
+ *
+ * Não há rota para começar conversa nem para denunciar a pessoa em si
+ * (`/api/app/conversas` só lê; a denúncia existe por mensagem e por
+ * publicação). Por isso "Mensagem" só aparece quando já existe conversa com
+ * essa pessoa, e abre essa conversa; "Denunciar" leva à conversa, onde cada
+ * mensagem tem a sua denúncia, ou explica onde denunciar quando não há
+ * conversa. Nenhuma rota nova (REGUA-003).
  *
  * O menu é o mesmo mecanismo do `MenuDaLinha` (sobreposição da entrada, Voltar
  * fecha), com o gatilho que esta tela pede: rótulo "Opções" ao lado do nome
@@ -55,6 +62,8 @@ export function PerfilDeMembro() {
   const [bloqueado, setBloqueado] = useState(false)
   const [bloqueando, setBloqueando] = useState(false)
   const [mensagem, setMensagem] = useState<string | null>(null)
+  const [conversaId, setConversaId] = useState<string | null>(null)
+  const [orientacao, setOrientacao] = useState(false)
 
   useRolagemEFoco(CARGA_CONCLUIDA)
 
@@ -82,6 +91,21 @@ export function PerfilDeMembro() {
     return () => controle.abort()
   }, [id, rodada])
 
+  // A conversa que já existe com esta pessoa, se houver: a primeira página da
+  // caixa basta, e falhar aqui só esconde o atalho, nunca a tela.
+  useEffect(() => {
+    const controle = new AbortController()
+    setConversaId(null)
+    setOrientacao(false)
+    void lerConversas({ signal: controle.signal })
+      .then((caixa) => {
+        if (controle.signal.aborted) return
+        setConversaId(caixa.conversas.find((conversa) => conversa.outroId === id)?.id ?? null)
+      })
+      .catch(() => undefined)
+    return () => controle.abort()
+  }, [id])
+
   const validacao = validarParametros("perfil", { id })
   if (!validacao.ok) return <TelaIndisponivel motivo={validacao.motivo} />
   if (erro === "ausente") return <TelaIndisponivel />
@@ -107,6 +131,23 @@ export function PerfilDeMembro() {
       .finally(() => setBloqueando(false))
   }
 
+  const abrirConversa = () => {
+    if (conversaId === null) return
+    void navegacao.irPara("conversa", { parametros: { id: conversaId } })
+  }
+
+  // Com conversa, o item TROCA a entrada do menu pela conversa (Voltar volta
+  // ao perfil, sem menu aberto); sem conversa, o Radix fecha o menu como
+  // sempre e a tela explica onde denunciar.
+  const denunciar = (evento: Event) => {
+    if (conversaId === null) {
+      setOrientacao(true)
+      return
+    }
+    evento.preventDefault()
+    void navegacao.irPara("conversa", { parametros: { id: conversaId }, replace: true })
+  }
+
   const nome =
     perfil === null ? "" : perfil.nome.trim() === "" ? "Membro da comunidade" : perfil.nome
 
@@ -125,7 +166,7 @@ export function PerfilDeMembro() {
           </p>
           <Botao
             tom="contornado"
-            className="shrink-0"
+            className="shrink-0 rounded-full"
             onClick={() => setRodada((atual) => atual + 1)}
           >
             Tentar de novo
@@ -166,6 +207,17 @@ export function PerfilDeMembro() {
               </h1>
               <small className="text-(--on-surface-variant)">Membro da comunidade</small>
             </span>
+            {bloqueado || conversaId === null ? null : (
+              <Botao
+                tom="contornado"
+                icone="chat_bubble"
+                data-acao="mensagem"
+                className="shrink-0 rounded-full"
+                onClick={abrirConversa}
+              >
+                Mensagem
+              </Botao>
+            )}
             {bloqueado ? null : (
               <DropdownMenu open={menuAberto} onOpenChange={mudarMenu} modal>
                 {/*
@@ -207,6 +259,11 @@ export function PerfilDeMembro() {
                   >
                     {bloqueando ? `Bloqueando ${nome}…` : `Bloquear ${nome}`}
                   </ItemDoMenu>
+                  {/* Sem o nome no rótulo: o item de bloqueio é o único que
+                      leva o nome da pessoa no menu. */}
+                  <ItemDoMenu data-acao="denunciar" onSelect={denunciar}>
+                    Denunciar
+                  </ItemDoMenu>
                 </DropdownMenuContent>
               </DropdownMenu>
             )}
@@ -232,6 +289,17 @@ export function PerfilDeMembro() {
               Você bloqueou {nome}. A conversa com esta pessoa fica fechada nos dois sentidos; o
               histórico continua visível para vocês; a pessoa não é avisada. Para voltar a
               conversar, desbloqueie em Pessoas bloqueadas, na área Você.
+            </p>
+          ) : null}
+
+          {orientacao ? (
+            <p
+              role="status"
+              data-aviso="denunciar"
+              className="rounded-2xl bg-(--surface-lowest) px-4 py-3 text-sm ring-1 ring-(--outline-variant)"
+            >
+              Para denunciar {nome}, abra a publicação ou a mensagem que incomodou e escolha
+              Denunciar no menu dela. Se quiser parar o contato agora, use Bloquear.
             </p>
           ) : null}
 
