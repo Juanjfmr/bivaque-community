@@ -72,6 +72,17 @@ describe("adaptador de push", () => {
     expect(marcarSucesso).toHaveBeenCalledWith("sub-1")
   })
 
+  it("passa tipo e autor para a reserva", async () => {
+    const inscricoes = vi.fn<DependenciasDoPush["inscricoes"]>(async () => [])
+    const adaptador = adaptadorComDependencias(dependencias({ inscricoes }))
+    await adaptador.send(mensagem({ payload: { actor_user_id: POST } }))
+    expect(inscricoes).toHaveBeenCalledWith(USER, "comment", POST)
+    await adaptador.send(mensagem({ payload: { actor_user_id: 42 } }))
+    expect(inscricoes).toHaveBeenLastCalledWith(USER, "comment", null)
+    await adaptador.send(mensagem({ payload: {} }))
+    expect(inscricoes).toHaveBeenLastCalledWith(USER, "comment", null)
+  })
+
   it("provedor dizendo que o destino não existe apaga a inscrição", async () => {
     const apagar = vi.fn<DependenciasDoPush["apagar"]>(async () => undefined)
     const marcarSucesso = vi.fn<DependenciasDoPush["marcarSucesso"]>(async () => undefined)

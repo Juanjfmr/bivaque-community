@@ -23,7 +23,9 @@ import type {
 export type ServidorDaEntrada = Readonly<{
   emailEmTransito: RefObject<string | null>
   enviarCodigo: (email: string) => Promise<EnvioDoCodigo>
-  verificarCodigo: (codigo: string) => Promise<VerificacaoDoCodigo>
+  verificarCodigo: (
+    codigo: string,
+  ) => Promise<VerificacaoDoCodigo | { readonly estado: "membro" | "verificacao-indisponivel" }>
   consultarCpf: (cpf: string) => Promise<ResultadoDoCpf>
   carregarEstados: () => Promise<readonly string[]>
   carregarCidades: (uf: string) => Promise<readonly CidadeDoCatalogo[]>

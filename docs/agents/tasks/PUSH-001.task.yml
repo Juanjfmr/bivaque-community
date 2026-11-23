@@ -1,0 +1,80 @@
+task_id: PUSH-001
+objective: >
+  Lado servidor do push nativo do app de loja, pronto para as chaves e provado sem elas
+  (ADR-20261118 §1, §2, §3, §5, §6 e §7, parte servidor): migration nova que abre os tipos android e ios
+  no registro com troca de titular atômica, limite de 10 e sem rótulo; reserva com revalidação de
+  titular, preferência push e bloqueio na mesma instrução do envio; adaptadores de envio para Android
+  (API HTTP v1 de mensagens do Google, conta de serviço) e iOS (APNs HTTP/2 com chave .p8), desligados
+  sem as chaves; validação por tipo na rota /api/app/push; exceção nomeada do termo do Google no teste de
+  limites de produto; teste de redação de logs. O plugin do Capacitor, o pedido de permissão no app, a
+  ordem de saída e o E2E de emulador e simulador ficam para o lote seguinte (dependem do LOJA-004).
+authority:
+  - docs/decisions/ADR-20261118-push-nativo-no-app-de-loja.md (decisões 1, 2, 3, 5, 6 e 7)
+  - docs/decisions/ADR-20261107-push-no-aparelho.md (frase fixa, outbox, purga de 90 dias)
+  - docs/decisions/ADR-20261024-front-react-spa.md §5 (contrato da rota)
+  - "card LAN-PUSH em tools/backend-kanban/public/board.json (checklist: reserva com revalidação)"
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    Em origin/main b93194eb6, public.register_push_subscription (20261118140200) recusa p_kind diferente
+    de 'web' e apaga-e-insere em duas instruções; apps/web/lib/push/adaptador.ts lê as inscrições kind
+    'web' e envia sem reservar a linha nem conferir de novo titular, preferência e bloqueio; não existe
+    adaptador Android nem iOS; tests/privacy/product-boundaries-and-pii.test.ts proíbe o termo do Google
+    em todo arquivo e não varre .gradle, .kt, .xml nem .plist.
+allowed_paths:
+  - supabase/migrations/*_push_nativo*.sql
+  - supabase/tests/push-subscriptions.sql
+  - supabase/tests/push-nativo.sql
+  - supabase/tests/notification-push-channel.sql
+  - supabase/database.generated.ts
+  - apps/web/app/api/app/push/**
+  - apps/web/lib/push/**
+  - apps/web/lib/outbox/adapters.ts
+  - apps/web/.env.example
+  - tests/unit/push/**
+  - tests/unit/app-api/push/**
+  - tests/privacy/product-boundaries-and-pii.test.ts
+  - tests/privacy/push-log-redaction.test.ts
+  - .gitignore
+  - docs/agents/tasks/PUSH-001.task.yml
+  - docs/decisions/ADR-20261118-push-nativo-no-app-de-loja.md
+  - tools/backend-kanban/public/board.json
+  - tools/backend-kanban/BOARD.md
+forbidden:
+  - editar migration já aplicada (toda mudança de banco entra numa migration nova criada com supabase migration new)
+  - chave real, conta de serviço real, .p8 real, google-services.json, GoogleService-Info.plist ou identificador real da Apple no repositório; as chaves de teste são geradas na hora pelo teste
+  - chamada a host real do Google ou da Apple em teste; os adaptadores são provados contra um servidor falso local em 127.0.0.1
+  - token do aparelho, endpoint, corpo, URL da requisição, resposta do provedor ou credencial em log, mensagem de exceção ou telemetria
+  - nome, trecho, foto ou dado de terceiro no conteúdo do push (só título Bivaque, frase fixa e caminho)
+  - apps/app, apps/mobile, apps/prototipo, o projeto Android ou iOS; o plugin de push do Capacitor (lote seguinte)
+  - supabase --linked, banco de produção, Portal da Transparência
+  - reiniciar, reconstruir ou resetar o banco local do PC; git stash; delegar
+  - dado pessoal real ou CPF real; fixtures pgTAP só com identidades example.invalid e UUIDs fixos
+acceptance:
+  - "migration nova: register_push_subscription aceita web (regras atuais) e android/ios (token opaco de 1 a 4096 caracteres ASCII imprimível, chaves nulas); grava por insert … on conflict (kind, destination) do update, trocando o titular numa instrução; quando a pessoa passa de 10 inscrições sai a mais antiga; a coluna label sai (drop column) e a função perde o parâmetro p_label (a assinatura antiga é removida, grants refeitos só para authenticated); erro de entrada levanta 22023 com mensagem fixa"
+  - "migration nova: desligar o canal push nas preferências apaga as inscrições android e ios da pessoa (gatilho ou no mesmo caminho que grava a preferência); a purga de 90 dias por coalesce(last_success_at, created_at) vale para os três tipos e roda em pg_cron sem depender de envio"
+  - "migration nova: função de reserva do envio (security definer, search_path vazio, só service_role) que, numa única instrução com for update skip locked sobre push_subscriptions, devolve as inscrições do destinatário que ainda são dele, com a preferência push ligada para o tipo do aviso e sem bloqueio entre o destinatário e o autor do aviso quando o payload trouxer o autor; o adaptador usa essa função no lugar do select direto"
+  - "pgTAP (supabase/tests/push-nativo.sql e ajuste do push-subscriptions.sql): positivo e negativo para android e ios — registro pelo dono, token inválido recusado, troca de titular atômica, limite de 10 com saída da mais antiga, outro membro não lê nem apaga, anon sem acesso, desligar push apaga as nativas e mantém a web, purga de 90 dias, reserva não devolve inscrição de outro titular, com push desligado ou com bloqueio"
+  - "rota /api/app/push: validação por tipo num módulo único (inscricao.ts) — web com a lista fechada de origens, android/ios com token opaco; label sai do corpo; testes da rota cobrindo sessão ausente, CSRF recusado, corpo inválido, token longo ou com caractere não imprimível, tipo desconhecido, sucesso para cada tipo e DELETE"
+  - "adaptador Android em apps/web/lib/push/: OAuth por JWT RS256 da conta de serviço para o escopo de mensagens, cache do token de acesso até expirar, POST na API HTTP v1 com host fixo no código; adaptador iOS: JWT ES256 da chave .p8 (kid e iss do ambiente), HTTP/2 para o host fixo do APNs (produção ou sandbox por variável), apns-topic do ambiente; timeout de 10 s em cada chamada"
+  - "classificação das respostas igual nos dois: 404, 410, UNREGISTERED e BadDeviceToken apagam a inscrição; 429, cota, 5xx, timeout e falha de rede voltam ao outbox; 401/403 desligam o adaptador nativo daquele tipo e geram log.error operacional, sem apagar inscrição; o conteúdo sai de conteudoDoPush (título, frase fixa e caminho)"
+  - "sem as variáveis de ambiente de cada provedor o adaptador daquele tipo fica desligado e a reserva não devolve linha daquele tipo; createChannelAdapters continua funcionando só com Web Push; nomes das variáveis documentados em apps/web/.env.example sem valor"
+  - "servidor falso local em tests/unit/push/: valida a assinatura ES256 com a chave pública sintética e o JWT da conta de serviço sintética (chaves geradas com node:crypto no teste) e responde sucesso, destino inexistente, 429, 5xx, atraso maior que o timeout e credencial recusada; os testes provam cada classificação e que o corpo enviado tem só título, frase fixa e caminho"
+  - "tests/privacy/push-log-redaction.test.ts: com token, endpoint e chaves sintéticos únicos, roda sucesso e cada erro e prova que nenhum deles aparece no log capturado nem na mensagem de erro; só tipo, status e contagem"
+  - "teste de limites de produto: o termo do Google sai da regex comum e vira regra própria com lista de exceções nomeada arquivo por arquivo (apps/app/android/app/build.gradle, apps/app/android/build.gradle, apps/app/android/variables.gradle e o arquivo do adaptador Android); a varredura inclui .gradle, .kt, .xml e .plist; casos que provam: o termo fora da lista reprova, outro termo proibido dentro da lista reprova, a lista tem só esses arquivos"
+  - ".gitignore cobre google-services.json, GoogleService-Info.plist e *.p8"
+  - "card LAN-PUSH recebe uma nota de prova com o que este lote fechou e o que fica para o lote do app (plugin, permissão em contexto, ordem de saída, E2E de emulador e simulador, dependente do LOJA-004) e para as chaves do dono; o item de checklist da reserva com revalidação é marcado"
+proof:
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/PUSH-001.task.yml
+  - npx pnpm@11.18.0 exec vitest run tests/unit/push tests/unit/app-api/push tests/privacy
+  - npx pnpm@11.18.0 gate --fast
+  - "CI completo verde no PR com ci:full (pgTAP roda no CI: o PC não tem a CLI do Supabase funcionando)"
+risk: data
+risk_level: R3
+adr: docs/decisions/ADR-20261118-push-nativo-no-app-de-loja.md
+reviewer_must_differ_from_executor: true
+# 22/11: de 3 para 5 pelo coordenador; as rodadas 1 e 2 pararam por escopo grande demais numa execução (nada reprovado), e o lote passou a ir em fatias.
+retry_budget: 5
+on_budget_exhausted: HUMAN_DECISION
+closure:
+  requires_runtime_evidence: true
