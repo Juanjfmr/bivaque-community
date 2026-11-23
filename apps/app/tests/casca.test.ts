@@ -63,6 +63,33 @@ describe("barra de baixo e Criar (§5.3)", () => {
     expect(navegacaoVisivel("salvos", 1440)).toBe(true)
   })
 
+  it("a barra de baixo nunca tem vão: onde ela aparece, o Criar aparece (REGUA-003)", () => {
+    const rotas = ["inicio", "comunidade", "conversas", "mercado", "voce", "avisos", "salvos"]
+    for (const largura of [320, 375, 768, 1023]) {
+      for (const rota of rotas) {
+        expect(criaVisivel(rota, largura), `${rota} em ${largura}`).toBe(
+          navegacaoVisivel(rota, largura),
+        )
+      }
+    }
+  })
+
+  it("nas telas das cinco posições da barra a barra e o Criar aparecem (REGUA-003)", () => {
+    for (const largura of [375, 768]) {
+      for (const aba of ["inicio", "comunidade", "conversas", "mercado", "voce"]) {
+        expect(navegacaoVisivel(aba, largura), `${aba} em ${largura}`).toBe(true)
+        expect(criaVisivel(aba, largura), `${aba} em ${largura}`).toBe(true)
+      }
+    }
+  })
+
+  it("fora das raízes, no celular, a barra some inteira — sem célula vazia", () => {
+    for (const rota of ["avisos", "salvos", "anuncio", "conversa"]) {
+      expect(navegacaoVisivel(rota, 375), rota).toBe(false)
+      expect(criaVisivel(rota, 375), rota).toBe(false)
+    }
+  })
+
   it("o Criar acompanha a barra de baixo", () => {
     expect(criaVisivel("inicio", 375)).toBe(true)
     expect(criaVisivel("pergunta", 375)).toBe(false)
