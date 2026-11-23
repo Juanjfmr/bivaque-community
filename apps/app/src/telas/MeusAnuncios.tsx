@@ -43,9 +43,12 @@ export function MeusAnuncios() {
   const [gerenciando, setGerenciando] = useState<AnuncioDaLista | null>(null)
   const paginaPendente = useRef<AbortController | null>(null)
   const geracaoDaLista = useRef(0)
-  const [desapegoLocal] = useState(() =>
-    lerRascunho(`bivaque:f03:desapego:${casca.cidade}`, { titulo: "" }),
-  )
+  // Sem cidade a chave do rascunho é vazia: até a sessão dizer a cidade, não há
+  // rascunho a mostrar (BUGCID-001).
+  const desapegoLocal =
+    casca.cidade === ""
+      ? { titulo: "" }
+      : lerRascunho(`bivaque:f03:desapego:${casca.cidade}`, { titulo: "" })
 
   useRolagemEFoco(CARGA_CONCLUIDA)
 

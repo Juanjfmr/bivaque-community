@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react"
 import { ChipsDeFiltro } from "@/components/bivaque/chips-de-filtro"
+import { EsqueletoDeLista } from "@/components/bivaque/esqueleto"
 import { FalhaDaApi } from "@/lib/api/cliente"
 import { publicarPergunta } from "@/lib/dados/criar"
 import { rotuloDoTopico, TOPICOS_DAS_PERGUNTAS } from "@/lib/dados/perguntas"
@@ -13,15 +14,23 @@ const ITENS_DO_TOPICO = [
   ...TOPICOS_DAS_PERGUNTAS.map(({ id, rotulo }) => ({ id, rotulo })),
 ]
 
-export function Perguntar({
-  cidade,
-  aoCancelar,
-  aoSalvar,
-}: {
+type PropsDoFormulario = {
   cidade: string
   aoCancelar: () => void
   aoSalvar: (id: string) => void
-}) {
+}
+
+/**
+ * Sem cidade a chave do rascunho fica vazia: ler ali não acha nada e o efeito
+ * de guardar regravaria esse vazio por cima do rascunho da cidade quando ela
+ * chegasse. O formulário só nasce com a cidade conhecida (BUGCID-001).
+ */
+export function Perguntar(props: PropsDoFormulario) {
+  if (props.cidade === "") return <EsqueletoDeLista linhas={3} />
+  return <FormularioDaPergunta {...props} />
+}
+
+function FormularioDaPergunta({ cidade, aoCancelar, aoSalvar }: PropsDoFormulario) {
   const chave = `bivaque:f03:pergunta:${cidade}`
   const [dados, setDados] = useState(() =>
     lerRascunho(chave, { titulo: "", assunto: "", topico: "" }),

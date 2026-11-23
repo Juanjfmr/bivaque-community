@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react"
+import { EsqueletoDeLista } from "@/components/bivaque/esqueleto"
 import { FalhaDaApi } from "@/lib/api/cliente"
 import { publicarDesapego } from "@/lib/dados/criar"
 import { AreaDeTexto, Botao, Campo, CampoDeArquivo, CampoDeEscolha } from "@/src/pecas/pecas"
@@ -25,15 +26,23 @@ const CONDICOES = [
   { valor: "new", rotulo: "Novo" },
 ] as const
 
-export function Desapego({
-  cidade,
-  aoCancelar,
-  aoSalvar,
-}: {
+type PropsDoFormulario = {
   cidade: string
   aoCancelar: () => void
   aoSalvar: (id: string) => void
-}) {
+}
+
+/**
+ * Sem cidade a chave do rascunho fica vazia: ler ali não acha nada e o efeito
+ * de guardar regravaria esse vazio por cima do rascunho da cidade quando ela
+ * chegasse. O formulário só nasce com a cidade conhecida (BUGCID-001).
+ */
+export function Desapego(props: PropsDoFormulario) {
+  if (props.cidade === "") return <EsqueletoDeLista linhas={3} />
+  return <FormularioDoDesapego {...props} />
+}
+
+function FormularioDoDesapego({ cidade, aoCancelar, aoSalvar }: PropsDoFormulario) {
   const chave = `bivaque:f03:desapego:${cidade}`
   const [dados, setDados] = useState(() =>
     lerRascunho(chave, {
