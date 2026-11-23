@@ -6,7 +6,7 @@
 
 > docs/LANCAMENTO.md define o lançamento e o que é pronto; os cards LAN-* acompanham cada fase e jornada. O ADR-20261024-front-react-spa governa o app (apps/app) e a troca das telas antigas do apps/web. Documentos de agosto a outubro estão em docs/historico e não orientam trabalho. Código e provas atuais determinam entrega, sem apagar evidências ou criar outra fila.
 
-**Mapa:** 319 frentes · 0 agora · 10 bloqueadas · 176 concluídas · 0 drifts
+**Mapa:** 330 frentes · 0 agora · 13 bloqueadas · 176 concluídas · 0 drifts
 
 Para trabalho autônomo, rode `node tools/backend-kanban/src/board.mjs --next` e resolva um card por commit. Drift é evidência temporária; não é fechamento.
 
@@ -24,9 +24,12 @@ Nenhum card.
 - **BLOCK-MOBILE-RUNTIME** · P1 · Runtime iOS em device real — Android já provado no emulador — cmdline-tools + system-image + AVD ausentes (Android); Apple Developer Program + EAS credentials ausentes (iOS)
 - **INFRA-CLI-SUPABASE-PC** · P1 · CLI do Supabase falha com EPERM no PC do dono e o banco local está fora de sincronia — O CLI do Supabase 2.107.0 (binário Bun) falha com EPERM ao abrir ou criar qualquer arquivo ou pasta: C:/Users/juana/.supabase/telemetry.json.tmp.* e também uma pasta pessoal temporária (HOME/USERPROFILE trocados), inclusive fora do sandbox. Quebra test:db, db:lint, migration list/up e status no PC do dono.; 22/11: decisão do coordenador (opção B): a prova de banco segue no CI com ci:full; nenhum binário baixado no PC e nenhuma mudança no Docker. Próximo passo concreto para desbloquear (opção A): com aval do dono para o download, apontar SUPABASE_CLI_BINARY_OVERRIDE para o supabase.exe Go oficial da última release 2.x anterior ao binário Bun, fora da pasta do repositório (sem o rótulo Low), repetir status e depois fazer o reset local exclusivo sem seed e o test:db.
 - **OUTBOX-INVITE-RECIPIENTS** · P1 · Convites de comunidade e de evento enfileiram destinatário inválido — BLOCK-RESEND: entrega real de e-mail depende do provedor e das chaves (ato do dono); próximo passo: dono cria a conta/chave do Resend e o coordenador roda a prova de entrega.
+- **PLAY-CONTA-REVISAO** · P1 · Play: conta de revisão que entra sem o código de uso único — Falta o ADR por delegação (R3) que fixe o mecanismo da conta de revisão; autorizado pelo coordenador em 23/11.
+- **PLAY-TESTE-FECHADO** · P1 · Play: teste fechado com 12 testadores por 14 dias (ato do dono) — Ato do dono: conta do Play, recrutamento dos testadores e pedido de acesso à produção.
 - **BLOCK-AFFILIATION** · HOLD · Afiliação militar declarada — Governanca LGPD de terceiros (BLOCK-LEGAL-AI) — portao da EXPOSICAO do campo, agora com o tecnico resolvido
 - **BLOCK-ASAAS** · HOLD · Marketplace pago / Asaas — CNPJ; Decisão operacional de cobrança
 - **PIPELINE-REVISAO-E-PREVIEW** · P2 · Parecer automático do PR e preview Vercel legado — Vercel: Root Directory do preview legado e quota dos projetos — ato do dono.; Revisor automático do PR sem parecer — executor e credenciais são do repositório e da máquina do dono.
+- **PLAY-APP-LINKS** · P2 · Android: App Links verificados para convite, e-mail e push abrirem no app — Ato do dono: aderir ao Play App Signing e informar a impressão SHA-256 da chave do Play e o domínio de produção.
 - **WEB-OG-METADATABASE** · P2 · OG da raiz resolve para localhost sem metadataBase — Dominio canonico de producao nao decidido; apps/web/.env.example nao possui variavel de URL publica
 
 ## Drift aberto
@@ -40,6 +43,7 @@ Nenhum card.
 - **LAN-PUSH** · P1 · Push no celular: token do aparelho, envio pelo outbox e abertura no destino certo
 - **LOJA-DEF-ANDROID-POS-CODIGO** · P1 · Android: tela branca e 401 depois do código; navegador do sistema no login Google
 - **LOJA-DEF-ENTRADA-MEMBRO** · P1 · Membro que entra por código fica na entrada em vez de ir ao Início
+- **PLAY-EXCLUSAO-WEB** · P1 · Play: pedido de exclusão de conta pela web, sem o app
 - **PROXY-SURFACE-RISK** · P1 · Superfície de escape do gate de rota documentada e reduzida
 
 ## Comandos
