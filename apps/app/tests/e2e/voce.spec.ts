@@ -211,6 +211,25 @@ test("perfil de membro com conversa: Mensagem abre a conversa e Denunciar está 
   )
   expect(vazaParaOLado).toBe(false)
   await expect(page.getByRole("button", { name: "Opções" })).toBeInViewport({ ratio: 1 })
+  // E não cobrem o nome: a caixa do nome e a do botão não se cruzam.
+  const nomeCaixa = await page.getByRole("heading", { name: "Paulo Roberto" }).boundingBox()
+  const botaoCaixa = await mensagem.boundingBox()
+  expect(nomeCaixa).not.toBeNull()
+  expect(botaoCaixa).not.toBeNull()
+  if (nomeCaixa && botaoCaixa) {
+    const cruzam =
+      nomeCaixa.x < botaoCaixa.x + botaoCaixa.width &&
+      botaoCaixa.x < nomeCaixa.x + nomeCaixa.width &&
+      nomeCaixa.y < botaoCaixa.y + botaoCaixa.height &&
+      botaoCaixa.y < nomeCaixa.y + nomeCaixa.height
+    expect(cruzam).toBe(false)
+  }
+  // O nome também não transborda a própria caixa (o texto escaparia por baixo do botão).
+  const nomeTransborda = await page
+    .getByRole("heading", { name: "Paulo Roberto" })
+    .evaluate((h) => h.scrollWidth > h.clientWidth + 1)
+  expect(nomeTransborda).toBe(false)
+  expect(nomeCaixa?.width ?? 0).toBeGreaterThanOrEqual(120)
   await page.getByRole("button", { name: "Opções" }).click()
   await expect(page.getByRole("menuitem", { name: "Bloquear Paulo Roberto" })).toBeVisible()
   await expect(page.getByRole("menuitem", { name: "Denunciar" })).toBeVisible()

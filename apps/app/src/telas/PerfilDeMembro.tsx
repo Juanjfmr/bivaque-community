@@ -203,7 +203,7 @@ export function PerfilDeMembro() {
               de empurrar a tela para fora da largura (375). */}
           <header className="flex flex-wrap items-center gap-x-3 gap-y-2 px-1">
             <Avatar nome={nome} tamanho={56} />
-            <span className="grid min-w-0 flex-1 gap-0.5">
+            <span className="grid min-w-0 flex-1 basis-40 gap-0.5">
               <h1 id="titulo-da-tela" data-titulo-da-tela tabIndex={-1} className="break-words">
                 {nome}
               </h1>
