@@ -38,6 +38,11 @@ export function Sobreposicao({
 }) {
   const gaveta = formato === "gaveta"
   const inicioDoArrasto = useRef<{ y: number; quando: number } | null>(null)
+  // Quem chama monta a sobreposição sem `DialogTrigger`: o Radix não sabe a
+  // quem devolver o foco. Guarda o elemento focado na abertura e o devolve.
+  const acionador = useRef<Element | null>(
+    typeof document === "undefined" ? null : document.activeElement,
+  )
 
   // O encolhimento da página de trás, que o protótipo faz por classe no body.
   useEffect(() => {
@@ -62,6 +67,12 @@ export function Sobreposicao({
         showCloseButton={false}
         data-sobreposicao={id}
         data-formato={formato}
+        onCloseAutoFocus={(evento) => {
+          const alvo = acionador.current
+          if (!(alvo instanceof HTMLElement) || !alvo.isConnected) return
+          evento.preventDefault()
+          alvo.focus()
+        }}
         className={cn(
           "bv-painel fixed z-45 border border-(--outline-variant) bg-(--surface-lowest) shadow-[0_10px_32px_var(--shadow-strong)]",
           formato === "folha" &&

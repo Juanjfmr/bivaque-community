@@ -107,7 +107,7 @@ export function EstadoDeErro({
       <span className="grid size-12 place-items-center rounded-full bg-(--muted)">
         <Icone nome="error" className="size-6 text-(--destructive)" />
       </span>
-      <h3>{titulo}</h3>
+      <h2 className="text-[17px] leading-6 font-semibold tracking-normal">{titulo}</h2>
       <p className="max-w-md text-sm text-(--muted-foreground)">{texto}</p>
       {aoTentar === undefined ? null : (
         <Botao icone="refresh" className="rounded-full" onClick={aoTentar}>

@@ -6,7 +6,7 @@
 
 > docs/LANCAMENTO.md define o lançamento e o que é pronto; os cards LAN-* acompanham cada fase e jornada. O ADR-20261024-front-react-spa governa o app (apps/app) e a troca das telas antigas do apps/web. Documentos de agosto a outubro estão em docs/historico e não orientam trabalho. Código e provas atuais determinam entrega, sem apagar evidências ou criar outra fila.
 
-**Mapa:** 319 frentes · 0 agora · 10 bloqueadas · 176 concluídas · 0 drifts
+**Mapa:** 320 frentes · 0 agora · 10 bloqueadas · 179 concluídas · 0 drifts
 
 Para trabalho autônomo, rode `node tools/backend-kanban/src/board.mjs --next` e resolva um card por commit. Drift é evidência temporária; não é fechamento.
 
@@ -35,7 +35,6 @@ Nenhum card.
 
 ## Triagem prioritária
 
-- **ENDURECE-B** · P1 · Endurecimento web B (R3): cabeçalhos de segurança, CSP com nonce e Clear-Site-Data na saída
 - **F09-B3-INSERT-DIRETO-DM** · P1 · Conversas: fechar o INSERT direto em dm_messages
 - **LAN-PUSH** · P1 · Push no celular: token do aparelho, envio pelo outbox e abertura no destino certo
 - **LOJA-DEF-ANDROID-POS-CODIGO** · P1 · Android: tela branca e 401 depois do código; navegador do sistema no login Google
