@@ -76,12 +76,19 @@ const paginasInstrumentadas = new WeakSet()
 let device
 let page
 let falhou = false
+function comLimite(promessa, ms, rotulo) {
+  let relogio
+  const limite = new Promise((_, rejeitar) => {
+    relogio = setTimeout(() => rejeitar(new Error(`${rotulo} excedeu ${ms / 1000}s`)), ms)
+  })
+  return Promise.race([promessa, limite]).finally(() => clearTimeout(relogio))
+}
 async function paginaAtual() {
   const limite = Date.now() + 30000
   while (Date.now() < limite) {
     for (const view of device.webViews().filter((v) => v.pkg() === pacote)) {
       try {
-        let atual = await view.page()
+        let atual = await comLimite(view.page(), 10000, "Conexão à WebView")
         if (atual.isClosed()) {
           // O Playwright guarda a primeira página do socket; quando a WebView troca de alvo
           // no mesmo processo, procura a página aberta no contexto ou reconecta ao socket.
@@ -92,7 +99,7 @@ async function paginaAtual() {
           if (aberta) atual = aberta
           else {
             view._pagePromise = undefined
-            atual = await view.page()
+            atual = await comLimite(view.page(), 10000, "Reconexão à WebView")
           }
           if (atual.isClosed()) continue
           log("WebView readquirida depois de trocar de alvo")
@@ -160,9 +167,23 @@ async function passo(nome, acao, dependencia = true) {
   }
 }
 async function esperarAutenticada() {
-  const limite = Date.now() + 90000
+  const limite = Date.now() + 120000
+  let reaberto = false
   while (Date.now() < limite) {
-    const atual = await paginaAtual()
+    let atual
+    try {
+      atual = await paginaAtual()
+    } catch (erro) {
+      if (reaberto) throw erro
+      // A WebView troca de alvo depois do código e pode não voltar ao depurador; a sessão
+      // gravada é o que importa, então reabre o app e confere a tela autenticada.
+      log("WebView não voltou depois do código; app reaberto para conferir a sessão")
+      adb("shell", "am", "force-stop", pacote)
+      abrir()
+      await esperar(3000)
+      reaberto = true
+      continue
+    }
     try {
       await atual
         .getByRole("button", { name: "Você", exact: true })
