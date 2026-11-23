@@ -336,6 +336,7 @@ export function PreferenciasDeAvisos() {
       <div data-barra="gravar-preferencias">
         <Botao
           tom="tonal"
+          className="rounded-full"
           onClick={salvar}
           disabled={!sujo || salvando}
           aria-label="Gravar preferências de avisos"

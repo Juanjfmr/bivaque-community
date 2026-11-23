@@ -996,6 +996,7 @@
    interruptor a ~1290 px de distância no computador. */
 @media (min-width: 768px) {
   [data-preferencias-de-aviso="sim"] {
+    width: 100%;
     max-width: 720px;
     margin-inline: auto;
   }
@@ -1007,9 +1008,7 @@
    seção, e nada cobre controle algum. */
 @media (max-width: 1023.98px) {
   [data-barra="gravar-preferencias"] {
-    position: static;
-    border-top: 0;
-    box-shadow: none;
+    bottom: calc(var(--altura-da-barra) + env(safe-area-inset-bottom));
   }
 }
 
@@ -3533,9 +3532,6 @@ body[data-profundidade="sim"] [data-casca="app"] {
 }
 
 @media (max-width: 1023.98px) {
-  [data-casca="app"]:has([data-preferencias-de-aviso]) [data-acao="criar"] {
-    visibility: hidden;
-  }
   [data-preferencias-de-aviso="sim"] > ul {
     scroll-margin-bottom: 180px;
   }
