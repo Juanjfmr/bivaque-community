@@ -234,7 +234,9 @@ export function Verbete({ id }: { readonly id: string }) {
 
           {verbete.podeSalvar ? (
             <section className="grid gap-2 border-t border-(--outline-variant) pt-4">
-              <h3 className="text-[17px]">Sugerir atualização</h3>
+              <h2 className="text-[17px] leading-6 font-semibold tracking-normal">
+                Sugerir atualização
+              </h2>
               {podeSugerir ? (
                 <Formulario>
                   <Campo

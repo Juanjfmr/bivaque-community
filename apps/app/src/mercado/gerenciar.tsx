@@ -98,6 +98,9 @@ export function GerenciarAnuncio({
   readonly aoFechar: () => void
   readonly aoGravar: () => void
 }) {
+  const acionador = useRef<Element | null>(
+    typeof document === "undefined" ? null : document.activeElement,
+  )
   const item = anuncio.tipo === "item"
   const [dados, setDados] = useState({
     titulo: anuncio.titulo,
@@ -226,6 +229,13 @@ export function GerenciarAnuncio({
       <DialogContent
         unstyled
         data-gerenciar-anuncio={anuncio.id}
+        // Aberto sem `DialogTrigger`: devolve o foco ao botão que abriu.
+        onCloseAutoFocus={(evento) => {
+          const alvo = acionador.current
+          if (!(alvo instanceof HTMLElement) || !alvo.isConnected) return
+          evento.preventDefault()
+          alvo.focus()
+        }}
         className="fixed inset-x-0 bottom-0 z-50 mx-auto grid max-h-[90dvh] w-full max-w-xl gap-3 overflow-y-auto rounded-t-2xl border border-(--outline-variant) bg-(--surface-lowest) p-5 shadow-xl sm:inset-x-4 sm:top-1/2 sm:bottom-auto sm:-translate-y-1/2 sm:rounded-2xl"
       >
         <DialogTitle className="pr-12 text-xl">Gerenciar anúncio</DialogTitle>

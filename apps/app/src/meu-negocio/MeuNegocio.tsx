@@ -476,6 +476,10 @@ export function MeuNegocio() {
                   <SeletorDeFoto
                     ref={campoDaFoto}
                     id="foto-arquivo"
+                    // O campo fica escondido e o botão "Escolher imagem" o aciona: o
+                    // nome vem daqui e o Tab não para num controle invisível.
+                    aria-label="Arquivo da foto do negócio"
+                    tabIndex={-1}
                     type="file"
                     accept="image/jpeg,image/png,image/webp"
                     className="sr-only"
