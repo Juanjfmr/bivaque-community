@@ -1,3 +1,4 @@
+import { iniciais } from "@/lib/texto"
 import {
   type ComponentProps,
   type CSSProperties,
@@ -169,14 +170,6 @@ function tomDoNome(nome: string): number {
   let soma = 0
   for (const letra of nome) soma = (soma + (letra.codePointAt(0) ?? 0)) % 997
   return soma % 4
-}
-
-/** "Carla R." vira "CR"; "Ana Souza", "AS"; um nome só, a primeira letra. */
-export function iniciais(nome: string): string {
-  const partes = nome.replace(/\./g, "").trim().split(/\s+/)
-  const primeira = partes[0]?.[0] ?? ""
-  const ultima = partes.length > 1 ? (partes.at(-1)?.[0] ?? "") : ""
-  return `${primeira}${ultima}`.toUpperCase()
 }
 
 /** Pessoa sem foto ganha as iniciais num dos tons da família, sempre o mesmo. */

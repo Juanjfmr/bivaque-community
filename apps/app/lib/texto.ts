@@ -22,10 +22,6 @@ export function iniciais(nome: unknown): string {
     .trim()
     .split(/\s+/)
     .filter((parte) => parte !== "")
-    .slice(0, 2)
   if (partes.length === 0) return "BV"
-  return partes
-    .map((parte) => parte.slice(0, 1))
-    .join("")
-    .toUpperCase()
+  return `${partes[0]?.[0] ?? ""}${partes.length > 1 ? (partes.at(-1)?.[0] ?? "") : ""}`.toUpperCase()
 }

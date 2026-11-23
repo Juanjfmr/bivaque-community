@@ -13,7 +13,7 @@ describe("texto (§7 helpers)", () => {
   })
 
   it("tira até duas iniciais e reserva BV", () => {
-    expect(iniciais("Ana Paula Souza")).toBe("AP")
+    expect(iniciais("Ana Paula Souza")).toBe("AS")
     expect(iniciais("João")).toBe("J")
     expect(iniciais("  ")).toBe("BV")
     expect(iniciais(null)).toBe("BV")

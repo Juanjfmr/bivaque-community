@@ -64,6 +64,7 @@ export function NavegacaoPrincipal({
   return (
     <nav
       data-nav="principal"
+      data-criar-visivel={criaVisivel(rota.nome, largura) ? "sim" : "nao"}
       aria-label="Navegação principal"
       data-visivel={larguraDaBarra ? "sim" : "nao"}
       data-minimizada={compacto ? "sim" : "nao"}

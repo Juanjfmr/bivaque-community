@@ -426,6 +426,10 @@
   padding-bottom: env(safe-area-inset-bottom);
 }
 
+[data-nav="principal"][data-criar-visivel="nao"] {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
 [data-nav="principal"][data-visivel="nao"] {
   display: none;
 }
