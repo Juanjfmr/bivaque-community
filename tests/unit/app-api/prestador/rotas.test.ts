@@ -33,6 +33,8 @@ type Opcoes = {
   erroDeTabela?: string
   erroRpc?: { nome: string; code: string }
   recusaDaResposta?: string
+  /** UPDATE que a RLS filtra em silêncio: zero linhas, sem erro (conta de membro). */
+  linhaNaoGravada?: boolean
 }
 
 function pedidoDoBanco(situacao: string) {
@@ -86,7 +88,9 @@ function cliente(opcoes: Opcoes = {}) {
           ? opcoes.semFicha === true
             ? null
             : { id: FICHA, contact_is_public: true }
-          : [{ id: FICHA }],
+          : opcoes.linhaNaoGravada === true
+            ? []
+            : [{ id: FICHA }],
         error: null,
         count: null,
       }
@@ -301,6 +305,19 @@ describe("TROCA-005 — conta do prestador", () => {
       tabela: "provider_profiles",
       coluna: "owner_user_id",
       valor: USER,
+    })
+  })
+
+  it("conta de membro grava zero linhas e recebe 403 honesto", async () => {
+    const mock = cliente({ linhaNaoGravada: true })
+    autenticar(mock)
+    const resposta = await salvarConta(
+      req("prestador/conta", "PATCH", '{"telefone":"92999990000","telefonePublico":true}'),
+    )
+    expect(resposta.status).toBe(403)
+    expect(await resposta.json()).toEqual({
+      erro: "sem-permissao",
+      mensagem: "Esta conta não edita o contato do negócio.",
     })
   })
 

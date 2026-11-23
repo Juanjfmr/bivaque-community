@@ -30,7 +30,7 @@ export type ResultadoSimples =
   | { readonly ok: true }
   | {
       readonly ok: false
-      readonly motivo: "sem-ficha" | "sem-comunidade" | "dados-invalidos"
+      readonly motivo: "sem-ficha" | "sem-comunidade" | "sem-permissao" | "dados-invalidos"
       readonly mensagem: string
     }
 
@@ -83,14 +83,25 @@ export async function salvarContaDoPrestador(
       mensagem: "Crie a página do negócio antes de editar a conta.",
     }
   }
-  const { error } = await client
+  // `.select("id")` + contagem: para conta de membro a policy owner-only filtra
+  // o UPDATE em silêncio (zero linhas, sem erro); sem contar linhas isso virava
+  // "Conta salva." com o telefone descartado (achado 1 da correção 3).
+  const { data: gravadas, error } = await client
     .from("provider_profiles")
     .update({
       contact_phone: telefone,
       contact_is_public: entrada.telefonePublico && telefone !== null,
     })
     .eq("id", ficha.id)
+    .select("id")
   if (error) throw error
+  if ((gravadas ?? []).length === 0) {
+    return {
+      ok: false,
+      motivo: "sem-permissao",
+      mensagem: "Esta conta não edita o contato do negócio.",
+    }
+  }
   return { ok: true }
 }
 

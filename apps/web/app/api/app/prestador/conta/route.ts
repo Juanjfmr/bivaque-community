@@ -56,11 +56,9 @@ export async function PATCH(request: NextRequest): Promise<NextResponse> {
       telefonePublico: publico,
     })
     if (!resultado.ok) {
-      return responder(
-        request,
-        { erro: resultado.motivo, mensagem: resultado.mensagem },
-        resultado.motivo === "sem-ficha" ? 404 : 400,
-      )
+      const status =
+        resultado.motivo === "sem-ficha" ? 404 : resultado.motivo === "sem-permissao" ? 403 : 400
+      return responder(request, { erro: resultado.motivo, mensagem: resultado.mensagem }, status)
     }
     const conta = await contaDoPrestador(client, auth.sessao.usuario.id, auth.sessao.usuario.email)
     return responder(request, { conta }, 200)
