@@ -40,6 +40,7 @@ import {
   salvarAvisos,
   salvarInteresses,
   salvarProgresso,
+  verificarCodigo as verificarSoOCodigo,
 } from "./servidor"
 
 /**
@@ -181,7 +182,13 @@ export function TelaDeEntrada() {
       },
       enviarCodigo,
       verificarCodigo: async (codigo) => {
-        const resultado = await verificarCodigoEVinculo(emailEmTransito.current ?? "", codigo)
+        // O convidado prestador não é membro de cidade: a conferência de vínculo
+        // é do funil de membro, e o convite segue para o aceite.
+        const email = emailEmTransito.current ?? ""
+        const resultado =
+          conviteDePrestador === null
+            ? await verificarCodigoEVinculo(email, codigo)
+            : await verificarSoOCodigo(email, codigo)
         if (resultado.estado === "membro") {
           // Quem já tem vínculo não grava rascunho nem provisiona de novo; a
           // abertura relê o progresso e segue a etapa canônica do servidor
