@@ -1,4 +1,3 @@
-import { iniciais } from "@/lib/texto"
 import {
   type ComponentProps,
   type CSSProperties,
@@ -16,6 +15,7 @@ import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/compone
 import type { NomeDeIcone } from "@/lib/icones"
 import { prefersReduzido } from "@/lib/movimento"
 import { SeletorDeFoto } from "@/lib/nativo/SeletorDeFoto"
+import { iniciais } from "@/lib/texto"
 import {
   animacaoDaFolha,
   comecaArrasto,

@@ -1,7 +1,7 @@
-import { iniciais } from "@/lib/texto"
 import { statSync } from "node:fs"
 import { join } from "node:path"
 import { describe, expect, it } from "vitest"
+import { iniciais } from "@/lib/texto"
 
 import { caminhoDaIlustracao, caminhoDoSelo, ILUSTRACOES, SELOS } from "@/src/pecas/pecas"
 

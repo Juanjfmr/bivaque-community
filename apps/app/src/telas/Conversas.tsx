@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState } from "react"
 import { Botao } from "@/components/bivaque/botao"
 import { CabecaDePagina } from "@/components/bivaque/cabeca-de-pagina"
-import { ContextoDaConversa } from "@/components/bivaque/contexto-conversa"
 import { EsqueletoDeLista } from "@/components/bivaque/esqueleto"
 import { EstadoDeErro } from "@/components/bivaque/estado-vazio"
 import { Icone } from "@/components/bivaque/icone"
@@ -257,6 +256,11 @@ export function ListaDeConversas({
               </Avatar>
               <span className="grid min-w-0 flex-1 gap-1">
                 <b className="truncate text-sm">{conversa.nome}</b>
+                {origem && comContexto && (
+                  <span className="truncate text-xs text-(--on-surface-variant)">
+                    {origem.titulo}
+                  </span>
+                )}
                 <span
                   className={
                     conversa.porLer
@@ -267,7 +271,7 @@ export function ListaDeConversas({
                   {conversa.ultima || "Comece a conversa"}
                 </span>
               </span>
-              {conversa.porLer && (
+              {conversa.porLer && selecionada !== conversa.id && (
                 <span
                   role="img"
                   aria-label="Por ler"
@@ -279,11 +283,6 @@ export function ListaDeConversas({
                 className="size-5 shrink-0 text-(--on-surface-variant) md:hidden"
               />
             </button>
-            {/* O tipo da conversa sem o rótulo "Contexto da conversa": o título
-                do item só entra quando a API o fornecer (F09-B). */}
-            {origem && comContexto && (
-              <ContextoDaConversa origem={{ ...origem, detalhe: "" }} compacto />
-            )}
           </article>
         )
       })}

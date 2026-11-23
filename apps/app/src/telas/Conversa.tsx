@@ -210,6 +210,7 @@ export function Conversa() {
       if (!pedido.signal.aborted) {
         setAnuncioDeEnvio("Não foi possível enviar. Seu texto foi mantido.")
         setNaoEnviada(texto)
+        if (!reenvio) setRascunho("")
       }
     } finally {
       if (!pedido.signal.aborted) {
@@ -462,6 +463,15 @@ export function Conversa() {
                     }
                   >
                     {item.conteudo}
+                    <time
+                      dateTime={item.criadaEm}
+                      className="mt-1 block text-right text-xs opacity-70"
+                    >
+                      {new Date(item.criadaEm).toLocaleTimeString("pt-BR", {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </time>
                   </p>
                   {item.minha ? null : (
                     <BotaoDeIcone
@@ -527,7 +537,7 @@ export function Conversa() {
             >
               <fieldset
                 aria-label="Respostas rápidas"
-                className="flex min-w-0 flex-wrap gap-2 pb-0.5"
+                className="flex min-w-0 flex-nowrap gap-2 overflow-x-auto pb-0.5"
               >
                 {[
                   "Ainda está disponível?",
@@ -567,7 +577,7 @@ export function Conversa() {
                       disabled={enviando}
                       onChange={(evento) => setRascunho(evento.target.value)}
                       placeholder="Escreva uma mensagem..."
-                      className="min-h-12 max-h-32 resize-y rounded-xl"
+                      className="min-h-12 max-h-32 resize-none rounded-3xl"
                     />
                   </div>
                   <BotaoDeIcone
@@ -661,6 +671,7 @@ export function Conversa() {
                 <label key={valor} className="flex min-h-11 items-center gap-3">
                   <input
                     type="radio"
+                    className="accent-(--on-surface)"
                     name="motivo-denuncia"
                     value={valor}
                     checked={motivo === valor}
