@@ -379,6 +379,12 @@ test.describe("axe nas telas reais", () => {
             (violacao) => violacao.impact === "serious" || violacao.impact === "critical",
           )
           expect(graves, descrever(superficie.nome, largura, tema, graves)).toEqual([])
+          const titulos = await new AxeBuilder({ page }).withRules(["heading-order"]).analyze()
+          expect(
+            titulos.violations,
+            descrever(`${superficie.nome} (heading-order)`, largura, tema, titulos.violations),
+          ).toEqual([])
+          await expect(page.locator("h1"), `${superficie.nome}: exatamente um h1`).toHaveCount(1)
         }
       }
     })
