@@ -52,6 +52,9 @@ allowed_paths:
   - apps/app/src/previa-f01
   - apps/app/src/telas/Inicio.tsx
   - apps/app/src/inicio
+  - apps/app/src/criar
+  - apps/app/src/eventos/FormularioDeEncontro.tsx
+  - apps/app/src/telas/MeusAnuncios.tsx
   - apps/app/lib
   - apps/app/tests
   - apps/web/app/api/app/entry

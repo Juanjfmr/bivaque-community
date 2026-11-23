@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs"
+import { join } from "node:path"
 import { describe, expect, it } from "vitest"
 import {
   type CidadeDaCasca,
@@ -7,6 +9,7 @@ import {
   comCidadeTrocada,
   textoDaFaixaDeVisita,
 } from "@/lib/casca"
+import { dadosDoApp } from "@/lib/dados"
 
 // A cidade da casca (BUG-CIDADE-GRUPOS): o chip e a cidade de casa vêm da
 // SESSÃO; o conteúdo do Início é sempre o da cidade da sessão, e a cidade
@@ -18,6 +21,7 @@ import {
 // perfil e o Início preenchem, a troca pelo chip manda).
 
 const DESCONHECIDA: CidadeDaCasca = cidadesDaCasca({})
+const CASCA = readFileSync(join(import.meta.dirname, "..", "src", "contexto", "casca.tsx"), "utf8")
 
 describe("cidade da casca", () => {
   it("a casca nasce sem cidade: neutra, nunca o padrão de demonstração", () => {
@@ -30,6 +34,13 @@ describe("cidade da casca", () => {
     expect(cidadesDaCasca({ cidade: "Recife", cidadeDeCasa: "Rio de Janeiro" })).toEqual({
       cidade: "Recife",
       cidadeDeCasa: "Rio de Janeiro",
+    })
+    // A base do modo de prova é a demonstração; a semente manda por cima.
+    const demonstracao = dadosDoApp.resumoDaCasca()
+    const base = { cidade: demonstracao.cidade, cidadeDeCasa: demonstracao.cidadeDeCasa }
+    expect(cidadesDaCasca({ ...base, cidade: "Recife" })).toEqual({
+      cidade: "Recife",
+      cidadeDeCasa: "Manaus",
     })
   })
 
@@ -99,5 +110,31 @@ describe("cidade da casca", () => {
     expect(cidadeDoConteudo("Rio de Janeiro", { cidade: "Recife", cidadeDeCasa: "" })).toBe(
       "Rio de Janeiro",
     )
+  })
+
+  // E2E completo do app em preview (sem servidor de sessão, correção 3): a casca
+  // nascia sem cidade e nada a preenchia. Sem sessão, a demonstração é a fonte.
+  it("sem sessão, a casca mostra a cidade da demonstração", () => {
+    const demonstracao = dadosDoApp.resumoDaCasca().cidade
+    expect(demonstracao).toBe("Manaus")
+    expect(comCidadeDaSessao(DESCONHECIDA, demonstracao)).toEqual({
+      cidade: demonstracao,
+      cidadeDeCasa: demonstracao,
+    })
+    // O efeito do provedor só cai na demonstração no ramo sem sessão.
+    expect(CASCA).toMatch(/if \(!sessao\?\.autenticado\) \{\s*cidadeDaDemonstracao\(\)/)
+    expect(CASCA.indexOf("lerPerfil({ signal: controle.signal })")).toBeGreaterThan(
+      CASCA.indexOf("if (!sessao?.autenticado) {"),
+    )
+  })
+
+  it("com sessão, a cidade da demonstração não entra", () => {
+    const demonstracao = dadosDoApp.resumoDaCasca().cidade
+    const comSessao = comCidadeDaSessao(DESCONHECIDA, "Rio de Janeiro")
+    expect(comSessao.cidade).toBe("Rio de Janeiro")
+    expect(comSessao.cidade).not.toBe(demonstracao)
+    // A chamada da demonstração existe uma vez só: ela é o ramo, não uma reserva
+    // aplicada também a quem tem sessão.
+    expect(CASCA.split("cidadeDaDemonstracao()")).toHaveLength(2)
   })
 })

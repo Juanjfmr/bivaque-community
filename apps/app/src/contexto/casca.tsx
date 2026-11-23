@@ -81,7 +81,15 @@ export function ProvedorDaCasca({ children }: { children: ReactNode }) {
     // A cidade não vem do dado de demonstração nem de um padrão: o chip nascia
     // "Manaus" para quem tinha vínculo no Rio. Vazio é "ainda não sei", e as
     // leituras abaixo (perfil e Início) preenchem sem sobrescrever uma troca.
-    const cidades = cidadesDaCasca(semente)
+    // No modo de prova a base é a demonstração, com a semente por cima: as specs
+    // não trazem cidade própria (correção 3 do BUGCID-001). Em produção o modo de
+    // prova não existe, então nada disto chega a quem usa.
+    const base = modoDeProvaAtivo() ? dadosDoApp.resumoDaCasca() : semente
+    const cidades = cidadesDaCasca({
+      cidade: base.cidade ?? "",
+      cidadeDeCasa: base.cidadeDeCasa ?? "",
+      ...semente,
+    })
     return {
       cidade: cidades.cidade,
       cidadeDeCasa: cidades.cidadeDeCasa,
@@ -108,9 +116,22 @@ export function ProvedorDaCasca({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (modoDeProvaAtivo()) return
     const controle = new AbortController()
+    // Sem sessão — ou sem servidor de sessão, como no preview — a casca mostra a
+    // cidade da demonstração: não há sessão real que a preencha.
+    const cidadeDaDemonstracao = () => {
+      if (!controle.signal.aborted) confirmarCidadeDaSessao(dadosDoApp.resumoDaCasca().cidade)
+    }
     void lerProgresso()
+      .then(
+        (sessao) => sessao,
+        () => null,
+      )
       .then((sessao) => {
-        if (!sessao.autenticado || controle.signal.aborted) return
+        if (controle.signal.aborted) return
+        if (!sessao?.autenticado) {
+          cidadeDaDemonstracao()
+          return
+        }
         // A cidade da sessão é a do chip: `lerPerfil` já devolve o vínculo
         // `current` da rota de perfil (nenhuma rota nova). Se esta leitura
         // falhar, a cidade fica vazia — e a consulta do Início devolve a mesma
