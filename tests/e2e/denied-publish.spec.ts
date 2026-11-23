@@ -4,7 +4,7 @@
 // uma tabela profile_suspensions + helper public.is_account_suspended()
 // + RLS update em posts/comments/post_reactions/reports. INSERT em posts
 // retorna 42501 quando o caller esta suspenso; o cliente
-// classifica como 'server' em lib/composer/publish-error.ts e exibe copy
+// vira recusa generica em apps/app/src/grupos/publicacao.ts (recusaAoPublicar) e exibe copy
 // generica identica a qualquer outra negacao (anti-enumeracao §4.3).
 //
 // Persona: membro-1@bivaque.example.invalid (membro verificado de Manaus,
@@ -191,8 +191,9 @@ test.describe("denied publish: conta suspensa veta INSERT em posts (W1-DENIED)",
       await composer.getByLabel("Pergunta").fill(`${contentPrefix} membro suspenso tentou publicar`)
       await composer.getByTestId("publish-submit").click()
 
-      // Copy generica: lib/composer/publish-error.ts classifica 42501 como
-      // 'server' e exibe exatamente o mesmo texto de qualquer outra falha.
+      // Copy generica: apps/app/src/grupos/publicacao.ts (recusaAoPublicar)
+      // traduz a recusa do servidor e exibe exatamente o mesmo texto de
+      // qualquer outra falha.
       // Anti-enumeracao §4.3: indistinguishable de "sem permissao" / "nao existe".
       await expect(page.getByText(/Não foi possível criar a publicação/)).toBeVisible({
         timeout: 10000,
