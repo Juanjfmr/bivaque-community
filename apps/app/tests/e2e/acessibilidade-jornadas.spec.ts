@@ -1,5 +1,5 @@
 ﻿import AxeBuilder from "@axe-core/playwright"
-import { expect, test } from "@playwright/test"
+import { expect, type Locator, type Page, test } from "@playwright/test"
 import {
   EVENTO_DA_PROVA,
   simularEvento,
@@ -14,6 +14,45 @@ import { ID_PERGUNTA, simularPerguntas } from "./perguntas-ajuda"
 import { simularEncontros } from "./run-140-ajuda"
 import { aplicarStubMercado } from "./stub-mercado"
 import { simularVoce } from "./voce-ajuda"
+
+async function alcancarComTab(page: Page, alvo: Locator) {
+  for (let volta = 0; volta < 160; volta += 1) {
+    await page.keyboard.press("Tab")
+    if (await alvo.evaluate((elemento) => elemento === document.activeElement)) {
+      const foco = await alvo.evaluate((elemento) => {
+        const estilo = getComputedStyle(elemento)
+        return estilo.outlineStyle !== "none" || estilo.boxShadow !== "none"
+      })
+      expect(foco).toBe(true)
+      return
+    }
+  }
+  throw new Error(`Tab não alcançou ${alvo}`)
+}
+
+test.describe("teclado por jornada", () => {
+  test("F04: abrir compositor do grupo", async ({ page }) => {
+    await simularProgresso(page)
+    await simularGrupos(page)
+    await page.goto("/app/grupo/g-pets")
+    const alvo = page.locator('[data-acao="escrever-grupo"]')
+    await expect(alvo).toBeVisible()
+    await alcancarComTab(page, alvo)
+    await page.keyboard.press("Enter")
+    await expect(page.locator('[data-dialogo="escrever-grupo"]')).toBeVisible()
+  })
+
+  test("F10: abrir pessoas bloqueadas", async ({ page }) => {
+    await simularProgresso(page)
+    await simularVoce(page)
+    await page.goto("/app/voce")
+    const alvo = page.getByRole("button", { name: /Pessoas bloqueadas/ })
+    await expect(alvo).toBeVisible()
+    await alcancarComTab(page, alvo)
+    await page.keyboard.press("Enter")
+    await expect(page).toHaveURL(/\/app\/bloqueados$/)
+  })
+})
 
 const telas = [
   {
