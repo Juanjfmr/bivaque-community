@@ -752,6 +752,7 @@ export function Conversa() {
             <Botao
               type="submit"
               data-acao="enviar-denuncia"
+              className="rounded-full"
               disabled={agindo || motivo === "" || explicacao.trim().length > 300}
             >
               {agindo ? "Enviando…" : "Enviar denúncia"}

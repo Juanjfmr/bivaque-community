@@ -184,6 +184,7 @@ test("o ⋯ tem Denunciar e Bloquear, e Denunciar abre a denúncia da mensagem r
     "Ainda está disponível?",
   )
   await folha.getByRole("radio", { name: "Spam" }).check()
+  await expect(folha.locator('[data-acao="enviar-denuncia"]')).toHaveClass(/rounded-full/)
   await folha.locator('[data-acao="enviar-denuncia"]').click()
   await expect(folha).toHaveCount(0)
   await expect(page.getByText("Denúncia enviada. A moderação vai analisar.")).toBeVisible()
@@ -233,4 +234,15 @@ test("no computador, o item e a segurança têm o recuo dos balões, sem encosta
       10,
     )
   }
+})
+
+test("a caixa vazia leva ao Mercado por uma pílula", async ({ page }) => {
+  await page.route("**/api/app/entry/progress", (rota) =>
+    rota.fulfill({ json: { autenticado: true } }),
+  )
+  await page.route(/\/api\/app\/conversas(?:\?|$)/, (rota) =>
+    rota.fulfill({ json: { conversas: [], proximo: null, porLer: 0 } }),
+  )
+  await page.goto("/app/conversas")
+  await expect(page.locator('[data-acao="ir-ao-mercado"]')).toHaveClass(/rounded-full/)
 })
