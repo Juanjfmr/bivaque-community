@@ -74,6 +74,23 @@ test("alvos das folhas de pergunta e desapego medem ao menos 24 px em 375", asyn
   }
 })
 
+test("movimento reduzido na folha de pergunta aberta pelo teclado", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" })
+  await simularProgresso(page)
+  await simularCriar(page)
+  await page.goto("/app/inicio")
+  await alcancarComTab(page, page.locator('[data-acao="criar"]'))
+  await page.keyboard.press("Enter")
+  await expect(page.locator('[data-escolha="ask"]')).toBeFocused()
+  await page.keyboard.press("Enter")
+  const folha = page.locator('[data-fluxo="perguntar"]')
+  await expect(folha).toBeVisible()
+  const duracoes = await folha.evaluate((elemento) =>
+    elemento.getAnimations().map((animacao) => animacao.effect?.getComputedTiming().duration),
+  )
+  expect(duracoes.every((duracao) => duracao === 0)).toBe(true)
+})
+
 const telas = [
   {
     nome: "Comunidade",
