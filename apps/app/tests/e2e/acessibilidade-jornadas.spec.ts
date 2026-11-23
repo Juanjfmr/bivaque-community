@@ -7,9 +7,11 @@ import {
   simularVerbeteDoGuia,
   VERBETE_DA_PROVA,
 } from "./apoio"
+import { simularCriar } from "./criar-ajuda"
 import { PADRAO, simularServidorF09F10 } from "./f09-f10-ajuda"
 import { simularGrupos } from "./grupos-ajuda"
 import { ID_PERGUNTA, simularPerguntas } from "./perguntas-ajuda"
+import { simularEncontros } from "./run-140-ajuda"
 import { aplicarStubMercado } from "./stub-mercado"
 import { simularVoce } from "./voce-ajuda"
 
@@ -62,6 +64,12 @@ const telas = [
 
 const telasAdicionais = [
   {
+    nome: "Agenda vazia",
+    pronto: '[data-tela="agenda"]',
+    caminho: "/app/agenda",
+    preparar: simularEncontros,
+  },
+  {
     nome: "Evento",
     pronto: '[data-tela="evento"]',
     caminho: `/app/evento/${EVENTO_DA_PROVA.evento.id}`,
@@ -104,6 +112,72 @@ const telasAdicionais = [
     preparar: (page: import("@playwright/test").Page) => simularServidorF09F10(page, { ...PADRAO }),
   },
 ] as const
+
+for (const escolha of ["ask", "create-item"] as const) {
+  test(`axe: folha Criar ${escolha}`, async ({ page }) => {
+    await simularProgresso(page)
+    await simularCriar(page)
+    await page.emulateMedia({ colorScheme: "light" })
+    await page.goto("/app/inicio")
+    await page.locator('[data-acao="criar"]').click()
+    await page.locator(`[data-escolha="${escolha}"]`).click()
+    await expect(
+      page.locator(
+        escolha === "ask" ? '[data-fluxo="perguntar"]' : '[data-formulario-criacao="create-item"]',
+      ),
+    ).toBeVisible()
+    const resultado = await new AxeBuilder({ page })
+      .withTags(["wcag2a", "wcag2aa", "wcag21aa"])
+      .analyze()
+    expect(
+      resultado.violations.filter((v) => v.impact === "serious" || v.impact === "critical"),
+    ).toEqual([])
+  })
+}
+
+for (const caso of [
+  {
+    nome: "Conversas vazias",
+    caminho: "/app/conversas",
+    rota: /\/api\/app\/conversas(?:\?|$)/,
+    falha: false,
+  },
+  {
+    nome: "Falha de conversas",
+    caminho: "/app/conversas",
+    rota: /\/api\/app\/conversas(?:\?|$)/,
+    falha: true,
+  },
+  {
+    nome: "Falha de salvos",
+    caminho: "/app/salvos",
+    rota: /\/api\/app\/mercado\/salvos(?:\?|$)/,
+    falha: true,
+  },
+] as const) {
+  test(`axe: ${caso.nome}`, async ({ page }) => {
+    await simularServidorF09F10(page, { ...PADRAO })
+    await page.route(caso.rota, (rota) =>
+      caso.falha
+        ? rota.fulfill({ status: 503, json: { erro: "indisponivel" } })
+        : rota.fulfill({ json: { conversas: [], proximo: null, porLer: 0 } }),
+    )
+    await page.emulateMedia({ colorScheme: "light" })
+    await page.goto(caso.caminho)
+    await expect(page.locator("h1[data-titulo-da-tela]")).toBeVisible()
+    await expect(
+      page
+        .getByText(caso.falha ? /não foi possível|tente novamente|erro/i : /comece uma conversa/i)
+        .first(),
+    ).toBeVisible()
+    const resultado = await new AxeBuilder({ page })
+      .withTags(["wcag2a", "wcag2aa", "wcag21aa"])
+      .analyze()
+    expect(
+      resultado.violations.filter((v) => v.impact === "serious" || v.impact === "critical"),
+    ).toEqual([])
+  })
+}
 
 for (const tela of telasAdicionais) {
   test(`axe adicional: ${tela.nome}`, async ({ page }) => {
