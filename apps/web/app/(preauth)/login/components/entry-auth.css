@@ -1,0 +1,82 @@
+/* PORT-003 (lote 4 da entrada) — o que falta na folha da base.
+   `components/entry/entry.css` é da PORT-002 e este contrato não a edita, mas as
+   telas de autenticação da especificação usam três classes que ela ainda não
+   tem (`en-or`, `en-hint`, `en-ok`), o `flex-wrap` do rodapé e o link dentro do
+   aceite. As medidas são as do protótipo
+   (prototypes/bivaque-html/src/styles/entry.css), palavra por palavra.
+
+   O arquivo mora em `(preauth)/login/components/` porque é o diretório da
+   frente que todas as telas de entrada já importam indiretamente — o mesmo
+   motivo que fez `privacidade/page.tsx` importar `../consent/document-render` —
+   e porque uma cópia por rota divergiria na primeira correção. Nenhuma cor
+   solta aqui: tudo vem de `brand-tokens.css`, e o teste de escopo
+   (tests/scope/design-tokens.test.mjs) recusa `#` neste diretório. */
+
+/* No protótipo o topo está DENTRO do bloco de 480 px do formulário
+   (`<div class="en en-form">…<header class="en-top">`), então a ação da direita
+   não corre até a borda da janela em 1440. A casca da PORT-002 põe o topo na
+   largura de `.en`; esta regra devolve a coluna do formulário ao topo sem tocar
+   na casca, que é da base. */
+.bv-entry .en-top {
+  max-width: 480px;
+}
+
+/* entry.js: `.en-or` — "ou com e-mail" com as duas linhas de apoio. */
+.bv-entry .en-or {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  color: var(--md-sys-color-on-surface-variant);
+  margin: 8px 0 12px;
+}
+
+.bv-entry .en-or::before,
+.bv-entry .en-or::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--md-sys-color-outline-variant);
+}
+
+/* entry.js: `.en-hint` — a nota de rodapé da tela. */
+.bv-entry .en-hint {
+  font-size: 13px;
+  line-height: 19px;
+  color: var(--md-sys-color-on-surface-variant);
+  text-align: center;
+  margin: 12px 0 0;
+}
+
+/* entry.js: `.en-foot` recebe `flex-wrap: wrap` porque os dois botões de texto
+   do pé ("Esqueci minha senha" e "Criar conta") não cabem lado a lado em 375. */
+.bv-entry .en-foot {
+  flex-wrap: wrap;
+}
+
+/* entry.js: `.en-ok` — a confirmação neutra do envio do link. */
+.bv-entry .en-ok {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: var(--md-sys-color-secondary-container);
+  color: var(--md-sys-color-on-secondary-container);
+  font-size: 14px;
+  line-height: 20px;
+  margin: 4px 0 8px;
+}
+
+.bv-entry .en-ok md-icon {
+  flex: none;
+}
+
+/* O aceite nomeia os dois documentos como links, como `legalConsentText()` no
+   protótipo (`en-inline`). O travessão é o sublinhado do próprio link: dentro de
+   um `<label>`, o link não pode virar botão (o clique marcaria a caixa). */
+.bv-entry .en-check a {
+  color: var(--md-sys-color-primary);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
