@@ -1,4 +1,4 @@
-﻿import AxeBuilder from "@axe-core/playwright"
+import AxeBuilder from "@axe-core/playwright"
 import { expect, type Locator, type Page, test } from "@playwright/test"
 import type { AxeResults } from "axe-core"
 import {
