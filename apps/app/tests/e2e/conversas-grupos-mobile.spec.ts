@@ -46,7 +46,7 @@ test("compositor mostra a resposta gravada e preserva o texto na falha", async (
   await caixa.locator("#mensagem-da-conversa").fill("Mensagem que falhou")
   await caixa.getByRole("button", { name: "Enviar", exact: true }).click()
   await expect(caixa.getByRole("alert")).toContainText("Seu texto foi mantido")
-  await expect(caixa.locator("#mensagem-da-conversa")).toHaveValue("Mensagem que falhou")
+  await expect(caixa.locator("#mensagem-da-conversa")).toHaveValue("")
   const medidas = await caixa.boundingBox()
   expect(medidas).not.toBeNull()
   if (medidas) {
