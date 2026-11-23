@@ -6372,7 +6372,7 @@
       "phase": "Lançamento",
       "tests": [],
       "blockers": [],
-      "updatedAt": "2026-11-22",
+      "updatedAt": "2026-11-23",
       "sourceRevision": "9762b4a01",
       "links": ["docs/LANCAMENTO.md"],
       "proof": [
@@ -6395,13 +6395,25 @@
         "Projeto Android e iOS no repositório, sobre o build do apps/app",
         "Login Google e Apple, sessão, câmera e links profundos provados no emulador Android e no simulador iOS",
         "Builds de release (AAB e arquivo do Xcode em executor macOS) gerados pelo CI sem assinatura de produção",
-        "Assinatura, fichas e envio registrados como atos do dono"
+        "Assinatura, fichas e envio registrados como atos do dono",
+        "Play App Signing: chave de upload criada e adesão no Console (ato do dono); impressão SHA-256 da chave do Play registrada para App Links e provedores",
+        "Requisitos do Play fechados: conta de revisão, exclusão pela web, Data safety, conferência do AAB e teste fechado (cards PLAY-*)"
       ],
-      "dependencies": ["LAN-TROCA", "BLOCK-MOBILE-RUNTIME"],
+      "dependencies": [
+        "LAN-TROCA",
+        "BLOCK-MOBILE-RUNTIME",
+        "PLAY-CONTA-REVISAO",
+        "PLAY-EXCLUSAO-WEB",
+        "PLAY-DATA-SAFETY",
+        "PLAY-AAB-CONFERENCIA",
+        "PLAY-TESTE-FECHADO",
+        "PLAY-CORE-QUALITY"
+      ],
       "notes": [
         "20/11 decisão do coordenador: a tela de entrada no nativo (apps/app/src/entrada/servidor.ts com fetch relativo) sai do LOJA-001 e entra no LOJA-002, junto da sessão nativa do ADR-20261120. Ficam também para o LOJA-002: android:allowBackup, window.alert no SeletorDeFoto, remover o ouvinte appUrlOpen, testes de template com.getcapacitor.myapp, varredura dos gerados do cap sync, ios/Pods no .gitignore, setup-java v4.",
         "22/11 riscos aceitos do LOJA-003, registrados no ADR-20261120 (reauditoria de 22/11): uma escrita que recebe 401 com o token longe de vencer não limpa o cofre (erro com Tentar de novo; o token vence em até 1 h); erro de configuração da origem da API aparece como falta de rede; a limpeza de rascunhos no IndexedDB é melhor esforço nos WebView sem indexedDB.databases().",
-        "22/11 falta para fechar o LAN-LOJA. (1) Provas: login Google/Apple, sessão ao reabrir, câmera e links no emulador Android (o PC não tem Docker para a pilha local) e no simulador iOS (macOS/CI); a sessão no iOS 15 só aparelho ou simulador mostram; builds de release sem assinatura no CI. (2) Atos do dono: credenciais Google e Apple, cadastro de bivaque://auth-callback nas URLs de retorno do projeto hospedado, assinatura, fichas e envio às lojas."
+        "22/11 falta para fechar o LAN-LOJA. (1) Provas: login Google/Apple, sessão ao reabrir, câmera e links no emulador Android (o PC não tem Docker para a pilha local) e no simulador iOS (macOS/CI); a sessão no iOS 15 só aparelho ou simulador mostram; builds de release sem assinatura no CI. (2) Atos do dono: credenciais Google e Apple, cadastro de bivaque://auth-callback nas URLs de retorno do projeto hospedado, assinatura, fichas e envio às lojas.",
+        "23/11 análise do developer.android.com e do Play Console (.visual/android-analise/ANALISE.md, sem commit), por decisão do dono de abrir cards: obrigatórios viraram PLAY-CONTA-REVISAO, PLAY-EXCLUSAO-WEB, PLAY-DATA-SAFETY, PLAY-AAB-CONFERENCIA e PLAY-TESTE-FECHADO, e o AAB com Play App Signing estende este card; recomendados viraram PLAY-VOLTAR-PREDITIVO, PLAY-AUDITORIA-CLI, PLAY-A11Y-TALKBACK, PLAY-APP-LINKS, PLAY-CAPTURA-TABLET e PLAY-CORE-QUALITY. Edge-to-edge (target 36; falta viewport-fit=cover no apps/app/index.html) segue no LOJA-007. Já cumpridos: targetSdk 36 e allowBackup=false."
       ]
     },
     {
@@ -10777,6 +10789,314 @@
       "proof": [
         "23/11 LOJA-006, run 45088773294: roteiro.log com FALHOU 02-codigo em https://localhost/app/entrar (Você não apareceu), 02-codigo.png em branco, rede.log com 401 em /api/app/entry/progress, /api/app/inicio e /api/app/mercado/salvos; 08-google com a URL OAuth válida e erro 'Navegador do sistema não abriu'."
       ]
+    },
+    {
+      "id": "PLAY-CONTA-REVISAO",
+      "title": "Play: conta de revisão que entra sem o código de uso único",
+      "phase": "Lançamento",
+      "priority": "P1",
+      "category": "backend",
+      "status": "blocked",
+      "description": "O Play exige credenciais reutilizáveis, válidas de qualquer lugar e em inglês, que contornem código de uso único ou 2FA, para o revisor ver o app inteiro; o relatório de pré-lançamento usa as mesmas credenciais. A entrada do Bivaque é só por código de 6 números por e-mail (ADR-20261101 entrada única por código) e passa pela porta de verificação militar, então o revisor para na entrada e o app é recusado. R3 (autenticação e dado pessoal): fica bloqueado até o ADR por delegação, com security-auditor, revisor independente e RATIFICACAO no mesmo commit.",
+      "checklist": [
+        "ADR por delegação com o mecanismo da conta de revisão (opções e escolha), security-auditor, revisor independente e linha na RATIFICACAO no mesmo commit",
+        "Implementação no servidor com testes positivos e negativos: a exceção vale só para a conta reservada e não abre a entrada para mais ninguém",
+        "Conta de revisão verificada no seed de produção por migration ou script do dono, com acesso a Início, Comunidade, Mercado, Conversas e Você, sem dado pessoal real",
+        "Prova no emulador: a conta entra sem e-mail e chega ao Início; a mesma via recusa qualquer outro e-mail",
+        "Instruções em inglês para o revisor e credenciais cadastradas no Play Console (ato do dono)"
+      ],
+      "dependencies": [],
+      "tests": [],
+      "blockers": [
+        "Falta o ADR por delegação (R3) que fixe o mecanismo da conta de revisão; autorizado pelo coordenador em 23/11."
+      ],
+      "updatedAt": "2026-11-23",
+      "sourceRevision": "9c075d211",
+      "links": [
+        "https://support.google.com/googleplay/android-developer/answer/15748846",
+        "https://support.google.com/googleplay/android-developer/answer/9842757",
+        "docs/decisions/ADR-20261101-entrada-unica-por-codigo.md",
+        ".visual/android-analise/ANALISE.md (2.6)"
+      ],
+      "proof": [
+        "23/11 análise do developer.android.com e do Play Console: a ajuda do Play pede credenciais que contornem código de uso único e não expirem; no repositório não há conta de revisão nem card, e a entrada só aceita o código por e-mail."
+      ]
+    },
+    {
+      "id": "PLAY-EXCLUSAO-WEB",
+      "title": "Play: pedido de exclusão de conta pela web, sem o app",
+      "phase": "Lançamento",
+      "priority": "P1",
+      "category": "backend",
+      "status": "repo",
+      "description": "Além do caminho no app (já existe: ApagarConta → POST /api/app/voce/apagar-conta → request_account_deletion()), o Play exige um link web, citado no Data safety, onde a pessoa peça a exclusão da conta e dos dados sem reinstalar o app; a página precisa citar o nome do app como na ficha e deixar o pedido fácil de achar. Hoje o /ajuda só descreve o caminho dentro do app. Toca dado pessoal: entra em repo até um ADR curto fixar como confirmar quem pede (por exemplo, código para o e-mail da conta) e o que acontece com o pedido.",
+      "checklist": [
+        "ADR curto por delegação: confirmação de quem pede, prazo e o que se apaga (reusar request_account_deletion)",
+        "Página pública no apps/web com o nome Bivaque e o pedido em destaque, sem expor se um e-mail tem conta",
+        "Testes positivos e negativos da rota (pedido confirmado, pedido sem confirmação, limite de tentativas)",
+        "URL registrada no rascunho do Data safety (PLAY-DATA-SAFETY)"
+      ],
+      "dependencies": [],
+      "tests": [],
+      "blockers": [],
+      "updatedAt": "2026-11-23",
+      "sourceRevision": "9c075d211",
+      "links": [
+        "https://support.google.com/googleplay/android-developer/answer/13327111",
+        "apps/app/src/telas/ApagarConta.tsx",
+        "apps/web/app/api/app/voce/apagar-conta/route.ts",
+        "apps/web/app/(public)/ajuda/help-topics.ts",
+        ".visual/android-analise/ANALISE.md (2.5)"
+      ],
+      "proof": [
+        "23/11 análise: exclusão dentro do app cumprida; o /ajuda diz só 'Em Você → Configurações → Conta e privacidade → Excluir conta', sem pedido pela web."
+      ]
+    },
+    {
+      "id": "PLAY-TESTE-FECHADO",
+      "title": "Play: teste fechado com 12 testadores por 14 dias (ato do dono)",
+      "phase": "Lançamento",
+      "priority": "P1",
+      "category": "governance",
+      "status": "blocked",
+      "description": "Contas pessoais do Play criadas depois de 13/11/2023 só ganham acesso à produção depois de um teste fechado com pelo menos 12 testadores inscritos sem interrupção por 14 dias; contas de organização não têm essa regra. Soma no mínimo 14 dias ao calendário depois do primeiro AAB aceito no teste fechado.",
+      "checklist": [
+        "Dono confirma o tipo de conta do Play (pessoal ou organização)",
+        "Se pessoal: AAB no teste fechado e 12 testadores inscritos",
+        "14 dias seguidos com os 12 inscritos e pedido de acesso à produção no Console"
+      ],
+      "dependencies": [],
+      "tests": [],
+      "blockers": [
+        "Ato do dono: conta do Play, recrutamento dos testadores e pedido de acesso à produção."
+      ],
+      "updatedAt": "2026-11-23",
+      "sourceRevision": "9c075d211",
+      "links": [
+        "https://support.google.com/googleplay/android-developer/answer/14151465",
+        ".visual/android-analise/ANALISE.md (2.7)"
+      ],
+      "proof": ["23/11 análise: regra lida na ajuda do Play Console; nada a fazer no código."]
+    },
+    {
+      "id": "PLAY-DATA-SAFETY",
+      "title": "Play: rascunho do Data safety derivado do código",
+      "phase": "Lançamento",
+      "priority": "P1",
+      "category": "governance",
+      "status": "next",
+      "description": "Todo app publicado, inclusive em teste fechado, preenche o Data safety e liga uma política de privacidade. O agente prepara o rascunho das respostas a partir do código (o que o app e o servidor coletam, para quê, se é compartilhado, se é criptografado em trânsito, como se pede exclusão); o dono preenche no Console e o texto legal passa pelo advogado.",
+      "checklist": [
+        "Inventário dos dados pelo código: e-mail, nome, fotos, mensagens, CEP e local aproximado, documento da verificação, resultado da consulta de vínculo (sem CPF cru), identificadores de sessão e, com o push, o token do aparelho",
+        "Respostas do formulário em português e inglês em docs/, com a fonte no código de cada resposta",
+        "Conferência com a política de privacidade publicada (/privacidade)",
+        "URL de exclusão pela web (PLAY-EXCLUSAO-WEB) no formulário",
+        "Preenchimento no Play Console (ato do dono)"
+      ],
+      "dependencies": ["PLAY-EXCLUSAO-WEB"],
+      "tests": [],
+      "blockers": [],
+      "updatedAt": "2026-11-23",
+      "sourceRevision": "9c075d211",
+      "links": [
+        "https://support.google.com/googleplay/android-developer/answer/10787469",
+        "apps/web/app/(preauth)/privacidade/page.tsx",
+        ".visual/android-analise/ANALISE.md (2.4)"
+      ],
+      "proof": [
+        "23/11 análise: o formulário é exigido mesmo no teste fechado; a página /privacidade existe."
+      ]
+    },
+    {
+      "id": "PLAY-AAB-CONFERENCIA",
+      "title": "Play: conferir o AAB de release (páginas de 16 KB e permissões de mídia)",
+      "phase": "Lançamento",
+      "priority": "P1",
+      "category": "infra",
+      "status": "next",
+      "description": "Com target 35+, o Play exige suporte a páginas de memória de 16 KB (bibliotecas nativas alinhadas). E a política do Play restringe READ_MEDIA_IMAGES/VIDEO a apps cujo uso central é acesso amplo à galeria; quem só escolhe uma foto usa o Photo Picker. O manifesto do app só declara INTERNET, mas o manifesto fundido pode receber permissões dos plugins (@capacitor/camera). Conferir no AAB de release assim que o CI o gerar (item de AAB do LAN-LOJA).",
+      "checklist": [
+        "android analyze (ou zipalign -c -P 16) no AAB do CI: bibliotecas nativas alinhadas a 16 KB",
+        "Permissões do manifesto fundido listadas: sem READ_MEDIA_IMAGES, READ_MEDIA_VIDEO ou READ_EXTERNAL_STORAGE (remover com tools:node=\"remove\" se aparecerem)",
+        "Escolher foto no emulador Android 13+ abre o seletor do sistema sem pedir permissão",
+        "Conferência automatizada no workflow do app de loja, coberta pelo teste de escopo"
+      ],
+      "dependencies": [],
+      "tests": [],
+      "blockers": [],
+      "updatedAt": "2026-11-23",
+      "sourceRevision": "9c075d211",
+      "links": [
+        "https://developer.android.com/guide/practices/page-sizes",
+        "https://developer.android.com/training/data-storage/shared/photo-picker",
+        "apps/app/android/app/src/main/AndroidManifest.xml",
+        "apps/app/lib/nativo/foto.ts",
+        ".visual/android-analise/ANALISE.md (2.3 e 2.9)"
+      ],
+      "proof": [
+        "23/11 análise: não verificável no PC (pacotes Capacitor ausentes dos node_modules locais); o CI hoje só gera assembleDebug."
+      ]
+    },
+    {
+      "id": "PLAY-VOLTAR-PREDITIVO",
+      "title": "Android: voltar preditivo navega no app e só sai na raiz",
+      "phase": "Lançamento",
+      "priority": "P2",
+      "category": "frontend",
+      "status": "next",
+      "description": "Com target 36 (Android 16) o voltar preditivo vem ligado por padrão e só se desliga com android:enableOnBackInvokedCallback=\"false\". No Capacitor o voltar passa pelo @capacitor/app (backButton). Provar que o gesto de voltar navega no histórico do app (Conversa → lista, Anúncio → Mercado, Criar → origem) e só sai do app na raiz, sem a animação de voltar para a tela inicial no meio da navegação.",
+      "checklist": [
+        "Mapa do voltar nas cinco abas e nos detalhes",
+        "Ajuste no app se o voltar fechar o app fora da raiz, com teste",
+        "Passo no roteiro Android do app-loja-provas com o gesto de voltar"
+      ],
+      "dependencies": [],
+      "tests": [],
+      "blockers": [],
+      "updatedAt": "2026-11-23",
+      "sourceRevision": "9c075d211",
+      "links": [
+        "https://developer.android.com/guide/navigation/custom-back/predictive-back-gesture",
+        "tests/nativo/android.mjs",
+        ".visual/android-analise/ANALISE.md (3.1)"
+      ],
+      "proof": [
+        "23/11 análise: manifesto sem enableOnBackInvokedCallback; sem prova do voltar no emulador."
+      ]
+    },
+    {
+      "id": "PLAY-AUDITORIA-CLI",
+      "title": "Android: auditoria com as skills oficiais de política e segurança do CLI",
+      "phase": "Lançamento",
+      "priority": "P2",
+      "category": "testing",
+      "status": "next",
+      "description": "Rodar as skills oficiais do Android CLI play-policy-insights, android-intent-security e android-permissions-security sobre o projeto apps/app/android e o manifesto fundido do release; registrar achados e corrigir os que tocam o envio. Inclui conferir que o release não tem usesCleartextTraffic nem a configuração de rede de prova (rede_de_prova é só do build de prova).",
+      "checklist": [
+        "play-policy-insights: relatório de permissões, conta e identidade e Data safety",
+        "android-intent-security: MainActivity exportada com bivaque://app e bivaque://auth-callback",
+        "android-permissions-security: permissões e componentes (FileProvider)",
+        "Achados registrados no card e corrigidos ou aceitos com razão"
+      ],
+      "dependencies": [],
+      "tests": [],
+      "blockers": [],
+      "updatedAt": "2026-11-23",
+      "sourceRevision": "9c075d211",
+      "links": [
+        "https://developer.android.com/tools/agents",
+        "https://developer.android.com/privacy-and-security/risks/insecure-webview-native-bridges",
+        "https://developer.android.com/develop/ui/views/layout/webapps/managing-webview",
+        ".visual/android-analise/ANALISE.md (3.2)"
+      ],
+      "proof": [
+        "23/11: Android CLI 1.1.16919734 instalado no PC do dono; skills listadas por android skills list."
+      ]
+    },
+    {
+      "id": "PLAY-A11Y-TALKBACK",
+      "title": "Android: TalkBack e Accessibility Scanner no app de loja",
+      "phase": "Lançamento",
+      "priority": "P2",
+      "category": "testing",
+      "status": "next",
+      "description": "Testar o app no emulador com TalkBack (leitor de tela) e com o Accessibility Scanner (alvos de toque, contraste, rótulos) na entrada por código, nas cinco abas e no Criar. A web já tem auditoria de acessibilidade; isto cobre o que só aparece na WebView do Android.",
+      "checklist": [
+        "TalkBack: entrada, Início, Comunidade, Criar, Mercado, Você e Conversas lidos na ordem certa e com rótulos",
+        "Accessibility Scanner nas mesmas telas, com capturas",
+        "Achados corrigidos ou registrados com próximo passo"
+      ],
+      "dependencies": [],
+      "tests": [],
+      "blockers": [],
+      "updatedAt": "2026-11-23",
+      "sourceRevision": "9c075d211",
+      "links": [
+        "https://developer.android.com/guide/topics/ui/accessibility/testing",
+        ".visual/android-analise/ANALISE.md (3.3)"
+      ],
+      "proof": ["23/11 análise: não há prova de TalkBack no Android."]
+    },
+    {
+      "id": "PLAY-APP-LINKS",
+      "title": "Android: App Links verificados para convite, e-mail e push abrirem no app",
+      "phase": "Lançamento",
+      "priority": "P2",
+      "category": "frontend",
+      "status": "blocked",
+      "description": "Links https do domínio do Bivaque (convites, avisos por e-mail, push) abrem hoje no navegador; com android:autoVerify=\"true\" e /.well-known/assetlinks.json no apps/web eles abrem direto no app. O arquivo precisa da impressão SHA-256 da chave de assinatura do Play App Signing (não a da chave de upload). O retorno do OAuth por bivaque://auth-callback com PKCE continua.",
+      "checklist": [
+        "assetlinks.json servido pelo apps/web com a impressão SHA-256 da chave do Play",
+        "Filtro https com autoVerify no manifesto para as rotas de convite e de destino",
+        "Prova no emulador: link https abre o app na rota certa; link de rota não coberta segue no navegador"
+      ],
+      "dependencies": [],
+      "tests": [],
+      "blockers": [
+        "Ato do dono: aderir ao Play App Signing e informar a impressão SHA-256 da chave do Play e o domínio de produção."
+      ],
+      "updatedAt": "2026-11-23",
+      "sourceRevision": "9c075d211",
+      "links": [
+        "https://developer.android.com/training/app-links/verify-applinks",
+        "https://support.google.com/googleplay/android-developer/answer/9842756",
+        ".visual/android-analise/ANALISE.md (3.5)"
+      ],
+      "proof": [
+        "23/11 análise: só esquemas bivaque://app e bivaque://auth-callback no manifesto; sem assetlinks.json no repositório."
+      ]
+    },
+    {
+      "id": "PLAY-CAPTURA-TABLET",
+      "title": "Android: capturas do app de loja em tablet",
+      "phase": "Lançamento",
+      "priority": "P3",
+      "category": "testing",
+      "status": "next",
+      "description": "Diretrizes de telas grandes e ChromeOS: o app não trava orientação e o Capacitor trata configChanges; a web é provada em 768 e 1440. Falta conferir no emulador de tablet, retrato e paisagem, que nada quebra nem fica esticado.",
+      "checklist": [
+        "AVD de tablet no roteiro (ou execução avulsa) com capturas em retrato e paisagem do Início, Mercado e Conversa",
+        "Achados corrigidos ou registrados"
+      ],
+      "dependencies": [],
+      "tests": [],
+      "blockers": [],
+      "updatedAt": "2026-11-23",
+      "sourceRevision": "9c075d211",
+      "links": [
+        "https://developer.android.com/docs/quality-guidelines/adaptive-app-quality",
+        "https://developer.android.com/develop/devices/chromeos/learn/optimizing",
+        ".visual/android-analise/ANALISE.md (3.6)"
+      ],
+      "proof": ["23/11 análise: manifesto sem screenOrientation; sem captura em tablet."]
+    },
+    {
+      "id": "PLAY-CORE-QUALITY",
+      "title": "Android: checklist de qualidade básica (core app quality) antes do envio",
+      "phase": "Lançamento",
+      "priority": "P2",
+      "category": "testing",
+      "status": "next",
+      "description": "Passar a lista oficial de qualidade básica do Android (estabilidade, desempenho, privacidade e segurança, UI e visual) item a item no app de loja e registrar o resultado com evidência; é a conferência final antes do envio.",
+      "checklist": [
+        "Lista oficial percorrida item a item com resultado e evidência",
+        "Itens reprovados corrigidos ou registrados como card com próximo passo"
+      ],
+      "dependencies": [
+        "PLAY-VOLTAR-PREDITIVO",
+        "PLAY-AUDITORIA-CLI",
+        "PLAY-A11Y-TALKBACK",
+        "PLAY-CAPTURA-TABLET"
+      ],
+      "tests": [],
+      "blockers": [],
+      "updatedAt": "2026-11-23",
+      "sourceRevision": "9c075d211",
+      "links": [
+        "https://developer.android.com/docs/quality-guidelines/core-app-quality",
+        ".visual/android-analise/ANALISE.md (3.7)"
+      ],
+      "proof": ["23/11 análise: checklist indicado como conferência final do LAN-LOJA."]
     }
   ],
   "launch": {
