@@ -161,7 +161,7 @@ export function PerfilDeMembro() {
           <header className="flex items-center gap-3 px-1">
             <Avatar nome={nome} tamanho={56} />
             <span className="grid min-w-0 gap-0.5">
-              <h1 id="titulo-da-tela" data-titulo-da-tela tabIndex={-1} className="truncate">
+              <h1 id="titulo-da-tela" data-titulo-da-tela tabIndex={-1} className="break-words">
                 {nome}
               </h1>
               <small className="text-(--on-surface-variant)">Membro da comunidade</small>

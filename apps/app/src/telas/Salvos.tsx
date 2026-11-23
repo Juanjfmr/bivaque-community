@@ -496,7 +496,7 @@ export function Salvos() {
             <EstadoVazio
               titulo="Nada salvo ainda"
               texto="Toque no marcador para guardar por aqui."
-              icone="bookmark_border"
+              icone="bookmark"
             >
               {/* A saída do vazio tem cara de ação (revisão às cegas, 5): a
                   ardósia preenchida de concluir, não o pálido de um secundário.

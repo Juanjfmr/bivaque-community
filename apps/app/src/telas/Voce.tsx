@@ -252,7 +252,7 @@ export function Voce() {
           </p>
           <Botao
             tom="contornado"
-            className="shrink-0"
+            className="shrink-0 rounded-full"
             onClick={() => setRodada((atual) => atual + 1)}
           >
             Tentar de novo
