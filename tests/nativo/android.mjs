@@ -23,13 +23,35 @@ const urlSemQuery = (valor) => {
     return "URL indisponível"
   }
 }
+let diagnosticarCodigo = false
 function instrumentarRede(pagina) {
+  pagina.on("pageerror", () => {
+    if (diagnosticarCodigo) log("02-codigo: erro JavaScript nao tratado")
+  })
   pagina.on("requestfailed", (pedido) =>
     logRede(
       `requestfailed ${pedido.method()} ${urlSemQuery(pedido.url())} ${sanitizar(pedido.failure()?.errorText ?? "falha sem detalhe")}`,
     ),
   )
   pagina.on("response", (resposta) => {
+    if (diagnosticarCodigo) {
+      const pedido = resposta.request()
+      const caminho = new URL(resposta.url()).pathname
+      if (caminho.startsWith("/api/app/")) {
+        const rotas = new Set([
+          "/api/app/entry/otp/verify",
+          "/api/app/entry/progress",
+          "/api/app/entry/verification",
+          "/api/app/inicio",
+          "/api/app/mercado/salvos",
+        ])
+        const rota = rotas.has(caminho) ? caminho : "/api/app/[outra]"
+        const autorizacao = pedido.headers()["authorization"] ? "sim" : "nao"
+        log(
+          `02-codigo: ${pedido.method()} ${rota} status=${resposta.status()} authorization=${autorizacao}`,
+        )
+      }
+    }
     if (resposta.status() >= 400)
       logRede(
         `response ${resposta.request().method()} ${urlSemQuery(resposta.url())} ${resposta.status()}`,
@@ -154,6 +176,19 @@ async function passo(nome, acao, dependencia = true) {
     log(
       `FALHOU: ${nome}; URL ${urlSemQuery(page?.isClosed() ? "" : (page?.url() ?? ""))}; erro ${sanitizar(erro instanceof Error ? erro.message : String(erro))}`,
     )
+    if (nome === "02-codigo" && page && !page.isClosed()) {
+      try {
+        const estado = await page.evaluate(() => ({
+          rota: location.pathname,
+          filhos: Boolean(document.querySelector("#root")?.children.length),
+        }))
+        log(
+          `02-codigo: rota=${/^\/app\/[a-z0-9/_-]*$/.test(estado.rota) ? estado.rota : "outra"} root_com_filhos=${estado.filhos}`,
+        )
+      } catch {
+        log("02-codigo: estado da WebView indisponivel")
+      }
+    }
     const limpa = await limparCodigo()
     if (limpa) {
       try {
@@ -243,11 +278,18 @@ try {
   })
   const codigoOk = await passo("02-codigo", async () => {
     await page.getByRole("button", { name: "Continuar com e-mail" }).click()
+    await page.getByLabel("E-mail", { exact: true }).fill("")
+    await page.getByLabel("E-mail", { exact: true }).click()
+    await esperar(1500)
+    captura("02-teclado")
     await page.getByLabel("E-mail", { exact: true }).fill(email)
     const desde = Date.now()
     await page.getByRole("button", { name: "Enviar código" }).click()
+    diagnosticarCodigo = true
     await page.getByLabel("Código de 6 números").fill(await codigoDoMailpit(email, desde))
     await esperarAutenticada()
+    captura("02-inicio-barras")
+    diagnosticarCodigo = false
   })
   const reabriu = await passo(
     "03-reabrir",
@@ -338,12 +380,35 @@ try {
     )
       throw new Error("URL OAuth ou PKCE inválido")
     await esperar(5000)
-    const atividade = adb("shell", "dumpsys", "activity", "activities")
-    if (
-      !atividade.includes("/auth/v1/authorize") ||
-      !/com\.android\.chrome|org\.chromium/i.test(atividade)
+    // Consultar somente endereco fixo, sem parametros OAuth.
+    const resolucao = adb(
+      "shell",
+      "cmd",
+      "package",
+      "resolve-activity",
+      "--brief",
+      "-a",
+      "android.intent.action.VIEW",
+      "-d",
+      "https://example.invalid/",
     )
-      throw new Error("Navegador do sistema não abriu")
+    const padrao =
+      resolucao
+        .match(/([a-zA-Z0-9_.]+)\/[a-zA-Z0-9_.$]+/g)
+        ?.at(-1)
+        ?.split("/")[0] ?? "indisponivel"
+    const atividade = adb("shell", "dumpsys", "activity", "activities")
+    const primeiroPlano =
+      atividade.match(/mResumedActivity[^\n]*? ([a-zA-Z0-9_.]+)\/[a-zA-Z0-9_.$]+/)?.[1] ??
+      "indisponivel"
+    const abriu =
+      padrao !== "indisponivel" &&
+      primeiroPlano === padrao &&
+      atividade.includes("/auth/v1/authorize")
+    log(
+      `Google: imagem=google_apis API=${adb("shell", "getprop", "ro.build.version.sdk").trim()} intent=VIEW navegador_padrao=${padrao} primeiro_plano=${primeiroPlano} authorize_em_atividade=${abriu}`,
+    )
+    if (!abriu) throw new Error("Intent VIEW OAuth nao observado em atividade")
   })
   if (falhou) process.exitCode = 1
 } catch (erro) {
