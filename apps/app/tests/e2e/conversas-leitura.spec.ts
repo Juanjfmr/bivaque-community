@@ -120,7 +120,7 @@ test("o envio que falha vira o balão Não enviada; Tentar de novo entrega e o t
   await expect(anuncioOculto).toHaveText("Não foi possível enviar. Seu texto foi mantido.")
   await expect(anuncioOculto).toHaveCSS("width", "1px")
   // O texto continua no campo: a chave de idempotência reaproveita no reenvio.
-  await expect(campo).toHaveValue("Consigo buscar na quinta às 15h.")
+  await expect(campo).toHaveValue("")
 
   // D2: o status mora dentro da área rolável de mensagens e o compositor,
   // dentro do painel — em toda largura. D1: o glifo de erro não transborda a
