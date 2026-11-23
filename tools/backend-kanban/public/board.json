@@ -6381,7 +6381,9 @@
         "21/11 LOJA-002 (#317): a prova contra o GoTrue local mediu que o reuso de R0 fora da janela recusa só R0 (401, 'Possible abuse attempt' no log); R2 segue válido direto no GoTrue. Emenda de 21/11 no ADR-20261120 por delegação: a revogação da família deixa de ser promessa, resíduo declarado na RATIFICACAO e card SEC-FAMILIA-RENOVACAO pós-lançamento.",
         "21/11 LOJA-002 (#317, 40850d7b4): CI completo verde (run 44910688304, stateful 375/768/1440); security-auditor LIBERA COM RESSALVAS e revisão independente PASS-COM-RESSALVA. Herdado pelo LOJA-003: cofre, PKCE no app, CSP nativa e retorno com auditoria própria; cabeçalho do app em todo pedido nativo; repetir renovar só dentro da janela de 10 s; Apple no entry/oauth.",
         "21/11 LOJA-003 (59ea6af85): testes do app 785/785, rota de progresso 28/28, build nativo com origens ficticias e CSP verificada; gate --fast executado. Pendentes: gate completo e CI, revisao independente de seguranca, prova Android com pilha local e iOS no CI/aparelho. Nao encerra LAN-LOJA.",
-        "22/11 LOJA-003 (#320, 9762b4a01): o app guarda a sessão no cofre do aparelho (@aparajita/capacitor-secure-storage 8.0.1, Keychain afterFirstUnlockThisDeviceOnly sem iCloud, Keystore, allowBackup=false). Também entraram: renovação única com espera em 429/503, PKCE no app, retorno bivaque://auth-callback no Android e iOS, CSP nativa sem script inline, CORS nativo em /api/localities, prévia do convite pelo Bearer com o cabeçalho do app, saída que limpa tudo (com o marcador 'saiu' se o cofre falhar). Gate completo verde em 8dd37550f e CI completo verde. Duas rodadas de auditoria de segurança independente: a 1ª reprovou (HIGH-1/2, MEDIUM-1/2); a 2ª deu LIBERA no eixo de segurança com F1–F5 corrigidos em 80077f9c6..9762b4a01 (AbortController no lugar de AbortSignal.timeout por causa do iOS 15, marcador de saída, renovação nas rotas autenticadas da entrada, cabeçalho do app na prévia, emenda dos allowed_paths). Testes: app 800, app-api 1644, escopo 318."
+        "22/11 LOJA-003 (#320, 9762b4a01): o app guarda a sessão no cofre do aparelho (@aparajita/capacitor-secure-storage 8.0.1, Keychain afterFirstUnlockThisDeviceOnly sem iCloud, Keystore, allowBackup=false). Também entraram: renovação única com espera em 429/503, PKCE no app, retorno bivaque://auth-callback no Android e iOS, CSP nativa sem script inline, CORS nativo em /api/localities, prévia do convite pelo Bearer com o cabeçalho do app, saída que limpa tudo (com o marcador 'saiu' se o cofre falhar). Gate completo verde em 8dd37550f e CI completo verde. Duas rodadas de auditoria de segurança independente: a 1ª reprovou (HIGH-1/2, MEDIUM-1/2); a 2ª deu LIBERA no eixo de segurança com F1–F5 corrigidos em 80077f9c6..9762b4a01 (AbortController no lugar de AbortSignal.timeout por causa do iOS 15, marcador de saída, renovação nas rotas autenticadas da entrada, cabeçalho do app na prévia, emenda dos allowed_paths). Testes: app 800, app-api 1644, escopo 318.",
+        "22/11 LOJA-005 (#322, 76ea99ec6..401c4dc84): quatro runs do app-loja-provas (45019546380, 45020824719, 45022364036, 45023729150), orçamento esgotado: HUMAN_DECISION, sem PASS. Roteiro Android readquire a WebView e roda os passos de forma independente. Provado no emulador: 01-entrada, 05-link (bivaque://app/entrar abre a entrada), 06-callback-sem-fluxo (callback sem PKCE não muda a rota), 07-backup (allowBackup=false). Não provado: 02/03/04 — defeito do app (card LOJA-DEF-ENTRADA-MEMBRO): o membro verificado do seed entra pelo código do Mailpit, o PUT /api/app/entry/progress volta 409 e o app fica em /app/entrar sem chegar ao Início (runs 2 e 3; no run 4 a WebView não reapareceu em 30 s depois do código). 08-google falhou nos runs 3 e 4 na conferência da URL OAuth/PKCE, sem detalhe no log; precisa de log da origem e dos parâmetros (sem valores) antes de culpar o app. iOS: saída (b), defeito do app (card LOJA-DEF-IOS-TELA-BRANCA): com a API de prova na forma real do servidor, em capacitor://localhost/app/ não há erro de JS, unhandledrejection, console.error nem falha de recurso; DOMContentLoaded em ~1,1 s; o pedido de progresso sai do bundle principal (provedor da casca), mas a raiz #root nunca recebe nenhuma mutação em 20 s: o React monta os provedores e o roteador nunca desenha a primeira tela. O mesmo build desenha no Android (https://localhost). Diagnóstico injetado só no dist-nativo do job (conferido pelo teste de escopo); artefatos em .visual/loja-004/ dos runs.",
+        "23/11 LOJA-006 (#322, 442a195fa..63b2ce5ec), opção A do dono: orçamento de 4 rodadas esgotado no Android 02–04, merge do que está provado. iOS: tela branca corrigida (card LOJA-DEF-IOS-TELA-BRANCA, done), 01-entrada verde no simulador com captura. Android: 01, 05, 06 e 07 verdes; 08-google com log por condição achou a origem errada (pilha em 55321, roteiro esperava 54321), corrigida derivando VITE_SUPABASE_URL do supabase status no workflow; o passo para agora em 'Navegador do sistema não abriu'. 02–04 não provados: tela branca e 401 depois do código (card LOJA-DEF-ANDROID-POS-CODIGO, próximo lote LOJA-007). Runs 45065428229, 45066442142, 45067867597 (cancelado no tempo-limite, reconexão sem limite), 45088773294."
       ],
       "id": "LAN-LOJA",
       "title": "Fase 7: app de loja em Capacitor pronto para envio",
@@ -10691,7 +10693,8 @@
       ],
       "proof": [
         "22/11 LOJA-005, runs 45020824719 e 45022364036: roteiro.log com FALHOU 02-codigo em /app/entrar; rede.log com PUT /api/app/entry/progress 409.",
-        "22/11 ENTRADA-001 (fix/entrada-membro, 363c63e99 + correção da revisão: o membro relê o progresso canônico em vez de ir direto ao Início): depois do código autenticado a entrada lê /api/app/entry/verification; membro segue a etapa canônica do servidor (o Início, ou a etapa pendente pós-prévia) sem PUT de rascunho, pessoa nova segue ao aceite, falha da conferência mostra a mensagem fixa e Tentar de novo. Vitest codigo-e-vinculo (3 casos) e E2E stateful \"membro existente entra por código e chega ao Início\" (sem PUT de progresso). Falta só o passo 02–04 do app-loja-provas no emulador."
+        "22/11 ENTRADA-001 (fix/entrada-membro, 363c63e99 + correção da revisão: o membro relê o progresso canônico em vez de ir direto ao Início): depois do código autenticado a entrada lê /api/app/entry/verification; membro segue a etapa canônica do servidor (o Início, ou a etapa pendente pós-prévia) sem PUT de rascunho, pessoa nova segue ao aceite, falha da conferência mostra a mensagem fixa e Tentar de novo. Vitest codigo-e-vinculo (3 casos) e E2E stateful \"membro existente entra por código e chega ao Início\" (sem PUT de progresso). Falta só o passo 02–04 do app-loja-provas no emulador.",
+        "23/11 LOJA-006 (#322): o passo 02-04 no emulador segue sem prova, agora por outro sintoma (tela branca e 401 depois do código), registrado no card LOJA-DEF-ANDROID-POS-CODIGO; o último item deste card fecha junto com aquele, no LOJA-007."
       ]
     },
     {
@@ -10714,6 +10717,65 @@
       "links": ["tests/unit/push/android.test.ts", "apps/web/lib/push/android.ts"],
       "proof": [
         "22/11 gate completo em .work/entrada-membro: 1 falha de 3668, só este teste; reexecução isolada verde."
+      ]
+    },
+    {
+      "id": "LOJA-DEF-IOS-TELA-BRANCA",
+      "title": "App iOS abre em branco: o roteador nunca desenha a primeira tela",
+      "phase": "Lançamento",
+      "priority": "P1",
+      "category": "frontend",
+      "status": "done",
+      "description": "Achado pelo LOJA-005 no simulador iOS (macos-15): em capacitor://localhost/app/, sem erro de JS, sem unhandledrejection, sem console.error e sem falha de recurso, a raiz #root não recebe nenhuma mutação em 20 s, embora o provedor da casca já peça /api/app/entry/progress. O mesmo build desenha no Android (https://localhost). Hipóteses a provar no lote de correção: o roteador (TanStack Router 1.170.42) parado na carga inicial sob o esquema capacitor:// (origem, history, replaceState sem URL registrado pelo diagnóstico), ou algo do raiz.js/dist-nativo que só o iOS usa.",
+      "checklist": [
+        "Reproduzir no simulador com o diagnóstico do LOJA-005 e achar a promessa ou a condição que segura o roteador",
+        "Corrigir no app (ou no preparar-nativo) com teste que falha antes e passa depois",
+        "Passo 01-entrada do iOS no app-loja-provas verde, com captura da entrada desenhada"
+      ],
+      "dependencies": [],
+      "tests": ["apps/app/tests/origem-roteador.test.ts", "tests/scope/loja-provas.test.mjs"],
+      "blockers": [],
+      "updatedAt": "2026-11-23",
+      "sourceRevision": "63b2ce5ec",
+      "links": [
+        "apps/app/lib/navegacao/origem.ts",
+        "apps/app/src/roteador.tsx",
+        "tests/nativo/diagnostico-ios.js",
+        "docs/agents/tasks/LOJA-006.task.yml"
+      ],
+      "proof": [
+        "22/11 LOJA-005, runs 45022364036 e 45023729150: ios-diagnostico.log com origem capacitor://localhost, DOMContentLoaded em ~1,1 s, fetch de progresso do bundle principal, raiz vazia aos 2/5/10/20 s e nenhuma mutação da raiz.",
+        "23/11 LOJA-006 (#322, 442a195fa..63b2ce5ec): causa achada no código instalado. Em @tanstack/router-core (dist/esm/router.js) a origem do roteador cai em window.origin, que no WKWebView é capacitor://localhost; isExternalUrl trata todo protocolo que não é http(s) como externo, então buildLocation/parseLocation marcam a rota inicial com external: true e commitLocation desvia para documentNavigation, que recusa em silêncio o esquema capacitor: (fora do protocolAllowlist). Nenhum erro, nenhum commit do React. Só o iOS dispara porque Android (https://localhost) e web são http(s). Correção: apps/app/lib/navegacao/origem.ts passa origin http://localhost ao createRouter só quando o protocolo é capacitor:. Teste apps/app/tests/origem-roteador.test.ts falha sem a correção (expected true to be false) e passa com ela; caso negativo para http/https. Run 45065428229 e seguintes do app-loja-provas: 01-entrada verde no simulador, captura da entrada desenhada e diagnóstico com #root com filhos aos 2 s. Revisão às cegas (DeepSeek) PASS e security-auditor PASS."
+      ],
+      "completedChecklist": [true, true, true],
+      "completedAt": "2026-11-23"
+    },
+    {
+      "id": "LOJA-DEF-ANDROID-POS-CODIGO",
+      "title": "Android: tela branca e 401 depois do código; navegador do sistema no login Google",
+      "phase": "Lançamento",
+      "priority": "P1",
+      "category": "frontend",
+      "status": "repo",
+      "description": "Achado pelo LOJA-006 no emulador Android (run 45088773294). Depois de digitar o código de 6 números, o app fica em tela branca em https://localhost/app/entrar e as chamadas a /api/app/* seguem com 401; a tela autenticada não aparece em 120 s e a WebView continua ligada ao depurador (não é troca de alvo). No passo 08-google a URL OAuth sai válida (origem da pilha, /auth/v1/authorize, google, s256, desafio de 43 caracteres), mas o navegador do sistema não abre no emulador. Próximo passo: lote LOJA-007 com orçamento próprio.",
+      "checklist": [
+        "Achar por que a sessão do código não chega aos pedidos da API (401) e por que a entrada fica em branco no Android",
+        "Corrigir no app ou no harness com teste que falha antes e passa depois",
+        "Passos 02-codigo, 03-reabrir e 04-sair verdes no emulador, com captura e linha OK",
+        "Passo 08-google abre o navegador do sistema no emulador ou vira relato com a condição exata"
+      ],
+      "dependencies": [],
+      "tests": [],
+      "blockers": [],
+      "updatedAt": "2026-11-23",
+      "sourceRevision": "63b2ce5ec",
+      "links": [
+        "tests/nativo/android.mjs",
+        ".github/workflows/app-loja-provas.yml",
+        "docs/agents/tasks/LOJA-006.task.yml"
+      ],
+      "proof": [
+        "23/11 LOJA-006, run 45088773294: roteiro.log com FALHOU 02-codigo em https://localhost/app/entrar (Você não apareceu), 02-codigo.png em branco, rede.log com 401 em /api/app/entry/progress, /api/app/inicio e /api/app/mercado/salvos; 08-google com a URL OAuth válida e erro 'Navegador do sistema não abriu'."
       ]
     }
   ],
