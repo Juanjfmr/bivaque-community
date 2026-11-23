@@ -4,6 +4,7 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react
 import { FaixaDeVisita } from "@/components/bivaque/faixa-de-contexto"
 import { mostraFaixaDeVisita } from "@/lib/casca"
 import { sairDoAparelho, saiuDoApp } from "@/lib/dados/push"
+import { lerPerfil } from "@/lib/dados/voce"
 import {
   calcularMinimizada,
   prefersReduzido,
@@ -89,6 +90,27 @@ export function Casca() {
       })
       .catch(() => undefined)
   }, [rota.nome])
+
+  // REGUA-003: a aba Você mostra quem está na sessão, não o nome da
+  // demonstração. A casca lê o perfil uma vez; sem sessão ou com falha, a aba
+  // fica com o ícone em vez de iniciais de outra pessoa. A tela Você continua
+  // atualizando o nome quando o perfil muda.
+  const definirCasca = casca.definir
+  useEffect(() => {
+    if (prova) return
+    const controle = new AbortController()
+    void lerProgresso()
+      .then(async (sessao) => {
+        if (!sessao.autenticado) return ""
+        const lida = await lerPerfil({ signal: controle.signal })
+        return lida.perfil.nome
+      })
+      .catch(() => "")
+      .then((nome) => {
+        if (!controle.signal.aborted) definirCasca({ nomeDaPessoa: nome })
+      })
+    return () => controle.abort()
+  }, [prova, definirCasca])
 
   const medir = useCallback(() => {
     const alvo = document.getElementById("conteudo")

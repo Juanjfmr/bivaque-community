@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest"
 import { assetUrl } from "../lib/assets"
 import { dataISO, diasAte, moeda, rotuloDeData } from "../lib/formato"
 import { idLocal } from "../lib/id"
-import { iniciais, normalizar } from "../lib/texto"
+import { iniciais, normalizar, tomDoNome } from "../lib/texto"
 
 describe("texto (§7 helpers)", () => {
   it("normaliza sem acento e em minúsculo", () => {
@@ -17,6 +17,17 @@ describe("texto (§7 helpers)", () => {
     expect(iniciais("João")).toBe("J")
     expect(iniciais("  ")).toBe("BV")
     expect(iniciais(null)).toBe("BV")
+  })
+
+  it("dá à mesma pessoa sempre o mesmo tom, entre os quatro da família (REGUA-003)", () => {
+    const nome = "Ana Beatriz Ferreira"
+    expect(tomDoNome(nome)).toBe(tomDoNome(nome))
+    for (const outro of ["Paulo Roberto", "Rafael Souza", "", "Lúcia"]) {
+      expect([0, 1, 2, 3]).toContain(tomDoNome(outro))
+    }
+    expect(
+      new Set(["Ana", "Bruno", "Carla", "Davi", "Elisa", "Fábio"].map(tomDoNome)).size,
+    ).toBeGreaterThan(1)
   })
 })
 

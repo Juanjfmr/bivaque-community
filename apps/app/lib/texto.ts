@@ -25,3 +25,14 @@ export function iniciais(nome: unknown): string {
   if (partes.length === 0) return "BV"
   return `${partes[0]?.[0] ?? ""}${partes.length > 1 ? (partes.at(-1)?.[0] ?? "") : ""}`.toUpperCase()
 }
+
+/**
+ * Um dos quatro tons da família das ilustrações para quem não tem foto, sempre
+ * o mesmo para o mesmo nome — o cartão de Você, a barra e a lateral pintam a
+ * pessoa igual (REGUA-003).
+ */
+export function tomDoNome(nome: string): 0 | 1 | 2 | 3 {
+  let soma = 0
+  for (const letra of nome) soma = (soma + (letra.codePointAt(0) ?? 0)) % 997
+  return (soma % 4) as 0 | 1 | 2 | 3
+}
