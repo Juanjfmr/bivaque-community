@@ -3622,3 +3622,52 @@ body[data-profundidade="sim"] [data-casca="app"] {
     padding-left: max(8px, calc((100% + 96px - 63rem) / 2));
   }
 }
+
+/* REGUA-003: no computador, o título da barra do topo começa na borda esquerda
+   da coluna de conteúdo das telas de Avisos, Conversas e Você. A coluna começa
+   depois do trilho (96 px) e do respiro do conteúdo (28 px), mais metade da
+   sobra quando a coluna é mais estreita que a área; a seta de voltar (44 px e
+   4 px de vão) fica à esquerda dessa borda, nunca por cima do trilho. */
+@media (min-width: 1024px) {
+  [data-topo="barra"]:is(
+    [data-rota="voce"],
+    [data-rota="salvos"],
+    [data-rota="bloqueados"],
+    [data-rota="perfil"]
+  ) {
+    --coluna-do-topo: 720px;
+  }
+
+  [data-topo="barra"][data-rota="avisos"] {
+    --coluna-do-topo: 46rem;
+  }
+
+  [data-topo="barra"]:is([data-rota="conversas"], [data-rota="conversa"]) {
+    --coluna-do-topo: 1120px;
+  }
+
+  [data-topo="barra"]:is(
+    [data-rota="voce"],
+    [data-rota="salvos"],
+    [data-rota="bloqueados"],
+    [data-rota="perfil"],
+    [data-rota="avisos"],
+    [data-rota="conversas"],
+    [data-rota="conversa"]
+  ) {
+    --borda-da-coluna: calc(124px + max(0px, (100% - 152px - var(--coluna-do-topo)) / 2));
+    padding-left: var(--borda-da-coluna);
+  }
+
+  [data-topo="barra"]:is(
+    [data-rota="voce"],
+    [data-rota="salvos"],
+    [data-rota="bloqueados"],
+    [data-rota="perfil"],
+    [data-rota="avisos"],
+    [data-rota="conversas"],
+    [data-rota="conversa"]
+  ):has(> [data-acao="voltar"]) {
+    padding-left: max(100px, calc(var(--borda-da-coluna) - 48px));
+  }
+}
