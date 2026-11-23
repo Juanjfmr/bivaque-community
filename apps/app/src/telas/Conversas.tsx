@@ -227,9 +227,9 @@ export function ListaDeConversas({
   /** A conversa aberta, quando a lista vive ao lado dela. */
   selecionada?: string
   /**
-   * A linha do tipo (Anúncio, Serviço) acompanha a caixa; na coluna ao lado da
-   * conversa ela não se repete — o contexto da conversa aberta já está no
-   * painel.
+   * A linha do item acompanha cada conversa da caixa; com `false` (coluna ao
+   * lado da conversa) ela só some da linha aberta — o item dela já está no
+   * cabeçalho do painel.
    */
   comContexto?: boolean
   aoAbrir: (id: string) => void
@@ -286,7 +286,7 @@ function LinhaDaConversa({
         </Avatar>
         <span className="grid min-w-0 flex-1 gap-1">
           <b className="truncate text-sm">{conversa.nome}</b>
-          {rotulo && comContexto && (
+          {rotulo && (comContexto || !ativa) && (
             <span
               data-contexto-da-linha=""
               className="truncate text-xs text-(--on-surface-variant)"

@@ -129,6 +129,19 @@ test("cada linha da caixa diz o nome do item, ou o tipo quando não há leitura"
   await expect(linha("t3")).toHaveText("Família")
 })
 
+test("na coluna ao lado da conversa, as outras linhas também dizem o item", async ({
+  page,
+}, info) => {
+  test.skip(info.project.name !== "desktop-1440", "a coluna da caixa só aparece no computador")
+  await simular(page)
+  await page.goto("/app/conversa/t1")
+  const linha = (id: string) => page.locator(`[data-thread="${id}"] [data-contexto-da-linha]`)
+  await expect(linha("t2")).toHaveText("Climatização Amazonas")
+  await expect(linha("t3")).toHaveText("Família")
+  // A aberta não repete o item: ele está no cabeçalho do painel.
+  await expect(linha("t1")).toHaveCount(0)
+})
+
 test("o cabeçalho da conversa mostra título e preço do anúncio", async ({ page }) => {
   await simular(page)
   await page.goto("/app/conversa/t1")
