@@ -65,7 +65,6 @@ vi.mock("web/lib/providers/app-negocio", () => ({
 }))
 
 import { POST } from "web/app/api/app/negocio/fotos/route"
-import { uploadPostPhotoAction } from "web/app/components/bivaque/post-photo-action"
 import { enviarFotoDoGrupo } from "web/lib/storage/foto-do-grupo"
 import { enviarFotoDoAnuncio } from "web/lib/storage/listing-photo"
 
@@ -195,36 +194,6 @@ describe("foto de grupo (enviarFotoDoGrupo)", () => {
       arquivoFoto(),
     )
     expect(resultado).toEqual({ recusada: true })
-    expect(mock.upload).not.toHaveBeenCalled()
-  })
-})
-
-describe("foto de post/evento (uploadPostPhotoAction)", () => {
-  const formulario = () => {
-    const dados = new FormData()
-    dados.set("photo", arquivoFoto())
-    return dados
-  }
-
-  it("conta ativa passa e sobe a foto", async () => {
-    const resultado = await uploadPostPhotoAction(formulario())
-    expect("photoPath" in resultado).toBe(true)
-    expect(mock.upload).toHaveBeenCalledOnce()
-  })
-
-  it("conta suspensa recusa antes do upload", async () => {
-    mock.ssrRpc.mockResolvedValue({ data: false, error: null })
-    const resultado = await uploadPostPhotoAction(formulario())
-    expect(resultado).toEqual({
-      error: RECUSA,
-    })
-    expect(mock.upload).not.toHaveBeenCalled()
-  })
-
-  it("conta com exclusão pedida recusa antes do upload", async () => {
-    mock.ssrRpc.mockResolvedValue({ data: false, error: null })
-    const resultado = await uploadPostPhotoAction(formulario())
-    expect(resultado).toEqual({ error: RECUSA })
     expect(mock.upload).not.toHaveBeenCalled()
   })
 })

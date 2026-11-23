@@ -127,20 +127,6 @@ test("the scanner reaches source files in both apps/web/app and apps/web/lib", (
   assert.ok(libFiles.length > 0, "apps/web/lib produced no files; walk is broken")
 })
 
-test("the resolver lives in the locality-context module", () => {
-  // TROCA-005: a casca web saiu inteira (o layout e as telas de membro), e com
-  // ela a prova de que o layout alimentava o provider. O resolvedor de localidade
-  // segue vivo para os fluxos públicos que ainda o usam.
-  const context = readFileSync(join(root, "apps", "web", "lib", "locality-context.tsx"), "utf8")
-
-  // When the executable code is inspected (comments stripped)
-  const contextCode = stripComments(context)
-
-  // Then the provider and hook are exported from the context module
-  assert.match(contextCode, /export function LocalityContextProvider/)
-  assert.match(contextCode, /export function useLocalityContext/)
-})
-
 test("the comment stripper ignores identifiers inside comments and strings", () => {
   // Given a source sample with a forbidden identifier in a comment and a
   // string, plus a real executable reference
