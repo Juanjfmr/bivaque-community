@@ -33,7 +33,7 @@ async function alcancarComTab(page: Page, alvo: Locator) {
 test.describe("teclado por jornada", () => {
   test("F04: abrir compositor do grupo", async ({ page }) => {
     await simularProgresso(page)
-    await simularGrupos(page)
+    await simularGrupos(page, { membro: true })
     await page.goto("/app/grupo/g-pets")
     const alvo = page.locator('[data-acao="escrever-grupo"]')
     await expect(alvo).toBeVisible()
