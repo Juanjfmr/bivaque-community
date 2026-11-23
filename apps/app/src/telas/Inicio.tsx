@@ -22,6 +22,7 @@ import { type InicioDaCidade, lerInicio } from "@/lib/dados/inicio"
 import { listarAnunciosSalvos, marcarSalvoAnuncio } from "@/lib/dados/mercado"
 import type { NomeDeIcone } from "@/lib/icones"
 import { useCargaDaLista, useNavegacao, useRolagemEFoco } from "@/lib/navegacao/react"
+import type { SubAbaDoMercado } from "@/lib/navegacao/rotas"
 import { registrarRecente } from "@/src/busca/recentes"
 import { termoAceito } from "@/src/busca/termo-url"
 import { useCasca } from "@/src/contexto/casca"
@@ -48,12 +49,17 @@ import { mensagemDaFalha } from "@/src/mercado/falha"
  * cartão, sem valor inventado.
  */
 
-type Atalho = { readonly rota: string; readonly icone: NomeDeIcone; readonly rotulo: string }
+type Atalho = {
+  readonly rota: string
+  readonly aba?: SubAbaDoMercado
+  readonly icone: NomeDeIcone
+  readonly rotulo: string
+}
 
 const ATALHOS: readonly Atalho[] = [
   { rota: "negocios", icone: "storefront", rotulo: "Negócios" },
-  { rota: "desapegos", icone: "sell", rotulo: "Desapegos" },
-  { rota: "imoveis", icone: "apartment", rotulo: "Imóveis" },
+  { rota: "mercado", aba: "desapegos", icone: "sell", rotulo: "Desapegos" },
+  { rota: "mercado", aba: "imoveis", icone: "apartment", rotulo: "Imóveis" },
   { rota: "comunidade", icone: "volunteer_activism", rotulo: "Indicações" },
 ]
 
@@ -285,11 +291,15 @@ export function Inicio() {
           <nav aria-label="Áreas" className="bv-home-atalhos">
             {ATALHOS.map((atalho) => (
               <button
-                key={atalho.rota}
+                key={atalho.rotulo}
                 type="button"
                 data-acao="atalho"
                 data-valor={atalho.rota}
-                onClick={() => void navegacao.irPara(atalho.rota)}
+                onClick={() =>
+                  void navegacao.irPara(atalho.rota, {
+                    ...(atalho.aba === undefined ? {} : { aba: atalho.aba }),
+                  })
+                }
                 className="bv-home-atalho bv-press"
               >
                 <span className="bv-home-atalho-icone">
@@ -403,7 +413,7 @@ export function Inicio() {
                       icone="sell"
                       acao={{
                         rotulo: "Anunciar desapego",
-                        aoAcionar: () => void navegacao.irPara("desapegos"),
+                        aoAcionar: () => void navegacao.irPara("mercado", { aba: "desapegos" }),
                       }}
                     />
                   ) : (

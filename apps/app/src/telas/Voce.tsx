@@ -1,5 +1,7 @@
 "use client"
 
+import { Capacitor } from "@capacitor/core"
+import { useQueryClient } from "@tanstack/react-query"
 import { useLocation } from "@tanstack/react-router"
 import { useEffect, useState } from "react"
 
@@ -21,6 +23,7 @@ import {
   salvarLocalizacao,
   salvarPerfil,
 } from "@/lib/dados/voce"
+import { sairNativo } from "@/lib/nativo/sair"
 import { useNavegacao, useRolagemEFoco, useSobreposicaoDaEntrada } from "@/lib/navegacao/react"
 import { CARGA_CONCLUIDA } from "@/lib/navegacao/restauracao"
 import { dataLegivel, destinoDoEndereco, mensagemDaMudanca } from "@/lib/voce/cidade"
@@ -50,6 +53,7 @@ const INDISPONIVEL = "Contagem indisponível agora"
  * mesma pessoa — a demonstração não inventa nome na barra (REGUA-002).
  */
 export function Voce() {
+  const cliente = useQueryClient()
   const navegacao = useNavegacao()
   const casca = useCasca()
   // A folha de interesses mora nesta tela: ela lê e grava os grupos da cidade
@@ -177,7 +181,7 @@ export function Voce() {
         // A revogação do push corre ANTES de encerrar a sessão: depois dela o
         // DELETE voltaria 401 e a inscrição ficaria no servidor. A falha da
         // revogação não segura a saída.
-        await sairDoApp(sairDaConta)
+        await sairDoApp(Capacitor.isNativePlatform() ? () => sairNativo(cliente) : sairDaConta)
         irParaEntrada()
       } catch (falha: unknown) {
         if (falha instanceof FalhaDaApi && falha.status === 401) {

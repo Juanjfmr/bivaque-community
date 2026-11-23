@@ -1,0 +1,54 @@
+task_id: ENTRADA-001
+objective: >
+  Corrigir o defeito LOJA-DEF-ENTRADA-MEMBRO: quem já é membro da cidade e entra pelo código de 6 números
+  precisa chegar ao Início, em vez de seguir o cadastro (aceite), receber 409 no PUT do rascunho e ficar
+  parado em /app/entrar. O cadastro de pessoa nova continua exatamente como está.
+authority:
+  - "coordenador, 22/11 12:56Z: começar a correção do LOJA-DEF-ENTRADA-MEMBRO com contrato próprio, orçamento novo, teste positivo e negativo, merge com CI completo verde"
+  - docs/decisions/ADR-20261101-entrada-unica-por-codigo.md
+  - docs/agents/tasks/LOJA-005.task.yml (onde o defeito foi achado)
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    Runs 45020824719 e 45022364036 do app-loja-provas (PR #322): o membro verificado do seed entra pelo código
+    do Mailpit, o app segue para a etapa seguinte do cadastro, PUT /api/app/entry/progress volta 409 e a tela
+    fica em /app/entrar. No código: apps/app/src/previa-f01/etapas-conta.tsx chama concluir() logo depois de
+    verificarCodigo autenticado; a conferência de membroDaCidade (lerVerificacao) só roda na abertura da
+    TelaDeEntrada (apps/app/src/entrada/TelaDeEntrada.tsx). O E2E web cobre só o membro que já abre com sessão
+    (tests/e2e/f01-entrada-real.spec.ts, "membro com sessão em /app/entrar cai no Início").
+allowed_paths:
+  - apps/app/src/entrada/**
+  - apps/app/src/previa-f01/etapas-conta.tsx
+  - apps/app/src/previa-f01/tipos.ts
+  - apps/app/tests/**
+  - tests/e2e/f01-entrada-real.spec.ts
+  - docs/agents/tasks/ENTRADA-001.task.yml
+  - tools/backend-kanban/public/board.json
+  - tools/backend-kanban/BOARD.md
+forbidden:
+  - apps/web (servidor e rotas não mudam; o 409 do PUT continua a resposta correta para quem já tem vínculo)
+  - supabase/ (migrations, seed, config.toml)
+  - mudar o fluxo do cadastro novo, do convite familiar, do documento ou do Google
+  - apps/mobile, apps/prototipo, android/ e ios/ versionados, workflows do CI
+  - dependência nova no package.json ou no lockfile
+  - dado pessoal real, CPF real, e-mail real ou credencial fixa em teste
+  - git stash, reiniciar ou reconstruir o banco local do PC, delegar
+acceptance:
+  - "depois do código autenticado, a entrada confere o vínculo (lerVerificacao) antes de avançar; membro da cidade vai ao Início sem PUT de rascunho e sem provisionar de novo"
+  - "pessoa sem vínculo segue para a mesma etapa de hoje (aceite), com o rascunho gravado como antes"
+  - "falha ao conferir o vínculo depois do código não deixa a pessoa presa: a tela mostra a mensagem fixa já usada na abertura e Tentar de novo, sem detalhe técnico"
+  - "teste do app (vitest) com os três casos: membro por código vai ao Início sem PUT; pessoa nova vai ao aceite; falha na conferência mostra a mensagem fixa"
+  - "E2E web stateful: membro existente do seed entra por código (Mailpit) e chega ao Início; o teste de conta nova existente continua passando"
+  - "gate completo verde e CI completo verde (ci:full) na revisão entregue"
+proof:
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/ENTRADA-001.task.yml
+  - npx pnpm@11.18.0 --filter @bivaque/app test
+  - npx pnpm@11.18.0 gate --fast
+  - "CI completo do PR com Stateful 375/768/1440 verdes"
+risk: entrada
+risk_level: R2
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: HUMAN_DECISION
+closure:
+  requires_runtime_evidence: true

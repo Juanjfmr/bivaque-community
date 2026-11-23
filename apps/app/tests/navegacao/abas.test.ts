@@ -84,4 +84,14 @@ describe("aba ativa", () => {
     expect(subAbaDoMercado("negocios")).toBe("negocios")
     expect(subAbaDoMercado("inicio")).toBeNull()
   })
+
+  it("a sub-aba do Mercado vem da busca do endereço (NAV-002)", () => {
+    expect(subAbaDoMercado("mercado")).toBe("desapegos")
+    expect(subAbaDoMercado("mercado", {})).toBe("desapegos")
+    expect(subAbaDoMercado("mercado", { aba: "imoveis" })).toBe("imoveis")
+    expect(subAbaDoMercado("mercado", { aba: "negocios" })).toBe("negocios")
+    expect(subAbaDoMercado("mercado", { aba: "outra" })).toBe("desapegos")
+    // O endereço antigo continua dizendo a sua aba, mesmo com busca torta.
+    expect(subAbaDoMercado("imoveis", { aba: "desapegos" })).toBe("imoveis")
+  })
 })

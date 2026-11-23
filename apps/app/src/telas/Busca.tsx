@@ -30,6 +30,7 @@ import {
   useNavegacao,
   useRolagemEFoco,
 } from "@/lib/navegacao/react"
+import type { SubAbaDoMercado } from "@/lib/navegacao/rotas"
 import { lerRecentes } from "@/src/busca/recentes"
 import { termoDaUrl } from "@/src/busca/termo-url"
 import { useCasca } from "@/src/contexto/casca"
@@ -391,7 +392,9 @@ export function Busca() {
                     key={item.id}
                     type="button"
                     data-explorar-categoria={item.id}
-                    onClick={() => void navegacao.irPara(item.id)}
+                    onClick={() =>
+                      void navegacao.irPara("mercado", { aba: item.id as SubAbaDoMercado })
+                    }
                     className="bv-press flex min-h-20 items-center gap-2 rounded-xl bg-(--surface-lowest) px-3 text-left ring-1 ring-(--outline-variant) hover:bg-(--muted)"
                   >
                     <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-(--secondary-container)">

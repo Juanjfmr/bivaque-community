@@ -17,6 +17,15 @@ const TROCADAS = [
   ["/gerir-comunidades", "/app/comunidade"],
   ["/communities", "/app/comunidade"],
   [`/communities/${ID}?fonte=teste`, "/app/comunidade?fonte=teste"],
+  // TROCA-004: a vila sai (redesenho §3.4 e §6) — o membro não indica prestador e o
+  // painel de quem administra a vila não existe mais. O id e a query seguem, e os dois
+  // destinos são telas do app (nenhum deles redireciona de novo).
+  [`/communities/${ID}/indicar-prestador`, "/app/negocios"],
+  [`/communities/${ID}/admin`, "/app/comunidade"],
+  [`/communities/${ID}/admin/pending`, "/app/comunidade"],
+  [`/communities/${ID}/admin/moderators`, "/app/comunidade"],
+  [`/communities/${ID}/admin/providers`, "/app/comunidade"],
+  [`/communities/${ID}/admin/media`, "/app/comunidade"],
   ["/community", "/app/comunidade"],
   [`/community?post=${ID}`, `/app/publicacao/${ID}?post=${ID}`],
   ["/community?post=invalido", "/app/comunidade?post=invalido"],
@@ -35,16 +44,21 @@ const TROCADAS = [
   ["/mercado/novo?categoria=eletronicos", "/app/mercado?categoria=eletronicos"],
   [`/imoveis/${ID}`, `/app/anuncio/${ID}`],
   // RUN-164: criar e editar imóvel saem da web; a lista é o destino do criar.
-  ["/imoveis/novo", "/app/imoveis"],
-  ["/imoveis/novo?tipo=casa", "/app/imoveis?tipo=casa"],
+  // NAV-002: a lista é o Mercado, com a aba na busca — o link chega ao destino
+  // final num salto só, sem o app redirecionar de novo.
+  ["/imoveis/novo", "/app/mercado?aba=imoveis"],
+  ["/imoveis/novo?tipo=casa", "/app/mercado?aba=imoveis&tipo=casa"],
   [`/imoveis/${ID}/editar`, `/app/anuncio/${ID}`],
   // RUN-169: a gestão dos alertas de busca é do app.
   ["/imoveis/alertas", "/app/imoveis/alertas"],
   ["/imoveis/alertas?aba=imoveis", "/app/imoveis/alertas?aba=imoveis"],
   ["/mercado", "/app/mercado"],
   ["/mercado?preco_min=10000&pagina=2", "/app/mercado?preco_min=10000&pagina=2"],
-  ["/imoveis", "/app/imoveis"],
-  ["/imoveis?q=centro&quartos=2&valor_max=4000", "/app/imoveis?q=centro&quartos=2&valor_max=4000"],
+  ["/imoveis", "/app/mercado?aba=imoveis"],
+  [
+    "/imoveis?q=centro&quartos=2&valor_max=4000",
+    "/app/mercado?aba=imoveis&q=centro&quartos=2&valor_max=4000",
+  ],
   ["/meus-anuncios", "/app/meus-anuncios"],
   ["/guide", "/app/guia"],
   ["/guide/sugerir", "/app/guia"],
@@ -293,28 +307,21 @@ describe("LAN-TROCA fase 1", () => {
     expect(sobras).toEqual([])
   })
 
-  it("remove as telas da vila e preserva indicação e console do dono", async () => {
+  it("remove as telas da vila e não deixa o painel do dono para trás", async () => {
     for (const rota of ["communities/[id]/invite", "invite", "gerir-comunidades"]) {
       expect(existsSync(join(shell, rota))).toBe(false)
     }
     for (const rota of ["communities", "communities/[id]"]) {
       expect(existsSync(join(shell, rota, "page.tsx"))).toBe(false)
     }
-    for (const caminho of [
-      `/communities/${ID}/indicar-prestador`,
-      ...["", "/pending", "/moderators", "/providers", "/media"].map(
-        (subrota) => `/communities/${ID}/admin${subrota}`,
-      ),
-    ]) {
-      expect((await resolver(caminho)).headers.get("location")).toBeNull()
-    }
-    expect(existsSync(join(shell, "communities", "[id]", "indicar-prestador", "page.tsx"))).toBe(
-      true,
-    )
+    // TROCA-004: o indicar-prestador saiu inteiro — página, action e formulário —
+    // e o endereço responde 307 (TROCADAS acima). Prova de ausência, não de tela.
+    expect(existsSync(join(shell, "communities", "[id]", "indicar-prestador"))).toBe(false)
     expect(existsSync(join(shell, "groups"))).toBe(false)
-    expect(
-      existsSync(join(shell, "..", "(owner)", "communities", "[id]", "admin", "page.tsx")),
-    ).toBe(true)
+    // TROCA-004: o painel de quem administrava a vila saiu inteiro, e com ele o grupo
+    // de rota (owner) e as Server Actions que só ele chamava. Prova de ausência: a
+    // pasta não existe mais no checkout, e as cinco rotas respondem 307.
+    expect(existsSync(join(shell, "..", "(owner)"))).toBe(false)
   })
 
   it.each(["mercado", "imoveis", "guide"])(

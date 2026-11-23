@@ -23,7 +23,9 @@ import type {
 export type ServidorDaEntrada = Readonly<{
   emailEmTransito: RefObject<string | null>
   enviarCodigo: (email: string) => Promise<EnvioDoCodigo>
-  verificarCodigo: (codigo: string) => Promise<VerificacaoDoCodigo>
+  verificarCodigo: (
+    codigo: string,
+  ) => Promise<VerificacaoDoCodigo | { readonly estado: "membro" | "verificacao-indisponivel" }>
   consultarCpf: (cpf: string) => Promise<ResultadoDoCpf>
   carregarEstados: () => Promise<readonly string[]>
   carregarCidades: (uf: string) => Promise<readonly CidadeDoCatalogo[]>
@@ -32,7 +34,7 @@ export type ServidorDaEntrada = Readonly<{
   registrarCombinado: (versao: number) => Promise<void>
   salvarAvisos: (avisos: "ativados" | "agora-nao") => Promise<void>
   enviarDocumento: (arquivo: File) => Promise<void>
-  iniciarGoogle: () => Promise<string>
+  iniciarGoogle: (provedor?: "google" | "apple") => Promise<string>
   aceitarConvite: (entrada: { codigo: string; nome: string }) => Promise<void>
   /** Valida o convite antes do envio; devolve quem convidou e o e-mail declarado. */
   previewConvite: (codigo: string, email?: string) => Promise<PreviewDoConvite>

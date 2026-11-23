@@ -1,0 +1,76 @@
+# NAV-002 — Um endereco so para o Mercado. Plano "Reduzir o excesso de telas"
+# aprovado pelo dono em 21/11/2026 ("Pode, em 3 lotes"). Hoje /mercado,
+# /desapegos e /catalogo montam a MESMA tela (Mercado.tsx: as tres funcoes
+# devolvem <ListaDeMercado inicial="desapegos" />) e /imoveis monta a mesma
+# lista com outra aba inicial. A aba e o filtro passam a viver no endereco
+# do proprio Mercado.
+
+task_id: NAV-002
+
+objective: >
+  O Mercado do app tem um endereco canonico, /app/mercado, com a aba
+  (desapegos, imoveis, negocios) e os filtros na busca da URL. Os enderecos
+  antigos /app/desapegos, /app/catalogo e /app/imoveis continuam funcionando
+  como redirecionamento em replace para /app/mercado com a aba certa e os
+  filtros preservados, sem ciclo e sem entrada extra no historico.
+
+authority:
+  - Decisao do dono em 21/11/2026 na thread "Reduzir o excesso de telas" (opcao "Pode, em 3 lotes")
+  - docs/decisions/ADR-20261024-front-react-spa.md (navegacao do app; rotas antigas redirecionam)
+  - docs/agents/tasks/NAV-BASE.task.yml (NAV-001, #318, volta a posicao da lista)
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    main b91612f. apps/app/src/telas/Mercado.tsx: Mercado, Desapegos e Catalogo
+    renderizam ListaDeMercado inicial="desapegos"; Imoveis com inicial="imoveis".
+    apps/app/lib/navegacao/rotas.ts declara quatro rotas (mercado, desapegos,
+    catalogo, imoveis) para uma tela so.
+
+allowed_paths:
+  - docs/agents/tasks/NAV-002.task.yml
+  - apps/app/lib/navegacao
+  - apps/app/src/roteador.tsx
+  - apps/app/src/telas
+  - apps/app/src/casca
+  - apps/app/src/criar
+  - apps/app/src/mercado
+  - apps/app/src/inicio
+  - apps/app/src/busca
+  - apps/app/src/voce
+  - apps/app/tests
+  - apps/web/next.config.ts
+  - apps/web/tests
+
+forbidden:
+  - mudar /app/imoveis/alertas, /app/anuncio/$id, /app/negocio/$id ou /app/negocios (Mercado da cidade fica como esta)
+  - mudar o que a lista carrega ou grava; so endereco, aba e filtro
+  - remover a restauracao de posicao do NAV-001 ou afrouxar seus testes
+  - tocar supabase, packages ou rotas de API
+  - skip/fixme novo ou afrouxar assercao existente
+  - ler, criar ou editar arquivos de ambiente; imprimir credenciais
+
+acceptance:
+  - "/app/mercado aceita ?aba=desapegos|imoveis|negocios; sem aba abre Desapegos. Trocar de aba atualiza a URL em replace e o voltar do navegador sai do Mercado, nao percorre as abas."
+  - "/app/desapegos, /app/catalogo e /app/imoveis redirecionam em replace para /app/mercado com a aba correspondente e os filtros que vieram na URL. Um link antigo da web (next.config.ts) que apontava para essas rotas chega ao destino final sem salto duplo nem ciclo."
+  - "Todo link interno do app (casca, Inicio, Criar, Busca, Voce, cartoes) aponta direto para /app/mercado?aba=...; nenhum link interno usa os enderecos antigos."
+  - "Abrir um anuncio a partir de qualquer aba e voltar devolve a mesma aba, filtros e rolagem (regra do NAV-001)."
+  - "Testes vitest cobrem o mapa de redirecionamento (cada endereco antigo, com e sem filtro) e a ausencia de links internos antigos. E2E do app em 375, 768 e 1440 nos dois temas: abrir /app/imoveis antigo, cair no Mercado na aba Imoveis, abrir um anuncio e voltar."
+  - "Passam: --filter @bivaque/app test, --filter @bivaque/app typecheck, --filter @bivaque/app test:e2e e gate completo no fechamento."
+
+proof:
+  - npx pnpm@11.18.0 --filter @bivaque/app test
+  - npx pnpm@11.18.0 --filter @bivaque/app typecheck
+  - npx pnpm@11.18.0 --filter @bivaque/app test:e2e
+  - npx pnpm@11.18.0 gate
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/NAV-002.task.yml
+
+risk: enderecos e navegacao do app; sem dado novo e sem servidor
+risk_level: R1
+
+reviewer_must_differ_from_executor: true
+retry_budget: 2
+on_budget_exhausted: HUMAN_DECISION
+
+closure:
+  requires_runtime_evidence: true

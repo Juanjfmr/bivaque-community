@@ -104,6 +104,42 @@ export const SUBABAS_DO_MERCADO = ["desapegos", "imoveis", "negocios"] as const
 
 export type SubAbaDoMercado = (typeof SUBABAS_DO_MERCADO)[number]
 
+/**
+ * Endereços antigos do Mercado (NAV-002): cada um levava a uma tela própria e
+ * hoje é a mesma tela, na aba correspondente. O catálogo os mantém para o
+ * roteador reconhecer o endereço e redirecionar; link interno usa o Mercado.
+ */
+export const ENDERECOS_ANTIGOS_DO_MERCADO: Readonly<Record<string, SubAbaDoMercado>> = {
+  catalogo: "desapegos",
+  desapegos: "desapegos",
+  imoveis: "imoveis",
+}
+
+/** A aba pedida na busca do Mercado; sem aba (ou fora da lista) é Desapegos. */
+export function lerAbaDaUrl(busca: Readonly<Record<string, unknown>>): SubAbaDoMercado {
+  const valor = busca["aba"]
+  return typeof valor === "string" && (SUBABAS_DO_MERCADO as readonly string[]).includes(valor)
+    ? (valor as SubAbaDoMercado)
+    : "desapegos"
+}
+
+/** A rota canônica de um nome: endereço antigo do Mercado é o próprio Mercado. */
+export function rotaCanonica(nome: string): string {
+  return ENDERECOS_ANTIGOS_DO_MERCADO[nome] === undefined ? nome : "mercado"
+}
+
+/**
+ * A busca do endereço canônico de um endereço antigo do Mercado: a aba que ele
+ * representava mais os filtros que vieram na URL. `null` fora dos antigos.
+ */
+export function buscaDoEnderecoAntigo(
+  nome: string,
+  busca: Readonly<Record<string, unknown>>,
+): Record<string, unknown> | null {
+  const aba = ENDERECOS_ANTIGOS_DO_MERCADO[nome]
+  return aba === undefined ? null : { ...busca, aba }
+}
+
 type LinhaDoCatalogo = readonly [
   nome: NomeDeRota,
   caminho: string,
@@ -128,6 +164,9 @@ const LINHAS: readonly LinhaDoCatalogo[] = [
   ["avisos", "/avisos", "Avisos", "sem-aba", { pai: "inicio" }],
   ["voce", "/voce", "Você", "voce", { raiz: true }],
   ["busca", "/busca", "Buscar", "origem", { pai: "inicio" }],
+  // Endereços antigos do Mercado (NAV-002): as três telas viraram uma só em
+  // `/mercado`, com a aba na busca. Estas linhas existem para o roteador
+  // reconhecer o endereço e redirecionar em replace; link interno não as usa.
   ["catalogo", "/catalogo", "Desapegos", "mercado", { pai: "inicio" }],
   // A consulta de cidade (CIDADE-169): a tela da cidade da pessoa (`/cidade/atual`)
   // e a de QUALQUER cidade do catálogo (`/cidade/<id>`). É leitura — a leitura de
@@ -138,7 +177,7 @@ const LINHAS: readonly LinhaDoCatalogo[] = [
   ["imoveis", "/imoveis", "Imóveis", "mercado", { pai: "inicio" }],
   ["negocios", "/negocios", "Mercado da cidade", "mercado", { pai: "inicio" }],
   ["mercado", "/mercado", "Mercado", "mercado", { pai: "inicio" }],
-  ["anuncio", "/anuncio/$id", "Anúncio", "mercado", { parametro: "id", pai: "desapegos" }],
+  ["anuncio", "/anuncio/$id", "Anúncio", "mercado", { parametro: "id", pai: "mercado" }],
   ["negocio", "/negocio/$id", "Negócio local", "mercado", { parametro: "id", pai: "negocios" }],
   ["pergunta", "/pergunta/$id", "Indicação", "comunidade", { parametro: "id", pai: "comunidade" }],
   // O perfil de outra pessoa (F10): identidade e atividade que o LEITOR pode

@@ -23,15 +23,26 @@ export type DecisaoDeNavegacao = {
  * Abrir uma rota nova: guarda de onde a pessoa veio (`pai`) e herda como origem
  * a aba da tela atual. Com sobreposição aberta, substitui a entrada em vez de
  * empilhar — assim sair não deixa entrada fantasma.
+ *
+ * Numa navegação em replace para a MESMA rota (a troca de aba do Mercado), a
+ * entrada não é outra tela: `pai` e `origem` são os da entrada atual, e não ela
+ * mesma. Sem isso, a primeira entrada (link direto, `pai: null`) passaria a
+ * dizer que veio do Mercado e o Voltar do app sairia do app.
  */
 export function entrarEmRota(dados: {
   readonly atual: EstadoDaEntrada
   readonly rotaAtual: string
+  readonly rotaDestino?: string
+  readonly replace?: boolean
 }): DecisaoDeNavegacao {
-  const origem = abaAtiva(dados.rotaAtual, dados.atual.origem) ?? dados.atual.origem
+  const replace = dados.replace ?? dados.atual.sobreposicao !== null
+  const mesmaRota = replace && dados.rotaDestino === dados.rotaAtual
+  const origem = mesmaRota
+    ? dados.atual.origem
+    : (abaAtiva(dados.rotaAtual, dados.atual.origem) ?? dados.atual.origem)
   return {
-    replace: dados.atual.sobreposicao !== null,
-    entrada: entradaPadrao({ origem, pai: dados.rotaAtual }),
+    replace,
+    entrada: entradaPadrao({ origem, pai: mesmaRota ? dados.atual.pai : dados.rotaAtual }),
   }
 }
 

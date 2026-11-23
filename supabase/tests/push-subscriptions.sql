@@ -34,14 +34,13 @@ select set_config('request.jwt.claim.role', 'authenticated', true);
 select throws_ok(
   $$
     insert into public.push_subscriptions
-      (user_id, kind, destination, key_p256dh, key_auth, label)
+      (user_id, kind, destination, key_p256dh, key_auth)
     values (
       '10000000-0000-4000-8000-000000000001',
       'web',
       'https://push.example.invalid/sub/one',
       'chave-publica',
-      'segredo',
-      'Navegador'
+      'segredo'
     )
   $$,
   '42501',
@@ -55,8 +54,7 @@ select lives_ok(
       'web',
       'https://push.example.invalid/sub/one',
       'chave-publica',
-      'segredo',
-      'Navegador'
+      'segredo'
     )
   $$,
   'o dono registra a própria inscrição pela função'
@@ -72,7 +70,7 @@ select is(
 select throws_ok(
   $$
     update public.push_subscriptions
-       set label = 'outro'
+       set destination = 'outro'
      where destination = 'https://push.example.invalid/sub/one'
   $$,
   '42501',
@@ -114,8 +112,7 @@ select lives_ok(
       'web',
       'https://push.example.invalid/sub/one',
       'chave-publica',
-      'segredo',
-      'Navegador'
+      'segredo'
     )
   $$,
   'o novo dono reinscreve o mesmo destino com as chaves do navegador'
@@ -157,8 +154,7 @@ select throws_ok(
       'web',
       'https://push.example.invalid/sub/one',
       'chave-falsificada',
-      'segredo',
-      'Navegador'
+      'segredo'
     )
   $$,
   '23505',
@@ -176,8 +172,7 @@ select throws_ok(
       'web',
       'https://push.example.invalid/sub/one',
       null,
-      null,
-      'Navegador'
+      null
     )
   $$,
   '22023',
@@ -191,8 +186,7 @@ select throws_ok(
       'web',
       'https://push.example.invalid/sub/one',
       null,
-      'segredo',
-      'Navegador'
+      'segredo'
     )
   $$,
   '22023',
@@ -206,8 +200,7 @@ select throws_ok(
       'web',
       'https://push.example.invalid/sub/one',
       'chave-publica',
-      null,
-      'Navegador'
+      null
     )
   $$,
   '22023',
@@ -221,8 +214,7 @@ select throws_ok(
       'web',
       'https://push.example.invalid/sub/one',
       '',
-      'segredo',
-      'Navegador'
+      'segredo'
     )
   $$,
   '22023',
@@ -236,8 +228,7 @@ select throws_ok(
       'web',
       'http://push.example.invalid/sub/one',
       'chave-publica',
-      'segredo',
-      'Navegador'
+      'segredo'
     )
   $$,
   '22023',
@@ -272,10 +263,7 @@ select is(
 );
 
 -- ── o cenário da auditoria: linha nativa de chaves nulas não é tomada ───────
--- Antes da correção, `is not distinct from` casava NULL com NULL: quem
--- conhecesse o destino registrava o mesmo kind com chaves nulas e tomava a
--- linha alheia. Agora o kind nativo é recusado nesta fase (o caminho nativo
--- vem no lote do ADR-20261118) e chaves nulas nem chegam ao delete.
+-- A inscricao nativa transfere o titular; chaves nativas sao recusadas.
 
 reset role;
 insert into public.push_subscriptions
@@ -292,19 +280,16 @@ set local role authenticated;
 select set_config('request.jwt.claim.sub', '10000000-0000-4000-8000-000000000001', true);
 select set_config('request.jwt.claim.role', 'authenticated', true);
 
-select throws_ok(
+select lives_ok(
   $$
     select public.register_push_subscription(
       'android',
       'https://push.example.invalid/native/one',
       null,
-      null,
-      'Navegador'
+      null
     )
   $$,
-  '22023',
-  'invalid push subscription',
-  'kind android com chaves nulas é recusado antes de qualquer delete'
+  'android transfere o titular'
 );
 
 select throws_ok(
@@ -313,13 +298,12 @@ select throws_ok(
       'ios',
       'https://push.example.invalid/native/one',
       'chave-publica',
-      'segredo',
-      'Navegador'
+      'segredo'
     )
   $$,
   '22023',
   'invalid push subscription',
-  'kind ios é recusado nesta fase'
+  'kind ios com chaves e recusado'
 );
 
 reset role;
@@ -331,8 +315,8 @@ select is(
     where kind = 'android'
       and destination = 'https://push.example.invalid/native/one'
   ),
-  '10000000-0000-4000-8000-000000000002/null',
-  'a linha nativa da vítima segue intacta com o dono de origem'
+  '10000000-0000-4000-8000-000000000001/null',
+  'a linha nativa pertence ao novo titular'
 );
 
 delete from public.push_subscriptions
@@ -373,8 +357,7 @@ select lives_ok(
       'web',
       'https://push.example.invalid/sub/service',
       'chave-publica',
-      'segredo',
-      'Navegador'
+      'segredo'
     )
   $$,
   'o dono registra a inscrição que o serviço vai ler'
@@ -427,8 +410,7 @@ select lives_ok(
       'web',
       'https://push.example.invalid/sub/cascade',
       'chave-publica',
-      'segredo',
-      'Navegador'
+      'segredo'
     )
   $$,
   'a conta nova registra a inscrição'
@@ -581,7 +563,7 @@ select is(
     where o.channel = 'push'
       and o.recipient = '10000000-0000-4000-8000-000000000001'
   ),
-  array['action', 'target_id', 'target_type', 'user_id'],
+  array['action', 'actor_user_id', 'target_id', 'target_type', 'user_id'],
   'o corpo do push só leva referências, nenhum dado de terceiro'
 );
 

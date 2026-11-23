@@ -6250,7 +6250,9 @@
       "sourceRevision": "29fcc8f",
       "links": ["docs/LANCAMENTO.md", "docs/decisions/ADR-20261024-front-react-spa.md"],
       "proof": [
-        "04/11: aberto por decisão do dono (push entra no lançamento), registrado em docs/LANCAMENTO.md, Mudanças de escopo."
+        "04/11: aberto por decisão do dono (push entra no lançamento), registrado em docs/LANCAMENTO.md, Mudanças de escopo.",
+        "PUSH-001 parcial: protecao de arquivos de credenciais e regra de limites de produto; reserva, migration, adaptadores, rota e testes de envio ainda pendentes. O lote do app segue dependente de LOJA-004: plugin, permissao em contexto, ordem de saida e E2E em emulador e simulador; chaves e testes reais dependem do dono.",
+        "PUSH-001: registro nativo, reserva com revalidação, adaptadores contra servidor falso, exceção do termo e redação. Faltam plugin do Capacitor, permissão em contexto, ordem de saída e E2E em emulador e simulador, dependentes de LOJA-004; recebimento real após as chaves do dono."
       ],
       "id": "LAN-PUSH",
       "title": "Push no celular: token do aparelho, envio pelo outbox e abertura no destino certo",
@@ -6266,7 +6268,8 @@
         "Prova no emulador Android e no simulador iOS com credenciais de teste; pgTAP positivo e negativo da tabela de tokens",
         "Requisito do lote nativo (ADR-20261118 §2): reserva com revalidação na mesma instrução no envio — apps/web/lib/push/adaptador.ts lê as inscrições e envia sem reservar a linha nem conferir de novo titular, preferência e bloqueio"
       ],
-      "dependencies": ["NOTIF-DEEPLINKS"]
+      "dependencies": ["NOTIF-DEEPLINKS"],
+      "completedChecklist": [false, false, false, false, false, true]
     },
     {
       "phase": "Lançamento",
@@ -6369,14 +6372,16 @@
       "phase": "Lançamento",
       "tests": [],
       "blockers": [],
-      "updatedAt": "2026-11-02",
-      "sourceRevision": "fc67e19e",
+      "updatedAt": "2026-11-22",
+      "sourceRevision": "9762b4a01",
       "links": ["docs/LANCAMENTO.md"],
       "proof": [
         "02/11: aberto na definição do lançamento (docs/LANCAMENTO.md), por mandato do dono.",
         "20/11 LOJA-001 (#312): Capacitor com android/ e ios/ versionados, base absoluta no nativo, câmera, link profundo, workflow app-loja.yml e inventário da sessão; revisão às cegas PASS no delta e2f069d3. Capturas do emulador em .visual/loja-001/ (camera, criar, link-entrada).",
         "21/11 LOJA-002 (#317): a prova contra o GoTrue local mediu que o reuso de R0 fora da janela recusa só R0 (401, 'Possible abuse attempt' no log); R2 segue válido direto no GoTrue. Emenda de 21/11 no ADR-20261120 por delegação: a revogação da família deixa de ser promessa, resíduo declarado na RATIFICACAO e card SEC-FAMILIA-RENOVACAO pós-lançamento.",
-        "21/11 LOJA-002 (#317, 40850d7b4): CI completo verde (run 44910688304, stateful 375/768/1440); security-auditor LIBERA COM RESSALVAS e revisão independente PASS-COM-RESSALVA. Herdado pelo LOJA-003: cofre, PKCE no app, CSP nativa e retorno com auditoria própria; cabeçalho do app em todo pedido nativo; repetir renovar só dentro da janela de 10 s; Apple no entry/oauth."
+        "21/11 LOJA-002 (#317, 40850d7b4): CI completo verde (run 44910688304, stateful 375/768/1440); security-auditor LIBERA COM RESSALVAS e revisão independente PASS-COM-RESSALVA. Herdado pelo LOJA-003: cofre, PKCE no app, CSP nativa e retorno com auditoria própria; cabeçalho do app em todo pedido nativo; repetir renovar só dentro da janela de 10 s; Apple no entry/oauth.",
+        "21/11 LOJA-003 (59ea6af85): testes do app 785/785, rota de progresso 28/28, build nativo com origens ficticias e CSP verificada; gate --fast executado. Pendentes: gate completo e CI, revisao independente de seguranca, prova Android com pilha local e iOS no CI/aparelho. Nao encerra LAN-LOJA.",
+        "22/11 LOJA-003 (#320, 9762b4a01): o app guarda a sessão no cofre do aparelho (@aparajita/capacitor-secure-storage 8.0.1, Keychain afterFirstUnlockThisDeviceOnly sem iCloud, Keystore, allowBackup=false). Também entraram: renovação única com espera em 429/503, PKCE no app, retorno bivaque://auth-callback no Android e iOS, CSP nativa sem script inline, CORS nativo em /api/localities, prévia do convite pelo Bearer com o cabeçalho do app, saída que limpa tudo (com o marcador 'saiu' se o cofre falhar). Gate completo verde em 8dd37550f e CI completo verde. Duas rodadas de auditoria de segurança independente: a 1ª reprovou (HIGH-1/2, MEDIUM-1/2); a 2ª deu LIBERA no eixo de segurança com F1–F5 corrigidos em 80077f9c6..9762b4a01 (AbortController no lugar de AbortSignal.timeout por causa do iOS 15, marcador de saída, renovação nas rotas autenticadas da entrada, cabeçalho do app na prévia, emenda dos allowed_paths). Testes: app 800, app-api 1644, escopo 318."
       ],
       "id": "LAN-LOJA",
       "title": "Fase 7: app de loja em Capacitor pronto para envio",
@@ -6392,7 +6397,9 @@
       ],
       "dependencies": ["LAN-TROCA", "BLOCK-MOBILE-RUNTIME"],
       "notes": [
-        "20/11 decisão do coordenador: a tela de entrada no nativo (apps/app/src/entrada/servidor.ts com fetch relativo) sai do LOJA-001 e entra no LOJA-002, junto da sessão nativa do ADR-20261120. Ficam também para o LOJA-002: android:allowBackup, window.alert no SeletorDeFoto, remover o ouvinte appUrlOpen, testes de template com.getcapacitor.myapp, varredura dos gerados do cap sync, ios/Pods no .gitignore, setup-java v4."
+        "20/11 decisão do coordenador: a tela de entrada no nativo (apps/app/src/entrada/servidor.ts com fetch relativo) sai do LOJA-001 e entra no LOJA-002, junto da sessão nativa do ADR-20261120. Ficam também para o LOJA-002: android:allowBackup, window.alert no SeletorDeFoto, remover o ouvinte appUrlOpen, testes de template com.getcapacitor.myapp, varredura dos gerados do cap sync, ios/Pods no .gitignore, setup-java v4.",
+        "22/11 riscos aceitos do LOJA-003, registrados no ADR-20261120 (reauditoria de 22/11): uma escrita que recebe 401 com o token longe de vencer não limpa o cofre (erro com Tentar de novo; o token vence em até 1 h); erro de configuração da origem da API aparece como falta de rede; a limpeza de rascunhos no IndexedDB é melhor esforço nos WebView sem indexedDB.databases().",
+        "22/11 falta para fechar o LAN-LOJA. (1) Provas: login Google/Apple, sessão ao reabrir, câmera e links no emulador Android (o PC não tem Docker para a pilha local) e no simulador iOS (macOS/CI); a sessão no iOS 15 só aparelho ou simulador mostram; builds de release sem assinatura no CI. (2) Atos do dono: credenciais Google e Apple, cadastro de bivaque://auth-callback nas URLs de retorno do projeto hospedado, assinatura, fichas e envio às lojas."
       ]
     },
     {
@@ -7891,17 +7898,18 @@
     },
     {
       "phase": "Lançamento",
-      "status": "repo",
+      "status": "done",
       "dependencies": ["F10-R3-SESSION-DERIVED"],
       "tests": [],
       "blockers": [],
       "proof": [
         "13/11: reconciliado pelo coordenador — o cartão estava desatualizado (06/11). A jornada JÁ está ligada e provada: rotas GET/POST/DELETE /api/app/voce/familia + tela Familia.tsx pela sessão (RUN-018, PR #147, merge 3093390f); service_role só no servidor após exigirSessao, id sempre da sessão, nunca do corpo. pgTAP positivo/negativo (plan 20) + revisão R3 sem CRÍTICO/ALTO (RUN-030/031, PR #194, ef72c839; docs/agents/reviews/2026-11-11-revisao-r3-f10-familia.md). E2E real f10-voce-real.spec.ts:180 (convite entra na lista, revogação some) em 375/768/1440. ADR-20261111-convite-familiar-pela-sessao listado em RATIFICACAO.md. Limite de envio (5704b78d) e corrida de convites (261a1ab5) corrigidos.",
         "Pendência que impede fechar como 'posse derivada da sessão' (ADR-20261111): o banco ainda aceita o id do titular por parâmetro; a posse é verificada na rota, não derivada de auth.uid() no banco. O hardening F10-R3-SESSION-DERIVED não é trivial: o caminho usa service_role, que não carrega o JWT do usuário, então auth.uid() seria nulo — exige redesenhar como a posse chega ao banco.",
-        "16/11: item acrescentado no fechamento do RUN-172 — a acao foi movida como estava (correto) e o achado M-3 estava sem dono."
+        "16/11: item acrescentado no fechamento do RUN-172 — a acao foi movida como estava (correto) e o achado M-3 estava sem dono.",
+        "22/11: fechado pela conferência na main e7a3ca880. Último item (M-3): as Server Actions antigas da família saíram com o SEC-011 (#267, 3e00a4c5); a rota /api/app/voce/familia devolve só frases fixas do módulo lib/convite/familia.ts e nunca a mensagem do Postgres, provado em tests/unit/app-api/voce/familia.test.ts (positivo: 403/409/429 com a frase fixa; negativo: \"falha ao criar não ecoa a mensagem do Postgres\" e falha de leitura/envio 503 sem detalhes). A dependência F10-R3-SESSION-DERIVED está done (posse derivada de auth.uid() no banco). vitest familia.test.ts + familia-limite.test.ts: 32/32 verdes em 22/11."
       ],
-      "updatedAt": "2026-11-16",
-      "sourceRevision": "ad5ac070",
+      "updatedAt": "2026-11-22",
+      "sourceRevision": "e7a3ca880",
       "id": "F10-FAMILIA",
       "title": "F10 família: ligar convite e vínculo familiar ao app",
       "priority": "P1",
@@ -7915,7 +7923,9 @@
         "Revisão de segurança R3 antes da integração",
         "Silencio real nas Server Actions da familia (M-3 do parecer R3 de 11/11, hoje em lib/convite/familia-acoes.ts): nao ecoar mensagem do Postgres ao navegador — assercao real positivo/negativo"
       ],
-      "links": ["docs/agents/tasks/RUN-016.task.yml"]
+      "links": ["docs/agents/tasks/RUN-016.task.yml"],
+      "completedChecklist": [true, true, true, true, true, true],
+      "completedAt": "2026-11-22"
     },
     {
       "phase": "Lançamento",
@@ -10424,21 +10434,24 @@
       "phase": "Lançamento",
       "tests": [],
       "blockers": [
-        "O CLI do Supabase 2.107.0 (binário Bun) falha com EPERM ao abrir ou criar qualquer arquivo ou pasta: C:/Users/juana/.supabase/telemetry.json.tmp.* e também uma pasta pessoal temporária (HOME/USERPROFILE trocados), inclusive fora do sandbox. Quebra test:db, db:lint, migration list/up e status no PC do dono."
+        "O CLI do Supabase 2.107.0 (binário Bun) falha com EPERM ao abrir ou criar qualquer arquivo ou pasta: C:/Users/juana/.supabase/telemetry.json.tmp.* e também uma pasta pessoal temporária (HOME/USERPROFILE trocados), inclusive fora do sandbox. Quebra test:db, db:lint, migration list/up e status no PC do dono.",
+        "22/11: decisão do coordenador (opção B): a prova de banco segue no CI com ci:full; nenhum binário baixado no PC e nenhuma mudança no Docker. Próximo passo concreto para desbloquear (opção A): com aval do dono para o download, apontar SUPABASE_CLI_BINARY_OVERRIDE para o supabase.exe Go oficial da última release 2.x anterior ao binário Bun, fora da pasta do repositório (sem o rótulo Low), repetir status e depois fazer o reset local exclusivo sem seed e o test:db."
       ],
-      "updatedAt": "2026-11-20",
-      "sourceRevision": "f1c405eca",
+      "updatedAt": "2026-11-22",
+      "sourceRevision": "e7a3ca880",
       "links": ["package.json (supabase 2.107.0)", "PR #314"],
       "proof": [
         "20/11: tentados (1) rodar no worktree e no checkout principal; (2) fora do sandbox; (3) HOME/USERPROFILE numa pasta temporária: EPERM em todos. A pasta .supabase aceita escrita pelo bash (touch), e o acesso controlado a pastas do Defender está desligado (EnableControlledFolderAccess=0). As ACLs de ~/.supabase têm uma entrada CodexSandboxUsers (RX) que não nega nada ao usuário juana.",
         "20/11: o banco local (supabase_db_bivaque-community, de pé há 4 dias) tem supabase_migrations.schema_migrations vazio e não tem as tabelas de 18/11 (push_subscriptions), então está fora de sincronia com a main. Até o card fechar, a prova de banco fica no CI (ci:full), como no #314.",
-        "20/11 noite: com DO_NOT_TRACK=1 SUPABASE_TELEMETRY_DISABLED=1 o EPERM some e `supabase migration new` funciona (criou 20261121002331_sessao_nativa_limiter.sql). `supabase status` agora falha em outro ponto: acesso negado ao pipe do Docker Desktop (//./pipe/dockerDesktopLinuxEngine) a partir desta sessão. Próximo passo: rodar status/test:db com a variável num terminal do dono para separar sandbox de permissão do Docker."
+        "20/11 noite: com DO_NOT_TRACK=1 SUPABASE_TELEMETRY_DISABLED=1 o EPERM some e `supabase migration new` funciona (criou 20261121002331_sessao_nativa_limiter.sql). `supabase status` agora falha em outro ponto: acesso negado ao pipe do Docker Desktop (//./pipe/dockerDesktopLinuxEngine) a partir desta sessão. Próximo passo: rodar status/test:db com a variável num terminal do dono para separar sandbox de permissão do Docker.",
+        "22/11: causa do EPERM achada. A pasta do repositório (C:\\Users\\juana\\bivaque-community) carrega o rótulo Mandatory Label\\Low Mandatory Level herdável (OI)(CI)(NW) e a ACL CodexSandboxUsers, restos do sandbox do Codex; o supabase.exe em node_modules/@supabase/cli-windows-x64 herda o rótulo e roda em integridade baixa, que não grava em ~/.supabase (EPERM). Uma cópia do binário fora do repositório (%LOCALAPPDATA%\\bivaque-supabase-cli\\supabase.exe, sem rótulo Low) já roda migration list --local sem EPERM, mesmo sem DO_NOT_TRACK. O banco local segue fora de sincronia: migration list mostra todas as migrations só na coluna Local (schema_migrations vazio).",
+        "22/11: segundo defeito, independente do rótulo. O CLI 2.107.0 (binário Bun) recebe Access is denied ao abrir //./pipe/dockerDesktopLinuxEngine e //./pipe/docker_engine, inclusive a cópia sem rótulo e rodando num PowerShell de integridade média do dono, enquanto o docker.exe 29.5.3 no mesmo terminal abre o pipe e lista os contêineres. Sem o pipe não rodam status, start, o reset do banco nem test:db. Próximo passo concreto: (1) apontar SUPABASE_CLI_BINARY_OVERRIDE para o supabase.exe Go oficial da última release 2.x anterior ao binário Bun (baixar da release do GitHub supabase/cli, com aval do dono para o download) e repetir status; (2) se funcionar, fixar o override no ambiente do PC; depois o reset local exclusivo sem seed e test:db. Não mexer no rótulo da pasta do repositório sem decisão: ele faz parte do isolamento do Codex."
       ],
       "id": "INFRA-CLI-SUPABASE-PC",
       "title": "CLI do Supabase falha com EPERM no PC do dono e o banco local está fora de sincronia",
       "priority": "P1",
       "category": "infra",
-      "status": "now",
+      "status": "blocked",
       "description": "Sem o CLI, nenhuma prova de banco local roda no PC (test:db, db:lint, migration up). Próximo passo concreto: rodar o binário @supabase/cli-windows-x64 direto com --version e um comando que grava, comparar com o CLI Go oficial (SUPABASE_CLI_BINARY_OVERRIDE apontando para o supabase.exe da release anterior da linha 2.x) e, se o Go funcionar, fixar o override no ambiente local ou voltar o pin; depois, com a pilha exclusiva, reset --local --no-seed e test:db para ressincronizar o banco.",
       "checklist": [
         "Diagnóstico do EPERM com o binário direto e com o CLI Go",
@@ -10500,7 +10513,8 @@
       "proof": [
         "21/11: implementado pelo DeepSeek v4.1 Flash (Codex Terra indisponível), 22 commits em apps/app (mais 1 chamada em src/roteador.tsx, aceita pelo coordenador). Conferido pelo coordenador em f03406ef7: typecheck limpo; app test 71 arquivos/756 testes; nav-001.spec 33/33 em mobile-375, tablet-768, desktop-1440, claro e escuro; capturas em .visual/nav-001/pos-*.",
         "21/11: revisão independente às cegas (subagente reviewer) deu FAIL com 4 altos e 5 médios; rodada única de correção fechou todos com teste (fundo da Folha/Aviso fora de .pc, ignorado em Salvos, Negócios, categoria da Busca, foco de volta, Grupos, altura no computador, tempos do ANIMATION.md, fechamento por arrasto). Baixos em NAV-001-RESSALVAS.",
-        "21/11: merge do PR #318 condicionado ao CI completo (ci:full) verde no head."
+        "21/11: merge do PR #318 condicionado ao CI completo (ci:full) verde no head.",
+        "21/11 22:31Z: o dono aprovou a prova de toque real da Folha no celular (\"Funcionou\")."
       ]
     },
     {
@@ -10585,6 +10599,122 @@
       ],
       "updatedAt": "2026-11-21",
       "sourceRevision": "c698ccad7"
+    },
+    {
+      "id": "NAV-002",
+      "title": "Mercado com um endereço só: aba e filtros na URL de /app/mercado",
+      "phase": "Lançamento",
+      "priority": "P1",
+      "category": "frontend",
+      "status": "done",
+      "description": "Plano Reduzir o excesso de telas (dono, 21/11, lote 2 de 3; contrato docs/agents/tasks/NAV-002.task.yml). /app/mercado é o endereço canônico, com aba (desapegos, imoveis, negocios) e filtros na busca da URL; /app/desapegos, /app/catalogo e /app/imoveis redirecionam em replace com aba e filtros preservados, sem ciclo; os endereços antigos do site (/imoveis, /imoveis/novo) chegam em um salto só; links internos, Paleta, Criar, Guia e alertas de imóvel apontam para o endereço canônico.",
+      "checklist": [
+        "Aba e filtros do Mercado vivem na URL de /app/mercado",
+        "Endereços antigos do app redirecionam em replace, sem ciclo e sem entrada extra no histórico",
+        "Endereços antigos do site chegam ao Mercado em um salto",
+        "Links internos apontam para o endereço canônico",
+        "Vitest e E2E 375/768/1440 claro/escuro"
+      ],
+      "dependencies": ["NAV-001"],
+      "tests": [
+        "apps/app/tests/mercado-enderecos.test.ts",
+        "apps/app/tests/navegacao/rotas.test.ts",
+        "apps/app/tests/navegacao/transicoes.test.ts",
+        "apps/app/tests/e2e/nav-002-mercado.spec.ts",
+        "apps/web/tests/redirecionamentos.test.ts",
+        "tests/unit/infra/lan-troca-redirect.test.ts"
+      ],
+      "blockers": [],
+      "updatedAt": "2026-11-22",
+      "completedAt": "2026-11-22",
+      "sourceRevision": "9afd8609f",
+      "links": [
+        "docs/agents/tasks/NAV-002.task.yml",
+        "https://github.com/Juanjfmr/bivaque-community/pull/321"
+      ],
+      "proof": [
+        "21/11: implementado pelo DeepSeek v4.1 Flash por contrato; revisão às cegas (subagente reviewer) com uma rodada de correção (origem da volta ao trocar de aba em sobreposição, alertas de imóvel, formatação). Desvios de cerca aceitos pelo coordenador: src/guia/secoes.ts, src/negocios/Negocios.tsx e o teste lan-troca-redirect, todos só trocando o endereço para o canônico.",
+        "22/11: conferido pelo coordenador em 9afd8609f (main 9fc92ef6b mesclada): typecheck 0; app vitest 765/765; lan-troca-redirect 116/116; E2E do app 318/318 em mobile-375, tablet-768, desktop-1440; capturas em .visual/nav-002/mercado-imoveis-*.",
+        "22/11: merge condicionado ao CI completo (ci:full) verde no head."
+      ]
+    },
+    {
+      "id": "INDICAR-NEGOCIO",
+      "title": "Indicar um negócio: membro indica, operador aprova",
+      "phase": "Lançamento",
+      "priority": "P2",
+      "category": "backend",
+      "status": "repo",
+      "description": "Decisão do dono em 21/11 (\"Manter e sugerir depois\"): só o operador convida prestador, e o membro pode indicar um negócio. Folha de indicação (nome, contato, motivo); fila do operador; convite com um toque a partir da indicação; \"indicado por membros\" no perfil do negócio. Precisa de ADR com regra própria (dado de terceiro, contato e anti-abuso) antes de código. Não altera TROCA-004 nem TROCA-005.",
+      "checklist": [
+        "ADR com a regra da indicação (quem indica, que dado guarda, por quanto tempo, anti-abuso)",
+        "Folha Indicar um negócio com nome, contato e motivo",
+        "Fila do operador com convite em um toque",
+        "Marca \"indicado por membros\" no perfil do negócio",
+        "Testes positivos e negativos de permissão e E2E 375/768/1440"
+      ],
+      "dependencies": ["LAN-F07"],
+      "tests": [],
+      "blockers": ["Aguarda ADR com a regra da indicação antes de qualquer código."],
+      "updatedAt": "2026-11-22",
+      "sourceRevision": "9afd8609f",
+      "links": [],
+      "proof": [
+        "21/11: decisão do dono na thread do projeto (\"Manter e sugerir depois\"), registrada pelo coordenador; só o operador convida prestador (ADR-20261024 §3.4/§6)."
+      ]
+    },
+    {
+      "id": "LOJA-DEF-ENTRADA-MEMBRO",
+      "title": "Membro que entra por código fica na entrada em vez de ir ao Início",
+      "phase": "Lançamento",
+      "priority": "P1",
+      "category": "frontend",
+      "status": "repo",
+      "description": "Achado pelo LOJA-005 no emulador Android: o membro verificado do seed (membro-rio) entra pelo código de 6 números, a sessão é criada, mas a entrada segue para a etapa seguinte do cadastro, o PUT /api/app/entry/progress volta 409 (já tem vínculo) e o app fica em /app/entrar sem chegar ao Início. Causa no código: em etapas-conta.tsx o retorno autenticado de verificarCodigo chama concluir() sem conferir o vínculo; a conferência de membroDaCidade (lerVerificacao) só roda na abertura da TelaDeEntrada. O E2E web cobre só membro que já abre com sessão (f01-entrada-real.spec.ts:629), não o login por código.",
+      "checklist": [
+        "Depois do código, a entrada confere o vínculo (lerVerificacao) e manda o membro ao Início, sem PUT de rascunho",
+        "Teste do app: membro existente que entra por código vai ao Início; pessoa nova segue para o aceite",
+        "E2E web do login por código de membro existente em 375/768/1440",
+        "Passos 02 a 04 do app-loja-provas verdes no emulador"
+      ],
+      "dependencies": [],
+      "tests": ["apps/app/tests/codigo-e-vinculo.test.ts", "tests/e2e/f01-entrada-real.spec.ts"],
+      "blockers": [],
+      "updatedAt": "2026-11-22",
+      "sourceRevision": "363c63e99",
+      "links": [
+        "apps/app/src/previa-f01/etapas-conta.tsx",
+        "apps/app/src/entrada/TelaDeEntrada.tsx",
+        "docs/agents/tasks/LOJA-005.task.yml",
+        "apps/app/src/entrada/codigo-e-vinculo.ts",
+        "docs/agents/tasks/ENTRADA-001.task.yml"
+      ],
+      "proof": [
+        "22/11 LOJA-005, runs 45020824719 e 45022364036: roteiro.log com FALHOU 02-codigo em /app/entrar; rede.log com PUT /api/app/entry/progress 409.",
+        "22/11 ENTRADA-001 (fix/entrada-membro, 363c63e99 + correção da revisão: o membro relê o progresso canônico em vez de ir direto ao Início): depois do código autenticado a entrada lê /api/app/entry/verification; membro segue a etapa canônica do servidor (o Início, ou a etapa pendente pós-prévia) sem PUT de rascunho, pessoa nova segue ao aceite, falha da conferência mostra a mensagem fixa e Tentar de novo. Vitest codigo-e-vinculo (3 casos) e E2E stateful \"membro existente entra por código e chega ao Início\" (sem PUT de progresso). Falta só o passo 02–04 do app-loja-provas no emulador."
+      ]
+    },
+    {
+      "id": "TEST-PUSH-ANDROID-INSTAVEL",
+      "title": "Teste do push Android falha sob carga no gate completo",
+      "phase": "Lançamento",
+      "priority": "P2",
+      "category": "backend",
+      "status": "repo",
+      "description": "tests/unit/push/android.test.ts (PUSH-001, #326) usa timeout de 100 ms contra o servidor falso local, com assinatura RSA no mesmo turno. No gate completo da fix/entrada-membro (22/11) falhou com FalhaNativa push android 0 (status 0 = tempo esgotado); sozinho passou em 296 ms. Instável por tempo, não por regra.",
+      "checklist": [
+        "Folga de timeout no teste (ou relógio controlado) sem mudar o timeout de produção",
+        "Gate completo verde três vezes seguidas no PC"
+      ],
+      "dependencies": [],
+      "tests": ["tests/unit/push/android.test.ts"],
+      "blockers": [],
+      "updatedAt": "2026-11-22",
+      "sourceRevision": "2855bf0c1",
+      "links": ["tests/unit/push/android.test.ts", "apps/web/lib/push/android.ts"],
+      "proof": [
+        "22/11 gate completo em .work/entrada-membro: 1 falha de 3668, só este teste; reexecução isolada verde."
+      ]
     }
   ],
   "launch": {

@@ -117,7 +117,6 @@ function inscricao(extra: Record<string, unknown> = {}) {
     kind: "web",
     destination: DESTINO,
     keys: { p256dh: CHAVE, auth: CHAVE },
-    label: "Navegador",
     ...extra,
   }
 }
@@ -140,7 +139,7 @@ describe("rota de push do app", () => {
   it.each([
     ["GET configuração", () => configuracao(req("GET"))],
     ["POST inscrição", () => inscrever(req("POST", BASE, inscricao()))],
-    ["DELETE inscrição", () => apagar(req("DELETE", BASE, { destination: DESTINO }))],
+    ["DELETE inscrição", () => apagar(req("DELETE", BASE, { kind: "web", destination: DESTINO }))],
   ])("%s recusa ausência de sessão", async (_rotulo, invocar) => {
     expect((await invocar()).status).toBe(401)
   })
@@ -182,17 +181,29 @@ describe("rota de push do app", () => {
         string,
         unknown
       >
-      expect(gravado).toMatchObject({
+      expect(gravado).toEqual({
         p_kind: "web",
         p_destination: DESTINO,
         p_key_p256dh: CHAVE,
         p_key_auth: CHAVE,
-        p_label: "Navegador",
       })
       // O dono vem da sessão, dentro da função de registro: o corpo do pedido
       // não carrega identidade nenhuma.
       expect("user_id" in gravado).toBe(false)
       expect("userId" in gravado).toBe(false)
+    })
+
+    it.each(["android", "ios"])("registra %s sem chaves nem rótulo", async (kind) => {
+      const mock = mockClient()
+      autenticar(mock)
+      const destination = kind === "ios" ? "a".repeat(64) : "token-123"
+      expect((await inscrever(req("POST", BASE, { kind, destination }))).status).toBe(201)
+      expect(mock.chamadas.find((chamada) => chamada.op === "rpc")?.corpo).toEqual({
+        p_kind: kind,
+        p_destination: destination,
+        p_key_p256dh: null,
+        p_key_auth: null,
+      })
     })
 
     it.each([
@@ -207,7 +218,13 @@ describe("rota de push do app", () => {
     })
 
     it.each([
-      ["kind nativo", inscricao({ kind: "android" })],
+      ["ios nao hexadecimal", { kind: "ios", destination: "g".repeat(64) }],
+      ["tipo ausente", { destination: DESTINO, keys: { p256dh: CHAVE, auth: CHAVE } }],
+      ["tipo desconhecido", { kind: "outro", destination: "token" }],
+      ["token longo", { kind: "android", destination: "a".repeat(4097) }],
+      ["token com espaço", { kind: "ios", destination: "a b" }],
+      ["token com controle", { kind: "ios", destination: "a\nb" }],
+      ["nativo com chaves", { kind: "android", destination: "token", keys: { auth: CHAVE } }],
       ["destino não HTTPS", inscricao({ destination: "http://push.example.invalid/sub" })],
       ["destino inválido", inscricao({ destination: "não é url" })],
       [
@@ -266,10 +283,25 @@ describe("rota de push do app", () => {
   })
 
   describe("remoção", () => {
+    it.each([
+      [{ destination: DESTINO }, 200, "web"],
+      [{ kind: "android", destination: "token" }, 200, "android"],
+      [{ kind: "ios", destination: "a".repeat(64) }, 200, "ios"],
+      [{ kind: "outro", destination: DESTINO }, 400, null],
+    ])("DELETE %j", async (corpo, status, kind) => {
+      const mock = mockClient()
+      autenticar(mock)
+      expect((await apagar(req("DELETE", BASE, corpo))).status).toBe(status)
+      if (kind)
+        expect(mock.chamadas).toContainEqual(
+          expect.objectContaining({ coluna: "kind", valor: kind }),
+        )
+    })
+
     it("apaga só o destino deste aparelho e do dono da sessão", async () => {
       const mock = mockClient({ removidos: [{ id: "a1" }] })
       autenticar(mock)
-      const resposta = await apagar(req("DELETE", BASE, { destination: DESTINO }))
+      const resposta = await apagar(req("DELETE", BASE, { kind: "web", destination: DESTINO }))
       expect(resposta.status).toBe(200)
       expect(await json(resposta)).toEqual({ removidos: 1 })
 
@@ -280,12 +312,15 @@ describe("rota de push do app", () => {
       expect(filtros).toContainEqual(
         expect.objectContaining({ coluna: "destination", valor: DESTINO }),
       )
+      expect(filtros).toContainEqual(expect.objectContaining({ coluna: "kind", valor: "web" }))
     })
 
     it("erro no DELETE também não leva o endpoint para o log, só o código", async () => {
       const mock = mockClient({ erroNaEscrita: { code: "XX000", message: `falha em ${DESTINO}` } })
       autenticar(mock)
-      expect((await apagar(req("DELETE", BASE, { destination: DESTINO }))).status).toBe(503)
+      expect(
+        (await apagar(req("DELETE", BASE, { kind: "web", destination: DESTINO }))).status,
+      ).toBe(503)
       expect(logError).toHaveBeenCalledTimes(1)
       const campos = logError.mock.calls[0]?.[1] ?? {}
       expect(campos["codigo"]).toBe("XX000")
@@ -295,7 +330,9 @@ describe("rota de push do app", () => {
     it("corpo sem destino é inválido", async () => {
       const mock = mockClient()
       autenticar(mock)
-      expect((await apagar(req("DELETE", BASE, { destination: "http://x" }))).status).toBe(400)
+      expect(
+        (await apagar(req("DELETE", BASE, { kind: "web", destination: "http://x" }))).status,
+      ).toBe(400)
       expect((await apagar(req("DELETE", BASE, {}))).status).toBe(400)
     })
 
@@ -304,7 +341,8 @@ describe("rota de push do app", () => {
       autenticar(mock)
       const semCabecalho = { origin: "http://localhost:3000" }
       expect(
-        (await apagar(req("DELETE", BASE, { destination: DESTINO }, semCabecalho))).status,
+        (await apagar(req("DELETE", BASE, { kind: "web", destination: DESTINO }, semCabecalho)))
+          .status,
       ).toBe(403)
       expect(mock.chamadas.some((chamada) => chamada.op === "delete")).toBe(false)
     })

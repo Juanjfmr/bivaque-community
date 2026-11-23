@@ -16,7 +16,6 @@ const FORM_SEGMENTS = new Set([
   "correcao",
   "perguntas",
   "invite",
-  "indicar-prestador",
 ])
 
 export function showsCreateAction(pathname: string): boolean {

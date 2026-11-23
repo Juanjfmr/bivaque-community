@@ -26,6 +26,7 @@ allowed_paths:
   - apps/web/proxy.ts
   - apps/web/next.config.ts
   - tests/**
+  - apps/web/tests/**
   - docs/agents/tasks/TROCA-004.task.yml
 forbidden:
   - criar no app tela, rota de API, RPC ou migration de comunidade (a vila sai, redesenho §3.4)
