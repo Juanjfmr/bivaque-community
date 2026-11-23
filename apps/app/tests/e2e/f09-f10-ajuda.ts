@@ -47,10 +47,8 @@ type Estado = {
   caixa: readonly Conversa[]
   porLer: number
   mensagens: Readonly<Record<string, readonly Mensagem[]>>
-  falharEnvio: boolean
   avisos: readonly Aviso[]
   falharAvisos: boolean
-  falhaDoPerfil: boolean
   bloqueados: readonly Bloqueado[]
   anunciosSalvos: readonly Linha[]
   imoveisSalvos: readonly Linha[]
@@ -360,10 +358,8 @@ export const PADRAO: Estado = {
   caixa: CAIXA,
   porLer: 1,
   mensagens: HISTORICO,
-  falharEnvio: false,
   avisos: AVISOS,
   falharAvisos: false,
-  falhaDoPerfil: false,
   bloqueados: BLOQUEADOS,
   anunciosSalvos: [ANUNCIO_SOFA, ANUNCIO_GELADEIRA],
   imoveisSalvos: [IMOVEL_SALVO],
@@ -412,7 +408,9 @@ export async function simularServidorF09F10(page: Page, estado: Estado): Promise
       return rota.fulfill({ status: 404, json: { erro: "nao-encontrado" } })
     if (caminho[4] === "lida") return rota.fulfill({ status: 204 })
     if (caminho[4] === "mensagens") {
-      if (estado.falharEnvio) return rota.fulfill({ status: 503, json: { erro: "indisponivel" } })
+      // A rota só aceita POST: outro método não pode cair no corpo do envio.
+      if (rota.request().method() !== "POST")
+        return rota.fulfill({ status: 405, json: { erro: "metodo-nao-permitido" } })
       const corpo = rota.request().postDataJSON() as { texto: string }
       const mensagem: Mensagem = {
         id: `m-enviada-${Date.now()}`,
@@ -430,9 +428,7 @@ export async function simularServidorF09F10(page: Page, estado: Estado): Promise
   await page.route(/\/api\/app\/voce(?:\/|\?|$)/, (rota) => {
     const recurso = new URL(rota.request().url()).pathname.split("/").filter(Boolean)[3]
     if (recurso === undefined) {
-      return estado.falhaDoPerfil
-        ? rota.fulfill({ status: 503, json: { erro: "indisponivel" } })
-        : rota.fulfill({ json: { perfil: PERFIL, contagens: CONTAGENS, conta: CONTA } })
+      return rota.fulfill({ json: { perfil: PERFIL, contagens: CONTAGENS, conta: CONTA } })
     }
     if (recurso === "bloqueados") return rota.fulfill({ json: { bloqueados: estado.bloqueados } })
     if (recurso === "familia")
