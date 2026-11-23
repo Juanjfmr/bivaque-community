@@ -216,32 +216,6 @@ export async function responderPedido(
   }
 }
 
-export type ResultadoDoEncerramento =
-  | {
-      readonly ok: true
-      readonly pedido: NonNullable<Awaited<ReturnType<typeof pedidoDoMembro>>>
-    }
-  | {
-      readonly ok: false
-      readonly motivo: "pedido-nao-encontrado" | "situacao-final" | "indisponivel"
-    }
-
-export async function encerrarPedido(
-  client: Cliente,
-  userId: string,
-  pedidoId: string,
-): Promise<ResultadoDoEncerramento> {
-  const pedido = await pedidoDoMembro(client, userId, pedidoId)
-  if (pedido === null) return { ok: false, motivo: "pedido-nao-encontrado" }
-  if (pedido.situacao === "closed") return { ok: true, pedido }
-  if (pedido.situacao === "cancelled") return { ok: false, motivo: "situacao-final" }
-  const { error } = await client.rpc("close_service_request", { p_request_id: pedidoId })
-  if (error) return { ok: false, motivo: "indisponivel" }
-  const atualizado = await pedidoDoMembro(client, userId, pedidoId)
-  if (atualizado === null) return { ok: false, motivo: "pedido-nao-encontrado" }
-  return { ok: true, pedido: atualizado }
-}
-
 /**
  * A recusa das RPCs de cancelar/encerrar traduzida para a porta. O texto do
  * Postgres não sai daqui; o estado final decidido no banco vira 409, não 500.
