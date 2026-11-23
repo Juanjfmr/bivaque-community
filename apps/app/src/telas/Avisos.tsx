@@ -22,6 +22,7 @@ import {
 import type { NomeDeIcone } from "@/lib/icones"
 import { useNavegacao, useRolagemEFoco } from "@/lib/navegacao/react"
 import { CARGA_CONCLUIDA } from "@/lib/navegacao/restauracao"
+import { irParaPreferencias } from "@/src/avisos/irParaPreferencias"
 import { useCasca } from "@/src/contexto/casca"
 import { EstadoDeSessaoVencida, EstadoNegado } from "@/src/eventos/EstadosDeAcesso"
 import { acessoNegado, sessaoVencida } from "@/src/eventos/formulario"
@@ -193,8 +194,13 @@ export function Avisos() {
         subtitulo="O que aconteceu enquanto você estava fora."
         acao={
           naoLidos > 0 ? (
-            <Botao tom="texto" onClick={() => void marcarTodas()} disabled={mexendo}>
-              Marcar todas
+            <Botao
+              tom="texto"
+              className="rounded-full"
+              onClick={() => void marcarTodas()}
+              disabled={mexendo}
+            >
+              Marcar todas como lidas
             </Botao>
           ) : undefined
         }
@@ -235,7 +241,13 @@ export function Avisos() {
               ? "Quando alguém responder, confirmar ou comentar algo seu, o aviso chega aqui."
               : "Você já leu tudo o que chegou."
           }
-          icone="notifications_none"
+          // REGUA-003: cena da família no lugar do ícone em mancha, e a saída
+          // para escolher o que chega e por onde.
+          figura="conta"
+          acao={{
+            rotulo: "Ajustar avisos",
+            aoAcionar: () => void irParaPreferencias(navegacao.irPara),
+          }}
         />
       ) : (
         <>

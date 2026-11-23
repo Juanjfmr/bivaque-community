@@ -59,7 +59,13 @@ export function EstadoVazio({
       <Titulo className="text-[17px] leading-6 font-semibold tracking-normal">{titulo}</Titulo>
       <p className={cn("max-w-md text-sm text-(--muted-foreground)")}>{texto}</p>
       {acao === undefined ? null : (
-        <Botao tom="tonal" data-acao="acao-do-vazio" onClick={acao.aoAcionar}>
+        <Botao
+          tom="tonal"
+          data-acao="acao-do-vazio"
+          // Nas telas que já passaram pela régua (com `figura`), a saída é pílula.
+          className={figura === undefined ? undefined : "rounded-full"}
+          onClick={acao.aoAcionar}
+        >
           {acao.rotulo}
         </Botao>
       )}
