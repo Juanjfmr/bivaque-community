@@ -117,8 +117,9 @@ export function Ajuda() {
   const alvoDaUrl = alvoDaBusca(busca["denunciar"])
   // O que já foi aberto pela URL: uma recarga reabre; a volta a esta entrada não.
   const abertoPelaUrl = useRef<string | null>(null)
-  /** A Folha já esteve aberta nesta entrada: é o que autoriza limpar a URL. */
+  /** Cada Folha já esteve aberta nesta entrada: é o que autoriza limpar a URL. */
   const jaAbriu = useRef(false)
+  const jaAbriuNova = useRef(false)
   const novaPelaUrl = useRef<string | null>(null)
   // biome-ignore lint/correctness/useExhaustiveDependencies: aba e rodada comandam a leitura
   useEffect(() => {
@@ -185,15 +186,21 @@ export function Ajuda() {
   // estado da entrada discordam, e limpar ali mataria a Folha que a URL abriu.
   // Fechar pelo botão, pelo Escape ou pelo Voltar do navegador passa por aqui —
   // o estado da entrada é quem manda, não o clique.
+  //
+  // O mesmo vale para `?denunciar=` (achado 4 da correção 3): enviar ou fechar a
+  // Folha de denúncia nova precisa tirar o alvo da URL, senão a recarga reabre o
+  // formulário com um alvo já denunciado. `novaPelaUrl` é zerado para que o mesmo
+  // link volte a abrir a Folha depois.
   useEffect(() => {
-    if (detalhe.aberto) {
-      jaAbriu.current = true
-      return
-    }
-    if (!jaAbriu.current) return
-    if (busca["denuncia"] === undefined) return
+    if (detalhe.aberto) jaAbriu.current = true
+    if (nova.aberto) jaAbriuNova.current = true
+    if (detalhe.aberto || nova.aberto) return
+    const limparDetalhe = jaAbriu.current && busca["denuncia"] !== undefined
+    const limparNova = jaAbriuNova.current && busca["denunciar"] !== undefined
+    if (!limparDetalhe && !limparNova) return
+    if (limparNova) novaPelaUrl.current = null
     void trocarBusca({ aba: "denuncias" })
-  }, [detalhe.aberto, busca, trocarBusca])
+  }, [detalhe.aberto, nova.aberto, busca, trocarBusca])
 
   // `?denuncia=<id>` e `?denunciar=<tipo>:<id>` abrem a Folha certa na carga.
   // biome-ignore lint/correctness/useExhaustiveDependencies: os refs guardam o que já abriu

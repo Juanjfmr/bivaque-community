@@ -46,7 +46,9 @@ describe("TROCA-005 — Ajuda com chamados e denúncias", () => {
     expect(ajuda).toContain("denuncia: id")
     expect(ajuda).not.toContain("...busca")
     // Fechar tira o id, senão a recarga reabriria a Folha fechada.
-    expect(ajuda).toContain('busca["denuncia"] === undefined')
+    expect(ajuda).toContain('busca["denuncia"] !== undefined')
+    // Enviar ou fechar a denúncia nova também tira o alvo da URL.
+    expect(ajuda).toContain('busca["denunciar"] !== undefined')
     // O alvo da URL chega ao formulário como opção escolhida.
     expect(ajuda).toContain("alvoInicial={alvoDaUrl}")
   })
