@@ -42,6 +42,7 @@ baseline:
 decisions:
   - "Coluna de contexto lateral não é exigida neste lote: a página de notificações e o perfil do Nextdoor web também usam uma coluna central. O que se exige é a largura de leitura da régua (sem coluna de ~320 px solta) e o título da barra do topo alinhado à coluna."
   - "Sem rota nova: o item da conversa vem dos dados que o app já lê (contextoId e as leituras existentes de anúncio, negócio e grupo); se o tipo não tiver leitura existente, o cabeçalho mostra o tipo e o nome do item quando houver, e o relatório registra o que faltou."
+  - "Rodada 3 (23/11, coordenador): a caixa de Conversas ganha o horário da última mensagem pelo campo ultimaEm na resposta existente de GET /api/app/conversas (sem rota nova, sem migração: o servidor já lê created_at); o leitor do app e os testes da rota acompanham. Denunciar membro sem rota própria abre a folha de denúncia da conversa existente, nunca navega em silêncio."
   - "Ilustrações novas dos vazios ficam fora: os vazios usam as ilustrações da família que já existem em apps/app (procure as usadas em Conversas vazia e Comunidade); se nenhuma servir, o vazio fica sem figura em vez de ícone em mancha."
 allowed_paths:
   - apps/app/src/telas/Conversas.tsx
@@ -71,8 +72,15 @@ allowed_paths:
   - apps/app/tests/**/*.test.ts
   - apps/app/tests/**/*.test.tsx
   - docs/agents/tasks/REGUA-003.task.yml
+  - apps/web/app/api/app/conversas/route.ts
+  - apps/web/app/api/app/conversas/_comum.ts
+  - apps/app/lib/dados/conversas.ts
+  - apps/app/lib/galeria.ts
+  - tests/unit/app-api/conversas/rotas.test.ts
+  - tests/scope/conversas-porta.test.mjs
+  - apps/app/tests/e2e/*.spec.ts
 forbidden:
-  - criar rota de API, mudar apps/web, supabase, banco, migrations ou contrato de dados
+  - criar rota de API, mudar apps/web além do campo ultimaEm em GET /api/app/conversas, supabase, banco ou migrations
   - adicionar dependência
   - usar Brasa fora do Criar (ADR-20261118)
   - mostrar Força, OM, posto ou selo de verificação de outro membro (BLOCK-AFFILIATION)
