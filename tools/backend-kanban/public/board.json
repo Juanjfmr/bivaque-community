@@ -6362,7 +6362,8 @@
         "17/11: /configuracoes trocada (RUN-184, #274); paridade da Pergunta pronta (RUN-185, #275) para a troca de /indicacoes/[id] no lote 3 do F09; /salvos em curso (RUN-186, #277).",
         "18/11: /salvos trocada (RUN-186, #277, 80604fba). Próximo da fase: lote 3 do F09 (troca de /indicacoes/[id] e revogação do INSERT direto) e a tela antiga /convite (SEC-017).",
         "20/11: dono escolheu a opção 1 do #309 (porta provisória no app) e determinou que nenhuma tela antiga sobreviva. Inventário pós-#309 de telas de membro ainda no site dividido em três cards com contrato: LAN-TROCA-CONVITE (TROCA-003), LAN-TROCA-ADMIN (TROCA-004) e LAN-TROCA-DENUNCIA-PRESTADOR (TROCA-005), todos antes do LAN-PROVA (que já depende de LAN-TROCA).",
-        "25/11: varredura na cabeça de #328 (3d44ad333): no apps/web restam só páginas de operador ((admin): admissions, arrivals, guide-queue, operator-actions, reports, suspensions), legais/pré-entrada ((preauth): codigo-de-conduta, consent, conta-apagada, privacidade), ajuda pública, auth/callback-error, auth/confirmar-email e a landing; a pasta (shell) não existe. Nenhum href da web aponta para rota antiga. Componentes da web sem órfão (20 arquivos). Em lib, um órfão anterior a #328: apps/web/lib/user-group-interests-rpcs.ts (sem import desde RUN-163, #242; só citado em comentário de lib/profile/profile-bio-rpcs.ts) — sai no lote que fechar #328. scripts/visual/loop.mjs só cita docs/historico em comentário (ferramenta viva, sem leitura). Pendências da fase: o merge de #328 (LAN-TROCA-DENUNCIA-PRESTADOR) com o 307 de /login e /signup achado pelo rastreador."
+        "25/11: varredura na cabeça de #328 (3d44ad333): no apps/web restam só páginas de operador ((admin): admissions, arrivals, guide-queue, operator-actions, reports, suspensions), legais/pré-entrada ((preauth): codigo-de-conduta, consent, conta-apagada, privacidade), ajuda pública, auth/callback-error, auth/confirmar-email e a landing; a pasta (shell) não existe. Nenhum href da web aponta para rota antiga. Componentes da web sem órfão (20 arquivos). Em lib, um órfão anterior a #328: apps/web/lib/user-group-interests-rpcs.ts (sem import desde RUN-163, #242; só citado em comentário de lib/profile/profile-bio-rpcs.ts) — sai no lote que fechar #328. scripts/visual/loop.mjs só cita docs/historico em comentário (ferramenta viva, sem leitura). Pendências da fase: o merge de #328 (LAN-TROCA-DENUNCIA-PRESTADOR) com o 307 de /login e /signup achado pelo rastreador.",
+        "25/11: com #328 em main (25c24f130) a varredura da troca está completa: apps/web serve só landing, operador (admin), páginas legais e de auth, ajuda pública e API; nenhuma rota de membro serve tela, as antigas respondem 307 para o /app e o link-crawl passa no rigor normal no CI completo. LAN-TROCA-CONVITE e LAN-TROCA-ADMIN reconciliados para done. O cartão segue aberto só pelas dependências ainda com trabalho: jornadas LAN-F01..F10, LAN-OP e PROXY-SURFACE-RISK."
       ],
       "id": "LAN-TROCA",
       "title": "Fase 6: varredura da troca — nenhuma rota de membro no apps/web servindo tela",
@@ -10367,7 +10368,7 @@
       "title": "Troca: grupo e sua administração saem do site para o app; convite e lista da vila saem sem substituto",
       "priority": "P1",
       "category": "frontend",
-      "status": "next",
+      "status": "done",
       "phase": "Lançamento",
       "description": "Revisto em 20/11 contra o ADR-20261024 do redesenho (§3.4: a vila sai) e o ADR-20261023 (convite de grupo é link para a tela do grupo). Refeito no app: a administração de /groups/:id (aprovar/recusar pedido, remover membro, passar a administração, regras, fixar, aviso por grupo, excluir) e o Convidar que compartilha o link do grupo. Sai sem substituto, com 307 para /app/comunidade: /communities/:id/invite, /invite/:token e /gerir-comunidades. /groups/:id passa a 307 para /app/grupo/:id.",
       "checklist": [
@@ -10390,21 +10391,23 @@
       "proof": [
         "20/11: aberto por decisão do dono (opção 1 do #309: porta provisória no app e nenhuma tela antiga sobrevive). Contrato TROCA-003 pronto para o Codex; começa depois do merge do TROCA-002 (#309).",
         "20/11: escopo revisto. A1 (6489eb3e, RPCs de convite de comunidade) e A2 (2abddb89, rotas) revertidas em 682e2a78 e 1fbd5a65 por contrariarem o redesenho §3.4; migration nunca chegou à main. Contrato TROCA-003 reescrito.",
-        "21/11: correção c698ccad7 no #314: regras e fixar só para o dono, remover membro pela API não apaga o dono (neq role owner, teste unitário), aviso abre com o nível salvo, falha ao ler membros com Tentar de novo. Local: typecheck, vitest grupos-admin e grupos (8), Playwright grupos-administracao (102) verdes. Pendências no card GRUPOS-ADMIN-RESSALVAS."
+        "21/11: correção c698ccad7 no #314: regras e fixar só para o dono, remover membro pela API não apaga o dono (neq role owner, teste unitário), aviso abre com o nível salvo, falha ao ler membros com Tentar de novo. Local: typecheck, vitest grupos-admin e grupos (8), Playwright grupos-administracao (102) verdes. Pendências no card GRUPOS-ADMIN-RESSALVAS.",
+        "25/11: reconciliação — o lote deste cartão está em main desde o #314 (9fc92ef6b), mergeado com CI completo verde; o cartão ficou em next por esquecimento. A varredura final da troca (#328, 25c24f130) confirmou que nenhuma rota de membro dele serve tela no site. Ressalvas abertas seguem nos próprios cartões de ressalva."
       ],
-      "updatedAt": "2026-11-20",
+      "updatedAt": "2026-11-25",
       "sourceRevision": "1bd9c7f8",
       "notes": [
         "20/11 pendências do #309 (f1c405e) para este card: MEDIUM — em apps/app/lib/api/cliente.ts a bandeira encaminhouParaEntrada nunca se religa quando a página volta do bfcache; religar no evento pageshow com persisted e cobrir em teste. LOW — comentar em supabase/seed.sql por que o insert de filiação owner/approved ficou só no grupo 2 (link-crawl e synthetic-people).",
         "20/11 também do #309: aprovação de pedidos e convite de grupo no app (hoje a porta provisória leva ao /groups/:id), porta para moderador além do dono, e os LOWs dos revisores (teste sequencial em vez de Promise.all, laço /app/entrar no retornoValido, 401 em escritas por 42501, Sair com sessão vencida)."
-      ]
+      ],
+      "completedAt": "2026-11-25"
     },
     {
       "id": "LAN-TROCA-ADMIN",
       "title": "Troca: indicar prestador e painel da vila saem do site sem substituto (307)",
       "priority": "P1",
       "category": "frontend",
-      "status": "next",
+      "status": "done",
       "phase": "Lançamento",
       "description": "Revisto em 20/11 contra o ADR-20261024 do redesenho: a vila sai (§3.4) e só o operador convida e atesta prestador (§6). /communities/:id/indicar-prestador passa a 307 para /app/negocios; /communities/:id/admin e subrotas passam a 307 para /app/comunidade; páginas (owner) e testes saem. A área do operador em (admin) fica.",
       "checklist": [
@@ -10424,17 +10427,19 @@
       "blockers": [],
       "proof": [
         "20/11: aberto por decisão do dono (opção 1 do #309: porta provisória no app e nenhuma tela antiga sobrevive). Contrato TROCA-004 pronto para o Codex; começa depois do merge do TROCA-002 (#309).",
-        "20/11: contrato TROCA-004 reescrito para só redirecionamento e remoção (R2), pelo redesenho §3.4 e §6."
+        "20/11: contrato TROCA-004 reescrito para só redirecionamento e remoção (R2), pelo redesenho §3.4 e §6.",
+        "25/11: reconciliação — o lote deste cartão está em main desde o #323 (e7a3ca880), mergeado com CI completo verde; o cartão ficou em next por esquecimento. A varredura final da troca (#328, 25c24f130) confirmou que nenhuma rota de membro dele serve tela no site. Ressalvas abertas seguem nos próprios cartões de ressalva."
       ],
-      "updatedAt": "2026-11-20",
-      "sourceRevision": "1bd9c7f8"
+      "updatedAt": "2026-11-25",
+      "sourceRevision": "1bd9c7f8",
+      "completedAt": "2026-11-25"
     },
     {
       "id": "LAN-TROCA-DENUNCIA-PRESTADOR",
       "title": "Troca: denúncias do membro e área do prestador saem do site para o app; arquivos mortos da entrada saem",
       "priority": "P1",
       "category": "frontend",
-      "status": "next",
+      "status": "done",
       "phase": "Lançamento",
       "description": "Depois do #309 seguem servindo tela no site /denuncias (3 páginas), (provider)/prestador (6 páginas) e /prestador-convite/[token]; login, signup, recuperar-senha, nova-senha e onboarding já redirecionam para /app/entrar mas os arquivos seguem no disco.",
       "checklist": [
@@ -10457,10 +10462,12 @@
       "blockers": [],
       "proof": [
         "20/11: aberto por decisão do dono (opção 1 do #309: porta provisória no app e nenhuma tela antiga sobrevive). Contrato TROCA-005 pronto para o Codex; começa depois do merge do TROCA-002 (#309).",
-        "25/11: #328 (nav/troca-005) na rodada única de correção do CI: head 3d44ad333 (specs do compositor antigo removidos com o shell, f07 pela aba Catálogo, mock tipoDaConta no axe). Gate --fast verde local. CI completo VERMELHO em 4 pontos, sem segunda rodada por ordem do coordenador (pausa de cota): (1) link-crawl desktop-1440 — a landing e outras telas ainda levam a /login e /signup, removidos por este PR sem 307 (50 links quebrados); (2) cega-capturas f07/meu-negocio em 375/768/1440 espera [data-lista=servicos] em /app/meu-negocio, que agora mora numa aba; (3) axe Meu negócio — 'Limpeza de split' fica oculto atrás da aba; (4) grupos-redirect 'entrada retoma o destino validado' — /app/entrar?redirect= não sai da entrada (verificar se a regra do proxy mudada no PR o afeta). Não marcado pronto, sem merge. Próximo passo: 307 de /login e /signup para /app/entrar no next.config (com teste no lan-troca-redirect), abrir a aba Serviços na captura f07 e no axe, e reproduzir o grupos-redirect local antes de atribuir; depois CI completo e merge."
+        "25/11: #328 (nav/troca-005) na rodada única de correção do CI: head 3d44ad333 (specs do compositor antigo removidos com o shell, f07 pela aba Catálogo, mock tipoDaConta no axe). Gate --fast verde local. CI completo VERMELHO em 4 pontos, sem segunda rodada por ordem do coordenador (pausa de cota): (1) link-crawl desktop-1440 — a landing e outras telas ainda levam a /login e /signup, removidos por este PR sem 307 (50 links quebrados); (2) cega-capturas f07/meu-negocio em 375/768/1440 espera [data-lista=servicos] em /app/meu-negocio, que agora mora numa aba; (3) axe Meu negócio — 'Limpeza de split' fica oculto atrás da aba; (4) grupos-redirect 'entrada retoma o destino validado' — /app/entrar?redirect= não sai da entrada (verificar se a regra do proxy mudada no PR o afeta). Não marcado pronto, sem merge. Próximo passo: 307 de /login e /signup para /app/entrar no next.config (com teste no lan-troca-redirect), abrir a aba Serviços na captura f07 e no axe, e reproduzir o grupos-redirect local antes de atribuir; depois CI completo e merge.",
+        "25/11: #328 mergeado (squash 25c24f130) na cabeça 5c5306e30 com CI completo verde: CI core, Stateful 375/768/1440, Visual 7 shards, App mobile-first, HTML R72, android e ios (só os deploys Vercel de experimentos falham, conhecidos). Rodada de correção: 307 de /login e /signup para /app/entrar cobertos pelo link-crawl; captura f07 e axe de Meu negócio abrem a aba Catálogo; o órfão apps/web/lib/user-group-interests-rpcs.ts saiu. O 'entrada retoma o destino validado' não era regressão: no run 45580139674 falhou só em desktop-1440, passou no retry e nas outras duas larguras (flaky registrado pelo anotar-flakes); nada a corrigir no código."
       ],
-      "updatedAt": "2026-11-20",
-      "sourceRevision": "1bd9c7f8"
+      "updatedAt": "2026-11-25",
+      "sourceRevision": "1bd9c7f8",
+      "completedAt": "2026-11-25"
     },
     {
       "phase": "Lançamento",
