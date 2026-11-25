@@ -6361,7 +6361,8 @@
         "17/11: /guide/sugerir trocada (RUN-182, #271). Em curso: /configuracoes* (RUN-184) e paridade da Pergunta antes de trocar /indicacoes/[id] (RUN-185). Depois: /salvos e o lote 3 do F09 (troca de /indicacoes/[id] e revogação do INSERT direto). Troca de e-mail fora do lançamento por decisão do dono.",
         "17/11: /configuracoes trocada (RUN-184, #274); paridade da Pergunta pronta (RUN-185, #275) para a troca de /indicacoes/[id] no lote 3 do F09; /salvos em curso (RUN-186, #277).",
         "18/11: /salvos trocada (RUN-186, #277, 80604fba). Próximo da fase: lote 3 do F09 (troca de /indicacoes/[id] e revogação do INSERT direto) e a tela antiga /convite (SEC-017).",
-        "20/11: dono escolheu a opção 1 do #309 (porta provisória no app) e determinou que nenhuma tela antiga sobreviva. Inventário pós-#309 de telas de membro ainda no site dividido em três cards com contrato: LAN-TROCA-CONVITE (TROCA-003), LAN-TROCA-ADMIN (TROCA-004) e LAN-TROCA-DENUNCIA-PRESTADOR (TROCA-005), todos antes do LAN-PROVA (que já depende de LAN-TROCA)."
+        "20/11: dono escolheu a opção 1 do #309 (porta provisória no app) e determinou que nenhuma tela antiga sobreviva. Inventário pós-#309 de telas de membro ainda no site dividido em três cards com contrato: LAN-TROCA-CONVITE (TROCA-003), LAN-TROCA-ADMIN (TROCA-004) e LAN-TROCA-DENUNCIA-PRESTADOR (TROCA-005), todos antes do LAN-PROVA (que já depende de LAN-TROCA).",
+        "25/11: varredura na cabeça de #328 (3d44ad333): no apps/web restam só páginas de operador ((admin): admissions, arrivals, guide-queue, operator-actions, reports, suspensions), legais/pré-entrada ((preauth): codigo-de-conduta, consent, conta-apagada, privacidade), ajuda pública, auth/callback-error, auth/confirmar-email e a landing; a pasta (shell) não existe. Nenhum href da web aponta para rota antiga. Componentes da web sem órfão (20 arquivos). Em lib, um órfão anterior a #328: apps/web/lib/user-group-interests-rpcs.ts (sem import desde RUN-163, #242; só citado em comentário de lib/profile/profile-bio-rpcs.ts) — sai no lote que fechar #328. scripts/visual/loop.mjs só cita docs/historico em comentário (ferramenta viva, sem leitura). Pendências da fase: o merge de #328 (LAN-TROCA-DENUNCIA-PRESTADOR) com o 307 de /login e /signup achado pelo rastreador."
       ],
       "id": "LAN-TROCA",
       "title": "Fase 6: varredura da troca — nenhuma rota de membro no apps/web servindo tela",
@@ -10455,7 +10456,8 @@
       "tests": [],
       "blockers": [],
       "proof": [
-        "20/11: aberto por decisão do dono (opção 1 do #309: porta provisória no app e nenhuma tela antiga sobrevive). Contrato TROCA-005 pronto para o Codex; começa depois do merge do TROCA-002 (#309)."
+        "20/11: aberto por decisão do dono (opção 1 do #309: porta provisória no app e nenhuma tela antiga sobrevive). Contrato TROCA-005 pronto para o Codex; começa depois do merge do TROCA-002 (#309).",
+        "25/11: #328 (nav/troca-005) na rodada única de correção do CI: head 3d44ad333 (specs do compositor antigo removidos com o shell, f07 pela aba Catálogo, mock tipoDaConta no axe). Gate --fast verde local. CI completo VERMELHO em 4 pontos, sem segunda rodada por ordem do coordenador (pausa de cota): (1) link-crawl desktop-1440 — a landing e outras telas ainda levam a /login e /signup, removidos por este PR sem 307 (50 links quebrados); (2) cega-capturas f07/meu-negocio em 375/768/1440 espera [data-lista=servicos] em /app/meu-negocio, que agora mora numa aba; (3) axe Meu negócio — 'Limpeza de split' fica oculto atrás da aba; (4) grupos-redirect 'entrada retoma o destino validado' — /app/entrar?redirect= não sai da entrada (verificar se a regra do proxy mudada no PR o afeta). Não marcado pronto, sem merge. Próximo passo: 307 de /login e /signup para /app/entrar no next.config (com teste no lan-troca-redirect), abrir a aba Serviços na captura f07 e no axe, e reproduzir o grupos-redirect local antes de atribuir; depois CI completo e merge."
       ],
       "updatedAt": "2026-11-20",
       "sourceRevision": "1bd9c7f8"
@@ -10828,8 +10830,72 @@
       "sourceRevision": "9c075d211",
       "links": ["docs/LANCAMENTO.md"],
       "proof": [
-        "23/11: separado do LAN-PROVA por decisão do coordenador sobre a pausa da loja pelo dono (o web vai primeiro); o LAN-PROVA fica com a prova da loja."
+        "23/11: separado do LAN-PROVA por decisão do coordenador sobre a pausa da loja pelo dono (o web vai primeiro); o LAN-PROVA fica com a prova da loja.",
+        "25/11: rodada enxuta (inventário, sem execução nova, por pausa de cota). E2E de todas as jornadas: depende de LAN-TROCA (#328 vermelho) e da entrada nova ENTRA-001, que precisa entrar antes da prova final — rodar agora seria refeito. Segurança: última revisão de borda em ENDURECE-B (#307, 19/11); desde então mudaram 53 arquivos em api/proxy/lib/next.config/migrations (incluindo 20261121002331_sessao_nativa_limiter e 20261122083205_push_nativo) — uma passada do security-auditor sobre git diff d6f886419..main nesses caminhos é o item a rodar na retomada. Desempenho e concorrência: OPS-CONCORRENCIA-LANCAMENTO done (login ~100-120/s, leitura ~1.000 req/s p95 99 ms, local); reavaliar no ambiente implantado. Ensaio de deploy: o build de produção de apps/web e apps/app roda no CI; deploy real e avançar producao são atos do dono. Ratificação: docs/decisions/RATIFICACAO.md lista as decisões por delegação para o dono no fim."
       ]
+    },
+    {
+      "id": "APP-MEUS-CHAMADOS",
+      "title": "Meus chamados lê os chamados reais da pessoa",
+      "priority": "P1",
+      "category": "frontend",
+      "status": "repo",
+      "phase": "Lançamento",
+      "description": "A tela /app/chamados (apps/app/src/telas/Chamados.tsx) é estática: mostra sempre 'Nenhum chamado aberto', mesmo quando a pessoa abriu chamado. A tabela support_tickets existe (migrations 20261022130516, 20261022130519, 20261022130521). Achado na revisão de #328 (TROCA-005), que levou as denúncias para a aba da Ajuda.",
+      "checklist": [
+        "Rota da API do app (ADR SPA §5) lista os chamados da própria pessoa sob RLS, com teste positivo e negativo (outra pessoa não lê)",
+        "Chamados.tsx mostra lista, vazio real, carregando e falha com nova tentativa",
+        "E2E em 375/768/1440 com chamado do seed e com lista vazia"
+      ],
+      "dependencies": [],
+      "tests": [],
+      "blockers": [],
+      "proof": ["25/11: registrado na pausa de cota; não iniciado."],
+      "links": ["apps/app/src/telas/Chamados.tsx"],
+      "updatedAt": "2026-11-25",
+      "sourceRevision": "1f2e5b521"
+    },
+    {
+      "id": "BUGCID-001",
+      "title": "Rascunho perdido ao recarregar antes de a cidade chegar",
+      "priority": "P1",
+      "category": "frontend",
+      "status": "repo",
+      "phase": "Lançamento",
+      "description": "Correção pronta no PC, no worktree C:/Users/juana/bv-bugcidade, branch bug/cidade-grupos (origin em ae2f2ec28; local à frente com o merge de main 86f59243e, não empurrado). A revisão às cegas do DeepSeek voltou FAIL; os achados ainda não foram confrontados com o código. Liberado até o merge pelo coordenador em 25/11, pausado pela cota.",
+      "checklist": [
+        "Confrontar cada achado FAIL do DeepSeek com o código e corrigir numa rodada",
+        "Gate completo no worktree e PR com CI verde",
+        "Merge e prova do rascunho que sobrevive ao recarregar"
+      ],
+      "dependencies": [],
+      "tests": [],
+      "blockers": [],
+      "proof": ["25/11: próximo passo depois da pausa de cota, antes de ENTRA-001."],
+      "links": [],
+      "updatedAt": "2026-11-25",
+      "sourceRevision": "1f2e5b521"
+    },
+    {
+      "id": "ENTRA-001",
+      "title": "Entrada enxuta: três passos, grupos opcionais e Comece no Bivaque",
+      "priority": "P1",
+      "category": "frontend",
+      "status": "repo",
+      "phase": "Lançamento",
+      "description": "Redesenho da entrada aprovado pelo dono em 22/11: conta com código em 6 caixas e termo em linha; vínculo com verificação animada numa tela só; cidade sugerida; grupos opcionais num carrossel; cartão 'Comece no Bivaque' no Início; régua Nextdoor no Mobbin. ADR e contrato escritos no PC, fora do git: C:/Users/juana/bv-rascunhos/entrada/ADR-20261122-entrada-enxuta.md e ENTRA-001.task.yml. Precisa entrar antes da prova final (LAN-PROVA-WEB).",
+      "checklist": [
+        "Trazer o ADR e o contrato para o repositório e validar o contrato",
+        "Implementar por contrato com referências do Mobbin citadas",
+        "E2E da entrada em 375/768/1440, revisão às cegas e merge com CI verde"
+      ],
+      "dependencies": ["BUGCID-001"],
+      "tests": [],
+      "blockers": [],
+      "proof": ["25/11: próximo passo depois da pausa de cota, após BUGCID-001."],
+      "links": [],
+      "updatedAt": "2026-11-25",
+      "sourceRevision": "1f2e5b521"
     }
   ],
   "launch": {
