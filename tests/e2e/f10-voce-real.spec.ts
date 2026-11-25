@@ -140,7 +140,7 @@ test.describe("F10 — Você real no app", { tag: "@stateful" }, () => {
     await page.goto("/app/voce")
     const erro = page.locator('[data-aviso="perfil"]')
     await expect(erro).toBeVisible({ timeout: 30_000 })
-    await expect(erro).toContainText("Leitura do perfil indisponível")
+    await expect(erro).toContainText("Não foi possível carregar seu perfil")
     await expect(
       page.getByText("Ninguém bloqueado"),
       "banco fora não pode virar perfil vazio",

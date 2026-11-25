@@ -517,7 +517,7 @@ export function Conversa() {
                 >
                   {item.minha ? (
                     <p className="whitespace-pre-wrap break-words rounded-2xl rounded-br-sm bg-(--secondary-container) px-3 py-2.5 text-[14px] leading-5">
-                      {item.conteudo}
+                      <span>{item.conteudo}</span>
                       <HoraDaMensagem criadaEm={item.criadaEm} />
                     </p>
                   ) : (
@@ -531,7 +531,7 @@ export function Conversa() {
                       className="whitespace-pre-wrap break-words rounded-2xl rounded-bl-sm bg-(--surface-lowest) px-3 py-2.5 text-left text-[14px] leading-5 ring-1 ring-(--outline-variant) hover:bg-(--surface-low) focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-(--ring)"
                       onClick={() => abrirDenuncia(item)}
                     >
-                      {item.conteudo}
+                      <span>{item.conteudo}</span>
                       <HoraDaMensagem criadaEm={item.criadaEm} />
                       <span className="sr-only">Denunciar mensagem</span>
                     </button>
