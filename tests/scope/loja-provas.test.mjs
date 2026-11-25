@@ -135,3 +135,15 @@ test("diagnóstico iOS é injetado somente na build do job", () => {
   assert.match(diagnostico, /unhandledrejection/)
   assert.match(diagnostico, /__diagnostico/)
 })
+
+test("diagnostico Android limita dados e registra as provas de barras", () => {
+  const android = readFileSync("tests/nativo/android.mjs", "utf8")
+  assert.match(android, /pedido\.headers\(\)\["authorization"\] \? "sim" : "nao"/)
+  assert.match(android, /root_com_filhos=/)
+  assert.match(android, /erro JavaScript nao tratado/)
+  assert.match(android, /captura\("02-teclado"\)/)
+  assert.match(android, /captura\("02-inicio-barras"\)/)
+  assert.match(android, /resolve-activity/)
+  assert.match(android, /navegador_padrao=/)
+  assert.doesNotMatch(android, /\$\{pedido\.headers\(\)/)
+})
