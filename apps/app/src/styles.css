@@ -3640,6 +3640,42 @@ body[data-profundidade="sim"] [data-casca="app"] {
   }
 }
 
+/* REGUA-003 (rodada 3, A4): no tablet a barra do topo também respeita a
+   coluna de cada tela — marca ou voltar na borda esquerda dela, busca ou
+   cidade na direita. A coluna é a largura máxima da tela (Você e subtelas:
+   640 px; Avisos: 46rem; Conversas: 1120 px) centrada no conteúdo, que tem
+   16 px de respiro de cada lado. */
+@media (min-width: 768px) and (max-width: 1023.98px) {
+  [data-topo="barra"]:is(
+    [data-rota="voce"],
+    [data-rota="salvos"],
+    [data-rota="bloqueados"],
+    [data-rota="perfil"]
+  ) {
+    --coluna-do-topo: 640px;
+  }
+
+  [data-topo="barra"][data-rota="avisos"] {
+    --coluna-do-topo: 46rem;
+  }
+
+  [data-topo="barra"]:is([data-rota="conversas"], [data-rota="conversa"]) {
+    --coluna-do-topo: 1120px;
+  }
+
+  [data-topo="barra"]:is(
+    [data-rota="voce"],
+    [data-rota="salvos"],
+    [data-rota="bloqueados"],
+    [data-rota="perfil"],
+    [data-rota="avisos"],
+    [data-rota="conversas"],
+    [data-rota="conversa"]
+  ) {
+    padding-inline: calc(16px + max(0px, (100% - 32px - var(--coluna-do-topo)) / 2));
+  }
+}
+
 /* REGUA-003: no computador, o título da barra do topo começa na borda esquerda
    da coluna de conteúdo das telas de Avisos, Conversas e Você. A coluna começa
    depois do trilho (96 px) e do respiro do conteúdo (28 px), mais metade da
@@ -3674,6 +3710,10 @@ body[data-profundidade="sim"] [data-casca="app"] {
   ) {
     --borda-da-coluna: calc(124px + max(0px, (100% - 152px - var(--coluna-do-topo)) / 2));
     padding-left: var(--borda-da-coluna);
+    /* A4 (rodada 3): Conversas, cidade e busca terminam na borda direita da
+       coluna, não na da janela — o mesmo respiro (28 px) e a mesma metade da
+       sobra do lado esquerdo. */
+    padding-right: calc(28px + max(0px, (100% - 152px - var(--coluna-do-topo)) / 2));
   }
 
   [data-topo="barra"]:is(
