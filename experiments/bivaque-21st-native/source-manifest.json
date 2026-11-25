@@ -1,0 +1,192 @@
+{
+  "origin": "21st.dev MCP get_component",
+  "sourceMap": [
+    {
+      "id": 8343,
+      "slug": "bottom-nav-bar",
+      "install": "npx shadcn@latest add \"https://21st.dev/r/arunachalam/bottom-nav-bar?api_key=$API_KEY_21ST\"",
+      "original": "src/components/21st/upstream/bottom-nav-bar.tsx",
+      "sha256": "d6c323cf6f8f7790af9f6d946fc74bc2f4d0a1f02ca32d8a4e24b0a0a275f2ba",
+      "licenseStatus": "unverified"
+    },
+    {
+      "id": 28199,
+      "slug": "product-card",
+      "install": "npx shadcn@latest add \"https://21st.dev/r/deltacomponents/product-card?api_key=$API_KEY_21ST\"",
+      "original": "src/components/21st/upstream/product-card.tsx",
+      "sha256": "79ba5510c0a940a818f19fcde2821bb823671a12b9c57f0a0aa30f76b7910dd7",
+      "licenseStatus": "unverified"
+    },
+    {
+      "id": 2652,
+      "slug": "social-post-card",
+      "install": "npx shadcn@latest add \"https://21st.dev/r/ruixen.ui/social-post-card?api_key=$API_KEY_21ST\"",
+      "original": "src/components/21st/upstream/social-post-card.tsx",
+      "sha256": "384eb06185821e9517fe1807cbb45a9ce1986c3329042af69466b8b4d9f8146b",
+      "licenseStatus": "unverified"
+    },
+    {
+      "id": 8229,
+      "slug": "event-card",
+      "install": "npx shadcn@latest add \"https://21st.dev/r/ravikatiyar162/event-card?api_key=$API_KEY_21ST\"",
+      "original": "src/components/21st/upstream/event-card.tsx",
+      "sha256": "8bc94292d8455b63abc28425324de2132ebcf03cdc66c641cf5e0575e934ca2b",
+      "licenseStatus": "unverified"
+    },
+    {
+      "id": 44978,
+      "slug": "chip-filter",
+      "install": "npx shadcn@latest add \"https://21st.dev/r/amankaushik481/chip-filter?api_key=$API_KEY_21ST\"",
+      "original": "src/components/21st/upstream/chip-filter.tsx",
+      "sha256": "d73fa3ad13fe533a895fe4c7ed649b8b50f9165a1d7316ef9fac684c20ecba5e",
+      "licenseStatus": "unverified"
+    },
+    {
+      "id": 7100,
+      "slug": "property-card",
+      "install": "npx shadcn@latest add \"https://21st.dev/r/ravikatiyar162/card-4?api_key=$API_KEY_21ST\"",
+      "original": "src/components/21st/upstream/property-card.tsx",
+      "sha256": "4254337e25384c1f6ed737478eb63f88532e76b00875c64cd6a4e4e77f88e15a",
+      "licenseStatus": "unverified"
+    },
+    {
+      "id": 8223,
+      "slug": "service-card",
+      "install": "npx shadcn@latest add \"https://21st.dev/r/lavikatiyar/service-card?api_key=$API_KEY_21ST\"",
+      "original": "src/components/21st/upstream/service-card.tsx",
+      "sha256": "1b1b91709de32be1af16546fceab9ffef985aa73475a6fa4044f81957ce6ebb8",
+      "licenseStatus": "unverified"
+    },
+    {
+      "id": 12402,
+      "slug": "agent-chat",
+      "install": "npx shadcn@latest add \"https://21st.dev/r/serafimcloud/agent-chat?api_key=$API_KEY_21ST\"",
+      "original": "src/components/21st/upstream/agent-chat.tsx",
+      "sha256": "40ab2df8c5931b069f9f555916f0a5ba3388c3afca98381b5a8ae13dfd223b91",
+      "licenseStatus": "unverified"
+    },
+    {
+      "id": 27575,
+      "slug": "empty-state",
+      "install": "npx shadcn@latest add \"https://21st.dev/r/wensity/empty-state?api_key=$API_KEY_21ST\"",
+      "original": "src/components/21st/upstream/empty-state.tsx",
+      "sha256": "2532ea20f930c16692f099ed62953386d1d0536e3078eb9baf420c413a408e19",
+      "licenseStatus": "unverified"
+    },
+    {
+      "id": 11829,
+      "slug": "interfaces-carousel",
+      "install": "npx shadcn@latest add \"https://21st.dev/r/jshguo/interfaces-carousel?api_key=$API_KEY_21ST\"",
+      "original": "src/components/21st/upstream/interfaces-carousel.tsx",
+      "sha256": "23ad2bf4c2416aabd973c9dfb1d529a3d20b3b581906b470b78e614a540d3f0b",
+      "licenseStatus": "unverified"
+    },
+    {
+      "id": 8568,
+      "slug": "image-uploader",
+      "install": "npx shadcn@latest add \"https://21st.dev/r/lavikatiyar/image-uploader?api_key=$API_KEY_21ST\"",
+      "original": "src/components/21st/upstream/image-uploader.tsx",
+      "sha256": "93878ac79b44ee4f9d528af857462e180147d36b657e70357517ead354aa759d",
+      "licenseStatus": "unverified"
+    },
+    {
+      "id": 28355,
+      "slug": "avatar-stack",
+      "install": "npx shadcn@latest add \"https://21st.dev/r/shadcnspace/avatar-08?api_key=$API_KEY_21ST\"",
+      "original": "src/components/21st/upstream/avatar-stack.tsx",
+      "sha256": "0bf71d5552b148370820b0b54ed0bdbb69aa93990049e49b0689356b39c8da11",
+      "licenseStatus": "unverified"
+    },
+    {
+      "id": 5621,
+      "slug": "comment-thread",
+      "install": "npx shadcn@latest add \"https://21st.dev/r/vaib215/reddit-nested-thread-reply?api_key=$API_KEY_21ST\"",
+      "original": "src/components/21st/upstream/comment-thread.tsx",
+      "sha256": "12721717b56a68cfc9f866761b0c87b8a0c2d4277e795384ffa5f5122a422e42",
+      "licenseStatus": "unverified"
+    },
+    {
+      "id": 19360,
+      "slug": "magnetic-drawer",
+      "install": "npx shadcn@latest add \"https://21st.dev/r/animbits/specials-magnetic-drawer?api_key=$API_KEY_21ST\"",
+      "original": "src/components/21st/upstream/magnetic-drawer.tsx",
+      "sha256": "ffe38abaea250c2b5e0a7b687b1335dac79df91baeda44fac4de7f095e1210e8",
+      "licenseStatus": "unverified"
+    },
+    {
+      "id": 10479,
+      "slug": "notification-popover",
+      "install": "npx shadcn@latest add \"https://21st.dev/r/patrick-xin/vercel-notification-popover?api_key=$API_KEY_21ST\"",
+      "original": "src/components/21st/upstream/notification-popover.tsx",
+      "sha256": "892ae6d657935364e07a2afacb9ba72f05a21ebcc2420d8e6584a14e0b3e859c",
+      "licenseStatus": "unverified"
+    },
+    {
+      "id": 22225,
+      "slug": "notification-settings",
+      "install": "npx shadcn@latest add \"https://21st.dev/r/felipemenezes098/notifications-2?api_key=$API_KEY_21ST\"",
+      "original": "src/components/21st/upstream/notification-settings.tsx",
+      "sha256": "8cd082cb0c3acd48babd44a8f5dc5670e36f0a0631e17be12c79c78ec2c894e2",
+      "licenseStatus": "unverified"
+    },
+    {
+      "id": 1696,
+      "slug": "bookmark-icon-button",
+      "install": "npx shadcn@latest add \"https://21st.dev/r/ozantekin/bookmark-icon-button?api_key=$API_KEY_21ST\"",
+      "original": "src/components/21st/upstream/bookmark-icon-button.tsx",
+      "sha256": "79f4ca833a9a851f89bd29c0cec1a37fce64caf28ebe4a7f7bae0314225db137",
+      "licenseStatus": "unverified"
+    },
+    {
+      "id": 25320,
+      "slug": "expand-menu",
+      "install": "npx shadcn@latest add \"https://21st.dev/r/unlumen/expand-menu?api_key=$API_KEY_21ST\"",
+      "original": "src/components/21st/upstream/expand-menu.tsx",
+      "sha256": "da7dbfebcd73b749c3ae0fd68eb3d9f480d851a6ad43cccababa80961c3bb2d8",
+      "licenseStatus": "unverified"
+    },
+    {
+      "id": 38984,
+      "slug": "command-menu",
+      "install": "npx shadcn@latest add \"https://21st.dev/r/victor-teles/command-menu?api_key=$API_KEY_21ST\"",
+      "original": "src/components/21st/upstream/command-menu.tsx",
+      "sha256": "d72651a44045f460b2a3991ea9b92777056af4aa144753373bd3a19ee543d57a",
+      "licenseStatus": "unverified"
+    },
+    {
+      "id": 8240,
+      "slug": "community-hub-card",
+      "install": "npx shadcn@latest add \"https://21st.dev/r/ravikatiyar162/community-hub-card?api_key=$API_KEY_21ST\"",
+      "original": "src/components/21st/upstream/community-hub-card.tsx",
+      "sha256": "9f945d2f07ad03b9c4aca398861b053aca89ddb203d9ad556a97a44120590df7",
+      "licenseStatus": "unverified"
+    },
+    {
+      "id": 23552,
+      "slug": "segmented-control",
+      "install": "npx shadcn@latest add \"https://21st.dev/r/ddoemonn/segmented-control?api_key=$API_KEY_21ST\"",
+      "original": "src/components/21st/upstream/segmented-control.tsx",
+      "sha256": "e8af72c4f84892181b5cbcbf3c2ae70ed5f75b043ac38b3123f85f0c90d14950",
+      "licenseStatus": "unverified"
+    },
+    {
+      "id": 19941,
+      "slug": "toast-action",
+      "install": "npx shadcn@latest add \"https://21st.dev/r/bundui/toast1?api_key=$API_KEY_21ST\"",
+      "original": "src/components/21st/upstream/toast-action.tsx",
+      "sha256": "5b01a6766878faad93c86912ce9db3baf061497518c7f0f7932c5ea2dfc8c5ac",
+      "licenseStatus": "unverified"
+    },
+    {
+      "id": 44878,
+      "slug": "profile-menu-expander",
+      "install": "npx shadcn@latest add \"https://21st.dev/r/aloksivastava1025/grid-row-profile-expander?api_key=$API_KEY_21ST\"",
+      "original": "src/components/21st/upstream/profile-menu-expander.tsx",
+      "sha256": "eb79ac324bc6836221b176c29647805568b70723796ca0ad849bb630963dcdad",
+      "licenseStatus": "unverified"
+    }
+  ],
+  "verifiedAgainst": "21st.dev MCP get_component code, byte-exact comparison",
+  "verifiedAt": "2026-11-11",
+  "verificationNote": "Hashes freeze the 23 retrieved 21st.dev sources. Licenses must be checked separately before production."
+}
