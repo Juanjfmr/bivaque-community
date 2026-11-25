@@ -216,6 +216,7 @@ async function simularMeuNegocio(page: Page): Promise<void> {
           fotos: [],
         },
         categorias: CATEGORIAS_DO_NEGOCIO,
+        tipoDaConta: "membro",
       },
     }),
   )
@@ -409,12 +410,19 @@ const CASOS: readonly Caso[] = [
     nome: "Meu negócio",
     caminho: "/app/meu-negocio",
     preparar: simularMeuNegocio,
-    pronto: comTexto("Limpeza de split"),
+    pronto: comTexto("Salvar alterações"),
     alvos: (page) => [
       page.getByRole("button", { name: "Salvar alterações" }),
-      page.getByRole("button", { name: "Publicar item", exact: true }),
       page.getByRole("button", { name: "Ver página pública" }),
     ],
+  },
+  // TROCA-005: o catálogo mora na aba Catálogo.
+  {
+    nome: "Meu negócio: catálogo",
+    caminho: "/app/meu-negocio?aba=catalogo",
+    preparar: simularMeuNegocio,
+    pronto: comTexto("Limpeza de split"),
+    alvos: (page) => [page.getByRole("button", { name: "Publicar item", exact: true })],
   },
   {
     nome: "Pedidos",

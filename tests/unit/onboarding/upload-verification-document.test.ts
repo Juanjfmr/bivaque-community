@@ -89,6 +89,30 @@ function foto(): File {
   return new File([new Uint8Array([0xff, 0xd8, 0xff, 0x00])], "foto.jpg", { type: "image/jpeg" })
 }
 
+/** Troca do documento em análise: a RPC devolve o caminho substituído (ou null). */
+function trocaCom(antigo: string | null) {
+  lerStatus.mockResolvedValue({ situation: "in_review", uploadedAt: null })
+  rpc.mockImplementation(async (name: string) => {
+    if (name === "has_accepted_consent") return { data: true, error: null }
+    if (name === "replace_verification_document") {
+      return {
+        data: [{ document_id: "fixture-document", replaced_storage_object_path: antigo }],
+        error: null,
+      }
+    }
+    return { data: null, error: null }
+  })
+}
+
+/** Os caminhos cuja linha da fila de remoção foi fechada. */
+function remocoesDaFila(): string[] {
+  return rpc.mock.calls
+    .filter(([nome]) => nome === "complete_verification_document_removal")
+    .map(
+      ([, parametros]) => (parametros as { p_storage_object_path: string }).p_storage_object_path,
+    )
+}
+
 beforeEach(() => {
   vi.clearAllMocks()
   criarCliente.mockReturnValue(servico as never)
@@ -263,6 +287,70 @@ describe("caminho feliz do documento", () => {
     expect(rpc).toHaveBeenCalledWith("complete_verification_document_removal", {
       p_storage_object_path: antigo,
     })
+  })
+
+  // PORT-004: o arquivo substituído não pode ficar para sempre no bucket. A
+  // linha da fila nasce na MESMA transação da troca; o núcleo só apaga o objeto
+  // (duas tentativas) e, quando a remoção funciona, fecha a linha. Estes quatro
+  // casos são os que a remoção da tela antiga levou junto (correção 2, item 3).
+  it("tenta a remoção de novo e fecha a fila quando a segunda tentativa funciona", async () => {
+    const antigo = `${PESSOA}/documento-antigo.pdf`
+    trocaCom(antigo)
+    remove
+      .mockResolvedValueOnce({ error: { message: "storage unavailable" } })
+      .mockResolvedValueOnce({ error: null })
+
+    await expect(uploadVerificationDocument({ userId: PESSOA, file: pdf() })).resolves.toEqual({
+      ok: true,
+    })
+
+    expect(remove).toHaveBeenCalledTimes(2)
+    expect(remove).toHaveBeenLastCalledWith([antigo])
+    expect(remocoesDaFila()).toEqual([antigo])
+  })
+
+  it("deixa o caminho na fila depois de duas falhas e mantém o envio", async () => {
+    trocaCom(`${PESSOA}/documento-antigo.pdf`)
+    remove.mockResolvedValue({ error: { message: "storage unavailable" } })
+
+    await expect(uploadVerificationDocument({ userId: PESSOA, file: pdf() })).resolves.toEqual({
+      ok: true,
+    })
+
+    expect(remove).toHaveBeenCalledTimes(2)
+    expect(remocoesDaFila()).toHaveLength(0)
+  })
+
+  it("registra o envio mesmo quando a conclusão da fila falha", async () => {
+    const antigo = `${PESSOA}/documento-antigo.pdf`
+    trocaCom(antigo)
+    rpc.mockImplementation(async (name: string) => {
+      if (name === "has_accepted_consent") return { data: true, error: null }
+      if (name === "replace_verification_document") {
+        return {
+          data: [{ document_id: "fixture-document", replaced_storage_object_path: antigo }],
+          error: null,
+        }
+      }
+      return { data: null, error: { message: "queue unavailable", code: "PGRST202" } }
+    })
+
+    await expect(uploadVerificationDocument({ userId: PESSOA, file: pdf() })).resolves.toEqual({
+      ok: true,
+    })
+
+    expect(remocoesDaFila()).toEqual([antigo])
+  })
+
+  it("não tenta remover nem fechar a fila quando não houve arquivo substituído", async () => {
+    trocaCom(null)
+
+    await expect(uploadVerificationDocument({ userId: PESSOA, file: pdf() })).resolves.toEqual({
+      ok: true,
+    })
+
+    expect(remove).not.toHaveBeenCalled()
+    expect(remocoesDaFila()).toHaveLength(0)
   })
 })
 

@@ -4,7 +4,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest"
 
 // F02-001: a tela antiga /inicio saiu do apps/web. O membro com sessão que abre
 // "/" vai direto ao Início do app, sem o salto /inicio → /app/inicio; sem aceite
-// segue para o onboarding; o anônimo continua recebendo a landing.
+// segue para a entrada do app (TROCA-005: o funil de onboarding saiu da web); o
+// anônimo continua recebendo a landing.
 
 const sessao = vi.hoisted(() => ({ usuario: null as { id: string } | null }))
 
@@ -51,11 +52,11 @@ describe("raiz do site no proxy", () => {
     expect(destino(resposta)).toBe("/app/inicio")
   })
 
-  it("membro com sessão sem aceite segue para o onboarding, não para o Início", async () => {
+  it("membro com sessão sem aceite segue para a entrada do app, não para o Início", async () => {
     sessao.usuario = { id: "00000000-0000-4000-8000-000000000001" }
     const resposta = await pedirRaiz(proxy, false)
     expect(resposta.status).toBe(307)
-    expect(destino(resposta)).toBe("/onboarding")
+    expect(destino(resposta)).toBe("/app/entrar")
   })
 
   it("visitante sem sessão recebe a landing, sem redirecionamento", async () => {

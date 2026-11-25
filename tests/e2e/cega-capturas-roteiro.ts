@@ -183,7 +183,8 @@ export const ROTEIRO: readonly JornadaDoRoteiro[] = [
       },
       {
         id: "meu-negocio",
-        rota: "/app/meu-negocio",
+        // TROCA-005: os serviços moram na aba Catálogo de Meu negócio.
+        rota: "/app/meu-negocio?aba=catalogo",
         persona: PERSONAS.prestador,
         seletor: '[data-lista="servicos"]',
         texto: "Limpeza completa",

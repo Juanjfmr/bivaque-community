@@ -52,6 +52,7 @@ type Opcoes = {
   linhaAusente?: boolean
   servicos?: readonly unknown[]
   fotos?: readonly unknown[]
+  contaDePrestador?: boolean
 }
 
 const servicoDaFicha = {
@@ -145,6 +146,13 @@ function cliente(opcoes: Opcoes = {}) {
           error: null,
           count: 1,
         }
+      // TROCA-005: o GET do negócio também diz o tipo da conta. Sem conta de
+      // prestador, a sessão é de membro.
+      if (tabela === "provider_accounts")
+        return {
+          data: opcoes.contaDePrestador === true ? { auth_user_id: USER } : null,
+          error: null,
+        }
       throw new Error(`Tabela inesperada: ${tabela}`)
     }
 
@@ -152,6 +160,7 @@ function cliente(opcoes: Opcoes = {}) {
     consulta["select"] = () => consulta
     consulta["order"] = () => consulta
     consulta["limit"] = () => consulta
+    consulta["is"] = () => consulta
     consulta["eq"] = (coluna: string, valor: unknown) => {
       filtros.push({ tabela, coluna, valor })
       return consulta
@@ -389,6 +398,16 @@ describe("F07 — escrita da ficha pela porta", () => {
     const resposta = await ler(req("negocio"))
     expect(resposta.status).toBe(200)
     expect((await resposta.json()).negocio).toBeNull()
+  })
+
+  it("a leitura diz o tipo da conta: membro grava pelos RPCs, prestador pela rota da ficha", async () => {
+    autenticar(cliente())
+    const resposta = await ler(req("negocio"))
+    expect((await resposta.json()).tipoDaConta).toBe("membro")
+
+    autenticar(cliente({ contaDePrestador: true }))
+    const daConta = await ler(req("negocio"))
+    expect((await daConta.json()).tipoDaConta).toBe("prestador")
   })
 
   it("leitura devolve serviços e fotos assinadas, sem caminho de mídia", async () => {

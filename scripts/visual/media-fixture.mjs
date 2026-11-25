@@ -186,8 +186,8 @@ let communityImages = 0
 for (const community of communities ?? []) {
   for (const kind of ["banner", "thumbnail"]) {
     // O caminho NAO e livre: o app assina sempre `communityImagePath(id, kind)`,
-    // isto e, `<id>/banner` e `<id>/thumbnail` (community-media.ts:30-32), e a
-    // policy de storage confere `communities.banner_path = objects.name`. Uma
+    // isto e, `<id>/banner` e `<id>/thumbnail`, e a policy de storage confere
+    // `communities.banner_path = objects.name`. Uma
     // fixture que inventa nome de arquivo (`seed-banner.png`) grava ponteiro que
     // o app nunca pede: as imagens caem no estado "sem imagem" e a captura
     // fotografa o vazio como se fosse a prancha entregue. Medido em 16/09/2026

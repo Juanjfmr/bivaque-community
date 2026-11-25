@@ -16,8 +16,8 @@ const nextConfig = ler("apps", "web", "next.config.ts")
 // (não há loader de TypeScript aqui) e falha se:
 // - o proxy voltar a ter lista própria ou `startsWith` cru;
 // - a Ajuda sair do público (PORT-006/ADR-20261022);
-// - `/convite/ABCD1234`, `/loginx`, `/apiario` ou `/landing` exato voltarem a
-//   ser tratados como públicos por prefixo;
+// - entradas removidas continuarem públicas, ou `/convite/ABCD1234`, `/apiario`
+//   ou `/landing` exato voltarem a ser tratados como públicos por prefixo;
 // - o redirect exato `/landing` → `/` sumir do next.config.ts.
 function entradasPublicas() {
   const regex = /\{\s*caminho: "([^"]+)",\s*modo: "(exata|pasta|ativos)",\s*motivo:/g
@@ -46,22 +46,22 @@ const isPublic = (pathname) =>
     return casaSubarvore(pathname, entrada.caminho)
   })
 
-test("a lista é a única fonte: o proxy não tem lista própria nem prefixo solto", () => {
+test("a lista é a única fonte e o proxy leva direto às entradas novas", () => {
   assert.match(superficie, /export const PUBLIC_SURFACE/)
   assert.match(proxy, /from "\.\/lib\/security\/route-surface"/)
   assert.match(proxy, /isPublicPath\(/)
-  assert.match(proxy, /entradaEmAndamento\(/)
-  assert.match(proxy, /areaDoPrestador\(/)
+  assert.match(proxy, /"\/app\/entrar"/)
+  assert.match(proxy, /"\/app\/meu-negocio"/)
+  assert.doesNotMatch(proxy, /"\/login"/)
+  assert.doesNotMatch(proxy, /"\/onboarding/)
   assert.doesNotMatch(proxy, /PUBLIC_PATHS/)
   assert.doesNotMatch(proxy, /PUBLIC_POR_PASTA/)
   assert.doesNotMatch(proxy, /startsWith\(/)
 })
 
-test("as três fronteiras e os dois allowlists internos são os exportados", () => {
+test("a superfície exporta as duas funções e os modos canônicos", () => {
   assert.match(superficie, /export function casaFronteira/)
   assert.match(superficie, /export function isPublicPath/)
-  assert.match(superficie, /export function entradaEmAndamento/)
-  assert.match(superficie, /export function areaDoPrestador/)
   assert.match(superficie, /case "exata"/)
   assert.match(superficie, /case "pasta"/)
   assert.match(superficie, /case "ativos"/)
@@ -69,7 +69,7 @@ test("as três fronteiras e os dois allowlists internos são os exportados", () 
 
 test("toda entrada declara um modo dos três e um motivo", () => {
   const entradas = entradasPublicas()
-  assert.ok(entradas.length >= 18, `esperava ao menos 18 entradas, achei ${entradas.length}`)
+  assert.ok(entradas.length >= 13, `esperava ao menos 13 entradas, achei ${entradas.length}`)
   for (const entrada of entradas) {
     assert.ok(["exata", "pasta", "ativos"].includes(entrada.modo), entrada.caminho)
   }
@@ -117,12 +117,22 @@ test("/landing é espaço de assets: exato e barra final fechados", () => {
 })
 
 test("entradas exatas não abrem o vizinho de prefixo", () => {
-  assert.equal(isPublic("/login"), true)
   assert.equal(isPublic("/loginx"), false)
-  assert.equal(isPublic("/prestador-convite/abc"), true)
   assert.equal(isPublic("/prestador-convitex"), false)
   assert.equal(isPublic("/auth/callback-error"), true)
   assert.equal(isPublic("/auth/callback-falso"), false)
+})
+
+test("as antigas telas de entrada não estão na superfície pública", () => {
+  for (const caminho of [
+    "/login",
+    "/signup",
+    "/recuperar-senha",
+    "/nova-senha",
+    "/prestador-convite/abc",
+  ]) {
+    assert.equal(isPublic(caminho), false, caminho)
+  }
 })
 
 test("/auth/confirmar-email continua no portão, não na lista pública", () => {

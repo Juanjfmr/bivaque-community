@@ -57,13 +57,10 @@ function declaresTabs(source: string): boolean {
   return TABS_ROOT.test(source)
 }
 
-const EXCEPTIONS = [
-  {
-    file: "apps/web/app/components/bivaque/bottom-nav.tsx",
-    reason:
-      'navegação primária em largura pequena (barra inferior); recebe variant="primary" de propósito, não é fileira de abas de conteúdo',
-  },
-] as const
+// TROCA-005: a última exceção era a barra inferior da casca web, que saiu com
+// as telas de membro. Sem exceção viva, a lista fica vazia — e quem a reabrir
+// precisa declarar o motivo nela e no arquivo (a prova órfã abaixo).
+const EXCEPTIONS: readonly { readonly file: string; readonly reason: string }[] = []
 
 function unstyleWithoutException(sources: Map<string, string>): string[] {
   const exceptions = new Set(EXCEPTIONS.map((entry) => entry.file))
@@ -91,11 +88,10 @@ describe("tabs rows use the product style", () => {
     expect(appliesProductStyle("<Tabs className={`tabs--secondary`} />")).toBe(true)
   })
 
-  it("keeps the exception list short and the bottom navigation among it", () => {
+  it("keeps the exception list short, sem entrada repetida", () => {
     expect(EXCEPTIONS.length).toBeLessThanOrEqual(3)
     const files = EXCEPTIONS.map((entry) => entry.file)
     expect(new Set(files).size).toBe(files.length)
-    expect(files).toContain("apps/web/app/components/bivaque/bottom-nav.tsx")
     for (const entry of EXCEPTIONS) expect(entry.reason.length).toBeGreaterThan(20)
   })
 
@@ -109,17 +105,10 @@ describe("tabs rows use the product style", () => {
     expect(unstyleWithoutException(sources)).toEqual([])
   })
 
-  it("carries the written declaration inside each shell exception it keeps", () => {
-    // bottom-nav.tsx é intocável neste lote; o motivo dela vive na lista acima.
-    // Toda exceção sob (shell) precisa declarar em si mesma por que difere.
-    // CIDADE-169: a única exceção sob (shell) era /localidade, que saiu com a
-    // consulta de cidade. Sem ela, a regra que resta é a que pega a deriva de
-    // verdade: exceção não pode citar arquivo que não existe.
-    const shellExceptions = EXCEPTIONS.filter((entry) => entry.file.includes("(shell)/"))
-    for (const entry of shellExceptions) {
-      const source = readFileSync(join(process.cwd(), entry.file), "utf8")
-      expect(source).toMatch(/RECON-047/)
-    }
+  it("não deixa exceção pendurada em arquivo que não existe", () => {
+    // TROCA-005: a única exceção (bottom-nav.tsx) saiu com a casca web. Sem
+    // exceção viva, a regra que resta é a que pega a deriva de verdade: exceção
+    // não pode citar arquivo morto.
     for (const entry of EXCEPTIONS) {
       expect(existsSync(join(process.cwd(), entry.file)), `exceção órfã: ${entry.file}`).toBe(true)
     }

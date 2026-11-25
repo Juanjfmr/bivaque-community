@@ -22,12 +22,24 @@ export const dynamic = "force-dynamic"
 export async function GET(request: NextRequest): Promise<NextResponse> {
   const auth = await exigirSessao(request)
   if (!auth.ok) return auth.resposta
-  const depois = new URL(request.url).searchParams.get("depois")
+  const parametros = new URL(request.url).searchParams
+  const depois = parametros.get("depois")
   if (depois !== null && !ehUuid(depois))
+    return responder(request, { erro: "dados-invalidos" }, 400)
+  // TROCA-005 — o lado da fila é do SERVIDOR: "recebidos" é a fila do dono do
+  // negócio, "enviados" é a de quem pediu, e sem `lado` vêm os dois. A tela que
+  // mostra só uma das filas não pode receber a outra para filtrar no navegador:
+  // a página perderia pedidos dela.
+  const lado = parametros.get("lado")
+  if (lado !== null && lado !== "recebidos" && lado !== "enviados")
     return responder(request, { erro: "dados-invalidos" }, 400)
   try {
     const userId = auth.sessao.usuario.id
-    let query = consultaPedidos(auth.sessao.cliente, userId)
+    let query = consultaPedidos(
+      auth.sessao.cliente,
+      userId,
+      lado === "recebidos" || lado === "enviados" ? lado : undefined,
+    )
     if (depois !== null) query = query.gt("id", depois)
     const { data, error } = await query.order("id", { ascending: true }).limit(20)
     if (error) throw error

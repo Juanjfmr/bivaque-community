@@ -111,11 +111,3 @@ test("a landing pinta a barra do navegador com o par claro e escuro", () => {
   assert.doesNotMatch(page, /themeColor:\s*brandTokens\.color\.accent/)
   assert.doesNotMatch(page, /2f7654/i)
 })
-
-test("reporting never exposes database errors and keeps a usable disclosure control", () => {
-  const reportButton = read("apps", "web", "app", "components", "bivaque", "report-button.tsx")
-
-  assert.doesNotMatch(reportButton, /setError\(insertError\.message\)/)
-  assert.match(reportButton, /htmlFor="report-reason"/)
-  assert.match(reportButton, /aria-errormessage=/)
-})

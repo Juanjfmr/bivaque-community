@@ -23,6 +23,15 @@ async function comRegistro(page: Page, aoVisitar: () => Promise<void>) {
   return { pedidos, respostas }
 }
 
+/**
+ * A origem do próprio app nesta execução. Antes era fixa em 3200; a bateria roda
+ * em portas paralelas (PLAYWRIGHT_PORT), e a prova que importa é "do próprio
+ * app", não "da porta 3200".
+ */
+function origemLocal(page: Page): string {
+  return new URL(page.url()).origin
+}
+
 test.describe("fontes locais", () => {
   test("as três famílias carregam do próprio app, sem rede externa", async ({ page }) => {
     const { pedidos, respostas } = await comRegistro(page, async () => {
@@ -52,9 +61,7 @@ test.describe("fontes locais", () => {
     const deFonte = pedidos.filter((pedido) => pedido.tipo === "font")
     expect(deFonte.length).toBeGreaterThan(0)
     for (const pedido of deFonte) {
-      expect(pedido.url.startsWith(`${new URL(page.url()).origin}/app/fonts/`), pedido.url).toBe(
-        true,
-      )
+      expect(pedido.url.startsWith(`${origemLocal(page)}/app/fonts/`), pedido.url).toBe(true)
     }
     for (const resposta of respostas) {
       expect(resposta.status, resposta.url).toBe(200)

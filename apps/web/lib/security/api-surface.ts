@@ -86,7 +86,7 @@ export type RotaClassificada = Readonly<{
 }>
 
 /** Quantas rotas o manifesto cobre. Um rota nova exige classificação explícita. */
-export const TOTAL_DE_ROTAS = 119
+export const TOTAL_DE_ROTAS = 127
 
 function teste(arquivo: string, caso: string): ProvaDaRota {
   return { tipo: "teste", arquivo, caso }
@@ -279,6 +279,14 @@ const SESSAO: readonly Linha[] = [
       "encerrar já encerrado é idempotente e não reescreve",
     ),
   ],
+  // TROCA-005: denúncias, mensagens do pedido e a conta do prestador no app.
+  ["/api/app/denuncias", "exigirSessao(", PORTA],
+  ["/api/app/denuncias/[id]", "exigirSessao(", PORTA],
+  ["/api/app/denuncias/alvos", "exigirSessao(", PORTA],
+  ["/api/app/pedidos/[id]/mensagens", "exigirSessao(", PORTA],
+  ["/api/app/prestador/atendimento", "exigirSessao(", PORTA],
+  ["/api/app/prestador/conta", "exigirSessao(", PORTA],
+  ["/api/app/prestador/ficha", "exigirSessao(", PORTA],
   ["/api/app/perguntas", "exigirSessao(", PORTA],
   ["/api/app/perguntas/[id]", "exigirSessao(", PORTA],
   ["/api/app/perguntas/[id]/denuncia", "exigirSessao(", PORTA],
@@ -402,6 +410,13 @@ const PORTA_SEM_SESSAO: readonly Linha[] = [
     "/api/app/sessao/renovar",
     "trocarSessao(",
     publica("O token de renovação é a credencial da sessão nativa."),
+  ],
+  [
+    "/api/app/prestador-convite/[token]",
+    "sessaoOpcional(",
+    publica(
+      "A prévia do convite de prestador existe antes da conta: o token é a credencial; aceitar (POST) exige sessão.",
+    ),
   ],
   [
     "/api/app/entry/invite/preview",

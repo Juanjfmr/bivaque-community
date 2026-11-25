@@ -1,16 +1,22 @@
 task_id: TROCA-005
 objective: >
-  Refazer no app as denúncias do membro (/denuncias, /denuncias/nova, /denuncias/[id]) e a área do
-  prestador ((provider)/prestador: início, atendimento, catálogo, conta, ficha e pedidos/[id], mais o
-  aceite em /prestador-convite/[token]), e então apagar as versões do site. Também apagar os arquivos
-  mortos da entrada antiga em (preauth) que next.config.ts já redireciona para /app/entrar (login,
-  signup, recuperar-senha, nova-senha, onboarding/*), com os testes deles. As denúncias do operador em
-  (admin) ficam.
+  Trazer para o app, no desenho fundido do plano "Reduzir o excesso de telas" (dono, 21/11/2026),
+  as denúncias do membro e a área do prestador, e então apagar as versões do site. (1) A área do
+  prestador ((provider)/prestador: início, atendimento, catálogo, conta, ficha e pedidos/[id]) vira
+  abas dentro do "Meu negócio" do app (/app/meu-negocio): Ficha, Catálogo, Pedidos/Atendimento e
+  Conta; o detalhe de um pedido abre como Folha (NAV-001) ou tela filha. O aceite em
+  /prestador-convite/[token] vira um estado da entrada do app ou uma Folha, sem tela nova. (2) As
+  denúncias do membro entram em Ajuda, numa lista única com "Meus chamados" (filtro ou abas);
+  "Nova denúncia" abre na Folha do NAV-001 e o detalhe abre como Folha ou tela filha. Nada de tela
+  nova quando uma aba ou uma Folha resolve. (3) Apagar os arquivos mortos da entrada antiga em
+  (preauth) que next.config.ts já redireciona para /app/entrar (login, signup, recuperar-senha,
+  nova-senha, onboarding/*), com os testes deles. As denúncias do operador em (admin) ficam.
 authority:
   - docs/LANCAMENTO.md (fase 6, critério: nenhuma rota de membro no apps/web servindo tela)
   - docs/decisions/ADR-20261024-front-react-spa.md (§5 contrato de API, §8 ordem da troca)
   - docs/decisions/ADR-20261116-bloqueio-e-denuncia-pela-porta-do-app.md
   - "card LAN-TROCA-DENUNCIA-PRESTADOR; decisão do dono de 20/11 (nenhuma tela antiga sobrevive)"
+  - "plano Reduzir o excesso de telas (dono, 21/11/2026): aba ou Folha antes de tela nova"
 adr: docs/decisions/ADR-20261116-bloqueio-e-denuncia-pela-porta-do-app.md
 baseline:
   status: FAIL-EVIDENCED
@@ -22,7 +28,8 @@ allowed_paths:
   - apps/app/src/**
   - apps/app/lib/**
   - apps/app/tests/**
-  - apps/web/app/(shell)/denuncias/**
+  - apps/web/app/(shell)/**
+  - apps/web/app/components/**
   - apps/web/app/(provider)/**
   - apps/web/app/(preauth)/**
   - apps/web/app/api/app/**
@@ -33,6 +40,8 @@ allowed_paths:
   - supabase/migrations/**
   - supabase/tests/**
   - tests/**
+  - apps/web/tests/**
+  - scripts/visual/media-fixture.mjs
   - docs/agents/tasks/TROCA-005.task.yml
 forbidden:
   - editar migration já aplicada (só arquivo novo); reiniciar ou reconstruir o banco local
@@ -46,9 +55,11 @@ forbidden:
   - git stash, delegar, dado pessoal real ou CPF real
   - apps/web/app/(admin)/**, a landing, apps/mobile, apps/prototipo
 acceptance:
-  - "o membro denuncia, acompanha e vê o desfecho no app; a área do prestador (pedidos, atendimento, catálogo, ficha, conta) e o aceite do convite de prestador funcionam no app, com falha principal, em 375/768/1440"
-  - "o prestador só vê os próprios pedidos e o membro só as próprias denúncias (testes negativos na API e na tela)"
-  - "as rotas antigas devolvem 307 ao /app com ID e token preservados; páginas, componentes e testes antigos saem, inclusive os arquivos mortos da entrada"
+  - "Meu negócio (/app/meu-negocio) tem as abas Ficha, Catálogo, Pedidos/Atendimento e Conta, com a aba na URL e a volta à posição do NAV-001; o prestador abre um pedido (Folha ou tela filha), responde e vê o estado gravado; a falha principal de cada aba mostra erro honesto, não vazio; em 375/768/1440, claro e escuro"
+  - "o convite de prestador (/prestador-convite/[token]) é aceito no app como estado da entrada ou Folha, com token válido, inválido e já usado; nenhuma tela nova foi criada para isso"
+  - "Ajuda mostra uma lista única com Meus chamados e Minhas denúncias (filtro ou abas); Nova denúncia abre na Folha única do NAV-001; o membro denuncia, acompanha e vê o desfecho no detalhe (Folha ou tela filha), com falha principal, em 375/768/1440"
+  - "o prestador só vê os próprios pedidos e o membro só as próprias denúncias (testes negativos na API e na tela); a denúncia nunca identifica o denunciante a quem foi denunciado (ADR-20261116)"
+  - "as rotas antigas (/denuncias, /denuncias/nova, /denuncias/[id], /prestador/*, /prestador-convite/[token]) devolvem 307 ao destino fundido no /app com ID e token preservados, sem ciclo; páginas, componentes e testes antigos saem, inclusive os arquivos mortos da entrada"
   - "inventário final: apps/web/app só tem landing, API, auth, páginas públicas e (admin); o card LAN-TROCA registra a lista"
 proof:
   - npx pnpm@11.18.0 gate --fast

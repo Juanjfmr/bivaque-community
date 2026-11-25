@@ -35,8 +35,11 @@ const pedir = (proxy: Proxy, caminho: string) =>
   proxy(new NextRequest(`http://localhost:3000${caminho}`))
 
 const passou = (resposta: Response) => resposta.headers.get("x-middleware-next") === "1"
-const foiParaLogin = (resposta: Response) =>
-  resposta.status === 307 && new URL(resposta.headers.get("location") ?? "").pathname === "/login"
+// TROCA-005: o portão manda quem não tem sessão direto para a entrada do app,
+// num salto (o `/login` da web só era um intermediário do next.config).
+const foiParaEntrada = (resposta: Response) =>
+  resposta.status === 307 &&
+  new URL(resposta.headers.get("location") ?? "").pathname === "/app/entrar"
 
 describe("portão do proxy para /app", () => {
   let proxy: Proxy
@@ -69,19 +72,19 @@ describe("portão do proxy para /app", () => {
   })
 
   it.each(["/application", "/approve", "/apple-touch", "/app-secreto", "/appx/entrar"])(
-    "%s NÃO é o app: segue para o login sem sessão",
+    "%s NÃO é o app: segue para a entrada do app sem sessão",
     async (caminho) => {
       const resposta = await pedir(proxy, caminho)
       expect(passou(resposta)).toBe(false)
-      expect(foiParaLogin(resposta)).toBe(true)
+      expect(foiParaEntrada(resposta)).toBe(true)
     },
   )
 
   it("os outros caminhos públicos continuam abertos (a mudança é só do /app)", async () => {
     for (const caminho of [
-      "/login",
       "/api/app/entry/otp",
       "/auth/callback-error",
+      "/ajuda",
       "/conta-apagada",
     ]) {
       expect(passou(await pedir(proxy, caminho)), caminho).toBe(true)
@@ -103,17 +106,17 @@ describe("/landing é espaço de assets, não de páginas", () => {
     },
   )
 
-  it("o caminho exato /landing não é público: sem sessão vai ao login", async () => {
+  it("o caminho exato /landing não é público: sem sessão vai à entrada do app", async () => {
     const resposta = await pedir(proxy, "/landing")
     expect(passou(resposta)).toBe(false)
-    expect(foiParaLogin(resposta)).toBe(true)
+    expect(foiParaEntrada(resposta)).toBe(true)
   })
 
   it("prefixo solto não abre /landingx nem /convite/ABCD1234", async () => {
     for (const caminho of ["/landingx", "/convite/ABCD1234"]) {
       const resposta = await pedir(proxy, caminho)
       expect(passou(resposta), caminho).toBe(false)
-      expect(foiParaLogin(resposta), caminho).toBe(true)
+      expect(foiParaEntrada(resposta), caminho).toBe(true)
     }
   })
 })
@@ -151,12 +154,12 @@ describe("bypass de autenticação só em development", () => {
     erro.mockRestore()
   })
 
-  it("bypass ausente ou false não muda nada: sem sessão, login", async () => {
+  it("bypass ausente ou false não muda nada: sem sessão, entrada do app", async () => {
     for (const bypass of [null, "false"]) {
       const proxy = await carregarProxy({ bypass })
       const resposta = await pedir(proxy, semSessao)
       expect(passou(resposta), String(bypass)).toBe(false)
-      expect(foiParaLogin(resposta), String(bypass)).toBe(true)
+      expect(foiParaEntrada(resposta), String(bypass)).toBe(true)
     }
   })
 })

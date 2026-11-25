@@ -9,6 +9,10 @@ import type { Database } from "supabase/database.generated"
  * `cidadeDaSessao` mora aqui e é a leitura única da cidade da sessão em
  * `api/app`: as rotas da entrada (grupos e interesses) a importam daqui desde o
  * BUG-CIDADE-GRUPOS, em vez de repetir a consulta sem filtro de `kind`.
+ *
+ * A cidade é sempre lida do banco, nunca do pedido, e sempre pelo vínculo
+ * `kind = 'current'`: quem está em transferência tem duas linhas (a atual e a
+ * que está deixando) e a leitura sem o filtro cai na cidade errada.
  */
 
 export type CidadeDaSessao = Readonly<{ id: string; nome: string }>

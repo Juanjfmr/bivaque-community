@@ -76,7 +76,8 @@ describe("alvo da denuncia", () => {
     const supabase = {
       from: vi.fn(() => ({
         select: () => ({
-          eq: () => ({ maybeSingle: async () => ({ data: null }) }),
+          // A leitura do alvo é em lote (`.in`), desde M2.
+          in: async () => ({ data: [] }),
         }),
       })),
     }
@@ -94,10 +95,10 @@ function makeCreateSupabase(options: {
       if (table === "posts") {
         return {
           select: () => ({
-            eq: () => ({
-              maybeSingle: async () => ({
-                data: options.targetVisible ? { content: "texto do alvo" } : null,
-              }),
+            in: async (_coluna: string, ids: readonly string[]) => ({
+              data: options.targetVisible
+                ? ids.map((id) => ({ id, content: "texto do alvo" }))
+                : [],
             }),
           }),
         }

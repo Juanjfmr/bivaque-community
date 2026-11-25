@@ -9,6 +9,7 @@ import {
   responder,
 } from "../../../../lib/app-api/rota-do-app"
 import { falhaDoNegocio, fichaDoDono, negocioDoDono } from "../../../../lib/providers/app-negocio"
+import { tipoDaConta } from "../../../../lib/providers/ficha-do-prestador"
 import {
   firstFailure,
   validateBio,
@@ -53,7 +54,10 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   if (!auth.ok) return auth.resposta
   try {
     const negocio = await negocioDoDono(auth.sessao.cliente, auth.sessao.usuario.id)
-    return responder(request, { negocio, categorias: CATEGORIAS }, 200)
+    // TROCA-005 — o tipo da conta decide o caminho de escrita da Ficha: a conta
+    // de prestador grava por `/api/app/prestador/ficha`, o membro pelos RPCs.
+    const conta = await tipoDaConta(auth.sessao.cliente, auth.sessao.usuario.id)
+    return responder(request, { negocio, categorias: CATEGORIAS, tipoDaConta: conta }, 200)
   } catch {
     return responder(request, { erro: "leitura-indisponivel" }, 503)
   }

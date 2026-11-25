@@ -110,6 +110,9 @@ type Opcoes = {
 
 function cliente(opcoes: Opcoes = {}) {
   const chamadas: { nome: string; argumentos: Record<string, unknown> }[] = []
+  // O filtro é o que decide de quem é a fila: guardá-lo é o que prova que a
+  // rota usa o id da SESSÃO (item 8 da revisão), e não um id do pedido.
+  const filtros: { tabela: string; metodo: string; valor: unknown }[] = []
   const from = vi.fn((tabela: string) => {
     const unica = () => {
       if (tabela === "locality_memberships")
@@ -126,7 +129,19 @@ function cliente(opcoes: Opcoes = {}) {
       throw new Error(`Tabela inesperada: ${tabela}`)
     }
     const query: Record<string, unknown> = { select: () => query }
-    for (const metodo of ["eq", "or", "gt", "order", "limit", "range"]) query[metodo] = () => query
+    for (const metodo of ["gt", "order", "limit", "range"]) query[metodo] = () => query
+    query["eq"] = (coluna: string, valor: unknown) => {
+      filtros.push({ tabela, metodo: `eq:${coluna}`, valor })
+      return query
+    }
+    query["or"] = (valor: unknown) => {
+      filtros.push({ tabela, metodo: "or", valor })
+      return query
+    }
+    query["gt"] = (coluna: string, valor: unknown) => {
+      filtros.push({ tabela, metodo: `gt:${coluna}`, valor })
+      return query
+    }
     query["maybeSingle"] = async () => unica()
     // biome-ignore lint/suspicious/noThenProperty: o builder PostgREST é awaitable
     Object.defineProperty(query, "then", {
@@ -151,7 +166,7 @@ function cliente(opcoes: Opcoes = {}) {
     cliente: client,
     cabecalhos: {},
   } as never)
-  return { chamadas, rpc, from }
+  return { chamadas, rpc, from, filtros }
 }
 
 function post(corpo: unknown) {
@@ -487,5 +502,76 @@ describe("GET dos pedidos com localização", () => {
 
     expect(resposta.status).toBe(503)
     expect(await resposta.text()).not.toContain("segredo")
+  })
+})
+
+describe("GET dos pedidos por lado (TROCA-005)", () => {
+  it("`lado=recebidos` filtra pelo dono da SESSÃO, sem a fila de quem pediu", async () => {
+    const mock = cliente()
+
+    const resposta = await listar(
+      new NextRequest(`${BASE}/pedidos?lado=recebidos`, { headers: { origin: headers.origin } }),
+    )
+
+    expect(resposta.status).toBe(200)
+    expect(mock.filtros).toContainEqual({
+      tabela: "service_requests",
+      metodo: "eq:provider_user_id",
+      valor: USER,
+    })
+    // O `.or` da consulta padrão não é usado nesta fila.
+    expect(mock.filtros.filter((filtro) => filtro.metodo === "or")).toHaveLength(0)
+  })
+
+  it("`lado=enviados` filtra por quem pediu, com o id da sessão", async () => {
+    const mock = cliente()
+
+    await listar(
+      new NextRequest(`${BASE}/pedidos?lado=enviados`, { headers: { origin: headers.origin } }),
+    )
+
+    expect(mock.filtros).toContainEqual({
+      tabela: "service_requests",
+      metodo: "eq:requester_user_id",
+      valor: USER,
+    })
+  })
+
+  it("sem `lado` a consulta usa o `.or` com o id da SESSÃO nos dois lados", async () => {
+    const mock = cliente()
+
+    await listar(new NextRequest(`${BASE}/pedidos`, { headers: { origin: headers.origin } }))
+
+    const doOr = mock.filtros.find((filtro) => filtro.metodo === "or")
+    expect(doOr?.valor).toBe(`requester_user_id.eq.${USER},provider_user_id.eq.${USER}`)
+  })
+
+  it("paginação real: `depois` vira cursor `id > depois`", async () => {
+    const mock = cliente()
+    const cursor = "10000000-0000-4000-8000-0000000000aa"
+
+    const resposta = await listar(
+      new NextRequest(`${BASE}/pedidos?lado=recebidos&depois=${cursor}`, {
+        headers: { origin: headers.origin },
+      }),
+    )
+
+    expect(resposta.status).toBe(200)
+    expect(mock.filtros).toContainEqual({
+      tabela: "service_requests",
+      metodo: "gt:id",
+      valor: cursor,
+    })
+  })
+
+  it("lado fora da lista é 400 antes do banco", async () => {
+    const mock = cliente()
+
+    const resposta = await listar(
+      new NextRequest(`${BASE}/pedidos?lado=inventado`, { headers: { origin: headers.origin } }),
+    )
+
+    expect(resposta.status).toBe(400)
+    expect(mock.from).not.toHaveBeenCalled()
   })
 })

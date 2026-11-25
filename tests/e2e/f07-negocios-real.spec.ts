@@ -502,8 +502,9 @@ test.describe("F07 — página de negócio do membro (dono)", { tag: "@stateful"
     await expect(page.getByText(APRESENTACAO_EDITADA)).toBeVisible()
     await capturar(page, testInfo.project.name, "10-ficha-publica")
 
-    // Catálogo: publicar o item e vê-lo na própria ficha.
-    await page.goto("/app/meu-negocio")
+    // Catálogo: publicar o item e vê-lo na própria ficha. TROCA-005: catálogo e
+    // fotos moram na aba Catálogo de Meu negócio.
+    await page.goto("/app/meu-negocio?aba=catalogo")
     await page.getByLabel("Título do item").fill(SERVICO)
     await page.getByLabel("Descrição do item (opcional)").fill("Atendimento sob orçamento.")
     await page.getByRole("button", { name: "Publicar item", exact: true }).click()

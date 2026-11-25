@@ -136,6 +136,67 @@ const nextConfig: NextConfig = {
         permanent: false,
       },
       { source: "/convite", destination: ENTRADA_DO_APP, permanent: false },
+      // LAN-TROCA fase 2 (TROCA-005): as denúncias do membro, a área do
+      // prestador e o convite de prestador saem do site e viram telas do app.
+      // O ID e o token seguem no destino; o destino é sempre uma tela que já
+      // existe em `apps/app` (nada de segundo salto).
+      //
+      // `/denuncias/nova?tipo=&id=` (e `/denuncias?tipo=&id=`) é a versão
+      // endereçável do diálogo de denúncia (spec C10): as duas capturas viram o `?denunciar=<tipo>:<id>`
+      // que a Ajuda do app já lê.
+      {
+        source: "/denuncias/nova",
+        has: [
+          { type: "query", key: "tipo", value: "(?<tipo>[a-z_]+)" },
+          {
+            type: "query",
+            key: "id",
+            value:
+              "(?<alvo>[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})",
+          },
+        ],
+        destination: "/app/ajuda?aba=denuncias&denunciar=:tipo::alvo",
+        permanent: false,
+      },
+      {
+        source: "/denuncias",
+        has: [
+          { type: "query", key: "tipo", value: "(?<tipo>[a-z_]+)" },
+          {
+            type: "query",
+            key: "id",
+            value:
+              "(?<alvo>[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})",
+          },
+        ],
+        destination: "/app/ajuda?aba=denuncias&denunciar=:tipo::alvo",
+        permanent: false,
+      },
+      {
+        source: "/denuncias/nova",
+        destination: "/app/ajuda?aba=denuncias",
+        permanent: false,
+      },
+      {
+        source: "/denuncias/:id((?!nova/?$)[^/]+)",
+        destination: "/app/ajuda?aba=denuncias&denuncia=:id",
+        permanent: false,
+      },
+      {
+        source: "/denuncias/:demais*",
+        destination: "/app/ajuda?aba=denuncias",
+        permanent: false,
+      },
+      {
+        source: "/prestador/pedidos/:id",
+        destination: "/app/meu-negocio?aba=pedidos&pedido=:id",
+        permanent: false,
+      },
+      {
+        source: "/prestador-convite/:token",
+        destination: `${ENTRADA_DO_APP}?prestador=:token`,
+        permanent: false,
+      },
       // LAN-TROCA fase 1: só as jornadas autorizadas. A query segue pelo Next;
       // conversation UUID escolhe o detalhe antes da regra genérica da caixa.
       {
@@ -253,6 +314,22 @@ const nextConfig: NextConfig = {
           // Supabase pelo navegador saem com o lote.
           ["/negocio/catalogo", "/app/meu-negocio"],
           ["/negocio", "/app/meu-negocio"],
+          // TROCA-005 fase 2: a área do prestador inteira vira abas de "Meu
+          // negócio" (fase 1). As regras com mais de um segmento e a do detalhe
+          // vêm antes da genérica, porque o Next aplica a primeira que casa. O
+          // detalhe leva o id; a genérica cobre favorito antigo e subrota morta.
+          ["/prestador/atendimento", "/app/meu-negocio?aba=pedidos"],
+          ["/prestador/pedidos", "/app/meu-negocio?aba=pedidos"],
+          ["/prestador/catalogo", "/app/meu-negocio?aba=catalogo"],
+          ["/prestador/conta", "/app/meu-negocio?aba=conta"],
+          ["/prestador/ficha", "/app/meu-negocio?aba=ficha"],
+          ["/prestador", "/app/meu-negocio"],
+          ["/prestador/:demais*", "/app/meu-negocio"],
+          // TROCA-005 fase 2: as denúncias do membro vivem na Ajuda do app
+          // (`?aba=denuncias`), com a nova denúncia e o acompanhamento em Folha.
+          // A regra de `/denuncias/nova` com alvo e a do detalhe ficam nomeadas
+          // acima, porque carregam captura de query e de caminho.
+          ["/denuncias", "/app/ajuda?aba=denuncias"],
           // F10: o perfil de OUTRA pessoa abre no app. RUN-172 (ADR-20261116): o
           // perfil próprio e a edição também saíram da web — transferência de
           // cidade e Força/OM privada já são do Você — e as regras EXATAS vêm

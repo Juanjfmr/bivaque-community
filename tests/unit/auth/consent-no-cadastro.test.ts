@@ -13,22 +13,11 @@ import { describe, expect, it } from "vitest"
 //
 // PORT-003: a linha passou a ser um componente só (`entry-consent.tsx`), usado
 // pelo cadastro e pelo passo Aceite do Google, e o envio deixou de depender de
-// um botão desligado — a especificação valida no envio e explica o que falta. A
-// cobertura não cai: o que se passa a exigir é a ORDEM, e ela é provada na
-// função pura (`entry-form.test.ts`).
+// um botão desligado — a especificação valida no envio e explica o que falta.
 
 const root = join(import.meta.dirname, "..", "..", "..")
 const read = (...segments: string[]) => readFileSync(join(root, ...segments), "utf8")
 
-const webEntry = read(
-  "apps",
-  "web",
-  "app",
-  "(preauth)",
-  "login",
-  "components",
-  "bivaque-sign-in.tsx",
-)
 const consentLine = read(
   "apps",
   "web",
@@ -43,28 +32,18 @@ const mobileEntry = read("apps", "mobile", "app", "(auth)", "acesso.tsx")
 const consentRoute = read("apps", "web", "app", "api", "consent", "route.ts")
 const proxy = read("apps", "web", "proxy.ts")
 
-describe("o aceite aparece no cadastro, e só nele", () => {
-  it("a web pede o aceite ao criar conta e não ao entrar", () => {
-    // A linha existe num componente só, e é o cadastro que a monta.
-    expect(webEntry).toContain('mode === "signup" && (')
-    expect(webEntry).toContain("<EntryConsent")
+describe("o aceite é uma linha do documento, fora do portão", () => {
+  it("a linha existe num componente só, com os dois documentos", () => {
+    // TROCA-005: o cadastro da web saiu (a entrada é a do app) e o componente
+    // ficou com o consentimento público, que continua montando a linha.
+    expect(consentForm).toContain("<EntryConsent")
     expect(consentLine).toContain("Li e aceito a")
     expect(consentLine).toContain('pathname: "/privacidade"')
     expect(consentLine).toContain('pathname: "/codigo-de-conduta"')
   })
 
-  it("criar conta é barrado sem o aceite, antes de qualquer request", () => {
-    // O protótipo deixa o botão ativo e explica no envio; o portão de verdade é
-    // o servidor. O que precisa continuar impossível é criar conta sem aceite —
-    // e a validação roda antes de o cliente do provedor ser criado.
-    expect(webEntry).toContain("signupProblem({ accepted, email, name, password })")
-    expect(webEntry.indexOf("signupProblem(")).toBeLessThan(
-      webEntry.indexOf("supabase.auth.signUp("),
-    )
-    expect(mobileEntry).toContain("name.trim().length > 0 && accepted")
-  })
-
   it("o mobile pede o mesmo aceite, com a versão completa fora do app", () => {
+    expect(mobileEntry).toContain("name.trim().length > 0 && accepted")
     expect(mobileEntry).toContain("Li e aceito a")
     expect(mobileEntry).toContain('openDocument("privacidade")')
     expect(mobileEntry).toContain('openDocument("codigo-de-conduta")')
@@ -77,20 +56,6 @@ describe("o aceite aparece no cadastro, e só nele", () => {
 })
 
 describe("o aceite é registrado no servidor, não só na tela", () => {
-  it("a web grava antes de navegar", () => {
-    expect(webEntry).toContain("recordConsentAction()")
-    // A gravação precisa acontecer no ramo de sucesso do cadastro, antes do
-    // push. Um aceite marcado e não gravado é um aceite que ninguém prova.
-    const signupBranch = webEntry.slice(
-      webEntry.indexOf("classifySignUp(error)"),
-      webEntry.indexOf("} else {"),
-    )
-    expect(signupBranch).toContain("recordConsentAction()")
-    expect(signupBranch.indexOf("recordConsentAction()")).toBeLessThan(
-      signupBranch.indexOf('router.push("/onboarding")'),
-    )
-  })
-
   it("o passo Aceite do Google grava pelo mesmo caminho", () => {
     // PR #104: quem entrou pelo Google não passou pelo cadastro, e o aceite
     // dele é registrado aqui, com o mesmo `recordConsentAction`.

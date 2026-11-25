@@ -98,6 +98,39 @@ export function useEntradaDaTela(): EstadoDaEntrada {
   return lerEntrada(localizacao.state)
 }
 
+/** A busca (query string) da rota atual, só com valores de texto. */
+export function useBuscaDaRota(): Readonly<Record<string, string>> {
+  const localizacao = useLocation()
+  const valores: Record<string, string> = {}
+  for (const [chave, valor] of Object.entries(localizacao.search as Record<string, unknown>)) {
+    if (typeof valor === "string") valores[chave] = valor
+  }
+  return valores
+}
+
+/**
+ * Troca só a busca da rota atual, em `replace` (TROCA-005): aba escolhida não
+ * vira uma entrada nova no histórico — o Voltar volta à tela anterior, não à aba
+ * anterior. A entrada da tela é preservada, então rolagem e foco continuam dela.
+ */
+export function useTrocarBusca(): (busca: Readonly<Record<string, string>>) => Promise<void> {
+  const roteador = useRouter()
+  return useCallback(
+    (busca: Readonly<Record<string, string>>) => {
+      const atual = lerEstadoDaRota(roteador)
+      return roteador.navigate({
+        to: atual.caminho,
+        params: atual.parametros,
+        search: { ...busca },
+        state: { [CHAVE_DA_ENTRADA]: atual.entrada },
+        replace: true,
+        resetScroll: false,
+      })
+    },
+    [roteador],
+  )
+}
+
 export function useRotaAtual(): Rota {
   const estado = useRouterState()
   const ultima = estado.matches[estado.matches.length - 1]
