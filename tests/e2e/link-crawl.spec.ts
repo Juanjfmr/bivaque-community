@@ -340,6 +340,11 @@ test.describe("rastreador de links", { tag: "@stateful" }, () => {
         // "rota inexistente" (medido no rastreador em 17/11).
         "/negocio",
         "/negocio/catalogo",
+        // TROCA-005: /login e /signup perderam o page.tsx e vivem do 307 do
+        // next.config para /app/entrar; a landing, o consentimento e o erro do
+        // callback seguem linkando essas URLs, então precisam de padrão.
+        "/login",
+        "/signup",
       ],
     )
     const reached = new Set<string>()

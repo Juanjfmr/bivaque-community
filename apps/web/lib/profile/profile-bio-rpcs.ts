@@ -1,7 +1,7 @@
 // Helper tipado para as RPCs da bio (migration 20260911024732).
 //
 // O cast em `client.rpc` é intencional e segue o mesmo padrão de
-// `profile-rpcs.ts` e `user-group-interests-rpcs.ts`: os tipos gerados só
+// `profile-rpcs.ts`: os tipos gerados só
 // ganham o nome da RPC quando `supabase gen types` roda no CI. O contrato de
 // runtime está no SQL da migration; esta assinatura espelha aquele contrato.
 
