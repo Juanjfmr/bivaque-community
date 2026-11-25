@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test"
+import { simularVoce } from "./voce-ajuda"
 
 /**
  * Avisos (F09) no app de prova: `/app` é servido pelo Vite puro, sem Next e sem
@@ -127,10 +128,16 @@ test.describe("F09 — avisos", () => {
     await expect(naoLidas.locator('[data-contagem="2"]')).toBeVisible()
     await expect(page.locator('[data-aviso-item="a2"]')).toHaveAttribute("data-nao-lida", "nao")
 
-    await expect(page.getByRole("button", { name: "Marcar todas" })).toBeVisible()
-    await page.getByRole("button", { name: "Marcar todas" }).click()
+    await expect(page.getByRole("button", { name: "Marcar todas como lidas" })).toBeVisible()
+    // REGUA-003 (rodada 3): a ação não mora no cabeçalho — ele tem a mesma
+    // altura com e sem não lidos.
+    const cabeca = page.locator('[data-tela="avisos"] [data-cabeca="pagina"]')
+    await expect(cabeca.getByRole("button", { name: "Marcar todas como lidas" })).toHaveCount(0)
+    const alturaAntes = (await cabeca.boundingBox())?.height
+    await page.getByRole("button", { name: "Marcar todas como lidas" }).click()
     await expect(page.locator('[data-aviso-item="a1"]')).toHaveAttribute("data-nao-lida", "nao")
-    await expect(page.getByRole("button", { name: "Marcar todas" })).toHaveCount(0)
+    await expect(page.getByRole("button", { name: "Marcar todas como lidas" })).toHaveCount(0)
+    expect((await cabeca.boundingBox())?.height).toBe(alturaAntes)
 
     await page.locator('[data-aviso-item="a1"]').click()
     await expect(page).toHaveURL(new RegExp(`/app/publicacao/${PUBLICACAO}$`))
@@ -177,8 +184,29 @@ test.describe("F09 — avisos", () => {
 
     await page.unroute(falha)
     await simularAvisos(page)
-    await page.getByRole("button", { name: "Tentar de novo" }).click()
+    const tentar = page.getByRole("button", { name: "Tentar de novo" })
+    // Tentar de novo é pílula, como as demais ações da régua (REGUA-003).
+    await expect(tentar).toHaveClass(/rounded-full/)
+    await tentar.click()
     await expect(page.locator('[data-aviso-item="a1"]')).toBeVisible()
+  })
+
+  // REGUA-003: o vazio tem saída — leva às preferências de avisos, na área Você.
+  test("vazio de avisos leva às preferências, com a seção à vista", async ({ page }) => {
+    await simularVoce(page)
+    await page.route(/\/api\/app\/avisos(?:\?|$)/, (rota) =>
+      rota.fulfill({ json: { avisos: [], proximo: null, naoLidos: 0 } }),
+    )
+    await page.goto("/app/avisos")
+
+    const vazio = page.locator('[data-tela="avisos"] [data-estado="vazio"]')
+    await expect(vazio).toContainText("Nenhum aviso ainda")
+    await expect(vazio).toHaveAttribute("data-figura", "conta")
+    await expect(page.getByRole("button", { name: /Marcar todas/ })).toHaveCount(0)
+    await vazio.getByRole("button", { name: "Ajustar avisos" }).click()
+
+    await expect(page).toHaveURL(/\/app\/voce$/)
+    await expect(page.locator('[data-preferencias-de-aviso="sim"]')).toBeInViewport()
   })
 
   test("não lido é um sinal só: ponto em tinta, contagem sem ponto, chevron em toda linha", async ({

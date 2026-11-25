@@ -39,6 +39,7 @@ type Conversa = Readonly<{
   tipo: string
   contextoId: string
   ultima: string
+  ultimaEm: string
   porLer: boolean
 }>
 
@@ -105,6 +106,7 @@ const CAIXA: readonly Conversa[] = [
     tipo: "listing",
     contextoId: "anuncio-sofa-3-lugares",
     ultima: "Fechado, levo o sofá na sexta de manhã.",
+    ultimaEm: new Date(Date.now() - 5 * 60000).toISOString(),
     porLer: true,
   },
   {
@@ -114,15 +116,19 @@ const CAIXA: readonly Conversa[] = [
     tipo: "provider",
     contextoId: "negocio-climatizacao-rio-negro",
     ultima: "Posso passar amanhã às 9h.",
+    ultimaEm: new Date(Date.now() - 26 * 3600000).toISOString(),
     porLer: false,
   },
   {
     id: "t3",
-    nome: "Ana Beatriz Ferreira",
-    outroId: "u-ana",
+    // Outra pessoa: a sessão e o perfil são de Ana Beatriz Ferreira, e ninguém
+    // conversa consigo mesmo.
+    nome: "Marcos Vinícius Lima",
+    outroId: "u-marcos",
     tipo: "shared_group",
     contextoId: "grupo-familias-do-centro",
     ultima: "Combinado, obrigada!",
+    ultimaEm: "2026-11-12T15:00:00Z",
     porLer: false,
   },
 ]
@@ -202,7 +208,7 @@ const AVISOS: readonly Aviso[] = [
   {
     id: "a5",
     tipo: "recommendation_reply",
-    texto: "Ana Beatriz Ferreira respondeu à sua indicação",
+    texto: "Marcos Vinícius Lima respondeu à sua indicação",
     destino: "/app/pergunta/q-pediatra",
     lida: true,
     criadaEm: "2026-11-03T09:30:00.000Z",
@@ -554,6 +560,63 @@ async function simularServidor(page: Page, estado: Estado): Promise<void> {
   await page.route(/\/api\/app\/guia\/salvos(?:\?|$)/, (rota) =>
     rota.fulfill({ json: { entradas: estado.guiaSalvo } }),
   )
+  // O item de cada conversa, pelas leituras que a conversa já usa.
+  await page.route(/\/api\/app\/mercado\/anuncio-sofa-3-lugares(?:\?|$)/, (rota) =>
+    rota.fulfill({
+      json: {
+        anuncio: {
+          ...ANUNCIO_SOFA,
+          id: "anuncio-sofa-3-lugares",
+          foto: new URL(String(ANUNCIO_SOFA["foto"]), rota.request().url()).href,
+          endereco: null,
+          donoNome: "Paulo Roberto",
+          donoId: "u-paulo",
+          fotos: [new URL(String(ANUNCIO_SOFA["foto"]), rota.request().url()).href],
+          meu: false,
+        },
+      },
+    }),
+  )
+  await page.route(/\/api\/app\/negocios\/negocio-climatizacao-rio-negro(?:\?|$)/, (rota) =>
+    rota.fulfill({
+      json: {
+        negocio: {
+          id: "negocio-climatizacao-rio-negro",
+          nome: "Climatização Rio Negro",
+          categoria: "servicos",
+          categoriaNome: "Serviços",
+          descricao: "Instalação e limpeza de ar-condicionado.",
+          cidade: "Manaus",
+          podePedir: true,
+          foto: null,
+          fotoDescricao: null,
+          servicos: [],
+        },
+      },
+    }),
+  )
+  await page.route(/\/api\/app\/grupos\/grupo-familias-do-centro(?:\?|$)/, (rota) =>
+    rota.fulfill({
+      json: {
+        grupo: {
+          id: "grupo-familias-do-centro",
+          nome: "Famílias do Centro",
+          descricao: "Famílias militares que moram no Centro.",
+          regras: "",
+          fechado: false,
+          membro: true,
+          pendente: false,
+          admin: false,
+          membros: 42,
+          fixada: null,
+          aviso: null,
+        },
+        cidade: "Manaus",
+        publicacoes: [],
+        proximo: null,
+      },
+    }),
+  )
   await page.route(/\/api\/app\/membros\/[^/?#]+(?:\?|$)/, (rota) =>
     rota.fulfill({ json: { membro: estado.membro } }),
   )
@@ -629,7 +692,8 @@ const JORNADAS: ReadonlyArray<{ nome: string; passos: readonly Passo[] }> = [
         ir: async (page) => {
           await abrirDoZero(page, "/app/conversa/t1")
           await expect(page.locator('[data-mensagens="historico"]')).toBeVisible()
-          await page.getByRole("button", { name: "Denunciar mensagem" }).first().click()
+          // A denúncia é um toque no balão recebido — sem bandeira fixa.
+          await page.locator('[data-acao="denunciar-mensagem"]').first().click()
           await page.getByRole("radio", { name: "Spam" }).check()
         },
         pronto: '[data-sobreposicao="conversa-denuncia"]',
@@ -796,6 +860,13 @@ async function fotografar(
 ) {
   const diretorio = join(RAIZ, jornada)
   mkdirSync(diretorio, { recursive: true })
+  // A figura do vazio é parte do estado: a foto espera a imagem decodificada,
+  // senão registra o lugar dela em branco (rodada 3, V1).
+  await page.waitForFunction(() =>
+    Array.from(document.querySelectorAll<HTMLImageElement>('[data-estado="vazio"] img')).every(
+      (imagem) => imagem.complete && imagem.naturalWidth > 0,
+    ),
+  )
   await page.screenshot({
     path: join(diretorio, `${largura}-${tema}-${passo.nome}.png`),
     fullPage: true,

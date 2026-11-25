@@ -77,7 +77,7 @@ test.describe("Ver mais negócios", () => {
     await expect(page.getByText("3 negócios em Manaus")).toBeVisible()
     await expect(page.getByRole("button", { name: "Ver mais negócios" })).toHaveCount(0)
 
-    const titulos = await page.locator('[data-cartao="negocio"] h3').allInnerTexts()
+    const titulos = await page.locator('[data-cartao="negocio"] h2').allInnerTexts()
     expect(semRepeticao(titulos.map((titulo) => titulo.trim()))).toEqual([])
     expect(titulos.map((titulo) => titulo.trim())).toContain(PAGINA_2_DOS_NEGOCIOS)
 

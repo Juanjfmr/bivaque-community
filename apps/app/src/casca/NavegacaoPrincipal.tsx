@@ -1,7 +1,7 @@
 import { MembroAvatar } from "@/components/bivaque/avatar"
 import { Icone } from "@/components/bivaque/icone"
 import { Marca } from "@/components/bivaque/marca"
-import { criaVisivel, navegacaoVisivel } from "@/lib/casca"
+import { navegacaoVisivel } from "@/lib/casca"
 import { abaAtiva } from "@/lib/navegacao/abas"
 import { useEntradaDaTela, useNavegacao, useRotaAtual } from "@/lib/navegacao/react"
 import type { Aba } from "@/lib/navegacao/rotas"
@@ -76,22 +76,22 @@ export function NavegacaoPrincipal({
         <ItemDeAba key={item.id} item={item} ativa={aba === item.id} navegacao={navegacao} />
       ))}
 
-      {criaVisivel(rota.nome, largura) ? (
-        <button
-          type="button"
-          data-acao="criar"
-          aria-label="Criar"
-          data-compacto={compacto ? "sim" : "nao"}
-          aria-haspopup="menu"
-          aria-keyshortcuts="C"
-          onClick={() => void navegacao.abrir("menu-criar")}
-        >
-          <span data-criar="botao">
-            <Icone nome="add" className="size-7" />
-          </span>
-          <span data-criar="rotulo">Criar</span>
-        </button>
-      ) : null}
+      {/* O Criar mora em toda barra que aparece: onde a barra some, some
+          inteira (rodada 3, L3) — nunca uma célula vazia. */}
+      <button
+        type="button"
+        data-acao="criar"
+        aria-label="Criar"
+        data-compacto={compacto ? "sim" : "nao"}
+        aria-haspopup="menu"
+        aria-keyshortcuts="C"
+        onClick={() => void navegacao.abrir("menu-criar")}
+      >
+        <span data-criar="botao">
+          <Icone nome="add" className="size-7" />
+        </span>
+        <span data-criar="rotulo">Criar</span>
+      </button>
 
       {ULTIMAS.map((item) => (
         <ItemDeAba key={item.id} item={item} ativa={aba === item.id} navegacao={navegacao} />

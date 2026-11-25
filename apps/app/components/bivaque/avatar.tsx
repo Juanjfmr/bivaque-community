@@ -1,5 +1,9 @@
-import { iniciais } from "@/lib/texto"
+import type { CSSProperties } from "react"
+
+import { iniciais, tomDoNome } from "@/lib/texto"
 import { cn } from "@/lib/utils"
+
+const MEDIDAS = { pequeno: 28, medio: 36, grande: 44 } as const
 
 /**
  * Avatar e pilha de avatares (inventário §7: `avatar` e `avatarStack`).
@@ -18,22 +22,16 @@ export function MembroAvatar({
   tamanho?: "pequeno" | "medio" | "grande"
   className?: string
 }) {
-  const medidas = {
-    pequeno: "size-7 text-[10px]",
-    medio: "size-9 text-xs",
-    grande: "size-11 text-sm",
-  } as const
+  // A mesma pessoa tem as mesmas iniciais e o mesmo tom em todo lugar
+  // (REGUA-003): o fundo vem do tom do nome, como na peça `Avatar`, e não de
+  // ser a própria pessoa — senão o cartão de Você e a barra a pintavam diferente.
   return (
     <span
       data-avatar="membro"
-      className={cn(
-        "grid shrink-0 place-items-center rounded-full font-bold tracking-wide",
-        medidas[tamanho],
-        propria
-          ? "bg-(--primary) text-(--primary-foreground)"
-          : "bg-(--surface-high) text-(--on-surface-variant)",
-        className,
-      )}
+      data-propria={propria ? "sim" : undefined}
+      data-tom={tomDoNome(nome)}
+      className={cn("pc-avatar", className)}
+      style={{ "--pc-avatar": `${MEDIDAS[tamanho]}px` } as CSSProperties}
     >
       {iniciais(nome)}
     </span>

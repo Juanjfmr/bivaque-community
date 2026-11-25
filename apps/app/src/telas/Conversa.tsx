@@ -11,7 +11,6 @@ import { Icone } from "@/components/bivaque/icone"
 import { ItemDoMenu, MenuDaLinha } from "@/components/bivaque/menu-de-linha"
 import { NomeDeMembro } from "@/components/bivaque/nome-de-membro"
 import { Sobreposicao } from "@/components/bivaque/sobreposicao"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Textarea } from "@/components/ui/textarea"
 import { enviar, FalhaDaApi } from "@/lib/api/cliente"
 import {
@@ -28,12 +27,15 @@ import { bloquear, lerBloqueados } from "@/lib/dados/voce"
 import { useNavegacao, useRolagemEFoco, useSobreposicaoDaEntrada } from "@/lib/navegacao/react"
 import { CARGA_CONCLUIDA } from "@/lib/navegacao/restauracao"
 import { validarParametros } from "@/lib/navegacao/rotas"
-import { iniciais } from "@/lib/texto"
 import { useLarguraDaTela } from "@/src/casca/ganchos"
 import { useCasca } from "@/src/contexto/casca"
+import { CabecaDoItem } from "@/src/conversas/CabecaDoItem"
 import { contexto } from "@/src/conversas/contexto"
+import { tomarDenunciaPedida } from "@/src/conversas/denunciaPedida"
+import { useItemDaConversa } from "@/src/conversas/item"
 import { EstadoDeSessaoVencida, EstadoNegado } from "@/src/eventos/EstadosDeAcesso"
 import { acessoNegado, sessaoVencida } from "@/src/eventos/formulario"
+import { Avatar } from "@/src/pecas/pecas"
 import { ListaDeConversas } from "@/src/telas/Conversas"
 import { TelaIndisponivel } from "@/src/telas/TelaIndisponivel"
 
@@ -55,6 +57,17 @@ const MOTIVOS_DA_DENUNCIA: ReadonlyArray<readonly [string, string]> = [
  * https://mobbin.com/screens/f23df80d-4b7d-4a7a-8abc-fdeadbc0bedd) e suspenso
  * no computador. A denúncia é folha e cita a mensagem denunciada.
  */
+const ICONE_DO_ITEM: Readonly<Record<string, "sell" | "storefront" | "forum">> = {
+  listing: "sell",
+  provider: "storefront",
+  shared_group: "forum",
+}
+const ROTA_DO_ITEM: Readonly<Record<string, string>> = {
+  listing: "anuncio",
+  provider: "negocio",
+  shared_group: "grupo",
+}
+
 export function Conversa() {
   const parametros = useParams({ strict: false }) as Record<string, string | undefined>
   const id = parametros["id"] ?? ""
@@ -91,6 +104,10 @@ export function Conversa() {
   const [agindo, setAgindo] = useState(false)
   const denuncia = useSobreposicaoDaEntrada("conversa-denuncia")
   const menuDaLinha = useSobreposicaoDaEntrada("menu-de-linha")
+  const itemDaConversa = useItemDaConversa(
+    dados?.conversa.tipo ?? "",
+    dados?.conversa.contextoId ?? "",
+  )
   const controle = useRef<AbortController | null>(null)
   const envioEmCurso = useRef(false)
   const paginaEmCurso = useRef(false)
@@ -177,6 +194,18 @@ export function Conversa() {
   }, [id])
   const nome = dados?.conversa.nome ?? ""
   const outroId = dados?.conversa.outroId ?? ""
+  // Vindo do "Denunciar" do perfil (rodada 3, M2): com a conversa lida, abre a
+  // folha da última mensagem recebida; sem mensagem da pessoa, diz por quê.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: o pedido vale para a carga desta conversa
+  useEffect(() => {
+    if (dados === null || !tomarDenunciaPedida(id)) return
+    const recebida = dados.mensagens.filter((mensagem) => !mensagem.minha).at(-1) ?? null
+    if (recebida === null) {
+      setAviso(`Ainda não há mensagem de ${dados.conversa.nome} para denunciar nesta conversa.`)
+      return
+    }
+    abrirDenuncia(recebida)
+  }, [dados, id])
   useEffect(() => {
     if (naoEnviada !== null) balaoFalho.current?.scrollIntoView({ block: "nearest" })
   }, [naoEnviada])
@@ -204,12 +233,14 @@ export function Conversa() {
       }
     } catch {
       // A mensagem que não saiu fica visível como balão seu, marcada
-      // "Não enviada", com a ação de tentar de novo; o texto continua no campo.
+      // "Não enviada", com a ação de tentar de novo; o campo volta limpo e o
+      // texto fica só no balão.
       // O leitor de tela ouve o fato pelo anúncio oculto; o que se VÊ é só o
       // balão (D22: um texto por erro).
       if (!pedido.signal.aborted) {
         setAnuncioDeEnvio("Não foi possível enviar. Seu texto foi mantido.")
         setNaoEnviada(texto)
+        if (!reenvio) setRascunho("")
       }
     } finally {
       if (!pedido.signal.aborted) {
@@ -263,12 +294,21 @@ export function Conversa() {
     }
   }
 
-  function abrirDenuncia(mensagem: Mensagem) {
+  /**
+   * Abre a denúncia de uma mensagem. Vindo do menu ⋯ a denúncia SUBSTITUI o
+   * menu na mesma entrada (cada entrada tem uma sobreposição só, RUN-165);
+   * vindo do toque no balão, abre direto.
+   */
+  function abrirDenuncia(mensagem: Mensagem, doMenu = false) {
     setDenunciando(mensagem)
     setMotivo("")
     setExplicacao("")
     setErroLocal("")
     setAviso("")
+    if (doMenu) {
+      void navegacao.atualizarCom((atual) => ({ ...atual, sobreposicao: "conversa-denuncia" }))
+      return
+    }
     denuncia.aoMudarAberto(true)
   }
 
@@ -313,6 +353,9 @@ export function Conversa() {
     )
   const origem = contexto(dados.conversa.tipo)
   const bloqueadoPorMim = outroId !== "" && meusBloqueios.includes(outroId)
+  // O ⋯ denuncia a última mensagem recebida; sem mensagem da outra pessoa não
+  // há o que denunciar nesta conversa e o item não aparece.
+  const ultimaRecebida = dados.mensagens.filter((mensagem) => !mensagem.minha).at(-1) ?? null
   return (
     <section
       data-tela="conversa"
@@ -332,7 +375,6 @@ export function Conversa() {
             <ListaDeConversas
               conversas={caixa.conversas}
               selecionada={id}
-              comContexto={false}
               aoAbrir={(nova) => {
                 if (nova === id) return
                 void navegacao.irPara("conversa", { parametros: { id: nova } })
@@ -342,11 +384,7 @@ export function Conversa() {
         </aside>
         <div data-conversa="painel" className="flex min-w-0 flex-col gap-2 sm:gap-3">
           <div data-cabeca="conversa" className="flex min-w-0 items-center gap-3 px-1 py-2">
-            <Avatar size="lg" className="size-11 shrink-0" aria-hidden="true">
-              <AvatarFallback className="bg-(--secondary-container) font-semibold">
-                {iniciais(nome)}
-              </AvatarFallback>
-            </Avatar>
+            <Avatar nome={nome} />
             <span className="grid min-w-0 gap-0.5">
               {/* O nome de quem conversa aparece uma vez só: aqui. A barra do
                   topo diz a seção ("Conversas"). */}
@@ -375,6 +413,15 @@ export function Conversa() {
                   porque cada entrada tem uma sobreposição só — e a pessoa via o
                   menu reabrir sem o diálogo (RUN-165).
                 */}
+                {ultimaRecebida && (
+                  <ItemDoMenu
+                    data-acao="denunciar"
+                    onSelect={(evento) => evento.preventDefault()}
+                    onClick={() => abrirDenuncia(ultimaRecebida, true)}
+                  >
+                    Denunciar
+                  </ItemDoMenu>
+                )}
                 <ItemDoMenu
                   perigo
                   onSelect={(evento) => evento.preventDefault()}
@@ -399,9 +446,23 @@ export function Conversa() {
               />
             )}
           </div>
-          {/* O tipo da conversa sem o rótulo "Contexto da conversa": o título do
-              item entra quando a API o fornecer (F09-B). */}
-          {origem && <ContextoDaConversa origem={{ ...origem, detalhe: "" }} />}
+          {/* REGUA-003: o item de que se fala — foto, título e preço — lido pela
+              leitura que já existe; sem ela, o tipo da conversa. */}
+          {itemDaConversa ? (
+            <CabecaDoItem
+              item={itemDaConversa}
+              icone={ICONE_DO_ITEM[dados.conversa.tipo] ?? "forum"}
+              aoAbrir={() => {
+                const rotaDoItem = ROTA_DO_ITEM[dados.conversa.tipo]
+                if (rotaDoItem === undefined) return
+                void navegacao.irPara(rotaDoItem, {
+                  parametros: { id: dados.conversa.contextoId },
+                })
+              }}
+            />
+          ) : (
+            origem && <ContextoDaConversa origem={{ ...origem, detalhe: "" }} />
+          )}
           <aside
             data-seguranca-conversa="sim"
             className="rounded-xl bg-(--secondary-container) px-3 py-2 text-xs leading-5"
@@ -441,7 +502,7 @@ export function Conversa() {
             <EstadoVazio
               titulo="Combine os detalhes por aqui"
               texto="Descreva o que você procura e confirme preço, disponibilidade e horário."
-              icone="chat_bubble"
+              figura="encontro"
             />
           ) : (
             <div data-mensagens="historico" className="grid min-w-0 content-start gap-2 pb-2">
@@ -454,22 +515,26 @@ export function Conversa() {
                       : "mr-auto flex max-w-[86%] items-end gap-1"
                   }
                 >
-                  <p
-                    className={
-                      item.minha
-                        ? "whitespace-pre-wrap break-words rounded-2xl rounded-br-sm bg-(--secondary-container) px-3 py-2.5 text-[14px] leading-5"
-                        : "whitespace-pre-wrap break-words rounded-2xl rounded-bl-sm bg-(--surface-lowest) px-3 py-2.5 text-[14px] leading-5 ring-1 ring-(--outline-variant)"
-                    }
-                  >
-                    {item.conteudo}
-                  </p>
-                  {item.minha ? null : (
-                    <BotaoDeIcone
-                      nome="flag"
-                      rotulo="Denunciar mensagem"
-                      className="shrink-0"
+                  {item.minha ? (
+                    <p className="whitespace-pre-wrap break-words rounded-2xl rounded-br-sm bg-(--secondary-container) px-3 py-2.5 text-[14px] leading-5">
+                      <span>{item.conteudo}</span>
+                      <HoraDaMensagem criadaEm={item.criadaEm} />
+                    </p>
+                  ) : (
+                    // A denúncia da mensagem é um toque no balão — sem bandeira
+                    // fixa ao lado de cada mensagem (REGUA-003). O nome
+                    // acessível diz o gesto depois do conteúdo.
+                    <button
+                      type="button"
+                      data-acao="denunciar-mensagem"
+                      aria-haspopup="dialog"
+                      className="whitespace-pre-wrap break-words rounded-2xl rounded-bl-sm bg-(--surface-lowest) px-3 py-2.5 text-left text-[14px] leading-5 ring-1 ring-(--outline-variant) hover:bg-(--surface-low) focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-(--ring)"
                       onClick={() => abrirDenuncia(item)}
-                    />
+                    >
+                      <span>{item.conteudo}</span>
+                      <HoraDaMensagem criadaEm={item.criadaEm} />
+                      <span className="sr-only">Denunciar mensagem</span>
+                    </button>
                   )}
                 </div>
               ))}
@@ -527,7 +592,7 @@ export function Conversa() {
             >
               <fieldset
                 aria-label="Respostas rápidas"
-                className="flex min-w-0 flex-wrap gap-2 pb-0.5"
+                className="flex min-w-0 flex-nowrap gap-2 overflow-x-auto pb-0.5"
               >
                 {[
                   "Ainda está disponível?",
@@ -567,7 +632,7 @@ export function Conversa() {
                       disabled={enviando}
                       onChange={(evento) => setRascunho(evento.target.value)}
                       placeholder="Escreva uma mensagem..."
-                      className="min-h-12 max-h-32 resize-y rounded-xl"
+                      className="min-h-12 max-h-32 resize-none rounded-3xl"
                     />
                   </div>
                   <BotaoDeIcone
@@ -617,6 +682,17 @@ export function Conversa() {
           {/* O menuitem só é ARIA válida dentro de um menu; a casca faz assim
               no Criar central (MenuCriar) e a folha segue o mesmo idioma. */}
           <div role="menu" aria-label="Opções da conversa">
+            {ultimaRecebida && (
+              <button
+                type="button"
+                role="menuitem"
+                data-acao="denunciar"
+                className="flex min-h-12 w-full items-center gap-3 rounded-xl px-4 text-left font-medium hover:bg-(--surface-low)"
+                onClick={() => abrirDenuncia(ultimaRecebida, true)}
+              >
+                Denunciar
+              </button>
+            )}
             <button
               type="button"
               role="menuitem"
@@ -661,6 +737,7 @@ export function Conversa() {
                 <label key={valor} className="flex min-h-11 items-center gap-3">
                   <input
                     type="radio"
+                    className="accent-(--on-surface)"
                     name="motivo-denuncia"
                     value={valor}
                     checked={motivo === valor}
@@ -688,6 +765,7 @@ export function Conversa() {
             <Botao
               type="submit"
               data-acao="enviar-denuncia"
+              className="rounded-full"
               disabled={agindo || motivo === "" || explicacao.trim().length > 300}
             >
               {agindo ? "Enviando…" : "Enviar denúncia"}
@@ -696,5 +774,13 @@ export function Conversa() {
         </Sobreposicao>
       ) : null}
     </section>
+  )
+}
+
+function HoraDaMensagem({ criadaEm }: { criadaEm: string }) {
+  return (
+    <time dateTime={criadaEm} className="mt-1 block text-right text-xs opacity-70">
+      {new Date(criadaEm).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
+    </time>
   )
 }

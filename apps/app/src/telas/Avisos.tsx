@@ -22,6 +22,7 @@ import {
 import type { NomeDeIcone } from "@/lib/icones"
 import { useNavegacao, useRolagemEFoco } from "@/lib/navegacao/react"
 import { CARGA_CONCLUIDA } from "@/lib/navegacao/restauracao"
+import { irParaPreferencias } from "@/src/avisos/irParaPreferencias"
 import { useCasca } from "@/src/contexto/casca"
 import { EstadoDeSessaoVencida, EstadoNegado } from "@/src/eventos/EstadosDeAcesso"
 import { acessoNegado, sessaoVencida } from "@/src/eventos/formulario"
@@ -188,36 +189,43 @@ export function Avisos() {
 
   return (
     <section data-tela="avisos" className="grid gap-2">
-      <CabecaDePagina
-        titulo="Avisos"
-        subtitulo="O que aconteceu enquanto você estava fora."
-        acao={
-          naoLidos > 0 ? (
-            <Botao tom="texto" onClick={() => void marcarTodas()} disabled={mexendo}>
-              Marcar todas
-            </Botao>
-          ) : undefined
-        }
-      />
+      <CabecaDePagina titulo="Avisos" subtitulo="O que aconteceu enquanto você estava fora." />
 
-      <fieldset aria-label="Filtrar avisos" className="flex min-w-0 gap-2 overflow-x-auto pb-1">
-        {FILTROS.map(([chave, rotulo]) => (
-          <button
-            key={chave}
-            type="button"
-            aria-pressed={filtro === chave}
-            data-filtro={chave}
-            className={
-              filtro === chave
-                ? "min-h-11 shrink-0 rounded-full bg-(--secondary-container) px-4 text-sm font-semibold"
-                : "min-h-11 shrink-0 rounded-full border border-(--outline-variant) px-4 text-sm"
-            }
-            onClick={() => setFiltro(chave)}
+      {/* REGUA-003 (rodada 3): "Marcar todas como lidas" sai da linha do título
+          — o cabeçalho tem a mesma altura em todos os estados e o apoio cabe
+          numa linha. A ação fica na linha dos filtros, uma pílula pequena à
+          direita; no celular estreito ela desce para baixo deles. */}
+      <div data-avisos="ferramentas" className="flex min-w-0 flex-wrap items-center gap-2">
+        <fieldset aria-label="Filtrar avisos" className="flex min-w-0 gap-2 overflow-x-auto pb-1">
+          {FILTROS.map(([chave, rotulo]) => (
+            <button
+              key={chave}
+              type="button"
+              aria-pressed={filtro === chave}
+              data-filtro={chave}
+              className={
+                filtro === chave
+                  ? "min-h-11 shrink-0 rounded-full bg-(--secondary-container) px-4 text-sm font-semibold"
+                  : "min-h-11 shrink-0 rounded-full border border-(--outline-variant) px-4 text-sm"
+              }
+              onClick={() => setFiltro(chave)}
+            >
+              {rotulo}
+            </button>
+          ))}
+        </fieldset>
+        {naoLidos > 0 ? (
+          <Botao
+            tom="contornado"
+            data-acao="marcar-todas"
+            className="ml-auto rounded-full px-3 text-[13px]"
+            onClick={() => void marcarTodas()}
+            disabled={mexendo}
           >
-            {rotulo}
-          </button>
-        ))}
-      </fieldset>
+            Marcar todas como lidas
+          </Botao>
+        ) : null}
+      </div>
 
       {erro === "sessao" ? (
         <EstadoDeSessaoVencida />
@@ -235,7 +243,13 @@ export function Avisos() {
               ? "Quando alguém responder, confirmar ou comentar algo seu, o aviso chega aqui."
               : "Você já leu tudo o que chegou."
           }
-          icone="notifications_none"
+          // REGUA-003: cena da família no lugar do ícone em mancha, e a saída
+          // para escolher o que chega e por onde.
+          figura="conta"
+          acao={{
+            rotulo: "Ajustar avisos",
+            aoAcionar: () => void irParaPreferencias(navegacao.irPara),
+          }}
         />
       ) : (
         <>

@@ -313,3 +313,19 @@ fixado pelo `Package.resolved` do build.
 ### Reauditoria de 22/11
 
 `AbortSignal.timeout` foi trocado por `AbortController` por causa do iOS 15; falha dupla ao apagar o cofre ao sair deixa o marcador `bivaque.saiu`, que impede retomar a sessão; rotas autenticadas da entrada renovam; e a prévia do convite exige `x-bivaque-app` no nativo. Riscos aceitos: escrita com 401 e token longe de vencer não limpa o cofre (a pessoa vê erro e Tentar de novo; o token vence em até 1 h); erro de configuração de `origemDaApi` aparece como falta de rede; `indexedDB.databases()` ausente em parte dos WebView torna a limpeza de rascunhos melhor esforço.
+
+
+### Emenda de 22/11 — execução das provas de loja
+
+O workflow `app-loja-provas` prepara a pilha local no runner Android e recolhe capturas do roteiro;
+o job macOS compila e abre o app e um link no simulador. Sessão iOS com servidor continua para o
+aparelho do dono: o job macOS não sobe Docker. A aprovação depende de um run e da conferência dos
+artefatos; a existência do workflow não é prova de execução.
+
+Para Google, a alternativa exercita a abertura do navegador e confere a URL local de autorização
+com PKCE S256; o retorno autenticado fica pendente. A CLI permite referências `env(...)` no
+`config.toml`, mas este lote não altera esse arquivo. O [GoTrue v2.190.0](https://github.com/supabase/auth/blob/v2.190.0/internal/api/provider/google.go#L26-L54)
+ignora explicitamente `GOTRUE_EXTERNAL_GOOGLE_URL` e usa o emissor Google fixo. O
+[Keycloak](https://github.com/supabase/auth/blob/v2.190.0/internal/api/provider/keycloak.go#L45-L66)
+aceita URL configurável, mas o app pede `provider=google`; substituí-lo não provaria esse botão.
+Isso impede o provedor Google falso apenas por configuração, sem trocar código ou imagem do GoTrue.

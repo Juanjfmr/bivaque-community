@@ -3,18 +3,18 @@
 import { useEffect, useRef, useState } from "react"
 import { Botao } from "@/components/bivaque/botao"
 import { CabecaDePagina } from "@/components/bivaque/cabeca-de-pagina"
-import { ContextoDaConversa } from "@/components/bivaque/contexto-conversa"
 import { EsqueletoDeLista } from "@/components/bivaque/esqueleto"
 import { EstadoDeErro } from "@/components/bivaque/estado-vazio"
 import { Icone } from "@/components/bivaque/icone"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { type Caixa, type ConversaDaCaixa, lerConversas } from "@/lib/dados/conversas"
 import { useNavegacao, useRolagemEFoco } from "@/lib/navegacao/react"
 import { CARGA_CONCLUIDA } from "@/lib/navegacao/restauracao"
-import { iniciais } from "@/lib/texto"
+import { horaDaCaixa } from "@/lib/texto"
 import { contexto } from "@/src/conversas/contexto"
+import { useItemDaConversa } from "@/src/conversas/item"
 import { EstadoDeSessaoVencida, EstadoNegado } from "@/src/eventos/EstadosDeAcesso"
 import { acessoNegado, sessaoVencida } from "@/src/eventos/formulario"
+import { Avatar } from "@/src/pecas/pecas"
 
 /**
  * A caixa de conversas (F09). No computador (referência Mobbin, Chats sem
@@ -178,6 +178,7 @@ export function Conversas() {
                 {dados?.proximo ? (
                   <Botao
                     data-acao="ver-mais-conversas"
+                    className="rounded-full"
                     disabled={carregandoMais}
                     aria-busy={carregandoMais}
                     onClick={() => void mais()}
@@ -187,6 +188,7 @@ export function Conversas() {
                 ) : (
                   <Botao
                     data-acao="ir-ao-mercado"
+                    className="rounded-full"
                     icone="storefront"
                     onClick={() => void navegacao.irPara("mercado")}
                   >
@@ -220,73 +222,101 @@ export function Conversas() {
 export function ListaDeConversas({
   conversas,
   selecionada,
-  comContexto = true,
   aoAbrir,
 }: {
   conversas: readonly ConversaDaCaixa[]
   /** A conversa aberta, quando a lista vive ao lado dela. */
   selecionada?: string
-  /**
-   * A linha do tipo (Anúncio, Serviço) acompanha a caixa; na coluna ao lado da
-   * conversa ela não se repete — o contexto da conversa aberta já está no
-   * painel.
-   */
-  comContexto?: boolean
   aoAbrir: (id: string) => void
 }) {
   return (
     <div data-lista="conversas" className="grid min-w-0">
-      {conversas.map((conversa) => {
-        const origem = contexto(conversa.tipo)
-        return (
-          <article
-            key={conversa.id}
-            data-thread={conversa.id}
-            data-ativa={selecionada === conversa.id ? "sim" : undefined}
-            className="border-b border-(--outline-variant) last:border-b-0 data-[ativa=sim]:bg-(--surface-low)"
-          >
-            <button
-              type="button"
-              className="bv-press flex min-h-16 w-full min-w-0 items-center gap-3 px-1 py-2.5 text-left hover:bg-(--surface-low) focus-visible:outline-3 focus-visible:outline-offset-[-3px] focus-visible:outline-(--ring)"
-              onClick={() => aoAbrir(conversa.id)}
-            >
-              <Avatar size="lg" aria-hidden="true">
-                <AvatarFallback className="bg-(--secondary-container) font-semibold">
-                  {iniciais(conversa.nome)}
-                </AvatarFallback>
-              </Avatar>
-              <span className="grid min-w-0 flex-1 gap-1">
-                <b className="truncate text-sm">{conversa.nome}</b>
-                <span
-                  className={
-                    conversa.porLer
-                      ? "truncate text-[13px] font-semibold"
-                      : "truncate text-[13px] text-(--on-surface-variant)"
-                  }
-                >
-                  {conversa.ultima || "Comece a conversa"}
-                </span>
-              </span>
-              {conversa.porLer && (
-                <span
-                  role="img"
-                  aria-label="Por ler"
-                  className="size-2 shrink-0 rounded-full bg-(--primary)"
-                />
-              )}
-              <Icone
-                nome="chevron_right"
-                className="size-5 shrink-0 text-(--on-surface-variant) md:hidden"
-              />
-            </button>
-            {/* O tipo da conversa sem o rótulo "Contexto da conversa": o título
-                do item só entra quando a API o fornecer (F09-B). */}
-            {origem && comContexto && (
-              <ContextoDaConversa origem={{ ...origem, detalhe: "" }} compacto />
-            )}
-          </article>
-        )
-      })}
+      {conversas.map((conversa) => (
+        <LinhaDaConversa
+          key={conversa.id}
+          conversa={conversa}
+          ativa={selecionada === conversa.id}
+          aoAbrir={aoAbrir}
+        />
+      ))}
     </div>
+  )
+}
+
+/**
+ * Uma linha da caixa: avatar no tom da pessoa, nome com o horário da última
+ * mensagem, o item (o anúncio, o negócio, o grupo em comum — lido pela leitura
+ * que já existe; sem ela, o tipo) e a prévia. A linha aberta também diz o item,
+ * para a caixa não mudar de forma ao lado da conversa.
+ */
+function LinhaDaConversa({
+  conversa,
+  ativa,
+  aoAbrir,
+}: {
+  conversa: ConversaDaCaixa
+  ativa: boolean
+  aoAbrir: (id: string) => void
+}) {
+  const item = useItemDaConversa(conversa.tipo, conversa.contextoId)
+  const origem = contexto(conversa.tipo)
+  const rotulo = item?.titulo ?? origem?.titulo ?? null
+  const hora = conversa.ultimaEm === null ? "" : horaDaCaixa(conversa.ultimaEm)
+  return (
+    <article
+      data-thread={conversa.id}
+      data-ativa={ativa ? "sim" : undefined}
+      className="border-b border-(--outline-variant) last:border-b-0 data-[ativa=sim]:bg-(--surface-low)"
+    >
+      <button
+        type="button"
+        className="bv-press flex min-h-16 w-full min-w-0 items-center gap-3 px-1 py-2.5 text-left hover:bg-(--surface-low) focus-visible:outline-3 focus-visible:outline-offset-[-3px] focus-visible:outline-(--ring)"
+        onClick={() => aoAbrir(conversa.id)}
+      >
+        <Avatar nome={conversa.nome} />
+        <span className="grid min-w-0 flex-1 gap-1">
+          <span className="flex min-w-0 items-baseline gap-2">
+            <b className="min-w-0 flex-1 truncate text-sm">{conversa.nome}</b>
+            {hora === "" || conversa.ultimaEm === null ? null : (
+              <time
+                data-hora-da-linha=""
+                dateTime={conversa.ultimaEm}
+                className="shrink-0 text-xs text-(--on-surface-variant)"
+              >
+                {hora}
+              </time>
+            )}
+          </span>
+          {rotulo && (
+            <span
+              data-contexto-da-linha=""
+              className="truncate text-xs text-(--on-surface-variant)"
+            >
+              {rotulo}
+            </span>
+          )}
+          <span
+            className={
+              conversa.porLer
+                ? "truncate text-[13px] font-semibold"
+                : "truncate text-[13px] text-(--on-surface-variant)"
+            }
+          >
+            {conversa.ultima || "Comece a conversa"}
+          </span>
+        </span>
+        {conversa.porLer && !ativa && (
+          <span
+            role="img"
+            aria-label="Por ler"
+            className="size-2 shrink-0 rounded-full bg-(--primary)"
+          />
+        )}
+        <Icone
+          nome="chevron_right"
+          className="size-5 shrink-0 text-(--on-surface-variant) md:hidden"
+        />
+      </button>
+    </article>
   )
 }

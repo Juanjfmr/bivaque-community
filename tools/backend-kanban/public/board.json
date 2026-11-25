@@ -4184,7 +4184,7 @@
       "phase": "Operacao",
       "priority": "P1",
       "category": "infra",
-      "status": "next",
+      "status": "done",
       "description": "Medicao sob concorrencia com 3.971 usuarios de carga em 19 cidades. O banco tem folga enorme (108.000 tps diretos com 50 clientes, 0,44ms). O LOGIN e o recurso mais apertado: GoTrue com bcrypt e CPU puro, teto de ~100-120 req/s, e p95 de 633ms a 50 simultaneos (x8.8 sobre o p95 de 1). A LEITURA pelo caminho real do app (RPC feed_community) entrega ~1000 req/s com p95 de 99ms a 50 simultaneos e ZERO falhas. O ponto de atencao antes de abrir: num pico de 500 pessoas entrando juntas, a fila do login e de ~4s no ambiente local; o que escala auth e CPU para o GoTrue, nao ajuste de banco.",
       "checklist": [
         "Medir login sob concorrencia (feito): teto ~100-120 req/s, p95 633ms a 50 simultaneos, 0 falhas na medicao final",
@@ -4192,17 +4192,19 @@
         "Medir o banco direto para separar camada (feito): 108.000 tps com pgbench, o banco nao e o gargalo",
         "Antes do lancamento: dimensionar CPU do GoTrue para o pico de entradas simultaneas esperado",
         "Antes do lancamento: decidir o pool do PostgREST (PGRST_DB_POOL nao esta definido, entao vale o padrao de 10) para o ambiente implantado",
-        "Reavaliar depois do primeiro ambiente implantado, porque os ABSOLUTOS daqui sao de container unico local e nao transferem"
+        "Reavaliacao depois do primeiro ambiente implantado levada ao LAN-PROVA-WEB (23/11)"
       ],
-      "completedChecklist": [true, true, true, false, false, false],
+      "completedChecklist": [true, true, true, true, true, true],
       "proof": [
         "Lote BC 19/09/2026: medicao sob concorrencia entregue em scripts/load/concurrency.mjs, com duas fases separadas (login = CPU do GoTrue; leitura = RPC do caminho real). Resultado final, com 0 falhas nas duas fases: login de 19/s a 1 simultaneo para ~100-117/s com p95 de 633ms a 50; leitura de 137/s a 1002/s com p95 de 99ms a 50. Referencia do banco medida no mesmo ambiente com pgbench: 108.000 tps e 0,44ms com 50 clientes, o que prova que o teto esta na camada de API e nao no banco.",
         "DOIS ERROS DE MEDICAO meus, corrigidos e registrados no proprio script: (1) a primeira versao media /rest/v1/posts?order=created_at.desc sem filtro de escopo, que NAO e o caminho do produto e nao tem indice — 40ms no banco contra 0,2ms da forma indexada; reportaria 88 req/s com p95 de 1,4s quando o caminho real faz ~1000 req/s com p95 de 99ms, ou seja 12x melhor; (2) a fase de leitura pegava os tokens DEPOIS de a fase de login martelar o auth, e quando vinham vazios ela media 'Bearer undefined' — 100% de erro em 1ms, rejeicao instantanea e nao leitura. Agora as sessoes vem antes e o script ABORTA se faltarem.",
-        "Os erros HTTP 500 de login vistos na primeira rodada (dial error do GoTrue para o banco, 'cannot assign requested address') NAO se repetiram nas rodadas seguintes: 0 falhas. Ficaram caracterizados como limitacao de rede do Docker local sob rajada, nao como capacidade da aplicacao — e por isso nao entraram como achado de produto."
+        "Os erros HTTP 500 de login vistos na primeira rodada (dial error do GoTrue para o banco, 'cannot assign requested address') NAO se repetiram nas rodadas seguintes: 0 falhas. Ficaram caracterizados como limitacao de rede do Docker local sob rajada, nao como capacidade da aplicacao — e por isso nao entraram como achado de produto.",
+        "23/11, decisão do coordenador com os números medidos: o lançamento do web segue no tamanho padrão do ambiente implantado, sem mudar a CPU do GoTrue nem definir PGRST_DB_POOL. Motivo: o teto local do login (~100-120 entradas/s, ~6.000/min, 0 falhas) e o da leitura (~1.000 req/s, p95 99 ms) ficam muito acima do pico esperado de uma comunidade com entrada por verificação aberta cidade a cidade, e o banco não é o gargalo (108.000 tps). Os absolutos são de container único local e não transferem; a reavaliação com scripts/load/concurrency.mjs no primeiro ambiente implantado é item do LAN-PROVA-WEB, onde se ajusta CPU ou pool se o p95 do login passar de 1 s ou houver falha."
       ],
       "dependencies": [],
-      "updatedAt": "2026-09-19",
-      "sourceRevision": "90e4c94"
+      "updatedAt": "2026-11-23",
+      "sourceRevision": "9c075d211",
+      "completedAt": "2026-11-23"
     },
     {
       "phase": "Reconstrução",
@@ -5844,7 +5846,9 @@
         "04/11: direção do Início decidida com o dono depois de cinco direções desenhadas com referências do Mobbin: Painel da cidade (busca, quatro áreas com selo, faixas que somem sem conteúdo), mais a saudação em Noto Serif e a ordem das seções pelo momento da pessoa (saindo vê bazares de mudança primeiro; chegando vê indicações e imóveis). Motivo: aguenta cidade com pouco conteúdo.",
         "05/11: RUN-012 — implementação com GPT Terra 6.1 (rodadas 5005a5b0 a 8118f0fb). Revisão Qwen FAIL: desenho aprovado retirado sem motivo de dado; sem gravação. Auditoria security-auditor (Sonnet 5.5): LIBERA COM RESSALVAS. Rodada única de correção por Sonnet 5.5 (780480e8, 6ec43f62, 2dcdf54c, aecdba82, 25610401): desenho aprovado restaurado; perguntas ocultas respeitadas via list_indications; presença do próximo encontro pela rota do F05, gravada e relida; termo de busca validado e escapado; E2E sem sessão (401) e presença persistida. Provas no HEAD 25610401: gate --fast verde; gate completo verde com build pulado; vitest app 24/241, mobile 12/76, web 1/19, raiz 213/2123, scope 196; início e busca 46 testes. Não rodou: E2E com banco (Docker/supabase start indisponível nesta máquina; roda no CI), build do Next, prova visual 375/768/1440, revisão independente final.",
         "06/11: integrado pelo PR #138 (83470086) depois de specs do app simularem as rotas reais e de três merges da main; CI verde (um teste instável de grupos passou na repetição).",
-        "18/11: F02-001 (PR #286, merge ec6e9fb8, contrato docs/agents/tasks/F02-FECHO.task.yml). apps/web/app/(shell)/inicio removida inteira (home-loaders -> apps/web/lib/inicio, join-community -> (shell)/community; órfãos intent-launcher, feed-right-rail e listings/highlights saíram com seus testes); /inicio segue 307 para /app/inicio; proxy manda '/' com sessão e aceite direto para /app/inicio (tests/unit/proxy/proxy-raiz-com-sessao.test.ts). Sessão vencida e acesso negado na Busca e no Início (BUSCA-SESSAO-VENCIDA). Gate verde; revisão independente Codex em duas rodadas (achados ALTA resolvidos; o MÉDIA restante, unidade por tela, ficou provado pelo E2E por tela e emendado no contrato); CI ci:full verde no head bee29f5d. Falta para done: revisão às cegas com capturas claro/escuro em 375/768/1440 e auditoria de acessibilidade da jornada."
+        "18/11: F02-001 (PR #286, merge ec6e9fb8, contrato docs/agents/tasks/F02-FECHO.task.yml). apps/web/app/(shell)/inicio removida inteira (home-loaders -> apps/web/lib/inicio, join-community -> (shell)/community; órfãos intent-launcher, feed-right-rail e listings/highlights saíram com seus testes); /inicio segue 307 para /app/inicio; proxy manda '/' com sessão e aceite direto para /app/inicio (tests/unit/proxy/proxy-raiz-com-sessao.test.ts). Sessão vencida e acesso negado na Busca e no Início (BUSCA-SESSAO-VENCIDA). Gate verde; revisão independente Codex em duas rodadas (achados ALTA resolvidos; o MÉDIA restante, unidade por tela, ficou provado pelo E2E por tela e emendado no contrato); CI ci:full verde no head bee29f5d. Falta para done: revisão às cegas com capturas claro/escuro em 375/768/1440 e auditoria de acessibilidade da jornada.",
+        "23/11: critério 5 (acessibilidade) provado pelo A11YWEB-001/002, PR #334 (merge 2f8cbde6). Matriz axe WCAG 2.1 AA sem violação séria/crítica, heading-order e um h1 por tela nos estados com conteúdo, vazio e falha; teclado Tab→Enter/Espaço→Esc→foco devolvido com foco visível medido; alvos de 24×24 px; movimento reduzido não vacuoso; 210 testes em 375/768/1440 e CI ci:full verde. Correções de produto: foco devolvido ao acionador das folhas e do Gerenciar anúncio, nome no campo da foto do negócio, salto h1→h3 em Negócios. Revisão às cegas de código: PASS COM RESSALVAS, HIGH fechado no mesmo PR.",
+        "23/11: critério 2 (revisão às cegas) fechado pelo VISCEGA-001, PR #306 (merge 192e9f41): achados HIGH e MEDIUM da cega do CAPT-001 (#304) resolvidos e recapturados em 375/768/1440 nos dois temas."
       ],
       "id": "LAN-F02",
       "title": "F02 Início e busca ligados ao banco",
@@ -5861,7 +5865,7 @@
         "Tela antiga do apps/web retirada, com redirecionamento e portão do proxy"
       ],
       "dependencies": ["LAN-F1-IDENTIDADE", "APP-001"],
-      "completedChecklist": [false, false, false, false, false, true]
+      "completedChecklist": [false, true, false, false, true, true]
     },
     {
       "id": "F02-RESSALVAS",
@@ -5894,7 +5898,9 @@
         "02/11: aberto na definição do lançamento (docs/LANCAMENTO.md), por mandato do dono.",
         "06/11: RUN-015 integrado pelo PR #145 (f9492a1d): perguntar à cidade, anunciar desapego com foto (publicação pela RPC transition_listing) e Meus anúncios, com rascunho, revisão e erro preservado; migration nova veta pergunta de conta suspensa. Implementação GPT Sol 6.1 (parcial) e Qwen 3.8 Flash; revisão DeepSeek V4.1 Flash FAIL (publicação por UPDATE direto recusada pela guarda) e security-auditor (Sonnet 5.5) LIBERA COM RESSALVAS; rodada única de correção fechou; CI verde com o E2E real. Publicação em grupo fica para o F04 Grupos.",
         "17/11: revisão às cegas (DS-022) achou o único bloqueante real no F03 (menu Criar sem scrim e formulário transparente no celular); corrigido pelo RUN-183 (#272). Falta nova rodada às cegas com as capturas corrigidas.",
-        "18/11: F03-001 (PR #288, merge 0c2f4ddb). Encontro com rascunho na aba (automático e 'Salvar rascunho') e revisão antes de gravar, com foco no título da revisão e falha voltando à edição; preço do desapego aceita vírgula; Grupo e Publicação mostram a cidade lida no servidor sob RLS (localities_select_same_membership, sem service_role); foco depois de publicar no grupo com uma regra só. Provas: tests/e2e/f03-evento-grupo-real.spec.ts (@stateful: encontro pela revisão sobrevive ao recarregar, cidade do servidor, 401 sem sessão em criar encontro, publicar e ler grupo); foto no grupo gravada e relida em f04-grupos-real; E2E simulado do app 108 passados em 375/768/1440; CI completo verde no head dfb1ff69. Revisão independente (Codex, somente leitura): 5 achados, 4 corrigidos e 1 refutado em execução. Faltam: revisão às cegas com capturas claro/escuro, auditoria de acessibilidade e a retirada das telas antigas (F04)."
+        "18/11: F03-001 (PR #288, merge 0c2f4ddb). Encontro com rascunho na aba (automático e 'Salvar rascunho') e revisão antes de gravar, com foco no título da revisão e falha voltando à edição; preço do desapego aceita vírgula; Grupo e Publicação mostram a cidade lida no servidor sob RLS (localities_select_same_membership, sem service_role); foco depois de publicar no grupo com uma regra só. Provas: tests/e2e/f03-evento-grupo-real.spec.ts (@stateful: encontro pela revisão sobrevive ao recarregar, cidade do servidor, 401 sem sessão em criar encontro, publicar e ler grupo); foto no grupo gravada e relida em f04-grupos-real; E2E simulado do app 108 passados em 375/768/1440; CI completo verde no head dfb1ff69. Revisão independente (Codex, somente leitura): 5 achados, 4 corrigidos e 1 refutado em execução. Faltam: revisão às cegas com capturas claro/escuro, auditoria de acessibilidade e a retirada das telas antigas (F04).",
+        "23/11: critério 5 (acessibilidade) provado pelo A11YWEB-001/002, PR #334 (merge 2f8cbde6). Matriz axe WCAG 2.1 AA sem violação séria/crítica, heading-order e um h1 por tela nos estados com conteúdo, vazio e falha; teclado Tab→Enter/Espaço→Esc→foco devolvido com foco visível medido; alvos de 24×24 px; movimento reduzido não vacuoso; 210 testes em 375/768/1440 e CI ci:full verde. Correções de produto: foco devolvido ao acionador das folhas e do Gerenciar anúncio, nome no campo da foto do negócio, salto h1→h3 em Negócios. Revisão às cegas de código: PASS COM RESSALVAS, HIGH fechado no mesmo PR.",
+        "23/11: critério 2 (revisão às cegas) fechado pelo VISCEGA-001, PR #306 (merge 192e9f41): achados HIGH e MEDIUM da cega do CAPT-001 (#304) resolvidos e recapturados em 375/768/1440 nos dois temas."
       ],
       "id": "LAN-F03",
       "title": "F03 Criar: pergunta, publicação com foto, evento e anúncio",
@@ -5911,7 +5917,7 @@
         "Tela antiga do apps/web retirada, com redirecionamento e portão do proxy"
       ],
       "dependencies": ["LAN-F1-IDENTIDADE", "APP-001"],
-      "completedChecklist": [true, false, false, true]
+      "completedChecklist": [true, true, false, true, true]
     },
     {
       "phase": "Lançamento",
@@ -5925,7 +5931,8 @@
         "05/11–06/11: RUN-014 (perguntas da cidade: lista, detalhe e resposta) integrado pelo PR #140 (ace60d99). Implementação DeepSeek V4.1 Flash; revisão Qwen 3.8 Flash PASS COM RESSALVAS; security-auditor (Sonnet 5.5) LIBERA COM RESSALVAS; specs do app ajustados ao dado real; CI verde (um teste instável de foco em sobreposição passou na repetição). Grupos, publicação com foto, Útil, salvar, seguir, fixar e denúncia continuam fora.",
         "07/11: na main — perguntas (#140) e grupos (#153, merge 4673a768), E2E real nas três larguras no CI. Ressalvas seguem em F04-RESSALVAS. Fecha quando INDICACOES-MEMORIA fechar(em) (dependências do card).",
         "07/11: dependências RED-003 e RECON-050 retiradas — tratam de comunidades, legado fora do produto atual (AGENTS.md); INDICACOES-MEMORIA fechado com o E2E do CI. F04 completo: perguntas (#140), grupos (#153), tópicos (#155).",
-        "15/11: lacunas de lançamento remanescentes do fechamento de 07/11 fechadas pelos lotes de 15/11 — resolver/reabrir (RUN-153, 2db19a6b), criar grupo (RUN-155, dff7dacd), seguir/salvar indicações (RUN-158, 0400887a). Demais itens F04: denúncias fechadas pelo RUN-159 (ecc2d95d); resta 'Também perguntar à cidade' (R3, card F04-TAMBEM-PERGUNTAR)."
+        "15/11: lacunas de lançamento remanescentes do fechamento de 07/11 fechadas pelos lotes de 15/11 — resolver/reabrir (RUN-153, 2db19a6b), criar grupo (RUN-155, dff7dacd), seguir/salvar indicações (RUN-158, 0400887a). Demais itens F04: denúncias fechadas pelo RUN-159 (ecc2d95d); resta 'Também perguntar à cidade' (R3, card F04-TAMBEM-PERGUNTAR).",
+        "23/11: critério 5 (acessibilidade) provado pelo A11YWEB-001/002, PR #334 (merge 2f8cbde6). Matriz axe WCAG 2.1 AA sem violação séria/crítica, heading-order e um h1 por tela nos estados com conteúdo, vazio e falha; teclado Tab→Enter/Espaço→Esc→foco devolvido com foco visível medido; alvos de 24×24 px; movimento reduzido não vacuoso; 210 testes em 375/768/1440 e CI ci:full verde. Correções de produto: foco devolvido ao acionador das folhas e do Gerenciar anúncio, nome no campo da foto do negócio, salto h1→h3 em Negócios. Revisão às cegas de código: PASS COM RESSALVAS, HIGH fechado no mesmo PR."
       ],
       "id": "LAN-F04",
       "title": "F04 Comunidade e grupos ligados ao banco, com o redesenho provado",
@@ -5982,7 +5989,8 @@
         "05/11: as políticas que cobrem a jornada já estão provadas no banco pelos pgTAP `supabase/tests/consulta-outra-cidade.sql` (leitura de encontro de outra cidade e o corte de presença), `event-questions.sql` e `event-question-with-service-request.sql` (pergunta vinculada ao evento e destinatário derivado no banco), `events-rsvp.sql`, `event-rsvp-scope.sql` e `event-rsvp-not-going.sql` (presença por cidade, escopo e o terceiro estado) e `events-insert-returning.sql`/`events-private-venue-denials.sql` (criação e local). Nenhuma migration nova nesta entrega.",
         "05/11: `npx pnpm@11.18.0 gate` COMPLETO verde no fechamento da rodada 3 (lint, typecheck, typecheck:e2e, build, build:app, test, secrets). A falha que travava `test` nas rodadas 1 e 2 era a data fixa de `provision-requires-verification.test.ts` e foi corrigida na main mesclada em `f8b01dca` (o teste passou a usar data relativa); 2066/2066.",
         "10/11: retirada da tela antiga de /events concluída (PR #176, merge 0d3acb30: 5 redirects, 11 specs migrados, revisão independente PASS); restam a revisão cega contra a Nextdoor e a acessibilidade (critérios 2 e 5).",
-        "11/11: F05 fecha com os seis criterios entregues. Revisao cega contra a regua Nextdoor e auditoria de acessibilidade do app provadas no App Visual Smoke verde do PR #185 (matriz axe em 11 superficies x 3 larguras x 2 temas, teclado, contraste, reduced-motion e overflow; capturas .visual/run-136 retidas). Tela antiga de /events retirada pelo PR #176 (merge 0d3acb30: 5 redirects 307, portao do proxy, 11 specs migrados, revisao independente PASS). E2E f05-eventos-real 21/21 e gate completo verde na rodada 3. Ressalvas baixas da troca viraram cartoes (EVENTOS-LOCALITY-LINK, EVENTOS-RESIDUOS-POS-TROCA)."
+        "11/11: F05 fecha com os seis criterios entregues. Revisao cega contra a regua Nextdoor e auditoria de acessibilidade do app provadas no App Visual Smoke verde do PR #185 (matriz axe em 11 superficies x 3 larguras x 2 temas, teclado, contraste, reduced-motion e overflow; capturas .visual/run-136 retidas). Tela antiga de /events retirada pelo PR #176 (merge 0d3acb30: 5 redirects 307, portao do proxy, 11 specs migrados, revisao independente PASS). E2E f05-eventos-real 21/21 e gate completo verde na rodada 3. Ressalvas baixas da troca viraram cartoes (EVENTOS-LOCALITY-LINK, EVENTOS-RESIDUOS-POS-TROCA).",
+        "23/11: critério 5 (acessibilidade) provado pelo A11YWEB-001/002, PR #334 (merge 2f8cbde6). Matriz axe WCAG 2.1 AA sem violação séria/crítica, heading-order e um h1 por tela nos estados com conteúdo, vazio e falha; teclado Tab→Enter/Espaço→Esc→foco devolvido com foco visível medido; alvos de 24×24 px; movimento reduzido não vacuoso; 210 testes em 375/768/1440 e CI ci:full verde. Correções de produto: foco devolvido ao acionador das folhas e do Gerenciar anúncio, nome no campo da foto do negócio, salto h1→h3 em Negócios. Revisão às cegas de código: PASS COM RESSALVAS, HIGH fechado no mesmo PR."
       ],
       "id": "LAN-F05",
       "title": "F05 Eventos ligados ao banco",
@@ -6015,7 +6023,9 @@
         "06/11, correção do check App mobile-first do PR #141 sobre 377df52e: reproduzidas 5 falhas e 20 passes nos cinco arquivos pedidos em mobile-375. Todos já instalavam o stub; completados fotos com URLs absolutas, galeria e aluguéis equivalentes à demo (3 quartos/98 m²/R$ 3.200 + R$ 720; 2 quartos/70 m²/R$ 2.400 + R$ 480). Decisão: restaurar Tenho interesse abrindo o editor existente, manter Guardar sem enviar sem POST e abrir a conversa somente pela ação explícita Abrir conversa; sem alteração de CSS ou desenho das telas. E2E integrado ajustado ao passo e acrescentada negativa 503 com preservação do texto e nova tentativa. Prova final dos cinco arquivos: 26/26 passam, zero pulados, em 375 px; build Vite e gate --fast verdes; servidor da porta 3200 encerrado. Logs: .visual/pr141-mobile-first/{antes,build,final,gate-fast}.log. Sem gate completo, banco, E2E integrado ou outras larguras nesta correção, conforme escopo solicitado; F06 permanece next e CI deve provar a revisão enviada.",
         "05/11–06/11: RUN-013 (lista, detalhe e interesse do Mercado) integrado pelo PR #141 (b0719459). Implementação Qwen 3.8 Flash; revisão GLM-5.3-Flash FAIL (stub dos testes inerte, E2E sem prova); security-auditor (Sonnet 5.5) LIBERA COM RESSALVAS (interesse sem checagem de cidade); correção por GPT Sol 6.1: stub por RegExp, 403 de-outra-cidade antes da RPC, donoId retirado, specs do app com dados equivalentes; CI verde com o E2E real. Criar, editar e Meus anúncios continuam fora.",
         "07/11: na main — mercado (#141) e gerenciar anúncios (#152), E2E real no CI. Ressalvas seguem em F06-RESSALVAS. Fecha quando LOC-IMPL e DATA-IBGE-BAIRROS fechar(em) (dependências do card).",
-        "14/11: LT-005 (PR #221) — listas antigas trocadas: /mercado -> /app/mercado, /imoveis -> /app/imoveis, /meus-anuncios -> /app/meus-anuncios (307, query preservada; TROCADAS 79/79; mercado-redirects.spec.ts 375/768/1440 sem sessão). Troca parcial: criação/edição de imóvel, alertas e criação/edição web de desapego ficam na web (sem equivalente no app). GAP REGISTRADO: a rota web /mercado/[id]/editar fica só por URL direta — o Gerenciar do app (MeusAnuncios) edita desapego em folha inline e não referencia a rota web, e nenhuma página web linca para ela. Filtros parcialmente consumidos pelo app (q client-side; categoria/condicao/regiao/ordem/bairro/tipo_negocio/sort não consumidos). Item 'Tela antiga do apps/web retirada' do checklist atendido por LT-005; fechamento do card segue condicionado às dependências (LOC-IMPL, DATA-IBGE-BAIRROS)."
+        "14/11: LT-005 (PR #221) — listas antigas trocadas: /mercado -> /app/mercado, /imoveis -> /app/imoveis, /meus-anuncios -> /app/meus-anuncios (307, query preservada; TROCADAS 79/79; mercado-redirects.spec.ts 375/768/1440 sem sessão). Troca parcial: criação/edição de imóvel, alertas e criação/edição web de desapego ficam na web (sem equivalente no app). GAP REGISTRADO: a rota web /mercado/[id]/editar fica só por URL direta — o Gerenciar do app (MeusAnuncios) edita desapego em folha inline e não referencia a rota web, e nenhuma página web linca para ela. Filtros parcialmente consumidos pelo app (q client-side; categoria/condicao/regiao/ordem/bairro/tipo_negocio/sort não consumidos). Item 'Tela antiga do apps/web retirada' do checklist atendido por LT-005; fechamento do card segue condicionado às dependências (LOC-IMPL, DATA-IBGE-BAIRROS).",
+        "23/11: critério 5 (acessibilidade) provado pelo A11YWEB-001/002, PR #334 (merge 2f8cbde6). Matriz axe WCAG 2.1 AA sem violação séria/crítica, heading-order e um h1 por tela nos estados com conteúdo, vazio e falha; teclado Tab→Enter/Espaço→Esc→foco devolvido com foco visível medido; alvos de 24×24 px; movimento reduzido não vacuoso; 210 testes em 375/768/1440 e CI ci:full verde. Correções de produto: foco devolvido ao acionador das folhas e do Gerenciar anúncio, nome no campo da foto do negócio, salto h1→h3 em Negócios. Revisão às cegas de código: PASS COM RESSALVAS, HIGH fechado no mesmo PR.",
+        "23/11: critério 2 (revisão às cegas) fechado pelo VISCEGA-001, PR #306 (merge 192e9f41): achados HIGH e MEDIUM da cega do CAPT-001 (#304) resolvidos e recapturados em 375/768/1440 nos dois temas."
       ],
       "id": "LAN-F06",
       "title": "F06 Mercado e moradia ligados ao banco",
@@ -6033,7 +6043,8 @@
         "Situação do anúncio: disponível ou vendido, marcar vendido em um toque, filtro \"Só disponíveis\" e contagem à venda/vendidos na vitrine do anunciante",
         "Interesse abre a conversa com mensagem pronta e editável que cita o item e o preço"
       ],
-      "dependencies": ["LAN-F1-IDENTIDADE", "LOC-IMPL", "DATA-IBGE-BAIRROS", "APP-001"]
+      "dependencies": ["LAN-F1-IDENTIDADE", "LOC-IMPL", "DATA-IBGE-BAIRROS", "APP-001"],
+      "completedChecklist": [false, true, false, false, true]
     },
     {
       "phase": "Lançamento",
@@ -6078,7 +6089,9 @@
         "05/11: RUN-010 (GPT Sol 6.1) — entram as cinco rotas da sessão (categorias e negócios da cidade atual, ficha com foto por URL assinada de 5 min, criação de pedido, lista e detalhe dos próprios pedidos) e a porta de dados do app, com cancelamento, paginação e falha que preserva o texto; 'Onde atende' usa a cidade real; Mercado segue intacto. Commits c68b9ea6, 16b4b4c7, f1fdb588, 55ea0cd8 e ca6498ee. Números: 126 testes de API passam (70 da F07 e 56 de pedidos antigos); gate final verde sem build Next (falta configuração local); 2.174 de unidade, 261 do app, 76 mobile, 19 web, 189 de privacidade e 192 de escopo passam; 'Onde atende' com 18 cenários em 375/768/1440, claro e escuro, em HTTP controlado; 42 capturas estáveis. Não rodou: E2E com banco local real (Docker negado), pgTAP e build Next. Revisões: Qwen PASS COM RESSALVAS (.visual/run-010/revisao-qwen.md); auditoria de segurança válida do coordenador (security-auditor, Sonnet 5.5): LIBERA COM RESSALVAS, sem crítico nem alto. O arquivo .visual/run-010/45-auditoria.log é autoavaliação do executor e não conta como revisão. Ressalvas abertas no cartão F07-RESSALVAS-REVISAO. E2E com banco real roda no check Install, test, and build do CI deste PR.",
         "05/11: decisão do coordenador, a ratificar pelo dono — a ficha do negócio no app deixa de mostrar contagem de indicações e horário, selo Patrocinado, Benefício para a comunidade e aviso de ficha não assumida, porque não há coluna real para eles (provider_profiles); 'Onde atende' mostra só a cidade. Volta quando houver dado.",
         "16/11: RUN-177 mergeado em e87b228e (PR #257; heads 6563d602→a92c8c62) — gestão do negócio próprio (/app/meu-negocio: ficha, catálogo, fotos pela porta §5 com service_role só após reconfirmar can_manage_provider_profile), pedidos dos DOIS lados com cancelar/encerrar idempotentes e link da conversa, /app/pedidos/novo?destino= endereçável (menu Criar e Paleta apontam para portas reais), provider-member-business migrado para o E2E real do app com tabela garantia→lar. R3: revisão independente (Qwen) PASS com C1 fechada (server action órfã morta com as 5 garantias realocadas, 1 morte declarada — anexo do pedido volta pela porta, card em F07-RESSALVAS? não: RELATORIO round-2). CI cheio verde em todos os heads (stateful×3, core, smoke 7 shards, mobile-first). F07-AINDA-ABERTO: ① troca de /explorar/servicos adiada por importador vivo (card TROCA-EXPLORAR-SERVICOS), ② painel do prestador civil fica na web — EXCEÇÃO DECIDIDA (convite/aceite/fila funcionam; shell não é rota de membro; portar = card F07-PAINEL-CIVIL-APP), ③ revisão visual às cegas das três telas novas contra a régua (próxima tarefa, antes deste fechar), ④ F07-CONTAGEM-ORDENACAO segue (contagem/'perto de mim' só com API que trouxer), ⑤ F07-RESSALVAS-REVISAO não foi tocada pelo lote — fica aberta com os 5 itens originais.",
-        "RUN-180 (régua do F07: coluna no Meu negócio, encerrar com peso e lado nomeado, token fantasma): PR #264 mergeado (17fd2563); CI completo e Visual verdes no SHA 68ab930b após um rerun do flake salvar-glyph:165. O critério 2 (revisão às cegas) segue aberto até a revisão das capturas do DS-022."
+        "RUN-180 (régua do F07: coluna no Meu negócio, encerrar com peso e lado nomeado, token fantasma): PR #264 mergeado (17fd2563); CI completo e Visual verdes no SHA 68ab930b após um rerun do flake salvar-glyph:165. O critério 2 (revisão às cegas) segue aberto até a revisão das capturas do DS-022.",
+        "23/11: critério 5 (acessibilidade) provado pelo A11YWEB-001/002, PR #334 (merge 2f8cbde6). Matriz axe WCAG 2.1 AA sem violação séria/crítica, heading-order e um h1 por tela nos estados com conteúdo, vazio e falha; teclado Tab→Enter/Espaço→Esc→foco devolvido com foco visível medido; alvos de 24×24 px; movimento reduzido não vacuoso; 210 testes em 375/768/1440 e CI ci:full verde. Correções de produto: foco devolvido ao acionador das folhas e do Gerenciar anúncio, nome no campo da foto do negócio, salto h1→h3 em Negócios. Revisão às cegas de código: PASS COM RESSALVAS, HIGH fechado no mesmo PR.",
+        "23/11: critério 2 (revisão às cegas) fechado pelo VISCEGA-001, PR #306 (merge 192e9f41): achados HIGH e MEDIUM da cega do CAPT-001 (#304) resolvidos e recapturados em 375/768/1440 nos dois temas."
       ],
       "id": "LAN-F07",
       "title": "F07 Negócios e serviços ligados ao banco",
@@ -6094,7 +6107,8 @@
         "Acessibilidade: teclado, leitor de tela, contraste, alvos, movimento reduzido",
         "Tela antiga do apps/web retirada, com redirecionamento e portão do proxy"
       ],
-      "dependencies": ["LAN-F1-IDENTIDADE", "PEDIDO-MENSAGEM-ERRO-CRU", "APP-001"]
+      "dependencies": ["LAN-F1-IDENTIDADE", "PEDIDO-MENSAGEM-ERRO-CRU", "APP-001"],
+      "completedChecklist": [false, true, false, false, true]
     },
     {
       "id": "F07-RESSALVAS-REVISAO",
@@ -6130,7 +6144,9 @@
       "proof": [
         "02/11: aberto na definição do lançamento (docs/LANCAMENTO.md), por mandato do dono.",
         "05/11–06/11: RUN-009 integrado pelo PR #139 (e59e6008). Implementação DeepSeek V4.1 Flash; revisão de contrato Haiku 5.5 FAIL (roteiro e atalhos retirados, salvo preso, Salvos sem verbetes, sugestão sem E2E); auditoria security-auditor (Sonnet 5.5) LIBERA COM RESSALVAS (cursor sem escape); rodada única de correção no DeepSeek V4.1 Flash gratuito fechou tudo; CI verde com o E2E real. Observação: arrival_guide_entries tem leitura nacional por policy; salvar/sugerir só da cidade.",
-        "17/11: RUN-182 (#271) fechou a última tela de membro do Guia na web (/guide/sugerir → app). Revisão às cegas de 17/11 (66 capturas, DS-022): F08 no nível da régua; melhoria registrada em CEGA-MELHORIAS-17-11 (cartões iguais no Guia)."
+        "17/11: RUN-182 (#271) fechou a última tela de membro do Guia na web (/guide/sugerir → app). Revisão às cegas de 17/11 (66 capturas, DS-022): F08 no nível da régua; melhoria registrada em CEGA-MELHORIAS-17-11 (cartões iguais no Guia).",
+        "23/11: critério 5 (acessibilidade) provado pelo A11YWEB-001/002, PR #334 (merge 2f8cbde6). Matriz axe WCAG 2.1 AA sem violação séria/crítica, heading-order e um h1 por tela nos estados com conteúdo, vazio e falha; teclado Tab→Enter/Espaço→Esc→foco devolvido com foco visível medido; alvos de 24×24 px; movimento reduzido não vacuoso; 210 testes em 375/768/1440 e CI ci:full verde. Correções de produto: foco devolvido ao acionador das folhas e do Gerenciar anúncio, nome no campo da foto do negócio, salto h1→h3 em Negócios. Revisão às cegas de código: PASS COM RESSALVAS, HIGH fechado no mesmo PR.",
+        "23/11: critério 2 (revisão às cegas) fechado pelo VISCEGA-001, PR #306 (merge 192e9f41): achados HIGH e MEDIUM da cega do CAPT-001 (#304) resolvidos e recapturados em 375/768/1440 nos dois temas."
       ],
       "id": "LAN-F08",
       "title": "F08 Guia ligado ao banco",
@@ -6146,13 +6162,14 @@
         "Acessibilidade: teclado, leitor de tela, contraste, alvos, movimento reduzido",
         "Tela antiga do apps/web retirada, com redirecionamento e portão do proxy"
       ],
-      "dependencies": ["LAN-F1-IDENTIDADE", "RECON-030-GUIA-FOTOS", "APP-001"]
+      "dependencies": ["LAN-F1-IDENTIDADE", "RECON-030-GUIA-FOTOS", "APP-001"],
+      "completedChecklist": [false, true, false, false, true]
     },
     {
       "phase": "Lançamento",
       "tests": [],
       "blockers": [],
-      "updatedAt": "2026-11-18",
+      "updatedAt": "2026-11-23",
       "sourceRevision": "b5c223c0",
       "links": ["docs/LANCAMENTO.md"],
       "proof": [
@@ -6166,7 +6183,11 @@
         "18/11: F09-002 (#291, 09e5f442) — bloqueio corta avisos e e-mails nos dois sentidos (frente D1 do ADR-20261023): trigger BEFORE INSERT em notifications, e-mail de resposta de recomendação/seguidores e alerta de anúncio filtrados, GET /api/app/avisos esconde avisos antigos de ator bloqueado. CI completo verde no head c86304d6 (test:db, db:lint). security-auditor PASS; LOW restantes no card BLOQUEIO-AVISOS-RESTOS.",
         "18/11: falta para fechar — LAN-PUSH (ADR R3 + tabela de token; chaves FCM/APNs são do dono), F09-B2 (pgTAP da corrida), F09-B3 (lote 3: 307 de /indicacoes/[id] e revogação do INSERT direto em dm_messages), capturas 375/768/1440 claro e revisão cega.",
         "18/11: lote 3 (#293, f980d8ac) — /indicacoes/:id passa a 307 para /app/pergunta/:id e a tela antiga sai inteira (indication-detail, conversation-menu, trigger-label, chat-thread e o ramo de bloqueio do ReportButton); links de aviso, denúncia e captura apontam para o app. Migration 20261118140000 revoga INSERT direto em dm_messages de authenticated: toda escrita passa por send_conversation_message (pergunta ao organizador inclusive, 42501→403, 22023→400). pgTAP dm-revogacao-insert prova veto do INSERT direto, idempotência por client_key, índice único parcial (23505), privilégios só de leitura e o gatilho de indisponibilidade em escrita direta; recusas fixadas por mensagem (blocked, not a participant). CI completo verde no head 740abeb4 (test:db, db:lint, stateful 375/768/1440). Revisão independente FAIL corrigível → corrigida em uma rodada; security-auditor LIBERA. Isto fecha os itens F09-B2 (corrida) e F09-B3 (troca e revogação). Falta para fechar: LAN-PUSH, capturas 375/768/1440 e revisão cega.",
-        "18/11: revisão às cegas (critério 2) REPROVADA. Origem: capturas de apps/app/tests/e2e/cegas/capturas-f09-f10.spec.ts no head edca972e (#295), só tema claro, 375/768/1440; revisor Claude independente, só imagens + PADRAO-DE-TELA e IDENTIDADE-DAS-PECAS. Julgadas: Conversas 01 caixa, 02 caixa vazia, 03 conversa, 04 envio falhou, 05 menu de bloqueio, 06 denúncia; Avisos 01 lista, 02 vazia, 03 falha, 04 preferências. No nível: Avisos 02 (todas), Avisos 03 (todas, com ressalva de cor), Avisos 01 em 768, Conversas 05 em 1440; o resto abaixo. Graves: '+' cobre 'Semanal' e 'Gravar preferências' (Avisos 04, 768); títulos dos avisos e resposta rápida cortados (375); desktop em coluna solta de ~1290 px, sem lista+conversa. Médios: título duplicado na barra em 1440, nome duplicado na conversa, contexto 'Anúncio' sem o item, envio falho sem balão 'não enviada', denúncia sem citar a mensagem, estado vazio sem saída, preferências com caixas de 18 px e 'Push'. Ressalva: a régua não cita links do Mobbin; o lote de correção deve citá-los. Próximo: lote de correção (GLM 5.3) e nova revisão às cegas em claro e escuro."
+        "18/11: revisão às cegas (critério 2) REPROVADA. Origem: capturas de apps/app/tests/e2e/cegas/capturas-f09-f10.spec.ts no head edca972e (#295), só tema claro, 375/768/1440; revisor Claude independente, só imagens + PADRAO-DE-TELA e IDENTIDADE-DAS-PECAS. Julgadas: Conversas 01 caixa, 02 caixa vazia, 03 conversa, 04 envio falhou, 05 menu de bloqueio, 06 denúncia; Avisos 01 lista, 02 vazia, 03 falha, 04 preferências. No nível: Avisos 02 (todas), Avisos 03 (todas, com ressalva de cor), Avisos 01 em 768, Conversas 05 em 1440; o resto abaixo. Graves: '+' cobre 'Semanal' e 'Gravar preferências' (Avisos 04, 768); títulos dos avisos e resposta rápida cortados (375); desktop em coluna solta de ~1290 px, sem lista+conversa. Médios: título duplicado na barra em 1440, nome duplicado na conversa, contexto 'Anúncio' sem o item, envio falho sem balão 'não enviada', denúncia sem citar a mensagem, estado vazio sem saída, preferências com caixas de 18 px e 'Push'. Ressalva: a régua não cita links do Mobbin; o lote de correção deve citá-los. Próximo: lote de correção (GLM 5.3) e nova revisão às cegas em claro e escuro.",
+        "23/11: o dono pausou a loja e o web vai primeiro. O F09 fecha no web com avisos no app, por e-mail e com o push do navegador que já existe (apps/app/lib/dados/push.ts, apps/web/lib/push/adaptador.ts); o push no celular e a dependência do LAN-PUSH saíram deste card para o LAN-PUSH.",
+        "23/11: critério 5 (acessibilidade) provado pelo A11YWEB-001/002, PR #334 (merge 2f8cbde6). Matriz axe WCAG 2.1 AA sem violação séria/crítica, heading-order e um h1 por tela nos estados com conteúdo, vazio e falha; teclado Tab→Enter/Espaço→Esc→foco devolvido com foco visível medido; alvos de 24×24 px; movimento reduzido não vacuoso; 210 testes em 375/768/1440 e CI ci:full verde. Correções de produto: foco devolvido ao acionador das folhas e do Gerenciar anúncio, nome no campo da foto do negócio, salto h1→h3 em Negócios. Revisão às cegas de código: PASS COM RESSALVAS, HIGH fechado no mesmo PR.",
+        "23/11: segunda cega (REGUA-003 rodada 2, tema claro, 375/768/1440, revisores Claude independentes só com imagens e régua): Avisos, Conversas e Você sem achado GRAVE, mas REPROVADAS por 4, 3 e 3 MÉDIOS (barra fixa das preferências, cartões empilhados, controles do topo fora da coluna em 768/1440, botões sem pílula, item da conversa aberta, vão no vazio de Salvos, Desbloquear como ação principal). Revisão de código: PASS COM RESSALVAS (horário da caixa ausente na API; controle morto no Você em falha; Denunciar do perfil navega sem denunciar). Rodada 3 em fix/regua-003, última do orçamento.",
+        "24/11: critério 2 (revisão às cegas) APROVADO na terceira cega do REGUA-003, PR #336 (tema claro, 375/768/1440, revisores Claude independentes só com imagens e régua): Avisos e Conversas sem GRAVE e no máximo 2 MÉDIOS. Correções da rodada 3: horário da caixa vindo da API (ultimaEm), barra Gravar fixa só com alteração, controles do topo na coluna, Denunciar do perfil abre a folha na conversa, vazio da conversa com a figura encontro, falha de envio deixa o texto só no balão com Tentar de novo. Revisão de código DeepSeek: PASS COM RESSALVAS, sem HIGH. Médios restantes, polimento pós-lançamento: barra Gravar no fluxo quando limpa; coluna da lista vazia em 768/1440 e mudança de forma da lista ao abrir conversa; balão inteiro como gatilho de denúncia; leitura N+1 do item por conversa na caixa."
       ],
       "id": "LAN-F09",
       "title": "F09 Conversas e avisos ligados ao banco",
@@ -6181,15 +6202,15 @@
         "Segurança e privacidade: contrato da API, RLS, sem dado proibido; auditoria nos lotes R3",
         "Acessibilidade: teclado, leitor de tela, contraste, alvos, movimento reduzido",
         "Tela antiga do apps/web retirada, com redirecionamento e portão do proxy",
-        "Preferências por canal (no app, e-mail, push), e o push abre o destino certo"
+        "Preferências por canal no web (no app, e-mail e o push do navegador que já existe), e o aviso abre o destino certo"
       ],
       "dependencies": [
         "LAN-F1-IDENTIDADE",
         "OUTBOX-INVITE-RECIPIENTS",
         "NOTIF-DEEPLINKS",
-        "APP-001",
-        "LAN-PUSH"
-      ]
+        "APP-001"
+      ],
+      "completedChecklist": [false, true, false, false, true]
     },
     {
       "phase": "Lançamento",
@@ -6246,13 +6267,14 @@
       "phase": "Lançamento",
       "tests": [],
       "blockers": [],
-      "updatedAt": "2026-11-18",
+      "updatedAt": "2026-11-23",
       "sourceRevision": "29fcc8f",
       "links": ["docs/LANCAMENTO.md", "docs/decisions/ADR-20261024-front-react-spa.md"],
       "proof": [
         "04/11: aberto por decisão do dono (push entra no lançamento), registrado em docs/LANCAMENTO.md, Mudanças de escopo.",
         "PUSH-001 parcial: protecao de arquivos de credenciais e regra de limites de produto; reserva, migration, adaptadores, rota e testes de envio ainda pendentes. O lote do app segue dependente de LOJA-004: plugin, permissao em contexto, ordem de saida e E2E em emulador e simulador; chaves e testes reais dependem do dono.",
-        "PUSH-001: registro nativo, reserva com revalidação, adaptadores contra servidor falso, exceção do termo e redação. Faltam plugin do Capacitor, permissão em contexto, ordem de saída e E2E em emulador e simulador, dependentes de LOJA-004; recebimento real após as chaves do dono."
+        "PUSH-001: registro nativo, reserva com revalidação, adaptadores contra servidor falso, exceção do termo e redação. Faltam plugin do Capacitor, permissão em contexto, ordem de saída e E2E em emulador e simulador, dependentes de LOJA-004; recebimento real após as chaves do dono.",
+        "23/11: o dono pausou a loja e o web vai primeiro; o item de push no celular do LAN-F09 veio para cá e o LAN-F09 deixou de depender deste card."
       ],
       "id": "LAN-PUSH",
       "title": "Push no celular: token do aparelho, envio pelo outbox e abertura no destino certo",
@@ -6266,7 +6288,8 @@
         "Envio pelo mesmo outbox dos avisos, respeitando a preferência por canal e o bloqueio entre membros",
         "Toque na notificação abre o destino certo pelos links profundos (NOTIF-DEEPLINKS)",
         "Prova no emulador Android e no simulador iOS com credenciais de teste; pgTAP positivo e negativo da tabela de tokens",
-        "Requisito do lote nativo (ADR-20261118 §2): reserva com revalidação na mesma instrução no envio — apps/web/lib/push/adaptador.ts lê as inscrições e envia sem reservar a linha nem conferir de novo titular, preferência e bloqueio"
+        "Requisito do lote nativo (ADR-20261118 §2): reserva com revalidação na mesma instrução no envio — apps/web/lib/push/adaptador.ts lê as inscrições e envia sem reservar a linha nem conferir de novo titular, preferência e bloqueio",
+        "Preferência de push no celular nas Preferências de avisos e o toque abre o destino certo (veio do LAN-F09 em 23/11)"
       ],
       "dependencies": ["NOTIF-DEEPLINKS"],
       "completedChecklist": [false, false, false, false, false, true]
@@ -6284,7 +6307,10 @@
         "17/11: DECISÃO DO DONO — a troca de e-mail fica fora do lançamento; quem precisar trocar pede pelo canal de Ajuda (suporte). A troca de /configuracoes* para o app segue sem ela no RUN-184 (em curso), com ADR registrando a exclusão; /salvos vai no lote seguinte.",
         "17/11: RUN-184 (#274) trocou /configuracoes para o app (sem troca de e-mail, decisão do dono). Em curso: RUN-186 (/salvos no app, PR #277).",
         "18/11: RUN-186 (PR #277, merge 80604fba) trocou /salvos: 307 para /app/salvos com query preservada (também /recommendations?aba=saved); página (shell)/salvos e lib/saves/saved-items.ts removidas; Salvos do app com busca local e remover em guia, pergunta, publicação e anúncio pelas rotas existentes, com volta em falha; ADR-20261117-f10-salvos-no-app. CI completo verde em 380a175 (15 checagens). Revisão independente (reviewer Claude) PASS, parecer no PR. Ressalvas em RUN-186-RESSALVAS.",
-        "18/11: revisão às cegas (critério 2) REPROVADA. Origem: capturas de apps/app/tests/e2e/cegas/capturas-f09-f10.spec.ts no head edca972e (#295), só tema claro, 375/768/1440; revisor Claude independente, só imagens + PADRAO-DE-TELA e IDENTIDADE-DAS-PECAS. Julgadas: Você 01 você, 02 falha ao carregar, 03 bloqueados, 04 bloqueados vazio, 05 salvos, 06 salvos vazio, 07 perfil de membro; todas abaixo da régua nas três larguras. Graves: avatar da barra 'RS' não bate com o perfil mostrado; '+' encosta em 'Mudar de cidade' (375); data do bloqueio e subtítulos de 'Seu Bivaque' cortados; perfil de membro sem mensagem, bloquear ou denunciar; hub Você abre em formulário de cidade com texto de mecanismo e privacidade e muda de estrutura entre sucesso e falha. Médios: desktop em coluna solta, navegação lateral marca Início em Salvos e perfil, erro triplicado na falha, bloqueados sem iniciais e 'Bloqueado' sem concordância, apoio de 4 linhas no vazio, salvos com quatro vazios empilhados. Próximo: lote de correção (GLM 5.3) e nova revisão às cegas em claro e escuro."
+        "18/11: revisão às cegas (critério 2) REPROVADA. Origem: capturas de apps/app/tests/e2e/cegas/capturas-f09-f10.spec.ts no head edca972e (#295), só tema claro, 375/768/1440; revisor Claude independente, só imagens + PADRAO-DE-TELA e IDENTIDADE-DAS-PECAS. Julgadas: Você 01 você, 02 falha ao carregar, 03 bloqueados, 04 bloqueados vazio, 05 salvos, 06 salvos vazio, 07 perfil de membro; todas abaixo da régua nas três larguras. Graves: avatar da barra 'RS' não bate com o perfil mostrado; '+' encosta em 'Mudar de cidade' (375); data do bloqueio e subtítulos de 'Seu Bivaque' cortados; perfil de membro sem mensagem, bloquear ou denunciar; hub Você abre em formulário de cidade com texto de mecanismo e privacidade e muda de estrutura entre sucesso e falha. Médios: desktop em coluna solta, navegação lateral marca Início em Salvos e perfil, erro triplicado na falha, bloqueados sem iniciais e 'Bloqueado' sem concordância, apoio de 4 linhas no vazio, salvos com quatro vazios empilhados. Próximo: lote de correção (GLM 5.3) e nova revisão às cegas em claro e escuro.",
+        "23/11: critério 5 (acessibilidade) provado pelo A11YWEB-001/002, PR #334 (merge 2f8cbde6). Matriz axe WCAG 2.1 AA sem violação séria/crítica, heading-order e um h1 por tela nos estados com conteúdo, vazio e falha; teclado Tab→Enter/Espaço→Esc→foco devolvido com foco visível medido; alvos de 24×24 px; movimento reduzido não vacuoso; 210 testes em 375/768/1440 e CI ci:full verde. Correções de produto: foco devolvido ao acionador das folhas e do Gerenciar anúncio, nome no campo da foto do negócio, salto h1→h3 em Negócios. Revisão às cegas de código: PASS COM RESSALVAS, HIGH fechado no mesmo PR.",
+        "23/11: segunda cega (REGUA-003 rodada 2, tema claro, 375/768/1440, revisores Claude independentes só com imagens e régua): Avisos, Conversas e Você sem achado GRAVE, mas REPROVADAS por 4, 3 e 3 MÉDIOS (barra fixa das preferências, cartões empilhados, controles do topo fora da coluna em 768/1440, botões sem pílula, item da conversa aberta, vão no vazio de Salvos, Desbloquear como ação principal). Revisão de código: PASS COM RESSALVAS (horário da caixa ausente na API; controle morto no Você em falha; Denunciar do perfil navega sem denunciar). Rodada 3 em fix/regua-003, última do orçamento.",
+        "24/11: critério 2 (revisão às cegas) APROVADO na terceira cega do REGUA-003, PR #336 (tema claro, 375/768/1440, revisores Claude independentes só com imagens e régua): Você sem GRAVE e no máximo 2 MÉDIOS. Correções da rodada 3: Desbloquear como botão de contorno, Força e OM tenta ler o perfil de novo na falha, avatar e cabeçalho do perfil de membro, Denunciar abre a folha da conversa. Revisão de código DeepSeek: PASS COM RESSALVAS, sem HIGH. Médio restante, polimento pós-lançamento: vazio de Bloqueados diferente do de Salvos."
       ],
       "id": "LAN-F10",
       "title": "F10 Você, família e conta ligados ao banco",
@@ -6300,7 +6326,8 @@
         "Acessibilidade: teclado, leitor de tela, contraste, alvos, movimento reduzido",
         "Tela antiga do apps/web retirada, com redirecionamento e portão do proxy"
       ],
-      "dependencies": ["LAN-F1-IDENTIDADE", "MVP-RETENTION-PURGE", "APP-001"]
+      "dependencies": ["LAN-F1-IDENTIDADE", "MVP-RETENTION-PURGE", "APP-001"],
+      "completedChecklist": [false, true, false, false, true]
     },
     {
       "phase": "Lançamento",
@@ -6381,7 +6408,9 @@
         "21/11 LOJA-002 (#317): a prova contra o GoTrue local mediu que o reuso de R0 fora da janela recusa só R0 (401, 'Possible abuse attempt' no log); R2 segue válido direto no GoTrue. Emenda de 21/11 no ADR-20261120 por delegação: a revogação da família deixa de ser promessa, resíduo declarado na RATIFICACAO e card SEC-FAMILIA-RENOVACAO pós-lançamento.",
         "21/11 LOJA-002 (#317, 40850d7b4): CI completo verde (run 44910688304, stateful 375/768/1440); security-auditor LIBERA COM RESSALVAS e revisão independente PASS-COM-RESSALVA. Herdado pelo LOJA-003: cofre, PKCE no app, CSP nativa e retorno com auditoria própria; cabeçalho do app em todo pedido nativo; repetir renovar só dentro da janela de 10 s; Apple no entry/oauth.",
         "21/11 LOJA-003 (59ea6af85): testes do app 785/785, rota de progresso 28/28, build nativo com origens ficticias e CSP verificada; gate --fast executado. Pendentes: gate completo e CI, revisao independente de seguranca, prova Android com pilha local e iOS no CI/aparelho. Nao encerra LAN-LOJA.",
-        "22/11 LOJA-003 (#320, 9762b4a01): o app guarda a sessão no cofre do aparelho (@aparajita/capacitor-secure-storage 8.0.1, Keychain afterFirstUnlockThisDeviceOnly sem iCloud, Keystore, allowBackup=false). Também entraram: renovação única com espera em 429/503, PKCE no app, retorno bivaque://auth-callback no Android e iOS, CSP nativa sem script inline, CORS nativo em /api/localities, prévia do convite pelo Bearer com o cabeçalho do app, saída que limpa tudo (com o marcador 'saiu' se o cofre falhar). Gate completo verde em 8dd37550f e CI completo verde. Duas rodadas de auditoria de segurança independente: a 1ª reprovou (HIGH-1/2, MEDIUM-1/2); a 2ª deu LIBERA no eixo de segurança com F1–F5 corrigidos em 80077f9c6..9762b4a01 (AbortController no lugar de AbortSignal.timeout por causa do iOS 15, marcador de saída, renovação nas rotas autenticadas da entrada, cabeçalho do app na prévia, emenda dos allowed_paths). Testes: app 800, app-api 1644, escopo 318."
+        "22/11 LOJA-003 (#320, 9762b4a01): o app guarda a sessão no cofre do aparelho (@aparajita/capacitor-secure-storage 8.0.1, Keychain afterFirstUnlockThisDeviceOnly sem iCloud, Keystore, allowBackup=false). Também entraram: renovação única com espera em 429/503, PKCE no app, retorno bivaque://auth-callback no Android e iOS, CSP nativa sem script inline, CORS nativo em /api/localities, prévia do convite pelo Bearer com o cabeçalho do app, saída que limpa tudo (com o marcador 'saiu' se o cofre falhar). Gate completo verde em 8dd37550f e CI completo verde. Duas rodadas de auditoria de segurança independente: a 1ª reprovou (HIGH-1/2, MEDIUM-1/2); a 2ª deu LIBERA no eixo de segurança com F1–F5 corrigidos em 80077f9c6..9762b4a01 (AbortController no lugar de AbortSignal.timeout por causa do iOS 15, marcador de saída, renovação nas rotas autenticadas da entrada, cabeçalho do app na prévia, emenda dos allowed_paths). Testes: app 800, app-api 1644, escopo 318.",
+        "22/11 LOJA-005 (#322, 76ea99ec6..401c4dc84): quatro runs do app-loja-provas (45019546380, 45020824719, 45022364036, 45023729150), orçamento esgotado: HUMAN_DECISION, sem PASS. Roteiro Android readquire a WebView e roda os passos de forma independente. Provado no emulador: 01-entrada, 05-link (bivaque://app/entrar abre a entrada), 06-callback-sem-fluxo (callback sem PKCE não muda a rota), 07-backup (allowBackup=false). Não provado: 02/03/04 — defeito do app (card LOJA-DEF-ENTRADA-MEMBRO): o membro verificado do seed entra pelo código do Mailpit, o PUT /api/app/entry/progress volta 409 e o app fica em /app/entrar sem chegar ao Início (runs 2 e 3; no run 4 a WebView não reapareceu em 30 s depois do código). 08-google falhou nos runs 3 e 4 na conferência da URL OAuth/PKCE, sem detalhe no log; precisa de log da origem e dos parâmetros (sem valores) antes de culpar o app. iOS: saída (b), defeito do app (card LOJA-DEF-IOS-TELA-BRANCA): com a API de prova na forma real do servidor, em capacitor://localhost/app/ não há erro de JS, unhandledrejection, console.error nem falha de recurso; DOMContentLoaded em ~1,1 s; o pedido de progresso sai do bundle principal (provedor da casca), mas a raiz #root nunca recebe nenhuma mutação em 20 s: o React monta os provedores e o roteador nunca desenha a primeira tela. O mesmo build desenha no Android (https://localhost). Diagnóstico injetado só no dist-nativo do job (conferido pelo teste de escopo); artefatos em .visual/loja-004/ dos runs.",
+        "23/11 LOJA-006 (#322, 442a195fa..63b2ce5ec), opção A do dono: orçamento de 4 rodadas esgotado no Android 02–04, merge do que está provado. iOS: tela branca corrigida (card LOJA-DEF-IOS-TELA-BRANCA, done), 01-entrada verde no simulador com captura. Android: 01, 05, 06 e 07 verdes; 08-google com log por condição achou a origem errada (pilha em 55321, roteiro esperava 54321), corrigida derivando VITE_SUPABASE_URL do supabase status no workflow; o passo para agora em 'Navegador do sistema não abriu'. 02–04 não provados: tela branca e 401 depois do código (card LOJA-DEF-ANDROID-POS-CODIGO, próximo lote LOJA-007). Runs 45065428229, 45066442142, 45067867597 (cancelado no tempo-limite, reconexão sem limite), 45088773294."
       ],
       "id": "LAN-LOJA",
       "title": "Fase 7: app de loja em Capacitor pronto para envio",
@@ -6406,34 +6435,29 @@
       "phase": "Lançamento",
       "tests": [],
       "blockers": [],
-      "updatedAt": "2026-11-11",
+      "updatedAt": "2026-11-23",
       "sourceRevision": "d17efa4c",
       "links": ["docs/LANCAMENTO.md"],
       "proof": [
         "02/11: checklist ganhou a medição pós-lançamento herdada de INDICACOES-AVISO (tempo até a primeira resposta e pedidos de indicação sem resposta em 24 h), que só se mede depois de o app estar no ar.",
         "02/11: aberto na definição do lançamento (docs/LANCAMENTO.md), por mandato do dono.",
-        "11/11: matriz de acessibilidade do app verde no App Visual Smoke 43028844129 (PR #185, head d17efa4c): 11 superfícies × 3 larguras × 2 temas, axe wcag2a/2aa/21aa com falha serious/critical, teclado, contraste, reduced-motion e overflow; capturas em .visual/run-136 retidas pelo artefato do smoke."
+        "11/11: matriz de acessibilidade do app verde no App Visual Smoke 43028844129 (PR #185, head d17efa4c): 11 superfícies × 3 larguras × 2 temas, axe wcag2a/2aa/21aa com falha serious/critical, teclado, contraste, reduced-motion e overflow; capturas em .visual/run-136 retidas pelo artefato do smoke.",
+        "23/11: o dono pausou a loja e o web vai primeiro; a prova do web saiu para o LAN-PROVA-WEB e este card ficou com a da loja (depende do LAN-PROVA-WEB e do LAN-LOJA)."
       ],
       "id": "LAN-PROVA",
-      "title": "Fase 7: prova final do lançamento e lista de ratificação",
+      "title": "Fase 7: prova final do app de loja e medição pós-lançamento",
       "priority": "P1",
       "category": "testing",
       "status": "next",
-      "description": "E2E completo, segurança, desempenho, acessibilidade, concorrência, ensaio de deploy na branch producao, relatório final e RATIFICACAO.md completa para o dono.",
+      "description": "Desde 23/11 a prova do web está no LAN-PROVA-WEB (o dono pausou a loja; o web vai primeiro). Fica aqui a prova do app de loja (Android e iOS) sobre o web provado e a medição que só existe com o app no ar.",
       "checklist": [
-        "E2E de todas as jornadas em três tamanhos e dois temas",
-        "Revisão de segurança final sem CRITICAL/HIGH",
-        "Desempenho e concorrência dentro do alvo",
-        "Ensaio de deploy e relatório final com a lista de ratificação",
+        "Prova do web fechada (LAN-PROVA-WEB)",
+        "E2E das jornadas no app de loja (emulador Android e simulador iOS)",
+        "Revisão de segurança final do app de loja sem CRITICAL/HIGH",
+        "Ensaio de envio às lojas e relatório final com a lista de ratificação",
         "Medir tempo até a primeira resposta e pedidos de indicação sem resposta em 24 h (herdado de INDICACOES-AVISO)"
       ],
-      "dependencies": [
-        "LAN-TROCA",
-        "LAN-LOJA",
-        "OPS-CONCORRENCIA-LANCAMENTO",
-        "ENDURECE-A",
-        "ENDURECE-B"
-      ]
+      "dependencies": ["LAN-PROVA-WEB", "LAN-LOJA"]
     },
     {
       "id": "LAN-OP",
@@ -10222,7 +10246,7 @@
       "title": "Endurecimento web A: IME, título, skip link, títulos, forced-colors e color-scheme no app",
       "priority": "P1",
       "category": "frontend",
-      "status": "next",
+      "status": "done",
       "phase": "Lançamento",
       "description": "Parte A da auditoria Modern Web Guidance rodada no Antigravity em 18/11 (00:25–00:37, conversa 8a9dd2e5, step 150 de transcript_full.jsonl; só na conversa, sem arquivo). Lote pequeno no apps/app, conferido contra main 912fd17e.",
       "checklist": [
@@ -10246,17 +10270,20 @@
       "tests": [],
       "blockers": [],
       "proof": [
-        "19/11: aberto a partir da auditoria do Antigravity de 18/11; achados conferidos no código da main 912fd17e (Paleta já tem isComposing; título fixo, sem skip link, h3 no Guia, sem meta color-scheme)."
+        "19/11: aberto a partir da auditoria do Antigravity de 18/11; achados conferidos no código da main 912fd17e (Paleta já tem isComposing; título fixo, sem skip link, h3 no Guia, sem meta color-scheme).",
+        "19/11: entregue pelo PR #305 (merge d03dcd372, contrato docs/agents/tasks/ENDURECE-001.task.yml): guarda de IME com keyCode 229 (teclado.ts, Paleta.tsx, teste teclado.test.ts), document.title por rota e skip link na Casca, ordem de títulos (Guia, Inicio, Busca e demais), outline de fallback em forced-colors (pecas.css, styles.css), meta color-scheme no apps/app/index.html; prova em apps/app/tests/e2e/endurece-a.spec.ts. Drift reconciliado em 23/11: o card seguia aberto depois do merge."
       ],
-      "updatedAt": "2026-11-19",
-      "sourceRevision": "912fd17e"
+      "updatedAt": "2026-11-23",
+      "sourceRevision": "912fd17e",
+      "completedChecklist": [true, true, true, true, true, true, true, true],
+      "completedAt": "2026-11-19"
     },
     {
       "id": "ENDURECE-B",
       "title": "Endurecimento web B (R3): cabeçalhos de segurança, CSP com nonce e Clear-Site-Data na saída",
       "priority": "P1",
       "category": "backend",
-      "status": "repo",
+      "status": "done",
       "phase": "Lançamento",
       "description": "Parte B da auditoria Modern Web Guidance do Antigravity (18/11). R3: exige ADR por delegação, security-auditor, revisão independente e linha na RATIFICACAO. Vem antes do LAN-PROVA.",
       "checklist": [
@@ -10275,10 +10302,13 @@
       "tests": [],
       "blockers": [],
       "proof": [
-        "19/11: aberto a partir da auditoria do Antigravity de 18/11; next.config.ts conferido na main 912fd17e (só frame-ancestors e X-Frame-Options)."
+        "19/11: aberto a partir da auditoria do Antigravity de 18/11; next.config.ts conferido na main 912fd17e (só frame-ancestors e X-Frame-Options).",
+        "19/11: entregue pelo PR #307 (merge d6f886419, contrato docs/agents/tasks/ENDURECE-002.task.yml): ADR-20261119-cabecalhos-e-csp (por delegação, linha na RATIFICACAO); cabeçalhos em toda resposta (next.config.ts), CSP com nonce nas páginas do Next (lib/security/csp.ts, proxy.ts, landing) e estática no /app; Clear-Site-Data \"cache\", \"storage\" só na saída bem-sucedida (api/app/voce/sair). Testes: tests/unit/infra/cabecalhos-de-seguranca.test.ts, tests/unit/infra/csp.test.ts, tests/unit/proxy/csp.test.ts, tests/e2e/csp.spec.ts em 375/768/1440. Revisão independente PASS-COM-RESSALVA e security-auditor LIBERA COM RESSALVAS (só LOW), corrigidas até 3a82f0b com CI completo verde. Drift reconciliado em 23/11."
       ],
-      "updatedAt": "2026-11-19",
-      "sourceRevision": "912fd17e"
+      "updatedAt": "2026-11-23",
+      "sourceRevision": "912fd17e",
+      "completedChecklist": [true, true, true, true, true],
+      "completedAt": "2026-11-19"
     },
     {
       "id": "ENDURECE-C",
@@ -10691,7 +10721,8 @@
       ],
       "proof": [
         "22/11 LOJA-005, runs 45020824719 e 45022364036: roteiro.log com FALHOU 02-codigo em /app/entrar; rede.log com PUT /api/app/entry/progress 409.",
-        "22/11 ENTRADA-001 (fix/entrada-membro, 363c63e99 + correção da revisão: o membro relê o progresso canônico em vez de ir direto ao Início): depois do código autenticado a entrada lê /api/app/entry/verification; membro segue a etapa canônica do servidor (o Início, ou a etapa pendente pós-prévia) sem PUT de rascunho, pessoa nova segue ao aceite, falha da conferência mostra a mensagem fixa e Tentar de novo. Vitest codigo-e-vinculo (3 casos) e E2E stateful \"membro existente entra por código e chega ao Início\" (sem PUT de progresso). Falta só o passo 02–04 do app-loja-provas no emulador."
+        "22/11 ENTRADA-001 (fix/entrada-membro, 363c63e99 + correção da revisão: o membro relê o progresso canônico em vez de ir direto ao Início): depois do código autenticado a entrada lê /api/app/entry/verification; membro segue a etapa canônica do servidor (o Início, ou a etapa pendente pós-prévia) sem PUT de rascunho, pessoa nova segue ao aceite, falha da conferência mostra a mensagem fixa e Tentar de novo. Vitest codigo-e-vinculo (3 casos) e E2E stateful \"membro existente entra por código e chega ao Início\" (sem PUT de progresso). Falta só o passo 02–04 do app-loja-provas no emulador.",
+        "23/11 LOJA-006 (#322): o passo 02-04 no emulador segue sem prova, agora por outro sintoma (tela branca e 401 depois do código), registrado no card LOJA-DEF-ANDROID-POS-CODIGO; o último item deste card fecha junto com aquele, no LOJA-007."
       ]
     },
     {
@@ -10714,6 +10745,90 @@
       "links": ["tests/unit/push/android.test.ts", "apps/web/lib/push/android.ts"],
       "proof": [
         "22/11 gate completo em .work/entrada-membro: 1 falha de 3668, só este teste; reexecução isolada verde."
+      ]
+    },
+    {
+      "id": "LOJA-DEF-IOS-TELA-BRANCA",
+      "title": "App iOS abre em branco: o roteador nunca desenha a primeira tela",
+      "phase": "Lançamento",
+      "priority": "P1",
+      "category": "frontend",
+      "status": "done",
+      "description": "Achado pelo LOJA-005 no simulador iOS (macos-15): em capacitor://localhost/app/, sem erro de JS, sem unhandledrejection, sem console.error e sem falha de recurso, a raiz #root não recebe nenhuma mutação em 20 s, embora o provedor da casca já peça /api/app/entry/progress. O mesmo build desenha no Android (https://localhost). Hipóteses a provar no lote de correção: o roteador (TanStack Router 1.170.42) parado na carga inicial sob o esquema capacitor:// (origem, history, replaceState sem URL registrado pelo diagnóstico), ou algo do raiz.js/dist-nativo que só o iOS usa.",
+      "checklist": [
+        "Reproduzir no simulador com o diagnóstico do LOJA-005 e achar a promessa ou a condição que segura o roteador",
+        "Corrigir no app (ou no preparar-nativo) com teste que falha antes e passa depois",
+        "Passo 01-entrada do iOS no app-loja-provas verde, com captura da entrada desenhada"
+      ],
+      "dependencies": [],
+      "tests": ["apps/app/tests/origem-roteador.test.ts", "tests/scope/loja-provas.test.mjs"],
+      "blockers": [],
+      "updatedAt": "2026-11-23",
+      "sourceRevision": "63b2ce5ec",
+      "links": [
+        "apps/app/lib/navegacao/origem.ts",
+        "apps/app/src/roteador.tsx",
+        "tests/nativo/diagnostico-ios.js",
+        "docs/agents/tasks/LOJA-006.task.yml"
+      ],
+      "proof": [
+        "22/11 LOJA-005, runs 45022364036 e 45023729150: ios-diagnostico.log com origem capacitor://localhost, DOMContentLoaded em ~1,1 s, fetch de progresso do bundle principal, raiz vazia aos 2/5/10/20 s e nenhuma mutação da raiz.",
+        "23/11 LOJA-006 (#322, 442a195fa..63b2ce5ec): causa achada no código instalado. Em @tanstack/router-core (dist/esm/router.js) a origem do roteador cai em window.origin, que no WKWebView é capacitor://localhost; isExternalUrl trata todo protocolo que não é http(s) como externo, então buildLocation/parseLocation marcam a rota inicial com external: true e commitLocation desvia para documentNavigation, que recusa em silêncio o esquema capacitor: (fora do protocolAllowlist). Nenhum erro, nenhum commit do React. Só o iOS dispara porque Android (https://localhost) e web são http(s). Correção: apps/app/lib/navegacao/origem.ts passa origin http://localhost ao createRouter só quando o protocolo é capacitor:. Teste apps/app/tests/origem-roteador.test.ts falha sem a correção (expected true to be false) e passa com ela; caso negativo para http/https. Run 45065428229 e seguintes do app-loja-provas: 01-entrada verde no simulador, captura da entrada desenhada e diagnóstico com #root com filhos aos 2 s. Revisão às cegas (DeepSeek) PASS e security-auditor PASS."
+      ],
+      "completedChecklist": [true, true, true],
+      "completedAt": "2026-11-23"
+    },
+    {
+      "id": "LOJA-DEF-ANDROID-POS-CODIGO",
+      "title": "Android: tela branca e 401 depois do código; navegador do sistema no login Google",
+      "phase": "Lançamento",
+      "priority": "P1",
+      "category": "frontend",
+      "status": "repo",
+      "description": "Achado pelo LOJA-006 no emulador Android (run 45088773294). Depois de digitar o código de 6 números, o app fica em tela branca em https://localhost/app/entrar e as chamadas a /api/app/* seguem com 401; a tela autenticada não aparece em 120 s e a WebView continua ligada ao depurador (não é troca de alvo). No passo 08-google a URL OAuth sai válida (origem da pilha, /auth/v1/authorize, google, s256, desafio de 43 caracteres), mas o navegador do sistema não abre no emulador. Próximo passo: lote LOJA-007 com orçamento próprio.",
+      "checklist": [
+        "Achar por que a sessão do código não chega aos pedidos da API (401) e por que a entrada fica em branco no Android",
+        "Corrigir no app ou no harness com teste que falha antes e passa depois",
+        "Passos 02-codigo, 03-reabrir e 04-sair verdes no emulador, com captura e linha OK",
+        "Passo 08-google abre o navegador do sistema no emulador ou vira relato com a condição exata"
+      ],
+      "dependencies": [],
+      "tests": [],
+      "blockers": [],
+      "updatedAt": "2026-11-23",
+      "sourceRevision": "63b2ce5ec",
+      "links": [
+        "tests/nativo/android.mjs",
+        ".github/workflows/app-loja-provas.yml",
+        "docs/agents/tasks/LOJA-006.task.yml"
+      ],
+      "proof": [
+        "23/11 LOJA-006, run 45088773294: roteiro.log com FALHOU 02-codigo em https://localhost/app/entrar (Você não apareceu), 02-codigo.png em branco, rede.log com 401 em /api/app/entry/progress, /api/app/inicio e /api/app/mercado/salvos; 08-google com a URL OAuth válida e erro 'Navegador do sistema não abriu'."
+      ]
+    },
+    {
+      "id": "LAN-PROVA-WEB",
+      "title": "Prova final do lançamento do web e lista de ratificação",
+      "phase": "Lançamento",
+      "priority": "P1",
+      "category": "testing",
+      "status": "next",
+      "description": "Separado do LAN-PROVA em 23/11: o dono pausou a loja e o web vai primeiro. Prova final só do web (apps/app em /app e apps/web): E2E de todas as jornadas, segurança, desempenho, concorrência, acessibilidade, ensaio de deploy e a lista de ratificação. A prova da loja fica no LAN-PROVA.",
+      "checklist": [
+        "E2E de todas as jornadas em 375/768/1440 no tema claro (escuro fora do lançamento desde 14/11)",
+        "Revisão de segurança final do web sem CRITICAL/HIGH",
+        "Desempenho e concorrência dentro do alvo (números do OPS-CONCORRENCIA-LANCAMENTO)",
+        "Depois do primeiro ambiente implantado: reavaliar o teto do login (CPU do GoTrue) e o pool do PostgREST com a mesma medição (scripts/load/concurrency.mjs), porque os absolutos locais não transferem",
+        "Ensaio de deploy do web e relatório final com a lista de ratificação (avançar producao é ato do dono)"
+      ],
+      "dependencies": ["LAN-TROCA", "OPS-CONCORRENCIA-LANCAMENTO", "ENDURECE-A", "ENDURECE-B"],
+      "tests": [],
+      "blockers": [],
+      "updatedAt": "2026-11-23",
+      "sourceRevision": "9c075d211",
+      "links": ["docs/LANCAMENTO.md"],
+      "proof": [
+        "23/11: separado do LAN-PROVA por decisão do coordenador sobre a pausa da loja pelo dono (o web vai primeiro); o LAN-PROVA fica com a prova da loja."
       ]
     }
   ],

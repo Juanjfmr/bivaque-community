@@ -104,7 +104,7 @@ test.describe("F09 — conversas reais", { tag: "@stateful" }, () => {
     expect(escrita.status()).toBe(404)
   })
 
-  test("falha de envio conserva texto; falha de leitura oferece nova tentativa", async ({
+  test("falha de envio guarda o texto no balão; falha de leitura oferece nova tentativa", async ({
     page,
     context,
   }, testInfo) => {
@@ -119,11 +119,12 @@ test.describe("F09 — conversas reais", { tag: "@stateful" }, () => {
     await expect(
       page.getByRole("alert").filter({ hasText: "Seu texto foi mantido" }),
     ).toBeAttached()
-    await expect(page.getByLabel("Mensagem", { exact: true })).toHaveValue(texto)
+    // REGUA-003: o texto fica só no balão e o campo volta limpo.
+    await expect(page.getByLabel("Mensagem", { exact: true })).toHaveValue("")
     await expect(page.locator('[data-mensagem="nao-enviada"]')).toContainText(texto)
     await expect(page.locator('[data-mensagem="nao-enviada"]')).toContainText("Não enviada")
     await page.unroute("**/api/app/conversas/*/mensagens")
-    await page.getByRole("button", { name: "Enviar", exact: true }).click()
+    await page.locator('[data-acao="tentar-de-novo"]').click()
     await expect(page.locator('[data-mensagens="historico"]')).toContainText(texto)
     await page.route("**/api/app/conversas", (rota) => rota.abort())
     await page.goto("/app/conversas")

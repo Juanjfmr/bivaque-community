@@ -3,6 +3,7 @@ import { createRootRoute, createRoute, createRouter, redirect } from "@tanstack/
 import type { ComponentType } from "react"
 
 import { esquecerEntradaDeOutroDocumento } from "@/lib/navegacao/dom"
+import { origemDoRoteador } from "@/lib/navegacao/origem"
 import { buscaDoEnderecoAntigo, ENDERECOS_ANTIGOS_DO_MERCADO, ROTAS } from "@/lib/navegacao/rotas"
 import { Casca } from "@/src/casca/Casca"
 import { TelaDeEntrada } from "@/src/entrada/TelaDeEntrada"
@@ -252,8 +253,11 @@ const arvore = raiz.addChildren([
 // documento só vale quando a pessoa recarregou ou voltou/avançou.
 esquecerEntradaDeOutroDocumento()
 
+const origem = typeof window === "undefined" ? undefined : origemDoRoteador(window.location)
+
 export const roteador = createRouter({
   basepath: "/app",
+  ...(origem === undefined ? {} : { origin: origem }),
   routeTree: arvore,
   // A rolagem é da entrada do app, restaurada pela camada fina depois da carga.
   scrollRestoration: false,

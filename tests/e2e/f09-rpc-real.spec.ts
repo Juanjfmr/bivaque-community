@@ -218,8 +218,10 @@ test.describe("F09 — envio pela RPC", { tag: "@stateful" }, () => {
     ).toBeAttached()
     expect(chaves).toHaveLength(1)
 
-    // Sem retry automático: só o segundo clique reenvia, com a MESMA chave.
-    await page.getByRole("button", { name: "Enviar", exact: true }).click()
+    // Sem retry automático: só o "Tentar de novo" do balão reenvia, com a
+    // MESMA chave (o campo volta limpo na falha, REGUA-003).
+    await expect(page.getByLabel("Mensagem", { exact: true })).toHaveValue("")
+    await page.locator('[data-acao="tentar-de-novo"]').click()
     await expect(page.locator(HISTORICO).getByText(texto, { exact: true })).toBeVisible()
     expect(chaves).toHaveLength(2)
     expect(chaves[1]).toBe(chaves[0])

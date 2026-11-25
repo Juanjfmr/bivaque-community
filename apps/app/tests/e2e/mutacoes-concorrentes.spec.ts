@@ -93,7 +93,7 @@ test("conversa: página anterior não é pedida duas vezes", async ({ page }) =>
   expect(leituras).toBe(1)
 })
 
-test("conversa: falha preserva o rascunho e permite repetição", async ({ page }) => {
+test("conversa: falha guarda o texto no balão e permite repetição", async ({ page }) => {
   await simularConversas(page)
   let envios = 0
   await page.route(/\/api\/app\/conversas\/t1\/mensagens$/, async (rota) => {
@@ -116,7 +116,9 @@ test("conversa: falha preserva o rascunho e permite repetição", async ({ page 
   await campo.fill("Teste sintético")
   await page.locator('[data-acao="enviar-mensagem"]').click()
   await expect(page.locator('[data-mensagem="nao-enviada"]')).toBeVisible()
-  await expect(campo).toHaveValue("Teste sintético")
+  // REGUA-003: o texto fica só no balão; o campo volta limpo.
+  await expect(page.locator('[data-mensagem="nao-enviada"]')).toContainText("Teste sintético")
+  await expect(campo).toHaveValue("")
   await page.getByRole("button", { name: "Tentar de novo" }).click()
   await expect(page.locator('[data-mensagem="nao-enviada"]')).toHaveCount(0)
   expect(envios).toBe(2)

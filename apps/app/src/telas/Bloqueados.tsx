@@ -9,7 +9,7 @@ import { EstadoVazio } from "@/components/bivaque/estado-vazio"
 import { Lista } from "@/components/bivaque/lista"
 import { desbloquear, lerBloqueados, type PessoaBloqueada } from "@/lib/dados/voce"
 import { rotuloDeData } from "@/lib/formato"
-import { useRolagemEFoco } from "@/lib/navegacao/react"
+import { useNavegacao, useRolagemEFoco } from "@/lib/navegacao/react"
 import { CARGA_CONCLUIDA } from "@/lib/navegacao/restauracao"
 import { Avatar, Botao as BotaoDaPeca } from "@/src/pecas/pecas"
 
@@ -26,6 +26,7 @@ export function Bloqueados() {
   const [erro, setErro] = useState(false)
   const [rodada, setRodada] = useState(0)
   const [removendo, setRemovendo] = useState<string | null>(null)
+  const navegacao = useNavegacao()
   const [mensagem, setMensagem] = useState<string | null>(null)
 
   useRolagemEFoco(CARGA_CONCLUIDA)
@@ -89,13 +90,19 @@ export function Bloqueados() {
       ) : carregando ? (
         <EsqueletoDeLista linhas={3} />
       ) : linhas.length === 0 ? (
-        // O vazio é compacto, centrado na coluna (revisão cega R1, M9), e sem
-        // CTA de voltar: a seta de voltar já está na barra (R1, L6).
-        <div className="mx-auto w-full max-w-[27rem]">
+        // O vazio ocupa a coluna do título (REGUA-003), sem figura — nenhuma
+        // cena da família fala de bloqueio — e sem CTA de voltar: a seta de
+        // voltar já está na barra (R1, L6).
+        <div>
           <EstadoVazio
             titulo="Ninguém bloqueado ainda"
-            texto="Quando você bloquear, a pessoa aparece aqui."
-            icone="person"
+            texto="Quando você bloquear, a pessoa aparece aqui. O bloqueio fica no menu da conversa e no perfil de quem incomodou."
+            figura="nenhuma"
+            // A próxima ação real (rodada 3, V2): onde se bloqueia alguém.
+            acao={{
+              rotulo: "Ver conversas",
+              aoAcionar: () => void navegacao.irPara("conversas"),
+            }}
           />
         </div>
       ) : (
@@ -122,15 +129,16 @@ export function Bloqueados() {
                       </small>
                     </span>
                   </span>
-                  {/* Desbloquear é a ação que conclui a tela: ardósia cheia
-                      (--acao), não o contorno pálido de um secundário
-                      (revisão cega R1, M10). */}
+                  {/* Desbloquear é ação da linha, não da tela (rodada 3, V2):
+                      contorno compacto, no fim da linha — em 375 desce para a
+                      direita, sem ocupar a largura toda como um CTA. */}
                   <BotaoDaPeca
-                    tom="principal"
+                    tom="contorno"
+                    compacto
                     aria-label={`Desbloquear ${nome}`}
                     disabled={removendo !== null}
                     onClick={() => desfazer(pessoa.id)}
-                    className="sm:ml-auto"
+                    className="self-end sm:ml-auto sm:self-auto"
                   >
                     {removendo === pessoa.id ? "Desbloqueando…" : "Desbloquear"}
                   </BotaoDaPeca>
