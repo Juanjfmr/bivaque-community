@@ -4,8 +4,9 @@ import Link from "next/link"
 import { MaterialCheckbox } from "../../../components/material/checkbox"
 
 // A linha do aceite do protótipo (`legalConsentText()` em legal/pages.js,
-// usada no cadastro e no passo Aceite do Google): a frase com os dois
-// documentos como links, dentro do `<label>` da caixa, para o clique no texto
+// usada no cadastro e no passo Aceite do Google): a frase com os três
+// documentos (Política, Termo de Uso e Código)
+// como links, dentro do `<label>` da caixa, para o clique no texto
 // também marcar.
 //
 // Um componente só porque a frase é a mesma nos dois lugares, e o registro no
@@ -21,7 +22,7 @@ const CHECKBOX_ID = "en-consent"
 const TEXT_ID = "en-consent-t"
 
 /** O que o leitor de tela anuncia: a frase visível, sem os links. */
-const CONSENT_TEXT = "Li e aceito a Política de privacidade e o Código de conduta."
+const CONSENT_TEXT = "Li e aceito a Política de Privacidade, o Termo de Uso e o Código de Conduta."
 
 /** `renderEntrySignup`: "Pelo Google, o aceite vem no passo seguinte." */
 const SIGNUP_NOTE = "Pelo Google, o aceite vem no passo seguinte."
@@ -46,11 +47,15 @@ export function EntryConsent({ checked, note, onChange }: EntryConsentProperties
         <span id={TEXT_ID}>
           Li e aceito a{" "}
           <Link href={{ pathname: "/privacidade" }} rel="noreferrer" target="_blank">
-            Política de privacidade
+            Política de Privacidade
+          </Link>
+          , o{" "}
+          <Link href={{ pathname: "/termos-de-uso" }} rel="noreferrer" target="_blank">
+            Termo de Uso
           </Link>{" "}
           e o{" "}
           <Link href={{ pathname: "/codigo-de-conduta" }} rel="noreferrer" target="_blank">
-            Código de conduta
+            Código de Conduta
           </Link>
           .{note === "signup" ? ` ${SIGNUP_NOTE}` : null}
         </span>

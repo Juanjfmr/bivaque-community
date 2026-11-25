@@ -9,18 +9,21 @@ test.describe("onboarding: verified holder and invited family", () => {
     // "Bem-vindo ao Bivaque" nunca existiu nesta página — achado ao realinhar
     // este spec contra o /consent de verdade. PORT-003: o título e a linha do
     // aceite são os do passo "Aceite" do protótipo
-    // (`renderEntryGoogleConsent`), com os dois documentos como links.
+    // (`renderEntryGoogleConsent`), com os três documentos como links.
     await expect(page.getByRole("heading", { name: "Antes de entrar, as regras." })).toBeVisible()
     await expect(page.getByText("Passo 1 de 3 · Conta")).toBeVisible()
-    await expect(page.getByRole("link", { name: "Política de privacidade" })).toBeVisible()
-    await expect(page.getByRole("link", { name: "Código de conduta" })).toBeVisible()
+    await expect(page.getByRole("link", { name: "Política de Privacidade" })).toBeVisible()
+    await expect(page.getByRole("link", { name: "Termo de Uso" })).toBeVisible()
+    await expect(page.getByRole("link", { name: "Código de Conduta" })).toBeVisible()
 
     const acceptButton = page.getByRole("button", { name: "Concordar e continuar" })
     await expect(acceptButton).toBeVisible()
 
     // Negativa: sem marcar, a tela explica em vez de registrar.
     await acceptButton.click()
-    await expect(page.locator("#en-err")).toContainText("aceite a Política de privacidade")
+    await expect(page.locator("#en-err")).toContainText(
+      "aceite a Política de Privacidade, o Termo de Uso e o Código de Conduta",
+    )
 
     const consentCheckbox = page.getByRole("checkbox", { name: /Li e aceito a/ })
     await consentCheckbox.focus()

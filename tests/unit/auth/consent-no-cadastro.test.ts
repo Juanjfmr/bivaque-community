@@ -61,7 +61,9 @@ describe("o aceite é registrado no servidor, não só na tela", () => {
     // dele é registrado aqui, com o mesmo `recordConsentAction`.
     expect(consentForm).toContain("recordConsentAction()")
     expect(consentForm).toContain("Concordar e continuar")
-    expect(consentForm).toContain("Para continuar, aceite a Política de privacidade")
+    expect(consentForm).toContain(
+      "Para continuar, aceite a Política de Privacidade, o Termo de Uso e o Código de Conduta.",
+    )
   })
 
   it("o mobile grava pelo contrato HTTP, porque Server Action não serve o app", () => {

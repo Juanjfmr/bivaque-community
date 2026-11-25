@@ -6,8 +6,9 @@ import { useNavegacao, useRolagemEFoco } from "@/lib/navegacao/react"
 import { CARGA_CONCLUIDA } from "@/lib/navegacao/restauracao"
 
 /**
- * Código de conduta (onda 8), texto de versão de teste do protótipo
- * (features/legal/pages.js). A versão final é do jurídico.
+ * Código de conduta, resumo da tela. O documento integral — o que o aceite
+ * cobre — é docs/legal/CODIGO_DE_CONDUTA.md, servido pela web em
+ * /codigo-de-conduta.
  */
 
 const SECOES: readonly (readonly [titulo: string, texto: string])[] = [
@@ -39,7 +40,10 @@ export function Conduta() {
 
   return (
     <section data-tela="conduta" className="grid gap-2">
-      <CabecaDePagina titulo="Código de conduta" subtitulo="Versão de teste · 18/10/2026" />
+      <CabecaDePagina
+        titulo="Código de conduta"
+        subtitulo="Resumo da versão 3 · 25 de novembro de 2026"
+      />
       {SECOES.map(([titulo, texto]) => (
         <article key={titulo} className="grid gap-1">
           <h2 className="text-[17px] leading-6">{titulo}</h2>

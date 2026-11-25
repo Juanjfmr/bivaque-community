@@ -58,7 +58,8 @@ rota.** O proxy deixa de ter lista própria; ele importa predicados de
   Não casa subárvore. Usado em `/login`, `/signup`, `/recuperar-senha`,
   `/nova-senha`, `/auth/callback`, `/auth/callback-error`, `/consent`,
   `/privacidade`, `/codigo-de-conduta`, `/conta-apagada`, `/convite` (removido em 18/11 pelo
-  ADR-20261118-convite-familiar-so-no-app), `/ajuda`,
+  ADR-20261118-convite-familiar-so-no-app), `/ajuda`, `/termos-de-uso` (adicionado em 25/11 pelo
+  ADR-20261125-textos-legais-v3-e-termo-de-uso),
   `/favicon.ico` e `/icon.svg`. `/auth/callback` e `/auth/callback-error` são
   entradas explícitas; `/auth/confirmar-email` **não** é pública e continua no
   portão.

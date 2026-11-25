@@ -36,7 +36,9 @@ export function ConsentForm({ consentVersion, email, signedIn }: ConsentFormProp
     if (!accepted) {
       // A frase do protótipo, e o foco na caixa: a recusa precisa apontar para
       // o que falta, não para o botão que a pessoa acabou de apertar.
-      setError("Para continuar, aceite a Política de privacidade e o Código de conduta.")
+      setError(
+        "Para continuar, aceite a Política de Privacidade, o Termo de Uso e o Código de Conduta.",
+      )
       document.getElementById("en-consent")?.focus()
       return
     }

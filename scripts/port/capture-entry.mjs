@@ -47,7 +47,7 @@ const MOMENTS = ["chegando", "moro", "saindo"]
 const CITY_PERSONA = "verified-no-membership@bivaque.example.invalid"
 const MEMBER_PERSONA = process.env.USER_EMAIL ?? "visual@bivaque.example.invalid"
 const BRASILIA_IBGE = "5300108"
-const CONSENT_VERSION = "2"
+const CONSENT_VERSION = "3"
 
 function readEnvLocal(key) {
   try {

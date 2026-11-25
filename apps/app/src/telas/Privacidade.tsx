@@ -6,8 +6,8 @@ import { useNavegacao, useRolagemEFoco } from "@/lib/navegacao/react"
 import { CARGA_CONCLUIDA } from "@/lib/navegacao/restauracao"
 
 /**
- * Política de privacidade (onda 8), texto de versão de teste do protótipo
- * (features/legal/pages.js). A versão final é do jurídico.
+ * Política de privacidade, resumo da tela. O documento integral — o que o
+ * aceite cobre — é docs/legal/PRIVACIDADE.md, servido pela web em /privacidade.
  */
 
 const SECOES: readonly (readonly [titulo: string, texto: string])[] = [
@@ -26,7 +26,10 @@ export function Privacidade() {
 
   return (
     <section data-tela="privacidade" className="grid gap-2">
-      <CabecaDePagina titulo="Política de privacidade" subtitulo="Versão de teste · 18/10/2026" />
+      <CabecaDePagina
+        titulo="Política de privacidade"
+        subtitulo="Resumo da versão 3 · 25 de novembro de 2026"
+      />
       {SECOES.map(([titulo, texto]) => (
         <article key={titulo} className="grid gap-1">
           <h2 className="text-[17px] leading-6">{titulo}</h2>

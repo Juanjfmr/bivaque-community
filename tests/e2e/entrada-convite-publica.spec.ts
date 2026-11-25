@@ -74,16 +74,17 @@ test.describe("entrada pública — sem sessão", () => {
   })
 
   test("as páginas legais continuam públicas e na pele da entrada", async ({ page }) => {
-    for (const [path, title] of [
-      ["/privacidade", "Política de privacidade"],
-      ["/codigo-de-conduta", "Código de conduta"],
+    for (const [path, title, version] of [
+      ["/privacidade", "Política de privacidade", "Versão 3"],
+      ["/termos-de-uso", "Termo de Uso", "Versão 1"],
+      ["/codigo-de-conduta", "Código de conduta", "Versão 3"],
     ] as const) {
       await page.goto(path)
       await expect(page.getByRole("heading", { level: 1 })).toHaveText(title)
       // O documento vem da fonte versionada: o cabeçalho com a versão aparece
       // sem os asteriscos de markdown.
       await expect(
-        page.getByText("Versão 2 · 31 de agosto de 2026", { exact: false }),
+        page.getByText(`${version} · 25 de novembro de 2026`, { exact: false }),
       ).toBeVisible()
       await expect(page.getByText("**Versão", { exact: false })).toHaveCount(0)
     }

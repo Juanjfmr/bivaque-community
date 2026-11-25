@@ -52,6 +52,7 @@ export type NomeDeRota =
   | "entrar"
   | "privacidade"
   | "conduta"
+  | "termos-de-uso"
   | "ocultados"
   | "bloqueados"
   | "ajuda"
@@ -232,6 +233,9 @@ const LINHAS: readonly LinhaDoCatalogo[] = [
   ],
   ["privacidade", "/privacidade", "Política de privacidade", "voce", { pai: "voce" }],
   ["conduta", "/conduta", "Código de conduta", "voce", { pai: "voce" }],
+  // Termo de Uso (v3 do lote legal): página legal aberta pelo aceite e pelo
+  // Você, fora das 33 do inventário, como os Avisos.
+  ["termos-de-uso", "/termos-de-uso", "Termo de Uso", "voce", { pai: "voce" }],
   ["ocultados", "/ocultados", "Ocultados", "voce", { pai: "voce" }],
   ["bloqueados", "/bloqueados", "Pessoas bloqueadas", "voce", { pai: "voce" }],
   [
@@ -266,6 +270,7 @@ export const NOMES_DAS_33: readonly NomeDeRota[] = ROTAS.filter(
     rota.nome !== "mercado" &&
     rota.nome !== "indisponivel" &&
     rota.nome !== "avisos" &&
+    rota.nome !== "termos-de-uso" &&
     rota.nome !== "verbete" &&
     rota.nome !== "perfil" &&
     rota.nome !== "cidade" &&

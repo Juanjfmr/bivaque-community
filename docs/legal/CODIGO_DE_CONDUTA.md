@@ -1,6 +1,6 @@
 # Código de conduta
 
-**Versão 2 · 31 de agosto de 2026 · Alpha fechado**
+**Versão 3 · 25 de novembro de 2026 · Alpha fechado**
 
 O Bivaque é uma comunidade fechada. Todo mundo aqui teve a elegibilidade conferida, e é isso
 que faz o lugar funcionar. Estas regras existem para manter assim.
@@ -11,7 +11,8 @@ que faz o lugar funcionar. Estas regras existem para manter assim.
 função que você não teve.
 
 **Nada de política partidária.** Sem campanha, sem candidato, sem sigla. Isso não é preferência
-de estilo: militar da ativa tem restrição legal sobre manifestação política, e um print de post
+de estilo: militar da ativa tem restrição legal sobre manifestação política (Estatuto dos
+Militares, Lei nº 6.880/1980, e normas disciplinares), e um print de post
 partidário num app "de militares" cria problema para você e para todo mundo aqui.
 
 **Hierarquia não vale aqui dentro.** Ninguém puxa posto para ganhar discussão, para conseguir
@@ -52,7 +53,7 @@ Dependendo do caso, o operador pode:
   informação operacional.
 
 Toda decisão fica registrada com motivo. A pessoa pode pedir revisão pelo canal
-juanjfmr1@gmail.com.
+bivaque.suporte@gmail.com.
 
 ## Denúncia
 

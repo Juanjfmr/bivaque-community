@@ -48,6 +48,7 @@ import { Publicacao } from "@/src/telas/Publicacao"
 import { Salvos } from "@/src/telas/Salvos"
 import { TelaDeProva } from "@/src/telas/TelaDeProva"
 import { TelaIndisponivel } from "@/src/telas/TelaIndisponivel"
+import { Termos } from "@/src/telas/Termos"
 import { VerbeteDoGuia } from "@/src/telas/VerbeteDoGuia"
 import { Voce } from "@/src/telas/Voce"
 
@@ -122,6 +123,7 @@ const TELAS_REAIS: Readonly<Partial<Record<string, ComponentType>>> = {
   entrar: TelaDeEntrada,
   ocultados: Ocultados,
   privacidade: Privacidade,
+  "termos-de-uso": Termos,
   voce: Voce,
   conversa: Conversa,
   conversas: Conversas,

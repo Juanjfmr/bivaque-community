@@ -7,7 +7,10 @@ import { FalhaDaEntrada } from "../src/entrada/servidor"
 
 describe("mensagem da falha do convite", () => {
   it.each([
-    ["consentimento-pendente", "Aceite os Termos e o Código de Conduta antes de entrar."],
+    [
+      "consentimento-pendente",
+      "Aceite a Política de Privacidade, o Termo de Uso e o Código de Conduta antes de entrar.",
+    ],
     ["nome-invalido", "Confira o nome informado e tente de novo."],
     ["email-ausente", "Seu e-mail não chegou nesta sessão. Volte e entre de novo."],
     ["convite-invalido", "Código inválido ou vencido. Volte e confira o convite."],
