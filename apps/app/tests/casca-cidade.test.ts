@@ -133,8 +133,9 @@ describe("cidade da casca", () => {
     const comSessao = comCidadeDaSessao(DESCONHECIDA, "Rio de Janeiro")
     expect(comSessao.cidade).toBe("Rio de Janeiro")
     expect(comSessao.cidade).not.toBe(demonstracao)
-    // A chamada da demonstração existe uma vez só: ela é o ramo, não uma reserva
-    // aplicada também a quem tem sessão.
-    expect(CASCA.split("cidadeDaDemonstracao()")).toHaveLength(2)
+    // A demonstração entra só em dois ramos sem sessão: resposta autenticado:false
+    // e rota de progresso ausente (404, prévia estática). Nunca como reserva de
+    // quem tem sessão.
+    expect(CASCA.split("cidadeDaDemonstracao()")).toHaveLength(3)
   })
 })

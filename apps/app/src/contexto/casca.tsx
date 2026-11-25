@@ -121,37 +121,44 @@ export function ProvedorDaCasca({ children }: { children: ReactNode }) {
       if (!controle.signal.aborted) confirmarCidadeDaSessao(dadosDoApp.resumoDaCasca().cidade)
     }
     void lerProgresso()
-      .then((sessao) => {
-        if (controle.signal.aborted) return
-        if (sessao.autenticado === false) {
-          cidadeDaDemonstracao()
-          return
-        }
-        // A cidade da sessão é a do chip: `lerPerfil` já devolve o vínculo
-        // `current` da rota de perfil (nenhuma rota nova). Se esta leitura
-        // falhar, a cidade fica vazia — e a consulta do Início devolve a mesma
-        // cidade da sessão, que preenche a casca no lugar dela.
-        void lerPerfil({ signal: controle.signal })
-          .then((conta) => {
-            if (controle.signal.aborted) return
-            confirmarCidadeDaSessao(conta.perfil.cidade.nome)
-          })
-          .catch(() => undefined)
-        void lerConversas({ signal: controle.signal })
-          .then((lista) => {
-            if (!controle.signal.aborted) definir({ conversas: lista.porLer })
-          })
-          .catch(() => undefined)
-        return lerAvisos({ limite: "1", signal: controle.signal }).then((lista) => {
-          if (!controle.signal.aborted) definir({ avisos: lista.naoLidos })
-        })
-      })
-      .catch((erro: unknown) => {
-        // 404 é a rota ausente: só acontece na prévia estática do app, sem
-        // servidor (capturas e specs visuais). Em produção a rota existe; 503 e
-        // falha de rede continuam deixando a cidade vazia.
-        if ((erro as { status?: unknown } | null)?.status === 404) cidadeDaDemonstracao()
-      })
+      .then(
+        (sessao) => {
+          if (controle.signal.aborted) return
+          if (sessao.autenticado === false) {
+            cidadeDaDemonstracao()
+            return
+          }
+          // A cidade da sessão é a do chip: `lerPerfil` já devolve o vínculo
+          // `current` da rota de perfil (nenhuma rota nova). Se esta leitura
+          // falhar, a cidade fica vazia — e a consulta do Início devolve a mesma
+          // cidade da sessão, que preenche a casca no lugar dela.
+          void lerPerfil({ signal: controle.signal })
+            .then((conta) => {
+              if (controle.signal.aborted) return
+              confirmarCidadeDaSessao(conta.perfil.cidade.nome)
+            })
+            .catch(() => undefined)
+          void lerConversas({ signal: controle.signal })
+            .then((lista) => {
+              if (!controle.signal.aborted) definir({ conversas: lista.porLer })
+            })
+            .catch(() => undefined)
+          void lerAvisos({ limite: "1", signal: controle.signal })
+            .then((lista) => {
+              if (!controle.signal.aborted) definir({ avisos: lista.naoLidos })
+            })
+            .catch(() => undefined)
+        },
+        (erro: unknown) => {
+          // 404 é a rota ausente: só acontece na prévia estática do app, sem
+          // servidor (capturas e specs visuais). Em produção a rota existe; 503 e
+          // falha de rede continuam deixando a cidade vazia.
+          // Só a falha da própria leitura de progresso chega aqui: as leituras de
+          // dentro do ramo com sessão têm o próprio catch.
+          if ((erro as { status?: unknown } | null)?.status === 404) cidadeDaDemonstracao()
+        },
+      )
+      .catch(() => undefined)
     return () => controle.abort()
   }, [definir, confirmarCidadeDaSessao])
 
