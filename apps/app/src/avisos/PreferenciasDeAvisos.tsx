@@ -247,35 +247,35 @@ export function PreferenciasDeAvisos() {
         Escolha o que você quer receber e por onde.
       </p>
 
-      {push.disponivel ? (
-        <div
-          data-preferencia="push-aparelho"
-          className="flex min-h-11 items-start justify-between gap-3 rounded-2xl border border-(--outline-variant) bg-(--surface-lowest) p-3"
-        >
-          <span className="grid min-w-0 gap-0.5">
-            <b className="text-[15px] font-semibold">Avisos no aparelho</b>
-            <small className="text-[13px] text-(--on-surface-variant)">
-              Chegam mesmo com o Bivaque fechado. O navegador pede permissão quando você liga.
-            </small>
-          </span>
-          <Checkbox
-            role="switch"
-            checked={push.ligado}
-            disabled={alternandoPush}
-            onCheckedChange={(valor) => void alterarPush(valor === true)}
-            aria-label={ROTULO_DO_PUSH}
-            className="bv-interruptor mt-1 shrink-0"
-          />
-        </div>
-      ) : null}
-
-      <ul className="grid gap-2">
-        {TIPOS.map(([tipo, titulo, texto]) => (
+      {/* REGUA-003 (rodada 3): uma superfície com divisórias, não um cartão
+          branco por categoria (PADRAO-DE-TELA: lista é linha com divisória). */}
+      <ul
+        data-lista="preferencias"
+        className="grid divide-y divide-(--outline-variant) overflow-hidden rounded-2xl border border-(--outline-variant) bg-(--surface-lowest)"
+      >
+        {push.disponivel ? (
           <li
-            key={tipo}
-            data-preferencia={tipo}
-            className="grid gap-2 rounded-2xl border border-(--outline-variant) bg-(--surface-lowest) p-3"
+            data-preferencia="push-aparelho"
+            className="flex min-h-11 items-start justify-between gap-3 p-3"
           >
+            <span className="grid min-w-0 gap-0.5">
+              <b className="text-[15px] font-semibold">Avisos no aparelho</b>
+              <small className="text-[13px] text-(--on-surface-variant)">
+                Chegam mesmo com o Bivaque fechado. O navegador pede permissão quando você liga.
+              </small>
+            </span>
+            <Checkbox
+              role="switch"
+              checked={push.ligado}
+              disabled={alternandoPush}
+              onCheckedChange={(valor) => void alterarPush(valor === true)}
+              aria-label={ROTULO_DO_PUSH}
+              className="bv-interruptor mt-1 shrink-0"
+            />
+          </li>
+        ) : null}
+        {TIPOS.map(([tipo, titulo, texto]) => (
+          <li key={tipo} data-preferencia={tipo} className="grid gap-2 p-3">
             <span className="grid min-w-0 gap-0.5">
               <b className="text-[15px] font-semibold">{titulo}</b>
               <small className="text-[13px] text-(--on-surface-variant)">{texto}</small>
@@ -301,47 +301,56 @@ export function PreferenciasDeAvisos() {
             </div>
           </li>
         ))}
+        <li data-preferencia="resumo-cidade" className="grid gap-2 p-3">
+          <span id="rotulo-resumo-cidade" className="text-[15px] font-semibold">
+            Resumo da cidade por e-mail
+          </span>
+          <p className="text-[13px] text-(--on-surface-variant)">
+            Perguntas novas e encontros da semana.
+          </p>
+          <Select
+            value={preferencias.resumoCidade}
+            disabled={salvando}
+            onValueChange={(valor) => {
+              if (envioEmCurso.current) return
+              if (valor !== "off" && valor !== "daily" && valor !== "weekly") return
+              setPreferencias({ ...preferencias, resumoCidade: valor })
+              setSujo(true)
+            }}
+          >
+            <SelectTrigger aria-labelledby="rotulo-resumo-cidade">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="off">Desligado</SelectItem>
+              <SelectItem value="daily">Diário</SelectItem>
+              <SelectItem value="weekly">Semanal</SelectItem>
+            </SelectContent>
+          </Select>
+        </li>
       </ul>
 
-      <div className="grid gap-2 rounded-2xl border border-(--outline-variant) bg-(--surface-lowest) p-3">
-        <span id="rotulo-resumo-cidade" className="text-[15px] font-semibold">
-          Resumo da cidade por e-mail
-        </span>
-        <p className="text-[13px] text-(--on-surface-variant)">
-          Perguntas novas e encontros da semana.
-        </p>
-        <Select
-          value={preferencias.resumoCidade}
-          disabled={salvando}
-          onValueChange={(valor) => {
-            if (envioEmCurso.current) return
-            if (valor !== "off" && valor !== "daily" && valor !== "weekly") return
-            setPreferencias({ ...preferencias, resumoCidade: valor })
-            setSujo(true)
-          }}
-        >
-          <SelectTrigger aria-labelledby="rotulo-resumo-cidade">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="off">Desligado</SelectItem>
-            <SelectItem value="daily">Diário</SelectItem>
-            <SelectItem value="weekly">Semanal</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
       {/* "Gravar", não "Salvar": o Salvar do perfil casa com qualquer nome que
-          contenha "Salvar" no seletor por papel, e esta seção vive na mesma tela. */}
-      <div data-barra="gravar-preferencias">
+          contenha "Salvar" no seletor por papel, e esta seção vive na mesma tela.
+          REGUA-003 (rodada 3): sem mudança, a linha fica no fim da seção e diz
+          por que o botão está desligado; com mudança, vira barra fixa no rodapé
+          (borda de cima, sem sombra). O rótulo visível é curto para não passar
+          por baixo do Criar da barra de baixo; o nome acessível diz o todo. */}
+      <div data-barra="gravar-preferencias" data-estado={sujo || salvando ? "sujo" : "limpo"}>
+        <span
+          data-estado-da-gravacao=""
+          className="min-w-0 truncate text-[13px] text-(--on-surface-variant)"
+        >
+          {sujo ? "Mudanças não gravadas" : "Nenhuma alteração para gravar"}
+        </span>
         <Botao
           tom="tonal"
-          className="rounded-full"
+          className="shrink-0 rounded-full"
           onClick={salvar}
           disabled={!sujo || salvando}
           aria-label="Gravar preferências de avisos"
         >
-          {salvando ? "Salvando…" : "Gravar preferências"}
+          {salvando ? "Salvando…" : "Gravar"}
         </Botao>
       </div>
     </div>

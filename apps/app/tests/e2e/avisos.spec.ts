@@ -129,9 +129,15 @@ test.describe("F09 — avisos", () => {
     await expect(page.locator('[data-aviso-item="a2"]')).toHaveAttribute("data-nao-lida", "nao")
 
     await expect(page.getByRole("button", { name: "Marcar todas como lidas" })).toBeVisible()
+    // REGUA-003 (rodada 3): a ação não mora no cabeçalho — ele tem a mesma
+    // altura com e sem não lidos.
+    const cabeca = page.locator('[data-tela="avisos"] [data-cabeca="pagina"]')
+    await expect(cabeca.getByRole("button", { name: "Marcar todas como lidas" })).toHaveCount(0)
+    const alturaAntes = (await cabeca.boundingBox())?.height
     await page.getByRole("button", { name: "Marcar todas como lidas" }).click()
     await expect(page.locator('[data-aviso-item="a1"]')).toHaveAttribute("data-nao-lida", "nao")
     await expect(page.getByRole("button", { name: "Marcar todas como lidas" })).toHaveCount(0)
+    expect((await cabeca.boundingBox())?.height).toBe(alturaAntes)
 
     await page.locator('[data-aviso-item="a1"]').click()
     await expect(page).toHaveURL(new RegExp(`/app/publicacao/${PUBLICACAO}$`))

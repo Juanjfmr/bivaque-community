@@ -465,8 +465,9 @@
 
 @media (max-width: 1023.98px) {
   #conteudo {
-    padding-bottom: calc(var(--altura-da-barra) + 2.5rem + env(safe-area-inset-bottom));
-    scroll-padding-bottom: calc(var(--altura-da-barra) + 2.5rem + env(safe-area-inset-bottom));
+    --folga-do-conteudo: calc(var(--altura-da-barra) + 2.5rem + env(safe-area-inset-bottom));
+    padding-bottom: var(--folga-do-conteudo);
+    scroll-padding-bottom: var(--folga-do-conteudo);
   }
 
   [data-nav="principal"][data-minimizada="sim"] {
@@ -528,9 +529,10 @@
   }
 
   #conteudo {
+    --folga-do-conteudo: 4rem;
     grid-column: 2;
     grid-row: 1;
-    padding: 0 28px 4rem;
+    padding: 0 28px var(--folga-do-conteudo);
   }
 }
 
@@ -787,8 +789,9 @@
       [data-tela="conversas"]
     )
     #conteudo {
-    padding-bottom: calc(var(--altura-da-barra) + 92px + env(safe-area-inset-bottom));
-    scroll-padding-bottom: calc(var(--altura-da-barra) + 92px + env(safe-area-inset-bottom));
+    --folga-do-conteudo: calc(var(--altura-da-barra) + 92px + env(safe-area-inset-bottom));
+    padding-bottom: var(--folga-do-conteudo);
+    scroll-padding-bottom: var(--folga-do-conteudo);
   }
 }
 
@@ -988,19 +991,24 @@
    da tela. O offset é relativo ao fim do scrollport, que se estende ATRÁS da
    barra de baixo e do Criar (ambos fixos, z-index maior): sem o offset do
    celular, a barra gravava por baixo deles. */
+/* Sem mudança, a linha de gravar é o fim calmo da seção: o texto diz por que
+   o botão está desligado. Com mudança, ela vira a barra fixa do rodapé da
+   área — borda de cima, fundo sólido, sem sombra nem canto que pareçam um
+   painel cortado (REGUA-003, rodada 3). */
 [data-barra="gravar-preferencias"] {
-  position: sticky;
-  z-index: 30;
   display: flex;
   min-height: 60px;
   align-items: center;
-  justify-content: flex-end;
-  gap: 8px;
+  justify-content: space-between;
+  gap: 12px;
   padding: 8px 4px;
+}
+
+[data-barra="gravar-preferencias"][data-estado="sujo"] {
+  position: sticky;
+  z-index: 30;
   border-top: 1px solid var(--outline-variant);
-  border-radius: 16px 16px 0 0;
   background: var(--background);
-  box-shadow: 0 -10px 24px var(--shadow-soft);
 }
 
 /* Largura de leitura da matriz de preferências (D16): nada de cartão e
@@ -1013,28 +1021,26 @@
   }
 }
 
-/* Abaixo de 1024 px a barra de baixo e o Criar já flutuam no rodapé: uma
-   terceira camada fixa acima deles cobria o seletor "Semanal" a 768 px
-   (reauditoria do #299). Ali a barra de gravar volta ao fluxo, no fim da
-   seção, e nada cobre controle algum. */
+/* Abaixo de 1024 px a barra de baixo já está no rodapé: a barra de gravar
+   para logo acima dela, e nada mais a cobre. Sem mudança ela fica no fluxo,
+   no fim da seção (reauditoria do #299: nada cobre o seletor "Semanal"). */
+/* O `sticky` do Chrome mede a borda de baixo pela caixa de conteúdo de
+   #conteudo, já descontado o respiro do rodapé (`--folga-do-conteudo`): sem
+   descontar de volta, a barra parava 156 px acima da barra de baixo — o
+   "painel solto no meio" da revisão às cegas (REGUA-003, rodada 3). */
 @media (max-width: 1023.98px) {
   [data-barra="gravar-preferencias"] {
-    bottom: calc(var(--altura-da-barra) + env(safe-area-inset-bottom));
+    bottom: calc(
+      var(--altura-da-barra) +
+      env(safe-area-inset-bottom) -
+      var(--folga-do-conteudo, 0px)
+    );
   }
 }
 
 @media (min-width: 1024px) {
   [data-barra="gravar-preferencias"] {
-    bottom: 12px;
-  }
-}
-
-/* A barra é o fim da seção: o respiro deixa o último cartão rolar para cima
-   dela sem ficar escondido (D4) — cobre a barra (60 px) e o offset de 12 px
-   do computador, com folga. */
-@media (min-width: 1024px) {
-  [data-preferencias-de-aviso="sim"] {
-    padding-bottom: 200px;
+    bottom: calc(0px - var(--folga-do-conteudo, 0px));
   }
 }
 

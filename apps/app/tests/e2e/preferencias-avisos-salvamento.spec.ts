@@ -83,3 +83,49 @@ test("avisos: falha de gravação preserva escolha e permite nova tentativa", as
   await expect(gravar).toBeDisabled()
   await expect(respostasNoApp).not.toBeChecked()
 })
+
+test("avisos: categorias numa superfície com divisórias e barra de gravar bem formada", async ({
+  page,
+}) => {
+  await page.route(/\/api\/app\/avisos\/preferencias$/, (rota) =>
+    rota.fulfill({ json: { preferencias: PREFERENCIAS } }),
+  )
+  await page.goto("/app/voce")
+  const secao = page.locator('[data-preferencias-de-aviso="sim"]')
+  const barra = secao.locator('[data-barra="gravar-preferencias"]')
+  // A2: uma lista só, sem cartão por categoria.
+  await expect(secao.locator('[data-lista="preferencias"]')).toHaveCount(1)
+  const raioDasLinhas = await secao
+    .locator('[data-lista="preferencias"] > li')
+    .evaluateAll((linhas) => linhas.map((linha) => getComputedStyle(linha).borderTopLeftRadius))
+  expect(raioDasLinhas.every((raio) => raio === "0px")).toBe(true)
+  // A1: sem mudança, a linha diz por que o botão está desligado.
+  await expect(barra).toHaveAttribute("data-estado", "limpo")
+  await expect(barra).toContainText("Nenhuma alteração para gravar")
+  await expect(barra.getByRole("button", { name: "Gravar preferências de avisos" })).toBeDisabled()
+
+  await secao.getByRole("switch", { name: "Respostas no app" }).click()
+  await expect(barra).toHaveAttribute("data-estado", "sujo")
+  await expect(barra).toContainText("Mudanças não gravadas")
+  const estilo = await barra.evaluate((elemento) => {
+    const css = getComputedStyle(elemento)
+    return { posicao: css.position, sombra: css.boxShadow, borda: css.borderTopWidth }
+  })
+  expect(estilo).toEqual({ posicao: "sticky", sombra: "none", borda: "1px" })
+
+  // No celular e no tablet, com o fim da seção abaixo da tela, a barra para
+  // logo acima da barra de baixo — nem solta no meio, nem por baixo dela.
+  await secao
+    .locator('[data-preferencia="comments"]')
+    .evaluate((elemento) => elemento.scrollIntoView({ block: "end" }))
+  await page.waitForTimeout(300)
+  const caixa = await barra.boundingBox()
+  const nav = await page.locator('[data-nav="principal"]').boundingBox()
+  const altura = page.viewportSize()?.height ?? 0
+  expect(caixa).not.toBeNull()
+  if (!caixa) return
+  expect(caixa.y + caixa.height).toBeLessThanOrEqual(altura + 1)
+  if (nav && (page.viewportSize()?.width ?? 0) < 1024) {
+    expect(Math.abs(caixa.y + caixa.height - nav.y)).toBeLessThanOrEqual(2)
+  }
+})
