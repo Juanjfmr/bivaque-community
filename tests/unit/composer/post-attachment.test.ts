@@ -7,7 +7,7 @@ import {
   type PostAttachment,
 } from "../../../apps/web/lib/composer/post-attachment"
 
-// Lógica PURA extraída do compositor (feed-post-create.tsx): o objeto que
+// Lógica PURA do compositor, hoje chamada pela rota da porta: o objeto que
 // deriva o `post_type` do anexo real e monta as colunas extras, mais a trava do
 // anexo ligado-e-vazio. Aqui ela é exercitada direto, sem navegador — é o único
 // ponto desta frente em que a regra em si é medida em vez de afirmada por

@@ -8,7 +8,7 @@ import {
   request,
   test,
 } from "@playwright/test"
-import { chooseTestGroup, openComposer, TEST_GROUP_FEED_URL } from "./helpers/composer"
+import { TEST_GROUP_FEED_URL } from "./helpers/composer"
 import { CURRENT_CONSENT, encodeAuthCookieValue } from "./helpers/session"
 
 // ---------------------------------------------------------------------------
@@ -184,14 +184,14 @@ test.describe("cinco pessoas sintéticas interagindo", { tag: "@stateful" }, () 
 
     // 1. A autora publica
     await withPersona(browser, AUTHOR_EMAIL, async (page) => {
-      await openComposer(page)
-      const modal = page.getByRole("dialog")
-      await chooseTestGroup(modal)
-      await modal.getByLabel("Pergunta").fill(postText)
-      await modal.getByRole("button", { name: "Publicar" }).click()
-      // A publicação aparece no feed do grupo escolhido.
-      await expect(modal).toBeHidden({ timeout: 15_000 })
+      // TROCA-005: publica pela tela do grupo no app, sem sair dela.
       await page.goto(`${APP_URL}${GROUP_FEED_URL}`, { waitUntil: "load" })
+      await page.locator('[data-acao="escrever-grupo"]').click()
+      const dialogo = page.locator('[data-dialogo="escrever-grupo"]')
+      await dialogo.locator("#texto-grupo").fill(postText)
+      await dialogo.getByRole("button", { name: "Publicar", exact: true }).click()
+      await expect(dialogo).toHaveCount(0, { timeout: 15_000 })
+      await page.reload({ waitUntil: "load" })
       await expect(page.locator("article", { hasText: postText })).toBeVisible({ timeout: 20_000 })
     })
 

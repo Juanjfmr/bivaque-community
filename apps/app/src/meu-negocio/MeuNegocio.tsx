@@ -19,12 +19,22 @@ import {
   removerServico,
   type ServicoDaFicha,
   salvarMinhaFicha,
+  salvarMinhaFichaDePrestador,
 } from "@/lib/dados/negocios"
 import { SeletorDeFoto } from "@/lib/nativo/SeletorDeFoto"
-import { useNavegacao, useRolagemEFoco, useSobreposicaoDaEntrada } from "@/lib/navegacao/react"
-import { CARGA_CONCLUIDA } from "@/lib/navegacao/restauracao"
+import {
+  useBuscaDaRota,
+  useCargaDaLista,
+  useNavegacao,
+  useRolagemEFoco,
+  useSobreposicaoDaEntrada,
+  useTrocarBusca,
+} from "@/lib/navegacao/react"
 import { FalhaDaLeitura } from "@/src/negocios/FalhaDaLeitura"
 import { mensagemDaFicha, validarFicha, validarServico } from "@/src/negocios/formulario"
+import { Segmentos } from "@/src/pecas/segmentos"
+import { ContaDoNegocio } from "./ContaDoNegocio"
+import { PedidosRecebidos } from "./PedidosRecebidos"
 
 /**
  * Meu negócio (F07, RUN-177) — a gestão da ficha do PRÓPRIO membro.
@@ -41,6 +51,20 @@ import { mensagemDaFicha, validarFicha, validarServico } from "@/src/negocios/fo
 type Pendente =
   | Readonly<{ tipo: "servico"; id: string; titulo: string }>
   | Readonly<{ tipo: "foto"; id: string; legenda: string | null }>
+
+type AbaDoNegocio = "ficha" | "catalogo" | "pedidos" | "conta"
+
+const ABAS: readonly Readonly<{ id: AbaDoNegocio; rotulo: string }>[] = [
+  { id: "ficha", rotulo: "Ficha" },
+  { id: "catalogo", rotulo: "Catálogo" },
+  { id: "pedidos", rotulo: "Pedidos" },
+  { id: "conta", rotulo: "Conta" },
+]
+
+function abaDaBusca(busca: Readonly<Record<string, string>>): AbaDoNegocio {
+  const valor = busca["aba"]
+  return ABAS.some((aba) => aba.id === valor) ? (valor as AbaDoNegocio) : "ficha"
+}
 
 /**
  * A legenda é editada em campo próprio e gravada ao sair do campo: um PATCH por
@@ -75,10 +99,14 @@ function LegendaDaFoto({
 
 export function MeuNegocio() {
   const navegacao = useNavegacao()
+  const busca = useBuscaDaRota()
+  const trocarBusca = useTrocarBusca()
+  const aba = abaDaBusca(busca)
   const { aberto: confirmando, aoMudarAberto: setConfirmando } =
     useSobreposicaoDaEntrada("confirmacao")
   const [carregado, setCarregado] = useState(false)
   const [ficha, setFicha] = useState<MinhaFicha | null>(null)
+  const [tipoDaConta, setTipoDaConta] = useState<"membro" | "prestador">("membro")
   const [categorias, setCategorias] = useState<readonly Readonly<{ id: string; nome: string }>[]>(
     [],
   )
@@ -95,7 +123,7 @@ export function MeuNegocio() {
   const [legenda, setLegenda] = useState("")
   const [pendente, setPendente] = useState<Pendente | null>(null)
   const campoDaFoto = useRef<HTMLInputElement | null>(null)
-  useRolagemEFoco(CARGA_CONCLUIDA)
+  useRolagemEFoco(useCargaDaLista(carregado || erro !== null))
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: rodada é o pedido de tentar de novo
   useEffect(() => {
@@ -107,6 +135,7 @@ export function MeuNegocio() {
         if (controle.signal.aborted) return
         setFicha(lida.ficha)
         setCategorias(lida.categorias)
+        setTipoDaConta(lida.tipoDaConta)
         setCarregado(true)
         if (lida.ficha === null) return
         setNome(lida.ficha.nome)
@@ -142,7 +171,12 @@ export function MeuNegocio() {
     }
     const dados = { nome, categoria, descricao }
     void executar(
-      () => (ficha === null ? criarMinhaFicha(dados) : salvarMinhaFicha(dados)),
+      () =>
+        tipoDaConta === "prestador"
+          ? salvarMinhaFichaDePrestador(dados)
+          : ficha === null
+            ? criarMinhaFicha(dados)
+            : salvarMinhaFicha(dados),
       (gravada) => {
         setFicha(gravada)
         setAviso(ficha === null ? "Sua página foi criada." : "Sua página foi salva.")
@@ -228,13 +262,8 @@ export function MeuNegocio() {
     )
   }
 
-  if (erro !== null) {
-    return (
-      <section data-tela="meu-negocio" className="grid gap-2">
-        <CabecaDePagina titulo="Meu negócio" />
-        <FalhaDaLeitura falha={erro} aoTentar={() => setRodada((atual) => atual + 1)} />
-      </section>
-    )
+  const irParaAba = (destino: AbaDoNegocio) => {
+    void trocarBusca(destino === "ficha" ? {} : { aba: destino })
   }
 
   return (
@@ -246,17 +275,41 @@ export function MeuNegocio() {
             ? "Crie a página do seu negócio e receba pedidos da comunidade."
             : "Sua página reúne seus serviços, suas fotos e os pedidos que você recebe."
         }
-        acao={
-          <Botao tom="texto" onClick={() => void navegacao.irPara("pedidos")}>
-            Pedidos recebidos
-          </Botao>
-        }
       />
-      {!carregado ? (
-        <EsqueletoDeLista linhas={4} />
-      ) : (
-        <>
-          <Secao titulo={ficha === null ? "Criar a página" : "Sua página"} className="max-w-2xl">
+      <Segmentos
+        itens={ABAS}
+        valor={aba}
+        aoEscolher={(id) => irParaAba(id as AbaDoNegocio)}
+        rotulo="Seções de Meu negócio"
+        grupo="meu-negocio"
+      />
+      {aba === "pedidos" ? (
+        <PedidosRecebidos
+          tipoDaConta={tipoDaConta}
+          // B3 da revisão da correção 1: quem sabe se a ficha existe é esta
+          // tela; a aba de pedidos não pode afirmar "sem ficha" por conta própria.
+          temFicha={carregado ? ficha !== null : null}
+          irParaFicha={() => irParaAba("ficha")}
+        />
+      ) : null}
+      {aba === "conta" ? (
+        // O tipo da conta decide se o telefone se edita aqui: até lê-lo, esqueleto;
+        // se a leitura falha, a falha com "Tentar de novo", nunca esqueleto eterno.
+        erro !== null ? (
+          <FalhaDaLeitura falha={erro} aoTentar={() => setRodada((atual) => atual + 1)} />
+        ) : carregado ? (
+          <ContaDoNegocio tipoDaConta={tipoDaConta} irParaFicha={() => irParaAba("ficha")} />
+        ) : (
+          <EsqueletoDeLista linhas={2} />
+        )
+      ) : null}
+      {aba === "ficha" || aba === "catalogo" ? (
+        erro !== null ? (
+          <FalhaDaLeitura falha={erro} aoTentar={() => setRodada((atual) => atual + 1)} />
+        ) : !carregado ? (
+          <EsqueletoDeLista linhas={4} />
+        ) : (
+          <>
             {mensagem === null ? null : (
               <p role="alert" className="text-sm text-(--destructive)">
                 {mensagem}
@@ -267,248 +320,263 @@ export function MeuNegocio() {
                 {aviso}
               </p>
             )}
-            {/* `noValidate`: a validação é a de lib/providers/showcase (a mesma do
+            <div hidden={aba !== "ficha"}>
+              <Secao
+                titulo={ficha === null ? "Criar a página" : "Sua página"}
+                className="max-w-2xl"
+              >
+                {/* `noValidate`: a validação é a de lib/providers/showcase (a mesma do
                 servidor) e precisa dar a FRASE para a pessoa. Deixar o
                 `minlength` do navegador barrar o submit esconderia a mensagem. */}
-            <form onSubmit={gravarFicha} aria-busy={ocupado} noValidate>
-              <Formulario>
-                <Campo
-                  id="negocio-nome"
-                  rotulo="Nome do negócio"
-                  valor={nome}
-                  aoMudar={setNome}
-                  maxLength={80}
-                />
-                <div className="grid gap-1.5">
-                  <label htmlFor="negocio-categoria" className="text-sm font-medium">
-                    Categoria
-                  </label>
-                  <select
-                    id="negocio-categoria"
-                    value={categoria}
-                    onChange={(evento) => setCategoria(evento.target.value)}
-                    className="min-h-11 w-full rounded-xl border border-(--border) bg-(--card) px-3 text-sm"
-                  >
-                    <option value="" disabled>
-                      Escolha uma categoria
-                    </option>
-                    {categorias.map((item) => (
-                      <option key={item.id} value={item.id}>
-                        {item.nome}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <Campo
-                  id="negocio-descricao"
-                  rotulo="O que você oferece (opcional)"
-                  area
-                  valor={descricao}
-                  aoMudar={setDescricao}
-                  nota={`${descricao.length}/800 caracteres.`}
-                />
-                <div className="flex flex-wrap justify-end gap-2">
-                  {ficha === null ? null : (
-                    <Botao
-                      tom="texto"
-                      icone="visibility"
-                      onClick={() =>
-                        void navegacao.irPara("negocio", { parametros: { id: ficha.id } })
-                      }
-                    >
-                      Ver página pública
-                    </Botao>
-                  )}
-                  <Botao type="submit" disabled={ocupado}>
-                    {ocupado
-                      ? "Salvando…"
-                      : ficha === null
-                        ? "Criar minha página"
-                        : "Salvar alterações"}
-                  </Botao>
-                </div>
-              </Formulario>
-            </form>
-          </Secao>
-
-          {ficha === null ? null : (
-            <>
-              <Secao titulo="Serviços" className="max-w-2xl">
-                {ficha.servicos.length === 0 ? (
-                  <p className="text-sm text-(--on-surface-variant)">
-                    Publique o que você faz. Os itens aparecem na sua página pública.
-                  </p>
-                ) : (
-                  <ul data-lista="servicos" className="grid gap-2">
-                    {ficha.servicos.map((servico, indice) => (
-                      <li
-                        key={servico.id}
-                        data-servico={servico.id}
-                        className="flex flex-wrap items-start gap-3 rounded-2xl bg-(--surface-lowest) px-4 py-3 ring-1 ring-(--outline-variant)"
-                      >
-                        <div className="grid min-w-0 grow gap-0.5">
-                          <b className="break-words text-[15px] font-semibold">{servico.titulo}</b>
-                          {servico.descricao === null ? null : (
-                            <small className="break-words text-[13px] text-(--on-surface-variant)">
-                              {servico.descricao}
-                            </small>
-                          )}
-                        </div>
-                        <div className="flex shrink-0 items-center gap-1">
-                          <BotaoDeIcone
-                            rotulo={`Mover ${servico.titulo} para cima`}
-                            nome="expand_more"
-                            className="rotate-180"
-                            disabled={ocupado || indice === 0}
-                            onClick={() => ordenarServico(servico, "cima")}
-                          />
-                          <BotaoDeIcone
-                            rotulo={`Mover ${servico.titulo} para baixo`}
-                            nome="expand_more"
-                            disabled={ocupado || indice === ficha.servicos.length - 1}
-                            onClick={() => ordenarServico(servico, "baixo")}
-                          />
-                          <BotaoDeIcone
-                            rotulo={`Remover ${servico.titulo}`}
-                            nome="delete"
-                            disabled={ocupado}
-                            onClick={() => {
-                              setPendente({
-                                tipo: "servico",
-                                id: servico.id,
-                                titulo: servico.titulo,
-                              })
-                              setConfirmando(true)
-                            }}
-                          />
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-                <form onSubmit={publicarItem} aria-busy={ocupado} noValidate>
+                <form onSubmit={gravarFicha} aria-busy={ocupado} noValidate>
                   <Formulario>
                     <Campo
-                      id="servico-titulo"
-                      rotulo="Título do item"
-                      valor={tituloDoServico}
-                      aoMudar={setTituloDoServico}
-                      maxLength={120}
+                      id="negocio-nome"
+                      rotulo="Nome do negócio"
+                      valor={nome}
+                      aoMudar={setNome}
+                      maxLength={80}
                     />
+                    <div className="grid gap-1.5">
+                      <label htmlFor="negocio-categoria" className="text-sm font-medium">
+                        Categoria
+                      </label>
+                      <select
+                        id="negocio-categoria"
+                        value={categoria}
+                        onChange={(evento) => setCategoria(evento.target.value)}
+                        className="min-h-11 w-full rounded-xl border border-(--border) bg-(--card) px-3 text-sm"
+                      >
+                        <option value="" disabled>
+                          Escolha uma categoria
+                        </option>
+                        {categorias.map((item) => (
+                          <option key={item.id} value={item.id}>
+                            {item.nome}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
                     <Campo
-                      id="servico-descricao"
-                      rotulo="Descrição do item (opcional)"
-                      valor={descricaoDoServico}
-                      aoMudar={setDescricaoDoServico}
-                      nota={`${descricaoDoServico.length}/600 caracteres.`}
+                      id="negocio-descricao"
+                      rotulo="O que você oferece (opcional)"
+                      area
+                      valor={descricao}
+                      aoMudar={setDescricao}
+                      nota={`${descricao.length}/800 caracteres.`}
                     />
-                    <div className="flex justify-end">
-                      <Botao type="submit" tom="contornado" disabled={ocupado}>
-                        Publicar item
+                    <div className="flex flex-wrap justify-end gap-2">
+                      {ficha === null ? null : (
+                        <Botao
+                          tom="texto"
+                          icone="visibility"
+                          onClick={() =>
+                            void navegacao.irPara("negocio", { parametros: { id: ficha.id } })
+                          }
+                        >
+                          Ver página pública
+                        </Botao>
+                      )}
+                      <Botao type="submit" disabled={ocupado}>
+                        {ocupado
+                          ? "Salvando…"
+                          : ficha === null
+                            ? "Criar minha página"
+                            : "Salvar alterações"}
                       </Botao>
                     </div>
                   </Formulario>
                 </form>
               </Secao>
+            </div>
 
-              <Secao titulo="Fotos" className="max-w-2xl">
-                <p className="text-sm text-(--on-surface-variant)">
-                  A primeira foto é a capa da sua página. Use JPEG, PNG ou WebP de até 5 MB.
-                </p>
-                {ficha.fotos.length === 0 ? (
-                  <p className="text-sm text-(--on-surface-variant)">Nenhuma foto publicada.</p>
-                ) : (
-                  <ul data-lista="fotos" className="grid gap-3 sm:grid-cols-2">
-                    {ficha.fotos.map((foto, indice) => (
-                      <li
-                        key={foto.id}
-                        data-foto={foto.id}
-                        className="grid gap-2 rounded-2xl bg-(--surface-lowest) p-2 ring-1 ring-(--outline-variant)"
-                      >
-                        <img
-                          src={foto.url}
-                          alt={foto.legenda ?? `Foto ${indice + 1} do negócio`}
-                          className="aspect-video w-full rounded-xl object-cover"
-                        />
-                        <LegendaDaFoto
-                          foto={foto}
-                          indice={indice}
-                          aoSalvar={(texto) => legendar(foto, texto)}
-                        />
-                        <div className="flex items-center justify-between gap-1">
-                          <div className="flex items-center gap-1">
+            {ficha === null ? (
+              aba === "catalogo" ? (
+                <Secao titulo="Catálogo" className="max-w-2xl">
+                  <p className="text-sm text-(--on-surface-variant)">
+                    Crie a página do negócio para publicar serviços e fotos.
+                  </p>
+                  <div className="flex justify-start">
+                    <Botao tom="texto" onClick={() => irParaAba("ficha")}>
+                      Criar a página
+                    </Botao>
+                  </div>
+                </Secao>
+              ) : null
+            ) : (
+              <div hidden={aba !== "catalogo"}>
+                <Secao titulo="Serviços" className="max-w-2xl">
+                  {ficha.servicos.length === 0 ? (
+                    <p className="text-sm text-(--on-surface-variant)">
+                      Publique o que você faz. Os itens aparecem na sua página pública.
+                    </p>
+                  ) : (
+                    <ul data-lista="servicos" className="grid gap-2">
+                      {ficha.servicos.map((servico, indice) => (
+                        <li
+                          key={servico.id}
+                          data-servico={servico.id}
+                          className="flex flex-wrap items-start gap-3 rounded-2xl bg-(--surface-lowest) px-4 py-3 ring-1 ring-(--outline-variant)"
+                        >
+                          <div className="grid min-w-0 grow gap-0.5">
+                            <b className="break-words text-[15px] font-semibold">
+                              {servico.titulo}
+                            </b>
+                            {servico.descricao === null ? null : (
+                              <small className="break-words text-[13px] text-(--on-surface-variant)">
+                                {servico.descricao}
+                              </small>
+                            )}
+                          </div>
+                          <div className="flex shrink-0 items-center gap-1">
                             <BotaoDeIcone
-                              rotulo={`Mover foto ${indice + 1} para cima`}
+                              rotulo={`Mover ${servico.titulo} para cima`}
                               nome="expand_more"
                               className="rotate-180"
                               disabled={ocupado || indice === 0}
-                              onClick={() => ordenarFoto(foto, "cima")}
+                              onClick={() => ordenarServico(servico, "cima")}
                             />
                             <BotaoDeIcone
-                              rotulo={`Mover foto ${indice + 1} para baixo`}
+                              rotulo={`Mover ${servico.titulo} para baixo`}
                               nome="expand_more"
-                              disabled={ocupado || indice === ficha.fotos.length - 1}
-                              onClick={() => ordenarFoto(foto, "baixo")}
+                              disabled={ocupado || indice === ficha.servicos.length - 1}
+                              onClick={() => ordenarServico(servico, "baixo")}
+                            />
+                            <BotaoDeIcone
+                              rotulo={`Remover ${servico.titulo}`}
+                              nome="delete"
+                              disabled={ocupado}
+                              onClick={() => {
+                                setPendente({
+                                  tipo: "servico",
+                                  id: servico.id,
+                                  titulo: servico.titulo,
+                                })
+                                setConfirmando(true)
+                              }}
                             />
                           </div>
-                          <BotaoDeIcone
-                            rotulo={`Remover foto ${indice + 1}`}
-                            nome="delete"
-                            disabled={ocupado}
-                            onClick={() => {
-                              setPendente({ tipo: "foto", id: foto.id, legenda: foto.legenda })
-                              setConfirmando(true)
-                            }}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                  <form onSubmit={publicarItem} aria-busy={ocupado} noValidate>
+                    <Formulario>
+                      <Campo
+                        id="servico-titulo"
+                        rotulo="Título do item"
+                        valor={tituloDoServico}
+                        aoMudar={setTituloDoServico}
+                        maxLength={120}
+                      />
+                      <Campo
+                        id="servico-descricao"
+                        rotulo="Descrição do item (opcional)"
+                        valor={descricaoDoServico}
+                        aoMudar={setDescricaoDoServico}
+                        nota={`${descricaoDoServico.length}/600 caracteres.`}
+                      />
+                      <div className="flex justify-end">
+                        <Botao type="submit" tom="contornado" disabled={ocupado}>
+                          Publicar item
+                        </Botao>
+                      </div>
+                    </Formulario>
+                  </form>
+                </Secao>
+
+                <Secao titulo="Fotos" className="max-w-2xl">
+                  <p className="text-sm text-(--on-surface-variant)">
+                    A primeira foto é a capa da sua página. Use JPEG, PNG ou WebP de até 5 MB.
+                  </p>
+                  {ficha.fotos.length === 0 ? (
+                    <p className="text-sm text-(--on-surface-variant)">Nenhuma foto publicada.</p>
+                  ) : (
+                    <ul data-lista="fotos" className="grid gap-3 sm:grid-cols-2">
+                      {ficha.fotos.map((foto, indice) => (
+                        <li
+                          key={foto.id}
+                          data-foto={foto.id}
+                          className="grid gap-2 rounded-2xl bg-(--surface-lowest) p-2 ring-1 ring-(--outline-variant)"
+                        >
+                          <img
+                            src={foto.url}
+                            alt={foto.legenda ?? `Foto ${indice + 1} do negócio`}
+                            className="aspect-video w-full rounded-xl object-cover"
                           />
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-                <Formulario>
-                  <Campo
-                    id="foto-legenda-nova"
-                    rotulo="Legenda da foto (opcional)"
-                    valor={legenda}
-                    aoMudar={setLegenda}
-                    maxLength={120}
-                  />
-                  <SeletorDeFoto
-                    ref={campoDaFoto}
-                    id="foto-arquivo"
-                    // O campo fica escondido e o botão "Escolher imagem" o aciona: o
-                    // nome vem daqui e o Tab não para num controle invisível.
-                    aria-label="Arquivo da foto do negócio"
-                    tabIndex={-1}
-                    type="file"
-                    accept="image/jpeg,image/png,image/webp"
-                    className="sr-only"
-                    disabled={ocupado}
-                    onChange={escolherFoto}
-                  />
-                  <div className="flex flex-wrap justify-end gap-2">
-                    <Botao
-                      tom="contornado"
-                      icone="add_photo_alternate"
+                          <LegendaDaFoto
+                            foto={foto}
+                            indice={indice}
+                            aoSalvar={(texto) => legendar(foto, texto)}
+                          />
+                          <div className="flex items-center justify-between gap-1">
+                            <div className="flex items-center gap-1">
+                              <BotaoDeIcone
+                                rotulo={`Mover foto ${indice + 1} para cima`}
+                                nome="expand_more"
+                                className="rotate-180"
+                                disabled={ocupado || indice === 0}
+                                onClick={() => ordenarFoto(foto, "cima")}
+                              />
+                              <BotaoDeIcone
+                                rotulo={`Mover foto ${indice + 1} para baixo`}
+                                nome="expand_more"
+                                disabled={ocupado || indice === ficha.fotos.length - 1}
+                                onClick={() => ordenarFoto(foto, "baixo")}
+                              />
+                            </div>
+                            <BotaoDeIcone
+                              rotulo={`Remover foto ${indice + 1}`}
+                              nome="delete"
+                              disabled={ocupado}
+                              onClick={() => {
+                                setPendente({ tipo: "foto", id: foto.id, legenda: foto.legenda })
+                                setConfirmando(true)
+                              }}
+                            />
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                  <Formulario>
+                    <Campo
+                      id="foto-legenda-nova"
+                      rotulo="Legenda da foto (opcional)"
+                      valor={legenda}
+                      aoMudar={setLegenda}
+                      maxLength={120}
+                    />
+                    <SeletorDeFoto
+                      ref={campoDaFoto}
+                      id="foto-arquivo"
+                      // O campo fica escondido e o botão "Escolher imagem" o aciona: o
+                      // nome vem daqui e o Tab não para num controle invisível.
+                      aria-label="Arquivo da foto do negócio"
+                      tabIndex={-1}
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      className="sr-only"
                       disabled={ocupado}
-                      onClick={() => campoDaFoto.current?.click()}
-                    >
-                      Escolher imagem
-                    </Botao>
-                    <Botao
-                      tom="texto"
-                      icone="storefront"
-                      onClick={() => void navegacao.irPara("pedidos")}
-                    >
-                      Pedidos recebidos
-                    </Botao>
-                  </div>
-                </Formulario>
-              </Secao>
-            </>
-          )}
-        </>
-      )}
+                      onChange={escolherFoto}
+                    />
+                    <div className="flex flex-wrap justify-end gap-2">
+                      <Botao
+                        tom="contornado"
+                        icone="add_photo_alternate"
+                        disabled={ocupado}
+                        onClick={() => campoDaFoto.current?.click()}
+                      >
+                        Escolher imagem
+                      </Botao>
+                    </div>
+                  </Formulario>
+                </Secao>
+              </div>
+            )}
+          </>
+        )
+      ) : null}
 
       {confirmando ? (
         <Confirmacao

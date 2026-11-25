@@ -52,6 +52,77 @@ const TARGET_LABELS: Record<ReportTargetType, string> = {
   recommendation_reply: "Resposta",
 }
 
+// Leitura em LOTE dos alvos, por tipo: uma consulta por tipo presente na página,
+// nunca uma por linha (M2 da revisão da correção 1). O acesso continua sendo o
+// da RLS do próprio membro — alvo que ele não vê simplesmente não volta.
+async function readTargets(
+  supabase: Client,
+  targetType: ReportTargetType,
+  ids: readonly string[],
+): Promise<Map<string, string | null>> {
+  const previas = new Map<string, string | null>()
+  if (ids.length === 0) return previas
+  switch (targetType) {
+    case "post": {
+      const { data, error } = await supabase.from("posts").select("id, content").in("id", ids)
+      if (error) throw error
+      for (const linha of (data ?? []) as Array<{ id: string; content: string }>) {
+        previas.set(linha.id, linha.content)
+      }
+      return previas
+    }
+    case "comment": {
+      const { data, error } = await supabase.from("comments").select("id, content").in("id", ids)
+      if (error) throw error
+      for (const linha of (data ?? []) as Array<{ id: string; content: string }>) {
+        previas.set(linha.id, linha.content)
+      }
+      return previas
+    }
+    case "group": {
+      const { data, error } = await supabase.from("groups").select("id, name").in("id", ids)
+      if (error) throw error
+      for (const linha of (data ?? []) as Array<{ id: string; name: string }>) {
+        previas.set(linha.id, linha.name)
+      }
+      return previas
+    }
+    case "message": {
+      const { data, error } = await supabase.from("dm_messages").select("id, content").in("id", ids)
+      if (error) throw error
+      for (const linha of (data ?? []) as Array<{ id: string; content: string }>) {
+        previas.set(linha.id, linha.content)
+      }
+      return previas
+    }
+    case "recommendation_request": {
+      const { data, error } = await supabase
+        .from("recommendation_requests")
+        .select("id, title")
+        .in("id", ids)
+      if (error) throw error
+      for (const linha of (data ?? []) as Array<{ id: string; title: string }>) {
+        previas.set(linha.id, linha.title)
+      }
+      return previas
+    }
+    case "recommendation_reply": {
+      // A coluna é `body` (database.generated.ts), não `content`: o preview da
+      // resposta nunca aparecia antes porque a consulta pedia uma coluna que não
+      // existe. Corrigido junto com a leitura em lote (M2).
+      const { data, error } = await supabase
+        .from("recommendation_replies")
+        .select("id, body")
+        .in("id", ids)
+      if (error) throw error
+      for (const linha of (data ?? []) as Array<{ id: string; body: string }>) {
+        previas.set(linha.id, linha.body)
+      }
+      return previas
+    }
+  }
+}
+
 // Leitura do alvo pela RLS do proprio membro: existence check e preview na
 // mesma consulta. Tipo fora da lista fechada nao tem consulta — recusa antes.
 async function readTarget(
@@ -59,52 +130,7 @@ async function readTarget(
   targetType: ReportTargetType,
   targetId: string,
 ): Promise<string | null> {
-  switch (targetType) {
-    case "post": {
-      const { data } = await supabase
-        .from("posts")
-        .select("content")
-        .eq("id", targetId)
-        .maybeSingle()
-      return (data as { content: string } | null)?.content ?? null
-    }
-    case "comment": {
-      const { data } = await supabase
-        .from("comments")
-        .select("content")
-        .eq("id", targetId)
-        .maybeSingle()
-      return (data as { content: string } | null)?.content ?? null
-    }
-    case "group": {
-      const { data } = await supabase.from("groups").select("name").eq("id", targetId).maybeSingle()
-      return (data as { name: string } | null)?.name ?? null
-    }
-    case "message": {
-      const { data } = await supabase
-        .from("dm_messages")
-        .select("content")
-        .eq("id", targetId)
-        .maybeSingle()
-      return (data as { content: string } | null)?.content ?? null
-    }
-    case "recommendation_request": {
-      const { data } = await supabase
-        .from("recommendation_requests")
-        .select("title")
-        .eq("id", targetId)
-        .maybeSingle()
-      return (data as { title: string } | null)?.title ?? null
-    }
-    case "recommendation_reply": {
-      const { data } = await supabase
-        .from("recommendation_replies")
-        .select("content")
-        .eq("id", targetId)
-        .maybeSingle()
-      return (data as { content: string } | null)?.content ?? null
-    }
-  }
+  return (await readTargets(supabase, targetType, [targetId])).get(targetId) ?? null
 }
 
 export function isReportTargetType(value: string): value is ReportTargetType {
@@ -153,6 +179,7 @@ export type ReportMutationError =
   | "explicacao-longa"
   | "ja-denunciado"
   | "proprio-conteudo"
+  | "recusado"
   | "falha"
 
 // Aceita apenas o vocabulario fechado; qualquer outro valor — inclusive por
@@ -214,6 +241,10 @@ export async function createReport(
 
   if (error) {
     if (error.code === "23505") return { ok: false, error: "ja-denunciado" }
+    // AUTHZ-007/AUTHZ-006: conta suspensa, exclusão pedida ou veto de escrita
+    // chegam como 42501. É recusa da conta (403 com frase), não serviço fora —
+    // o mesmo tratamento da denúncia de mensagem.
+    if (error.code === "42501") return { ok: false, error: "recusado" }
     if (error.message.toLowerCase().includes("own content")) {
       return { ok: false, error: "proprio-conteudo" }
     }
@@ -253,13 +284,35 @@ type ReportRow = {
   resolved_at: string | null
 }
 
-export async function listOwnReports(supabase: Client): Promise<OwnReport[]> {
-  const { data, error } = await supabase
+export type OwnReportsPage = Readonly<{
+  denuncias: OwnReport[]
+  /** `created_at` da última linha quando a página encheu; `null` no fim. */
+  proximo: string | null
+}>
+
+/** Tamanho da página, como em `/api/app/pedidos`. */
+export const REPORTS_PAGE = 50
+
+export async function listOwnReports(
+  supabase: Client,
+  depois: string | null = null,
+): Promise<OwnReportsPage> {
+  let consulta = supabase
     .from("reports")
     .select("id, target_type, target_id, reason, status, created_at, resolved_at")
     .order("created_at", { ascending: false })
+    .limit(REPORTS_PAGE)
+  // Cursor pelo `created_at` da última linha, que é a ordem mostrada. Empate no
+  // mesmo microssegundo seria pulado; a decisão de denunciar em dois alvos no
+  // mesmo microssegundo não acontece por ação humana.
+  if (depois !== null) consulta = consulta.lt("created_at", depois)
+  const { data, error } = await consulta
   if (error) throw new Error("reports-query-failed")
-  return hydrateOwnReports(supabase, (data ?? []) as ReportRow[])
+  const linhas = (data ?? []) as ReportRow[]
+  return {
+    denuncias: await hydrateOwnReports(supabase, linhas),
+    proximo: linhas.length === REPORTS_PAGE ? (linhas.at(-1)?.created_at ?? null) : null,
+  }
 }
 
 export async function getOwnReport(supabase: Client, reportId: string): Promise<OwnReport | null> {
@@ -279,13 +332,21 @@ export async function getOwnReport(supabase: Client, reportId: string): Promise<
 // hide/dismiss) e identidade de quem modera nao aparecem aqui — a RLS ja
 // esconde as linhas alheias; a projecao abaixo esconde as colunas proprias.
 async function hydrateOwnReports(supabase: Client, rows: ReportRow[]): Promise<OwnReport[]> {
+  // Uma consulta por TIPO de alvo presente na página, com todos os ids de uma
+  // vez — o custo não cresce com o número de linhas (M2).
+  const idsPorTipo = new Map<ReportTargetType, Set<string>>()
+  for (const row of rows) {
+    if (!isReportTargetType(row.target_type)) continue
+    const ids = idsPorTipo.get(row.target_type) ?? new Set<string>()
+    ids.add(row.target_id)
+    idsPorTipo.set(row.target_type, ids)
+  }
   const previews = new Map<string, string | null>()
   await Promise.all(
-    rows.map(async (row) => {
-      if (!isReportTargetType(row.target_type)) return
-      const key = `${row.target_type}:${row.target_id}`
-      if (previews.has(key)) return
-      previews.set(key, await readTarget(supabase, row.target_type, row.target_id))
+    [...idsPorTipo].map(async ([tipo, ids]) => {
+      for (const [id, previa] of await readTargets(supabase, tipo, [...ids])) {
+        previews.set(`${tipo}:${id}`, previa)
+      }
     }),
   )
 

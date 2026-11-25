@@ -20,9 +20,10 @@ export type LocalizacaoDoPerfil = Readonly<{ cep: string | null; definida: boole
 /** A cidade do vínculo `current`, com o id que o formulário de mudança usa. */
 export type CidadeDoPerfil = Readonly<{ id: string; nome: string }>
 /**
- * A cidade que a pessoa está deixando (`kind = 'leaving'`), no formato do
- * `(shell)/layout.tsx:91-110` da web: quem está em transferência tem duas linhas
- * e só esta diz até quando a origem continua valendo.
+ * A cidade que a pessoa está deixando (`kind = 'leaving'`): quem está em
+ * transferência tem duas linhas de vínculo e só esta diz até quando a origem
+ * continua valendo (`endsAt` + `readOnly`, o espelho de `access = 'read_only'`
+ * depois de a data passar).
  */
 export type SaidaDoPerfil = Readonly<{
   id: string

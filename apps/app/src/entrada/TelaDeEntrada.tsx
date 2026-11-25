@@ -14,6 +14,7 @@ import {
 import { MolduraContexto } from "@/src/previa-f01/moldura"
 import { TELAS_DA_ENTRADA } from "@/src/previa-f01/telas"
 import "@/src/previa-f01/previa-f01.css"
+import { AceiteDeConviteDePrestador } from "./AceiteDeConviteDePrestador"
 import { verificarCodigoEVinculo } from "./codigo-e-vinculo"
 import { ProvedorDoServidorDaEntrada, type ServidorDaEntrada } from "./contexto"
 import { paraServidor, progressoDoServidor, verificacaoDoStatus } from "./estado"
@@ -39,6 +40,7 @@ import {
   salvarAvisos,
   salvarInteresses,
   salvarProgresso,
+  verificarCodigo as verificarSoOCodigo,
 } from "./servidor"
 
 /**
@@ -67,11 +69,45 @@ const retornoInicial =
     ? null
     : retornoValido(new URLSearchParams(window.location.search).get("redirect"))
 
+/** Token do convite de prestador: 32 bytes em hexadecimal, como o banco o grava. */
+function tokenDoConviteDePrestador(): string | null {
+  if (typeof window === "undefined") return null
+  const ler = (valor: string | null): string | null => {
+    const bruto = (valor ?? "").trim()
+    return /^[0-9a-fA-F]{64}$/.test(bruto) ? bruto : null
+  }
+  const daBarra = ler(new URLSearchParams(window.location.search).get("prestador"))
+  if (daBarra !== null) return daBarra
+  // O botão da tela de aceite manda a pessoa entrar com o retorno apontando de
+  // volta ao aceite (retorno.ts): o token segue no endereço de retorno.
+  if (retornoInicial === null) return null
+  const noRetorno = new URL(retornoInicial, "https://bivaque.example.invalid")
+  if (noRetorno.pathname !== "/app/entrar") return null
+  return ler(noRetorno.searchParams.get("prestador"))
+}
+
+/**
+ * O caminho do convite de prestador na entrada: o aceite é o retorno depois do
+ * código, e nunca o funil de membro (CPF, cidade, provisionamento).
+ */
+const conviteDePrestador = tokenDoConviteDePrestador()
+const retornoDoConvite =
+  conviteDePrestador === null ? null : `/app/entrar?prestador=${conviteDePrestador}`
+
 export function TelaDeEntrada() {
   const navegacao = useNavegacao()
   const roteador = useRouter()
   const retorno = retornoInicial
-  const [progresso, setProgresso] = useState<Progresso | null>(null)
+  // Quem chega pelo retorno do aceite já começa no e-mail; quem abre o link do
+  // convite vê o aceite primeiro e pede a entrada pelo botão.
+  const [entrandoNoConvite, setEntrandoNoConvite] = useState(
+    conviteDePrestador !== null && retornoDoConvite !== null && retorno === retornoDoConvite,
+  )
+  const [progresso, setProgresso] = useState<Progresso | null>(() =>
+    entrandoNoConvite
+      ? { ...progressoInicial(), via: "email", etapa: "email", convite: false }
+      : null,
+  )
   const [autenticado, setAutenticado] = useState(false)
   const [reabrir, setReabrir] = useState(0)
   useEffect(() => {
@@ -112,11 +148,28 @@ export function TelaDeEntrada() {
     [],
   )
 
+  // TROCA-005 — o convite de prestador chega pelo mesmo endereço da entrada,
+  // com o token na busca; é um estado da entrada, não uma tela nova.
+  const tokenDoPrestador = conviteDePrestador
+
   useEffect(() => {
     if (conviteDaUrl === null) return
     codigoDoConvite.current = conviteDaUrl
     window.history.replaceState(null, "", window.location.pathname)
   }, [conviteDaUrl])
+
+  // O token é credencial, como o código do convite de família: some da barra
+  // assim que é lido, e o caminho do aceite segue na memória. O `redirect` que
+  // trouxe a pessoa de volta ao aceite carrega o mesmo token, então sai junto —
+  // nem a barra nem o histórico ficam com ele (M1 da revisão da correção 1).
+  useEffect(() => {
+    if (tokenDoPrestador === null) return
+    const url = new URL(window.location.href)
+    if (!url.searchParams.has("prestador") && !url.searchParams.has("redirect")) return
+    url.searchParams.delete("prestador")
+    url.searchParams.delete("redirect")
+    window.history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`)
+  }, [])
 
   const servidor = useMemo<ServidorDaEntrada>(
     () => ({
@@ -129,7 +182,13 @@ export function TelaDeEntrada() {
       },
       enviarCodigo,
       verificarCodigo: async (codigo) => {
-        const resultado = await verificarCodigoEVinculo(emailEmTransito.current ?? "", codigo)
+        // O convidado prestador não é membro de cidade: a conferência de vínculo
+        // é do funil de membro, e o convite segue para o aceite.
+        const email = emailEmTransito.current ?? ""
+        const resultado =
+          conviteDePrestador === null
+            ? await verificarCodigoEVinculo(email, codigo)
+            : await verificarSoOCodigo(email, codigo)
         if (resultado.estado === "membro") {
           // Quem já tem vínculo não grava rascunho nem provisiona de novo; a
           // abertura relê o progresso e segue a etapa canônica do servidor
@@ -162,6 +221,9 @@ export function TelaDeEntrada() {
   // ── abertura: sessão, rascunho e verificação ──────────────────────────────
   // biome-ignore lint/correctness/useExhaustiveDependencies: o retorno OAuth solicita nova leitura
   useEffect(() => {
+    // O convite de prestador não tem rascunho nem verificação de membro: a
+    // entrada só pede o e-mail e o código, e o aceite é a tela da vez.
+    if (tokenDoPrestador !== null) return
     let ativo = true
     lerProgresso()
       .then(async (resposta) => {
@@ -214,6 +276,8 @@ export function TelaDeEntrada() {
   // ── salva o rascunho a cada mudança de etapa (com atraso curto) ───────────
   useEffect(() => {
     if (progresso === null || !autenticado) return
+    // Convite de prestador não é cadastro de membro: nada de rascunho de entrada.
+    if (tokenDoPrestador !== null) return
     // Depois do provisionamento o rascunho deixou de ser escrito: a etapa
     // seguinte vive nas tabelas canônicas. Salvar aqui recriaria a linha que o
     // provisionamento transformou em marcador.
@@ -334,6 +398,15 @@ export function TelaDeEntrada() {
     async (mudancas?: Partial<Progresso>) => {
       const atual = progressoRef.current
       if (atual === null) return
+      // O código do convite de prestador fecha a entrada: a sessão nasceu no
+      // `verify` e a volta é o estado de aceite, na memória — nunca o funil de
+      // membro (CPF, cidade, provisionamento) e nunca o token de volta à barra.
+      if (tokenDoPrestador !== null && atual.etapa === "codigo") {
+        setFalha(null)
+        setTentar(null)
+        setEntrandoNoConvite(false)
+        return
+      }
       if (mudancas?.via === "google" || mudancas?.via === "apple") {
         setFalha(
           "Entrar com Google ou Apple ainda não está ligado nesta versão. Use o código no e-mail.",
@@ -429,6 +502,21 @@ export function TelaDeEntrada() {
           },
     [progresso, anterior, voltar],
   )
+
+  if (tokenDoPrestador !== null && !entrandoNoConvite) {
+    return (
+      <AceiteDeConviteDePrestador
+        token={tokenDoPrestador}
+        aoEntrar={() => {
+          // O aceite é um estado da ENTRADA, não um endereço novo: o token fica
+          // na memória (constante do módulo e o retorno já lido) para não viajar
+          // na barra nem no histórico (M1 da revisão da correção 1).
+          setProgresso({ ...progressoInicial(), via: "email", etapa: "email", convite: false })
+          setEntrandoNoConvite(true)
+        }}
+      />
+    )
+  }
 
   if (progresso === null || contexto === null) {
     return (

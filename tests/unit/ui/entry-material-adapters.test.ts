@@ -11,13 +11,7 @@ import { describe, expect, it, vi } from "vitest"
 // limpa sem abrir exceção em tests/secrets-scan.mjs.
 import { EntryShell } from "web/app/components/entry/entry-shell"
 import { MaterialCheckbox } from "web/app/components/material/checkbox"
-import { MaterialConfirmDialog } from "web/app/components/material/confirm-dialog"
 import { valueToRestore } from "web/app/components/material/controlled-value"
-import {
-  passwordFieldType,
-  passwordToggleIcon,
-  passwordToggleLabel,
-} from "web/app/components/material/password-toggle"
 import { stripComments } from "./source-scan"
 
 // PORT-002 (lote 4 da entrada): os adaptadores do Material Web.
@@ -43,36 +37,6 @@ const source = (name: string) => readFileSync(join(SOURCE_DIR, name), "utf8")
 const types = readFileSync(join(process.cwd(), "apps", "web", "types", "material-web.d.ts"), "utf8")
 const entryCss = readFileSync(ENTRY_CSS, "utf8")
 
-describe("campo de texto outlined", () => {
-  const file = source("outlined-text-field.tsx")
-
-  it("leva valor, rótulo, tipo, apoio e erro para os atributos do Material", () => {
-    expect(file).toContain("value={value}")
-    expect(file).toContain("label={label}")
-    expect(file).toContain("type={type}")
-    expect(file).toContain("inputmode={inputmode}")
-    expect(file).toContain("autocomplete={autocomplete}")
-    expect(file).toContain("supporting-text={supportingText}")
-    expect(file).toContain("error-text={errorText}")
-    expect(file).toContain("required={required}")
-    expect(file).toContain("readonly={readOnly}")
-  })
-
-  it("entrega o valor digitado pelo evento input do Material", () => {
-    // O Material reemite o `input` do shadow root; o adaptador escuta isso e
-    // converte para a API do React com o valor já atualizado.
-    expect(file).toContain('element.addEventListener("input", handleInput)')
-    expect(file).toMatch(/onChange\?\.\(element\.value\)/)
-  })
-
-  it("escreve o valor controlado depois do registro", () => {
-    // Antes do registro, `value` não é acessor: escrever criaria uma
-    // propriedade própria que passaria por cima do Material para sempre.
-    expect(file).toMatch(/registerOutlinedTextField\(\)\.then/)
-    expect(file).toContain("element.value = restore")
-  })
-})
-
 describe("valor controlado", () => {
   it("devolve a prop quando o pai recusa a mudança", () => {
     // O caso do achado: `value="123"`, o pai remove letras e a pessoa digita x.
@@ -97,47 +61,12 @@ describe("valor controlado", () => {
     expect(valueToRestore("true", true)).toBe(true)
   })
 
-  it("os adaptadores controlados usam a mesma decisão a cada render e após o evento", () => {
-    for (const file of ["outlined-text-field.tsx", "outlined-select.tsx"]) {
-      const content = source(file)
-      expect(content).toContain('from "./controlled-value"')
-      expect(content).toContain("valueToRestore(")
-      // O efeito sem lista de dependências roda a cada render; o microtask cobre
-      // a recusa que não gera estado novo.
-      expect(content).toMatch(/useEffect\(\(\) => \{\s+syncValue\(\)\s+\}\)/)
-      expect(content).toContain("queueMicrotask(syncValue)")
-    }
-
+  it("o adaptador checkbox usa a mesma decisão a cada render e após o evento", () => {
     const checkbox = source("checkbox.tsx")
     expect(checkbox).toContain('from "./controlled-value"')
     expect(checkbox).toContain("valueToRestore(")
     expect(checkbox).toMatch(/useEffect\(\(\) => \{\s+syncChecked\(\)\s+\}\)/)
     expect(checkbox).toContain("queueMicrotask(syncChecked)")
-  })
-})
-
-describe("campo de senha", () => {
-  it("mostra e esconde trocando tipo, rótulo e glifo", () => {
-    expect(passwordFieldType(false)).toBe("password")
-    expect(passwordFieldType(true)).toBe("text")
-    expect(passwordToggleLabel(false)).toBe("Mostrar senha")
-    expect(passwordToggleLabel(true)).toBe("Esconder senha")
-    expect(passwordToggleIcon(false)).toBe("visibility")
-    expect(passwordToggleIcon(true)).toBe("visibility_off")
-  })
-
-  it("monta o botão no slot trailing-icon e alterna o estado", () => {
-    const file = source("password-field.tsx")
-
-    expect(file).toContain('slot="trailing-icon"')
-    expect(file).toContain("label={passwordToggleLabel(visible)}")
-    expect(file).toContain("name={passwordToggleIcon(visible)}")
-    expect(file).toContain("type={passwordFieldType(visible)}")
-    expect(file).toMatch(/setVisible\(\(current\) => !current\)/)
-    // Os dois módulos são deste componente: um campo de senha sozinho não pode
-    // depender da ordem de montagem de outro adaptador.
-    expect(file).toContain("registerOutlinedTextField()")
-    expect(file).toContain("registerIconButton()")
   })
 })
 
@@ -188,19 +117,6 @@ describe("checkbox", () => {
   })
 })
 
-describe("seleção outlined", () => {
-  it("monta md-select-option com o texto no slot headline", () => {
-    const file = source("outlined-select.tsx")
-
-    expect(file).toContain("<md-select-option")
-    expect(file).toContain('<div slot="headline">{option.label}</div>')
-    expect(file).toContain("selected={option.value === value}")
-    expect(file).toContain('element.addEventListener("change", handleChange)')
-    expect(file).toMatch(/onChange\?\.\(element\.value\)/)
-    expect(file).toContain("element.value = restore")
-  })
-})
-
 describe("botões", () => {
   it("outlined, texto e ícone aceitam href e registram só o próprio módulo", () => {
     for (const [file, register] of [
@@ -227,55 +143,6 @@ describe("botões", () => {
     // A landing não muda: ela não importa esta folha e não existe seletor `.ld`
     // aqui (as menções em comentário não são regra).
     expect(entryCss).not.toMatch(/^\s*\.ld\b/m)
-  })
-})
-
-describe("diálogo de confirmação", () => {
-  const file = source("confirm-dialog.tsx")
-
-  it("tem título, texto, cancelar e a ação", () => {
-    expect(file).toContain('<div slot="headline">{title}</div>')
-    expect(file).toContain('<div slot="content">{text}</div>')
-    expect(file).toContain('cancelLabel = "Cancelar"')
-    expect(file).toContain("{confirmLabel}")
-  })
-
-  it("guarda o foco de retorno e trata o fechamento por Esc", () => {
-    expect(file).toContain("document.activeElement")
-    expect(file).toContain('element.addEventListener("closed", handleClosed)')
-    expect(file).toContain("target.focus({ preventScroll: true })")
-    // Esc/clique fora fecham sem escolha: quem chamou precisa saber para não
-    // ficar com `open` preso em true.
-    expect(file).toMatch(/if \(settled\.current\) return\s+settled\.current = true\s+onCancel\(\)/)
-  })
-
-  it("não entrega conteúdo no HTML do servidor com o diálogo fechado", () => {
-    // Sem o registro, `md-dialog` é elemento desconhecido e o conteúdo do light
-    // DOM aparecia como HTML comum na página.
-    const html = renderToStaticMarkup(
-      createElement(MaterialConfirmDialog, {
-        confirmLabel: "Sair",
-        onCancel: () => undefined,
-        onConfirm: () => undefined,
-        open: false,
-        text: "Você vai sair da conta.",
-        title: "Sair da conta?",
-      }),
-    )
-
-    expect(html).toContain("<md-dialog")
-    expect(html).not.toContain("Sair da conta?")
-    expect(html).not.toContain("Você vai sair da conta.")
-    expect(html).not.toContain("Cancelar")
-    expect(html).not.toContain("Confirmar")
-  })
-
-  it("só abre depois do registro, para o diálogo já ter slots preenchidos", () => {
-    // `ready` separa o HTML do servidor do momento em que o `md-dialog` existe:
-    // mostrar antes abriria uma caixa vazia e o conteúdo chegaria depois.
-    expect(file).toContain("const [ready, setReady] = useState(false)")
-    expect(file).toMatch(/registerDialog\(\)\.then\(\(\) => \{\s+if \(active\) setReady\(true\)/)
-    expect(file).toMatch(/if \(!element \|\| !ready\) return/)
   })
 })
 
@@ -312,10 +179,7 @@ describe("registro dos elementos", () => {
       "registerOutlinedButton",
       "registerTextButton",
       "registerIconButton",
-      "registerOutlinedTextField",
       "registerCheckbox",
-      "registerOutlinedSelect",
-      "registerDialog",
     ]) {
       expect(registry).toContain(`export function ${name}(`)
     }
@@ -327,10 +191,6 @@ describe("registro dos elementos", () => {
     )
 
     expect(new Set(modules).size).toBe(modules.length)
-    expect(modules).toContain("textfield/outlined-text-field.js")
-    expect(modules).toContain("select/outlined-select.js")
-    expect(modules).toContain("select/select-option.js")
-    expect(modules).toContain("dialog/dialog.js")
     // O pacote inteiro no topo quebraria a renderização no servidor
     // (ADR-20261022, item 1).
     expect(registry).not.toContain('from "@material/web')
@@ -339,13 +199,9 @@ describe("registro dos elementos", () => {
   it("nenhum adaptador importa o Material no topo", () => {
     for (const file of [
       "checkbox.tsx",
-      "confirm-dialog.tsx",
       "filled-button.tsx",
       "icon-button.tsx",
       "outlined-button.tsx",
-      "outlined-select.tsx",
-      "outlined-text-field.tsx",
-      "password-field.tsx",
       "text-button.tsx",
     ]) {
       expect(source(file)).not.toContain('from "@material/web')
@@ -357,12 +213,8 @@ describe("declaração de tipos", () => {
   it("declara as tags novas sem any", () => {
     for (const tag of [
       '"md-checkbox"',
-      '"md-dialog"',
       '"md-icon-button"',
       '"md-outlined-button"',
-      '"md-outlined-select"',
-      '"md-outlined-text-field"',
-      '"md-select-option"',
       '"md-text-button"',
     ]) {
       expect(types).toContain(`${tag}: Material`)

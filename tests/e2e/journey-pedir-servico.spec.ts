@@ -2,8 +2,9 @@ import { expect, test } from "@playwright/test"
 import { encerrarPedidoAberto } from "./helpers/pedidos"
 import { signInAs } from "./helpers/session"
 
-// LAN-TROCA fase 1: criação e painel do prestador continuam na web.
-// A membra acompanha o pedido e lê a resposta na conversa do app, em sessão própria.
+// LAN-TROCA fase 1 + TROCA-005: o pedido nasce no app e a resposta do prestador
+// também é do app (Meu negócio). A membra acompanha o pedido e lê a resposta na
+// conversa do app, em sessão própria.
 const MEMBER = "membro-1@bivaque.example.invalid"
 const PROVIDER = "prestador-seed@bivaque.example.invalid"
 const PROVIDER_ID = "30000000-0000-4000-8000-000000000010"
@@ -46,32 +47,24 @@ test.describe("jornada simulada: pedir e responder um serviço", { tag: "@statef
       })
       await expect(member.getByText("Em aberto", { exact: true })).toBeVisible()
 
-      // O mesmo pedido aparece para a outra persona, que responde pela web.
-      await provider.goto("/prestador")
-      await expect(
-        provider.getByRole("heading", { level: 1, name: "Orçamentos para você" }),
-      ).toBeVisible({ timeout: 20_000 })
-      await expect(provider.getByRole("tab", { name: /^Novos \(\d+\)/ })).toBeVisible()
-      const row = provider.getByRole("row").filter({ hasText: marker })
-      await expect(row).toBeVisible()
-      const responder = row.getByRole("link", { name: "Responder" })
-      await expect(responder).toHaveAttribute("href", `/prestador/pedidos/${requestId}`)
-      await responder.click()
-      await expect(provider.getByRole("region", { name: "Responder" })).toBeVisible()
-      await provider.getByLabel("Escreva uma mensagem").fill(reply)
-      await provider.getByRole("button", { name: "Enviar", exact: true }).click()
-      await expect(provider.getByRole("region", { name: "Conversa" }).getByText(reply)).toBeVisible(
-        {
-          timeout: 20_000,
-        },
-      )
+      // O mesmo pedido aparece para a outra persona, que responde pelo app:
+      // TROCA-005 fez da área do prestador as abas de Meu negócio, e esta é a
+      // mesma tela que a revisão às cegas e o E2E do app já medem.
+      await provider.goto("/app/meu-negocio?aba=pedidos")
+      await expect(provider.getByRole("heading", { level: 1, name: "Meu negócio" })).toBeVisible({
+        timeout: 20_000,
+      })
+      const row = provider.locator('[data-linha="lista"]').filter({ hasText: marker })
+      await expect(row).toBeVisible({ timeout: 20_000 })
+      await row.click()
+      const folha = provider.locator('[data-sobreposicao="pedido-do-negocio"]')
+      await expect(folha).toBeVisible()
+      await folha.getByLabel("Resposta ao pedido").fill(reply)
+      await folha.getByRole("button", { name: "Enviar resposta" }).click()
+      await expect(folha.getByText(reply)).toBeVisible({ timeout: 20_000 })
 
-      // A casca de /denuncias mostra o contador; a caixa abre o pedido no app.
+      // O aviso do app abre o pedido; o contador da casca web saiu com a casca.
       const glance = await memberContext.newPage()
-      await glance.goto("/denuncias")
-      await expect(
-        glance.getByRole("link", { name: /^Conversas, \d+ com mensagem nova/ }),
-      ).toBeVisible({ timeout: 20_000 })
       await glance.goto("/app/avisos")
       const notice = glance.getByText("Seu pedido recebeu uma resposta")
       await expect(notice.first()).toBeVisible({ timeout: 20_000 })

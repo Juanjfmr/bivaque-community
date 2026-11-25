@@ -104,6 +104,24 @@ const TROCADAS = [
   [`/events/${ID}/perguntas`, `/app/evento/${ID}`],
   // CIDADE-169: a consulta de cidade é tela do app; o id do catálogo vai junto.
   [`/cidade/${ID}`, `/app/cidade/${ID}`],
+  // TROCA-005 fase 2: as denúncias do membro entram na Ajuda do app e a área do
+  // prestador nas abas de Meu negócio. O id e o token seguem no destino, e o
+  // destino é tela que já existe (nenhum deles redireciona de novo).
+  ["/denuncias", "/app/ajuda?aba=denuncias"],
+  ["/denuncias/nova", "/app/ajuda?aba=denuncias"],
+  // A versão endereçável do diálogo leva o alvo junto, no formato que a Ajuda lê.
+  [`/denuncias/nova?tipo=post&id=${ID}`, `/app/ajuda?aba=denuncias&denunciar=post:${ID}`],
+  [`/denuncias?tipo=post&id=${ID}`, `/app/ajuda?aba=denuncias&denunciar=post:${ID}`],
+  [`/denuncias/${ID}`, `/app/ajuda?aba=denuncias&denuncia=${ID}`],
+  [`/prestador/pedidos/${ID}`, `/app/meu-negocio?aba=pedidos&pedido=${ID}`],
+  ["/prestador/atendimento", "/app/meu-negocio?aba=pedidos"],
+  ["/prestador/pedidos", "/app/meu-negocio?aba=pedidos"],
+  ["/prestador/catalogo", "/app/meu-negocio?aba=catalogo"],
+  ["/prestador/conta", "/app/meu-negocio?aba=conta"],
+  ["/prestador/ficha", "/app/meu-negocio?aba=ficha"],
+  ["/prestador", "/app/meu-negocio"],
+  ["/prestador/qualquer-coisa", "/app/meu-negocio"],
+  ["/prestador-convite/abc123", "/app/entrar?prestador=abc123"],
 ] as const
 
 // Mesmos matchers do resolve-routes do Next, sem servidor. O helper experimental
@@ -150,8 +168,52 @@ describe("LAN-TROCA fase 1", () => {
       (await resolver(`${destino.pathname}${destino.search}`)).headers.get("location"),
     ).toBeNull()
     expect(
-      ROTAS.some((rota) => `/app${rota.caminho.replace("$id", ID)}` === destino.pathname),
+      ROTAS.some(
+        (rota) =>
+          `/app${rota.caminho.replace("$id", ID)}` === destino.pathname ||
+          // `entrar` e `ajuda` existem nas duas formas (`/app/entrar`,
+          // `/app/ajuda`): o caminho com parâmetro não é o destino.
+          (rota.caminhoSemParametro !== null &&
+            `/app${rota.caminhoSemParametro}` === destino.pathname),
+      ),
     ).toBe(true)
+  })
+
+  // TROCA-005 fase 2: as telas de denúncias, a área do prestador, o convite de
+  // prestador e os arquivos mortos da entrada antiga não deixam tela nem action
+  // para trás. O componente `entry-consent` fica: o consentimento público o usa.
+  it.each([
+    "(shell)",
+    "(provider)",
+    "(preauth)/prestador-convite",
+    "(preauth)/login",
+    "(preauth)/signup",
+    "(preauth)/recuperar-senha",
+    "(preauth)/nova-senha",
+    "(preauth)/onboarding",
+  ])("a pasta %s não deixa tela nem action para trás", (relativa) => {
+    const pasta = join(app, relativa)
+    const sobras = existsSync(pasta)
+      ? readdirSync(pasta, { recursive: true, encoding: "utf8" }).filter(
+          (arquivo) => arquivo.endsWith("page.tsx") || arquivo.endsWith("actions.ts"),
+        )
+      : []
+    expect(sobras).toEqual([])
+  })
+
+  it("em (preauth) só ficam o consentimento, as páginas legais e o aviso de conta apagada", () => {
+    // `login/` sobrevive só como casa de `entry-consent.tsx`, que o consentimento
+    // público importa; não tem page.tsx nem action (a prova está acima).
+    expect(readdirSync(join(app, "(preauth)")).sort()).toEqual(
+      [
+        "codigo-de-conduta",
+        "consent",
+        "conta-apagada",
+        "layout.tsx",
+        "login",
+        "privacidade",
+      ].sort(),
+    )
   })
 
   // RUN-166: a pasta de mensagens saiu da web (a prova de ausência está no fim
@@ -186,11 +248,9 @@ describe("LAN-TROCA fase 1", () => {
     },
   )
 
-  const shell = join(process.cwd(), "apps/web/app/(shell)")
-  it("remove o detalhe antigo de indicacoes", () => {
-    expect(existsSync(join(shell, "indicacoes", "[id]"))).toBe(false)
-  })
-  const paginas = readdirSync(shell, { recursive: true, encoding: "utf8" })
+  const app = join(process.cwd(), "apps/web/app")
+  const shell = join(app, "(shell)")
+  const paginas = readdirSync(app, { recursive: true, encoding: "utf8" })
     .filter((arquivo) => arquivo.replaceAll("\\", "/").endsWith("/page.tsx"))
     .map((arquivo) => routeFromFile(arquivo).replace(/\[[^\]]+\]/g, ID))
   const trocadas = new Set(TROCADAS.map(([de]) => de.split("?")[0]))
@@ -204,12 +264,17 @@ describe("LAN-TROCA fase 1", () => {
     },
   )
 
-  it.each(["/", "/api/app/pedidos", "/auth/callback", "/consent", "/admissions", "/prestador"])(
-    "%s mantém seu portão ou fluxo próprio",
-    async (caminho) => {
-      expect((await resolver(caminho)).headers.get("location")).toBeNull()
-    },
-  )
+  it.each([
+    "/",
+    "/api/app/pedidos",
+    "/auth/callback",
+    "/consent",
+    "/admissions",
+    // `/prestador` deixou de ter portão próprio no TROCA-005 (fase 2): o
+    // endereço é 307 para o Meu negócio do app. `/admissions` segue com o dele.
+  ])("%s mantém seu portão ou fluxo próprio", async (caminho) => {
+    expect((await resolver(caminho)).headers.get("location")).toBeNull()
+  })
 
   // RUN-164: as regras de criar/editar imóvel não engolem a lista de alertas
   // nem transformam um subcaminho qualquer num anúncio.

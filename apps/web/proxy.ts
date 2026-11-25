@@ -3,7 +3,7 @@ import { createServerClient } from "@supabase/ssr"
 import type { NextRequest } from "next/server"
 import { NextResponse } from "next/server"
 import { cspDasPaginas } from "./lib/security/csp"
-import { areaDoPrestador, entradaEmAndamento, isPublicPath } from "./lib/security/route-surface"
+import { isPublicPath } from "./lib/security/route-surface"
 
 // A superfície pública mora em `lib/security/route-surface.ts` — uma lista, três
 // modos (`exata`, `pasta`, `ativos`) e comparação por fronteira. Este arquivo não
@@ -95,17 +95,12 @@ async function encaminhar(request: NextRequest, headers: Headers) {
     // no-op — user remains null
   }
 
-  // Root redirect — session-aware (new behaviour). The marketing landing
-  // lives at "/" and must stay public for acquisition, so an anonymous
-  // visitor is served the landing. Only an authenticated member hitting
-  // "/" is routed into the app (/inicio after consent, else onboarding).
+  // Root redirect — session-aware. The marketing landing lives at "/" and
+  // stays public for acquisition; authenticated visitors continue into the app.
   if (pathname === "/" || pathname === "") {
     if (user) {
       const hasConsent = request.cookies.get(CONSENT_COOKIE)?.value === String(CONSENT_VERSION)
-      // Sem aceite, a pessoa segue para o onboarding, não para a tela de
-      // consentimento: só contas anteriores a esta mudança chegam aqui sem
-      // aceite, e mandá-las ao portão seria a tela reaparecendo.
-      return NextResponse.redirect(new URL(hasConsent ? "/app/inicio" : "/onboarding", request.url))
+      return NextResponse.redirect(new URL(hasConsent ? "/app/inicio" : "/app/entrar", request.url))
     }
     return supabaseResponse
   }
@@ -120,30 +115,9 @@ async function encaminhar(request: NextRequest, headers: Headers) {
   // interrompe quem já aceitou.
 
   if (!user) {
-    const loginUrl = new URL("/login", request.url)
-    loginUrl.searchParams.set("redirect", pathname)
-    return NextResponse.redirect(loginUrl)
-  }
-
-  // Onboarding keeps its own screen and is not part of the verified shell.
-  // /onboarding/locality is the post-eligibility step (P0 Task 5): an
-  // eligible-but-not-yet-provisioned member lands there, not on the feed.
-  // /onboarding/documento (prancha 69) é o caminho de identidade depois que o
-  // CPF não confirma: sem ele na allowlist, o portão de estado redireciona a
-  // própria rota para /onboarding/status — e a tela de status, ao ver o
-  // documento rejeitado, manda de volta para cá, em laço. A página decide o
-  // estado (pendente/verificado/sem direito) sozinha, então liberar o path é
-  // seguro: quem não deve ver o formulário é redirecionado por ela.
-  // /onboarding/perfil (prancha 39, personalização) é o passo seguinte à cidade:
-  // fora da allowlist, o verificado sem membership era devolvido a
-  // /onboarding/locality ao clicar Continuar, e NINGUÉM novo concluía o
-  // cadastro — achado da jornada simulada de 22/09/2026. A página decide o
-  // estado sozinha (sem cidade guardada e sem vínculo, volta para a cidade). A
-  // autorização NÃO é desta allowlist: /api/onboarding `provision` exige
-  // verificação `verified`, lida no servidor pelo usuário do token, e recusa o
-  // resto com 403 (tests/unit/onboarding/provision-requires-verification.test.ts).
-  if (entradaEmAndamento(pathname)) {
-    return supabaseResponse
+    const entryUrl = new URL("/app/entrar", request.url)
+    entryUrl.searchParams.set("redirect", pathname)
+    return NextResponse.redirect(entryUrl)
   }
 
   // Onda G — Task 1: a conta de prestador civil existe e precisa de
@@ -154,11 +128,7 @@ async function encaminhar(request: NextRequest, headers: Headers) {
   // banco, em vez de duas).
   const { data: kindRows, error: kindError } = await supabase.rpc("my_account_kind")
   if (kindError) {
-    // Não dá para rotear com segurança. Falha fechado em /onboarding é
-    // a mesma decisão que o bloco abaixo toma quando o estado é
-    // desconhecido: a tela determinística é melhor do que uma meia
-    // decisão.
-    return NextResponse.redirect(new URL("/onboarding", request.url))
+    return NextResponse.redirect(new URL("/app/entrar", request.url))
   }
   // `my_account_kind()` devolve um ESCALAR (`returns text`), e o PostgREST
   // responde com o valor cru — a string "member", nao uma lista de linhas.
@@ -174,49 +144,17 @@ async function encaminhar(request: NextRequest, headers: Headers) {
   const kind = (kindRows ?? null) as "member" | "provider" | null
 
   if (kind === "provider") {
-    // O prestador vive fora do shell do membro (D36; ADR de shells e
-    // navegação). Deixa-o passar em /prestador e manda-o de volta para
-    // lá em qualquer outra rota — sem membership, toda policy de
-    // conteúdo nega; o redirect evita a tela vazia.
-    return areaDoPrestador(pathname)
-      ? supabaseResponse
-      : NextResponse.redirect(new URL("/prestador", request.url))
+    return NextResponse.redirect(new URL("/app/meu-negocio", request.url))
   }
 
   if (kind === null) {
-    // D2 Task 1 — a porta agora lê o estado real de verificação, não só
-    // a linha de membership. O comportamento anterior era: pending,
-    // temporary_error e rejected pareciam o mesmo que "nunca
-    // verificou" porque o redirect era o mesmo, e a pessoa gastava uma
-    // tentativa de verificação para descobrir isso. O novo caminho
-    // roteia cada estado para a tela dele:
-    //   - nunca verificou       -> /onboarding
-    //   - pending, rejected, temporary_error -> /onboarding/status
-    //   - verified, sem membership -> /onboarding/locality
-    //     (P0 Task 4 two-phase admission step; verified é o gap entre
-    //      elegibilidade e provisionamento)
-    //
-    // O cookie que consent/page.tsx escreve é atalho de navegação, não
-    // a autoridade — /api/onboarding reconfirma com has_accepted_consent.
-    // O status de verificação é lido via RPC SECURITY DEFINER que escopa
-    // por auth.uid() server-side (sem parâmetro p_user_id para errar).
-    // Uma ida extra ao banco só quando falta membership.
-    const { data: statusRows, error: statusError } = await supabase.rpc("my_verification_status")
-    if (statusError) {
-      return NextResponse.redirect(new URL("/onboarding", request.url))
-    }
-    const status = (statusRows?.[0]?.status ?? null) as string | null
-    if (status === "verified") {
-      return NextResponse.redirect(new URL("/onboarding/locality", request.url))
-    }
-    if (status === "pending" || status === "temporary_error" || status === "rejected") {
-      const statusUrl = new URL("/onboarding/status", request.url)
-      statusUrl.searchParams.set("next", pathname)
-      return NextResponse.redirect(statusUrl)
-    }
-    const onboardingUrl = new URL("/onboarding", request.url)
-    onboardingUrl.searchParams.set("next", pathname)
-    return NextResponse.redirect(onboardingUrl)
+    // TROCA-005: o roteamento por estado de verificação (nunca verificou →
+    // /onboarding, pending/rejected → /onboarding/status, verified sem vínculo →
+    // /onboarding/locality) saiu daqui com as telas do funil. Quem não é membro
+    // nem prestador vai para a entrada do app, que lê `/api/app/entry/verification`
+    // e `/api/app/entry/progress` e decide o passo. Não reintroduza um segundo
+    // roteador de funil neste arquivo: os dois divergem.
+    return NextResponse.redirect(new URL("/app/entrar", request.url))
   }
 
   return supabaseResponse

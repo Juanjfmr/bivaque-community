@@ -224,11 +224,12 @@ test.describe("contextual DM and report journey", () => {
 // Flow 9: Bottom navigation across journeys
 // ---------------------------------------------------------------------------
 
-// The app shell (header, sidebar, BottomNav) is mounted by `(shell)/layout.tsx`
-// and therefore exists only on authenticated routes. The `(preauth)` group has
-// no layout of its own, so /app/entrar and /consent are deliberately
-// chrome-free. Positive BottomNav coverage lives in shell-navigation.spec.ts,
-// which signs in first; here we pin the boundary.
+// The member shell of the site (header, sidebar, BottomNav) left with TROCA-005:
+// `(shell)/layout.tsx` and `shell-navigation.spec.ts` no longer exist, and the
+// authenticated app now lives in /app. What this spec still pins is the boundary
+// that did not move — the root serves the anonymous landing with no app chrome,
+// and /app/entrar and /consent stay chrome-free. Positive BottomNav coverage is
+// `apps/app/tests/e2e` now.
 test.describe("preauth routes render no app shell", () => {
   test("root serves the public landing without the app shell", async ({ page }) => {
     // Given the production Next server

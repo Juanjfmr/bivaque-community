@@ -8,8 +8,7 @@ import type { Database } from "supabase/database.generated"
  *
  * A cidade é sempre lida do banco, nunca do pedido, e sempre pelo vínculo
  * `kind = 'current'`: quem está em transferência tem duas linhas (a atual e a
- * que está deixando) e a leitura sem o filtro cai na cidade errada — o mesmo
- * recorte que `apps/web/app/(shell)/layout.tsx` usa.
+ * que está deixando) e a leitura sem o filtro cai na cidade errada.
  */
 
 export const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i

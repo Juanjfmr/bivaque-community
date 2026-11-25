@@ -48,6 +48,10 @@ export function Sobreposicoes() {
     aberta === "interesses" ||
     // A denúncia de mensagem é da Conversa; o pedido de entrada, da Participação.
     aberta === "conversa-denuncia" ||
+    // TROCA-005: a folha do pedido é de Meu negócio; as duas da denúncia, da Ajuda.
+    aberta === "pedido-do-negocio" ||
+    aberta === "denuncia-nova" ||
+    aberta === "denuncia-detalhe" ||
     aberta === "grupo-pedir"
   )
     return null

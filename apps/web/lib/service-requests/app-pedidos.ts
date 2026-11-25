@@ -16,13 +16,19 @@ type Cliente = SupabaseClient<Database>
  * cruas — cep, latitude, longitude — não estão aqui de propósito: `authenticated`
  * não tem SELECT nelas, e o payload nunca as carrega.
  */
-export function consultaPedidos(client: Cliente, userId: string) {
-  return client
+export type LadoDaFila = "recebidos" | "enviados"
+
+export function consultaPedidos(client: Cliente, userId: string, lado?: LadoDaFila) {
+  const consulta = client
     .from("service_requests")
     .select(
       "id,provider_id,requester_user_id,provider_user_id,category,description,when_text,status,region,created_at,updated_at,conversation_id,provider_profiles(display_name)",
     )
-    .or(`requester_user_id.eq.${userId},provider_user_id.eq.${userId}`)
+  // TROCA-005 — a fila de UM lado é do servidor: a página da aba não pode vir
+  // cheia da outra fila para a tela descartar metade.
+  if (lado === "recebidos") return consulta.eq("provider_user_id", userId)
+  if (lado === "enviados") return consulta.eq("requester_user_id", userId)
+  return consulta.or(`requester_user_id.eq.${userId},provider_user_id.eq.${userId}`)
 }
 
 type LinhaPedido = Pick<
@@ -83,6 +89,131 @@ export async function pedidoDoMembro(client: Cliente, userId: string, id: string
   if (error) throw error
   if (data === null) return null
   return resumoDoPedido(data, userId, await distanciaDoPedido(client, id))
+}
+
+// ── a conversa do pedido (TROCA-005) ─────────────────────────────────────────
+//
+// O prestador responde e vê o estado GRAVADO. A conversa sai do pedido, não do
+// corpo do pedido: o `conversation_id` é o do banco, então um id escolhido pelo
+// cliente nunca conduz a escrita para outra conversa. O envio usa a RPC
+// `send_conversation_message`, que deriva o remetente da sessão e move
+// `open → in_conversation` na mesma transação.
+
+export const CONTEUDO_MAX = 2000
+/** A Folha mostra a conversa recente; um histórico enorme não vira resposta gigante. */
+export const MENSAGENS_DO_PEDIDO_MAX = 50
+
+export type MensagemDoPedido = Readonly<{
+  id: string
+  minha: boolean
+  conteudo: string
+  criadoEm: string
+}>
+
+export async function mensagensDoPedido(
+  client: Cliente,
+  userId: string,
+  conversaId: string,
+): Promise<readonly MensagemDoPedido[]> {
+  const { data, error } = await client
+    .from("dm_messages")
+    .select("id,sender_id,content,created_at")
+    .eq("conversation_id", conversaId)
+    // As N mais recentes vêm do banco (descendente) e voltam em ordem de leitura.
+    .order("created_at", { ascending: false })
+    .limit(MENSAGENS_DO_PEDIDO_MAX)
+  if (error) throw error
+  return (data ?? []).reverse().map((linha) => ({
+    id: linha.id,
+    minha: linha.sender_id === userId,
+    conteudo: linha.content,
+    criadoEm: linha.created_at,
+  }))
+}
+
+export type MotivoDaResposta =
+  | "pedido-nao-encontrado"
+  | "sem-conversa"
+  | "conteudo-vazio"
+  | "conteudo-longo"
+  | "recusado"
+  | "indisponivel"
+
+export type ResultadoDaResposta =
+  | {
+      readonly ok: true
+      readonly pedido: NonNullable<Awaited<ReturnType<typeof pedidoDoMembro>>>
+      readonly mensagens: readonly MensagemDoPedido[]
+    }
+  | { readonly ok: false; readonly motivo: MotivoDaResposta; readonly mensagem: string }
+
+export async function responderPedido(
+  client: Cliente,
+  userId: string,
+  pedidoId: string,
+  conteudo: string,
+): Promise<ResultadoDaResposta> {
+  const texto = conteudo.trim()
+  if (texto.length === 0) {
+    return {
+      ok: false,
+      motivo: "conteudo-vazio",
+      mensagem: "Escreva uma resposta antes de enviar.",
+    }
+  }
+  if (texto.length > CONTEUDO_MAX) {
+    return {
+      ok: false,
+      motivo: "conteudo-longo",
+      mensagem: `A resposta passa de ${CONTEUDO_MAX} caracteres.`,
+    }
+  }
+
+  const pedido = await pedidoDoMembro(client, userId, pedidoId)
+  if (pedido === null) {
+    return {
+      ok: false,
+      motivo: "pedido-nao-encontrado",
+      mensagem: "Este pedido não existe ou não é seu.",
+    }
+  }
+  if (pedido.conversaId === null) {
+    return {
+      ok: false,
+      motivo: "sem-conversa",
+      mensagem: "Este pedido ainda não tem conversa para responder.",
+    }
+  }
+
+  const { error } = await client.rpc("send_conversation_message", {
+    p_conversation_id: pedido.conversaId,
+    p_content: texto,
+  })
+  if (error) {
+    if (error.code === "42501") {
+      return {
+        ok: false,
+        motivo: "recusado",
+        mensagem: "Só quem participa da conversa pode responder.",
+      }
+    }
+    if (error.code === "P0002") {
+      return { ok: false, motivo: "pedido-nao-encontrado", mensagem: "Este pedido não existe." }
+    }
+    return {
+      ok: false,
+      motivo: "indisponivel",
+      mensagem: "Não foi possível enviar a resposta agora. Tente de novo.",
+    }
+  }
+
+  const atualizado = await pedidoDoMembro(client, userId, pedidoId)
+  if (atualizado === null) throw new Error("pedido sumiu depois da resposta")
+  return {
+    ok: true,
+    pedido: atualizado,
+    mensagens: await mensagensDoPedido(client, userId, pedido.conversaId),
+  }
 }
 
 /**

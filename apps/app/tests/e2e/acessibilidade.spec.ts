@@ -165,9 +165,82 @@ const SUPERFICIES_NOVAS: readonly Superficie[] = [
     conteudo: 'button:has-text("Ver negócio")',
     preparar: simularPedido,
   },
+  {
+    // TROCA-005: a área do prestador e a Ajuda com denúncias entraram no app;
+    // sem elas na matriz, as telas novas herdam o gate sem medi-lo.
+    nome: "Meu negócio",
+    caminho: "/app/meu-negocio?aba=pedidos",
+    seletor: '[data-tela="meu-negocio"]',
+    conteudo: 'input[type="checkbox"]',
+    preparar: simularMeuNegocio,
+  },
+  {
+    nome: "Ajuda",
+    caminho: "/app/ajuda?aba=denuncias",
+    seletor: '[data-tela="ajuda"]',
+    preparar: simularAjuda,
+  },
 ]
 
 const SUPERFICIES: readonly Superficie[] = [...SUPERFICIES_DO_LANCAMENTO, ...SUPERFICIES_NOVAS]
+
+async function simularMeuNegocio(page: Page): Promise<void> {
+  await page.route(/\/api\/app\/negocio(?:\?|$)/, (rota) =>
+    rota.fulfill({
+      json: {
+        negocio: {
+          id: "30000000-0000-4000-8000-000000000010",
+          nome: "Climatiza Manaus",
+          categoria: "assistencia_tecnica",
+          categoriaNome: "Assistência técnica",
+          descricao: "Apoio prático para quem está chegando à cidade.",
+          servicos: [],
+          fotos: [],
+        },
+        categorias: [{ id: "assistencia_tecnica", nome: "Assistência técnica" }],
+        tipoDaConta: "prestador",
+      },
+    }),
+  )
+  await page.route(/\/api\/app\/pedidos(?:\?|$)/, (rota) =>
+    rota.fulfill({ json: { pedidos: [], proximo: null } }),
+  )
+  await page.route(/\/api\/app\/prestador\/atendimento$/, (rota) =>
+    rota.fulfill({
+      json: {
+        atendimento: {
+          temFicha: true,
+          alcanceAtivo: true,
+          comunidade: "Comunidade Manaus",
+          cidade: "Manaus",
+        },
+      },
+    }),
+  )
+}
+
+async function simularAjuda(page: Page): Promise<void> {
+  await page.route(/\/api\/app\/denuncias(?:\?|$)/, (rota) =>
+    rota.fulfill({
+      json: {
+        denuncias: [
+          {
+            id: "50000000-0000-4000-8000-0000000000f1",
+            targetType: "post",
+            targetLabel: "Publicação",
+            targetPreview: "Oferta repetida de serviço",
+            targetHref: "/app/publicacao/50000000-0000-4000-8000-0000000000a1",
+            reason: "Spam: Oferta repetida",
+            status: "open",
+            createdAt: "2026-11-05T12:00:00Z",
+            resolvedAt: null,
+          },
+        ],
+        proximo: null,
+      },
+    }),
+  )
+}
 
 function descrever(
   superficie: string,
@@ -687,6 +760,8 @@ test.describe("contraste nas telas reais", () => {
     await simularProgresso(page)
     await simularNegocio(page)
     await simularPedido(page)
+    await simularMeuNegocio(page)
+    await simularAjuda(page)
 
     for (const tema of TEMAS) {
       await page.emulateMedia({ colorScheme: tema })
@@ -742,6 +817,8 @@ test.describe("sem rolagem horizontal e sem erro de console", () => {
     await simularInicio(page)
     await simularNegocio(page)
     await simularPedido(page)
+    await simularMeuNegocio(page)
+    await simularAjuda(page)
 
     const erros: string[] = []
     page.on("pageerror", (erro) => erros.push(`pageerror: ${erro.message}`))
@@ -823,6 +900,8 @@ test.describe("capturas das superfícies novas", () => {
     await simularInicio(page)
     await simularNegocio(page)
     await simularPedido(page)
+    await simularMeuNegocio(page)
+    await simularAjuda(page)
 
     const arquivar = (nome: string) =>
       nome

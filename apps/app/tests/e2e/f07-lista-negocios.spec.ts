@@ -63,7 +63,14 @@ for (const tema of ["light"] as const) {
       // os dois botões levam. Sem ficha, a tela é o formulário de criação.
       await page.route(/\/api\/app\/negocio(?:\?|$)/, (rota) =>
         rota.fulfill({
-          json: { negocio: null, categorias: [{ id: "pets", nome: "Pets" }] },
+          // `tipoDaConta` é parte do contrato do GET desde a ficha do prestador
+          // (TROCA-005, correção 1): sem ele a tela cai na falha de contrato em
+          // vez do formulário, que é o que este caso mede.
+          json: {
+            negocio: null,
+            categorias: [{ id: "pets", nome: "Pets" }],
+            tipoDaConta: "membro",
+          },
         }),
       )
       await page.goto("/app/negocios")
