@@ -41,10 +41,17 @@ test("o perfil vem da rota, a edição sobrevive ao recarregar e o desfazer some
   await expect(linha).toContainText("Maria Souza")
   await expect(linha).toContainText("Bloqueio desde 3 de novembro")
   const desbloquear = page.getByRole("button", { name: "Desbloquear Maria Souza" })
-  // A ação que conclui a tela é ardósia (--acao), não o contorno pálido (M10).
-  await expect(desbloquear).toHaveAttribute("data-tom", "principal")
+  // Desbloquear é ação da linha (rodada 3, V2): contorno compacto, nunca um
+  // CTA na largura toda da linha.
+  await expect(desbloquear).toHaveAttribute("data-tom", "contorno")
+  await expect(desbloquear).toHaveAttribute("data-tamanho", "compacto")
+  const larguraDoBotao = (await desbloquear.boundingBox())?.width ?? 0
+  const larguraDaLinha = (await linha.boundingBox())?.width ?? 0
+  expect(larguraDoBotao).toBeLessThan(larguraDaLinha / 2)
   await desbloquear.click()
   await expect(page.getByText("Ninguém bloqueado ainda")).toBeVisible()
+  // O vazio oferece a próxima ação real: onde se bloqueia (rodada 3, V2).
+  await expect(page.getByRole("button", { name: "Ver conversas" })).toBeVisible()
   await page.reload()
   await expect(
     page.locator('[data-tela="bloqueados"] [data-linha="bloqueado"]'),
