@@ -10838,7 +10838,8 @@
       "links": ["docs/LANCAMENTO.md"],
       "proof": [
         "23/11: separado do LAN-PROVA por decisão do coordenador sobre a pausa da loja pelo dono (o web vai primeiro); o LAN-PROVA fica com a prova da loja.",
-        "25/11: rodada enxuta (inventário, sem execução nova, por pausa de cota). E2E de todas as jornadas: depende de LAN-TROCA (#328 vermelho) e da entrada nova ENTRA-001, que precisa entrar antes da prova final — rodar agora seria refeito. Segurança: última revisão de borda em ENDURECE-B (#307, 19/11); desde então mudaram 53 arquivos em api/proxy/lib/next.config/migrations (incluindo 20261121002331_sessao_nativa_limiter e 20261122083205_push_nativo) — uma passada do security-auditor sobre git diff d6f886419..main nesses caminhos é o item a rodar na retomada. Desempenho e concorrência: OPS-CONCORRENCIA-LANCAMENTO done (login ~100-120/s, leitura ~1.000 req/s p95 99 ms, local); reavaliar no ambiente implantado. Ensaio de deploy: o build de produção de apps/web e apps/app roda no CI; deploy real e avançar producao são atos do dono. Ratificação: docs/decisions/RATIFICACAO.md lista as decisões por delegação para o dono no fim."
+        "25/11: rodada enxuta (inventário, sem execução nova, por pausa de cota). E2E de todas as jornadas: depende de LAN-TROCA (#328 vermelho) e da entrada nova ENTRA-001, que precisa entrar antes da prova final — rodar agora seria refeito. Segurança: última revisão de borda em ENDURECE-B (#307, 19/11); desde então mudaram 53 arquivos em api/proxy/lib/next.config/migrations (incluindo 20261121002331_sessao_nativa_limiter e 20261122083205_push_nativo) — uma passada do security-auditor sobre git diff d6f886419..main nesses caminhos é o item a rodar na retomada. Desempenho e concorrência: OPS-CONCORRENCIA-LANCAMENTO done (login ~100-120/s, leitura ~1.000 req/s p95 99 ms, local); reavaliar no ambiente implantado. Ensaio de deploy: o build de produção de apps/web e apps/app roda no CI; deploy real e avançar producao são atos do dono. Ratificação: docs/decisions/RATIFICACAO.md lista as decisões por delegação para o dono no fim.",
+        "25/11: revisão de segurança da borda d6f886419..origin/main (api, proxy, lib, next.config, migrations): PASS, sem CRITICAL/HIGH/MEDIUM. Dois LOW: token de push nativo troca de dono (risco aceito no ADR-20261118, testado) e moderador pode remover outro moderador em /api/app/grupos/[id]/membros/[usuario] (regra de produto; se só membro comum, acrescentar .eq(\"role\",\"member\") ou ajustar a policy). Nota fora do diff: ORIGENS_LOCAIS valem em produção, sem exploração hoje (SameSite=lax)."
       ]
     },
     {
@@ -10867,7 +10868,7 @@
       "title": "Rascunho perdido ao recarregar antes de a cidade chegar",
       "priority": "P1",
       "category": "frontend",
-      "status": "repo",
+      "status": "done",
       "phase": "Lançamento",
       "description": "Correção pronta no PC, no worktree C:/Users/juana/bv-bugcidade, branch bug/cidade-grupos (origin em ae2f2ec28; local à frente com o merge de main 86f59243e, não empurrado). A revisão às cegas do DeepSeek voltou FAIL; os achados ainda não foram confrontados com o código. Liberado até o merge pelo coordenador em 25/11, pausado pela cota.",
       "checklist": [
@@ -10878,10 +10879,14 @@
       "dependencies": [],
       "tests": [],
       "blockers": [],
-      "proof": ["25/11: próximo passo depois da pausa de cota, antes de ENTRA-001."],
+      "proof": [
+        "25/11: próximo passo depois da pausa de cota, antes de ENTRA-001.",
+        "25/11: #339 mergeado (1a8f3cf6f). Achados do DeepSeek corrigidos numa rodada (cidade vazia em falha de rede/503, rascunho lido quando a cidade chega, persona dona dos grupos do demo, copy neutra sem cidade); segunda revisão às cegas sem defeito de código. CI completo verde no head 64aea0cf2, depois de duas correções da prévia estática (404 da rota de progresso usa a demonstração; só a falha da própria leitura). Resíduos registrados: SQL de demonstração não aplicado num banco local nesta rodada; três leituras de locality_memberships na entrada sem kind='current' (LOW); testes que conferem texto de código."
+      ],
       "links": [],
       "updatedAt": "2026-11-25",
-      "sourceRevision": "1f2e5b521"
+      "sourceRevision": "1f2e5b521",
+      "completedAt": "2026-11-25"
     },
     {
       "id": "ENTRA-001",
