@@ -68,14 +68,6 @@ export function navegacaoVisivel(nomeDaRota: string, largura: number): boolean {
   return moraNaBarraDeBaixo(nomeDaRota)
 }
 
-/**
- * §5.3: o Criar acompanha a barra de baixo. Onde a barra aparece, o Criar
- * aparece também — a barra nunca fica com uma célula vazia (REGUA-003).
- */
-export function criaVisivel(nomeDaRota: string, largura: number): boolean {
-  return navegacaoVisivel(nomeDaRota, largura)
-}
-
 /** §5.2: vendo outra cidade, a faixa de visita aparece no alto do conteúdo. */
 export function mostraFaixaDeVisita(vendoOutraCidade: boolean): boolean {
   return vendoOutraCidade

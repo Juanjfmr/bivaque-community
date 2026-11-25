@@ -1,8 +1,9 @@
+import { readFileSync } from "node:fs"
+import { join } from "node:path"
 import { describe, expect, it } from "vitest"
 
 import {
   acoesDaBarraDoTopo,
-  criaVisivel,
   mostraFaixaDeVisita,
   navegacaoVisivel,
   textoDaFaixaDeVisita,
@@ -63,22 +64,22 @@ describe("barra de baixo e Criar (§5.3)", () => {
     expect(navegacaoVisivel("salvos", 1440)).toBe(true)
   })
 
-  it("a barra de baixo nunca tem vão: onde ela aparece, o Criar aparece (REGUA-003)", () => {
-    const rotas = ["inicio", "comunidade", "conversas", "mercado", "voce", "avisos", "salvos"]
-    for (const largura of [320, 375, 768, 1023]) {
-      for (const rota of rotas) {
-        expect(criaVisivel(rota, largura), `${rota} em ${largura}`).toBe(
-          navegacaoVisivel(rota, largura),
-        )
-      }
-    }
+  // Rodada 3, L3: o Criar não tem regra própria de visibilidade — ele mora
+  // dentro da barra e some só quando ela some inteira. A prova é a fonte: um
+  // Criar condicional ou a grade de quatro colunas voltariam a abrir o vão.
+  it("o Criar é incondicional dentro da barra e não há grade de quatro células", () => {
+    const raiz = join(import.meta.dirname, "..", "src")
+    const barra = readFileSync(join(raiz, "casca", "NavegacaoPrincipal.tsx"), "utf8")
+    const estilos = readFileSync(join(raiz, "styles.css"), "utf8")
+    expect(barra).toMatch(/^ {6}<button\s+type="button"\s+data-acao="criar"/m)
+    expect(barra).not.toContain("data-criar-visivel")
+    expect(estilos).not.toContain("data-criar-visivel")
   })
 
   it("nas telas das cinco posições da barra a barra e o Criar aparecem (REGUA-003)", () => {
     for (const largura of [375, 768]) {
       for (const aba of ["inicio", "comunidade", "conversas", "mercado", "voce"]) {
         expect(navegacaoVisivel(aba, largura), `${aba} em ${largura}`).toBe(true)
-        expect(criaVisivel(aba, largura), `${aba} em ${largura}`).toBe(true)
       }
     }
   })
@@ -86,15 +87,13 @@ describe("barra de baixo e Criar (§5.3)", () => {
   it("fora das raízes, no celular, a barra some inteira — sem célula vazia", () => {
     for (const rota of ["avisos", "salvos", "anuncio", "conversa"]) {
       expect(navegacaoVisivel(rota, 375), rota).toBe(false)
-      expect(criaVisivel(rota, 375), rota).toBe(false)
     }
   })
 
-  it("o Criar acompanha a barra de baixo", () => {
-    expect(criaVisivel("inicio", 375)).toBe(true)
-    expect(criaVisivel("pergunta", 375)).toBe(false)
-    expect(criaVisivel("pergunta", 768)).toBe(false)
-    expect(criaVisivel("pergunta", 1024)).toBe(true)
+  it("a barra de baixo some nas telas internas até 1023 e volta como trilho em 1024", () => {
+    expect(navegacaoVisivel("pergunta", 375)).toBe(false)
+    expect(navegacaoVisivel("pergunta", 768)).toBe(false)
+    expect(navegacaoVisivel("pergunta", 1024)).toBe(true)
   })
 })
 
