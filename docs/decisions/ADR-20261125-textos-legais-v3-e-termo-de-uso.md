@@ -63,7 +63,8 @@ o SEC-007 já evita re-consulta de quem está verificado. A política passa a de
 - **7B→7A:** o CPF não é retido em forma alguma (o código não guarda o número nem digest dele).
   Implementar o 7B (digest para evitar re-consulta) exigiria migration, nova finalidade e mudança no
   texto prometido ao usuário, sem necessidade conhecida — quem está verificado não re-consulta
-  (SEC-007). Recomendação: manter o 7A. Ratificar o desvio ou pedir a implementação.
+  (SEC-007). Recomendação: manter o 7A. **Ratificado pelo dono em 25/11: 7A confirmado, sem
+  implementação do digest.**
 - **6 (parcial):** o canal novo foi adotado; a constituição de pessoa jurídica do controlador fica
   para antes da ativação de cobranças (BLOCK-ASAAS), como decidido.
 
