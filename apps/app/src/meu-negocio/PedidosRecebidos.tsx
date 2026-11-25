@@ -120,6 +120,8 @@ export function PedidosRecebidos({
     }
   }
 
+  // O tipo da conta chega depois do primeiro desenho (a tela-mãe o lê do
+  // servidor): por isso `ehPrestador` também dispara a leitura do atendimento.
   // biome-ignore lint/correctness/useExhaustiveDependencies: rodada é o pedido de tentar de novo
   useEffect(() => {
     if (!ehPrestador) return
@@ -136,7 +138,7 @@ export function PedidosRecebidos({
         if (!controle.signal.aborted) setErroDoAtendimento(falha)
       })
     return () => controle.abort()
-  }, [rodada])
+  }, [rodada, ehPrestador])
 
   const conversa = detalheId
   // biome-ignore lint/correctness/useExhaustiveDependencies: a conversa muda só com o pedido aberto

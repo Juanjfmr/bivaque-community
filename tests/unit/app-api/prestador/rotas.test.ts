@@ -31,6 +31,8 @@ type Opcoes = {
   semPedido?: boolean
   semContaDePrestador?: boolean
   erroDeTabela?: string
+  /** Tabela cuja escrita a RLS recusa com 42501. */
+  recusaDaTabela?: string
   erroRpc?: { nome: string; code: string }
   recusaDaResposta?: string
   /** UPDATE que a RLS filtra em silêncio: zero linhas, sem erro (conta de membro). */
@@ -79,6 +81,9 @@ function cliente(opcoes: Opcoes = {}) {
   ]
 
   const resposta = (tabela: string, unico: boolean) => {
+    if (opcoes.recusaDaTabela === tabela) {
+      return { data: null, error: { code: "42501", message: "segredo da RLS" } }
+    }
     if (opcoes.erroDeTabela === tabela) {
       return { data: null, error: { code: "XX000", message: "segredo do Postgres" } }
     }
@@ -387,6 +392,18 @@ describe("TROCA-005 — área de atendimento", () => {
     )
     expect(resposta.status).toBe(403)
     expect(mock.gravacoes).toHaveLength(0)
+  })
+
+  it("upsert recusado pela RLS (42501) é 403 com frase, não 503", async () => {
+    const mock = cliente({ recusaDaTabela: "provider_reach" })
+    autenticar(mock)
+    const resposta = await salvarAtendimento(
+      req("prestador/atendimento", "PATCH", '{"ativo":true}'),
+    )
+    expect(resposta.status).toBe(403)
+    const dados = await resposta.json()
+    expect(dados.erro).toBe("sem-permissao")
+    expect(JSON.stringify(dados)).not.toContain("segredo")
   })
 
   it("corpo sem booleano é 400", async () => {

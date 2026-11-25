@@ -19,8 +19,7 @@ type Cliente = SupabaseClient<Database>
  * intercambiáveis: o membro grava pelos RPCs `create_/update_member_business_page`
  * (que recusam quem tem `provider_accounts`), e a conta de prestador grava direto
  * em `provider_profiles`, sob a policy owner-only (AUTHZ-007). Esta é a regra do
- * segundo caminho — a mesma da Server Action antiga
- * (`saveProfileAction`), agora chamada por ela e pela rota `/api/app/prestador/ficha`.
+ * segundo caminho, chamada pela rota `/api/app/prestador/ficha`.
  *
  * Nada de `service_role`: a RLS decide, e o dono vem da sessão.
  */

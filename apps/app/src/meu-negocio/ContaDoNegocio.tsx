@@ -14,9 +14,17 @@ import { Campo, Nota } from "@/src/pecas/pecas"
  * Conta de Meu negócio (TROCA-005): o e-mail de acesso (somente leitura) e o
  * telefone público, opcional e opt-in. O telefone é o único dado daqui que muda
  * a ficha pública; a validação é a do servidor, e a recusa volta como frase.
+ * O banco só deixa a conta de prestador gravar o contato da ficha: para a conta
+ * de membro o formulário não aparece, em vez de prometer uma escrita recusada.
  */
 
-export function ContaDoNegocio({ irParaFicha }: { readonly irParaFicha: () => void }) {
+export function ContaDoNegocio({
+  tipoDaConta,
+  irParaFicha,
+}: {
+  readonly tipoDaConta: "membro" | "prestador"
+  readonly irParaFicha: () => void
+}) {
   const [conta, setConta] = useState<Conta | null>(null)
   const [erro, setErro] = useState<unknown>(null)
   const [rodada, setRodada] = useState(0)
@@ -98,6 +106,8 @@ export function ContaDoNegocio({ irParaFicha }: { readonly irParaFicha: () => vo
               </Botao>
             </div>
           </div>
+        ) : tipoDaConta === "membro" ? (
+          <Nota>O telefone na ficha pública é das contas de prestador.</Nota>
         ) : (
           <form className="grid gap-3" onSubmit={gravar} aria-busy={salvando} noValidate>
             <Campo

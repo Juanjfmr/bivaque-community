@@ -292,7 +292,14 @@ export function MeuNegocio() {
           irParaFicha={() => irParaAba("ficha")}
         />
       ) : null}
-      {aba === "conta" ? <ContaDoNegocio irParaFicha={() => irParaAba("ficha")} /> : null}
+      {aba === "conta" ? (
+        // O tipo da conta decide se o telefone se edita aqui: até lê-lo, esqueleto.
+        carregado ? (
+          <ContaDoNegocio tipoDaConta={tipoDaConta} irParaFicha={() => irParaAba("ficha")} />
+        ) : (
+          <EsqueletoDeLista linhas={2} />
+        )
+      ) : null}
       {aba === "ficha" || aba === "catalogo" ? (
         erro !== null ? (
           <FalhaDaLeitura falha={erro} aoTentar={() => setRodada((atual) => atual + 1)} />

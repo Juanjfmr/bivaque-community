@@ -111,7 +111,7 @@ const TROCADAS = [
   ["/denuncias/nova", "/app/ajuda?aba=denuncias"],
   // A versão endereçável do diálogo leva o alvo junto, no formato que a Ajuda lê.
   [`/denuncias/nova?tipo=post&id=${ID}`, `/app/ajuda?aba=denuncias&denunciar=post:${ID}`],
-  [`/denuncias?tipo=post&id=${ID}`, `/app/ajuda?aba=denuncias&tipo=post&id=${ID}`],
+  [`/denuncias?tipo=post&id=${ID}`, `/app/ajuda?aba=denuncias&denunciar=post:${ID}`],
   [`/denuncias/${ID}`, `/app/ajuda?aba=denuncias&denuncia=${ID}`],
   [`/prestador/pedidos/${ID}`, `/app/meu-negocio?aba=pedidos&pedido=${ID}`],
   ["/prestador/atendimento", "/app/meu-negocio?aba=pedidos"],

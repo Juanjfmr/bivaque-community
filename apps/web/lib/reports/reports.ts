@@ -64,38 +64,43 @@ async function readTargets(
   if (ids.length === 0) return previas
   switch (targetType) {
     case "post": {
-      const { data } = await supabase.from("posts").select("id, content").in("id", ids)
+      const { data, error } = await supabase.from("posts").select("id, content").in("id", ids)
+      if (error) throw error
       for (const linha of (data ?? []) as Array<{ id: string; content: string }>) {
         previas.set(linha.id, linha.content)
       }
       return previas
     }
     case "comment": {
-      const { data } = await supabase.from("comments").select("id, content").in("id", ids)
+      const { data, error } = await supabase.from("comments").select("id, content").in("id", ids)
+      if (error) throw error
       for (const linha of (data ?? []) as Array<{ id: string; content: string }>) {
         previas.set(linha.id, linha.content)
       }
       return previas
     }
     case "group": {
-      const { data } = await supabase.from("groups").select("id, name").in("id", ids)
+      const { data, error } = await supabase.from("groups").select("id, name").in("id", ids)
+      if (error) throw error
       for (const linha of (data ?? []) as Array<{ id: string; name: string }>) {
         previas.set(linha.id, linha.name)
       }
       return previas
     }
     case "message": {
-      const { data } = await supabase.from("dm_messages").select("id, content").in("id", ids)
+      const { data, error } = await supabase.from("dm_messages").select("id, content").in("id", ids)
+      if (error) throw error
       for (const linha of (data ?? []) as Array<{ id: string; content: string }>) {
         previas.set(linha.id, linha.content)
       }
       return previas
     }
     case "recommendation_request": {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("recommendation_requests")
         .select("id, title")
         .in("id", ids)
+      if (error) throw error
       for (const linha of (data ?? []) as Array<{ id: string; title: string }>) {
         previas.set(linha.id, linha.title)
       }
@@ -105,10 +110,11 @@ async function readTargets(
       // A coluna é `body` (database.generated.ts), não `content`: o preview da
       // resposta nunca aparecia antes porque a consulta pedia uma coluna que não
       // existe. Corrigido junto com a leitura em lote (M2).
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("recommendation_replies")
         .select("id, body")
         .in("id", ids)
+      if (error) throw error
       for (const linha of (data ?? []) as Array<{ id: string; body: string }>) {
         previas.set(linha.id, linha.body)
       }

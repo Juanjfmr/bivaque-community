@@ -259,6 +259,15 @@ describe("TROCA-005 — escrita de denúncia pela porta", () => {
     expect(mock.gravacoes).toHaveLength(0)
   })
 
+  it("falha ao ler o alvo é 503, não 'conteúdo indisponível'", async () => {
+    const mock = cliente({ erroDeTabela: "posts" })
+    autenticar(mock)
+    const resposta = await denunciar(req("denuncias", "POST", corpo))
+    expect(resposta.status).toBe(503)
+    expect(JSON.stringify(await resposta.json())).not.toContain("segredo")
+    expect(mock.gravacoes).toHaveLength(0)
+  })
+
   it("grava a denúncia do dono da sessão e devolve o id", async () => {
     const mock = cliente()
     autenticar(mock)

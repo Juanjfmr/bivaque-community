@@ -141,11 +141,25 @@ const nextConfig: NextConfig = {
       // O ID e o token seguem no destino; o destino é sempre uma tela que já
       // existe em `apps/app` (nada de segundo salto).
       //
-      // `/denuncias/nova?tipo=&id=` é a versão endereçável do diálogo de
-      // denúncia (spec C10): as duas capturas viram o `?denunciar=<tipo>:<id>`
+      // `/denuncias/nova?tipo=&id=` (e `/denuncias?tipo=&id=`) é a versão
+      // endereçável do diálogo de denúncia (spec C10): as duas capturas viram o `?denunciar=<tipo>:<id>`
       // que a Ajuda do app já lê.
       {
         source: "/denuncias/nova",
+        has: [
+          { type: "query", key: "tipo", value: "(?<tipo>[a-z_]+)" },
+          {
+            type: "query",
+            key: "id",
+            value:
+              "(?<alvo>[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})",
+          },
+        ],
+        destination: "/app/ajuda?aba=denuncias&denunciar=:tipo::alvo",
+        permanent: false,
+      },
+      {
+        source: "/denuncias",
         has: [
           { type: "query", key: "tipo", value: "(?<tipo>[a-z_]+)" },
           {

@@ -233,8 +233,54 @@ for (const tema of TEMAS) {
       await expect(page.getByRole("heading", { name: "Criar a página" })).toBeVisible()
     })
 
+    test("conta de membro vê o e-mail e não recebe um formulário que o banco recusa", async ({
+      page,
+    }) => {
+      await montarNegocio(page, "membro")
+      await page.route(/\/api\/app\/prestador\/conta$/, (rota) =>
+        rota.fulfill({
+          json: {
+            conta: {
+              email: "membro@example.invalid",
+              temFicha: true,
+              telefone: null,
+              telefonePublico: false,
+            },
+          },
+        }),
+      )
+      await ir(page, "/app/meu-negocio?aba=conta", tema)
+      await expect(page.getByText("membro@example.invalid")).toBeVisible()
+      await expect(
+        page.getByText("O telefone na ficha pública é das contas de prestador."),
+      ).toBeVisible()
+      await expect(page.getByRole("button", { name: "Salvar conta" })).toHaveCount(0)
+    })
+
+    test("prestador abre direto a aba de pedidos e vê a área de atendimento", async ({ page }) => {
+      await montarNegocio(page, "prestador")
+      await page.route(/\/api\/app\/pedidos(?:\?|$)/, (rota) =>
+        rota.fulfill({ json: { pedidos: [], proximo: null } }),
+      )
+      await page.route(/\/api\/app\/prestador\/atendimento$/, (rota) =>
+        rota.fulfill({
+          json: {
+            atendimento: {
+              temFicha: true,
+              alcanceAtivo: true,
+              comunidade: "Comunidade Manaus",
+              cidade: "Manaus",
+            },
+          },
+        }),
+      )
+      await ir(page, "/app/meu-negocio?aba=pedidos", tema)
+      // O conteúdo do bloco, não só o título: com o esqueleto preso o título aparece.
+      await expect(page.getByLabel("Atender membros de Comunidade Manaus")).toBeChecked()
+    })
+
     test("a aba Conta mostra o e-mail da sessão e salva o telefone", async ({ page }) => {
-      await montarNegocio(page)
+      await montarNegocio(page, "prestador")
       let conta = {
         email: "prestador@example.invalid",
         temFicha: true,

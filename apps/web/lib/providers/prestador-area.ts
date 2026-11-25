@@ -6,9 +6,8 @@ type Cliente = SupabaseClient<Database>
 
 // TROCA-005 — a conta e a área de atendimento do PRESTADOR pela porta do app.
 //
-// Mesma regra do painel antigo (apps/web/app/(provider)/prestador), agora em um
-// módulo que a Server Action e a rota `/api/app` chamam: a validação do
-// telefone é a de `showcase`, chamada pelos dois caminhos. Tudo lê e grava com o
+// A regra do antigo painel (apps/web/app/(provider)/prestador), agora no módulo
+// que a rota `/api/app` chama: a validação do telefone é a de `showcase`. Tudo lê e grava com o
 // cliente da SESSÃO — a RLS `provider_accounts_select_self` e as policies
 // owner-only de `provider_reach` decidem. Nenhum `service_role` aqui.
 
@@ -198,6 +197,15 @@ export async function salvarAtendimento(
     },
     { onConflict: "provider_id,scope_type,scope_id" },
   )
+  // A conta revogada entre a leitura e o upsert cai na RLS (42501): é recusa,
+  // como na ficha e na conta, não serviço fora.
+  if (error?.code === "42501") {
+    return {
+      ok: false,
+      motivo: "sem-permissao",
+      mensagem: "Esta conta não define a área de atendimento.",
+    }
+  }
   if (error) throw error
   return { ok: true }
 }
