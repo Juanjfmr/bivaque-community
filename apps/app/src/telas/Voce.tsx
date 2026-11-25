@@ -382,8 +382,9 @@ export function Voce() {
           />
           {perfil === null && !erro ? null : (
             <>
-              {/* Na falha a linha continua (REGUA-003); sem perfil não há
-                  formulário de cidade, então o toque tenta a leitura de novo. */}
+              {/* Na falha as linhas continuam (REGUA-003); sem perfil não há
+                  formulário de cidade nem de Força e OM, então o toque tenta a
+                  leitura de novo — nunca um controle morto (rodada 3, M1). */}
               <LinhaDeAjuste
                 icone="location_on"
                 titulo="Mudar de cidade"
@@ -398,9 +399,13 @@ export function Voce() {
               <LinhaDeAjuste
                 icone="badge"
                 titulo="Força e OM"
-                subtitulo="Declarar é opcional"
+                subtitulo={
+                  perfil === null
+                    ? "Carregue seu perfil para declarar Força e OM"
+                    : "Declarar é opcional"
+                }
                 aria-expanded={forcaAberta || undefined}
-                onClick={abrirForca}
+                onClick={perfil === null ? () => setRodada((atual) => atual + 1) : abrirForca}
               />
             </>
           )}

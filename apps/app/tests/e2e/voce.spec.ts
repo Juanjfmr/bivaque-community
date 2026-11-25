@@ -84,6 +84,17 @@ test("falha de leitura mostra um único aviso e a tela segue de pé", async ({ p
   // A linha "Mudar de cidade" continua na falha (REGUA-003); sem perfil o
   // toque tenta a leitura de novo, porque o formulário depende dela.
   await expect(page.getByRole("button", { name: /Mudar de cidade/ })).toBeVisible()
+  // "Força e OM" também não é controle morto (rodada 3, M1): diz que depende
+  // do perfil e o toque refaz a leitura em vez de abrir um formulário vazio.
+  const forca = page.getByRole("button", { name: /Força e OM/ })
+  await expect(forca).toContainText("Carregue seu perfil para declarar Força e OM")
+  let leituras = 0
+  page.on("request", (pedido) => {
+    if (new URL(pedido.url()).pathname === "/api/app/voce") leituras += 1
+  })
+  await forca.click()
+  await expect.poll(() => leituras).toBeGreaterThan(0)
+  await expect(forca).not.toHaveAttribute("aria-expanded", "true")
 
   await page.unroute("**/api/app/voce")
   await page.getByRole("button", { name: "Tentar de novo" }).click()
