@@ -679,16 +679,18 @@
         "Decisão do dono nesta sessão: a pendência jurídica completa fica para a segunda etapa; não bloqueia o Alpha fechado",
         "docs/legal/CODIGO_DE_CONDUTA.md e docs/legal/PRIVACIDADE.md versão 2 identificam o controlador e o canal",
         "consent/page.tsx exige checkbox; /privacidade e /codigo-de-conduta exibem os documentos completos",
-        "tests/scope/consent-version.test.mjs e tests/scope/support-channel.test.mjs verdes em 2026-08-31"
+        "tests/scope/consent-version.test.mjs e tests/scope/support-channel.test.mjs verdes em 2026-08-31",
+        "25/11: Politica e Codigo v3 e Termo de Uso v1 (25/11/2026), CONSENT_VERSION=3 com aceite dos tres documentos, canal bivaque.suporte@gmail.com e pagina publica /termos-de-uso (commit 0b58b825f, ramo textos-legais-v3). ADR-20261125-textos-legais-v3-e-termo-de-uso aguarda ratificacao; desvio registrado: o CPF nao e retido em forma alguma (realidade do codigo), em vez do digest da decisao 7B. Revisao independente PASS COM RESSALVAS com F1-F3 fechados no mesmo commit. Faltam para a abertura publica: auditoria do security-auditor, revisao por advogado habilitado (OAB) e definicao de NEXT_PUBLIC_SUPPORT_EMAIL em producao."
       ],
       "blockers": ["Abertura pública", "Prova E2E/deploy"],
       "links": [
         "Código de conduta | ../../docs/legal/CODIGO_DE_CONDUTA.md",
         "Privacidade | ../../docs/legal/PRIVACIDADE.md",
-        "Status de consentimento | ../../docs/historico/PRODUCT_STATUS.md"
+        "Status de consentimento | ../../docs/historico/PRODUCT_STATUS.md",
+        "Termo de Uso | ../../docs/legal/TERMOS_DE_USO.md"
       ],
-      "updatedAt": "2026-08-31",
-      "sourceRevision": "5c13510",
+      "updatedAt": "2026-11-25",
+      "sourceRevision": "0b58b825f",
       "dependencies": []
     },
     {
