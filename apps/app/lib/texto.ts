@@ -22,10 +22,36 @@ export function iniciais(nome: unknown): string {
     .trim()
     .split(/\s+/)
     .filter((parte) => parte !== "")
-    .slice(0, 2)
   if (partes.length === 0) return "BV"
-  return partes
-    .map((parte) => parte.slice(0, 1))
-    .join("")
-    .toUpperCase()
+  return `${partes[0]?.[0] ?? ""}${partes.length > 1 ? (partes.at(-1)?.[0] ?? "") : ""}`.toUpperCase()
+}
+
+/**
+ * Um dos quatro tons da família das ilustrações para quem não tem foto, sempre
+ * o mesmo para o mesmo nome — o cartão de Você, a barra e a lateral pintam a
+ * pessoa igual (REGUA-003).
+ */
+export function tomDoNome(nome: string): 0 | 1 | 2 | 3 {
+  let soma = 0
+  for (const letra of nome) soma = (soma + (letra.codePointAt(0) ?? 0)) % 997
+  return (soma % 4) as 0 | 1 | 2 | 3
+}
+
+/**
+ * Horário curto da última mensagem na linha da caixa, como nas caixas de
+ * mensagem maduras: "agora", "5 min", "3 h", "ontem", "12/11". Data inválida
+ * devolve "" — a linha não inventa horário.
+ */
+export function horaDaCaixa(iso: string, agora: Date = new Date()): string {
+  const quando = new Date(iso)
+  if (Number.isNaN(quando.getTime())) return ""
+  const minutos = Math.floor((agora.getTime() - quando.getTime()) / 60000)
+  if (minutos < 1) return "agora"
+  if (minutos < 60) return `${minutos} min`
+  const dia = (data: Date) =>
+    new Date(data.getFullYear(), data.getMonth(), data.getDate()).getTime()
+  const dias = Math.round((dia(agora) - dia(quando)) / 86400000)
+  if (dias === 0) return `${Math.floor(minutos / 60)} h`
+  if (dias === 1) return "ontem"
+  return quando.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" })
 }

@@ -460,7 +460,8 @@ export function Salvos() {
               />
               <BotaoDeIcone
                 rotulo={`Remover dos salvos: ${pergunta.titulo}`}
-                nome="bookmark_remove"
+                nome="bookmark"
+                aria-pressed
                 className="bg-(--muted)"
                 disabled={removendo === pergunta.id}
                 onClick={() =>
@@ -482,7 +483,9 @@ export function Salvos() {
   )
 
   return (
-    <section data-tela="salvos" className="grid gap-2 md:mx-auto md:max-w-[640px] lg:max-w-[720px]">
+    // As seções respiram entre si (REGUA-003): o título de uma seção não
+    // encosta no bloco anterior.
+    <section data-tela="salvos" className="grid gap-6 md:mx-auto md:max-w-[640px] lg:max-w-[720px]">
       <CabecaDePagina
         titulo="Salvos"
         subtitulo="Anúncios, publicações, perguntas e referências do guia guardados para ver com calma."
@@ -490,13 +493,14 @@ export function Salvos() {
 
       {nadaSalvo ? (
         <>
-          {/* O vazio é compacto (revisão cega R1, M9): largura máxima
-              própria, centrado na coluna — sem cartão de 720 px esticado. */}
-          <div className="mx-auto w-full max-w-[27rem]">
+          {/* O cartão do vazio tem a largura da coluna do título (REGUA-003),
+              com a cena da mesa da família de ilustrações no lugar do ícone. */}
+          <div>
             <EstadoVazio
               titulo="Nada salvo ainda"
               texto="Toque no marcador para guardar por aqui."
-              icone="bookmark_border"
+              icone="bookmark"
+              figura="vinculo"
             >
               {/* A saída do vazio tem cara de ação (revisão às cegas, 5): a
                   ardósia preenchida de concluir, não o pálido de um secundário.
@@ -579,7 +583,10 @@ export function Salvos() {
               // 7): preenche a coluna em 3 cartões no 1440, sem esticar até a
               // borda. Colunas por tela, não pelo viewport: a coluna de 720
               // não comporta as 4 faixas do `.bv-grade`.
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              <div
+                data-grade="salvos"
+                className="grid grid-cols-1 gap-3 sm:grid-cols-[repeat(auto-fill,minmax(13rem,1fr))]"
+              >
                 {anunciosVisiveis.map((anuncio) => (
                   <CartaoDeFoto
                     key={anuncio.id}
@@ -649,7 +656,8 @@ export function Salvos() {
                           separam sob o dedo. */}
                       <BotaoDeIcone
                         rotulo={`Remover dos salvos: ${publicacao.texto}`}
-                        nome="bookmark_remove"
+                        nome="bookmark"
+                        aria-pressed
                         className="bg-(--muted)"
                         disabled={removendo === publicacao.id}
                         onClick={() =>
@@ -701,7 +709,8 @@ export function Salvos() {
                       />
                       <BotaoDeIcone
                         rotulo={`Remover dos salvos: ${entrada.nome}`}
-                        nome="bookmark_remove"
+                        nome="bookmark"
+                        aria-pressed
                         className="bg-(--muted)"
                         disabled={removendo === entrada.id}
                         onClick={() =>

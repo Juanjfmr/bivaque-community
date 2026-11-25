@@ -41,10 +41,17 @@ test("o perfil vem da rota, a edição sobrevive ao recarregar e o desfazer some
   await expect(linha).toContainText("Maria Souza")
   await expect(linha).toContainText("Bloqueio desde 3 de novembro")
   const desbloquear = page.getByRole("button", { name: "Desbloquear Maria Souza" })
-  // A ação que conclui a tela é ardósia (--acao), não o contorno pálido (M10).
-  await expect(desbloquear).toHaveAttribute("data-tom", "principal")
+  // Desbloquear é ação da linha (rodada 3, V2): contorno compacto, nunca um
+  // CTA na largura toda da linha.
+  await expect(desbloquear).toHaveAttribute("data-tom", "contorno")
+  await expect(desbloquear).toHaveAttribute("data-tamanho", "compacto")
+  const larguraDoBotao = (await desbloquear.boundingBox())?.width ?? 0
+  const larguraDaLinha = (await linha.boundingBox())?.width ?? 0
+  expect(larguraDoBotao).toBeLessThan(larguraDaLinha / 2)
   await desbloquear.click()
   await expect(page.getByText("Ninguém bloqueado ainda")).toBeVisible()
+  // O vazio oferece a próxima ação real: onde se bloqueia (rodada 3, V2).
+  await expect(page.getByRole("button", { name: "Ver conversas" })).toBeVisible()
   await page.reload()
   await expect(
     page.locator('[data-tela="bloqueados"] [data-linha="bloqueado"]'),
@@ -66,8 +73,11 @@ test("falha de leitura mostra um único aviso e a tela segue de pé", async ({ p
 
   const aviso = page.locator('[data-aviso="perfil"]')
   await expect(aviso).toBeVisible()
-  await expect(aviso).toContainText("Leitura do perfil indisponível agora.")
-  await expect(page.getByRole("button", { name: "Tentar de novo" })).toBeVisible()
+  await expect(aviso).toContainText("Não foi possível carregar seu perfil.")
+  const tentar = page.getByRole("button", { name: "Tentar de novo" })
+  await expect(tentar).toBeVisible()
+  // A saída é pílula, como no resto do app (REGUA-003).
+  await expect(tentar).toHaveClass(/rounded-full/)
   await expect(page.locator('[data-estado="erro"]')).toHaveCount(0)
   // Sem leitura não há identidade: a barra cai no ícone, sem nome herdado.
   await expect(
@@ -78,8 +88,20 @@ test("falha de leitura mostra um único aviso e a tela segue de pé", async ({ p
   await expect(page.getByRole("heading", { name: "Família" })).toBeVisible()
   await expect(page.getByRole("heading", { name: "Avisos" })).toBeVisible()
   await expect(page.getByRole("heading", { name: "Privacidade e ajuda" })).toBeVisible()
-  // O formulário de cidade depende da leitura: a linha não aparece sem perfil.
-  await expect(page.getByRole("button", { name: "Mudar de cidade" })).toHaveCount(0)
+  // A linha "Mudar de cidade" continua na falha (REGUA-003); sem perfil o
+  // toque tenta a leitura de novo, porque o formulário depende dela.
+  await expect(page.getByRole("button", { name: /Mudar de cidade/ })).toBeVisible()
+  // "Força e OM" também não é controle morto (rodada 3, M1): diz que depende
+  // do perfil e o toque refaz a leitura em vez de abrir um formulário vazio.
+  const forca = page.getByRole("button", { name: /Força e OM/ })
+  await expect(forca).toContainText("Carregue seu perfil para declarar Força e OM")
+  let leituras = 0
+  page.on("request", (pedido) => {
+    if (new URL(pedido.url()).pathname === "/api/app/voce") leituras += 1
+  })
+  await forca.click()
+  await expect.poll(() => leituras).toBeGreaterThan(0)
+  await expect(forca).not.toHaveAttribute("aria-expanded", "true")
 
   await page.unroute("**/api/app/voce")
   await page.getByRole("button", { name: "Tentar de novo" }).click()
@@ -161,6 +183,151 @@ test("bloquear pelo perfil com o servidor fora: o alerta diz para tentar e o men
   // A falha não finge sucesso: sem estado de bloqueado, com a saída à mão.
   await expect(page.getByRole("status")).toHaveCount(0)
   await expect(page.getByRole("button", { name: "Opções" })).toBeVisible()
+})
+
+// REGUA-003: o menu do perfil tem Bloquear e Denunciar. "Mensagem" só aparece
+// quando já existe conversa com a pessoa — não há rota para começar uma — e a
+// denúncia leva a essa conversa ou explica onde denunciar.
+function simularCaixa(page: import("@playwright/test").Page, outroId: string | null) {
+  return page.route(/\/api\/app\/conversas(?:\?|$)/, (rota) =>
+    rota.fulfill({
+      json: {
+        conversas:
+          outroId === null
+            ? []
+            : [
+                {
+                  id: "c-paulo",
+                  nome: "Paulo Roberto",
+                  outroId,
+                  tipo: "direct",
+                  contextoId: "c-paulo",
+                  ultima: "Até amanhã.",
+                  porLer: false,
+                },
+              ],
+        proximo: null,
+        porLer: 0,
+      },
+    }),
+  )
+}
+
+test("perfil de membro com conversa: Mensagem abre a conversa e Denunciar está no menu", async ({
+  page,
+}) => {
+  await simularVoce(page)
+  await simularCaixa(page, "u-paulo")
+  await page.goto("/app/perfil/u-paulo")
+  await expect(page.getByRole("heading", { name: "Paulo Roberto" })).toBeVisible()
+
+  const mensagem = page.getByRole("button", { name: "Mensagem" })
+  await expect(mensagem).toBeVisible()
+  // Mensagem e Opções cabem na largura: a tela não rola para o lado (375).
+  const vazaParaOLado = await page.evaluate(
+    () => document.documentElement.scrollWidth > document.documentElement.clientWidth,
+  )
+  expect(vazaParaOLado).toBe(false)
+  await expect(page.getByRole("button", { name: "Opções" })).toBeInViewport({ ratio: 1 })
+  // E não cobrem o nome: a caixa do nome e a do botão não se cruzam.
+  const nomeCaixa = await page.getByRole("heading", { name: "Paulo Roberto" }).boundingBox()
+  const botaoCaixa = await mensagem.boundingBox()
+  expect(nomeCaixa).not.toBeNull()
+  expect(botaoCaixa).not.toBeNull()
+  if (nomeCaixa && botaoCaixa) {
+    const cruzam =
+      nomeCaixa.x < botaoCaixa.x + botaoCaixa.width &&
+      botaoCaixa.x < nomeCaixa.x + nomeCaixa.width &&
+      nomeCaixa.y < botaoCaixa.y + botaoCaixa.height &&
+      botaoCaixa.y < nomeCaixa.y + nomeCaixa.height
+    expect(cruzam).toBe(false)
+  }
+  // O nome também não transborda a própria caixa (o texto escaparia por baixo do botão).
+  const nomeTransborda = await page
+    .getByRole("heading", { name: "Paulo Roberto" })
+    .evaluate((h) => h.scrollWidth > h.clientWidth + 1)
+  expect(nomeTransborda).toBe(false)
+  expect(nomeCaixa?.width ?? 0).toBeGreaterThanOrEqual(120)
+  await page.getByRole("button", { name: "Opções" }).click()
+  await expect(page.getByRole("menuitem", { name: "Bloquear Paulo Roberto" })).toBeVisible()
+  await expect(page.getByRole("menuitem", { name: "Denunciar" })).toBeVisible()
+  await page.keyboard.press("Escape")
+
+  await mensagem.click()
+  await expect(page).toHaveURL(/\/app\/conversa\/c-paulo$/)
+})
+
+// Rodada 3, M2: "Denunciar" com conversa abre a folha de denúncia da última
+// mensagem recebida, e o perfil continua no histórico.
+test("perfil de membro com conversa: Denunciar abre a folha e o Voltar devolve o perfil", async ({
+  page,
+}) => {
+  await simularVoce(page)
+  await simularCaixa(page, "u-paulo")
+  await page.route(/\/api\/app\/conversas\/c-paulo(?:\?|$)/, (rota) =>
+    rota.request().method() === "GET"
+      ? rota.fulfill({
+          json: {
+            conversa: {
+              id: "c-paulo",
+              nome: "Paulo Roberto",
+              outroId: "u-paulo",
+              tipo: "direct",
+              contextoId: "c-paulo",
+              ultima: "Até amanhã.",
+              porLer: false,
+            },
+            mensagens: [
+              {
+                id: "m-1",
+                conteudo: "Oi, tudo bem?",
+                minha: true,
+                criadaEm: "2026-11-20T13:00:00Z",
+              },
+              {
+                id: "m-2",
+                conteudo: "Até amanhã.",
+                minha: false,
+                criadaEm: "2026-11-20T13:05:00Z",
+              },
+            ],
+            anterior: null,
+          },
+        })
+      : rota.fulfill({ status: 204, body: "" }),
+  )
+  await page.goto("/app/perfil/u-paulo")
+  await expect(page.getByRole("heading", { name: "Paulo Roberto" })).toBeVisible()
+  await page.getByRole("button", { name: "Opções" }).click()
+  await page.getByRole("menuitem", { name: "Denunciar" }).click()
+
+  await expect(page).toHaveURL(/\/app\/conversa\/c-paulo$/)
+  const folha = page.getByRole("dialog", { name: "Denunciar mensagem" })
+  await expect(folha).toBeVisible()
+  await expect(folha.locator('[data-mensagem-denunciada="sim"]')).toHaveText("Até amanhã.")
+
+  await page.keyboard.press("Escape")
+  await expect(folha).toHaveCount(0)
+  await expect(page).toHaveURL(/\/app\/conversa\/c-paulo$/)
+  await page.goBack()
+  await expect(page).toHaveURL(/\/app\/perfil\/u-paulo$/)
+  await expect(page.getByRole("heading", { name: "Paulo Roberto" })).toBeVisible()
+  await expect(page.getByRole("menuitem", { name: "Denunciar" })).toHaveCount(0)
+})
+
+test("perfil de membro sem conversa: sem Mensagem e a denúncia explica o caminho", async ({
+  page,
+}) => {
+  await simularVoce(page)
+  await simularCaixa(page, null)
+  await page.goto("/app/perfil/u-paulo")
+  await expect(page.getByRole("heading", { name: "Paulo Roberto" })).toBeVisible()
+  await expect(page.getByRole("button", { name: "Mensagem" })).toHaveCount(0)
+
+  await page.getByRole("button", { name: "Opções" }).click()
+  await page.getByRole("menuitem", { name: "Denunciar" }).click()
+  await expect(page.locator('[data-aviso="denunciar"]')).toContainText("Denunciar no menu dela")
+  await expect(page.getByRole("menu")).toHaveCount(0)
 })
 
 // RUN-184: o aviso da exclusão é o mesmo da tela antiga da web (o que sai agora, o

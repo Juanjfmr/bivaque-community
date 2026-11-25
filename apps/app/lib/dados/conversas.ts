@@ -9,6 +9,8 @@ export type ConversaDaCaixa = Readonly<{
   tipo: string
   contextoId: string
   ultima: string
+  /** Horário (ISO) da última mensagem; null quando a resposta não o traz (detalhe). */
+  ultimaEm: string | null
   porLer: boolean
 }>
 export type Mensagem = Readonly<{ id: string; conteudo: string; minha: boolean; criadaEm: string }>
@@ -47,6 +49,8 @@ function conversaDe(valor: unknown): ConversaDaCaixa {
     tipo: texto(item["tipo"]),
     contextoId: texto(item["contextoId"]),
     ultima: typeof item["ultima"] === "string" ? item["ultima"] : "",
+    ultimaEm:
+      typeof item["ultimaEm"] === "string" && item["ultimaEm"] !== "" ? item["ultimaEm"] : null,
     porLer: item["porLer"] === true,
   }
 }

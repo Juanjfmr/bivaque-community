@@ -175,6 +175,33 @@ test.describe("navegação de baixo e lateral", () => {
     }
   })
 
+  test("abaixo de 1024 a barra de baixo não tem célula vazia (REGUA-003)", async ({ page }) => {
+    const largura = page.viewportSize()?.width ?? 0
+    test.skip(largura >= 1024, "a barra de baixo é do celular e do tablet")
+
+    for (const caminho of ["/app/voce", "/app/avisos", "/app/mercado"]) {
+      await abrir(page, caminho)
+      await expect(tituloDaTela(page), caminho).toBeVisible()
+      const nav = page.locator(SELETOR_NAVEGACAO)
+      if (!(await nav.isVisible())) continue
+      await expect(nav.locator(SELETOR_CRIAR), caminho).toBeVisible()
+      const celulas = await nav.evaluate((elemento) => {
+        const lista = elemento.querySelector("ul") ?? elemento
+        const colunas = getComputedStyle(lista).gridTemplateColumns.split(" ").filter(Boolean)
+        const filhos = Array.from(lista.children).filter(
+          (filho) => getComputedStyle(filho).display !== "none",
+        )
+        const vazios = filhos.filter((filho) => {
+          const caixa = filho.getBoundingClientRect()
+          return caixa.width === 0 || caixa.height === 0 || filho.textContent?.trim() === ""
+        })
+        return { colunas: colunas.length, filhos: filhos.length, vazios: vazios.length }
+      })
+      expect(celulas.vazios, caminho).toBe(0)
+      expect(celulas.colunas, caminho).toBe(celulas.filhos)
+    }
+  })
+
   test("minimiza ao rolar para baixo e volta ao subir", async ({ page }) => {
     const largura = page.viewportSize()?.width ?? 0
     test.skip(largura >= 1024, "a minimização é do celular")

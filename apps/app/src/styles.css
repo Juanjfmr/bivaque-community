@@ -461,8 +461,9 @@
 
 @media (max-width: 1023.98px) {
   #conteudo {
-    padding-bottom: calc(var(--altura-da-barra) + 2.5rem + env(safe-area-inset-bottom));
-    scroll-padding-bottom: calc(var(--altura-da-barra) + 2.5rem + env(safe-area-inset-bottom));
+    --folga-do-conteudo: calc(var(--altura-da-barra) + 2.5rem + env(safe-area-inset-bottom));
+    padding-bottom: var(--folga-do-conteudo);
+    scroll-padding-bottom: var(--folga-do-conteudo);
   }
 
   [data-nav="principal"][data-minimizada="sim"] {
@@ -524,9 +525,10 @@
   }
 
   #conteudo {
+    --folga-do-conteudo: 4rem;
     grid-column: 2;
     grid-row: 1;
-    padding: 0 28px 4rem;
+    padding: 0 28px var(--folga-do-conteudo);
   }
 }
 
@@ -783,8 +785,9 @@
       [data-tela="conversas"]
     )
     #conteudo {
-    padding-bottom: calc(var(--altura-da-barra) + 92px + env(safe-area-inset-bottom));
-    scroll-padding-bottom: calc(var(--altura-da-barra) + 92px + env(safe-area-inset-bottom));
+    --folga-do-conteudo: calc(var(--altura-da-barra) + 92px + env(safe-area-inset-bottom));
+    padding-bottom: var(--folga-do-conteudo);
+    scroll-padding-bottom: var(--folga-do-conteudo);
   }
 }
 
@@ -888,6 +891,17 @@
     padding: 10px 12px;
   }
 
+  /* O item, a segurança e os avisos do painel têm o recuo dos balões: nada
+     encosta na divisória das colunas (sem borda dupla) — REGUA-003. */
+  [data-tela="conversa"] [data-conversa="painel"] > [data-cabeca-do-item],
+  [data-tela="conversa"] [data-conversa="painel"] > [data-contexto-conversa],
+  [data-tela="conversa"] [data-conversa="painel"] > [data-seguranca-conversa],
+  [data-tela="conversa"] [data-conversa="painel"] > [data-estado],
+  [data-tela="conversa"] [data-conversa="painel"] > [role="status"] {
+    margin-inline: 12px;
+    width: auto;
+  }
+
   [data-tela="conversa"] [data-mensagens="historico"] {
     flex: 1 1 auto;
     min-height: 0;
@@ -973,54 +987,56 @@
    da tela. O offset é relativo ao fim do scrollport, que se estende ATRÁS da
    barra de baixo e do Criar (ambos fixos, z-index maior): sem o offset do
    celular, a barra gravava por baixo deles. */
+/* Sem mudança, a linha de gravar é o fim calmo da seção: o texto diz por que
+   o botão está desligado. Com mudança, ela vira a barra fixa do rodapé da
+   área — borda de cima, fundo sólido, sem sombra nem canto que pareçam um
+   painel cortado (REGUA-003, rodada 3). */
 [data-barra="gravar-preferencias"] {
-  position: sticky;
-  z-index: 30;
   display: flex;
   min-height: 60px;
   align-items: center;
-  justify-content: flex-end;
-  gap: 8px;
+  justify-content: space-between;
+  gap: 12px;
   padding: 8px 4px;
+}
+
+[data-barra="gravar-preferencias"][data-estado="sujo"] {
+  position: sticky;
+  z-index: 30;
   border-top: 1px solid var(--outline-variant);
-  border-radius: 16px 16px 0 0;
   background: var(--background);
-  box-shadow: 0 -10px 24px var(--shadow-soft);
 }
 
 /* Largura de leitura da matriz de preferências (D16): nada de cartão e
    interruptor a ~1290 px de distância no computador. */
 @media (min-width: 768px) {
   [data-preferencias-de-aviso="sim"] {
+    width: 100%;
     max-width: 720px;
     margin-inline: auto;
   }
 }
 
-/* Abaixo de 1024 px a barra de baixo e o Criar já flutuam no rodapé: uma
-   terceira camada fixa acima deles cobria o seletor "Semanal" a 768 px
-   (reauditoria do #299). Ali a barra de gravar volta ao fluxo, no fim da
-   seção, e nada cobre controle algum. */
+/* Abaixo de 1024 px a barra de baixo já está no rodapé: a barra de gravar
+   para logo acima dela, e nada mais a cobre. Sem mudança ela fica no fluxo,
+   no fim da seção (reauditoria do #299: nada cobre o seletor "Semanal"). */
+/* O `sticky` do Chrome mede a borda de baixo pela caixa de conteúdo de
+   #conteudo, já descontado o respiro do rodapé (`--folga-do-conteudo`): sem
+   descontar de volta, a barra parava 156 px acima da barra de baixo — o
+   "painel solto no meio" da revisão às cegas (REGUA-003, rodada 3). */
 @media (max-width: 1023.98px) {
   [data-barra="gravar-preferencias"] {
-    position: static;
-    border-top: 0;
-    box-shadow: none;
+    bottom: calc(
+      var(--altura-da-barra) +
+      env(safe-area-inset-bottom) -
+      var(--folga-do-conteudo, 0px)
+    );
   }
 }
 
 @media (min-width: 1024px) {
   [data-barra="gravar-preferencias"] {
-    bottom: 12px;
-  }
-}
-
-/* A barra é o fim da seção: o respiro deixa o último cartão rolar para cima
-   dela sem ficar escondido (D4) — cobre a barra (60 px) e o offset de 12 px
-   do computador, com folga. */
-@media (min-width: 1024px) {
-  [data-preferencias-de-aviso="sim"] {
-    padding-bottom: 200px;
+    bottom: calc(0px - var(--folga-do-conteudo, 0px));
   }
 }
 
@@ -3529,9 +3545,6 @@ body[data-profundidade="sim"] [data-casca="app"] {
 }
 
 @media (max-width: 1023.98px) {
-  [data-casca="app"]:has([data-preferencias-de-aviso]) [data-acao="criar"] {
-    visibility: hidden;
-  }
   [data-preferencias-de-aviso="sim"] > ul {
     scroll-margin-bottom: 180px;
   }
@@ -3620,5 +3633,94 @@ body[data-profundidade="sim"] [data-casca="app"] {
 @media (min-width: 1024px) {
   [data-topo="barra"]:is([data-rota="grupo"], [data-rota="grupo-administrar"]) {
     padding-left: max(8px, calc((100% + 96px - 63rem) / 2));
+  }
+}
+
+/* REGUA-003 (rodada 3, A4): no tablet a barra do topo também respeita a
+   coluna de cada tela — marca ou voltar na borda esquerda dela, busca ou
+   cidade na direita. A coluna é a largura máxima da tela (Você e subtelas:
+   640 px; Avisos: 46rem; Conversas: 1120 px) centrada no conteúdo, que tem
+   16 px de respiro de cada lado. */
+@media (min-width: 768px) and (max-width: 1023.98px) {
+  [data-topo="barra"]:is(
+    [data-rota="voce"],
+    [data-rota="salvos"],
+    [data-rota="bloqueados"],
+    [data-rota="perfil"]
+  ) {
+    --coluna-do-topo: 640px;
+  }
+
+  [data-topo="barra"][data-rota="avisos"] {
+    --coluna-do-topo: 46rem;
+  }
+
+  [data-topo="barra"]:is([data-rota="conversas"], [data-rota="conversa"]) {
+    --coluna-do-topo: 1120px;
+  }
+
+  [data-topo="barra"]:is(
+    [data-rota="voce"],
+    [data-rota="salvos"],
+    [data-rota="bloqueados"],
+    [data-rota="perfil"],
+    [data-rota="avisos"],
+    [data-rota="conversas"],
+    [data-rota="conversa"]
+  ) {
+    padding-inline: calc(16px + max(0px, (100% - 32px - var(--coluna-do-topo)) / 2));
+  }
+}
+
+/* REGUA-003: no computador, o título da barra do topo começa na borda esquerda
+   da coluna de conteúdo das telas de Avisos, Conversas e Você. A coluna começa
+   depois do trilho (96 px) e do respiro do conteúdo (28 px), mais metade da
+   sobra quando a coluna é mais estreita que a área; a seta de voltar (44 px e
+   4 px de vão) fica à esquerda dessa borda, nunca por cima do trilho. */
+@media (min-width: 1024px) {
+  [data-topo="barra"]:is(
+    [data-rota="voce"],
+    [data-rota="salvos"],
+    [data-rota="bloqueados"],
+    [data-rota="perfil"]
+  ) {
+    --coluna-do-topo: 720px;
+  }
+
+  [data-topo="barra"][data-rota="avisos"] {
+    --coluna-do-topo: 46rem;
+  }
+
+  [data-topo="barra"]:is([data-rota="conversas"], [data-rota="conversa"]) {
+    --coluna-do-topo: 1120px;
+  }
+
+  [data-topo="barra"]:is(
+    [data-rota="voce"],
+    [data-rota="salvos"],
+    [data-rota="bloqueados"],
+    [data-rota="perfil"],
+    [data-rota="avisos"],
+    [data-rota="conversas"],
+    [data-rota="conversa"]
+  ) {
+    --borda-da-coluna: calc(124px + max(0px, (100% - 152px - var(--coluna-do-topo)) / 2));
+    padding-left: var(--borda-da-coluna);
+    /* A4 (rodada 3): Conversas, cidade e busca terminam na borda direita da
+       coluna, não na da janela — o mesmo respiro (28 px) e a mesma metade da
+       sobra do lado esquerdo. */
+    padding-right: calc(28px + max(0px, (100% - 152px - var(--coluna-do-topo)) / 2));
+  }
+
+  [data-topo="barra"]:is(
+    [data-rota="voce"],
+    [data-rota="salvos"],
+    [data-rota="bloqueados"],
+    [data-rota="perfil"],
+    [data-rota="avisos"],
+    [data-rota="conversas"],
+    [data-rota="conversa"]
+  ):has(> [data-acao="voltar"]) {
+    padding-left: max(100px, calc(var(--borda-da-coluna) - 48px));
   }
 }

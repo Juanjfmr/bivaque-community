@@ -59,7 +59,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
           nomeDaConversa(client, linha.id),
           client
             .from("dm_messages")
-            .select("content")
+            .select("content,created_at")
             .eq("conversation_id", linha.id)
             .order("created_at", { ascending: false })
             .order("id", { ascending: false })
@@ -76,6 +76,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
           tipo: linha.context_type,
           contextoId: linha.context_id,
           ultima: ultima.data?.content ?? "",
+          ultimaEm: ultima.data?.created_at ?? linha.created_at,
           porLer: (naoLida.data?.length ?? 0) > 0,
         }
       }),

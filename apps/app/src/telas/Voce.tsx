@@ -9,6 +9,7 @@ import { Botao } from "@/components/bivaque/botao"
 import { CabecaDePagina } from "@/components/bivaque/cabeca-de-pagina"
 import { Confirmacao } from "@/components/bivaque/confirmacao"
 import { EsqueletoDeLista } from "@/components/bivaque/esqueleto"
+import { Icone } from "@/components/bivaque/icone"
 import { LinhaDeAjuste, Lista } from "@/components/bivaque/lista"
 import { Secao } from "@/components/bivaque/secao"
 import { FalhaDaApi } from "@/lib/api/cliente"
@@ -243,16 +244,28 @@ export function Voce() {
         // A falha mora no cartão do perfil (revisão às cegas, 2): a caixa é a
         // mesma do estado de sucesso e a saída é um botão de verdade, ao lado
         // da mensagem — não um texto solto no canto da tela.
+        // REGUA-003: a falha mantém a forma do cartão de sucesso — o lugar do
+        // avatar, a linha do nome e a saída em pílula — para a tela não mudar
+        // de desenho quando a leitura volta.
         <div
           data-aviso="perfil"
-          className="flex flex-wrap items-center gap-2 rounded-2xl bg-(--surface-lowest) p-4 ring-1 ring-(--outline-variant)"
+          className="flex flex-wrap items-center gap-3 rounded-2xl bg-(--surface-lowest) p-4 ring-1 ring-(--outline-variant)"
         >
-          <p role="alert" className="min-w-0 grow text-sm text-(--destructive)">
-            Leitura do perfil indisponível agora.
-          </p>
+          <span
+            aria-hidden="true"
+            className="grid size-14 shrink-0 place-items-center rounded-full bg-(--surface-container) text-(--on-surface-variant)"
+          >
+            <Icone nome="person" />
+          </span>
+          <div className="grid min-w-0 grow gap-0.5">
+            <b className="text-[17px]">Seu perfil</b>
+            <p role="alert" className="text-sm text-(--destructive)">
+              Não foi possível carregar seu perfil.
+            </p>
+          </div>
           <Botao
             tom="contornado"
-            className="shrink-0"
+            className="shrink-0 rounded-full"
             onClick={() => setRodada((atual) => atual + 1)}
           >
             Tentar de novo
@@ -367,21 +380,32 @@ export function Voce() {
             subtitulo="Grupos que você quer ver"
             onClick={() => setInteressesAbertos(true)}
           />
-          {perfil === null ? null : (
+          {perfil === null && !erro ? null : (
             <>
+              {/* Na falha as linhas continuam (REGUA-003); sem perfil não há
+                  formulário de cidade nem de Força e OM, então o toque tenta a
+                  leitura de novo — nunca um controle morto (rodada 3, M1). */}
               <LinhaDeAjuste
                 icone="location_on"
                 titulo="Mudar de cidade"
-                subtitulo="Levar sua conta para outra cidade"
+                subtitulo={
+                  perfil === null
+                    ? "Carregue seu perfil para mudar de cidade"
+                    : "Levar sua conta para outra cidade"
+                }
                 aria-expanded={cidadeAberta || undefined}
-                onClick={abrirCidade}
+                onClick={perfil === null ? () => setRodada((atual) => atual + 1) : abrirCidade}
               />
               <LinhaDeAjuste
                 icone="badge"
                 titulo="Força e OM"
-                subtitulo="Declarar é opcional"
+                subtitulo={
+                  perfil === null
+                    ? "Carregue seu perfil para declarar Força e OM"
+                    : "Declarar é opcional"
+                }
                 aria-expanded={forcaAberta || undefined}
-                onClick={abrirForca}
+                onClick={perfil === null ? () => setRodada((atual) => atual + 1) : abrirForca}
               />
             </>
           )}

@@ -1,0 +1,111 @@
+task_id: REGUA-003
+objective: >
+  Conversas, Avisos e Você (F09 e F10) ficam no nível da régua Nextdoor em 375/768/1440 no tema
+  claro, corrigindo os achados graves e médios da revisão às cegas de 23/11: a barra de baixo nunca
+  tem vão, a mesma pessoa tem as mesmas iniciais em toda parte, a conversa mostra o item de que trata,
+  nenhuma tela vira coluna de celular solta no computador e nenhum dado principal é cortado.
+authority:
+  - docs/LANCAMENTO.md (F09 e F10, critério 2)
+  - tools/backend-kanban/public/board.json (LAN-F09 e LAN-F10, nota de 23/11 da revisão às cegas)
+  - docs/decisions/ADR-20261118-brasa-so-no-criar.md
+  - docs/decisions/ADR-20261116-bloqueio-e-denuncia-pela-porta-do-app.md
+  - docs/agents/regua-nextdoor/PADRAO-DE-TELA.md
+  - docs/agents/regua-nextdoor/IDENTIDADE-DAS-PECAS.md
+  - "Mobbin, Nextdoor web, perfil de vizinho (botão Message escuro, ⋯ no canto): https://mobbin.com/screens/041fb7de-0cfe-46de-9d78-37448e7f0493"
+  - "Mobbin, Nextdoor iOS, menu ⋯ como folha de baixo: https://mobbin.com/screens/f23df80d-4b7d-4a7a-8abc-fdeadbc0bedd"
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    Revisão às cegas de 23/11 sobre a main 9c075d211 (capturas de
+    apps/app/tests/e2e/cegas/capturas-f09-f10.spec.ts, tema claro, revisor Claude independente com
+    só imagens e régua): F09 Avisos, F09 Conversas e F10 Você REPROVADAS. Vereditos em
+    .visual/cega-003/vereditos/. Graves: (1) a barra de baixo mostra um vão entre Comunidade e
+    Mercado em /voce, /avisos e nas preferências em 375 e 768 (criaVisivel em apps/app/lib/casca.ts
+    tira o botão mas o espaço fica); (2) há duas funções iniciais(): apps/app/src/pecas/pecas.tsx
+    (primeira e última: "AF") e apps/app/lib/texto.ts (duas primeiras: "AB"), então a mesma "Ana
+    Beatriz Ferreira" aparece como AF no cartão e AB na navegação; nas capturas de 1440 a lateral ainda
+    mostra "RS" por sessão simulada diferente do perfil; (3) preferências de avisos em coluna de ~320 px
+    solta em 1440 e duas larguras de coluna em 768; (4) a caixa de Conversas põe um cartão branco solto
+    ("Anúncio", "Serviço", "Grupo em comum") sob cada linha, sem dizer qual item; o cabeçalho da conversa
+    diz só "Anúncio", sem título, foto ou preço; (5) nome do membro cortado ("Paulo Robe…") em 375 no
+    perfil de membro, que também não tem ação de mensagem. Médios: envio que falhou repõe o texto no
+    campo além do balão com "Tentar de novo"; bandeira de denúncia fixa ao lado de cada mensagem
+    recebida; menu da conversa só com Bloquear; campo de mensagem retangular com alça de
+    redimensionar; respostas rápidas empilhadas (~170 px); sem horário na caixa e nos balões; ponto de
+    não lida continua com a conversa aberta; rádios azuis nativos na denúncia; "Tentar de novo" e
+    "Gravar preferências" sem forma de pílula; "Gravar preferências" fora de barra fixa no celular e
+    barra fixa malformada em 1440; texto de falha do Você descreve o sistema ("Leitura do perfil
+    indisponível agora"); "Mudar de cidade" some na falha; vazios com ícone genérico em mancha e cartão
+    vazio mais estreito que a coluna do título; ícone de salvo em contorno nas linhas e cheio nos
+    cartões; títulos de seção colados no bloco anterior em Salvos; título da barra do topo no
+    computador fora do alinhamento da coluna de conteúdo.
+decisions:
+  - "Coluna de contexto lateral não é exigida neste lote: a página de notificações e o perfil do Nextdoor web também usam uma coluna central. O que se exige é a largura de leitura da régua (sem coluna de ~320 px solta) e o título da barra do topo alinhado à coluna."
+  - "Sem rota nova: o item da conversa vem dos dados que o app já lê (contextoId e as leituras existentes de anúncio, negócio e grupo); se o tipo não tiver leitura existente, o cabeçalho mostra o tipo e o nome do item quando houver, e o relatório registra o que faltou."
+  - "Rodada 3 (23/11, coordenador): a caixa de Conversas ganha o horário da última mensagem pelo campo ultimaEm na resposta existente de GET /api/app/conversas (sem rota nova, sem migração: o servidor já lê created_at); o leitor do app e os testes da rota acompanham. Denunciar membro sem rota própria abre a folha de denúncia da conversa existente, nunca navega em silêncio."
+  - "Ilustrações novas dos vazios ficam fora: os vazios usam as ilustrações da família que já existem em apps/app (procure as usadas em Conversas vazia e Comunidade); se nenhuma servir, o vazio fica sem figura em vez de ícone em mancha."
+allowed_paths:
+  - apps/app/src/telas/Conversas.tsx
+  - apps/app/src/telas/Conversa.tsx
+  - apps/app/src/telas/Avisos.tsx
+  - apps/app/src/telas/Voce.tsx
+  - apps/app/src/telas/PerfilDeMembro.tsx
+  - apps/app/src/telas/Bloqueados.tsx
+  - apps/app/src/telas/Salvos.tsx
+  - apps/app/src/casca/*.tsx
+  - apps/app/src/pecas/*.tsx
+  - apps/app/src/conversas/**
+  - apps/app/src/avisos/**
+  - apps/app/src/voce/**
+  - apps/app/components/bivaque/**
+  - apps/app/lib/casca.ts
+  - apps/app/lib/texto.ts
+  - apps/app/src/styles.css
+  - apps/app/tests/e2e/cegas/capturas-f09-f10.spec.ts
+  - apps/app/tests/e2e/*-ajuda.ts
+  - apps/app/tests/e2e/apoio.ts
+  - apps/app/tests/e2e/avisos*.spec.ts
+  - apps/app/tests/e2e/conversa*.spec.ts
+  - apps/app/tests/e2e/voce*.spec.ts
+  - apps/app/tests/e2e/salvos*.spec.ts
+  - apps/app/tests/e2e/casca*.spec.ts
+  - apps/app/tests/**/*.test.ts
+  - apps/app/tests/**/*.test.tsx
+  - docs/agents/tasks/REGUA-003.task.yml
+  - apps/web/app/api/app/conversas/route.ts
+  - apps/web/app/api/app/conversas/_comum.ts
+  - apps/app/lib/dados/conversas.ts
+  - apps/app/lib/galeria.ts
+  - tests/unit/app-api/conversas/rotas.test.ts
+  - tests/scope/conversas-porta.test.mjs
+  - apps/app/tests/e2e/*.spec.ts
+forbidden:
+  - criar rota de API, mudar apps/web além do campo ultimaEm em GET /api/app/conversas, supabase, banco ou migrations
+  - adicionar dependência
+  - usar Brasa fora do Criar (ADR-20261118)
+  - mostrar Força, OM, posto ou selo de verificação de outro membro (BLOCK-AFFILIATION)
+  - afrouxar, pular ou apagar teste existente para ficar verde; mudar o comportamento de bloqueio, denúncia ou envio além do descrito
+  - tocar em telas de outras jornadas além do efeito da casca e das peças compartilhadas
+  - git stash, reset de banco, delegação, push, board
+acceptance:
+  - "barra de baixo: em nenhuma rota e largura abaixo de 1024 px há vão; nas raízes das cinco abas o Criar aparece; fora delas os itens se redistribuem sem buraco (ou o Criar aparece) — teste unitário da regra e prova no E2E de casca"
+  - "iniciais: uma única função para toda a app, mesma pessoa → mesmas iniciais e mesmo tom no cartão, na barra e na lateral; os simuladores das capturas usam a mesma pessoa na sessão e no perfil"
+  - "Conversas: cada linha da caixa é uma linha só (avatar, nome, prévia, horário relativo, e o contexto como texto curto ou miniatura na própria linha), sem cartão solto; o cabeçalho da conversa mostra o item (título e, quando houver, foto e preço) e não só o tipo; horário nos balões; o ponto de não lida some ao abrir; denúncia por mensagem fica no menu da mensagem ou num toque, não como bandeira fixa; o menu ⋯ tem Denunciar e Bloquear; campo de mensagem em pílula sem alça de redimensionar; respostas rápidas em faixa horizontal com rolagem; envio que falhou fica só no balão com Tentar de novo e o campo volta limpo; rádios da denúncia na cor de tinta"
+  - "Avisos: preferências na mesma largura de leitura das demais seções em 768 e 1440; Gravar preferências em barra fixa no rodapé no celular e bem formada no computador; botões em pílula; Marcar todas como lidas; vazio com saída para as preferências; cabeçalho alinhado"
+  - "Você: falha fala com a pessoa ('Não foi possível carregar seu perfil') com Tentar de novo em pílula e mantém a estrutura do sucesso, incluindo Mudar de cidade; perfil de membro com nome inteiro em 375 (quebra linha em vez de cortar) e ação de mensagem quando a rota de conversa existente permitir, com ⋯ Bloquear e Denunciar; Salvos com o mesmo ícone de salvo nas linhas e nos cartões, respiro entre seções, grade que ocupa a coluna em 1440; vazios com cartão na largura da coluna"
+  - "no computador o título da barra do topo se alinha à coluna de conteúdo nas telas destas jornadas"
+  - "capturas cegas regeradas (capturas-f09-f10.spec.ts, portas PLAYWRIGHT_PORT=3310 PLAYWRIGHT_BUILD_PORT=3311) e relatório em .visual/regua-003/RELATORIO.md: achado → arquivo → como foi resolvido, ou por que ficou"
+proof:
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/REGUA-003.task.yml
+  - npx pnpm@11.18.0 gate --fast
+  - npx pnpm@11.18.0 --filter @bivaque/app test
+  - npx pnpm@11.18.0 --filter @bivaque/app build
+  - PLAYWRIGHT_PORT=3310 PLAYWRIGHT_BUILD_PORT=3311 npx pnpm@11.18.0 --filter @bivaque/app exec playwright test tests/e2e/avisos tests/e2e/conversa tests/e2e/voce tests/e2e/salvos tests/e2e/casca tests/e2e/acessibilidade.spec.ts --project mobile-375 --project tablet-768 --project desktop-1440
+  - PLAYWRIGHT_PORT=3310 PLAYWRIGHT_BUILD_PORT=3311 npx pnpm@11.18.0 --filter @bivaque/app exec playwright test tests/e2e/cegas/capturas-f09-f10.spec.ts --project desktop-1440
+risk: interface
+risk_level: R2
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: HUMAN_DECISION
+closure:
+  requires_runtime_evidence: true

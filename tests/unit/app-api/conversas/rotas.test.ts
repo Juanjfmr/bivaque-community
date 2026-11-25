@@ -177,8 +177,22 @@ describe("conversas do app", () => {
     expect(resposta.status).toBe(200)
     expect(await resposta.json()).toMatchObject({
       porLer: 1,
-      conversas: [{ porLer: true, id: ID, nome: "Maria", outroId: OUTRO, ultima: "Olá" }],
+      conversas: [
+        {
+          porLer: true,
+          id: ID,
+          nome: "Maria",
+          outroId: OUTRO,
+          ultima: "Olá",
+          ultimaEm: "2026-11-02T12:00:00Z",
+        },
+      ],
     })
+  })
+  it("sem mensagem, o horário da linha é o da abertura da conversa", async () => {
+    autenticar(cliente({ mensagens: [] }))
+    const corpo = await (await listar(req("GET"))).json()
+    expect(corpo.conversas[0]).toMatchObject({ ultima: "", ultimaEm: conversa.created_at })
   })
   it("não marca por ler a própria mensagem nem a já lida", async () => {
     autenticar(cliente({ mensagens: [mensagem] }))
