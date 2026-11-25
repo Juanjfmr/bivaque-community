@@ -860,6 +860,13 @@ async function fotografar(
 ) {
   const diretorio = join(RAIZ, jornada)
   mkdirSync(diretorio, { recursive: true })
+  // A figura do vazio é parte do estado: a foto espera a imagem decodificada,
+  // senão registra o lugar dela em branco (rodada 3, V1).
+  await page.waitForFunction(() =>
+    Array.from(document.querySelectorAll<HTMLImageElement>('[data-estado="vazio"] img')).every(
+      (imagem) => imagem.complete && imagem.naturalWidth > 0,
+    ),
+  )
   await page.screenshot({
     path: join(diretorio, `${largura}-${tema}-${passo.nome}.png`),
     fullPage: true,
