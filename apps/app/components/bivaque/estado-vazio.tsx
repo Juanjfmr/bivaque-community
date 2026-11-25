@@ -51,9 +51,11 @@ export function EstadoVazio({
           aria-hidden="true"
           width={1200}
           height={800}
-          loading="lazy"
+          // O vazio fica acima da dobra: carregar sob demanda deixava o lugar
+          // da figura em branco (~170 px) até a imagem chegar (rodada 3, V1).
+          loading="eager"
           decoding="async"
-          className="h-auto w-56 max-w-full"
+          className="aspect-[3/2] h-auto w-56 max-w-full"
         />
       )}
       <Titulo className="text-[17px] leading-6 font-semibold tracking-normal">{titulo}</Titulo>

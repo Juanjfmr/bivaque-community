@@ -260,6 +260,12 @@ test("remover tira a linha de cada seção pela rota daquele tipo", async ({ pag
   const vazio = page.locator('[data-tela="salvos"] [data-estado="vazio"]')
   await expect(vazio).toHaveCount(1)
   await expect(vazio).toContainText("Nada salvo ainda")
+  // A figura do vazio chega junto com o texto, sem vão em branco (rodada 3, V1).
+  const figura = vazio.locator("img")
+  await expect(figura).toHaveAttribute("loading", "eager")
+  await expect
+    .poll(() => figura.evaluate((img) => (img as HTMLImageElement).naturalWidth))
+    .toBeGreaterThan(0)
   await expect(page.getByRole("searchbox", { name: "Buscar nos salvos" })).toHaveCount(0)
   const perguntasAinda = page.locator('[data-salvos="perguntas"]')
   await expect(perguntasAinda).toContainText(TITULO_DA_SEGUNDA_PERGUNTA)
