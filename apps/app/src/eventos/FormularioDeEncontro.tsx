@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react"
 
+import { EsqueletoDeLista } from "@/components/bivaque/esqueleto"
 import { Sobreposicao } from "@/components/bivaque/sobreposicao"
 import { criarEncontro, type Encontro, editarEncontro } from "@/lib/dados/eventos"
 import { useCasca } from "@/src/contexto/casca"
@@ -21,6 +22,14 @@ import {
 } from "@/src/eventos/formulario"
 import { AreaDeTexto, Botao, Campo } from "@/src/pecas/pecas"
 
+const DESCRICAO_DA_FOLHA = "Quem pode ver é a cidade do encontro: ela vem do seu perfil."
+
+type PropsDoFormulario = {
+  readonly encontro?: Encontro
+  readonly aoFechar: () => void
+  readonly aoSalvar: (id: string) => void
+}
+
 /**
  * A folha de criar e editar encontro.
  *
@@ -36,18 +45,48 @@ import { AreaDeTexto, Botao, Campo } from "@/src/pecas/pecas"
  *
  * Ao gravar, a tela vai para o detalhe do encontro gravado: o que aparece depois
  * é o que o banco devolveu, não o que o formulário achava que ia gravar.
+ *
+ * Sem cidade a chave do rascunho fica vazia: ler ali não acha nada e o efeito de
+ * guardar regravaria esse vazio por cima do rascunho da cidade quando ela
+ * chegasse. Em criação a folha espera a cidade; editar não usa rascunho e abre
+ * sem ela (BUGCID-001).
  */
-export function FormularioDeEncontro({
+export function FormularioDeEncontro(props: PropsDoFormulario) {
+  const { cidadeDeCasa } = useCasca()
+  if (props.encontro === undefined && cidadeDeCasa === "") {
+    return (
+      <Sobreposicao
+        id="folha"
+        titulo="Novo encontro"
+        descricao={DESCRICAO_DA_FOLHA}
+        aoFechar={props.aoFechar}
+      >
+        <EsqueletoDeLista linhas={3} />
+      </Sobreposicao>
+    )
+  }
+  return (
+    <FormularioDaCidade
+      cidadeDeCasa={cidadeDeCasa}
+      encontro={props.encontro}
+      aoFechar={props.aoFechar}
+      aoSalvar={props.aoSalvar}
+    />
+  )
+}
+
+function FormularioDaCidade({
+  cidadeDeCasa,
   encontro,
   aoFechar,
   aoSalvar,
 }: {
-  readonly encontro?: Encontro
+  readonly cidadeDeCasa: string
+  readonly encontro: Encontro | undefined
   readonly aoFechar: () => void
   readonly aoSalvar: (id: string) => void
 }) {
   const editando = encontro !== undefined
-  const { cidadeDeCasa } = useCasca()
   const chave = `bivaque:f03:encontro:${cidadeDeCasa}`
   const [revisando, setRevisando] = useState(false)
   const [aviso, setAviso] = useState("")
@@ -127,7 +166,7 @@ export function FormularioDeEncontro({
     <Sobreposicao
       id="folha"
       titulo={editando ? "Editar encontro" : "Novo encontro"}
-      descricao="Quem pode ver é a cidade do encontro: ela vem do seu perfil."
+      descricao={DESCRICAO_DA_FOLHA}
       aoFechar={aoFechar}
     >
       <form onSubmit={(evento) => void gravar(evento)} noValidate>

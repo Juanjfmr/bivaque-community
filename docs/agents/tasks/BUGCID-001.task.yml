@@ -1,0 +1,113 @@
+# BUG-CIDADE-GRUPOS — Defeitos que o dono achou no app local em 22/11/2026 (03h38 UTC),
+# com um perfil que trocou de Manaus para o Rio de Janeiro na entrada.
+# Diagnóstico do coordenador no banco local e no código (main 3c360fc1b):
+#  - O vínculo está certo: Rio de Janeiro com kind 'current' e Manaus com 'leaving'.
+#  - Chip do topo: apps/app/src/contexto/casca.tsx inicia `cidade`/`cidadeDeCasa` com
+#    dadosDoApp.resumoDaCasca() ou CIDADE_PADRAO = "Manaus" e nunca lê a cidade da sessão.
+#    A Início lê a cidade da sessão (cidadeDaSessao em api/app/eventos/_comum.ts, kind 'current').
+#  - Grupos de outra cidade na entrada: api/app/entry/groups/route.ts (e interests) lê
+#    locality_memberships com .limit(1) SEM filtrar kind = 'current'; pegou Manaus ('leaving').
+#  - Grupos escolhidos somem: o "Entrar" da entrada só grava interesse
+#    (user_group_interests, via record_user_group_interests); a Comunidade lista
+#    group_memberships. A pessoa nunca vira membro.
+#  - Grupos de prova no banco local: tests/e2e/group-base.spec.ts e
+#    group-join-reason.spec.ts (apps/web) criam "Grupo COM-003 <ts>" e "Grupo COM-005 ..."
+#    e não apagam. Quase-duplicatas: supabase/dev/demo-manaus.sql cria grupos parecidos
+#    com os do seed ("Caminhada do Mindu" x "Caminhada no Mindu", "Corrida ao amanhecer" x
+#    "Corrida às Terças", "Trocas de livro e gibis" x "Trocas de Livros", "Reformas e
+#    reparos em casa" x "Reformas e Consertos", "Pais e mães do Parque 10" x "Pais e Filhos").
+#  - A persona demo-ana caiu na entrada de novo: o script de demonstração não grava o
+#    progresso da entrada como concluído.
+
+task_id: BUGCID-001
+
+objective: >
+  O app mostra uma cidade só: o chip do topo, a Início e a lista de grupos da entrada
+  usam a cidade atual da sessão (vínculo kind 'current'), ou a cidade consultada quando
+  a pessoa troca pelo chip. Os grupos em que a pessoa toca "Entrar" na entrada viram
+  participação de verdade e aparecem na Comunidade. O banco local não guarda grupos de
+  prova nem quase-duplicatas da demonstração, e a persona de demonstração entra direto
+  no app.
+
+authority:
+  - Relato do dono em 22/11/2026 03h38 UTC na thread do projeto (capturas do cadastro RJ)
+  - Nota do coordenador de 22/11/2026 03h39 UTC (lote BUG-CIDADE-GRUPOS, itens 1 a 6)
+  - docs/decisions/ADR-20261102-progresso-da-entrada.md (etapa de interesses e provisionamento)
+  - docs/decisions/ADR-20261024-front-react-spa.md §5 (contrato de segurança das rotas)
+
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    Banco local em 22/11: usuário dd000000-0000-4000-8000-000000000001 com vínculos
+    Rio de Janeiro (current) e Manaus (leaving); entry/groups devolveu grupos de Manaus;
+    6 linhas em user_group_interests e nenhuma group_membership nova; chip do topo
+    "Manaus" com a Início em "Rio de Janeiro"; 11 grupos "Grupo COM-00x <timestamp>"
+    na cidade de Manaus.
+
+allowed_paths:
+  - docs/agents/tasks/BUGCID-001.task.yml
+  - apps/app/src/contexto
+  - apps/app/src/casca
+  - apps/app/src/entrada
+  - apps/app/src/previa-f01
+  - apps/app/src/telas/Inicio.tsx
+  - apps/app/src/inicio
+  - apps/app/src/criar
+  - apps/app/src/eventos/FormularioDeEncontro.tsx
+  - apps/app/src/telas/MeusAnuncios.tsx
+  - apps/app/lib
+  - apps/app/tests
+  - apps/web/app/api/app/entry
+  - apps/web/app/api/app/eventos/_comum.ts
+  - apps/web/lib/app-api
+  - apps/web/lib/communities
+  - apps/web/tests
+  - tests/e2e/group-base.spec.ts
+  - tests/e2e/group-join-reason.spec.ts
+  - tests/unit
+  - supabase/dev/demo-manaus.sql
+  - scripts/dev/popular-local.mjs
+
+forbidden:
+  - criar ou editar migration, policy, grant ou função do banco; se a correção exigir, pare e devolva BLOCKED com o motivo
+  - editar supabase/seed.sql
+  - mudar o tamanho, a ordem ou os passos da entrada (o redesenho é outro lote, ENTRADA-ENXUTA)
+  - mudar o fluxo de CPF, Portal ou verificação
+  - usar service_role para entrar em grupo; a participação usa o cliente da sessão (RPC join_group, sob RLS)
+  - entrar automaticamente em grupo privado ou de outra cidade
+  - skip/fixme novo ou afrouxar asserção existente
+  - ler, criar ou editar arquivos de ambiente; imprimir credenciais
+  - rodar reset de banco; o banco local é compartilhado com o app que o dono está usando
+
+acceptance:
+  - "Cidade da sessão em um lugar só: as rotas de entry (groups, interests e qualquer outra que use a cidade para escopar dado) leem a cidade pelo mesmo helper de cidadeDaSessao (kind 'current'). Teste da rota com uma pessoa que tem vínculo current numa cidade e leaving em outra: a lista só traz grupos públicos da current."
+  - "Chip do topo: com sessão, cidade e cidadeDeCasa da casca vêm da cidade da sessão (rota existente do app que já devolve a cidade, sem rota nova se der). CIDADE_PADRAO não aparece para quem tem cidade. O chip abre o painel da cidade; a Início mostra o conteúdo da cidade de casa, conforme ADR-20260925. Vitest cobre: sessão com cidade X mostra X no chip; o conteúdo preserva a cidade de casa ao consultar outra cidade."
+  - "Entrar na entrada vira participação: cada grupo público da cidade current marcado com Entrar vira group_membership pela RPC join_group no cliente da sessão, no momento em que o vínculo com a cidade existe (no provisionamento ou logo depois). Interesse continua gravado como hoje. Grupo privado ou de outra cidade é ignorado sem erro para a pessoa. Testes positivos e negativos na rota (grupo público da cidade vira membro; privado e de outra cidade não)."
+  - "E2E do app em 375, 768 e 1440 nos dois temas: concluir a entrada marcando um grupo, abrir Comunidade e ver o grupo em Seus grupos (ou equivalente)."
+  - "Botões Entrar da lista de grupos da entrada com a mesma largura em todas as linhas, qualquer que seja o tamanho do texto. Asserção de largura igual no E2E."
+  - "Estado vazio da Início numa cidade sem conteúdo só afirma o que a consulta confirmou: nenhuma contagem, nome ou promessa de conteúdo que não existe. Teste cobre a cidade vazia."
+  - "Banco local limpo: o demo-manaus.sql não cria quase-duplicatas do seed: reaproveita os grupos do seed ou troca por temas distintos, e apaga, só no banco local e de forma idempotente, grupos cujo nome começa com 'Grupo COM-00' e as quase-duplicatas que ele mesmo criou antes (ids dd2...)."
+  - "A persona de demonstração entra direto no app: o script grava o progresso da entrada como concluído para as contas dd... (mesmas tabelas que o provisionamento usa), e conserta demo-ana se ela já tiver passado pela entrada (deixa uma cidade current só)."
+  - "Passam: --filter @bivaque/app test, --filter @bivaque/app typecheck, --filter web test, --filter @bivaque/app test:e2e (PLAYWRIGHT_PORT=3294, PLAYWRIGHT_BUILD_PORT=3295) e gate completo no fechamento."
+
+# 25/11/2026: o chip abre o painel e a Início mantém a cidade de casa, conforme ADR-20260925.
+# 25/11/2026: a limpeza ficou apenas no demo-manaus.sql porque as specs group-base e group-join-reason não existem mais.
+
+proof:
+  - npx pnpm@11.18.0 --filter @bivaque/app test
+  - npx pnpm@11.18.0 --filter @bivaque/app typecheck
+  - npx pnpm@11.18.0 --filter web test
+  - npx pnpm@11.18.0 --filter @bivaque/app test:e2e
+  - npx pnpm@11.18.0 gate
+  - node scripts/dev/popular-local.mjs
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/BUGCID-001.task.yml
+
+risk: escreve participação em grupo pela sessão e lê a cidade da sessão em rotas da entrada; sem banco novo
+risk_level: R2
+
+reviewer_must_differ_from_executor: true
+retry_budget: 2
+on_budget_exhausted: HUMAN_DECISION
+
+closure:
+  requires_runtime_evidence: true

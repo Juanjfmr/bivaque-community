@@ -219,7 +219,7 @@ export function Casca() {
           aria-label="Conteúdo"
           inert={comCascaDoApp && bloqueado}
         >
-          {comCascaDoApp && mostraFaixaDeVisita(casca.vendoOutraCidade) ? (
+          {comCascaDoApp && mostraFaixaDeVisita(casca.vendoOutraCidade, casca.cidadeDeCasa) ? (
             <FaixaDeVisita
               cidadeVista={casca.cidade}
               cidadeDaPessoa={casca.cidadeDeCasa}

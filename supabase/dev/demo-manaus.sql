@@ -191,6 +191,59 @@ select m.id, 2, 2, now() - make_interval(days => m.dias)
 from demo_membros m
 on conflict do nothing;
 
+-- ── Entrada concluída ───────────────────────────────────────────────────────
+--
+-- A demonstração entra DIRETO no app: o fim da entrada é o estado canônico
+-- (vínculo `current` + perfil + momento) e NENHUM rascunho. Um
+-- `entry_progress` que sobrou — o marcador que o provisionamento grava para a
+-- prévia — manda a pessoa de volta a uma etapa do cadastro; foi o que
+-- aconteceu com a demo-ana. É exatamente o estado que o provisionamento deixa:
+-- vínculo, perfil e momento gravados, rascunho apagado.
+insert into public.member_entry_moments (user_id, moment)
+select m.id, 'resident'
+from demo_membros m
+on conflict (user_id) do nothing;
+
+delete from public.entry_progress ep
+using demo_membros m
+where ep.user_id = m.id;
+
+-- A persona de demonstração é de MANAUS. Um cadastro feito em outra cidade — o
+-- dono trocou para o Rio na entrada — não fica na demonstração: o vínculo da
+-- outra cidade sai, Manaus volta a ser a `current` e um momento de mudança
+-- para outra cidade volta a "morando". Só contas dd…; nenhuma outra é tocada.
+delete from public.locality_memberships lm
+ using demo_membros m
+ where lm.user_id = m.id
+   and lm.locality_id <> '00000000-0000-4000-8000-000000000001';
+
+-- A persona é de Manaus; participação e interesse em grupos do Rio são resíduos de cadastro no Rio.
+delete from public.group_memberships gm
+ using demo_membros m, public.groups g
+ where gm.user_id = m.id
+   and gm.group_id = g.id
+   and g.locality_id = (select id from public.localities where ibge_code = '3304557');
+
+delete from public.user_group_interests ugi
+ using demo_membros m, public.groups g
+ where ugi.user_id = m.id
+   and ugi.group_id = g.id
+   and g.locality_id = (select id from public.localities where ibge_code = '3304557');
+
+update public.locality_memberships lm
+   set kind = 'current', leaving_at = null
+ from demo_membros m
+ where lm.user_id = m.id
+   and lm.locality_id = '00000000-0000-4000-8000-000000000001'
+   and (lm.kind <> 'current' or lm.leaving_at is not null);
+
+update public.member_entry_moments mem
+   set moment = 'resident', arrival_date = null, departure_date = null,
+       destination_locality_id = null, updated_at = now()
+ from demo_membros m
+ where mem.user_id = m.id
+   and (mem.moment <> 'resident' or mem.destination_locality_id is not null);
+
 -- ══════════════════════════════════════════════════════════════════════════
 -- 2. Família
 --
@@ -761,68 +814,55 @@ on conflict (id) do nothing;
 --
 -- Sem vila e sem comunidade: grupos de cidade (`locality_id`), `community_id`
 -- nulo. Publicação só existe dentro de grupo — é a regra vigente do produto.
+--
+-- A demonstração REAPROVEITA os grupos do seed (ids 60000000…) em vez de criar
+-- os seus: as versões anteriores deste arquivo criavam um grupo quase igual
+-- para cada tema do seed ("Caminhada do Mindu" x "Caminhada no Mindu" etc.), e
+-- a cidade ficava com duas cópias de tudo. Os grupos de prova que as specs da
+-- web deixavam ("Grupo COM-00…") e as quase-duplicatas antigas (ids dd2…) saem
+-- daqui, só no banco local e de forma idempotente.
 -- ══════════════════════════════════════════════════════════════════════════
 
-insert into public.groups (
-  id, name, description, rules, visibility, locality_id, created_by, owner_user_id, created_at
-)
-values
-  ('dd200000-0000-4000-8000-000000000001', 'Caminhada do Mindu',
-   'Combinamos caminhada cedo, antes do calor apertar.',
-   'Avisar no grupo quando não puder ir. Ritmo leve, todos caminham juntos.',
-   'public', '00000000-0000-4000-8000-000000000001',
-   'dd000000-0000-4000-8000-000000000004', 'dd000000-0000-4000-8000-000000000004',
-   now() - interval '120 days'),
-  ('dd200000-0000-4000-8000-000000000002', 'Pais e mães do Parque 10',
-   'Escola, atividades e passeios com as crianças do bairro.',
-   'Nada de discussão política. Dúvida sobre escola é sempre bem-vinda.',
-   'public', '00000000-0000-4000-8000-000000000001',
-   'dd000000-0000-4000-8000-000000000008', 'dd000000-0000-4000-8000-000000000008',
-   now() - interval '110 days'),
-  ('dd200000-0000-4000-8000-000000000003', 'Corrida ao amanhecer',
-   'Treino leve às terças e quintas, para quem está começando.',
-   'Sem competição no grupo. Cada um no seu pace.',
-   'public', '00000000-0000-4000-8000-000000000001',
-   'dd000000-0000-4000-8000-000000000006', 'dd000000-0000-4000-8000-000000000006',
-   now() - interval '100 days'),
-  ('dd200000-0000-4000-8000-000000000004', 'Trocas de livro e gibis',
-   'Cada um traz um livro lido e leva outro para casa.',
-   'Combinar a troca pelo grupo antes de sair de casa.',
-   'public', '00000000-0000-4000-8000-000000000001',
-   'dd000000-0000-4000-8000-000000000011', 'dd000000-0000-4000-8000-000000000011',
-   now() - interval '95 days'),
-  ('dd200000-0000-4000-8000-000000000005', 'Reformas e reparos em casa',
-   'Indicação de quem faz bem feito e socorro para o que quebrou.',
-   'Quem indicar serviço conta como foi a experiência.',
-   'public', '00000000-0000-4000-8000-000000000001',
-   'dd000000-0000-4000-8000-000000000010', 'dd000000-0000-4000-8000-000000000010',
-   now() - interval '90 days'),
-  ('dd200000-0000-4000-8000-000000000006', 'Cozinha de domingo',
-   'Receitas, panelas e o almoço que junta a família.',
-   'Grupo fechado, só por convite. Receita boa se compartilha.',
-   'private', '00000000-0000-4000-8000-000000000001',
-   'dd000000-0000-4000-8000-000000000025', 'dd000000-0000-4000-8000-000000000025',
-   now() - interval '80 days')
-on conflict (id) do nothing;
+-- O gatilho recusa trocar group_id; as linhas dd2… saem e voltam pelo insert abaixo,
+-- já no grupo do seed do mesmo tema.
+delete from public.posts
+ where group_id in (
+   'dd200000-0000-4000-8000-000000000001',
+   'dd200000-0000-4000-8000-000000000002',
+   'dd200000-0000-4000-8000-000000000003',
+   'dd200000-0000-4000-8000-000000000004',
+   'dd200000-0000-4000-8000-000000000005',
+   'dd200000-0000-4000-8000-000000000006'
+ );
+
+delete from public.posts p
+ using public.groups g
+ where p.group_id = g.id
+   and g.locality_id = '00000000-0000-4000-8000-000000000001'
+   and g.name like 'Grupo COM-00%';
+
+delete from public.groups
+ where locality_id = '00000000-0000-4000-8000-000000000001'
+   and (name like 'Grupo COM-00%' or id::text like 'dd200000-%');
 
 -- Cada membro entra em parte dos grupos (o resto da cidade fica de fora, como
 -- na vida real). A persona principal entra em todos; o grupo fechado só recebe
--- quem foi convidado.
+-- quem foi convidado. Cada grupo tem uma persona de demonstração como dona.
 insert into public.group_memberships (group_id, user_id, role, status, joined_at)
 select
   g.id,
   m.id,
-  'member'::public.group_membership_role,
+  (case when m.i = g.dono then 'owner' else 'member' end)::public.group_membership_role,
   'approved'::public.group_membership_status,
   now() - make_interval(days => 60 - (m.i % 20) - g.n)
 from (
   values
-    (1, 'dd200000-0000-4000-8000-000000000001'::uuid, 4),
-    (2, 'dd200000-0000-4000-8000-000000000002'::uuid, 8),
-    (3, 'dd200000-0000-4000-8000-000000000003'::uuid, 6),
-    (4, 'dd200000-0000-4000-8000-000000000004'::uuid, 11),
-    (5, 'dd200000-0000-4000-8000-000000000005'::uuid, 10),
-    (6, 'dd200000-0000-4000-8000-000000000006'::uuid, 25)
+    (1, '60000000-0000-4000-8000-000000000001'::uuid, 4),
+    (2, '60000000-0000-4000-8000-000000000002'::uuid, 8),
+    (3, '60000000-0000-4000-8000-000000000003'::uuid, 6),
+    (4, '60000000-0000-4000-8000-000000000004'::uuid, 11),
+    (5, '60000000-0000-4000-8000-000000000007'::uuid, 10),
+    (6, '60000000-0000-4000-8000-000000000006'::uuid, 25)
 ) as g(n, id, dono)
 cross join demo_membros m
 where (
@@ -831,67 +871,102 @@ where (
     or m.i = g.dono
   )
   and (g.n < 6 or m.i in (1, 7, 12, 25))
-on conflict (group_id, user_id) do nothing;
+on conflict (group_id, user_id) do update
+  set role = 'owner', status = 'approved'
+  where excluded.role = 'owner';
+
+-- Mantém o campo de proprietário e a participação anterior coerentes.
+update public.group_memberships gm
+   set role = 'member'
+  from public.groups g, public.group_memberships dono
+ where gm.group_id = g.id
+   and dono.group_id = g.id
+   and g.id in (
+     '60000000-0000-4000-8000-000000000001', '60000000-0000-4000-8000-000000000002',
+     '60000000-0000-4000-8000-000000000003', '60000000-0000-4000-8000-000000000004',
+     '60000000-0000-4000-8000-000000000006', '60000000-0000-4000-8000-000000000007'
+   )
+   and dono.user_id::text like 'dd000000-%'
+   and dono.role = 'owner'
+   and gm.user_id = g.owner_user_id
+   and gm.user_id <> dono.user_id
+   and gm.role = 'owner';
+
+update public.groups g
+   set owner_user_id = dono.user_id
+  from public.group_memberships dono
+ where dono.group_id = g.id
+   and g.id in (
+     '60000000-0000-4000-8000-000000000001', '60000000-0000-4000-8000-000000000002',
+     '60000000-0000-4000-8000-000000000003', '60000000-0000-4000-8000-000000000004',
+     '60000000-0000-4000-8000-000000000006', '60000000-0000-4000-8000-000000000007'
+   )
+   and dono.user_id::text like 'dd000000-%'
+   and dono.role = 'owner'
+   and g.owner_user_id <> dono.user_id;
 
 -- Entradas que as conversas de grupo em comum pressupõem (quem conversa sobre
 -- o grupo participa dele).
 insert into public.group_memberships (group_id, user_id, role, status)
 values
-  ('dd200000-0000-4000-8000-000000000001', 'dd000000-0000-4000-8000-000000000002', 'member', 'approved')
+  ('60000000-0000-4000-8000-000000000001', 'dd000000-0000-4000-8000-000000000002', 'member', 'approved')
 on conflict (group_id, user_id) do nothing;
-
--- Dono de cada grupo, explícito (o UPDATE cobre quem já entrou acima).
-insert into public.group_memberships (group_id, user_id, role, status)
-values
-  ('dd200000-0000-4000-8000-000000000001', 'dd000000-0000-4000-8000-000000000004', 'owner', 'approved'),
-  ('dd200000-0000-4000-8000-000000000002', 'dd000000-0000-4000-8000-000000000008', 'owner', 'approved'),
-  ('dd200000-0000-4000-8000-000000000003', 'dd000000-0000-4000-8000-000000000006', 'owner', 'approved'),
-  ('dd200000-0000-4000-8000-000000000004', 'dd000000-0000-4000-8000-000000000011', 'owner', 'approved'),
-  ('dd200000-0000-4000-8000-000000000005', 'dd000000-0000-4000-8000-000000000010', 'owner', 'approved'),
-  ('dd200000-0000-4000-8000-000000000006', 'dd000000-0000-4000-8000-000000000025', 'owner', 'approved')
-on conflict (group_id, user_id) do update set role = 'owner', status = 'approved';
 
 insert into public.posts (
   id, locality_id, user_id, group_id, post_type, content, created_at
 )
 values
   ('dd300000-0000-4000-8000-000000000001', '00000000-0000-4000-8000-000000000001',
-   'dd000000-0000-4000-8000-000000000001', 'dd200000-0000-4000-8000-000000000001',
+   'dd000000-0000-4000-8000-000000000001', '60000000-0000-4000-8000-000000000001',
    'text', 'Saí às cinco e meia hoje e o parque estava fresco, com pouca gente. Quem quiser, encontro no portão principal amanhã.', now() - interval '2 days'),
   ('dd300000-0000-4000-8000-000000000002', '00000000-0000-4000-8000-000000000001',
-   'dd000000-0000-4000-8000-000000000004', 'dd200000-0000-4000-8000-000000000001',
+   'dd000000-0000-4000-8000-000000000004', '60000000-0000-4000-8000-000000000001',
    'text', 'Combinado para sábado: saída às seis, uma hora de caminhada e café na padaria depois.', now() - interval '5 days'),
   ('dd300000-0000-4000-8000-000000000003', '00000000-0000-4000-8000-000000000001',
-   'dd000000-0000-4000-8000-000000000008', 'dd200000-0000-4000-8000-000000000002',
+   'dd000000-0000-4000-8000-000000000008', '60000000-0000-4000-8000-000000000002',
    'text', 'A escola do bairro abriu inscrição para a turma de reforço no contraturno. Fui hoje cedo e a fila estava tranquila.', now() - interval '1 day'),
   ('dd300000-0000-4000-8000-000000000004', '00000000-0000-4000-8000-000000000001',
-   'dd000000-0000-4000-8000-000000000005', 'dd200000-0000-4000-8000-000000000002',
+   'dd000000-0000-4000-8000-000000000005', '60000000-0000-4000-8000-000000000002',
    'text', 'Alguém já levou as crianças no passeio do fim de semana? Queria saber se precisa levar lanche.', now() - interval '4 days'),
   ('dd300000-0000-4000-8000-000000000005', '00000000-0000-4000-8000-000000000001',
-   'dd000000-0000-4000-8000-000000000002', 'dd200000-0000-4000-8000-000000000003',
+   'dd000000-0000-4000-8000-000000000002', '60000000-0000-4000-8000-000000000003',
    'text', 'Primeiro treino feito. Corri menos do que imaginei, mas terminei inteiro. Obrigado pelo apoio de vocês.', now() - interval '3 days'),
   ('dd300000-0000-4000-8000-000000000006', '00000000-0000-4000-8000-000000000001',
-   'dd000000-0000-4000-8000-000000000006', 'dd200000-0000-4000-8000-000000000003',
+   'dd000000-0000-4000-8000-000000000006', '60000000-0000-4000-8000-000000000003',
    'text', 'Terça e quinta, seis da manhã, no mesmo ponto. Quem chegar depois a gente espera dois minutos e sai.', now() - interval '7 days'),
   ('dd300000-0000-4000-8000-000000000007', '00000000-0000-4000-8000-000000000001',
-   'dd000000-0000-4000-8000-000000000011', 'dd200000-0000-4000-8000-000000000004',
+   'dd000000-0000-4000-8000-000000000011', '60000000-0000-4000-8000-000000000004',
    'text', 'Separei duas caixas de livro infantil e uma de romance. Deixo na biblioteca na quinta para quem quiser passar.', now() - interval '6 days'),
   ('dd300000-0000-4000-8000-000000000008', '00000000-0000-4000-8000-000000000001',
-   'dd000000-0000-4000-8000-000000000004', 'dd200000-0000-4000-8000-000000000004',
+   'dd000000-0000-4000-8000-000000000004', '60000000-0000-4000-8000-000000000004',
    'text', 'Peguei dois livros na troca do mês passado e já terminei os dois. Volto com eles na próxima.', now() - interval '9 days'),
   ('dd300000-0000-4000-8000-000000000009', '00000000-0000-4000-8000-000000000001',
-   'dd000000-0000-4000-8000-000000000010', 'dd200000-0000-4000-8000-000000000005',
+   'dd000000-0000-4000-8000-000000000010', '60000000-0000-4000-8000-000000000007',
    'text', 'Torneira da cozinha trocada em vinte minutos, sem quebrar nada. Serviço simples e bem feito.', now() - interval '2 days'),
   ('dd300000-0000-4000-8000-000000000010', '00000000-0000-4000-8000-000000000001',
-   'dd000000-0000-4000-8000-000000000002', 'dd200000-0000-4000-8000-000000000005',
+   'dd000000-0000-4000-8000-000000000002', '60000000-0000-4000-8000-000000000007',
    'text', 'Alguém conhece quem faça instalação de prateleira em parede de alvenaria? Tenho três para pendurar.', now() - interval '8 days'),
   ('dd300000-0000-4000-8000-000000000011', '00000000-0000-4000-8000-000000000001',
-   'dd000000-0000-4000-8000-000000000025', 'dd200000-0000-4000-8000-000000000006',
-   'text', 'Testei o bolo de macaxeira com coco e ficou melhor que o da feira. Passo a receita para quem pedir aqui.', now() - interval '3 days'),
+   'dd000000-0000-4000-8000-000000000025', '60000000-0000-4000-8000-000000000006',
+   'text', 'Levei o bolo de macaxeira com coco para o lanche da escola e as crianças limparam a forma. Passo a receita para quem pedir aqui.', now() - interval '3 days'),
   ('dd300000-0000-4000-8000-000000000012', '00000000-0000-4000-8000-000000000001',
-   'dd000000-0000-4000-8000-000000000007', 'dd200000-0000-4000-8000-000000000006',
-   'text', 'Almoço de domingo confirmado aqui em casa. Cada um traz um prato e eu faço o arroz.', now() - interval '5 days')
+   'dd000000-0000-4000-8000-000000000007', '60000000-0000-4000-8000-000000000006',
+   'text', 'Encontro das mães confirmado aqui em casa no domingo. Cada uma traz um prato e eu faço o arroz.', now() - interval '5 days')
 on conflict (id) do nothing;
+
+-- O texto acompanha o tema do grupo de destino ("Mães da Cidade"): a versão
+-- anterior deixou receita de bolo e almoço de domingo num grupo de outro tema.
+-- Idempotente, e alcança o banco que já tem as linhas.
+update public.posts p
+   set content = n.texto
+  from (values
+    ('dd300000-0000-4000-8000-000000000011'::uuid,
+     'Levei o bolo de macaxeira com coco para o lanche da escola e as crianças limparam a forma. Passo a receita para quem pedir aqui.'),
+    ('dd300000-0000-4000-8000-000000000012'::uuid,
+     'Encontro das mães confirmado aqui em casa no domingo. Cada uma traz um prato e eu faço o arroz.')
+  ) as n(id, texto)
+ where p.id = n.id
+   and p.content <> n.texto;
 
 insert into public.comments (id, post_id, user_id, content, created_at)
 values
@@ -926,7 +1001,7 @@ insert into public.dm_conversations (
 values
   ('dd900000-0000-4000-8000-000000000001', 'dd000000-0000-4000-8000-000000000001',
    'dd000000-0000-4000-8000-000000000002', 'shared_group',
-   'dd200000-0000-4000-8000-000000000001', now() - interval '6 days'),
+   '60000000-0000-4000-8000-000000000001', now() - interval '6 days'),
   ('dd900000-0000-4000-8000-000000000002', 'dd000000-0000-4000-8000-000000000001',
    'dd000000-0000-4000-8000-000000000003', 'provider',
    'dd800000-0000-4000-8000-000000000001', now() - interval '4 days'),
@@ -938,13 +1013,13 @@ values
    'dd800000-0000-4000-8000-000000000003', now() - interval '8 days'),
   ('dd900000-0000-4000-8000-000000000005', 'dd000000-0000-4000-8000-000000000006',
    'dd000000-0000-4000-8000-000000000007', 'shared_group',
-   'dd200000-0000-4000-8000-000000000001', now() - interval '9 days'),
+   '60000000-0000-4000-8000-000000000001', now() - interval '9 days'),
   ('dd900000-0000-4000-8000-000000000006', 'dd000000-0000-4000-8000-000000000005',
    'dd000000-0000-4000-8000-000000000008', 'shared_group',
-   'dd200000-0000-4000-8000-000000000002', now() - interval '5 days'),
+   '60000000-0000-4000-8000-000000000002', now() - interval '5 days'),
   ('dd900000-0000-4000-8000-000000000007', 'dd000000-0000-4000-8000-000000000011',
    'dd000000-0000-4000-8000-000000000012', 'shared_group',
-   'dd200000-0000-4000-8000-000000000005', now() - interval '7 days'),
+   '60000000-0000-4000-8000-000000000007', now() - interval '7 days'),
   ('dd900000-0000-4000-8000-000000000008', 'dd000000-0000-4000-8000-000000000013',
    'dd000000-0000-4000-8000-000000000015', 'provider',
    'dd800000-0000-4000-8000-000000000005', now() - interval '3 days'),
@@ -953,7 +1028,7 @@ values
    'dd500000-0000-4000-8000-000000000020', now() - interval '1 day'),
   ('dd900000-0000-4000-8000-000000000010', 'dd000000-0000-4000-8000-000000000023',
    'dd000000-0000-4000-8000-000000000024', 'shared_group',
-   'dd200000-0000-4000-8000-000000000002', now() - interval '12 days')
+   '60000000-0000-4000-8000-000000000002', now() - interval '12 days')
 on conflict (id) do nothing;
 
 insert into public.dm_messages (id, conversation_id, sender_id, content, created_at)
@@ -1011,6 +1086,21 @@ values
   ('dd910000-0000-4000-8000-000000000026', 'dd900000-0000-4000-8000-000000000010',
    'dd000000-0000-4000-8000-000000000023', 'Pode ser amanhã às seis.', now() - interval '11 days')
 on conflict (id) do nothing;
+
+-- O contexto de grupo das conversas acompanha os grupos do seed: uma conversa
+-- gravada por uma versão anterior apontaria para a quase-duplicata apagada.
+update public.dm_conversations c
+   set context_id = g.novo
+  from (values
+    ('dd900000-0000-4000-8000-000000000001'::uuid, '60000000-0000-4000-8000-000000000001'::uuid),
+    ('dd900000-0000-4000-8000-000000000005'::uuid, '60000000-0000-4000-8000-000000000001'::uuid),
+    ('dd900000-0000-4000-8000-000000000006'::uuid, '60000000-0000-4000-8000-000000000002'::uuid),
+    ('dd900000-0000-4000-8000-000000000007'::uuid, '60000000-0000-4000-8000-000000000007'::uuid),
+    ('dd900000-0000-4000-8000-000000000010'::uuid, '60000000-0000-4000-8000-000000000002'::uuid)
+  ) as g(conversa, novo)
+ where c.id = g.conversa
+   and c.context_type = 'shared_group'
+   and c.context_id <> g.novo;
 
 -- Uma conversa lida e duas por ler: o contador da casca precisa dos dois
 -- estados para não parecer que sempre mostra um.
@@ -1113,7 +1203,7 @@ values
    now() - interval '5 days'),
   ('dd930000-0000-4000-8000-000000000004', 'dd000000-0000-4000-8000-000000000001',
    'dd000000-0000-4000-8000-000000000004', 'group_post', 'published', 'group',
-   'dd200000-0000-4000-8000-000000000001', now() - interval '1 hour',
+   '60000000-0000-4000-8000-000000000001', now() - interval '1 hour',
    now() - interval '5 days'),
   ('dd930000-0000-4000-8000-000000000005', 'dd000000-0000-4000-8000-000000000001',
    'dd000000-0000-4000-8000-000000000002', 'event_rsvp', 'going', 'event',
@@ -1122,5 +1212,13 @@ values
    null, 'service_request', 'provider_first_reply', 'service_request',
    'dd940000-0000-4000-8000-000000000001', null, now() - interval '4 days' + interval '40 minutes')
 on conflict (id) do nothing;
+
+-- Aviso de grupo gravado antes da reutilização aponta para o grupo do seed, não
+-- para a duplicata apagada.
+update public.notifications
+   set target_id = '60000000-0000-4000-8000-000000000001'
+ where id = 'dd930000-0000-4000-8000-000000000004'
+   and target_type = 'group'
+   and target_id <> '60000000-0000-4000-8000-000000000001';
 
 commit;

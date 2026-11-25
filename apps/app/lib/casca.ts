@@ -68,11 +68,58 @@ export function navegacaoVisivel(nomeDaRota: string, largura: number): boolean {
   return moraNaBarraDeBaixo(nomeDaRota)
 }
 
-/** §5.2: vendo outra cidade, a faixa de visita aparece no alto do conteúdo. */
-export function mostraFaixaDeVisita(vendoOutraCidade: boolean): boolean {
-  return vendoOutraCidade
+/** §5.2: a faixa de visita exige uma cidade de casa conhecida. */
+export function mostraFaixaDeVisita(vendoOutraCidade: boolean, cidadeDeCasa: string): boolean {
+  return vendoOutraCidade && cidadeDeCasa.trim() !== ""
 }
 
 export function textoDaFaixaDeVisita(cidadeVista: string, cidadeDaPessoa: string): string {
   return `Você está conhecendo ${cidadeVista}. Sua cidade atual é ${cidadeDaPessoa}.`
+}
+
+/**
+ * A cidade do chip e a cidade de casa (BUG-CIDADE-GRUPOS).
+ *
+ * A cidade é a da SESSÃO — vínculo `kind = 'current'` —, nunca um valor de
+ * demonstração: o chip dizia "Manaus" enquanto o Início dizia "Rio de Janeiro".
+ * Vazio quer dizer "a sessão ainda não disse": o chip mostra o rótulo neutro em
+ * vez de afirmar uma cidade. A semente da prova manda em modo de prova (é
+ * entrada da prova, não medida).
+ */
+export type CidadeDaCasca = Readonly<{ cidade: string; cidadeDeCasa: string }>
+
+export function cidadesDaCasca(semente: Partial<CidadeDaCasca>): CidadeDaCasca {
+  return { cidade: semente.cidade ?? "", cidadeDeCasa: semente.cidadeDeCasa ?? "" }
+}
+
+/**
+ * A cidade da sessão chegou — pelo perfil ou pela consulta do Início. Sem troca
+ * pelo chip, a vista e a casa passam a ser a da sessão; com troca já feita, só a
+ * casa muda, e a cidade escolhida continua na faixa de visita. Idempotente: as
+ * duas fontes podem chamar na ordem que for.
+ */
+export function comCidadeDaSessao(atual: CidadeDaCasca, cidadeDaSessao: string): CidadeDaCasca {
+  const sessao = cidadeDaSessao.trim()
+  if (sessao === "") return atual
+  if (atual.cidade === atual.cidadeDeCasa) return { cidade: sessao, cidadeDeCasa: sessao }
+  return { cidade: atual.cidade, cidadeDeCasa: sessao }
+}
+
+/** O chip consulta outra cidade: a vista muda, a de casa continua a da sessão. */
+export function comCidadeTrocada(atual: CidadeDaCasca, cidade: string): CidadeDaCasca {
+  const limpa = cidade.trim()
+  if (limpa === "") return atual
+  return { cidade: limpa, cidadeDeCasa: atual.cidadeDeCasa }
+}
+
+/**
+ * A cidade que nomeia o CONTEÚDO do Início: a que a consulta confirmou. Antes
+ * da consulta, a reserva é a cidade de casa, nunca a cidade escolhida no chip.
+ * Sem a cidade de casa, "sua cidade" não afirma nada.
+ */
+export function cidadeDoConteudo(cidadeDosDados: string | null, cidades: CidadeDaCasca): string {
+  const confirmada = cidadeDosDados?.trim() ?? ""
+  if (confirmada !== "") return confirmada
+  const daCasca = cidades.cidadeDeCasa.trim()
+  return daCasca !== "" ? daCasca : "sua cidade"
 }

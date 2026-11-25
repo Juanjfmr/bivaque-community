@@ -99,8 +99,9 @@ describe("barra de baixo e Criar (§5.3)", () => {
 
 describe("faixa de visita (§5.2)", () => {
   it("só existe olhando outra cidade", () => {
-    expect(mostraFaixaDeVisita(false)).toBe(false)
-    expect(mostraFaixaDeVisita(true)).toBe(true)
+    expect(mostraFaixaDeVisita(false, "Rio de Janeiro")).toBe(false)
+    expect(mostraFaixaDeVisita(true, "Rio de Janeiro")).toBe(true)
+    expect(mostraFaixaDeVisita(true, "")).toBe(false)
   })
 
   it("diz o que está vendo e qual é a cidade da pessoa", () => {

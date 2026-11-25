@@ -10,9 +10,11 @@ import {
   useState,
 } from "react"
 
+import { cidadesDaCasca, comCidadeDaSessao, comCidadeTrocada } from "@/lib/casca"
 import { dadosDoApp } from "@/lib/dados"
 import { lerAvisos } from "@/lib/dados/avisos"
 import { lerConversas } from "@/lib/dados/conversas"
+import { lerPerfil } from "@/lib/dados/voce"
 import { lerProgresso } from "@/src/entrada/servidor"
 import { modoDeProvaAtivo } from "@/src/modo-de-prova"
 
@@ -31,6 +33,10 @@ import { modoDeProvaAtivo } from "@/src/modo-de-prova"
  * é entrada da prova, não medida que o app faz de si mesmo.
  */
 export type EstadoDaCasca = {
+  /**
+   * A cidade consultada. Vazia até a sessão dizer qual é: o chip mostra o rótulo
+   * neutro e nenhuma tela afirma uma cidade que não veio da sessão.
+   */
   readonly cidade: string
   readonly cidadeDeCasa: string
   readonly avisos: number
@@ -42,8 +48,6 @@ export type EstadoDaCasca = {
   readonly nomeDaPessoa: string
 }
 
-export const CIDADE_PADRAO = "Manaus"
-
 type PortaDaCasca = EstadoDaCasca & {
   readonly consulta: string
   definirConsulta(consulta: string): void
@@ -52,6 +56,8 @@ type PortaDaCasca = EstadoDaCasca & {
   readonly vendoOutraCidade: boolean
   trocarCidade(cidade: string): void
   voltarParaCasa(): void
+  /** A cidade da sessão chegou (perfil ou Início): nunca sobrescreve uma troca. */
+  confirmarCidadeDaSessao(cidade: string): void
   definir(pedaco: Partial<EstadoDaCasca>): void
 }
 
@@ -72,14 +78,30 @@ export function ProvedorDaCasca({ children }: { children: ReactNode }) {
   const [estado, setEstado] = useState<EstadoDaCasca>(() => {
     const semente = sementeDaProva()
     const resumo = modoDeProvaAtivo() ? null : dadosDoApp.resumoDaCasca()
+    // A cidade não vem do dado de demonstração nem de um padrão: o chip nascia
+    // "Manaus" para quem tinha vínculo no Rio. Vazio é "ainda não sei", e as
+    // leituras abaixo (perfil e Início) preenchem sem sobrescrever uma troca.
+    // No modo de prova a base é a demonstração, com a semente por cima: as specs
+    // não trazem cidade própria (correção 3 do BUGCID-001). Em produção o modo de
+    // prova não existe, então nada disto chega a quem usa.
+    const base = modoDeProvaAtivo() ? dadosDoApp.resumoDaCasca() : semente
+    const cidades = cidadesDaCasca({
+      cidade: base.cidade ?? "",
+      cidadeDeCasa: base.cidadeDeCasa ?? "",
+      ...semente,
+    })
     return {
-      cidade: semente.cidade ?? resumo?.cidade ?? CIDADE_PADRAO,
-      cidadeDeCasa: semente.cidadeDeCasa ?? resumo?.cidadeDeCasa ?? CIDADE_PADRAO,
+      cidade: cidades.cidade,
+      cidadeDeCasa: cidades.cidadeDeCasa,
       avisos: semente.avisos ?? 0,
       conversas: semente.conversas ?? 0,
       nomeDaPessoa: semente.nomeDaPessoa ?? resumo?.nomeDaPessoa ?? "",
     }
   })
+
+  const confirmarCidadeDaSessao = useCallback((cidade: string) => {
+    setEstado((anterior) => ({ ...anterior, ...comCidadeDaSessao(anterior, cidade) }))
+  }, [])
 
   const definir = useCallback((pedaco: Partial<EstadoDaCasca>) => {
     setEstado((anterior) => ({ ...anterior, ...pedaco }))
@@ -94,30 +116,55 @@ export function ProvedorDaCasca({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (modoDeProvaAtivo()) return
     const controle = new AbortController()
+    // A demonstração só entra quando a resposta confirma que não há sessão.
+    const cidadeDaDemonstracao = () => {
+      if (!controle.signal.aborted) confirmarCidadeDaSessao(dadosDoApp.resumoDaCasca().cidade)
+    }
     void lerProgresso()
-      .then((sessao) => {
-        if (!sessao.autenticado || controle.signal.aborted) return
-        void lerConversas({ signal: controle.signal })
-          .then((lista) => {
-            if (!controle.signal.aborted) definir({ conversas: lista.porLer })
-          })
-          .catch(() => undefined)
-        return lerAvisos({ limite: "1", signal: controle.signal }).then((lista) => {
-          if (!controle.signal.aborted) definir({ avisos: lista.naoLidos })
-        })
-      })
+      .then(
+        (sessao) => {
+          if (controle.signal.aborted) return
+          if (sessao.autenticado === false) {
+            cidadeDaDemonstracao()
+            return
+          }
+          // A cidade da sessão é a do chip: `lerPerfil` já devolve o vínculo
+          // `current` da rota de perfil (nenhuma rota nova). Se esta leitura
+          // falhar, a cidade fica vazia — e a consulta do Início devolve a mesma
+          // cidade da sessão, que preenche a casca no lugar dela.
+          void lerPerfil({ signal: controle.signal })
+            .then((conta) => {
+              if (controle.signal.aborted) return
+              confirmarCidadeDaSessao(conta.perfil.cidade.nome)
+            })
+            .catch(() => undefined)
+          void lerConversas({ signal: controle.signal })
+            .then((lista) => {
+              if (!controle.signal.aborted) definir({ conversas: lista.porLer })
+            })
+            .catch(() => undefined)
+          void lerAvisos({ limite: "1", signal: controle.signal })
+            .then((lista) => {
+              if (!controle.signal.aborted) definir({ avisos: lista.naoLidos })
+            })
+            .catch(() => undefined)
+        },
+        (erro: unknown) => {
+          // 404 é a rota ausente: só acontece na prévia estática do app, sem
+          // servidor (capturas e specs visuais). Em produção a rota existe; 503 e
+          // falha de rede continuam deixando a cidade vazia.
+          // Só a falha da própria leitura de progresso chega aqui: as leituras de
+          // dentro do ramo com sessão têm o próprio catch.
+          if ((erro as { status?: unknown } | null)?.status === 404) cidadeDaDemonstracao()
+        },
+      )
       .catch(() => undefined)
     return () => controle.abort()
-  }, [definir])
+  }, [definir, confirmarCidadeDaSessao])
 
-  const trocarCidade = useCallback(
-    (cidade: string) => {
-      const limpa = cidade.trim()
-      if (limpa === "") return
-      definir({ cidade: limpa })
-    },
-    [definir],
-  )
+  const trocarCidade = useCallback((cidade: string) => {
+    setEstado((anterior) => ({ ...anterior, ...comCidadeTrocada(anterior, cidade) }))
+  }, [])
 
   const voltarParaCasa = useCallback(() => {
     setEstado((anterior) => ({ ...anterior, cidade: anterior.cidadeDeCasa }))
@@ -133,9 +180,18 @@ export function ProvedorDaCasca({ children }: { children: ReactNode }) {
       vendoOutraCidade: estado.cidade !== estado.cidadeDeCasa,
       trocarCidade,
       voltarParaCasa,
+      confirmarCidadeDaSessao,
       definir,
     }),
-    [estado, consulta, conversaNoTopo, trocarCidade, voltarParaCasa, definir],
+    [
+      estado,
+      consulta,
+      conversaNoTopo,
+      trocarCidade,
+      voltarParaCasa,
+      confirmarCidadeDaSessao,
+      definir,
+    ],
   )
 
   return <Contexto.Provider value={porta}>{children}</Contexto.Provider>

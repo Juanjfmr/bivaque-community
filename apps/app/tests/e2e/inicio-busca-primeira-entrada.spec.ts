@@ -110,9 +110,11 @@ test.describe("estado de primeira entrada", () => {
       await page.goto("/app/inicio")
 
       await expect(
-        page.getByRole("heading", { name: "A primeira publicação abre a cidade" }),
+        page.getByRole("heading", { name: "Manaus ainda não tem publicações" }),
       ).toBeVisible()
       await expect(page.getByRole("button", { name: "Publicar na cidade" })).toBeVisible()
+      // O vazio não oferece "Ver perguntas": a consulta disse que não há nenhuma.
+      await expect(page.getByRole("button", { name: "Ver perguntas" })).toHaveCount(0)
       await expect(page.locator('[data-tela="inicio"] [data-cartao]')).toHaveCount(0)
       await expect(page.getByText(/\d+ (negócio|negócios)/)).toHaveCount(0)
     })

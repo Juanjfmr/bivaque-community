@@ -6,23 +6,24 @@ import type { Database } from "supabase/database.generated"
  * aceitam e a resposta a uma pergunta que TODAS fazem — de que cidade é a pessoa
  * da sessão.
  *
+ * `cidadeDaSessao` mora aqui e é a leitura única da cidade da sessão em
+ * `api/app`: as rotas da entrada (grupos e interesses) a importam daqui desde o
+ * BUG-CIDADE-GRUPOS, em vez de repetir a consulta sem filtro de `kind`.
+ *
  * A cidade é sempre lida do banco, nunca do pedido, e sempre pelo vínculo
  * `kind = 'current'`: quem está em transferência tem duas linhas (a atual e a
  * que está deixando) e a leitura sem o filtro cai na cidade errada.
  */
 
-export const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
-
-/** Id no formato que as rotas aceitam. Não é prova de existência. */
-export function ehUuid(valor: string | undefined): valor is string {
-  return typeof valor === "string" && UUID.test(valor)
-}
-
 export type CidadeDaSessao = Readonly<{ id: string; nome: string }>
 
 /**
  * A cidade atual de quem está na sessão, ou `null` para quem ainda não tem
- * vínculo. Erro de leitura sobe: quem chama decide entre 503 e seguir.
+ * vínculo. A leitura é sempre pelo vínculo `kind = 'current'`: quem está em
+ * transferência tem duas linhas (a atual e a que está deixando) e a leitura sem
+ * o filtro cai na cidade errada — o mesmo recorte que
+ * `apps/web/app/(shell)/layout.tsx` usa. Erro de leitura sobe: quem chama
+ * decide entre 503 e seguir.
  */
 export async function cidadeDaSessao(
   client: SupabaseClient<Database>,
@@ -39,6 +40,13 @@ export async function cidadeDaSessao(
   if (error) throw error
   if (data === null) return null
   return { id: data.locality_id, nome: data.localities?.city_name ?? "" }
+}
+
+export const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+
+/** Id no formato que as rotas aceitam. Não é prova de existência. */
+export function ehUuid(valor: string | undefined): valor is string {
+  return typeof valor === "string" && UUID.test(valor)
 }
 
 export type EncontroDaSessao = Readonly<{

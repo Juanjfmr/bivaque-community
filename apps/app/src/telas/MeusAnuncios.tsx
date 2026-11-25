@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { Botao } from "@/components/bivaque/botao"
 import { CabecaDePagina } from "@/components/bivaque/cabeca-de-pagina"
 import { CartaoDeFoto } from "@/components/bivaque/cartao-de-anuncio"
@@ -43,8 +43,16 @@ export function MeusAnuncios() {
   const [gerenciando, setGerenciando] = useState<AnuncioDaLista | null>(null)
   const paginaPendente = useRef<AbortController | null>(null)
   const geracaoDaLista = useRef(0)
-  const [desapegoLocal] = useState(() =>
-    lerRascunho(`bivaque:f03:desapego:${casca.cidade}`, { titulo: "" }),
+  // Sem cidade a chave do rascunho é vazia: até a sessão dizer a cidade, não há
+  // rascunho a mostrar (BUGCID-001).
+  // Lido uma vez por cidade, não a cada render: quando a sessão diz a cidade, a
+  // chave muda e o rascunho dela aparece.
+  const desapegoLocal = useMemo(
+    () =>
+      casca.cidade === ""
+        ? { titulo: "" }
+        : lerRascunho(`bivaque:f03:desapego:${casca.cidade}`, { titulo: "" }),
+    [casca.cidade],
   )
 
   useRolagemEFoco(CARGA_CONCLUIDA)

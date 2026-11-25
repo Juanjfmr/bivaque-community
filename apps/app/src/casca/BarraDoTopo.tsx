@@ -33,6 +33,9 @@ export function BarraDoTopo({
   const navegacao = useNavegacao()
   const casca = useCasca()
   const acoes = acoesDaBarraDoTopo(rota.nome)
+  // Antes de a sessão dizer a cidade, o chip não afirma nenhuma: o rótulo neutro
+  // é o que um lugar sem cidade confirmada pode dizer.
+  const rotuloDaCidade = casca.cidade === "" ? "Sua cidade" : casca.cidade
 
   if (!acoes.barra) return null
 
@@ -66,7 +69,9 @@ export function BarraDoTopo({
                 rota.nome === "conversa"
                 ? "Conversas"
                 : rota.nome === "guia"
-                  ? `Guia de ${casca.cidade}`
+                  ? casca.cidade === ""
+                    ? "Guia da cidade"
+                    : `Guia de ${rotuloDaCidade}`
                   : rota.titulo}
           </span>
           <span className="grow" />
@@ -100,12 +105,12 @@ export function BarraDoTopo({
             variant="ghost"
             data-acao="cidade"
             aria-haspopup="dialog"
-            data-cidade-atual={casca.cidade}
+            data-cidade-atual={rotuloDaCidade}
             onClick={() => void navegacao.abrir("cidade")}
             className="inline-flex min-h-11 max-w-40 shrink-0 gap-1 rounded-xl px-3 text-sm font-semibold"
           >
             <Icone nome="place" className="size-5" />
-            <span className="truncate">{casca.cidade}</span>
+            <span className="truncate">{rotuloDaCidade}</span>
             <Icone nome="expand_more" className="size-4" />
           </Button>
 
@@ -142,6 +147,7 @@ function Contador({ quantidade, nome }: { quantidade: number; nome: "avisos" | "
 function BuscaEmTelaCheia() {
   const navegacao = useNavegacao()
   const { consulta: busca, cidade, definirConsulta: setBusca } = useCasca()
+  const cidadeDoCampo = cidade === "" ? "sua cidade" : cidade
   const campo = useRef<HTMLInputElement | null>(null)
 
   // O foco no campo ao abrir a busca é do protótipo (§5.2), feito no efeito e
@@ -168,8 +174,8 @@ function BuscaEmTelaCheia() {
           inputMode="search"
           value={busca}
           onChange={(evento) => setBusca(evento.target.value)}
-          aria-label={`Buscar em ${cidade}`}
-          placeholder={`Buscar em ${cidade}`}
+          aria-label={`Buscar em ${cidadeDoCampo}`}
+          placeholder={`Buscar em ${cidadeDoCampo}`}
           className="min-h-11 w-full min-w-0 rounded-xl border border-(--input) bg-transparent px-3 text-base outline-none focus-visible:border-(--ring)"
         />
       </span>

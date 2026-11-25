@@ -2,11 +2,12 @@ import { NextRequest } from "next/server"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 
 // A rota dos grupos da etapa de interesses: sessão obrigatória, cidade vinda da
-// sessão (nunca do pedido) e leitura pelo cliente de serviço — o app não fala
+// sessão (nunca do pedido) e leitura pelo cliente do usuário — o app não fala
 // com o Supabase. O teste troca a sessão e o cliente e prova o contrato: 401
 // sem sessão, 409 sem cidade (o provisionamento não terminou), grupos públicos
 // da cidade mapeados para nome/descricao e 503 em qualquer falha de leitura,
-// nunca lista vazia silenciosa.
+// nunca lista vazia silenciosa. Quem está em transferência tem duas linhas em
+// `locality_memberships`: a lista só pode vir da `current`.
 
 vi.mock("web/lib/app-api/sessao-do-next", () => ({ resolverSessaoDaRequisicao: vi.fn() }))
 
@@ -17,6 +18,7 @@ const resolver = vi.mocked(resolverSessaoDaRequisicao)
 
 const PESSOA = { id: "10000000-0000-4000-8000-000000000001", email: "pessoa@example.invalid" }
 const CIDADE = "00000000-0000-4000-8000-000000000001"
+const CIDADE_QUE_DEIXA = "00000000-0000-4000-8000-000000000002"
 const ORIGEM = "http://localhost:3000"
 const URL_DA_ROTA = `${ORIGEM}/app/api/app/entry/groups`
 
@@ -24,12 +26,15 @@ const URL_DA_ROTA = `${ORIGEM}/app/api/app/entry/groups`
 // olha só o JSON, confere os filtros que a rota aplica no banco.
 const mockVinculoSelect = vi.fn()
 const mockVinculoFiltro = vi.fn()
+const mockVinculoKind = vi.fn()
+const mockVinculoOrdem = vi.fn()
 const mockVinculoLimite = vi.fn()
 const mockVinculo = vi.fn()
 
 const mockGruposSelect = vi.fn()
 const mockGruposFiltroCidade = vi.fn()
 const mockGruposFiltroVisibilidade = vi.fn()
+const mockGruposFiltroApagado = vi.fn()
 const mockGruposOrdem = vi.fn()
 const mockGruposLimite = vi.fn()
 
@@ -40,15 +45,31 @@ function clienteDoUsuario() {
         return {
           select: (colunas: string) => {
             mockVinculoSelect(colunas)
-            return {
-              eq: (coluna: string, valor: unknown) => {
-                mockVinculoFiltro(coluna, valor)
+            // O trecho depois das duas eqs fica disponível sem o filtro de
+            // `kind`: assim uma consulta que esqueça o filtro ainda chega ao
+            // `maybeSingle` e devolve a linha errada, em vez de quebrar.
+            const depoisDoKind = {
+              order: (colunaDaOrdem: string, opcoes: unknown) => {
+                mockVinculoOrdem(colunaDaOrdem, opcoes)
                 return {
                   limit: (quantidade: number) => {
                     mockVinculoLimite(quantidade)
                     return { maybeSingle: mockVinculo }
                   },
                 }
+              },
+            }
+            const depoisDaCidade = {
+              eq: (colunaDoKind: string, kind: unknown) => {
+                mockVinculoKind(colunaDoKind, kind)
+                return depoisDoKind
+              },
+              ...depoisDoKind,
+            }
+            return {
+              eq: (coluna: string, valor: unknown) => {
+                mockVinculoFiltro(coluna, valor)
+                return depoisDaCidade
               },
             }
           },
@@ -65,9 +86,14 @@ function clienteDoUsuario() {
                   eq: (colunaDaVisibilidade: string, visibilidade: unknown) => {
                     mockGruposFiltroVisibilidade(colunaDaVisibilidade, visibilidade)
                     return {
-                      order: (colunaDaOrdem: string, opcoes: unknown) => {
-                        mockGruposOrdem(colunaDaOrdem, opcoes)
-                        return { limit: mockGruposLimite }
+                      eq: (colunaDaExclusao: string, excluido: unknown) => {
+                        mockGruposFiltroApagado(colunaDaExclusao, excluido)
+                        return {
+                          order: (colunaDaOrdem: string, opcoes: unknown) => {
+                            mockGruposOrdem(colunaDaOrdem, opcoes)
+                            return { limit: mockGruposLimite }
+                          },
+                        }
                       },
                     }
                   },
@@ -153,15 +179,72 @@ describe("GET /api/app/entry/groups", () => {
       ],
     })
 
-    // A cidade é a da sessão; os grupos são só os públicos dela, por nome, com teto.
-    expect(mockVinculoSelect).toHaveBeenCalledWith("locality_id")
+    // A cidade é a `current` da sessão; os grupos são só os públicos dela, por
+    // nome, com teto.
+    expect(mockVinculoSelect).toHaveBeenCalledWith("locality_id, localities(city_name)")
     expect(mockVinculoFiltro).toHaveBeenCalledWith("user_id", PESSOA.id)
+    expect(mockVinculoKind).toHaveBeenCalledWith("kind", "current")
+    expect(mockVinculoOrdem).toHaveBeenCalledWith("joined_at", { ascending: true })
     expect(mockVinculoLimite).toHaveBeenCalledWith(1)
     expect(mockGruposSelect).toHaveBeenCalledWith("id, name, description")
     expect(mockGruposFiltroCidade).toHaveBeenCalledWith("locality_id", CIDADE)
     expect(mockGruposFiltroVisibilidade).toHaveBeenCalledWith("visibility", "public")
+    // A listagem descarta grupo apagado, como a consulta da participação.
+    expect(mockGruposFiltroApagado).toHaveBeenCalledWith("is_deleted", false)
     expect(mockGruposOrdem).toHaveBeenCalledWith("name", { ascending: true })
     expect(mockGruposLimite).toHaveBeenCalledWith(50)
+  })
+
+  it("grupo apagado não aparece na lista, mesmo vindo do banco", async () => {
+    const publicado = {
+      id: "10000000-0000-4000-8000-000000000101",
+      name: "Veteranos",
+      description: null,
+    }
+    // O banco obedece ao filtro: só devolve o apagado quando a rota não pede
+    // `is_deleted = false`. Sem o filtro, a resposta traria o grupo fantasma.
+    mockGruposLimite.mockImplementation(async () => {
+      const pediuNaoApagado = mockGruposFiltroApagado.mock.calls.some(
+        ([coluna, valor]) => coluna === "is_deleted" && valor === false,
+      )
+      return {
+        data: pediuNaoApagado ? [publicado] : [publicado, { ...publicado, id: "apagado" }],
+        error: null,
+      }
+    })
+
+    const resposta = await GET(requisicao())
+    expect(resposta.status).toBe(200)
+    expect(await resposta.json()).toEqual({
+      autenticado: true,
+      grupos: [{ id: publicado.id, nome: publicado.name, descricao: null }],
+    })
+  })
+
+  it("quem está de mudança lista os grupos da cidade ATUAL, não da que deixa", async () => {
+    // O banco tem duas linhas para a pessoa: a cidade que ela deixa e a atual.
+    // Sem o filtro `kind = 'current'` o mock devolve a linha `leaving` — é o
+    // defeito de verdade —, e as asserções abaixo falham.
+    mockVinculo.mockImplementation(async () => {
+      const filtrouAKind = mockVinculoKind.mock.calls.some(
+        ([coluna, valor]) => coluna === "kind" && valor === "current",
+      )
+      return filtrouAKind
+        ? {
+            data: { locality_id: CIDADE, localities: { city_name: "Rio de Janeiro" } },
+            error: null,
+          }
+        : {
+            data: { locality_id: CIDADE_QUE_DEIXA, localities: { city_name: "Manaus" } },
+            error: null,
+          }
+    })
+
+    const resposta = await GET(requisicao())
+    expect(resposta.status).toBe(200)
+    expect(mockVinculoKind).toHaveBeenCalledWith("kind", "current")
+    expect(mockGruposFiltroCidade).toHaveBeenCalledWith("locality_id", CIDADE)
+    expect(mockGruposFiltroCidade).not.toHaveBeenCalledWith("locality_id", CIDADE_QUE_DEIXA)
   })
 
   it("leitura da cidade que falha vira 503, nunca lista vazia", async () => {
