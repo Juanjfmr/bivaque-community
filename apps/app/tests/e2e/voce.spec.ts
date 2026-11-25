@@ -250,6 +250,64 @@ test("perfil de membro com conversa: Mensagem abre a conversa e Denunciar está 
   await expect(page).toHaveURL(/\/app\/conversa\/c-paulo$/)
 })
 
+// Rodada 3, M2: "Denunciar" com conversa abre a folha de denúncia da última
+// mensagem recebida, e o perfil continua no histórico.
+test("perfil de membro com conversa: Denunciar abre a folha e o Voltar devolve o perfil", async ({
+  page,
+}) => {
+  await simularVoce(page)
+  await simularCaixa(page, "u-paulo")
+  await page.route(/\/api\/app\/conversas\/c-paulo(?:\?|$)/, (rota) =>
+    rota.request().method() === "GET"
+      ? rota.fulfill({
+          json: {
+            conversa: {
+              id: "c-paulo",
+              nome: "Paulo Roberto",
+              outroId: "u-paulo",
+              tipo: "direct",
+              contextoId: "c-paulo",
+              ultima: "Até amanhã.",
+              porLer: false,
+            },
+            mensagens: [
+              {
+                id: "m-1",
+                conteudo: "Oi, tudo bem?",
+                minha: true,
+                criadaEm: "2026-11-20T13:00:00Z",
+              },
+              {
+                id: "m-2",
+                conteudo: "Até amanhã.",
+                minha: false,
+                criadaEm: "2026-11-20T13:05:00Z",
+              },
+            ],
+            anterior: null,
+          },
+        })
+      : rota.fulfill({ status: 204, body: "" }),
+  )
+  await page.goto("/app/perfil/u-paulo")
+  await expect(page.getByRole("heading", { name: "Paulo Roberto" })).toBeVisible()
+  await page.getByRole("button", { name: "Opções" }).click()
+  await page.getByRole("menuitem", { name: "Denunciar" }).click()
+
+  await expect(page).toHaveURL(/\/app\/conversa\/c-paulo$/)
+  const folha = page.getByRole("dialog", { name: "Denunciar mensagem" })
+  await expect(folha).toBeVisible()
+  await expect(folha.locator('[data-mensagem-denunciada="sim"]')).toHaveText("Até amanhã.")
+
+  await page.keyboard.press("Escape")
+  await expect(folha).toHaveCount(0)
+  await expect(page).toHaveURL(/\/app\/conversa\/c-paulo$/)
+  await page.goBack()
+  await expect(page).toHaveURL(/\/app\/perfil\/u-paulo$/)
+  await expect(page.getByRole("heading", { name: "Paulo Roberto" })).toBeVisible()
+  await expect(page.getByRole("menuitem", { name: "Denunciar" })).toHaveCount(0)
+})
+
 test("perfil de membro sem conversa: sem Mensagem e a denúncia explica o caminho", async ({
   page,
 }) => {

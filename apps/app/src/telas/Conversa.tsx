@@ -31,6 +31,7 @@ import { useLarguraDaTela } from "@/src/casca/ganchos"
 import { useCasca } from "@/src/contexto/casca"
 import { CabecaDoItem } from "@/src/conversas/CabecaDoItem"
 import { contexto } from "@/src/conversas/contexto"
+import { tomarDenunciaPedida } from "@/src/conversas/denunciaPedida"
 import { useItemDaConversa } from "@/src/conversas/item"
 import { EstadoDeSessaoVencida, EstadoNegado } from "@/src/eventos/EstadosDeAcesso"
 import { acessoNegado, sessaoVencida } from "@/src/eventos/formulario"
@@ -193,6 +194,18 @@ export function Conversa() {
   }, [id])
   const nome = dados?.conversa.nome ?? ""
   const outroId = dados?.conversa.outroId ?? ""
+  // Vindo do "Denunciar" do perfil (rodada 3, M2): com a conversa lida, abre a
+  // folha da última mensagem recebida; sem mensagem da pessoa, diz por quê.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: o pedido vale para a carga desta conversa
+  useEffect(() => {
+    if (dados === null || !tomarDenunciaPedida(id)) return
+    const recebida = dados.mensagens.filter((mensagem) => !mensagem.minha).at(-1) ?? null
+    if (recebida === null) {
+      setAviso(`Ainda não há mensagem de ${dados.conversa.nome} para denunciar nesta conversa.`)
+      return
+    }
+    abrirDenuncia(recebida)
+  }, [dados, id])
   useEffect(() => {
     if (naoEnviada !== null) balaoFalho.current?.scrollIntoView({ block: "nearest" })
   }, [naoEnviada])

@@ -23,6 +23,7 @@ import { rotuloDeData } from "@/lib/formato"
 import { useNavegacao, useRolagemEFoco, useSobreposicaoDaEntrada } from "@/lib/navegacao/react"
 import { CARGA_CONCLUIDA } from "@/lib/navegacao/restauracao"
 import { validarParametros } from "@/lib/navegacao/rotas"
+import { pedirDenuncia } from "@/src/conversas/denunciaPedida"
 import { EstadoDeSessaoVencida } from "@/src/eventos/EstadosDeAcesso"
 import { sessaoVencida } from "@/src/eventos/formulario"
 import { Avatar, Ilustracao } from "@/src/pecas/pecas"
@@ -136,15 +137,18 @@ export function PerfilDeMembro() {
     void navegacao.irPara("conversa", { parametros: { id: conversaId } })
   }
 
-  // Com conversa, o item TROCA a entrada do menu pela conversa (Voltar volta
-  // ao perfil, sem menu aberto); sem conversa, o Radix fecha o menu como
-  // sempre e a tela explica onde denunciar.
+  // Com conversa, o item leva à conversa com a folha de denúncia aberta
+  // (rodada 3, M2). O menu é uma entrada própria empilhada sobre o perfil, e
+  // o `replace` troca só ELA pela conversa: o perfil continua no histórico e o
+  // Voltar volta a ele, sem menu aberto. Sem conversa, o Radix fecha o menu
+  // como sempre e a tela explica onde denunciar.
   const denunciar = (evento: Event) => {
     if (conversaId === null) {
       setOrientacao(true)
       return
     }
     evento.preventDefault()
+    pedirDenuncia(conversaId)
     void navegacao.irPara("conversa", { parametros: { id: conversaId }, replace: true })
   }
 
