@@ -216,6 +216,7 @@ async function simularMeuNegocio(page: Page): Promise<void> {
           fotos: [],
         },
         categorias: CATEGORIAS_DO_NEGOCIO,
+        tipoDaConta: "membro",
       },
     }),
   )

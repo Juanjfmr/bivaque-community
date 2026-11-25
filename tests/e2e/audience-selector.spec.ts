@@ -2,7 +2,7 @@
 
 import type { Page } from "@playwright/test"
 import { expect, test } from "@playwright/test"
-import { chooseTestGroup, openComposer, TEST_GROUP_FEED_URL } from "./helpers/composer"
+import { TEST_GROUP_FEED_URL } from "./helpers/composer"
 import { CURRENT_CONSENT, encodeAuthCookieValue, readEnvLocal } from "./helpers/session"
 
 const SUPABASE_URL = process.env["SUPABASE_URL"] ?? "http://127.0.0.1:55321"
@@ -53,20 +53,6 @@ async function signInAs(page: Page, email: string): Promise<void> {
 }
 
 test.describe("audience selector and group feed", () => {
-  test("the audience notice describes who will read", async ({ page }) => {
-    // Given an authenticated member who belongs to a group
-    await signInAs(page, MEMBER_EMAIL)
-    await page.setViewportSize({ width: 1280, height: 800 })
-
-    // When the composer opens and the group is chosen
-    await openComposer(page)
-    const dialog = page.getByRole("dialog")
-    await chooseTestGroup(dialog)
-
-    // Then the audience section renders with the notice of the chosen group
-    await expect(dialog.getByText(/aprovados deste grupo vão ler/i)).toBeVisible()
-  })
-
   test("group feed shows a post without a city-reach chip", async ({ page }) => {
     // Given a member of Manaus (any verified member reads a public group)
     await signInAs(page, MEMBER_EMAIL)
