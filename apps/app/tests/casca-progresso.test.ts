@@ -44,4 +44,20 @@ describe("leitura de progresso na casca", () => {
     await new Promise((resolver) => setTimeout(resolver, 0))
     expect(mocks.estados[2]).toMatchObject({ cidade: "", cidadeDeCasa: "" })
   })
+
+  it("usa a cidade da demonstração quando a rota de progresso não existe (prévia estática)", async () => {
+    mocks.lerProgresso.mockRejectedValue(Object.assign(new Error("404"), { status: 404 }))
+    ProvedorDaCasca({ children: null })
+    for (const efeito of mocks.efeitos) efeito()
+    await new Promise((resolver) => setTimeout(resolver, 0))
+    expect(mocks.estados[2]).toMatchObject({ cidade: "Manaus" })
+  })
+
+  it("não usa a cidade da demonstração com 503 do servidor", async () => {
+    mocks.lerProgresso.mockRejectedValue(Object.assign(new Error("503"), { status: 503 }))
+    ProvedorDaCasca({ children: null })
+    for (const efeito of mocks.efeitos) efeito()
+    await new Promise((resolver) => setTimeout(resolver, 0))
+    expect(mocks.estados[2]).toMatchObject({ cidade: "", cidadeDeCasa: "" })
+  })
 })

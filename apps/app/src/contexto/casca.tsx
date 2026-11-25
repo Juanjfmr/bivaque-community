@@ -146,7 +146,12 @@ export function ProvedorDaCasca({ children }: { children: ReactNode }) {
           if (!controle.signal.aborted) definir({ avisos: lista.naoLidos })
         })
       })
-      .catch(() => undefined)
+      .catch((erro: unknown) => {
+        // 404 é a rota ausente: só acontece na prévia estática do app, sem
+        // servidor (capturas e specs visuais). Em produção a rota existe; 503 e
+        // falha de rede continuam deixando a cidade vazia.
+        if ((erro as { status?: unknown } | null)?.status === 404) cidadeDaDemonstracao()
+      })
     return () => controle.abort()
   }, [definir, confirmarCidadeDaSessao])
 
