@@ -317,5 +317,36 @@ for (const tema of TEMAS) {
       await expect(page.getByRole("button", { name: "Tentar de novo" })).toBeVisible()
       await expect(page.getByText("Nenhum pedido recebido ainda.")).toHaveCount(0)
     })
+
+    test("a aba Conta mostra a falha com nova tentativa quando o negócio não carrega", async ({
+      page,
+    }) => {
+      let falhar = true
+      await page.route(/\/api\/app\/negocio(?:\?|$)/, (rota) =>
+        falhar
+          ? rota.fulfill({ status: 503, json: { erro: "leitura-indisponivel" } })
+          : rota.fulfill({
+              json: { negocio: ficha, categorias: CATEGORIAS, tipoDaConta: "membro" },
+            }),
+      )
+      await page.route(/\/api\/app\/prestador\/conta$/, (rota) =>
+        rota.fulfill({
+          json: {
+            conta: {
+              email: "membro@example.invalid",
+              temFicha: true,
+              telefone: null,
+              telefonePublico: false,
+            },
+          },
+        }),
+      )
+      await ir(page, "/app/meu-negocio?aba=conta", tema)
+      const tentar = page.getByRole("button", { name: "Tentar de novo" })
+      await expect(tentar).toBeVisible()
+      falhar = false
+      await tentar.click()
+      await expect(page.getByText("membro@example.invalid")).toBeVisible()
+    })
   })
 }

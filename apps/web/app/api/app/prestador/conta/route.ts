@@ -16,8 +16,7 @@ export const dynamic = "force-dynamic"
 
 // TROCA-005 — a conta do prestador na aba "Conta" de Meu negócio. O e-mail de
 // acesso vem da sessão (nunca do corpo); o telefone é opcional e opt-in, e a
-// validação é a de lib/providers/showcase, a mesma que a Server Action antiga
-// usa. RLS owner-only: nenhuma escrita aqui alcança ficha de outra pessoa.
+// validação é a de lib/providers/showcase. RLS owner-only: nenhuma escrita aqui alcança ficha de outra pessoa.
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
   const auth = await exigirSessao(request)

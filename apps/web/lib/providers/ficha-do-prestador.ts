@@ -41,7 +41,7 @@ export type FalhaDaFicha = Readonly<{
 
 export type ResultadoDaFicha = { readonly ok: true } | ({ readonly ok: false } & FalhaDaFicha)
 
-/** A mesma validação que a Server Action antiga aplica, com a frase da pessoa. */
+/** A validação da ficha, com a frase da pessoa. */
 export function validarEntradaDaFicha(entrada: EntradaDaFicha): string | null {
   const telefone: FieldValidation =
     entrada.telefone === undefined ? { ok: true } : validateContactPhone(entrada.telefone)

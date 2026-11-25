@@ -17,8 +17,8 @@ export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
 
 // TROCA-005 — a ficha do prestador civil pela porta do app (aba Ficha de Meu
-// negócio). A regra de escrita é uma só, em `lib/providers/ficha-do-prestador`,
-// a mesma que a Server Action antiga chama: os RPCs de página de negócio do
+// negócio). A regra de escrita é uma só, em `lib/providers/ficha-do-prestador`:
+// os RPCs de página de negócio do
 // membro recusam conta de prestador (AUTHZ-007), então esta conta grava direto
 // em `provider_profiles`, sob a policy owner-only. GET lê com o cliente da
 // sessão; nenhum `service_role` aqui.

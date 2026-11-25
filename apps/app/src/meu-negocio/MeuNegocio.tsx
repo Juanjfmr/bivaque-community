@@ -293,8 +293,11 @@ export function MeuNegocio() {
         />
       ) : null}
       {aba === "conta" ? (
-        // O tipo da conta decide se o telefone se edita aqui: até lê-lo, esqueleto.
-        carregado ? (
+        // O tipo da conta decide se o telefone se edita aqui: até lê-lo, esqueleto;
+        // se a leitura falha, a falha com "Tentar de novo", nunca esqueleto eterno.
+        erro !== null ? (
+          <FalhaDaLeitura falha={erro} aoTentar={() => setRodada((atual) => atual + 1)} />
+        ) : carregado ? (
           <ContaDoNegocio tipoDaConta={tipoDaConta} irParaFicha={() => irParaAba("ficha")} />
         ) : (
           <EsqueletoDeLista linhas={2} />

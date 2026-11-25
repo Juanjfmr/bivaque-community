@@ -107,7 +107,10 @@ export function ContaDoNegocio({
             </div>
           </div>
         ) : tipoDaConta === "membro" ? (
-          <Nota>O telefone na ficha pública é das contas de prestador.</Nota>
+          <Nota>
+            O telefone na ficha pública é das contas de prestador. Para mostrar um contato, use a
+            descrição na aba Ficha.
+          </Nota>
         ) : (
           <form className="grid gap-3" onSubmit={gravar} aria-busy={salvando} noValidate>
             <Campo
