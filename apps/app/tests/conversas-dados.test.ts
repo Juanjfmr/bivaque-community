@@ -9,6 +9,7 @@ const conversa = {
   tipo: "provider",
   contextoId: "p1",
   ultima: "Oi",
+  ultimaEm: "2026-11-05T11:00:00Z",
   porLer: true,
 }
 const mensagem = { id: "m1", conteudo: "Olá", minha: true, criadaEm: "2026-11-05T12:00:00Z" }
@@ -32,6 +33,12 @@ describe("porta de conversas", () => {
       "/api/app/conversas?depois=um%7Cdois",
       expect.objectContaining({ signal }),
     )
+  })
+  it("sem ultimaEm na resposta, a linha fica sem horário (null), não inventado", async () => {
+    const { ultimaEm: _ignorado, ...semHora } = conversa
+    responder({ conversas: [semHora], proximo: null, porLer: 0 })
+    const caixa = await lerConversas()
+    expect(caixa.conversas[0]?.ultimaEm).toBeNull()
   })
   it("lê detalhe e mensagens", async () => {
     responder({ conversa, mensagens: [mensagem], anterior: null })

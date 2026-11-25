@@ -16,12 +16,14 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { FalhaDaApi } from "@/lib/api/cliente"
+import { lerConversas } from "@/lib/dados/conversas"
 import { lerPerfilDeMembro, type PerfilDeMembro as Perfil } from "@/lib/dados/perfil"
 import { bloquear } from "@/lib/dados/voce"
 import { rotuloDeData } from "@/lib/formato"
 import { useNavegacao, useRolagemEFoco, useSobreposicaoDaEntrada } from "@/lib/navegacao/react"
 import { CARGA_CONCLUIDA } from "@/lib/navegacao/restauracao"
 import { validarParametros } from "@/lib/navegacao/rotas"
+import { pedirDenuncia } from "@/src/conversas/denunciaPedida"
 import { EstadoDeSessaoVencida } from "@/src/eventos/EstadosDeAcesso"
 import { sessaoVencida } from "@/src/eventos/formulario"
 import { Avatar, Ilustracao } from "@/src/pecas/pecas"
@@ -37,8 +39,14 @@ import { TelaIndisponivel } from "@/src/telas/TelaIndisponivel"
  * "sem acesso": a existência da pessoa também é privada.
  *
  * A saída é o menu de opções (Mobbin f23df80d): Bloquear, pela porta existente
- * `/api/app/voce/bloqueados`, com confirmação. "Mandar mensagem" e "Denunciar
- * a pessoa" não têm rota no produto e ficam de fora (REGUA-002).
+ * `/api/app/voce/bloqueados`, com confirmação, e Denunciar (REGUA-003).
+ *
+ * Não há rota para começar conversa nem para denunciar a pessoa em si
+ * (`/api/app/conversas` só lê; a denúncia existe por mensagem e por
+ * publicação). Por isso "Mensagem" só aparece quando já existe conversa com
+ * essa pessoa, e abre essa conversa; "Denunciar" leva à conversa, onde cada
+ * mensagem tem a sua denúncia, ou explica onde denunciar quando não há
+ * conversa. Nenhuma rota nova (REGUA-003).
  *
  * O menu é o mesmo mecanismo do `MenuDaLinha` (sobreposição da entrada, Voltar
  * fecha), com o gatilho que esta tela pede: rótulo "Opções" ao lado do nome
@@ -55,6 +63,8 @@ export function PerfilDeMembro() {
   const [bloqueado, setBloqueado] = useState(false)
   const [bloqueando, setBloqueando] = useState(false)
   const [mensagem, setMensagem] = useState<string | null>(null)
+  const [conversaId, setConversaId] = useState<string | null>(null)
+  const [orientacao, setOrientacao] = useState(false)
 
   useRolagemEFoco(CARGA_CONCLUIDA)
 
@@ -82,6 +92,21 @@ export function PerfilDeMembro() {
     return () => controle.abort()
   }, [id, rodada])
 
+  // A conversa que já existe com esta pessoa, se houver: a primeira página da
+  // caixa basta, e falhar aqui só esconde o atalho, nunca a tela.
+  useEffect(() => {
+    const controle = new AbortController()
+    setConversaId(null)
+    setOrientacao(false)
+    void lerConversas({ signal: controle.signal })
+      .then((caixa) => {
+        if (controle.signal.aborted) return
+        setConversaId(caixa.conversas.find((conversa) => conversa.outroId === id)?.id ?? null)
+      })
+      .catch(() => undefined)
+    return () => controle.abort()
+  }, [id])
+
   const validacao = validarParametros("perfil", { id })
   if (!validacao.ok) return <TelaIndisponivel motivo={validacao.motivo} />
   if (erro === "ausente") return <TelaIndisponivel />
@@ -107,6 +132,26 @@ export function PerfilDeMembro() {
       .finally(() => setBloqueando(false))
   }
 
+  const abrirConversa = () => {
+    if (conversaId === null) return
+    void navegacao.irPara("conversa", { parametros: { id: conversaId } })
+  }
+
+  // Com conversa, o item leva à conversa com a folha de denúncia aberta
+  // (rodada 3, M2). O menu é uma entrada própria empilhada sobre o perfil, e
+  // o `replace` troca só ELA pela conversa: o perfil continua no histórico e o
+  // Voltar volta a ele, sem menu aberto. Sem conversa, o Radix fecha o menu
+  // como sempre e a tela explica onde denunciar.
+  const denunciar = (evento: Event) => {
+    if (conversaId === null) {
+      setOrientacao(true)
+      return
+    }
+    evento.preventDefault()
+    pedirDenuncia(conversaId)
+    void navegacao.irPara("conversa", { parametros: { id: conversaId }, replace: true })
+  }
+
   const nome =
     perfil === null ? "" : perfil.nome.trim() === "" ? "Membro da comunidade" : perfil.nome
 
@@ -125,7 +170,7 @@ export function PerfilDeMembro() {
           </p>
           <Botao
             tom="contornado"
-            className="shrink-0"
+            className="shrink-0 rounded-full"
             onClick={() => setRodada((atual) => atual + 1)}
           >
             Tentar de novo
@@ -158,58 +203,78 @@ export function PerfilDeMembro() {
               negativa: nome e menu nunca encostam na arte, nos dois temas e
               nas três larguras (revisão cega R1, G3). O nome é h1 na escala
               de título da tela, acima das seções (R1, M12). */}
-          <header className="flex items-center gap-3 px-1">
+          {/* Com Mensagem, as ações descem para a linha de baixo no celular em vez
+              de empurrar a tela para fora da largura (375). */}
+          <header className="flex flex-wrap items-center gap-x-3 gap-y-2 px-1">
             <Avatar nome={nome} tamanho={56} />
-            <span className="grid min-w-0 gap-0.5">
-              <h1 id="titulo-da-tela" data-titulo-da-tela tabIndex={-1} className="truncate">
+            <span className="grid min-w-0 flex-1 basis-40 gap-0.5">
+              <h1 id="titulo-da-tela" data-titulo-da-tela tabIndex={-1} className="break-words">
                 {nome}
               </h1>
               <small className="text-(--on-surface-variant)">Membro da comunidade</small>
             </span>
-            {bloqueado ? null : (
-              <DropdownMenu open={menuAberto} onOpenChange={mudarMenu} modal>
-                {/*
+            <div data-acoes-do-perfil="" className="ms-auto flex shrink-0 items-center gap-1">
+              {bloqueado || conversaId === null ? null : (
+                <Botao
+                  tom="contornado"
+                  icone="chat_bubble"
+                  data-acao="mensagem"
+                  className="shrink-0 rounded-full"
+                  onClick={abrirConversa}
+                >
+                  Mensagem
+                </Botao>
+              )}
+              {bloqueado ? null : (
+                <DropdownMenu open={menuAberto} onOpenChange={mudarMenu} modal>
+                  {/*
                   A confirmação SUBSTITUI o menu na mesma entrada. Deixar o Radix
                   fechar o menu (Voltar da entrada) fecharia a confirmação junto,
                   porque cada entrada tem uma sobreposição só — o molde da
                   Conversa (RUN-165).
                 */}
-                <DropdownMenuTrigger asChild>
-                  <button
-                    type="button"
-                    data-acao="opcoes"
-                    aria-haspopup="menu"
-                    className="inline-flex h-11 shrink-0 items-center gap-1 rounded-full px-3 text-sm font-medium text-(--on-surface-variant) hover:bg-(--muted)"
-                    onClick={() => mudarMenu(true)}
+                  <DropdownMenuTrigger asChild>
+                    <button
+                      type="button"
+                      data-acao="opcoes"
+                      aria-haspopup="menu"
+                      className="inline-flex h-11 shrink-0 items-center gap-1 rounded-full px-3 text-sm font-medium text-(--on-surface-variant) hover:bg-(--muted)"
+                      onClick={() => mudarMenu(true)}
+                    >
+                      <Icone nome="more_vert" />
+                      Opções
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent
+                    data-sobreposicao="menu-de-linha"
+                    aria-label={`Opções do perfil de ${nome}`}
+                    sideOffset={6}
+                    align="end"
+                    className="min-w-52"
                   >
-                    <Icone nome="more_vert" />
-                    Opções
-                  </button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent
-                  data-sobreposicao="menu-de-linha"
-                  aria-label={`Opções do perfil de ${nome}`}
-                  sideOffset={6}
-                  align="end"
-                  className="min-w-52"
-                >
-                  <ItemDoMenu
-                    perigo
-                    disabled={bloqueando}
-                    aria-busy={bloqueando ? "true" : undefined}
-                    onSelect={(evento) => evento.preventDefault()}
-                    onClick={() =>
-                      void navegacao.atualizarCom((atual) => ({
-                        ...atual,
-                        sobreposicao: "confirmacao",
-                      }))
-                    }
-                  >
-                    {bloqueando ? `Bloqueando ${nome}…` : `Bloquear ${nome}`}
-                  </ItemDoMenu>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            )}
+                    <ItemDoMenu
+                      perigo
+                      disabled={bloqueando}
+                      aria-busy={bloqueando ? "true" : undefined}
+                      onSelect={(evento) => evento.preventDefault()}
+                      onClick={() =>
+                        void navegacao.atualizarCom((atual) => ({
+                          ...atual,
+                          sobreposicao: "confirmacao",
+                        }))
+                      }
+                    >
+                      {bloqueando ? `Bloqueando ${nome}…` : `Bloquear ${nome}`}
+                    </ItemDoMenu>
+                    {/* Sem o nome no rótulo: o item de bloqueio é o único que
+                      leva o nome da pessoa no menu. */}
+                    <ItemDoMenu data-acao="denunciar" onSelect={denunciar}>
+                      Denunciar
+                    </ItemDoMenu>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
+            </div>
           </header>
 
           {perfil.bio.trim() === "" ? null : (
@@ -235,6 +300,17 @@ export function PerfilDeMembro() {
             </p>
           ) : null}
 
+          {orientacao ? (
+            <p
+              role="status"
+              data-aviso="denunciar"
+              className="rounded-2xl bg-(--surface-lowest) px-4 py-3 text-sm ring-1 ring-(--outline-variant)"
+            >
+              Para denunciar {nome}, abra a publicação ou a mensagem que incomodou e escolha
+              Denunciar no menu dela. Se quiser parar o contato agora, use Bloquear.
+            </p>
+          ) : null}
+
           {mensagem === null ? null : (
             <p role="alert" className="text-sm text-(--destructive)">
               {mensagem}
@@ -247,7 +323,7 @@ export function PerfilDeMembro() {
                 nivel="h3"
                 titulo="Nenhuma publicação visível"
                 texto="O que vocês dois podem ver aparece aqui."
-                icone="forum"
+                figura="nenhuma"
               />
             ) : (
               <ul className="grid gap-3">
@@ -272,7 +348,7 @@ export function PerfilDeMembro() {
                 nivel="h3"
                 titulo="Nenhum evento visível"
                 texto="Os encontros que essa pessoa organiza aparecem aqui."
-                icone="event"
+                figura="nenhuma"
               />
             ) : (
               <ul className="grid gap-2">

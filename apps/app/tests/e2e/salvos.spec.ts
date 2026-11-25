@@ -172,6 +172,50 @@ test("busca filtra o que as seções já carregaram e não esconde os segmentos"
   await expect(busca).toHaveValue("apartamento")
 })
 
+// REGUA-003: o mesmo marcador cheio nas linhas e nos cartões, respiro entre as
+// seções e, no computador, a grade de anúncios ocupando a coluna inteira.
+test("salvos com o mesmo marcador, seções com respiro e grade na largura da coluna", async ({
+  page,
+}) => {
+  aplicarStubMercado(page)
+  await simularSalvos(page)
+  await salvarAnuncio(page, ANUNCIO)
+  await page.goto("/app/salvos")
+
+  const guia = page.locator('[data-salvos="guia"]')
+  await expect(guia).toContainText(NOME_DO_GUIA)
+  const anuncios = page.locator('[data-salvos="anuncios"]')
+  await expect(anuncios.locator('[data-cartao="anuncio"]').first()).toBeVisible()
+
+  const marcadorDaLinha = guia.getByRole("button", { name: `Remover dos salvos: ${NOME_DO_GUIA}` })
+  const marcadorDoCartao = anuncios
+    .getByRole("button", { name: "Remover dos salvos", exact: true })
+    .first()
+  for (const marcador of [marcadorDaLinha, marcadorDoCartao]) {
+    await expect(marcador.locator('[data-icone="bookmark"]')).toHaveClass(/bv-icone-preenchido/)
+  }
+
+  const respiro = await page
+    .locator('[data-tela="salvos"]')
+    .evaluate((elemento) => Number.parseFloat(getComputedStyle(elemento).rowGap))
+  expect(respiro, "títulos de seção não encostam no bloco anterior").toBeGreaterThanOrEqual(20)
+
+  const largura = page.viewportSize()?.width ?? 0
+  if (largura >= 1024) {
+    const [coluna, grade] = await Promise.all([
+      anuncios.evaluate((elemento) => elemento.getBoundingClientRect().width),
+      anuncios
+        .locator('[data-grade="salvos"]')
+        .evaluate((elemento) => elemento.getBoundingClientRect().width),
+    ])
+    expect(Math.abs(coluna - grade)).toBeLessThanOrEqual(1)
+    const colunas = await anuncios
+      .locator('[data-grade="salvos"]')
+      .evaluate((elemento) => getComputedStyle(elemento).gridTemplateColumns.split(" ").length)
+    expect(colunas, "a grade preenche a coluna em mais de uma faixa").toBeGreaterThanOrEqual(3)
+  }
+})
+
 test("remover tira a linha de cada seção pela rota daquele tipo", async ({ page }) => {
   const escritas: string[] = []
   aplicarStubMercado(page)
@@ -216,6 +260,12 @@ test("remover tira a linha de cada seção pela rota daquele tipo", async ({ pag
   const vazio = page.locator('[data-tela="salvos"] [data-estado="vazio"]')
   await expect(vazio).toHaveCount(1)
   await expect(vazio).toContainText("Nada salvo ainda")
+  // A figura do vazio chega junto com o texto, sem vão em branco (rodada 3, V1).
+  const figura = vazio.locator("img")
+  await expect(figura).toHaveAttribute("loading", "eager")
+  await expect
+    .poll(() => figura.evaluate((img) => (img as HTMLImageElement).naturalWidth))
+    .toBeGreaterThan(0)
   await expect(page.getByRole("searchbox", { name: "Buscar nos salvos" })).toHaveCount(0)
   const perguntasAinda = page.locator('[data-salvos="perguntas"]')
   await expect(perguntasAinda).toContainText(TITULO_DA_SEGUNDA_PERGUNTA)
@@ -362,6 +412,15 @@ test("nada salvo em nenhuma seção: um vazio só, da tela inteira", async ({ pa
   await expect(page.getByRole("searchbox", { name: "Buscar nos salvos" })).toHaveCount(0)
   await expect(page.locator('[data-salvos="anuncios"]')).toHaveCount(0)
   await expect(page.locator('[data-salvos="guia"]')).toHaveCount(0)
+  // REGUA-003: o cartão do vazio tem a largura da coluna do título e usa a
+  // ilustração da família, não o ícone em mancha.
+  const larguraDaColuna = await page
+    .locator('[data-tela="salvos"]')
+    .evaluate((elemento) => elemento.getBoundingClientRect().width)
+  const larguraDoVazio = await vazio.evaluate((elemento) => elemento.getBoundingClientRect().width)
+  expect(Math.abs(larguraDaColuna - larguraDoVazio)).toBeLessThanOrEqual(1)
+  await expect(vazio).toHaveAttribute("data-figura", "vinculo")
+  await expect(vazio.locator('[data-arte="vazia"]')).toHaveCount(0)
   await vazio.getByRole("button", { name: "Ver o Mercado" }).click()
   await expect(page).toHaveURL(/\/app\/mercado$/)
 })

@@ -1,0 +1,77 @@
+task_id: A11YWEB-001
+objective: >
+  Fechar o critério 5 de LANCAMENTO (acessibilidade: teclado, leitor de tela, contraste, alvos,
+  movimento reduzido) em todas as jornadas do web, F02 a F10: a matriz de axe do app passa a cobrir
+  as telas de cada jornada que hoje ficam de fora, cada jornada ganha uma prova do caminho principal
+  pelo teclado, e as falhas essenciais que aparecerem são corrigidas no mesmo lote.
+authority:
+  - docs/LANCAMENTO.md (critério 5 e jornadas F02 a F10)
+  - "decisão do coordenador, 23/11: o dono pausou a loja e o web vai primeiro; lote 2 do plano aprovado"
+  - "cards LAN-F02, LAN-F03, LAN-F06, LAN-F07, LAN-F08, LAN-F09, LAN-F10 em tools/backend-kanban/public/board.json"
+  - apps/app/tests/e2e/acessibilidade.spec.ts (matriz atual e o seu padrão)
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    Na main 9c075d211 a matriz de acessibilidade.spec.ts (axe wcag2a/wcag2aa/wcag21aa, falha em
+    serious ou critical, 375/768/1440, tema claro) só cobre Início, Mercado, Negócios, Guia,
+    Conversas, Busca (vazia e com termo), Menu Criar, Formulário de encontro, Negócio e Pedido. Ficam
+    fora: Comunidade, Grupo, Agenda, Evento, Cidade, Pergunta, Publicação, Anúncio, Meus anúncios,
+    Imóveis, Verbete do Guia, Meu negócio, Pedidos, Novo pedido, Conversa aberta, Avisos e
+    preferências de avisos, Você, Bloqueados, Ocultados, Salvos, Perfil de membro e Apagar conta,
+    e as folhas do Criar para pergunta, publicação e desapego.
+allowed_paths:
+  - apps/app/tests/e2e/acessibilidade.spec.ts
+  - apps/app/tests/e2e/acessibilidade-jornadas.spec.ts
+  - apps/app/tests/e2e/*-ajuda.ts
+  - apps/app/tests/e2e/apoio.ts
+  - apps/app/tests/e2e/stub-mercado.ts
+  - apps/app/src/telas/*.tsx
+  - apps/app/src/casca/*.tsx
+  - apps/app/src/grupos/*.tsx
+  - apps/app/src/eventos/*.tsx
+  - apps/app/src/guia/*.tsx
+  - apps/app/src/mercado/*.tsx
+  - apps/app/src/meu-negocio/*.tsx
+  - apps/app/src/negocios/*.tsx
+  - apps/app/src/perguntas/*.tsx
+  - apps/app/src/conversas/*.tsx
+  - apps/app/src/avisos/*.tsx
+  - apps/app/src/voce/*.tsx
+  - apps/app/src/criar/*.tsx
+  - apps/app/src/pecas/*.tsx
+  - apps/app/src/pecas/pecas.css
+  - apps/app/src/styles.css
+  - apps/app/components/bivaque/*.tsx
+  - apps/app/tests/*.test.ts
+  - apps/app/tests/*.test.tsx
+  - docs/agents/tasks/A11YWEB-001.task.yml
+forbidden:
+  - API, banco, migrations, supabase/, apps/web
+  - dependência nova ou troca de versão no package.json ou no lockfile
+  - afrouxar o axe (tags, impacto, regras desligadas, seletores excluídos) ou apagar asserção existente; excluir um elemento da análise só com o motivo em comentário e o achado registrado no relatório
+  - apps/app/tests/e2e/cegas/ (lote CEGA-003 em paralelo), apps/app/src/roteador.tsx, apps/app/lib/navegacao/
+  - mudança de produto, de texto ou de desenho além do que a correção de acessibilidade exige
+  - git stash, reiniciar ou reconstruir o banco local, delegar
+  - dado pessoal real ou CPF real em stub; e-mails só em example.invalid
+acceptance:
+  - "a matriz de axe cobre, em 375/768/1440 e tema claro, ao menos uma tela por destino da lista do baseline, no estado populado (stub no contrato das rotas /api/app/*), e também o vazio e a falha principal de Conversa, Avisos, Salvos e Meus anúncios"
+  - "nenhuma violação serious ou critical nas telas cobertas; cada correção no código de produto tem a sua causa no relatório e não muda o desenho além do necessário"
+  - "uma prova de teclado por jornada (F02, F03, F04, F05, F06, F07, F08, F09, F10): Tab alcança a ação principal, Enter ou Espaço ativa, Esc fecha folha ou menu e devolve o foco a quem abriu, com foco visível"
+  - "alvos de toque de no mínimo 24 por 24 px (WCAG 2.2 2.5.8) nas ações principais das telas novas da matriz; movimento reduzido respeitado nas folhas abertas pelo teclado"
+  - "nomes acessíveis: ícones sem texto têm rótulo; cada tela tem um h1 e ordem de títulos sem salto (heading-order do axe)"
+  - "o lote roda com PLAYWRIGHT_PORT=3400 e PLAYWRIGHT_BUILD_PORT=3401 para não colidir com o CEGA-003 (3300/3301)"
+  - "relatório curto em .visual/a11yweb-001/RELATORIO.md: telas cobertas por jornada, violações achadas e corrigidas, exclusões com motivo"
+proof:
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/A11YWEB-001.task.yml
+  - npx pnpm@11.18.0 gate --fast
+  - npx pnpm@11.18.0 --filter @bivaque/app test
+  - npx pnpm@11.18.0 --filter @bivaque/app build
+  - npx pnpm@11.18.0 --filter @bivaque/app exec playwright test tests/e2e/acessibilidade.spec.ts tests/e2e/acessibilidade-jornadas.spec.ts --project mobile-375 --project tablet-768 --project desktop-1440
+  - "CI completo (ci:full) verde no PR"
+risk: ui
+risk_level: R1
+reviewer_must_differ_from_executor: true
+retry_budget: 3
+on_budget_exhausted: HUMAN_DECISION
+closure:
+  requires_runtime_evidence: true

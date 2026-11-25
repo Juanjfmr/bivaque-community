@@ -86,7 +86,7 @@ export function CartaoDeFoto({
             <small className="text-[12px] text-(--on-surface-variant)">/ mês</small>
           ) : null}
         </span>
-        <h3 className="text-[17px] leading-6">{anuncio.titulo}</h3>
+        <h2 className="text-[17px] leading-6 font-semibold tracking-normal">{anuncio.titulo}</h2>
         <span className="text-[13px] text-(--on-surface-variant)">{anuncio.meta}</span>
         {anuncio.detalhes === undefined || anuncio.detalhes.length === 0 ? null : (
           <span
@@ -184,7 +184,7 @@ export function CartaoDeNegocio({
         onClick={aoAbrir}
         className="grid min-h-11 w-full gap-1 p-3 text-left focus-visible:outline-2 focus-visible:outline-offset-[-3px] focus-visible:outline-(--ring)"
       >
-        <h3 className="text-[17px] leading-6">{negocio.nome}</h3>
+        <h2 className="text-[17px] leading-6 font-semibold tracking-normal">{negocio.nome}</h2>
         <span className="text-[13px] text-(--on-surface-variant)">
           {`${negocio.categoria} · ${negocio.bairro ?? negocio.cidade}`}
         </span>

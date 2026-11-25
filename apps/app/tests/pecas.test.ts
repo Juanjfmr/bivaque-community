@@ -1,8 +1,9 @@
 import { statSync } from "node:fs"
 import { join } from "node:path"
 import { describe, expect, it } from "vitest"
+import { iniciais } from "@/lib/texto"
 
-import { caminhoDaIlustracao, caminhoDoSelo, ILUSTRACOES, iniciais, SELOS } from "@/src/pecas/pecas"
+import { caminhoDaIlustracao, caminhoDoSelo, ILUSTRACOES, SELOS } from "@/src/pecas/pecas"
 
 const pastaDasIlustracoes = join(import.meta.dirname, "..", "public", "ilustracoes")
 

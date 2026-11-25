@@ -15,6 +15,7 @@ import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/compone
 import type { NomeDeIcone } from "@/lib/icones"
 import { prefersReduzido } from "@/lib/movimento"
 import { SeletorDeFoto } from "@/lib/nativo/SeletorDeFoto"
+import { iniciais, tomDoNome } from "@/lib/texto"
 import {
   animacaoDaFolha,
   comecaArrasto,
@@ -165,20 +166,6 @@ export function Linha({
 }
 
 // ── avatar, selo e ilustração ──────────────────────────────────────────────
-function tomDoNome(nome: string): number {
-  let soma = 0
-  for (const letra of nome) soma = (soma + (letra.codePointAt(0) ?? 0)) % 997
-  return soma % 4
-}
-
-/** "Carla R." vira "CR"; "Ana Souza", "AS"; um nome só, a primeira letra. */
-export function iniciais(nome: string): string {
-  const partes = nome.replace(/\./g, "").trim().split(/\s+/)
-  const primeira = partes[0]?.[0] ?? ""
-  const ultima = partes.length > 1 ? (partes.at(-1)?.[0] ?? "") : ""
-  return `${primeira}${ultima}`.toUpperCase()
-}
-
 /** Pessoa sem foto ganha as iniciais num dos tons da família, sempre o mesmo. */
 export function Avatar({
   nome,

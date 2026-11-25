@@ -1,0 +1,71 @@
+task_id: LOJA-006
+objective: >
+  Lote curto de correção que segue o LOJA-005 (opção A do dono, 22/11), com orçamento próprio. Corrige a tela
+  branca do app iOS em capacitor://localhost/app/ com teste que falha antes e passa depois; põe log detalhado
+  no passo 08-google do roteiro Android, sem token nem dado sensível; e reaproveita o workflow app-loja-provas
+  do #322 para provar os passos 02 a 04 no Android (a entrada de membro já foi corrigida no #327) e o passo
+  01-entrada no iOS.
+authority:
+  - "decisão do dono, 22/11 (opção A do LOJA-005, repassada pelo coordenador às 19:55Z): lote LOJA-006 com orçamento próprio, merge com CI completo verde"
+  - docs/agents/tasks/LOJA-005.task.yml (roteiro, fronteiras e sanitização herdados)
+  - docs/decisions/ADR-20261120-sessao-nativa-do-app-de-loja.md (Provas exigidas)
+  - "cards LOJA-DEF-IOS-TELA-BRANCA, LOJA-DEF-ENTRADA-MEMBRO e LAN-LOJA em tools/backend-kanban/public/board.json"
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    Run 45023729150 do app-loja-provas (PR #322). iOS: em capacitor://localhost/app/ o bundle principal roda
+    (GET /api/app/entry/progress chega à API de prova), sem erro de JS, sem unhandledrejection, sem falha de
+    recurso, mas #root não recebe nenhuma mutação em 20 s; o mesmo build desenha no Android (https://localhost).
+    Não há lazy, Suspense nem use() no app: a suspeita é o carregamento inicial do TanStack Router
+    (1.170.42) ou do react-dom 19.1 sob o esquema capacitor:// (origem, parse de URL, history ou o raiz.js do
+    preparar-nativo), que deixa a primeira renderização suspensa sem commit. Android: 08-google falhou em
+    "URL OAuth ou PKCE inválido" sem dizer qual condição (origem, caminho, provider, método ou desafio); a
+    origem esperada no roteiro é só localhost/127.0.0.1:54321, e o build nativo usa a VITE_SUPABASE_URL do job.
+    Passos 02 a 04 não provados por causa do defeito já corrigido no #327.
+allowed_paths:
+  - apps/app/src/main.tsx
+  - apps/app/src/roteador.tsx
+  - apps/app/src/contexto/**
+  - apps/app/src/casca/**
+  - apps/app/lib/**
+  - apps/app/scripts/preparar-nativo.mjs
+  - apps/app/tests/**
+  - .github/workflows/app-loja-provas.yml
+  - tests/nativo/**
+  - tests/scope/loja-provas.test.mjs
+  - docs/agents/tasks/LOJA-006.task.yml
+  - docs/decisions/ADR-20261120-sessao-nativa-do-app-de-loja.md
+  - tools/backend-kanban/public/board.json
+  - tools/backend-kanban/BOARD.md
+forbidden:
+  - telas e fluxos do app (apps/app/src/telas, entrada, previa-f01 e demais), apps/web, supabase/
+  - apps/app/capacitor.config.ts, android/ e ios/ versionados, server.url ou allowNavigation, build de release assinado
+  - instrumentação de diagnóstico no código de produção; o diagnóstico continua injetado só no dist-nativo do job
+  - chave, token, senha, código OTP, cookie, code_challenge, query string ou e-mail real no repositório, no log ou no artefato
+  - projeto Supabase hospedado, banco de produção, Portal da Transparência, provedor OAuth real
+  - tornar o workflow obrigatório no ruleset ou mudar outros workflows
+  - dependência nova ou troca de versão no package.json ou no lockfile
+  - git stash, reiniciar ou reconstruir o banco local do PC, delegar
+  - dado pessoal real ou CPF real
+acceptance:
+  - "iOS: a causa da tela branca é achada no código e registrada no card LOJA-DEF-IOS-TELA-BRANCA (arquivo, condição e por que só o capacitor:// dispara), sem palpite"
+  - "iOS: correção mínima no app ou no preparar-nativo; um teste automatizado em apps/app/tests (ou tests/nativo) reproduz a condição do iOS (por exemplo a URL capacitor://localhost/app/ e a origem do WKWebView), falha sem a correção e passa com ela; web e Android seguem iguais"
+  - "iOS: no app-loja-provas o passo 01-entrada fica verde no simulador, com captura PNG da entrada desenhada"
+  - "Android: o 08-google registra no roteiro.log qual condição falhou (origem recebida, caminho, provider, método do desafio e só o comprimento e o formato do code_challenge, nunca o valor nem a query string); a origem aceita é a do Supabase com que o build nativo foi feito no job, e o passo fica verde ou vira relato com a condição exata"
+  - "Android: passos 02-codigo, 03-reabrir e 04-sair verdes no emulador, com captura e linha OK no roteiro.log; 01, 05, 06 e 07 continuam verdes"
+  - "logs e artefatos seguem a sanitização do LOJA-004; o teste de escopo tests/scope/loja-provas.test.mjs continua passando e cobre o que mudou"
+  - "gate completo verde e CI completo (ci:full) verde na revisão entregue; nota de prova nos cards LAN-LOJA, LOJA-DEF-IOS-TELA-BRANCA e LOJA-DEF-ENTRADA-MEMBRO"
+proof:
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/LOJA-006.task.yml
+  - npx pnpm@11.18.0 --filter @bivaque/app test
+  - node --test tests/scope/loja-provas.test.mjs
+  - npx pnpm@11.18.0 gate --fast
+  - "run do workflow app-loja-provas no PR com o artefato baixado e conferido pelo coordenador, passo a passo"
+risk: harness
+risk_level: R3
+adr: docs/decisions/ADR-20261120-sessao-nativa-do-app-de-loja.md
+reviewer_must_differ_from_executor: true
+retry_budget: 4
+on_budget_exhausted: HUMAN_DECISION
+closure:
+  requires_runtime_evidence: true

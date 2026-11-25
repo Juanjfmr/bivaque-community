@@ -47,19 +47,25 @@ export function acoesDaBarraDoTopo(nomeDaRota: string): AcoesDaBarra {
 }
 
 /**
- * §5.3: no celular a barra de baixo só aparece nas rotas-raiz
- * (`syncMobileNavigation`); a partir de 1024 px ela é a coluna da esquerda e
- * nunca some.
+ * As telas onde a barra de baixo mora no celular: as rotas-raiz do catálogo e a
+ * tela de cada aba da navegação. O Mercado é a aba sem marca de raiz no
+ * catálogo (o topo dele mantém Voltar e Buscar), mas é a porta de uma das
+ * cinco posições da barra: sem ela, tocar em Mercado escondia a barra inteira.
+ */
+const TELAS_DAS_ABAS: ReadonlySet<string> = new Set(["inicio", "comunidade", "mercado", "voce"])
+
+function moraNaBarraDeBaixo(nomeDaRota: string): boolean {
+  return TELAS_DAS_ABAS.has(nomeDaRota) || (rotaPorNome(nomeDaRota)?.raiz ?? false)
+}
+
+/**
+ * §5.3: no celular a barra de baixo só aparece nas rotas-raiz e nas telas das
+ * abas (`syncMobileNavigation`); a partir de 1024 px ela é a coluna da esquerda
+ * e nunca some.
  */
 export function navegacaoVisivel(nomeDaRota: string, largura: number): boolean {
   if (largura >= 1024) return true
-  return rotaPorNome(nomeDaRota)?.raiz ?? false
-}
-
-/** §5.3: o Criar acompanha a barra de baixo. */
-export function criaVisivel(nomeDaRota: string, largura: number): boolean {
-  if (largura >= 1024) return true
-  return rotaPorNome(nomeDaRota)?.raiz ?? false
+  return moraNaBarraDeBaixo(nomeDaRota)
 }
 
 /** §5.2: a faixa de visita exige uma cidade de casa conhecida. */

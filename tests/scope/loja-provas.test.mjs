@@ -1,0 +1,137 @@
+import assert from "node:assert/strict"
+import { readFileSync } from "node:fs"
+import test from "node:test"
+
+const workflow = readFileSync(".github/workflows/app-loja-provas.yml", "utf8")
+
+test("workflow de provas tem escopo e permissões mínimas", () => {
+  assert.match(workflow, /workflow_dispatch:/)
+  assert.match(workflow, /pull_request:/)
+  assert.match(workflow, /permissions:\s+contents: read/)
+  assert.doesNotMatch(workflow, /secrets\.|--linked/)
+  assert.doesNotMatch(workflow, /(?:write-all|contents:\s*write)/)
+  assert.match(workflow, /^ {2}android:/m)
+  assert.match(workflow, /^ {2}ios:/m)
+})
+
+test("actions têm versões fixadas e provas executam em ambos os jobs", () => {
+  const actions = [...workflow.matchAll(/^\s*-?\s*uses:\s*(\S+)/gm)].map((m) => m[1])
+  assert.ok(actions.length >= 10)
+  for (const action of actions) assert.match(action, /^[\w.-]+\/[\w.-]+@v\d+(?:\.\d+)*$/)
+  assert.match(workflow, /reactivecircus\/android-emulator-runner@v\d/)
+  assert.match(workflow, /node tests\/nativo\/android\.mjs/)
+  assert.match(workflow, /node tests\/nativo\/ios\.mjs/)
+  assert.match(workflow, /if: always\(\)/)
+  assert.match(workflow, /actions\/upload-artifact@v\d/)
+})
+
+test("iOS só prova tela renderizada e não registra diálogo como link", () => {
+  const ios = readFileSync("tests/nativo/ios.mjs", "utf8")
+  assert.match(ios, /renderThresholdBytes = 120_000/)
+  assert.match(ios, /elapsed <= 90_000/)
+  assert.match(ios, /elapsed \+= 3_000/)
+  assert.match(ios, /PNG \$\{lastSize\} bytes/)
+  assert.match(ios, /osascript/)
+  assert.match(ios, /click button "Open"/)
+  assert.match(ios, /link profundo no iOS não provado no CI: o simctl pede confirmação/)
+  assert.match(ios, /01-entrada-falha\.png/)
+  assert.match(ios, /02-link-falha\.png/)
+  assert.match(
+    workflow,
+    /simctl launch --terminate-running-process --stdout="\$RUNNER_TEMP\/ios-console\.log" --stderr="\$RUNNER_TEMP\/ios-console-error\.log" "\$device" "\$bundle_id"/,
+  )
+  assert.match(workflow, /ios-console\.log/)
+  assert.match(workflow, /ios-console-error\.log/)
+  assert.match(workflow, /cache: gradle/)
+  assert.match(workflow, /for attempt in 1 2 3/)
+  assert.match(workflow, /sleep 60/)
+  assert.match(workflow, /Tentativa \$attempt\/3/)
+  assert.match(workflow, /tail -n 400/)
+  assert.match(workflow, /CFBundleExecutable/)
+  assert.match(workflow, /ios-app\.log/)
+  assert.match(workflow, /ios-webkit\.log/)
+  assert.ok(workflow.includes('NOT subsystem CONTAINS[c] \\"com.apple.coremedia\\"'))
+  assert.match(workflow, /\.visual\/loja-004\/ios\/\*\.png/)
+  assert.match(workflow, /Content Security Policy/)
+  assert.match(workflow, /VITE_API_BASE: http:\/\/localhost:3999/)
+  assert.match(workflow, /VITE_SUPABASE_URL: http:\/\/localhost:3999/)
+  assert.match(workflow, /tests\/nativo\/api-de-prova\.mjs/)
+  assert.match(workflow, /ios-api\.log/)
+})
+
+test("Mailpit Android lê a porta do Inbucket e registra URL sem query", () => {
+  const android = readFileSync("tests/nativo/android.mjs", "utf8")
+  const config = readFileSync("supabase/config.toml", "utf8")
+  assert.match(config, /\[inbucket\][\s\S]*?port\s*=\s*55324/)
+  assert.match(android, /\\\[inbucket\\\]/)
+  assert.match(android, /MAILPIT_URL \?\? `http:\/\/127\.0\.0\.1:\$\{porta/)
+  assert.match(android, /log\(`Mailpit: \$\{urlSemQuery\(base\)\}`\)/)
+  assert.doesNotMatch(android, /127\.0\.0\.1:54324/)
+})
+
+test("OAuth usa a mesma origem do build e registra somente dados de diagnóstico", () => {
+  const android = readFileSync("tests/nativo/android.mjs", "utf8")
+  const job = workflow.split("  android:")[1].split("  ios:")[0]
+  assert.match(job, /echo "VITE_SUPABASE_URL=\$API_URL" >> "\$GITHUB_ENV"/)
+  assert.doesNotMatch(job, /VITE_SUPABASE_URL: /)
+  assert.doesNotMatch(job, /54321/)
+  assert.doesNotMatch(job.split("    steps:")[0], /VITE_SUPABASE_URL/)
+  assert.match(android, /new URL\(process\.env\.VITE_SUPABASE_URL\)\.origin/)
+  assert.match(android, /url\.origin !== origemEsperada/)
+  assert.match(
+    android,
+    /desafio_comprimento=\$\{desafio\.length\} desafio_formato_valido=\$\{formatoValido\}/,
+  )
+  assert.doesNotMatch(android, /\$\{desafio\}/)
+  assert.doesNotMatch(android, /\$\{url\.(search|href)\}/)
+})
+
+test("roteador do app recebe a origem HTTP só no iOS", () => {
+  const roteador = readFileSync("apps/app/src/roteador.tsx", "utf8")
+  assert.match(roteador, /origemDoRoteador\(window\.location\)/)
+  assert.match(roteador, /\{ origin: origem \}/)
+})
+
+test("API iOS de prova aplica CORS e respostas esperadas", () => {
+  const api = readFileSync("tests/nativo/api-de-prova.mjs", "utf8")
+  assert.match(api, /capacitor:\/\/localhost/)
+  assert.match(api, /Access-Control-Allow-Origin/)
+  assert.match(api, /GET, POST, OPTIONS/)
+  assert.match(api, /authorization, content-type, x-bivaque-app, x-bivaque-cliente/)
+  assert.match(api, /request\.method === "OPTIONS"/)
+  assert.match(api, /\/api\\\/localities/)
+  assert.match(api, /writeHead\(401/)
+  assert.match(api, /\{"autenticado":false,"motivo":"sem-sessao"\}/)
+  assert.match(api, /request\.method\} \$\{pathname\}/)
+  assert.doesNotMatch(api, /Access-Control-Allow-Credentials/)
+})
+
+test("rede cleartext de prova só existe no overlay debug gerado pelo workflow", () => {
+  assert.match(workflow, /apps\/app\/android\/app\/src\/debug\/AndroidManifest\.xml/)
+  assert.match(workflow, /apps\/app\/android\/app\/src\/debug\/res\/xml\/rede_de_prova\.xml/)
+  assert.ok(workflow.includes('base-config cleartextTrafficPermitted="false"'))
+  assert.ok(workflow.includes('<domain includeSubdomains="false">localhost</domain>'))
+  assert.ok(workflow.includes('<domain includeSubdomains="false">127.0.0.1</domain>'))
+  assert.match(workflow, /assembleDebug/)
+  assert.match(workflow, /dump xmltree .*--file AndroidManifest\.xml/)
+  assert.match(workflow, /grep -F 'networkSecurityConfig'/)
+  assert.match(workflow, /unzip -p .*resources\.arsc/)
+  assert.match(workflow, /grep -F 'rede_de_prova'/)
+  assert.doesNotMatch(workflow, /src\/main\/AndroidManifest\.xml/)
+})
+
+test("diagnóstico iOS é injetado somente na build do job", () => {
+  const iosJob = workflow.split("  ios:")[1]
+  assert.ok(iosJob)
+  assert.doesNotMatch(workflow.split("  ios:")[0], /diagnostico-ios/)
+  assert.match(iosJob, /find apps -name diagnostico-ios\.js/)
+  assert.match(
+    iosJob,
+    /cp tests\/nativo\/diagnostico-ios\.js apps\/app\/dist-nativo\/diagnostico-ios\.js/,
+  )
+  assert.match(iosJob, /<script src=/)
+  assert.match(iosJob, /GITHUB_ENV/)
+  const diagnostico = readFileSync("tests/nativo/diagnostico-ios.js", "utf8")
+  assert.match(diagnostico, /unhandledrejection/)
+  assert.match(diagnostico, /__diagnostico/)
+})

@@ -1,0 +1,60 @@
+task_id: LOJA-005
+objective: >
+  Lote curto de provas que segue o LOJA-004 (chamado de LOJA-004b na decisão do dono de 22/11, opção A),
+  com orçamento próprio. No Android, o roteiro readquire a WebView depois do login e roda os passos 3 a 8.
+  No iOS, a tela em branco é diagnosticada inspecionando a WebView só na build de teste do CI, com log de
+  erros de JS e da rota. Se a causa for defeito do app, ela vira relato e a correção vai num lote separado.
+authority:
+  - "decisão do dono, 22/11 (opção A no LOJA-004, repassada pelo coordenador): lote curto novo com orçamento próprio"
+  - docs/agents/tasks/LOJA-004.task.yml (roteiro, fronteiras e aceitação herdados)
+  - docs/decisions/ADR-20261120-sessao-nativa-do-app-de-loja.md (Provas exigidas)
+  - "card LAN-LOJA em tools/backend-kanban/public/board.json (nota de 22/11 do LOJA-004: o que não foi provado)"
+baseline:
+  status: FAIL-EVIDENCED
+  evidence: >
+    Runs 44995198232..44999649034 do workflow app-loja-provas no PR #322 (branch feat/loja-004). Android:
+    passo 01-entrada OK; no 02-codigo, depois de enviar o código, a página segurada pelo roteiro fecha
+    ("Target page, context or browser has been closed") e os passos 3 a 8 não rodam. iOS: o app carrega
+    (pedidos a /api/app/entry/progress e /api/localities chegam à API de prova), mas a tela fica em branco
+    por 90 s; causa não diagnosticada.
+allowed_paths:
+  - .github/workflows/app-loja-provas.yml
+  - tests/nativo/**
+  - tests/scope/loja-provas.test.mjs
+  - docs/agents/tasks/LOJA-005.task.yml
+  - docs/decisions/ADR-20261120-sessao-nativa-do-app-de-loja.md
+  - tools/backend-kanban/public/board.json
+  - tools/backend-kanban/BOARD.md
+forbidden:
+  - código de produção do app ou do servidor (apps/app/src, apps/app/lib, apps/web, capacitor.config.ts, android/ e ios/ versionados); defeito achado vira relato com passo, captura e log, nunca remendo neste lote
+  - instrumentação de diagnóstico fora da build de teste do CI (o que for injetado no dist-nativo ou no projeto iOS acontece só dentro do job, sem commit em apps/)
+  - apps/mobile, apps/prototipo
+  - chave, token, senha, código OTP, cookie ou e-mail real no repositório, no log ou no artefato; credenciais fixas no workflow (o CI deriva da pilha local)
+  - projeto Supabase hospedado (só a pilha local do CI), banco de produção, Portal da Transparência, provedor OAuth real
+  - mudar supabase/config.toml, migrations ou seed.sql
+  - server.url ou allowNavigation; build de release assinado
+  - tornar o workflow obrigatório no ruleset ou mudar outros workflows
+  - dependência nova no package.json ou no lockfile
+  - git stash, reiniciar ou reconstruir o banco local do PC, delegar
+  - dado pessoal real ou CPF real
+acceptance:
+  - "Android: o roteiro tests/nativo/android.mjs não segura uma página única; cada passo obtém a página atual da WebView do pacote (nova busca em device.webViews() quando a página fecha ou troca de documento, com espera limitada) e reinstala a instrumentação de rede; o passo 02-codigo termina com a tela autenticada visível na WebView readquirida"
+  - "Android: passos 03-reabrir, 04-sair, 05-link, 06-callback-sem-fluxo, 07-backup e 08-google rodam no emulador, cada um com captura PNG e linha OK/FALHOU no roteiro.log; um passo que falha por defeito do app é registrado como relato (passo, captura, log filtrado) e os passos seguintes que não dependem dele continuam"
+  - "iOS: só no job do CI, a build de teste liga a inspeção da WebView (por exemplo isInspectable no simulador, ou um script de diagnóstico injetado no dist-nativo depois do build e antes do cap sync) e grava num log de artefato os erros de JS (window error e unhandledrejection, com mensagem e arquivo:linha, sem query string), a rota atual (pathname) e o estado do elemento raiz (vazio ou com filhos); a captura e o log permitem dizer por que a tela fica em branco"
+  - "iOS: o resultado é uma de duas saídas, registrada no card: (a) a causa é do harness e foi corrigida no harness, com captura da entrada renderizada; ou (b) a causa é defeito do app, com o erro e a rota no relato e um card novo de correção em status repo"
+  - "logs e artefatos passam pela mesma sanitização do LOJA-004: nenhum token, código, cookie, query string ou e-mail completo"
+  - "teste de escopo tests/scope/loja-provas.test.mjs continua passando e cobre o que mudou no workflow (permissões mínimas, sem secrets., sem projeto hospedado, actions fixadas, diagnóstico iOS só dentro do job)"
+  - "nota de prova no card LAN-LOJA com o run, o resultado por passo e o diagnóstico do iOS"
+proof:
+  - node scripts/agents/task-contract.mjs docs/agents/tasks/LOJA-005.task.yml
+  - node --test tests/scope/loja-provas.test.mjs
+  - npx pnpm@11.18.0 gate --fast
+  - "run do workflow app-loja-provas no PR #322 com o artefato baixado e conferido pelo coordenador, passo a passo"
+risk: harness
+risk_level: R3
+adr: docs/decisions/ADR-20261120-sessao-nativa-do-app-de-loja.md
+reviewer_must_differ_from_executor: true
+retry_budget: 4
+on_budget_exhausted: HUMAN_DECISION
+closure:
+  requires_runtime_evidence: true

@@ -1,6 +1,7 @@
 import type { ReactNode } from "react"
 import type { NomeDeIcone } from "@/lib/icones"
 import { cn } from "@/lib/utils"
+import { caminhoDaIlustracao, type NomeDaIlustracao } from "@/src/pecas/pecas"
 import { ArteVazia } from "./arte-vazia"
 import { Botao } from "./botao"
 import { Icone } from "./icone"
@@ -12,6 +13,11 @@ import { Icone } from "./icone"
  * O vazio repetido em 25 arquivos do protótipo; o ícone de reserva é o
  * `search_off` de lá. A ilustração respira e cintila — movimento que o
  * interruptor de movimento reduzido desliga (§6, item 34).
+ *
+ * `figura` (REGUA-003) troca o ícone em mancha por uma ilustração da família
+ * que o app já tem (`public/ilustracoes`) ou por nenhuma figura — a régua
+ * prefere vazio sem figura a ícone genérico. Sem `figura`, o desenho antigo
+ * continua, para as telas que ainda não passaram pela régua.
  */
 export function EstadoVazio({
   titulo,
@@ -20,6 +26,7 @@ export function EstadoVazio({
   acao,
   children,
   nivel = "h2",
+  figura,
 }: {
   titulo: string
   texto: string
@@ -27,30 +34,59 @@ export function EstadoVazio({
   acao?: { readonly rotulo: string; readonly aoAcionar: () => void }
   children?: ReactNode
   nivel?: "h2" | "h3" | "h4" | "h5" | "h6"
+  figura?: NomeDaIlustracao | "nenhuma"
 }) {
   const Titulo = nivel
   return (
     <div
       data-estado="vazio"
-      className="grid justify-items-center gap-3 rounded-2xl bg-(--surface-lowest) px-5 py-8 text-center"
+      data-figura={figura}
+      className="grid w-full justify-items-center gap-3 rounded-2xl bg-(--surface-lowest) px-5 py-8 text-center"
     >
-      <div className="relative grid size-33 place-items-center">
-        <ArteVazia className="absolute inset-0 size-full" />
-        <span className="bv-empty-float relative grid size-15 place-items-center rounded-full bg-(--surface-lowest) shadow-[0_6px_18px_var(--shadow-soft)]">
-          <Icone nome={icone} className="size-7 text-(--primary)" />
-        </span>
-        <i className="bv-empty-twinkle absolute top-5 left-3 size-2.5 rounded-full bg-(--tertiary-container)" />
-        <i className="bv-empty-twinkle absolute top-3 right-4 size-2 rounded-full bg-(--primary) [animation-delay:0.8s]" />
-        <i className="bv-empty-twinkle absolute right-2 bottom-5 size-3 rounded-full bg-(--on-primary-container) [animation-delay:1.6s]" />
-      </div>
+      {figura === undefined ? <ArteDoIcone icone={icone} /> : null}
+      {figura === undefined || figura === "nenhuma" ? null : (
+        <img
+          src={caminhoDaIlustracao(figura)}
+          alt=""
+          aria-hidden="true"
+          width={1200}
+          height={800}
+          // O vazio fica acima da dobra: carregar sob demanda deixava o lugar
+          // da figura em branco (~170 px) até a imagem chegar (rodada 3, V1).
+          loading="eager"
+          decoding="async"
+          className="aspect-[3/2] h-auto w-56 max-w-full"
+        />
+      )}
       <Titulo className="text-[17px] leading-6 font-semibold tracking-normal">{titulo}</Titulo>
       <p className={cn("max-w-md text-sm text-(--muted-foreground)")}>{texto}</p>
       {acao === undefined ? null : (
-        <Botao tom="tonal" data-acao="acao-do-vazio" onClick={acao.aoAcionar}>
+        <Botao
+          tom="tonal"
+          data-acao="acao-do-vazio"
+          // Nas telas que já passaram pela régua (com `figura`), a saída é pílula.
+          className={figura === undefined ? undefined : "rounded-full"}
+          onClick={acao.aoAcionar}
+        >
           {acao.rotulo}
         </Botao>
       )}
       {children}
+    </div>
+  )
+}
+
+/** O ícone em mancha do protótipo, com a cintilação. */
+function ArteDoIcone({ icone }: { icone: NomeDeIcone }) {
+  return (
+    <div className="relative grid size-33 place-items-center">
+      <ArteVazia className="absolute inset-0 size-full" />
+      <span className="bv-empty-float relative grid size-15 place-items-center rounded-full bg-(--surface-lowest) shadow-[0_6px_18px_var(--shadow-soft)]">
+        <Icone nome={icone} className="size-7 text-(--primary)" />
+      </span>
+      <i className="bv-empty-twinkle absolute top-5 left-3 size-2.5 rounded-full bg-(--tertiary-container)" />
+      <i className="bv-empty-twinkle absolute top-3 right-4 size-2 rounded-full bg-(--primary) [animation-delay:0.8s]" />
+      <i className="bv-empty-twinkle absolute right-2 bottom-5 size-3 rounded-full bg-(--on-primary-container) [animation-delay:1.6s]" />
     </div>
   )
 }
@@ -73,10 +109,10 @@ export function EstadoDeErro({
       <span className="grid size-12 place-items-center rounded-full bg-(--muted)">
         <Icone nome="error" className="size-6 text-(--destructive)" />
       </span>
-      <h3>{titulo}</h3>
+      <h2 className="text-[17px] leading-6 font-semibold tracking-normal">{titulo}</h2>
       <p className="max-w-md text-sm text-(--muted-foreground)">{texto}</p>
       {aoTentar === undefined ? null : (
-        <Botao icone="refresh" onClick={aoTentar}>
+        <Botao icone="refresh" className="rounded-full" onClick={aoTentar}>
           Tentar de novo
         </Botao>
       )}
