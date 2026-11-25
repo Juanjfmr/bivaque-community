@@ -241,7 +241,7 @@ export function Inicio() {
         <div data-home="apresentacao">
           <CabecaDePagina
             className="bv-home-heading"
-            titulo={`Sua rede em ${cidade}`}
+            titulo={cidade === "sua cidade" ? "Sua rede na cidade" : `Sua rede em ${cidade}`}
             subtitulo="Moradia, serviços e boas indicações da comunidade militar."
           />
         </div>
@@ -485,7 +485,7 @@ export function Inicio() {
                 </Secao>
 
                 <Secao
-                  titulo={`Guia de ${cidade}`}
+                  titulo={cidade === "sua cidade" ? "Guia da cidade" : `Guia de ${cidade}`}
                   acoes={
                     <Botao tom="texto" onClick={() => void navegacao.irPara("guia")}>
                       Abrir guia

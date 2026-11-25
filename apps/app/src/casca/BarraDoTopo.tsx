@@ -69,7 +69,9 @@ export function BarraDoTopo({
                 rota.nome === "conversa"
                 ? "Conversas"
                 : rota.nome === "guia"
-                  ? `Guia de ${rotuloDaCidade}`
+                  ? casca.cidade === ""
+                    ? "Guia da cidade"
+                    : `Guia de ${rotuloDaCidade}`
                   : rota.titulo}
           </span>
           <span className="grow" />

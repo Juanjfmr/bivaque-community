@@ -847,12 +847,12 @@ delete from public.groups
 
 -- Cada membro entra em parte dos grupos (o resto da cidade fica de fora, como
 -- na vida real). A persona principal entra em todos; o grupo fechado só recebe
--- quem foi convidado. O dono de cada grupo é o do seed.
+-- quem foi convidado. Cada grupo tem uma persona de demonstração como dona.
 insert into public.group_memberships (group_id, user_id, role, status, joined_at)
 select
   g.id,
   m.id,
-  'member'::public.group_membership_role,
+  (case when m.i = g.dono then 'owner' else 'member' end)::public.group_membership_role,
   'approved'::public.group_membership_status,
   now() - make_interval(days => 60 - (m.i % 20) - g.n)
 from (
@@ -871,7 +871,39 @@ where (
     or m.i = g.dono
   )
   and (g.n < 6 or m.i in (1, 7, 12, 25))
-on conflict (group_id, user_id) do nothing;
+on conflict (group_id, user_id) do update
+  set role = 'owner', status = 'approved'
+  where excluded.role = 'owner';
+
+-- Mantém o campo de proprietário e a participação anterior coerentes.
+update public.group_memberships gm
+   set role = 'member'
+  from public.groups g, public.group_memberships dono
+ where gm.group_id = g.id
+   and dono.group_id = g.id
+   and g.id in (
+     '60000000-0000-4000-8000-000000000001', '60000000-0000-4000-8000-000000000002',
+     '60000000-0000-4000-8000-000000000003', '60000000-0000-4000-8000-000000000004',
+     '60000000-0000-4000-8000-000000000006', '60000000-0000-4000-8000-000000000007'
+   )
+   and dono.user_id::text like 'dd000000-%'
+   and dono.role = 'owner'
+   and gm.user_id = g.owner_user_id
+   and gm.user_id <> dono.user_id
+   and gm.role = 'owner';
+
+update public.groups g
+   set owner_user_id = dono.user_id
+  from public.group_memberships dono
+ where dono.group_id = g.id
+   and g.id in (
+     '60000000-0000-4000-8000-000000000001', '60000000-0000-4000-8000-000000000002',
+     '60000000-0000-4000-8000-000000000003', '60000000-0000-4000-8000-000000000004',
+     '60000000-0000-4000-8000-000000000006', '60000000-0000-4000-8000-000000000007'
+   )
+   and dono.user_id::text like 'dd000000-%'
+   and dono.role = 'owner'
+   and g.owner_user_id <> dono.user_id;
 
 -- Entradas que as conversas de grupo em comum pressupõem (quem conversa sobre
 -- o grupo participa dele).
@@ -1063,7 +1095,8 @@ update public.dm_conversations c
     ('dd900000-0000-4000-8000-000000000001'::uuid, '60000000-0000-4000-8000-000000000001'::uuid),
     ('dd900000-0000-4000-8000-000000000005'::uuid, '60000000-0000-4000-8000-000000000001'::uuid),
     ('dd900000-0000-4000-8000-000000000006'::uuid, '60000000-0000-4000-8000-000000000002'::uuid),
-    ('dd900000-0000-4000-8000-000000000007'::uuid, '60000000-0000-4000-8000-000000000007'::uuid)
+    ('dd900000-0000-4000-8000-000000000007'::uuid, '60000000-0000-4000-8000-000000000007'::uuid),
+    ('dd900000-0000-4000-8000-000000000010'::uuid, '60000000-0000-4000-8000-000000000002'::uuid)
   ) as g(conversa, novo)
  where c.id = g.conversa
    and c.context_type = 'shared_group'

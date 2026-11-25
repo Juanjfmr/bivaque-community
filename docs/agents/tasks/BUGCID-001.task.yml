@@ -81,14 +81,17 @@ forbidden:
 
 acceptance:
   - "Cidade da sessão em um lugar só: as rotas de entry (groups, interests e qualquer outra que use a cidade para escopar dado) leem a cidade pelo mesmo helper de cidadeDaSessao (kind 'current'). Teste da rota com uma pessoa que tem vínculo current numa cidade e leaving em outra: a lista só traz grupos públicos da current."
-  - "Chip do topo: com sessão, cidade e cidadeDeCasa da casca vêm da cidade da sessão (rota existente do app que já devolve a cidade, sem rota nova se der). CIDADE_PADRAO não aparece para quem tem cidade. Trocar pelo chip continua mudando a cidade consultada, e a Início mostra a mesma cidade do chip. Vitest cobre: sessão com cidade X mostra X no chip; troca pelo chip muda os dois."
+  - "Chip do topo: com sessão, cidade e cidadeDeCasa da casca vêm da cidade da sessão (rota existente do app que já devolve a cidade, sem rota nova se der). CIDADE_PADRAO não aparece para quem tem cidade. O chip abre o painel da cidade; a Início mostra o conteúdo da cidade de casa, conforme ADR-20260925. Vitest cobre: sessão com cidade X mostra X no chip; o conteúdo preserva a cidade de casa ao consultar outra cidade."
   - "Entrar na entrada vira participação: cada grupo público da cidade current marcado com Entrar vira group_membership pela RPC join_group no cliente da sessão, no momento em que o vínculo com a cidade existe (no provisionamento ou logo depois). Interesse continua gravado como hoje. Grupo privado ou de outra cidade é ignorado sem erro para a pessoa. Testes positivos e negativos na rota (grupo público da cidade vira membro; privado e de outra cidade não)."
   - "E2E do app em 375, 768 e 1440 nos dois temas: concluir a entrada marcando um grupo, abrir Comunidade e ver o grupo em Seus grupos (ou equivalente)."
   - "Botões Entrar da lista de grupos da entrada com a mesma largura em todas as linhas, qualquer que seja o tamanho do texto. Asserção de largura igual no E2E."
   - "Estado vazio da Início numa cidade sem conteúdo só afirma o que a consulta confirmou: nenhuma contagem, nome ou promessa de conteúdo que não existe. Teste cobre a cidade vazia."
-  - "Banco local limpo: as duas specs da web que criam Grupo COM-003/COM-005 apagam o que criaram (afterAll ou afterEach, com o cliente que já usam). O demo-manaus.sql não cria quase-duplicatas do seed: reaproveita os grupos do seed ou troca por temas distintos, e apaga, só no banco local e de forma idempotente, grupos cujo nome começa com 'Grupo COM-00' e as quase-duplicatas que ele mesmo criou antes (ids dd2...)."
+  - "Banco local limpo: o demo-manaus.sql não cria quase-duplicatas do seed: reaproveita os grupos do seed ou troca por temas distintos, e apaga, só no banco local e de forma idempotente, grupos cujo nome começa com 'Grupo COM-00' e as quase-duplicatas que ele mesmo criou antes (ids dd2...)."
   - "A persona de demonstração entra direto no app: o script grava o progresso da entrada como concluído para as contas dd... (mesmas tabelas que o provisionamento usa), e conserta demo-ana se ela já tiver passado pela entrada (deixa uma cidade current só)."
   - "Passam: --filter @bivaque/app test, --filter @bivaque/app typecheck, --filter web test, --filter @bivaque/app test:e2e (PLAYWRIGHT_PORT=3294, PLAYWRIGHT_BUILD_PORT=3295) e gate completo no fechamento."
+
+# 25/11/2026: o chip abre o painel e a Início mantém a cidade de casa, conforme ADR-20260925.
+# 25/11/2026: a limpeza ficou apenas no demo-manaus.sql porque as specs group-base e group-join-reason não existem mais.
 
 proof:
   - npx pnpm@11.18.0 --filter @bivaque/app test

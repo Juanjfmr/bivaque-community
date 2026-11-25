@@ -116,19 +116,14 @@ export function ProvedorDaCasca({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (modoDeProvaAtivo()) return
     const controle = new AbortController()
-    // Sem sessão — ou sem servidor de sessão, como no preview — a casca mostra a
-    // cidade da demonstração: não há sessão real que a preencha.
+    // A demonstração só entra quando a resposta confirma que não há sessão.
     const cidadeDaDemonstracao = () => {
       if (!controle.signal.aborted) confirmarCidadeDaSessao(dadosDoApp.resumoDaCasca().cidade)
     }
     void lerProgresso()
-      .then(
-        (sessao) => sessao,
-        () => null,
-      )
       .then((sessao) => {
         if (controle.signal.aborted) return
-        if (!sessao?.autenticado) {
+        if (sessao.autenticado === false) {
           cidadeDaDemonstracao()
           return
         }

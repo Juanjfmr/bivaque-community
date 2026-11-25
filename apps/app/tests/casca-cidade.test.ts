@@ -122,9 +122,9 @@ describe("cidade da casca", () => {
       cidadeDeCasa: demonstracao,
     })
     // O efeito do provedor só cai na demonstração no ramo sem sessão.
-    expect(CASCA).toMatch(/if \(!sessao\?\.autenticado\) \{\s*cidadeDaDemonstracao\(\)/)
+    expect(CASCA).toMatch(/if \(sessao\.autenticado === false\) \{\s*cidadeDaDemonstracao\(\)/)
     expect(CASCA.indexOf("lerPerfil({ signal: controle.signal })")).toBeGreaterThan(
-      CASCA.indexOf("if (!sessao?.autenticado) {"),
+      CASCA.indexOf("if (sessao.autenticado === false) {"),
     )
   })
 
