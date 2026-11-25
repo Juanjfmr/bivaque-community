@@ -410,6 +410,9 @@ export function LandingPage({ nonce }: { nonce?: string | undefined } = {}) {
             <Link className="ld-link" href="/privacidade">
               Privacidade
             </Link>
+            <Link className="ld-link" href="/termos-de-uso">
+              Termo de Uso
+            </Link>
             <Link className="ld-link" href="/codigo-de-conduta">
               Código de conduta
             </Link>
@@ -460,6 +463,9 @@ export function LandingPage({ nonce }: { nonce?: string | undefined } = {}) {
           </Link>
           <Link className="ld-link" href="/privacidade">
             Privacidade
+          </Link>
+          <Link className="ld-link" href="/termos-de-uso">
+            Termo de Uso
           </Link>
           <Link className="ld-link" href="/codigo-de-conduta">
             Código de conduta

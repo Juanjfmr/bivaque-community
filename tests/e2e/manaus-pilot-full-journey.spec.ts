@@ -34,18 +34,21 @@ test.describe("holder onboarding journey", () => {
     // Then the terms of use are displayed. "Bem-vindo ao Bivaque" never
     // existed on this page — found realigning this spec against the real
     // rendered /consent (apps/web/app/(preauth)/consent/page.tsx). PORT-003: a
-    // tela passou a ser o passo "Aceite" do protótipo, com os dois documentos
+    // tela passou a ser o passo "Aceite" do protótipo, com os três documentos
     // como links na própria frase do aceite.
     await expect(page.getByRole("heading", { name: "Antes de entrar, as regras." })).toBeVisible()
-    await expect(page.getByRole("link", { name: "Política de privacidade" })).toBeVisible()
-    await expect(page.getByRole("link", { name: "Código de conduta" })).toBeVisible()
+    await expect(page.getByRole("link", { name: "Política de Privacidade" })).toBeVisible()
+    await expect(page.getByRole("link", { name: "Termo de Uso" })).toBeVisible()
+    await expect(page.getByRole("link", { name: "Código de Conduta" })).toBeVisible()
 
     const acceptButton = page.getByRole("button", { name: "Concordar e continuar" })
     await expect(acceptButton).toBeVisible()
     // PORT-003: o botão fica ativo como na especificação e o envio sem aceite é
     // recusado com a explicação; registrar o aceite é o portão de verdade.
     await acceptButton.click()
-    await expect(page.locator("#en-err")).toContainText("aceite a Política de privacidade")
+    await expect(page.locator("#en-err")).toContainText(
+      "aceite a Política de Privacidade, o Termo de Uso e o Código de Conduta",
+    )
   })
 
   test("accepting consent navigates to the app entry", async ({ page }) => {
