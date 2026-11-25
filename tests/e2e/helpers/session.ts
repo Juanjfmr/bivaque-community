@@ -84,7 +84,7 @@ const CONSENT_COOKIE = "bivaque-consent-version"
 // @bivaque/domain, so every spec session must carry this exact value. Specs
 // import this constant instead of declaring their own. tests/scope/
 // consent-version.test.mjs fails if it drifts from the domain source.
-export const CURRENT_CONSENT = "2"
+export const CURRENT_CONSENT = "3"
 
 interface PasswordGrantBody {
   access_token: string

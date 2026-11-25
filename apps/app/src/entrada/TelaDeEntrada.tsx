@@ -56,7 +56,7 @@ import {
 
 // Igual a CODE_OF_CONDUCT_VERSION de packages/domain; um teste de escopo cobra a
 // igualdade para o combinado não registrar outra versão sem ninguém notar.
-const VERSAO_DO_CODIGO_DE_CONDUTA = 2
+const VERSAO_DO_CODIGO_DE_CONDUTA = 3
 
 const MOMENTO_DO_PROVISIONAMENTO = {
   chegando: "arriving",

@@ -58,6 +58,11 @@ export const PUBLIC_SURFACE: readonly EntradaDaSuperficie[] = [
     motivo: "página legal: leitura sem conta",
   },
   {
+    caminho: "/termos-de-uso",
+    modo: "exata",
+    motivo: "página legal: leitura sem conta",
+  },
+  {
     caminho: "/api",
     modo: "pasta",
     motivo: "cada rota declara a própria postura em lib/security/api-surface.ts",

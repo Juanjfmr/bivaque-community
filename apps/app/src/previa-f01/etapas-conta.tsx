@@ -450,7 +450,8 @@ const PROMESSAS: readonly { icone: NomeDeIcone; titulo: string; texto: string }[
   {
     icone: "lock",
     titulo: "Seu CPF não fica guardado",
-    texto: "Usamos uma vez para confirmar seu vínculo e não guardamos.",
+    texto:
+      "Usamos só para confirmar seu vínculo na consulta ao Portal da Transparência, e não guardamos.",
   },
   {
     icone: "visibility_off",
@@ -460,7 +461,7 @@ const PROMESSAS: readonly { icone: NomeDeIcone; titulo: string; texto: string }[
   {
     icone: "delete",
     titulo: "Você sai quando quiser",
-    texto: "Apagar a conta apaga seus dados.",
+    texto: "Apagar a conta remove seus dados conforme a Política de Privacidade.",
   },
 ]
 
@@ -487,15 +488,15 @@ export function Aceite({ concluir }: PropsDaEtapa) {
         <a href={`${base}privacidade`} target="_blank" rel="noopener noreferrer">
           Política de Privacidade
         </a>
-        , os{" "}
-        <a href={`${base}ajuda`} target="_blank" rel="noopener noreferrer">
-          Termos
+        , o{" "}
+        <a href={`${base}termos-de-uso`} target="_blank" rel="noopener noreferrer">
+          Termo de Uso
         </a>{" "}
         e o{" "}
         <a href={`${base}conduta`} target="_blank" rel="noopener noreferrer">
           Código de Conduta
         </a>{" "}
-        de 01/11/2026.
+        de 25/11/2026.
       </p>
     </Moldura>
   )

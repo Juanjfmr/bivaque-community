@@ -13,6 +13,7 @@ const PUBLICOS = [
   "/consent",
   "/privacidade",
   "/codigo-de-conduta",
+  "/termos-de-uso",
   "/conta-apagada",
   "/ajuda",
   "/favicon.ico",

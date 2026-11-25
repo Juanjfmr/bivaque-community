@@ -212,6 +212,7 @@ describe("LAN-TROCA fase 1", () => {
         "layout.tsx",
         "login",
         "privacidade",
+        "termos-de-uso",
       ].sort(),
     )
   })

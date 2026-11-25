@@ -199,8 +199,8 @@ describe("POST /api/app/entry/invite", () => {
     })
     expect(consultarConsentimento).toHaveBeenCalledWith("has_accepted_consent", {
       p_user_id: PESSOA.id,
-      p_consent_version: 2,
-      p_code_of_conduct_version: 2,
+      p_consent_version: 3,
+      p_code_of_conduct_version: 3,
     })
     expect(registrarMarcador).toHaveBeenCalledWith(
       { user_id: PESSOA.id, versao: 2, etapa: "interesses", estado: {} },

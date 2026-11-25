@@ -183,7 +183,7 @@ describe("provision exige o momento da entrada", () => {
     expect(response.status).toBe(200)
     expect(provisionArgs()).toEqual({
       p_arrival_date: chegada,
-      p_consent_version: 2,
+      p_consent_version: 3,
       p_display_name: "Pessoa",
       p_locality_id: MANAUS.id,
       p_moment: "arriving",
@@ -206,7 +206,7 @@ describe("provision exige o momento da entrada", () => {
     // A cidade escolhida é Manaus e o destino é o Rio: o mock responde pelo
     // código pedido, então o id abaixo só pode vir do Rio.
     expect(provisionArgs()).toEqual({
-      p_consent_version: 2,
+      p_consent_version: 3,
       p_departure_date: saida,
       p_destination_locality_id: RIO.id,
       p_display_name: "Pessoa",

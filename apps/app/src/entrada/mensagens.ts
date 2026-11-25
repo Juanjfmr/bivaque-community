@@ -10,7 +10,7 @@ export function mensagemDoConvite(falha: unknown): string {
     if (falha.status === 400) {
       switch (falha.codigo) {
         case "consentimento-pendente":
-          return "Aceite os Termos e o Código de Conduta antes de entrar."
+          return "Aceite a Política de Privacidade, o Termo de Uso e o Código de Conduta antes de entrar."
         case "nome-invalido":
           return "Confira o nome informado e tente de novo."
         case "email-ausente":

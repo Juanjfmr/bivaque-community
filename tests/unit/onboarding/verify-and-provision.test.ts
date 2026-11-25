@@ -42,7 +42,7 @@ describe("verifyEligibility (P0 Task 4)", () => {
       verifyEligibility(supabase, {
         userId: "user-1",
         cpf: "12345678901",
-        consentVersion: 2,
+        consentVersion: 3,
       }),
     ).resolves.toEqual({
       outcome: {
@@ -75,7 +75,7 @@ describe("verifyEligibility (P0 Task 4)", () => {
     const supabase = { rpc, from: vi.fn() } as unknown as VerifySupabase
 
     await expect(
-      verifyEligibility(supabase, { userId: "user-1", cpf: "12345678901", consentVersion: 2 }),
+      verifyEligibility(supabase, { userId: "user-1", cpf: "12345678901", consentVersion: 3 }),
     ).rejects.toThrow(/Failed to upsert verification outcome/)
   })
 
@@ -87,7 +87,7 @@ describe("verifyEligibility (P0 Task 4)", () => {
     const result = await verifyEligibility(supabase, {
       userId: "user-1",
       cpf: "12345678901",
-      consentVersion: 2,
+      consentVersion: 3,
     })
 
     expect(result).toEqual({ outcome: { status: "pending" } })
@@ -112,7 +112,7 @@ describe("verifyEligibility (P0 Task 4)", () => {
     await verifyEligibility(supabase, {
       userId: "user-1",
       cpf: "12345678901",
-      consentVersion: 2,
+      consentVersion: 3,
     })
 
     // The negative is the test of the task: verify touches no table.
@@ -121,7 +121,7 @@ describe("verifyEligibility (P0 Task 4)", () => {
 })
 
 describe("verifyEligibility não rebaixa quem já está verificado (SEC-007)", () => {
-  const entrada = { userId: "user-1", cpf: "12345678901", consentVersion: 2 }
+  const entrada = { userId: "user-1", cpf: "12345678901", consentVersion: 3 }
 
   it("verificado volta verificado, sem Portal, sem tentativa e sem regravar", async () => {
     vi.stubEnv("PORTAL_DADOS_API_KEY", "chave-valida")
@@ -190,7 +190,7 @@ describe("provisionMember (P0 Task 4)", () => {
         userId: "user-1",
         localityId: "",
         displayName: "Ana",
-        consentVersion: 2,
+        consentVersion: 3,
       }),
     ).rejects.toThrow("locality is required to provision a member")
   })
